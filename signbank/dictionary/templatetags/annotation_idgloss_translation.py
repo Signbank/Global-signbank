@@ -9,16 +9,18 @@ register = Library()
 @register.filter
 def get_annotation_idgloss_translation(gloss, language):
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+    print(annotationidglosstranslations)
     if annotationidglosstranslations is not None and len(annotationidglosstranslations) > 0:
         return annotationidglosstranslations[0].text
 
     #This is a fallback to the English translation, but we rather want nothing, see #583
+    # Use the other function _no_default below if no default is wanted
 
-    #translations = gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
-    #if translations:
-    #    return translations[0].text
+    translations = gloss.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
+    if translations:
+       return translations[0].text
 
-    return ''
+    return str(gloss.id)
 
 @register.filter
 def get_annotation_idgloss_translation_no_default(gloss, language):

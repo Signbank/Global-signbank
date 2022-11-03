@@ -244,11 +244,9 @@ class GlossListView(ListView):
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
-        from signbank.tools import convert_language_code_to_language_minus_locale
         for lang in dataset_languages:
-            lang_code = convert_language_code_to_language_minus_locale(lang.language_code_2char)
-            if lang_code not in self.queryset_language_codes:
-                self.queryset_language_codes.append(lang_code)
+            if lang.language_code_2char not in self.queryset_language_codes:
+                self.queryset_language_codes.append(lang.language_code_2char)
         if self.queryset_language_codes is None:
             self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
 
@@ -460,6 +458,12 @@ class GlossListView(ListView):
 
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
+        # it is necessary to sort the object list by lemma_id in order for all glosses with the same lemma to be grouped
+        # correctly in the template
+        list_of_object_ids = [ g.id for g in self.object_list ]
+        glosses_ordered_by_lemma_id = Gloss.objects.filter(id__in=list_of_object_ids).order_by('lemma_id')
+        context['glosses_ordered_by_lemma_id'] = glosses_ordered_by_lemma_id
+
         if self.search_type == 'sign' or not self.request.user.is_authenticated():
             # Only count the none-morpheme glosses
             # this branch is slower than the other one
@@ -477,7 +481,6 @@ class GlossListView(ListView):
 
         this_page_number = context['page_obj'].number
         this_paginator = context['page_obj'].paginator
-
         if len(self.object_list) > settings.MAX_SCROLL_BAR:
             this_page = this_paginator.page(this_page_number)
             if this_page.has_previous():
@@ -488,16 +491,27 @@ class GlossListView(ListView):
                 next_objects = this_paginator.page(this_page_number + 1).object_list
             else:
                 next_objects = []
-            list_of_objects = previous_objects + context['page_obj'].object_list + next_objects
+            list_of_objects = previous_objects + list(context['page_obj'].object_list) + next_objects
         else:
             list_of_objects = self.object_list
 
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
-        from signbank.tools import convert_language_code_to_language_minus_locale
-        lang_attr_name = convert_language_code_to_language_minus_locale(
-            settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+
+        default_language = Language.objects.get(id=get_default_language_id())
+        default_language_code = default_language.language_code_2char
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        interface_language_code = interface_language.language_code_2char
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
         items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -1309,11 +1323,12 @@ class GlossDetailView(DetailView):
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
 
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
-        language = Language.objects.get(id=get_default_language_id())
-        default_language_code = language.language_code_2char
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        interface_language_code = interface_language.language_code_2char
+
+        default_language = Language.objects.get(id=get_default_language_id())
+        default_language_code = default_language.language_code_2char
 
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
@@ -1364,7 +1379,7 @@ class GlossDetailView(DetailView):
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
         context['handedness'] = (int(self.object.handedness_fk.machine_value) > 1) \
             if self.object.handedness_fk and self.object.handedness_fk.machine_value else 0  # minimal machine value is 2
-        context['domhndsh'] = (int(self.object.domhndsh_handshapefk.machine_value) > 2) \
+        context['domhndsh'] = (int(self.object.domhndsh_handshapefk.machine_value) > 1) \
             if self.object.domhndsh_handshapefk and self.object.domhndsh_handshapefk.machine_value else 0        # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
 
@@ -1405,6 +1420,7 @@ class GlossDetailView(DetailView):
             self.request.session['datasetid'] = gl.dataset.id
             self.last_used_dataset = gl.dataset.acronym
         else:
+            print('error function get default language is assigned to context datasetid')
             self.request.session['datasetid'] = get_default_language_id()
 
         # CHECK THIS
@@ -1524,8 +1540,8 @@ class GlossDetailView(DetailView):
             sign_display = str(morphdef.morpheme.id)
             morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
             if morph_texts.keys():
-                if language_code in morph_texts.keys():
-                    sign_display = morph_texts[language_code]
+                if interface_language_code in morph_texts.keys():
+                    sign_display = morph_texts[interface_language_code]
                 else:
                     sign_display = morph_texts[default_language_code]
 
@@ -1545,8 +1561,8 @@ class GlossDetailView(DetailView):
             else:
                 language = Language.objects.get(id=get_default_language_id())
                 homo_trans[language.language_code_2char] = saved_gl.annotationidglosstranslation_set.filter(language=language)
-            if language_code in homo_trans:
-                homo_display = homo_trans[language_code][0].text
+            if interface_language_code in homo_trans:
+                homo_display = homo_trans[interface_language_code][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
                 homo_display = homo_trans[default_language_code][0].text
@@ -1565,8 +1581,8 @@ class GlossDetailView(DetailView):
             else:
                 language = Language.objects.get(id=get_default_language_id())
                 homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
-            if language_code in homo_trans:
-                homo_display = homo_trans[language_code][0].text
+            if interface_language_code in homo_trans:
+                homo_display = homo_trans[interface_language_code][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
                 homo_display = homo_trans[default_language_code][0].text
@@ -1634,13 +1650,14 @@ class GlossDetailView(DetailView):
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
+        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
             except (ObjectDoesNotExist):
-                annotation_text = ''
+                annotation_text = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_text
 
         # Put translations (keywords) per language in the context
@@ -1737,8 +1754,8 @@ class GlossDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-                if language_code in morpheme_annotation_idgloss.keys():
-                    morpheme_display = morpheme_annotation_idgloss[language_code][0].text
+                if interface_language_code in morpheme_annotation_idgloss.keys():
+                    morpheme_display = morpheme_annotation_idgloss[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     morpheme_display = morpheme_annotation_idgloss[default_language_code][0].text
@@ -1765,8 +1782,8 @@ class GlossDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     glosses_annotation_idgloss[language.language_code_2char] = ble_morph.glosses.annotationidglosstranslation_set.filter(language=language)
-                if language_code in glosses_annotation_idgloss.keys():
-                    morpheme_display = glosses_annotation_idgloss[language_code][0].text
+                if interface_language_code in glosses_annotation_idgloss.keys():
+                    morpheme_display = glosses_annotation_idgloss[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     morpheme_display = glosses_annotation_idgloss[default_language_code][0].text
@@ -1787,8 +1804,8 @@ class GlossDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
-                if language_code in other_relations_dict.keys():
-                    target_display = other_relations_dict[language_code][0].text
+                if interface_language_code in other_relations_dict.keys():
+                    target_display = other_relations_dict[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     target_display = other_relations_dict[default_language_code][0].text
@@ -1916,9 +1933,10 @@ class GlossVideosView(DetailView):
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
 
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        interface_language_code = interface_language.language_code_2char
+
         language = Language.objects.get(id=get_default_language_id())
         default_language_code = language.language_code_2char
 
@@ -2044,23 +2062,17 @@ class GlossRelationsDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
 
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
-        language = Language.objects.get(id=get_default_language_id())
-        default_language_code = language.language_code_2char
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        interface_language_code = interface_language.language_code_2char
+
+        default_language = Language.objects.get(id=get_default_language_id())
+        default_language_code = default_language.language_code_2char
 
         # Call the base implementation first to get a context
         context = super(GlossRelationsDetailView, self).get_context_data(**kwargs)
 
-        if self.request.LANGUAGE_CODE == 'zh-hans':
-            languages = Language.objects.filter(language_code_2char='zh')
-        else:
-            languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
-        if languages:
-            context['language'] = languages[0]
-        else:
-            context['language'] = Language.objects.get(id=get_default_language_id())
+        context['language'] = interface_language
 
         context['navigation'] = context['gloss'].navigation(True)
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
@@ -2117,8 +2129,8 @@ class GlossRelationsDetailView(DetailView):
             sign_display = str(morphdef.morpheme.id)
             morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
             if morph_texts.keys():
-                if language_code in morph_texts.keys():
-                    sign_display = morph_texts[language_code]
+                if interface_language_code in morph_texts.keys():
+                    sign_display = morph_texts[interface_language_code]
                 else:
                     sign_display = morph_texts[default_language_code]
 
@@ -2160,8 +2172,8 @@ class GlossRelationsDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     lemma_dict[language.language_code_2char] = gl_lem.annotationidglosstranslation_set.filter(language=language)
-                if language_code in lemma_dict.keys():
-                    gl_lem_display = lemma_dict[language_code][0].text
+                if interface_language_code in lemma_dict.keys():
+                    gl_lem_display = lemma_dict[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     gl_lem_display = lemma_dict[default_language_code][0].text
@@ -2181,8 +2193,8 @@ class GlossRelationsDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
-                if language_code in other_relations_dict.keys():
-                    target_display = other_relations_dict[language_code][0].text
+                if interface_language_code in other_relations_dict.keys():
+                    target_display = other_relations_dict[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     target_display = other_relations_dict[default_language_code][0].text
@@ -2217,8 +2229,8 @@ class GlossRelationsDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     variants_dict[language.language_code_2char] = gl_var.annotationidglosstranslation_set.filter(language=language)
-                if language_code in variants_dict.keys():
-                    gl_var_display = variants_dict[language_code][0].text
+                if interface_language_code in variants_dict.keys():
+                    gl_var_display = variants_dict[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     gl_var_display = variants_dict[default_language_code][0].text
@@ -2238,8 +2250,8 @@ class GlossRelationsDetailView(DetailView):
             else:
                 language = Language.objects.get(id=get_default_language_id())
                 minimal_pairs_trans[language.language_code_2char] = mpg.annotationidglosstranslation_set.filter(language=language)
-            if language_code in minimal_pairs_trans.keys():
-                minpar_display = minimal_pairs_trans[language_code][0].text
+            if interface_language_code in minimal_pairs_trans.keys():
+                minpar_display = minimal_pairs_trans[interface_language_code][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
                 minpar_display = minimal_pairs_trans[default_language_code][0].text
@@ -2257,13 +2269,14 @@ class GlossRelationsDetailView(DetailView):
             compounds.append((rm.parent_gloss, translated_role))
         context['compounds'] = compounds
 
+        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
             except (ObjectDoesNotExist):
-                annotation_text = ''
+                annotation_text = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_text
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -2306,11 +2319,9 @@ class MorphemeListView(ListView):
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
-        from signbank.tools import convert_language_code_to_2char
         for lang in dataset_languages:
-            lang_code = convert_language_code_to_2char(lang.language_code_2char)
-            if lang_code not in self.queryset_language_codes:
-                self.queryset_language_codes.append(lang_code)
+            if lang.language_code_2char not in self.queryset_language_codes:
+                self.queryset_language_codes.append(lang.language_code_2char)
         if self.queryset_language_codes is None:
             self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
 
@@ -2399,9 +2410,20 @@ class MorphemeListView(ListView):
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
-        from signbank.tools import convert_language_code_to_language_minus_locale
-        lang_attr_name = convert_language_code_to_language_minus_locale(
-            settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+
+        default_language = Language.objects.get(id=get_default_language_id())
+        default_language_code = default_language.language_code_2char
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        interface_language_code = interface_language.language_code_2char
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
         items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -2985,9 +3007,19 @@ class HandshapeDetailView(DetailView):
 
             qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
-            from signbank.tools import convert_language_code_to_language_minus_locale
-            lang_attr_name = convert_language_code_to_language_minus_locale(
-                settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+            default_language = Language.objects.get(id=get_default_language_id())
+            default_language_code = default_language.language_code_2char
+            interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+            interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+            interface_language_code = interface_language.language_code_2char
+            dataset_display_languages = []
+            for lang in dataset_languages:
+                dataset_display_languages.append(lang.language_code_2char)
+            if interface_language_code in dataset_display_languages:
+                lang_attr_name = interface_language_code
+            else:
+                lang_attr_name = default_language_code
+
             items = construct_scrollbar(qs, self.search_type, lang_attr_name)
             self.request.session['search_results'] = items
 
@@ -3027,51 +3059,12 @@ class SemanticFieldDetailView(DetailView):
             self.object = SemanticField.objects.get(machine_value=match_machine_value)
         except ObjectDoesNotExist:
             # No SemanticField exists for this machine value
-            # See if there is a fieldChoice for the SemField category with this machine value
-            # check to see if this semantic field has been created in FieldChoice but not yet viewed
-            # if that is the case, create a new SemanticField object and view that,
-            # otherwise return an error
-
-            new_semanticfield = semanticfield_fieldchoice_to_multiselect(match_machine_value)
-
-            if not new_semanticfield:
-                translated_message = _('SemanticField not configured for this machine value.')
-                return render(request, 'dictionary/warning.html',
-                              {'warning': translated_message,
-                               'dataset_languages': dataset_languages,
-                               'selected_datasets': selected_datasets,
-                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-
-        try:
-            # The semantic field object exists, make sure it's in FieldChoices
-            fieldchoice_for_this_object = FieldChoice.objects.get(field__iexact='SemField', machine_value=match_machine_value)
-        except ObjectDoesNotExist:
-            # the semantic field object with the machine value has been either fetched or created and stored in self.object
-            print('field choice not found for SemField with machine value ', match_machine_value)
-            this_semanticfield = self.object
-            new_translation = this_semanticfield.name
-
-            new_name_translations = dict()
-
-            for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
-                name_languagecode = 'name_' + language.replace('-', '_')
-                translation_language = Language.objects.get(language_code_3char=language_3charcode)
-                translation = SemanticFieldTranslation.objects.filter(semField=this_semanticfield, language=translation_language).first()
-
-                if not translation:
-                    # this SemanticField was created without a translation, use English
-                    semanticfieldtranslation = SemanticFieldTranslation(semField=new_semanticfield, language=translation_language,
-                                                                 name=new_translation)
-                    semanticfieldtranslation.save()
-
-                new_name_translations[name_languagecode] = new_translation
-
-            # for the purposes of FieldChoice choice lists, make sure the translations have values
-            this_field_choice = FieldChoice(machine_value=this_semanticfield.machine_value,
-                                            field='SemField',
-                                            name=this_semanticfield.name,
-                                            **new_name_translations)
-            this_field_choice.save()
+            translated_message = _('SemanticField not configured for this machine value.')
+            return render(request, 'dictionary/warning.html',
+                          {'warning': translated_message,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -3087,7 +3080,8 @@ class SemanticFieldDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
 
-        context['translations'] = [ (translation.language.name, translation.name) for translation in self.object.semanticfieldtranslation_set.all() ]
+        context['translations'] = [ (translation.language.name, translation.name)
+                                    for translation in self.object.semanticfieldtranslation_set.all() ]
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -3108,12 +3102,8 @@ class SemanticFieldListView(ListView):
         # Call the base implementation first to get a context
         context = super(SemanticFieldListView, self).get_context_data(**kwargs)
 
-        context['semanticfieldchoicecount'] = FieldChoice.objects.filter(field__iexact='semField').count()
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
-
-        context['semanticfieldcount'] = SemanticField.objects.count()
 
         # this is needed to avoid crashing the browser if you go to the last page
         # of an extremely long list and go to Detail View on the objects
@@ -3138,29 +3128,7 @@ class SemanticFieldListView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
-        qs = SemanticField.objects.all().order_by('name')
-
-        semantic_fields = FieldChoice.objects.filter(field__iexact='semField')
-        # Find out if any SemanticFields exist for which no SemanticField object has been created
-        # this can happen if new semField choices are created in Admin
-
-        existing_semanticfield_objects_machine_values = [ o.machine_value for o in qs ]
-
-        new_semanticfield_created = 0
-
-        for s in semantic_fields:
-            if s.machine_value in existing_semanticfield_objects_machine_values:
-                pass
-            else:
-                # create a new SemanticField object
-                new_semanticfield = semanticfield_fieldchoice_to_multiselect(s.machine_value)
-
-                if new_semanticfield:
-                    new_semanticfield_created = 1
-
-        if new_semanticfield_created: # if a new SemanticField object was created, reload the query result
-
-            qs = SemanticField.objects.all().order_by('name')
+        qs = SemanticField.objects.filter(machine_value__gt=1).order_by('name')
 
         return qs
 
@@ -3190,52 +3158,12 @@ class DerivationHistoryDetailView(DetailView):
             self.object = DerivationHistory.objects.get(machine_value=match_machine_value)
         except ObjectDoesNotExist:
             # No DerivationHistory exists for this machine value
-            # See if there is a fieldChoice for the derivHist category with this machine value
-            # check to see if this semantic field has been created in FieldChoice but not yet viewed
-            # if that is the case, create a new DerivationHistory object and view that,
-            # otherwise return an error
-
-            new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(match_machine_value)
-
-            if not new_derivationhistory:
-                translated_message = _('DerivationHistory not configured for this machine value.')
-                return render(request, 'dictionary/warning.html',
-                              {'warning': translated_message,
-                               'dataset_languages': dataset_languages,
-                               'selected_datasets': selected_datasets,
-                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-
-        try:
-            # The semantic field object exists, make sure it's in FieldChoices
-            fieldchoice_for_this_object = FieldChoice.objects.get(field__iexact='derivHist', machine_value=match_machine_value)
-        except (ObjectDoesNotExist, MultipleObjectsReturned):
-            # the semantic field object with the machine value has been either fetched or created and stored in self.object
-            print('field choice not found for derivHist with machine value ', match_machine_value)
-            this_derivationhistory = self.object
-
-            new_translation = this_derivationhistory.name
-
-            new_name_translations = dict()
-
-            for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
-                name_languagecode = 'name_' + language.replace('-', '_')
-                translation_language = Language.objects.get(language_code_3char=language_3charcode)
-                translation = DerivationHistoryTranslation.objects.filter(derivHist=this_derivationhistory, language=translation_language).first()
-
-                if not translation:
-                    # this SemanticField was created without a translation, use English
-                    derivationhistorytranslation = DerivationHistoryTranslation(derivHist=this_derivationhistory, language=translation_language,
-                                                                 name=new_translation)
-                    derivationhistorytranslation.save()
-
-                new_name_translations[name_languagecode] = new_translation
-
-            # for the purposes of FieldChoice choice lists, make sure the translations have values
-            this_field_choice = FieldChoice(machine_value=this_derivationhistory.machine_value,
-                                            field='derivHist',
-                                            name=this_derivationhistory.name,
-                                            **new_name_translations)
-            this_field_choice.save()
+            translated_message = _('DerivationHistory not configured for this machine value.')
+            return render(request, 'dictionary/warning.html',
+                          {'warning': translated_message,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -3251,7 +3179,8 @@ class DerivationHistoryDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
 
-        context['translations'] = [ (translation.language.name, translation.name) for translation in self.object.derivationhistorytranslation_set.all() ]
+        context['translations'] = [ (translation.language.name, translation.name)
+                                    for translation in self.object.derivationhistorytranslation_set.all() ]
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -3272,12 +3201,8 @@ class DerivationHistoryListView(ListView):
         # Call the base implementation first to get a context
         context = super(DerivationHistoryListView, self).get_context_data(**kwargs)
 
-        context['derivationhistoryfieldchoicecount'] = FieldChoice.objects.filter(field__iexact='derivHist').count()
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
-
-        context['derivationhistorycount'] = DerivationHistory.objects.count()
 
         # this is needed to avoid crashing the browser if you go to the last page
         # of an extremely long list and go to Detail View on the objects
@@ -3302,32 +3227,9 @@ class DerivationHistoryListView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
-        qs = DerivationHistory.objects.all().order_by('name')
-
-        derivationhistory_fields = FieldChoice.objects.filter(field__iexact='derivHist')
-        # Find out if any DerivationHistorys exist for which no DerivationHistory object has been created
-        # this can happen if new derivHist choices are created in Admin
-
-        existing_derivationhistory_objects_machine_values = [ o.machine_value for o in qs ]
-
-        new_derivationhistory_created = 0
-
-        for s in derivationhistory_fields:
-            if s.machine_value in existing_derivationhistory_objects_machine_values:
-                pass
-            else:
-                # create a new DerivationHistory object
-                new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(s.machine_value)
-
-                if new_derivationhistory:
-                    new_derivationhistory_created = 1
-
-        if new_derivationhistory_created: # if a new DerivationHistory object was created, reload the query result
-
-            qs = DerivationHistory.objects.all().order_by('name')
+        qs = DerivationHistory.objects.filter(machine_value__gt=1).order_by('name')
 
         return qs
-
 
 
 class HomonymListView(ListView):
@@ -3478,9 +3380,20 @@ class MinimalPairsListView(ListView):
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
-        from signbank.tools import convert_language_code_to_language_minus_locale
-        lang_attr_name = convert_language_code_to_language_minus_locale(
-            settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+
+        default_language = Language.objects.get(id=get_default_language_id())
+        default_language_code = default_language.language_code_2char
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        interface_language_code = interface_language.language_code_2char
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
         items = construct_scrollbar(list_of_objects, 'sign', lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -4017,13 +3930,10 @@ class GlossFrequencyView(DetailView):
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
 
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        interface_language_code = interface_language.language_code_2char
         default_language = Language.objects.get(id=get_default_language_id())
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        try:
-            interface_language = Language.objects.get(language_code_2char=convert_language_code_to_2char(self.request.LANGUAGE_CODE))
-        except:
-            interface_language = Language.objects.get(id=get_default_language_id())
 
         #Pass info about which fields we want to see
         gl = context['gloss']
@@ -4147,13 +4057,14 @@ class GlossFrequencyView(DetailView):
         else:
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
 
+        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_translation = gl.annotationidglosstranslation_set.get(language=language).text
             except (ValueError):
-                annotation_translation = ''
+                annotation_translation = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_translation
 
         if interface_language in context['annotation_idgloss'].keys():
@@ -4179,12 +4090,14 @@ class LemmaFrequencyView(DetailView):
     def get_context_data(self, **kwargs):
 
         # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        interface_language_code = interface_language.language_code_2char
+
         default_language = Language.objects.get(id=get_default_language_id())
         default_language_code = default_language.language_code_2char
         try:
-            interface_language = Language.objects.get(language_code_2char=language_code)
+            interface_language = Language.objects.get(language_code_2char=interface_language_code)
         except:
             interface_language = default_language
 
@@ -4237,12 +4150,13 @@ class LemmaFrequencyView(DetailView):
             context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
 
         # Put annotation_idgloss per language in the context
+        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
             except (ObjectDoesNotExist):
-                annotation_text = ''
+                annotation_text = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_text
         if interface_language in context['annotation_idgloss'].keys():
             gloss_idgloss = context['annotation_idgloss'][interface_language]
@@ -4356,9 +4270,20 @@ class HandshapeListView(ListView):
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
-        from signbank.tools import convert_language_code_to_language_minus_locale
-        lang_attr_name = convert_language_code_to_language_minus_locale(
-            settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+
+        default_language = Language.objects.get(id=get_default_language_id())
+        default_language_code = default_language.language_code_2char
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        interface_language_code = interface_language.language_code_2char
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
         items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -6464,27 +6389,24 @@ def gloss_ajax_complete(request, prefix):
     dataset = Dataset.objects.get(id=datasetid)
     default_language = dataset.default_language
 
-    from signbank.tools import convert_language_code_to_2char
-    try:
-        language_code = convert_language_code_to_2char(request.LANGUAGE_CODE)
-    except:
-        language_code = default_language.language_code_2char
-    language = Language.objects.get(language_code_2char=language_code)
+    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
 
     # language is not empty
     # the following query only retrieves annotations for the language that match the prefix
     query = Q(annotationidglosstranslation__text__istartswith=prefix,
-              annotationidglosstranslation__language=language)
+              annotationidglosstranslation__language=interface_language)
     qs = Gloss.objects.filter(query).distinct()
 
     result = []
     for g in qs:
         if g.dataset == dataset:
             try:
-                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=language)
+                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=interface_language)
                 default_annotationidglosstranslation = annotationidglosstranslation.text
-            except:
-                continue
+            except ObjectDoesNotExist:
+                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=default_language)
+                default_annotationidglosstranslation = annotationidglosstranslation.text
             result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % (g.id)})
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
@@ -6550,18 +6472,21 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
 
     # the following code allows for specifying a language for the dataset in the add_gloss.html template
 
-    # print('inside lemma ajax complete language code: ', language_code)
-
-    from signbank.tools import convert_language_code_to_2char
-    language_code = convert_language_code_to_2char(language_code)
+    # other code uses the language code in request
+    # interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    # the language code parameter in the url is needed for some reason in order to parse the url
+    # otherwise it thinks the q parameter is part of the dataset id
+    # this may have something to do with dynamic construction of the url path in the javascript functions that call this routine
+    # via the url
+    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+    interface_language_id = interface_language.id
 
     dataset = Dataset.objects.get(id=dataset_id)
-    try:
-        language_id = Language.objects.get(language_code_2char=language_code).id
-    except:
-        language_id = dataset.default_language.id
+    dataset_default_language_id = dataset.default_language.id
+
     lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id,
-                                         lemmaidglosstranslation__language_id=language_id,
+                                         lemmaidglosstranslation__language_id=interface_language_id,
                                          lemmaidglosstranslation__text__istartswith=q)\
         .order_by('lemmaidglosstranslation__text')
     # lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in set(lemmas)]
@@ -6570,7 +6495,7 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
     for lemma in set(lemmas):
         trans_dict = {}
         for translation in lemma.lemmaidglosstranslation_set.all():
-            if translation.language.id == language_id:
+            if translation.language.id == interface_language_id:
                 trans_dict['pk'] = lemma.pk
                 trans_dict['lemma'] = translation.text
                 lemmas_dict_list.append(trans_dict)
@@ -6580,33 +6505,26 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
 
 def homonyms_ajax_complete(request, gloss_id):
 
-    language_code = request.LANGUAGE_CODE
-
-    if language_code == "zh-hans":
-        language_code = "zh"
-
     try:
         this_gloss = Gloss.objects.get(id=gloss_id)
         homonym_objects = this_gloss.homonym_objects()
     except ObjectDoesNotExist:
         homonym_objects = []
 
+    default_language = Language.objects.get(id=get_default_language_id())
+    default_language_code = default_language.language_code_2char
+    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+    interface_language_code = interface_language.language_code_2char
     result = []
     for homonym in homonym_objects:
-        translation = ""
-        # translations = homonym.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
-        translations = homonym.annotationidglosstranslation_set.all()
-        # print(translations)
-        if translations is not None and len(translations) > 0:
-            translation = translations[0].text
-        else:
-            translation = str(homonym.id)
-            # translations = homonym.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
-            # if translations is not None and len(translations) > 0:
-            #     translation = translations[0].text
+        translations = homonym.get_annotationidglosstranslation_texts()
 
+        if interface_language_code in translations.keys():
+            translation = translations[interface_language_code]
+        else:
+            translation = translations[default_language_code]
         result.append({ 'id': str(homonym.id), 'gloss': translation })
-        # result.append({ 'id': str(homonym.id), 'gloss': str(homonym) })
 
     homonyms_dict = { str(gloss_id) : result }
 
@@ -6968,7 +6886,9 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
         machine_value = getattr(this_gloss,fieldname)
 
         gloss_field = Gloss._meta.get_field(fieldname)
-        if machine_value and (isinstance(gloss_field, FieldChoiceForeignKey) or isinstance(gloss_field, Handshape)):
+        if machine_value and isinstance(machine_value, Handshape):
+            human_value = machine_value.name
+        elif machine_value and isinstance(machine_value, FieldChoice):
             human_value = machine_value.name
         else:
             human_value = machine_value
@@ -7081,27 +7001,28 @@ class LemmaListView(ListView):
 
         list_of_objects = self.object_list
 
-        from signbank.tools import convert_language_code_to_language_minus_locale
-
         # to accomodate putting lemma's in the scroll bar in the LemmaUpdateView (aka LemmaDetailView),
         # look at available translations, choose the Interface language if it is a Dataset language
         # some legacy lemma's have missing translations,
         # the language code is used when more than one is available,
         # otherwise the Default language will be used, if available
         # otherwise the Lemma ID will be used in the scroll bar
-        display_language_code = convert_language_code_to_language_minus_locale(self.request.LANGUAGE_CODE)
+        default_language = Language.objects.get(id=get_default_language_id())
+        default_language_code = default_language.language_code_2char
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        interface_language_code = interface_language.language_code_2char
         dataset_display_languages = []
         for lang in dataset_languages:
-            lang_code = convert_language_code_to_language_minus_locale(lang.language_code_2char)
-            dataset_display_languages.append(lang_code)
-        if display_language_code in dataset_display_languages:
-            lang_attr_name = display_language_code
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
         else:
             # construct scroll bar
             # the following retrieves language code for English (or DEFAULT LANGUAGE)
             # so the sorting of the scroll bar matches the default sorting of the results in Lemma List View
-            lang_attr_name = convert_language_code_to_language_minus_locale(
-                settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+            lang_attr_name = default_language_code
+
         items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 

@@ -1138,23 +1138,25 @@ class Gloss(models.Model):
         # this function is used in Relations View to dynamically get the Annotation of related glosses
         # it is called by a template tag on the gloss using the interface language code
 
-        from signbank.tools import convert_language_code_to_language_minus_locale
-        # take care of zh-hans
-        language_code = convert_language_code_to_language_minus_locale(language_code)
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        default_language = Language.objects.get(id=get_default_language_id())
 
-        interface_language = Language.objects.get(language_code_2char=language_code)
-
-        dataset_languages = self.lemma.dataset.translation_languages.all()
-
-        if interface_language not in dataset_languages:
-            # use English
-            language = Language.objects.get(language_code_2char=settings.LANGUAGE_CODE)
-        else:
-            language = interface_language
         try:
-            return self.annotationidglosstranslation_set.get(language=language).text
-        except:
-            return str(self.id)
+            default_dataset_language = self.lemma.dataset.default_language
+        except (KeyError, ObjectDoesNotExist, None):
+            default_dataset_language = default_language
+
+        try:
+            return self.annotationidglosstranslation_set.get(language=interface_language).text
+        except ObjectDoesNotExist:
+            try:
+                return self.annotationidglosstranslation_set.get(language=default_dataset_language).text
+            except ObjectDoesNotExist:
+                try:
+                    return self.annotationidglosstranslation_set.get(language=default_language).text
+                except ObjectDoesNotExist:
+                    return str(self.id)
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
@@ -1895,11 +1897,19 @@ class Gloss(models.Model):
         q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
         foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
-        mapped_minimal_pairs_fields = [ field+'_fk' if field+'_fk' in foreign_key_fields else field
-                                        for field in settings.MINIMAL_PAIRS_FIELDS ]
+        minimal_pair_fields = []
+        for field in settings.MINIMAL_PAIRS_FIELDS:
+            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                minimal_pair_fields.append(field + '_handshapefk')
+            elif field+'_fk' in foreign_key_fields:
+                minimal_pair_fields.append(field+'_fk')
+            else:
+                minimal_pair_fields.append(field)
 
-        for field in mapped_minimal_pairs_fields + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-            if field.endswith('_fk'):
+        for field in minimal_pair_fields + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+            if field.endswith('_handshapefk'):
+                lookup_key = field.replace('_handshapefk', '')
+            elif field.endswith('_fk'):
                 lookup_key = field.replace('_fk', '')
             else:
                 lookup_key = field

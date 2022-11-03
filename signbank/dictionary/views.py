@@ -2103,6 +2103,8 @@ def switch_to_language(request,language):
 def recently_added_glosses(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 	
     try:
@@ -2114,6 +2116,7 @@ def recently_added_glosses(request):
                       {'glosses': recent_glosses,
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
+                       'language': interface_language,
                         'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
@@ -2122,6 +2125,7 @@ def recently_added_glosses(request):
                       {'glosses':Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
+                       'language': interface_language,
                         'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
