@@ -235,5 +235,11 @@ DELETE_FILES_ON_GLOSSVIDEO_DELETE = False
 #Whether the non ASCII characters in the path and filename of an uploaded video should be escaped
 ESCAPE_UPLOADED_VIDEO_FILE_PATH = False
 
+#Enables plugin such that images/videos only appear to logged in users
+USE_X_SENDFILE = False
+
 # this keeps the browser from crashing
 MAX_SCROLL_BAR = 500
+
+# default url to admin page, specify a hidden one in server_specific to override this
+ADMIN_URL = 'admin'
