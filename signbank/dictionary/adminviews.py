@@ -2927,6 +2927,10 @@ class HandshapeDetailView(DetailView):
 
         setattr(self.request.session, 'search_type', self.search_type)
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
         labels = hs.field_labels()
         context['imageform'] = ImageUploadForHandshapeForm()
 
@@ -3022,10 +3026,6 @@ class HandshapeDetailView(DetailView):
 
             items = construct_scrollbar(qs, self.search_type, lang_attr_name)
             self.request.session['search_results'] = items
-
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-        context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
