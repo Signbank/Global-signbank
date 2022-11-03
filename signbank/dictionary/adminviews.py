@@ -4096,10 +4096,6 @@ class LemmaFrequencyView(DetailView):
 
         default_language = Language.objects.get(id=get_default_language_id())
         default_language_code = default_language.language_code_2char
-        try:
-            interface_language = Language.objects.get(language_code_2char=interface_language_code)
-        except:
-            interface_language = default_language
 
         # Call the base implementation first to get a context
         context = super(LemmaFrequencyView, self).get_context_data(**kwargs)
