@@ -1528,8 +1528,6 @@ class HandshapeTests(TestCase):
 
         self.field_choice_handedness_1 = FieldChoice.objects.filter(field='Handeness', machine_value__gt=1).first()
         self.field_choice_handedness_2 = FieldChoice.objects.filter(field='Handeness', machine_value__gt=1).last()
-        self.field_choice_handshape_1 = FieldChoice.objects.filter(field='Handshape', machine_value__gt=1).first()
-        self.field_choice_handshape_2 = FieldChoice.objects.filter(field='Handshape', machine_value__gt=1).last()
 
         print('HandshapeTests setUp.')
         used_machine_values = [ h.machine_value for h in Handshape.objects.filter(machine_value__gt=1) ]
@@ -1546,6 +1544,12 @@ class HandshapeTests(TestCase):
         print('New handshape ', self.test_handshape1.machine_value, ' created: ', self.test_handshape1.name)
         print('New handshape ', self.test_handshape2.machine_value, ' created: ', self.test_handshape2.name)
 
+        from signbank.dictionary.admin import HandshapeAdmin
+
+        self.factory = RequestFactory()
+
+        self.handshape_admin = HandshapeAdmin(model=Handshape, admin_site=signbank)
+
     def create_handshape(self):
 
         used_machine_values = [h.machine_value for h in Handshape.objects.filter(machine_value__gt=1)]
@@ -1556,11 +1560,8 @@ class HandshapeTests(TestCase):
 
         new_handshape = Handshape(machine_value=new_machine_value, name=new_name)
         new_handshape.save()
-        new_handshape_field_choice = FieldChoice(field='Handshape', machine_value=new_machine_value, name=new_name)
-        new_handshape_field_choice.save()
 
         print('New handshape ', new_handshape.machine_value, ' created: ', new_handshape.name)
-        print('New fieldchoice ', new_handshape_field_choice.machine_value, ' created: ', new_handshape_field_choice.name)
 
         return new_handshape
 
@@ -1586,11 +1587,6 @@ class HandshapeTests(TestCase):
         response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
         self.assertEqual(response.status_code,200)
 
-        # Querying the new handshape puts it into FieldChoice
-        field_choices_handshapes = FieldChoice.objects.filter(field='Handshape')
-        machine_values_of_field_choices_handshapes = [ h.machine_value for h in field_choices_handshapes]
-        print('Test that the new handshape is in FieldChoice for Handshape')
-        self.assertIn(new_handshape.machine_value, machine_values_of_field_choices_handshapes)
 
     def test_handshape_choices(self):
 
@@ -1643,22 +1639,81 @@ class HandshapeTests(TestCase):
         self.client.login(username='test-user', password='test-user')
 
         new_handshape = self.create_handshape()
-        new_handshape_field_choice = FieldChoice.objects.get(field='Handshape', machine_value=new_handshape.machine_value)
-        print('Get fieldchoice for new handshape: ',new_handshape_field_choice)
 
         #We can now request a detail view
         print('Test HandshapeDetailView for new handshape.')
         response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
         self.assertEqual(response.status_code,200)
 
-        new_handshape_value_string = '_' + str(new_handshape_field_choice.machine_value)
-        # Find out if the new handshape appears in the Field Choice menus
+        new_handshape_value_string = '_' + str(new_handshape.machine_value)
+        # Find out if the new handshape appears in the Handshape Choice menus
         print("Update a gloss to use the new handshape, using the choice list")
         self.client.post('/dictionary/update/gloss/'+str(glosses[1].pk),{'id':'domhndsh','value':new_handshape_value_string})
 
         changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
         print('Confirm the gloss was updated to the new handshape.')
         self.assertEqual(changed_gloss.domhndsh_handshapefk.machine_value, new_handshape.machine_value)
+
+    def test_delete_handshape(self):
+
+        from signbank.tools import gloss_handshape_fields
+        gloss_handshape_fields = gloss_handshape_fields()
+        # create a gloss with and without handshape choices
+
+        # set the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+
+        # Create a lemma
+        new_lemma = LemmaIdgloss(dataset=test_dataset)
+        new_lemma.save()
+
+        # Create a lemma idgloss translation
+        language = Language.objects.get(id=get_default_language_id())
+        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                              lemma=new_lemma, language=language)
+        new_lemmaidglosstranslation.save()
+
+        #Create the gloss
+        new_gloss = Gloss()
+        new_gloss.lemma = new_lemma
+        new_gloss.save()
+
+        # now set all the choice fields of the gloss to the first choice of FieldChoice
+        # it doesn't matter exactly which one, as long as the same one is used to check existence later
+        from signbank.dictionary.models import Handshape
+
+        request = self.factory.get('/admin/dictionary/handshape/')
+        request.user = self.user
+
+        # give the test user permission to delete handshapes
+        handshape_options = Handshape.objects.filter(machine_value__gt=1)
+        for fc in handshape_options:
+            assign_perm('delete_handshape', self.user, fc)
+        self.user.save()
+
+        for handshape_field in gloss_handshape_fields:
+            # get the first choice for the field
+            if handshape_options:
+                handshape_in_use = handshape_options.first()
+                setattr(new_gloss, handshape_field, handshape_in_use)
+        new_gloss.save()
+
+        if handshape_options:
+            handshape_in_use = handshape_options.first()
+            print('Handshape in use: ', handshape_in_use.name)
+            print('Test cannot delete Handshape: ', handshape_in_use.name)
+            self.assertEqual(self.handshape_admin.has_delete_permission(request=request, obj=handshape_in_use), False)
+
+        # now do the same with the second choice
+        # this time, there are no glosses with that choice
+        # the test makes sure it can be deleted in admin
+        if handshape_options:
+            # a different field choice is chosen than that of the test gloss
+            handshape_not_in_use = handshape_options.last()  # This assumes there is more than one
+            print('Handshape not in use: ', handshape_not_in_use.name)
+            print('Test can delete Handshape: ', handshape_not_in_use.name)
+            self.assertEqual(self.handshape_admin.has_delete_permission(request=request, obj=handshape_not_in_use), True)
 
 
 class MultipleSelectTests(TestCase):

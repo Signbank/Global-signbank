@@ -428,6 +428,33 @@ class HandshapeAdmin(VersionAdmin, TranslationAdmin):
             del actions['delete_selected']
         return actions
 
+    def has_delete_permission(self, request, obj=None):
+        if not obj:
+            # print('ADMIN has_delete_permission obj is None')
+            # just return False if there is no object, prevent arbitrary deletion of field choices
+            return False
+
+        machine_value = obj.__dict__.get('machine_value', 0)
+        if not machine_value:
+            print('ADMIN has_delete_permission: handshape ', obj.name, ' has an empty machine value')
+
+        # check if this is a duplicate, if so allow deletion
+        handshapes_with_same_machine_value = Handshape.objects.filter(machine_value=machine_value).count()
+        if handshapes_with_same_machine_value > 1:
+            return True
+
+        from signbank.tools import gloss_handshape_fields
+
+        gloss_handshape_fields = gloss_handshape_fields()
+        for field_name in gloss_handshape_fields:
+            queries = [Q(**{ field_name + '__machine_value' : machine_value })]
+            query = queries.pop()
+            for item in queries:
+                query |= item
+            count_in_use = Gloss.objects.filter(query).count()
+            if count_in_use > 0:
+                return False
+        return True
 
 class SemanticFieldTranslationInline(admin.TabularInline):
 
@@ -766,6 +793,10 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
         field_machine_value = obj.__dict__.get('machine_value', 0)
         if not field_machine_value:
             print('ADMIN has_delete_permission: field ', field_value, ' has an empty machine value')
+
+        # do not allow deletion of choices in to be removed field choice categories
+        if field_value in ['Handshape', 'SemField', 'derivHist']:
+            return False
 
         # check if this is a duplicate, if so allow deletion
         fieldchoices_with_same_machine_value = FieldChoice.objects.filter(field=field_value,machine_value=field_machine_value).count()

@@ -1558,6 +1558,18 @@ def map_field_name_to_fk_field_name(field):
     else:
         return field
 
+
+def gloss_handshape_fields():
+    # returns a list of fields that are Handshape ForeignKeys
+    fields_list = []
+
+    from signbank.dictionary.models import Gloss
+    for gloss_field in Gloss._meta.fields:
+        if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
+            fields_list.append(gloss_field.name)
+    return fields_list
+
+
 def fields_with_choices_glosses():
     # return a dict that maps the field choice categories to the fields of Gloss that have the category
 
@@ -1565,6 +1577,10 @@ def fields_with_choices_glosses():
 
     from signbank.dictionary.models import Gloss
     for field in Gloss._meta.fields:
+        # omit the gloss fields to be deleted from FieldChoiceForeignKey model
+        if field.name in ['domhndsh_fk', 'subhndsh_fk', 'final_domhndsh_fk', 'final_subhndsh_fk',
+                          'semField_fk', 'derivHist_fk']:
+            continue
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
