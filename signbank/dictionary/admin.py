@@ -408,7 +408,28 @@ class HandshapeAdmin(VersionAdmin, TranslationAdmin):
     else:
         show_handshape_colors = False
 
-    list_display = ['machine_value', 'name']
+    list_display = ['machine_value', 'name', 'gloss_count']
+    ordering = ['machine_value']
+
+    def gloss_count(self, obj):
+
+        gloss_count = 0
+        if not obj:
+            return gloss_count
+        else:
+            machine_value = int(obj.machine_value)
+            from signbank.tools import gloss_handshape_fields
+
+            gloss_handshape_fields = gloss_handshape_fields()
+            for field_name in gloss_handshape_fields:
+                queries = [Q(**{field_name + '__machine_value': machine_value})]
+                query = queries.pop()
+                for item in queries:
+                    query |= item
+                count_in_use = Gloss.objects.filter(query).count()
+                gloss_count += count_in_use
+
+            return gloss_count
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(HandshapeAdmin, self).get_form(request, obj, **kwargs)
