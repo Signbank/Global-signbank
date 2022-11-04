@@ -3554,12 +3554,6 @@ class QueryListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        codes_to_adjectives = dict(settings.LANGUAGES)
-        if language_code not in codes_to_adjectives.keys():
-            adjective = 'english'
-        else:
-            adjective = codes_to_adjectives[language_code].lower()
-
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
