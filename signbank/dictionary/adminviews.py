@@ -804,7 +804,7 @@ class GlossListView(ListView):
             notes_of_gloss = gloss.definition_set.all()
             notes_list = []
             for note in notes_of_gloss:
-                translated_note_role = note.role_fk.name
+                translated_note_role = note.role.name
                 note_string = translated_note_role + ": (" + str(note.published) +","+ str(note.count) +","+ note.text + ")"
                 notes_list.append(note_string)
             sorted_notes_list = sorted(notes_list)
@@ -1035,8 +1035,6 @@ class GlossListView(ListView):
             fieldnamemultiVarname = fieldnamemulti + '[]'
             if fieldnamemulti in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                 fieldnameQuery = fieldnamemulti + '_handshapefk__machine_value__in'
-            elif fieldnamemulti + '_fk' in mapped_fieldnames:
-                fieldnameQuery = fieldnamemulti + '_fk__machine_value__in'
             else:
                 fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
@@ -1057,10 +1055,8 @@ class GlossListView(ListView):
         for fieldname in fieldnames:
 
             if fieldname in get and get[fieldname] != '':
-                if fieldname + '_fk' in mapped_fieldnames:
-                    field_obj = Gloss._meta.get_field(fieldname+'_fk')
-                else:
-                    field_obj = Gloss._meta.get_field(fieldname)
+
+                field_obj = Gloss._meta.get_field(fieldname)
 
                 if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
                     key = fieldname + '__iregex'
@@ -1165,7 +1161,7 @@ class GlossListView(ListView):
             query_parameters['hasComponentOfType'] = get['hasComponentOfType']
 
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role_fk__machine_value=get['hasComponentOfType'])
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value=get['hasComponentOfType'])
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
@@ -1174,7 +1170,7 @@ class GlossListView(ListView):
 
             morpheme_type = get['hasMorphemeOfType']
             # Get all Morphemes of the indicated mrpType
-            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType_fk__machine_value=morpheme_type) ]
+            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType__machine_value=morpheme_type) ]
             qs = qs.filter(id__in=target_morphemes)
 
         if 'definitionRole' in get and get['definitionRole'] != '' and get['definitionRole'] not in ['', '0']:
@@ -1184,7 +1180,7 @@ class GlossListView(ListView):
             if get['definitionRole'] == 'all':
                 definitions_with_this_role = Definition.objects.all()
             else:
-                definitions_with_this_role = Definition.objects.filter(role_fk__machine_value=get['definitionRole'])
+                definitions_with_this_role = Definition.objects.filter(role__machine_value=get['definitionRole'])
 
             #Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
@@ -1377,8 +1373,8 @@ class GlossDetailView(DetailView):
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
-        context['handedness'] = (int(self.object.handedness_fk.machine_value) > 1) \
-            if self.object.handedness_fk and self.object.handedness_fk.machine_value else 0  # minimal machine value is 2
+        context['handedness'] = (int(self.object.handedness.machine_value) > 1) \
+            if self.object.handedness and self.object.handedness.machine_value else 0  # minimal machine value is 2
         context['domhndsh'] = (int(self.object.domhndsh_handshapefk.machine_value) > 1) \
             if self.object.domhndsh_handshapefk and self.object.domhndsh_handshapefk.machine_value else 0        # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
@@ -1535,7 +1531,7 @@ class GlossDetailView(DetailView):
 
         for morphdef in context['gloss'].parent_glosses.all():
 
-            translated_role = morphdef.role_fk.name
+            translated_role = morphdef.role.name
 
             sign_display = str(morphdef.morpheme.id)
             morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
@@ -1597,8 +1593,8 @@ class GlossDetailView(DetailView):
         notes_groupedby_role = {}
         for note in notes:
             # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
-            if note.role_fk is not None:
-                translated_note_role = note.role_fk.name
+            if note.role is not None:
+                translated_note_role = note.role.name
             else:
                 translated_note_role = ''
             role_id = (note.role, translated_note_role)
@@ -1615,7 +1611,7 @@ class GlossDetailView(DetailView):
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
 
-            human_value_media_type = other_media.type_fk.name
+            human_value_media_type = other_media.type.name
 
             import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
@@ -1745,7 +1741,7 @@ class GlossDetailView(DetailView):
 
         if gl.simultaneous_morphology:
             for sim_morph in gl.simultaneous_morphology.all():
-                translated_morph_type = sim_morph.morpheme.mrpType_fk.name
+                translated_morph_type = sim_morph.morpheme.mrpType.name
 
                 morpheme_annotation_idgloss = {}
                 if sim_morph.morpheme.dataset:
@@ -2124,7 +2120,7 @@ class GlossRelationsDetailView(DetailView):
 
         for morphdef in context['gloss'].parent_glosses.all():
 
-            translated_role = morphdef.role_fk.name
+            translated_role = morphdef.role.name
 
             sign_display = str(morphdef.morpheme.id)
             morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
@@ -2956,10 +2952,7 @@ class HandshapeDetailView(DetailView):
                 handshape_fields[f.name] = f
 
         for field in mapped_handshape_fields:
-            if field.endswith('_fk'):
-                lookup_key = field.replace('_fk', '')
-            else:
-                lookup_key = field
+            lookup_key = field
             handshape_field = handshape_fields[field]
             # Get and save the choice list for this field
             if hasattr(handshape_field, 'field_choice_category'):
@@ -3258,7 +3251,7 @@ class HomonymListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
-        handedness_filter = 'handedness_fk__name__in'
+        handedness_filter = 'handedness__name__in'
         strong_hand_filter = 'domhndsh_handshapefk__name__in'
         empty_value = ['-','N/A']
 
@@ -3273,7 +3266,7 @@ class HomonymListView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        handedness_filter = 'handedness_fk__name__in'
+        handedness_filter = 'handedness__name__in'
         strong_hand_filter = 'domhndsh_handshapefk__name__in'
         empty_value = ['-','N/A']
 
@@ -3454,8 +3447,8 @@ class MinimalPairsListView(ListView):
 
         finger_spelling_glosses = [ a_idgloss_trans.gloss_id for a_idgloss_trans in AnnotationIdglossTranslation.objects.filter(text__startswith="#") ]
 
-        handedness_filter = 'handedness_fk__name__in'
-        handedness_null = 'handedness_fk__isnull'
+        handedness_filter = 'handedness__name__in'
+        handedness_null = 'handedness__isnull'
         strong_hand_filter = 'domhndsh_handshapefk__name__in'
         strong_hand_null = 'domhndsh_handshapefk__isnull'
         empty_value = ['-','N/A']
@@ -5908,8 +5901,6 @@ def order_handshape_queryset_by_sort_order(get, qs):
         reverse = True
 
     mapped_handshape_fields = map_field_names_to_fk_field_names(settings.FIELDS['handshape'])
-    if sort_order+'_fk' in mapped_handshape_fields:
-        sort_order = sort_order+'_fk'
 
     if hasattr(Handshape._meta.get_field(sort_order), 'field_choice_category'):
         # The Handshape field is a FK to a FieldChoice
@@ -6049,8 +6040,8 @@ class MorphemeDetailView(DetailView):
 
         for sim_morph in other_glosses_that_point_to_morpheme:
             parent_gloss = sim_morph.parent_gloss
-            if parent_gloss.wordClass_fk:
-                translated_word_class = parent_gloss.wordClass_fk.name
+            if parent_gloss.wordClass:
+                translated_word_class = parent_gloss.wordClass.name
             else:
                 translated_word_class = ''
 
@@ -6171,8 +6162,8 @@ class MorphemeDetailView(DetailView):
         notes_groupedby_role = {}
         for note in notes:
             # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
-            if note.role_fk is not None:
-                translated_note_role = note.role_fk.name
+            if note.role is not None:
+                translated_note_role = note.role.name
             else:
                 translated_note_role = ''
             role_id = (note.role, translated_note_role)
@@ -6189,7 +6180,7 @@ class MorphemeDetailView(DetailView):
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
 
-            human_value_media_type = other_media.type_fk.name
+            human_value_media_type = other_media.type.name
 
             import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
@@ -6221,7 +6212,7 @@ class MorphemeDetailView(DetailView):
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
         if gl.mrpType:
-            translated_morph_type = gl.mrpType_fk.name
+            translated_morph_type = gl.mrpType.name
         else:
             translated_morph_type = ''
 
@@ -6690,7 +6681,7 @@ def glosslist_ajax_complete(request, gloss_id):
             target_morphemes = Morpheme.objects.filter(id=this_gloss.id)
             if target_morphemes:
                 morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
-                morpheme_type = target_morphemes[0].mrpType_fk.machine_value
+                morpheme_type = target_morphemes[0].mrpType.machine_value
                 translated_morph_type = machine_value_to_translated_human_value(morpheme_type, morph_typ_choices)
             else:
                 translated_morph_type = ''

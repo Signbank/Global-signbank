@@ -1086,7 +1086,7 @@ def get_notes_as_string(gloss):
     notes_list = []
     for note in notes_of_gloss:
         # use the notes field choice machine value rather than the translation
-        note_field = note.role_fk.name
+        note_field = note.role.name
         note_tuple = (note_field, str(note.published), str(note.count), note.text)
         notes_list.append(note_tuple)
 
@@ -1578,8 +1578,8 @@ def fields_with_choices_glosses():
     from signbank.dictionary.models import Gloss
     for field in Gloss._meta.fields:
         # omit the gloss fields to be deleted from FieldChoiceForeignKey model
-        if field.name in ['domhndsh_fk', 'subhndsh_fk', 'final_domhndsh_fk', 'final_subhndsh_fk',
-                          'semField_fk', 'derivHist_fk']:
+        if field.name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh',
+                          'semField', 'derivHist']:
             continue
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices

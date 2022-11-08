@@ -2734,11 +2734,8 @@ def choice_lists(request):
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             if len(choice_list) > 0:
-                if field.endswith('_fk'):
-                    lookup_key = field.replace('_fk','')
-                else:
-                    lookup_key = field
-                all_choice_lists[lookup_key] = choicelist_queryset_to_translated_dict(choice_list,
+                lookup_key = field
+                all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,
                                                                                  choices_to_exclude=choices_to_exclude)
 
                 #Also concatenate the frequencies of all values

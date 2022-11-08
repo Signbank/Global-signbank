@@ -41,7 +41,7 @@ class BasicCRUDTests(TestCase):
         #Is the gloss there before?
         found = 0
         total_nr_of_glosses = 0
-        for gloss in Gloss.objects.filter(handedness_fk=self.handedness_fieldchoice_1):
+        for gloss in Gloss.objects.filter(handedness=self.handedness_fieldchoice_1):
             if gloss.idgloss == 'thisisatemporarytestlemmaidglosstranslation':
                 found += 1
             total_nr_of_glosses += 1
@@ -65,20 +65,20 @@ class BasicCRUDTests(TestCase):
 
         #Create the gloss
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
         #Is the gloss there now?
         found = 0
-        for gloss in Gloss.objects.filter(handedness_fk=self.handedness_fieldchoice_1):
+        for gloss in Gloss.objects.filter(handedness=self.handedness_fieldchoice_1):
             if gloss.idgloss == 'thisisatemporarytestlemmaidglosstranslation':
                 found += 1
 
         self.assertEqual(found, 1)
 
         #The handedness before was 4
-        self.assertEqual(new_gloss.handedness_fk,self.handedness_fieldchoice_1)
+        self.assertEqual(new_gloss.handedness,self.handedness_fieldchoice_1)
 
         #If you run an update post request, you can change the gloss
         new_value_handedness = '_'+str(self.handedness_fieldchoice_2.machine_value)
@@ -87,7 +87,7 @@ class BasicCRUDTests(TestCase):
         client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'handedness','value':new_value_handedness})
 
         changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
-        self.assertEqual(changed_gloss.handedness_fk, self.handedness_fieldchoice_2)
+        self.assertEqual(changed_gloss.handedness, self.handedness_fieldchoice_2)
 
         # set up keyword search parameter for default language
         default_language = Language.objects.get(id=get_default_language_id())
@@ -131,7 +131,7 @@ class BasicCRUDTests(TestCase):
         #Throwing stuff away with the update functionality
         client.post(settings.PREFIX_URL + '/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'deletegloss','value':'confirmed'})
         found = 0
-        for gloss in Gloss.objects.filter(handedness_fk=self.handedness_fieldchoice_1):
+        for gloss in Gloss.objects.filter(handedness=self.handedness_fieldchoice_1):
             if gloss.idgloss == 'thisisatemporarytestgloss':
                 found += 1
 
@@ -210,7 +210,7 @@ class BasicCRUDTests(TestCase):
 
 
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -224,7 +224,7 @@ class BasicCRUDTests(TestCase):
             annotationIdgloss.save()
 
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -238,7 +238,7 @@ class BasicCRUDTests(TestCase):
             annotationIdgloss.save()
 
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_2
+        new_gloss.handedness = self.handedness_fieldchoice_2
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -308,8 +308,8 @@ class BasicCRUDTests(TestCase):
         # to test the package functionality of phonology fields, add some to settings.API_FIELDS
         # for this test, the local settings file has added these two fields
         # they are visible in the result if they appear in API_FIELDS
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
-        new_gloss.locprim_fk = self.locprim_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
+        new_gloss.locprim = self.locprim_fieldchoice_1
 
         new_gloss.lemma = new_lemma
         new_gloss.save()
@@ -381,7 +381,7 @@ class BasicQueryTests(TestCase):
 
         # #Create the gloss
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
         for language in test_dataset.translation_languages.all():
@@ -845,7 +845,7 @@ class VideoTests(TestCase):
 
         #Create the gloss
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -919,7 +919,7 @@ class VideoTests(TestCase):
 
         #Create the gloss
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -1613,7 +1613,7 @@ class HandshapeTests(TestCase):
         for gloss_id in range(1,4):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
-                'handedness_fk': self.field_choice_handedness_1,
+                'handedness': self.field_choice_handedness_1,
                 'domhndsh_handshapefk' : self.test_handshape1,
                 'subhndsh_handshapefk': self.test_handshape2,
             }
@@ -1775,7 +1775,7 @@ class MultipleSelectTests(TestCase):
         #Create the gloss
         new_gloss = Gloss()
         new_gloss.lemma = new_lemma
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         # save the gloss so it can be used in the ManyToMany relation of SemanticField added to the gloss below
         new_gloss.save()
 
@@ -2439,10 +2439,10 @@ class testFrequencyAnalysis(TestCase):
         for gloss_id in range(1,10):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
-                'handedness_fk': self.handedness_fieldchoice_1,
+                'handedness': self.handedness_fieldchoice_1,
                 'domhndsh_handshapefk' : self.test_handshape1,
                 'subhndsh_handshapefk': self.test_handshape2,
-                'locprim_fk': self.locprim_fieldchoice_1,
+                'locprim': self.locprim_fieldchoice_1,
             }
             new_gloss = Gloss(**gloss_data)
             new_gloss.save()
@@ -2455,28 +2455,28 @@ class testFrequencyAnalysis(TestCase):
                 annotationIdgloss.save()
             glosses[gloss_id] = new_gloss
 
-        glosses[2].locprim_fk = self.locprim_fieldchoice_2
+        glosses[2].locprim = self.locprim_fieldchoice_2
         glosses[2].save()
 
-        glosses[3].handedness_fk = self.handedness_fieldchoice_2
+        glosses[3].handedness = self.handedness_fieldchoice_2
         glosses[3].save()
 
-        glosses[4].handCh_fk = self.handch_fieldchoice_1
+        glosses[4].handCh = self.handch_fieldchoice_1
         glosses[4].save()
 
         glosses[5].domhndsh_handshapefk = self.test_handshape2
         glosses[5].save()
 
-        glosses[6].handedness_fk = self.handedness_fieldchoice_1
+        glosses[6].handedness = self.handedness_fieldchoice_1
         glosses[6].save()
 
         glosses[7].domhndsh_handshapefk = self.test_handshape2
         glosses[7].save()
 
-        glosses[8].namEnt_fk = self.nament_fieldchoice_1
+        glosses[8].namEnt = self.nament_fieldchoice_1
         glosses[8].save()
 
-        glosses[9].handedness_fk = self.handedness_fieldchoice_2
+        glosses[9].handedness = self.handedness_fieldchoice_2
         glosses[9].save()
 
         self.client.login(username='test-user', password='test-user')
@@ -2924,7 +2924,7 @@ class Corpus_Tests(TestCase):
             gloss_data = {
                 'id': glosses[gloss_id],
                 'lemma' : lemmas[gloss_id],
-                'handedness_fk': self.handedness_fieldchoice_1,
+                'handedness': self.handedness_fieldchoice_1,
                 'tokNo': 0,
                 'tokNoSgnr': 0
             }
@@ -3225,9 +3225,9 @@ class MinimalPairsTests(TestCase):
         for gloss_id in range(1,15):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
-                'handedness_fk': self.handedness_fieldchoice_1,
+                'handedness': self.handedness_fieldchoice_1,
                 'domhndsh_handshapefk' : self.test_handshape1,
-                'locprim_fk': self.locprim_fieldchoice_1,
+                'locprim': self.locprim_fieldchoice_1,
             }
             new_gloss = Gloss(**gloss_data)
             new_gloss.save()
@@ -3245,13 +3245,13 @@ class MinimalPairsTests(TestCase):
         # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
         # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
 
-        glosses[2].locprim_fk = self.locprim_fieldchoice_2
+        glosses[2].locprim = self.locprim_fieldchoice_2
         glosses[2].save()
 
         glosses[3].repeat = True
         glosses[3].save()
 
-        glosses[4].handedness_fk = self.handedness_fieldchoice_2
+        glosses[4].handedness = self.handedness_fieldchoice_2
         glosses[4].save()
 
         glosses[5].domhndsh_letter = True
@@ -3266,22 +3266,22 @@ class MinimalPairsTests(TestCase):
         glosses[8].altern = True
         glosses[8].save()
 
-        glosses[9].handCh_fk = self.handch_fieldchoice_1
+        glosses[9].handCh = self.handch_fieldchoice_1
         glosses[9].save()
 
         glosses[10].domhndsh_handshapefk = self.test_handshape2
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
-        glosses[11].handedness_fk = self.handedness_fieldchoice_2
+        glosses[11].handedness = self.handedness_fieldchoice_2
         glosses[11].weakdrop = False
         glosses[11].save()
 
-        glosses[12].handedness_fk = self.handedness_fieldchoice_2
+        glosses[12].handedness = self.handedness_fieldchoice_2
         glosses[12].weakdrop = True
         glosses[12].save()
 
-        glosses[13].handedness_fk = self.handedness_fieldchoice_2
+        glosses[13].handedness = self.handedness_fieldchoice_2
         glosses[13].save()
 
         glosses[14].domhndsh_handshapefk = self.test_handshape2
@@ -3353,9 +3353,9 @@ class MinimalPairsTests(TestCase):
         for gloss_id in range(1,15):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
-                'handedness_fk': self.handedness_fieldchoice_1,
+                'handedness': self.handedness_fieldchoice_1,
                 'domhndsh_handshapefk' : self.test_handshape1,
-                'locprim_fk': self.locprim_fieldchoice_1,
+                'locprim': self.locprim_fieldchoice_1,
                 'tokNo': 0,
                 'tokNoSgnr': 0
             }
@@ -3373,31 +3373,31 @@ class MinimalPairsTests(TestCase):
         # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
         # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
 
-        glosses[3].locprim_fk = None
+        glosses[3].locprim = None
         glosses[3].save()
 
         # gloss 9 has an empty handedness, it has no minimal pairs
-        glosses[9].handedness_fk = None
+        glosses[9].handedness = None
         glosses[9].save()
 
         glosses[10].domhndsh_handshapefk = self.test_handshape2
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
-        glosses[11].handedness_fk = self.handedness_fieldchoice_2
+        glosses[11].handedness = self.handedness_fieldchoice_2
         glosses[11].weakdrop = False
         glosses[11].save()
 
-        glosses[12].handedness_fk = self.handedness_fieldchoice_2
+        glosses[12].handedness = self.handedness_fieldchoice_2
         glosses[12].weakdrop = True
         glosses[12].save()
 
         glosses[13].domhndsh_handshapefk = self.test_handshape2
-        glosses[13].handedness_fk = self.handedness_fieldchoice_2
+        glosses[13].handedness = self.handedness_fieldchoice_2
         glosses[13].save()
 
         glosses[14].domhndsh_handshapefk = self.test_handshape2
-        glosses[14].handedness_fk = self.handedness_fieldchoice_2
+        glosses[14].handedness = self.handedness_fieldchoice_2
         glosses[14].subhndsh_handshapefk = self.test_handshape2
         glosses[14].save()
 

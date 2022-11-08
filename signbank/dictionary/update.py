@@ -436,21 +436,7 @@ def update_gloss(request, glossid):
         # The following code relies on the order of if else testing
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
-        if not settings.USE_FIELD_CHOICE_FOREIGN_KEY and field + '_fk' in fieldchoiceforeignkey_fields:
-            # leave this print statement for debugging purposes, some code was using the id field and some using the machine_value
-            # uncomment for debugging
-            # print('gloss update field choice foreign key ', gloss, field, value)
-            gloss_field = Gloss._meta.get_field(field + '_fk')
-            try:
-                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('Update field choice no unique machine value found: ', gloss_field.name, gloss_field.field_choice_category, value)
-                print('Setting to machine value 0')
-                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
-            gloss.__setattr__(field+'_fk', fieldchoice)
-            gloss.save()
-            newvalue = fieldchoice.name
-        elif field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             # leave this print statement for debugging purposes
             # uncomment for debugging
             # print('gloss update handshape foreign key ', gloss, field, value)
@@ -523,11 +509,8 @@ def update_gloss(request, glossid):
         glossrevision_newvalue = value
     else:
         glossrevision_newvalue = newvalue
-    if field.endswith('_fk'):
-        # make sure the original field names are used in the revision history
-        lookup_key = field.replace('_fk', '')
-    else:
-        lookup_key = field
+
+    lookup_key = field
     revision = GlossRevision(old_value=original_human_value,
                              new_value=glossrevision_newvalue,
                              field_name=lookup_key,
@@ -925,10 +908,10 @@ def subst_notes(gloss, field, values):
         is_published = (published == 'True')
         note_role = note_reverse_translation[role]
         index_count = int(count)
-        defn = Definition(gloss=gloss, count=index_count, role_fk=note_role, text=text, published=is_published)
+        defn = Definition(gloss=gloss, count=index_count, role=note_role, text=text, published=is_published)
         defn.save()
 
-    new_notes_refresh = [(note.role_fk.name, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
+    new_notes_refresh = [(note.role.name, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
     notes_by_role = []
     for note in new_notes_refresh:
         notes_by_role.append(':'.join(note))
@@ -1207,9 +1190,9 @@ def update_definition(request, gloss, field, value):
         else:
             newvalue = 'No'
     elif what == 'definitionrole':
-        defn.role_fk = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
+        defn.role = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
         defn.save()
-        newvalue = defn.role_fk.name
+        newvalue = defn.role.name
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -1233,7 +1216,7 @@ def update_other_media(request,gloss,field,value):
     elif action_or_fieldname == 'other-media-type':
         # value is the (str) machine value of the Other Media Type from the choice list in the template
         other_media_type = FieldChoice.objects.filter(field='OtherMediaType', machine_value=int(value))
-        other_media.type_fk = other_media_type
+        other_media.type = other_media_type
         value = other_media_type.name
 
     elif action_or_fieldname == 'other-media-alternative-gloss':
@@ -1359,7 +1342,7 @@ def add_definition(request, glossid):
             role = FieldChoice.objects.get(field='NoteType', machine_value=int(form.cleaned_data['note']))
             text = form.cleaned_data['text']
             
-            defn = Definition(gloss=thisgloss, count=count, role_fk=role, text=text, published=published)
+            defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
             defn.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
@@ -1380,7 +1363,7 @@ def add_morphology_definition(request):
             thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
 
             # create definition, default to not published
-            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role_fk=role, morpheme=morpheme)
+            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
@@ -1449,7 +1432,7 @@ def add_morphemeappearance(request):
             thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
 
             # create definition, default to not published
-            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role_fk=role, morpheme=morpheme)
+            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
@@ -1724,7 +1707,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
         morph_def.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morphology_definition_role':
-        morph_def.role_fk = value
+        morph_def.role = value
         morph_def.save()
 
         choice_list = FieldChoice.objects.filter(field='MorphologyType')

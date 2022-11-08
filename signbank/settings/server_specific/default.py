@@ -217,7 +217,7 @@ USE_HANDSHAPE = True
 USE_DERIVATIONHISTORY = True
 
 # Only set this to true after the foreign key field choices have replaced the machine value field choices in the migration
-USE_FIELD_CHOICE_FOREIGN_KEY = False
+USE_FIELD_CHOICE_FOREIGN_KEY = True
 
 #Gloss fields used in the API
 API_FIELDS = ['idgloss']

@@ -233,7 +233,7 @@ def convert_query_parameters_to_filter(query_parameters):
             if get_value == 'all':
                 definitions_with_this_role = Definition.objects.all()
             else:
-                definitions_with_this_role = Definition.objects.filter(role_fk__machine_value=get_value)
+                definitions_with_this_role = Definition.objects.filter(role__machine_value=get_value)
             # Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_these_definitions))
@@ -265,12 +265,12 @@ def convert_query_parameters_to_filter(query_parameters):
                 continue
         elif get_key in ['hasComponentOfType']:
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role_fk__machine_value=get_value)
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value=get_value)
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_morphdefs_with_correct_role))
         elif get_key in ['hasMorphemeOfType']:
             # Get all Morphemes of the indicated mrpType
-            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType_fk__machine_value=get_value) ]
+            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType__machine_value=get_value) ]
             # this only works in the query is Sign or Morpheme
             query_list.append(Q(id__in=target_morphemes))
         elif get_key in ['tags']:
@@ -295,7 +295,7 @@ def convert_query_parameters_to_filter(query_parameters):
                 q_filter = get_key + '__iregex'
             elif hasattr(field_obj, 'field_choice_category'):
                 # just in case, field choice field that is not multi-select
-                q_filter = get_key + '_fk__machine_value'
+                q_filter = get_key + '__machine_value'
             else:
                 q_filter = get_key + '__exact'
 
