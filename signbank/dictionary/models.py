@@ -260,13 +260,11 @@ class Definition(models.Model):
     """An English text associated with a gloss. It's called a note in the web interface"""
 
     def __str__(self):
-        return str(self.gloss) + "/" + str(self.role_fk)
+        return str(self.gloss) + "/" + str(self.role)
 
     gloss = models.ForeignKey("Gloss")
     text = models.TextField()
-    role = models.CharField(_("Type"), blank=True, null=True, choices=build_choice_list("NoteType"), max_length=5)
-    role.field_choice_category = 'NoteType'
-    role_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    role = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.NOTETYPE},
                                     field_choice_category=FieldChoice.NOTETYPE,
                                     verbose_name=_("Type"), related_name="definition")
@@ -282,10 +280,8 @@ class Definition(models.Model):
         search_fields = ['gloss__idgloss']
 
     def get_role_display(self):
-        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-            return self.role.name if self.role else self.role
-        else:
-            return self.role_fk.name if self.role_fk else self.role_fk
+        return self.role.name if self.role else self.role
+
 
 class SignLanguage(models.Model):
     """A sign language name"""
@@ -364,81 +360,55 @@ class Handshape(models.Model):
     dutch_name = models.CharField(_("Dutch name"), max_length=50)
     chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
     field_color = ColorField(default='ffffff')
-    hsNumSel = models.CharField(_("Quantity"), null=True, blank=True, choices=build_choice_list("Quantity"),
-                                max_length = 5)
-    hsNumSel.field_choice_category = 'Quantity'
-    hsNumSel_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    hsNumSel = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                         limit_choices_to={'field': FieldChoice.QUANTITY},
                                         field_choice_category=FieldChoice.QUANTITY,
                                         verbose_name=_("Quantity"),
                                         related_name="quantity")
 
-    hsFingSel = models.CharField(_("Finger selection"), blank=True, null=True,
-                                 choices=build_choice_list("FingerSelection"), max_length=5)
-    hsFingSel.field_choice_category = 'FingerSelection'
-    hsFingSel_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    hsFingSel = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                          limit_choices_to={'field': FieldChoice.FINGERSELECTION},
                                          field_choice_category=FieldChoice.FINGERSELECTION,
                                          verbose_name=_("Finger selection"),
                                          related_name="finger_selection")
 
-    hsFingSel2 = models.CharField(_("Finger selection 2"), blank=True, null=True,
-                                  choices=build_choice_list("FingerSelection"), max_length=5)
-    hsFingSel2.field_choice_category = 'FingerSelection'
-    hsFingSel2_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    hsFingSel2 = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.FINGERSELECTION},
                                           field_choice_category=FieldChoice.FINGERSELECTION,
                                           verbose_name=_("Finger selection 2"),
                                           related_name="finger_selection_2")
 
-    hsFingConf = models.CharField(_("Finger configuration"), blank=True, null=True,
-                                  choices=build_choice_list("JointConfiguration"), max_length=5)
-    hsFingConf.field_choice_category = 'JointConfiguration'
-    hsFingConf_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    hsFingConf = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.JOINTCONFIGURATION},
                                           field_choice_category=FieldChoice.JOINTCONFIGURATION,
                                           verbose_name=_("Finger configuration"),
                                           related_name="finger_configuration")
 
-    hsFingConf2 = models.CharField(_("Finger configuration 2"), blank=True, null=True,
-                                   choices=build_choice_list("JointConfiguration"), max_length=5)
-    hsFingConf2.field_choice_category = 'JointConfiguration'
-    hsFingConf2_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    hsFingConf2 = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.JOINTCONFIGURATION},
                                           field_choice_category=FieldChoice.JOINTCONFIGURATION,
                                           verbose_name=_("Finger configuration 2"),
                                            related_name="finger_configuration_2")
 
-    hsAperture = models.CharField(_("Aperture"), blank=True, null=True, choices=build_choice_list("Aperture"),
-                                  max_length=5)
-    hsAperture.field_choice_category = 'Aperture'
-    hsAperture_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    hsAperture = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.APERTURE},
                                           field_choice_category=FieldChoice.APERTURE,
                                           verbose_name=_("Aperture"),
                                           related_name="aperture")
 
-    hsThumb = models.CharField(_("Thumb"), blank=True, null=True, choices=build_choice_list("Thumb"), max_length=5)
-    hsThumb.field_choice_category = 'Thumb'
-    hsThumb_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    hsThumb = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.THUMB},
                                           field_choice_category=FieldChoice.THUMB,
                                           verbose_name=_("Thumb"),
                                        related_name="thumb")
 
-    hsSpread = models.CharField(_("Spreading"), blank=True, null=True, choices=build_choice_list("Spreading"),
-                                max_length=5)
-    hsSpread.field_choice_category = 'Spreading'
-    hsSpread_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    hsSpread = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.SPREADING},
                                           field_choice_category=FieldChoice.SPREADING,
                                           verbose_name=_("Spreading"),
                                         related_name="spreading")
 
-    hsFingUnsel = models.CharField(_("Unselected fingers"), blank=True, null=True,
-                                   choices=build_choice_list("FingerSelection"), max_length=5)
-    hsFingUnsel.field_choice_category = 'FingerSelection'
-    hsFingUnsel_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    hsFingUnsel = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.FINGERSELECTION},
                                           field_choice_category=FieldChoice.FINGERSELECTION,
                                           verbose_name=_("Unselected fingers"),
@@ -469,9 +439,6 @@ class Handshape(models.Model):
         foreign_key_fields = [f.name for f in self._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         d = dict()
         for f in self._meta.fields:
-            if f.name + '_fk' in foreign_key_fields:
-                # skip original obsolete field choice fields
-                continue
             if f.name in ['dutch_name', 'chinese_name']:
                 # skip obsolete language fields
                 continue
@@ -641,11 +608,7 @@ class Gloss(models.Model):
         return self.idgloss
 
     def display_handedness(self):
-        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-            field = self._meta.get_field('handedness')
-        else:
-            field = self._meta.get_field('handedness_fk')
-        return getattr(self,field.name).name
+        return self.handedness.name if self.handedness else self.handedness
 
     def display_domhndsh(self):
         if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
@@ -662,20 +625,13 @@ class Gloss(models.Model):
         return getattr(self,field.name).name
 
     def display_locprim(self):
-        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-            field = self._meta.get_field('locprim')
-        else:
-            field = self._meta.get_field('locprim_fk')
-        return getattr(self,field.name).name
+        return self.locprim.name if self.locprim else self.locprim
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
         foreign_key_fields = [f.name for f in self._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         d = dict()
         for f in self._meta.fields:
-            # skip obsolete field choice fields
-            if f.name + '_fk' in foreign_key_fields:
-                continue
             try:
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
             except:
@@ -714,10 +670,7 @@ class Gloss(models.Model):
     comptf = models.NullBooleanField(_("Compound"), null=True, blank=True)
 
     # Phonology fields
-    handedness = models.CharField(_("Handedness"), blank=True, null=True, choices=build_choice_list("Handedness"),
-                                  max_length=5)
-    handedness.field_choice_category = 'Handedness'
-    handedness_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    handedness = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.HANDEDNESS},
                                           field_choice_category=FieldChoice.HANDEDNESS,
                                           verbose_name=_("Handedness"),
@@ -726,10 +679,7 @@ class Gloss(models.Model):
     weakdrop = models.NullBooleanField(_("Weak Drop"), null=True, blank=True)
     weakprop = models.NullBooleanField(_("Weak Prop"), null=True, blank=True)
 
-    domhndsh = models.CharField(_("Strong Hand"), blank=True, null=True, choices=build_choice_list("Handshape"),
-                                max_length=5)
-    domhndsh.field_choice_category = 'Handshape'
-    domhndsh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    domhndsh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.HANDSHAPE},
                                           field_choice_category=FieldChoice.HANDSHAPE,
                                           verbose_name=_("Strong Hand"),
@@ -738,10 +688,7 @@ class Gloss(models.Model):
                                              verbose_name=_("Strong Hand"),
                                              related_name="strong_hand_handshapefk")
 
-    subhndsh = models.CharField(_("Weak Hand"), null=True, choices=build_choice_list("Handshape"), blank=True,
-                                max_length=5)
-    subhndsh.field_choice_category = 'Handshape'
-    subhndsh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    subhndsh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.HANDSHAPE},
                                           field_choice_category=FieldChoice.HANDSHAPE,
                                           verbose_name=_("Weak Hand"),
@@ -756,10 +703,7 @@ class Gloss(models.Model):
     subhndsh_number = models.NullBooleanField(_("Weak hand number"), null=True, blank=True)
     subhndsh_letter = models.NullBooleanField(_("Weak hand letter"), null=True, blank=True)
 
-    final_domhndsh = models.CharField(_("Final Dominant Handshape"), blank=True, null=True,
-                                      choices=build_choice_list("Handshape"), max_length=5)
-    final_domhndsh.field_choice_category = 'Handshape'
-    final_domhndsh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    final_domhndsh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.HANDSHAPE},
                                           field_choice_category=FieldChoice.HANDSHAPE,
                                           verbose_name=_("Final Dominant Handshape"),
@@ -768,10 +712,7 @@ class Gloss(models.Model):
                                                    verbose_name=_("Final Dominant Handshape"),
                                                    related_name="final_dominant_handshape_handshapefk")
 
-    final_subhndsh = models.CharField(_("Final Subordinate Handshape"), null=True,
-                                      choices=build_choice_list("Handshape"), blank=True, max_length=5)
-    final_subhndsh.field_choice_category = 'Handshape'
-    final_subhndsh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    final_subhndsh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.HANDSHAPE},
                                           field_choice_category=FieldChoice.HANDSHAPE,
                                           verbose_name=_("Final Subordinate Handshape"),
@@ -780,19 +721,13 @@ class Gloss(models.Model):
                                                    verbose_name=_("Final Subordinate Handshape"),
                                                    related_name="final_subordinate_handshape_handshapefk")
 
-    locprim = models.CharField(_("Location"), choices=build_choice_list("Location"), null=True, blank=True,
-                               max_length=20)
-    locprim.field_choice_category = 'Location'
-    locprim_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    locprim = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.LOCATION},
                                           field_choice_category=FieldChoice.LOCATION,
                                           verbose_name=_("Location"),
                                            related_name="location")
 
-    final_loc = models.IntegerField(_("Final Primary Location"), choices=build_choice_list("Location"), null=True,
-                                    blank=True)
-    final_loc.field_choice_category = 'Location'
-    final_loc_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    final_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.LOCATION},
                                           field_choice_category=FieldChoice.LOCATION,
                                           verbose_name=_("Final Primary Location"),
@@ -800,29 +735,19 @@ class Gloss(models.Model):
 
     locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=50)
 
-    locsecond = models.IntegerField(_("Secondary Location"), choices=build_choice_list("Location"), null=True,
-                                    blank=True)
-    locsecond.field_choice_category = 'Location'
-    locsecond_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    locsecond = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.LOCATION},
                                           field_choice_category=FieldChoice.LOCATION,
                                           verbose_name=_("Secondary Location"),
                                            related_name="secondary_location")
 
-    initial_secondary_loc = models.CharField(_("Initial Subordinate Location"),
-                                             choices=build_choice_list("MinorLocation"), max_length=20, null=True,
-                                             blank=True)
-    initial_secondary_loc.field_choice_category = 'MinorLocation'
-    initial_secondary_loc_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    initial_secondary_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.MINORLOCATION},
                                           field_choice_category=FieldChoice.MINORLOCATION,
                                           verbose_name=_("Initial Subordinate Location"),
                                            related_name="initial_subordinate_location")
 
-    final_secondary_loc = models.CharField(_("Final Subordinate Location"), choices=build_choice_list("MinorLocation"),
-                                           max_length=20, null=True, blank=True)
-    final_secondary_loc.field_choice_category = 'MinorLocation'
-    final_secondary_loc_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    final_secondary_loc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.MINORLOCATION},
                                           field_choice_category=FieldChoice.MINORLOCATION,
                                           verbose_name=_("Final Subordinate Location"),
@@ -837,20 +762,13 @@ class Gloss(models.Model):
     final_relative_orientation = models.CharField(_("Final Interacting Dominant Hand Part"), null=True, max_length=20,
                                                   blank=True)
 
-    domSF = models.CharField("Dominant hand - Selected Fingers",
-                             choices=build_choice_list("DominantHandSelectedFingers"), null=True, blank=True,
-                             max_length=5)
-    domSF.field_choice_category = 'DominantHandSelectedFingers'
-    domSF_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    domSF = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.DOMINANTHANDSELECTEDFINGERS},
                                           field_choice_category=FieldChoice.DOMINANTHANDSELECTEDFINGERS,
                                           verbose_name="Dominant hand - Selected Fingers",
                                            related_name="dominant_hand_selected_fingers")
 
-    domFlex = models.CharField("Dominant hand - Flexion", choices=build_choice_list("DominantHandFlexion"), null=True,
-                               blank=True, max_length=5)
-    domFlex.field_choice_category = 'DominantHandFlexion'
-    domFlex_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    domFlex = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.DOMINANTHANDFLEXION},
                                           field_choice_category=FieldChoice.DOMINANTHANDFLEXION,
                                           verbose_name="Dominant hand - Flexion",
@@ -887,67 +805,43 @@ class Gloss(models.Model):
 
     StemSN = models.IntegerField(null=True, blank=True)
 
-    relatArtic = models.CharField(_("Relation between Articulators"), choices=build_choice_list("RelatArtic"),
-                                  null=True, blank=True, max_length=5)
-    relatArtic.field_choice_category = 'RelatArtic'
-    relatArtic_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    relatArtic = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.RELATARTIC},
                                           field_choice_category=FieldChoice.RELATARTIC,
                                           verbose_name=_("Relation between Articulators"),
                                            related_name="relation_between_articulators")
 
-
-    absOriPalm = models.CharField(_("Absolute Orientation: Palm"), choices=build_choice_list("AbsOriPalm"), null=True,
-                                  blank=True, max_length=5)
-    absOriPalm.field_choice_category = 'AbsOriPalm'
-    absOriPalm_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    absOriPalm = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.ABSORIPALM},
                                           field_choice_category=FieldChoice.ABSORIPALM,
                                           verbose_name=_("Absolute Orientation: Palm"),
                                            related_name="absolute_orientation_palm")
 
-    absOriFing = models.CharField(_("Absolute Orientation: Fingers"), choices=build_choice_list("AbsOriFing"),
-                                  null=True, blank=True, max_length=5)
-    absOriFing.field_choice_category = 'AbsOriFing'
-    absOriFing_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    absOriFing = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.ABSORIFING},
                                           field_choice_category=FieldChoice.ABSORIFING,
                                           verbose_name=_("Absolute Orientation: Fingers"),
                                            related_name="absolute_orientation_fingers")
 
-    relOriMov = models.CharField(_("Relative Orientation: Movement"), choices=build_choice_list("RelOriMov"), null=True,
-                                 blank=True, max_length=5)
-    relOriMov.field_choice_category = 'RelOriMov'
-    relOriMov_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    relOriMov = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.RELORIMOV},
                                           field_choice_category=FieldChoice.RELORIMOV,
                                           verbose_name=_("Relative Orientation: Movement"),
                                            related_name="relative_orientation_movement")
 
-    relOriLoc = models.CharField(_("Relative Orientation: Location"), choices=build_choice_list("RelOriLoc"), null=True,
-                                 blank=True, max_length=5)
-    relOriLoc.field_choice_category = 'RelOriLoc'
-    relOriLoc_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    relOriLoc = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.RELORILOC},
                                           field_choice_category=FieldChoice.RELORILOC,
                                           verbose_name=_("Relative Orientation: Location"),
                                            related_name="relative_orientation_location")
 
-
-    oriCh = models.CharField(_("Orientation Change"), choices=build_choice_list("OriChange"), null=True, blank=True,
-                             max_length=5)
-    oriCh.field_choice_category = 'OriChange'
-    oriCh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    oriCh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.ORICHANGE},
                                           field_choice_category=FieldChoice.ORICHANGE,
                                           verbose_name=_("Orientation Change"),
                                            related_name="orientation_change")
 
-
-    handCh = models.CharField(_("Handshape Change"), choices=build_choice_list("HandshapeChange"), null=True,
-                              blank=True, max_length=5)
-    handCh.field_choice_category = 'HandshapeChange'
-    handCh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    handCh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.HANDSHAPECHANGE},
                                           field_choice_category=FieldChoice.HANDSHAPECHANGE,
                                           verbose_name=_("Handshape Change"),
@@ -957,37 +851,25 @@ class Gloss(models.Model):
     repeat = models.NullBooleanField(_("Repeated Movement"), null=True, default=False)
     altern = models.NullBooleanField(_("Alternating Movement"), null=True, default=False)
 
-    movSh = models.CharField(_("Movement Shape"), choices=build_choice_list("MovementShape"), null=True, blank=True,
-                             max_length=5)
-    movSh.field_choice_category = 'MovementShape'
-    movSh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    movSh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
                                           field_choice_category=FieldChoice.MOVEMENTSHAPE,
                                           verbose_name=_("Movement Shape"),
                                            related_name="movement_shape")
 
-    movDir = models.CharField(_("Movement Direction"), choices=build_choice_list("MovementDir"), null=True, blank=True,
-                              max_length=5)
-    movDir.field_choice_category = 'MovementDir'
-    movDir_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    movDir = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.MOVEMENTDIR},
                                           field_choice_category=FieldChoice.MOVEMENTDIR,
                                           verbose_name=_("Movement Direction"),
                                            related_name="movement_direction")
 
-    movMan = models.CharField(_("Movement Manner"), choices=build_choice_list("MovementMan"), null=True, blank=True,
-                              max_length=5)
-    movMan.field_choice_category = 'MovementMan'
-    movMan_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    movMan = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.MOVEMENTMAN},
                                           field_choice_category=FieldChoice.MOVEMENTMAN,
                                           verbose_name=_("Movement Manner"),
                                            related_name="movement_manner")
 
-    contType = models.CharField(_("Contact Type"), choices=build_choice_list("ContactType"), null=True, blank=True,
-                                max_length=5)
-    contType.field_choice_category = 'ContactType'
-    contType_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    contType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.CONTACTTYPE},
                                           field_choice_category=FieldChoice.CONTACTTYPE,
                                           verbose_name=_("Contact Type"),
@@ -1000,10 +882,7 @@ class Gloss(models.Model):
     mouthing = models.CharField(_("Mouthing"), max_length=50, blank=True)
     phonetVar = models.CharField(_("Phonetic Variation"), max_length=50, blank=True, )
 
-    locPrimLH = models.CharField(_("Placement Active Articulator LH"), choices=build_choice_list("Location"), null=True,
-                                 blank=True, max_length=5)
-    locPrimLH.field_choice_category = 'Location'
-    locPrimLH_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    locPrimLH = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.LOCATION},
                                           field_choice_category=FieldChoice.LOCATION,
                                           verbose_name=_("Placement Active Articulator LH"),
@@ -1019,29 +898,21 @@ class Gloss(models.Model):
     # Semantic fields
 
     iconImg = models.CharField(_("Iconic Image"), max_length=50, blank=True)
-    iconType = models.CharField(_("Type of iconicity"), choices=build_choice_list("iconicity"), null=True, blank=True,
-                                max_length=5)
-    iconType.field_choice_category = 'iconicity'
-    iconType_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+
+    iconType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.ICONICITY},
                                           field_choice_category=FieldChoice.ICONICITY,
                                           verbose_name=_("Type of iconicity"),
                                            related_name="type_of_iconicity")
 
 
-    namEnt = models.CharField(_("Named Entity"), choices=build_choice_list("NamedEntity"), null=True, blank=True,
-                              max_length=5)
-    namEnt.field_choice_category = 'NamedEntity'
-    namEnt_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    namEnt = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.NAMEDENTITY},
                                           field_choice_category=FieldChoice.NAMEDENTITY,
                                           verbose_name=_("Named Entity"),
                                            related_name="named_entity")
 
-    semField = models.CharField(_("Semantic Field"), choices=build_choice_list("SemField"), null=True, blank=True,
-                                max_length=5)
-    semField.field_choice_category = 'SemField'
-    semField_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    semField = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.SEMFIELD},
                                           field_choice_category=FieldChoice.SEMFIELD,
                                           verbose_name=_("Semantic Field"),
@@ -1049,28 +920,20 @@ class Gloss(models.Model):
 
     semFieldShadow = models.ManyToManyField(SemanticField)
 
-    wordClass = models.CharField(_("Word class"), null=True, blank=True, max_length=5,
-                                 choices=build_choice_list('WordClass'))
-    wordClass.field_choice_category = 'WordClass'
-    wordClass_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    wordClass = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.WORDCLASS},
                                           field_choice_category=FieldChoice.WORDCLASS,
                                           verbose_name=_("Word class"),
                                            related_name="word_class")
 
-    wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5,
-                                  choices=build_choice_list('WordClass'))
-    wordClass2.field_choice_category = 'WordClass'
-    wordClass2_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    wordClass2 = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.WORDCLASS},
                                           field_choice_category=FieldChoice.WORDCLASS,
                                           verbose_name=_("Word class 2"),
                                            related_name="word_class_2")
 
-    derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("derivHist"), max_length=50,
-                                 blank=True)
-    derivHist.field_choice_category = 'derivHist'
-    derivHist_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+
+    derivHist = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.DERIVHIST},
                                           field_choice_category=FieldChoice.DERIVHIST,
                                           verbose_name=_("Derivation history"),
@@ -1078,9 +941,8 @@ class Gloss(models.Model):
     derivHistShadow = models.ManyToManyField(DerivationHistory)
 
     lexCatNotes = models.CharField(_("Lexical category notes"), null=True, blank=True, max_length=300)
-    valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
-    valence.field_choice_category = 'Valence'
-    valence_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+
+    valence = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.VALENCE},
                                           field_choice_category=FieldChoice.VALENCE,
                                           verbose_name=_("Valence"),
@@ -1722,8 +1584,8 @@ class Gloss(models.Model):
         q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
         # exclude glosses with empty handedness or empty strong hand
-        handedness_filter = 'handedness_fk__name__in'
-        handedness_null = 'handedness_fk__isnull'
+        handedness_filter = 'handedness__name__in'
+        handedness_null = 'handedness__isnull'
         strong_hand_filter = 'domhndsh_handshapefk__name__in'
         strong_hand_null = 'domhndsh_handshapefk__isnull'
         empty_value = ['-','N/A']
@@ -2402,9 +2264,7 @@ class MorphologyDefinition(models.Model):
     """Tells something about morphology of a gloss"""
 
     parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses")
-    role = models.CharField(max_length=5, choices=build_choice_list('MorphologyType'))
-    role.field_choice_category = 'MorphologyType'
-    role_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    role = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.MORPHOLOGYTYPE},
                                     field_choice_category=FieldChoice.MORPHOLOGYTYPE,
                                     verbose_name=_("MorphologyType"))
@@ -2419,10 +2279,7 @@ class Morpheme(Gloss):
 
     # Fields that are specific for morphemes, and not so much for 'sign-words' (=Gloss) as a whole
     # (1) optional morpheme-type field (not to be confused with MorphologyType from MorphologyDefinition)
-    mrpType = models.CharField(_("Has morpheme type"), max_length=5, blank=True, null=True,
-                               choices=build_choice_list('MorphemeType'))
-    mrpType.field_choice_category = 'MorphemeType'
-    mrpType_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    mrpType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                        limit_choices_to={'field': FieldChoice.MORPHEMETYPE},
                                        field_choice_category=FieldChoice.MORPHEMETYPE,
                                        verbose_name=_("Has morpheme type"), related_name='morpheme_type')
@@ -2437,22 +2294,13 @@ class Morpheme(Gloss):
         return self.idgloss
 
     def get_mrpType_display(self):
-        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-            return self.mrpType.name if self.mrpType else self.mrpType
-        else:
-            return self.mrpType_fk.name if self.mrpType_fk else self.mrpType_fk
+        return self.mrpType.name if self.mrpType else self.mrpType
 
     def get_handedness_display(self):
-        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-            return self.handedness.name if self.handedness else self.handedness
-        else:
-            return self.handedness_fk.name if self.handedness_fk else self.handedness_fk
+        return self.handedness.name if self.handedness else self.handedness
 
     def get_locprim_display(self):
-        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-            return self.locprim.name if self.locprim else self.locprim
-        else:
-            return self.locprim_fk.name if self.locprim_fk else self.locprim_fk
+        return self.locprim.name if self.locprim else self.locprim
 
     def admin_next_morpheme(self):
         """next morpheme in the admin view, shortcut for next_dictionary_morpheme with staff=True"""
@@ -2584,9 +2432,7 @@ class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""
 
     parent_gloss = models.ForeignKey(Gloss)
-    type = models.CharField(max_length=5, choices=build_choice_list('OtherMediaType'))
-    type.field_choice_category = 'OtherMediaType'
-    type_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+    type = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.OTHERMEDIATYPE},
                                     field_choice_category=FieldChoice.OTHERMEDIATYPE,
                                     verbose_name=_("Type"), related_name='other_media')
@@ -2773,8 +2619,8 @@ class Dataset(models.Model):
         for field in fields_to_map:
             if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                 mapped_phonology_fields[field] = field + '_handshapefk'
-            elif field+'_fk' in foreign_key_fields:
-                mapped_phonology_fields[field] = field+'_fk'
+            elif field in foreign_key_fields:
+                mapped_phonology_fields[field] = field
 
         gloss_fields = {}
         # construct a dictionary where the keys are the field names as in the settings

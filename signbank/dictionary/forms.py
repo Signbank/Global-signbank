@@ -739,7 +739,7 @@ class HandshapeSearchForm(forms.ModelForm):
 
         model = Handshape
         fields = ('machine_value', 'name',
-				  'hsNumSel_fk', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2',
+				  'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2',
 				  'hsAperture', 'hsThumb', 'hsSpread', 'hsFingUnsel',
                   'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                   'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
