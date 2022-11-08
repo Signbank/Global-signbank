@@ -30,9 +30,6 @@ class BasicCRUDTests(TestCase):
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
         self.user.save()
 
-        self.handshape_fieldchoice_1 = FieldChoice.objects.filter(field='Handshape', machine_value__gt=1).first()
-        self.handshape_fieldchoice_2 = FieldChoice.objects.filter(field='Handshape', machine_value__gt=1).last()
-
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
 
@@ -1681,7 +1678,6 @@ class HandshapeTests(TestCase):
 
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
-        from signbank.dictionary.models import Handshape
 
         request = self.factory.get('/admin/dictionary/handshape/')
         request.user = self.user
@@ -1748,13 +1744,6 @@ class MultipleSelectTests(TestCase):
         # Make a translation for Dutch since it is the other language of the test dataset
         new_semanticfield_translation = SemanticFieldTranslation(semField=new_semanticfield, language=dutch_language, name=new_dutch_name)
         new_semanticfield_translation.save()
-
-        # Create a corresponding legacy field of type semField in FieldChoice for the new SemanticField
-        # At the moment, the legacy fields are still used in Search routines
-        new_fieldchoice = FieldChoice(machine_value=new_machine_value,
-                                        field='semField',
-                                        name=new_english_name)
-        new_fieldchoice.save()
 
         print('New semantic field ', new_semanticfield.machine_value, ' created: ', new_semanticfield.name)
 
@@ -1960,7 +1949,6 @@ class FieldChoiceTests(TestCase):
 
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
-        from signbank.dictionary.models import FieldChoice
 
         request = self.factory.get('/admin/dictionary/fieldchoice/')
         request.user = self.user
@@ -1995,8 +1983,8 @@ class FieldChoiceTests(TestCase):
             field_options = FieldChoice.objects.filter(field=fieldchoice, machine_value__gt=1)
             if field_options:
                 # a different field choice is chosen than that of the test gloss
-                field_choice_in_use = field_options.last()  # This assumes there is more than one
-                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+                field_choice_not_in_use = field_options.last()  # This assumes there is more than one
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_not_in_use), True)
 
     def test_delete_fieldchoice_handshape(self):
 
@@ -2012,7 +2000,6 @@ class FieldChoiceTests(TestCase):
 
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
-        from signbank.dictionary.models import FieldChoice
 
         request = self.factory.get('/admin/dictionary/fieldchoice/')
         request.user = self.user
@@ -2098,7 +2085,6 @@ class FieldChoiceTests(TestCase):
         new_gloss.save()
 
         # now set all the choice field of the role to the first choice of FieldChoice
-        from signbank.dictionary.models import FieldChoice
 
         #Create a definition
         new_definition = Definition(gloss=new_gloss, text="thisisatemporarytestnote", count=1, published=True)
@@ -2147,10 +2133,10 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice, machine_value__gt=1)
             if field_options:
-                field_choice_in_use = field_options.last()  # This assumes there is more than one
+                field_choice_not_in_use = field_options.last()  # This assumes there is more than one
                 print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.name), ' (not used)')
-                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+                      str(field_choice_not_in_use.name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_not_in_use), True)
 
     def test_delete_fieldchoice_morphology_definition(self):
 
@@ -2194,7 +2180,6 @@ class FieldChoiceTests(TestCase):
         new_gloss2.save()
 
         # now set all the choice field of the role to the first choice of FieldChoice
-        from signbank.dictionary.models import FieldChoice
 
         #Create a definition
         new_morphology_definition = MorphologyDefinition(parent_gloss=new_gloss, morpheme=new_gloss2)
@@ -2235,10 +2220,10 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice, machine_value__gt=1)
             if field_options:
-                field_choice_in_use = field_options[2]
+                field_choice_not_in_use = field_options.last()
                 print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.name), ' (not used)')
-                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+                      str(field_choice_not_in_use.name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_not_in_use), True)
 
     def test_delete_fieldchoice_othermediatype(self):
 
@@ -2269,7 +2254,6 @@ class FieldChoiceTests(TestCase):
         new_gloss.save()
 
         # now set all the choice field of the role to the first choice of FieldChoice
-        from signbank.dictionary.models import FieldChoice
 
         #Create a definition
         new_othermedia = OtherMedia(parent_gloss=new_gloss,
@@ -2312,10 +2296,10 @@ class FieldChoiceTests(TestCase):
         for fieldchoice in fields_with_choices.keys():
             field_options = FieldChoice.objects.filter(field=fieldchoice, machine_value__gt=1)
             if field_options:
-                field_choice_in_use = field_options[2]
+                field_choice_not_in_use = field_options.last()
                 print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                      str(field_choice_in_use.name), ' (not used)')
-                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+                      str(field_choice_not_in_use.name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_not_in_use), True)
 
     def test_delete_fieldchoice_morpheme_type(self):
 
@@ -2349,7 +2333,6 @@ class FieldChoiceTests(TestCase):
         new_morpheme = Morpheme(gloss_ptr_id=new_gloss.id)
 
         # now set all the choice field of the role to the first choice of FieldChoice
-        from signbank.dictionary.models import FieldChoice
 
         # set the morpheme type to the first choice
         for fieldchoice in fields_with_choices.keys():
@@ -2357,7 +2340,6 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options.first()
                 for field in fields_with_choices[fieldchoice]:
-                    # print('field: ', field)
                     setattr(new_gloss, field, field_choice_in_use)
                     setattr(new_morpheme, field, field_choice_in_use)
         new_gloss.save()
@@ -2391,10 +2373,10 @@ class FieldChoiceTests(TestCase):
             field_options = FieldChoice.objects.filter(field=fieldchoice, machine_value__gt=1)
             if field_options:
                 # a different field choice is chosen than that of the test morpheme
-                field_choice_in_use = field_options[2]
+                field_choice_not_in_use = field_options.last()
                 print('TEST: test whether has_delete_permission is True for ', fieldchoice, ' choice ',
-                          str(field_choice_in_use.name), ' (not used)')
-                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_in_use), True)
+                          str(field_choice_not_in_use.name), ' (not used)')
+                self.assertEqual(self.fieldchoice_admin.has_delete_permission(request=request, obj=field_choice_not_in_use), True)
 
 class testFrequencyAnalysis(TestCase):
 
@@ -3209,17 +3191,6 @@ class MinimalPairsTests(TestCase):
 
         self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2')
         self.test_handshape2.save()
-
-        # FieldChoice fields for Handshape are still used in MinimalPairs routines
-        self.new_fieldchoice_1 = FieldChoice(machine_value=max_used_machine_value+1,
-                                             field='Handshape',
-                                             name=name_1)
-        self.new_fieldchoice_1.save()
-
-        self.new_fieldchoice_2 = FieldChoice(machine_value=max_used_machine_value+2,
-                                        field='Handshape',
-                                        name=name_2)
-        self.new_fieldchoice_2.save()
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()

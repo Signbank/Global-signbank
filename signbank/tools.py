@@ -1661,6 +1661,9 @@ def fields_with_choices_morpheme_type():
 
     from signbank.dictionary.models import Morpheme
     for field in Morpheme._meta.fields:
+        if field in Gloss._meta.fields:
+            # skip fields that are also in superclass Gloss
+            continue
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
