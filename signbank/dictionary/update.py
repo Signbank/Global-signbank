@@ -440,14 +440,14 @@ def update_gloss(request, glossid):
             # leave this print statement for debugging purposes
             # uncomment for debugging
             # print('gloss update handshape foreign key ', gloss, field, value)
-            gloss_field = Gloss._meta.get_field(field + '_handshapefk')
+            gloss_field = Gloss._meta.get_field(field)
             try:
                 handshape = Handshape.objects.get(machine_value=value)
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 print('Update handshape no unique machine value found: ', gloss_field.name, value)
                 print('Setting to machine value 0')
                 handshape = Handshape.objects.get(machine_value=0)
-            gloss.__setattr__(field+'_handshapefk', handshape)
+            gloss.__setattr__(field, handshape)
             gloss.save()
             newvalue = handshape.name
         elif field in fieldchoiceforeignkey_fields:

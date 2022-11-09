@@ -1614,8 +1614,8 @@ class HandshapeTests(TestCase):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness': self.field_choice_handedness_1,
-                'domhndsh_handshapefk' : self.test_handshape1,
-                'subhndsh_handshapefk': self.test_handshape2,
+                'domhndsh': self.test_handshape1,
+                'subhndsh': self.test_handshape2,
             }
             new_gloss = Gloss(**gloss_data)
             new_gloss.save()
@@ -1649,7 +1649,7 @@ class HandshapeTests(TestCase):
 
         changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
         print('Confirm the gloss was updated to the new handshape.')
-        self.assertEqual(changed_gloss.domhndsh_handshapefk.machine_value, new_handshape.machine_value)
+        self.assertEqual(changed_gloss.domhndsh.machine_value, new_handshape.machine_value)
 
     def test_delete_handshape(self):
 
@@ -2440,8 +2440,8 @@ class testFrequencyAnalysis(TestCase):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness': self.handedness_fieldchoice_1,
-                'domhndsh_handshapefk' : self.test_handshape1,
-                'subhndsh_handshapefk': self.test_handshape2,
+                'domhndsh': self.test_handshape1,
+                'subhndsh': self.test_handshape2,
                 'locprim': self.locprim_fieldchoice_1,
             }
             new_gloss = Gloss(**gloss_data)
@@ -2464,13 +2464,13 @@ class testFrequencyAnalysis(TestCase):
         glosses[4].handCh = self.handch_fieldchoice_1
         glosses[4].save()
 
-        glosses[5].domhndsh_handshapefk = self.test_handshape2
+        glosses[5].domhndsh = self.test_handshape2
         glosses[5].save()
 
         glosses[6].handedness = self.handedness_fieldchoice_1
         glosses[6].save()
 
-        glosses[7].domhndsh_handshapefk = self.test_handshape2
+        glosses[7].domhndsh = self.test_handshape2
         glosses[7].save()
 
         glosses[8].namEnt = self.nament_fieldchoice_1
@@ -3226,7 +3226,7 @@ class MinimalPairsTests(TestCase):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness': self.handedness_fieldchoice_1,
-                'domhndsh_handshapefk' : self.test_handshape1,
+                'domhndsh' : self.test_handshape1,
                 'locprim': self.locprim_fieldchoice_1,
             }
             new_gloss = Gloss(**gloss_data)
@@ -3269,7 +3269,7 @@ class MinimalPairsTests(TestCase):
         glosses[9].handCh = self.handch_fieldchoice_1
         glosses[9].save()
 
-        glosses[10].domhndsh_handshapefk = self.test_handshape2
+        glosses[10].domhndsh = self.test_handshape2
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
@@ -3284,7 +3284,7 @@ class MinimalPairsTests(TestCase):
         glosses[13].handedness = self.handedness_fieldchoice_2
         glosses[13].save()
 
-        glosses[14].domhndsh_handshapefk = self.test_handshape2
+        glosses[14].domhndsh = self.test_handshape2
         glosses[14].domhndsh_letter = False
         glosses[14].save()
 
@@ -3354,7 +3354,7 @@ class MinimalPairsTests(TestCase):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
                 'handedness': self.handedness_fieldchoice_1,
-                'domhndsh_handshapefk' : self.test_handshape1,
+                'domhndsh' : self.test_handshape1,
                 'locprim': self.locprim_fieldchoice_1,
                 'tokNo': 0,
                 'tokNoSgnr': 0
@@ -3380,7 +3380,7 @@ class MinimalPairsTests(TestCase):
         glosses[9].handedness = None
         glosses[9].save()
 
-        glosses[10].domhndsh_handshapefk = self.test_handshape2
+        glosses[10].domhndsh = self.test_handshape2
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
@@ -3392,13 +3392,13 @@ class MinimalPairsTests(TestCase):
         glosses[12].weakdrop = True
         glosses[12].save()
 
-        glosses[13].domhndsh_handshapefk = self.test_handshape2
+        glosses[13].domhndsh = self.test_handshape2
         glosses[13].handedness = self.handedness_fieldchoice_2
         glosses[13].save()
 
-        glosses[14].domhndsh_handshapefk = self.test_handshape2
+        glosses[14].domhndsh = self.test_handshape2
         glosses[14].handedness = self.handedness_fieldchoice_2
-        glosses[14].subhndsh_handshapefk = self.test_handshape2
+        glosses[14].subhndsh = self.test_handshape2
         glosses[14].save()
 
         glosses_to_ids = {}

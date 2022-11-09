@@ -1531,32 +1531,10 @@ import re
 import datetime as DT
 
 def map_field_names_to_fk_field_names(fields):
-    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-        return fields
-    gloss_field_names = [f.name for f in Gloss._meta.fields]
-    handshape_field_names = [f.name for f in Handshape._meta.fields]
-    mapped_fields = []
-    for field in fields:
-        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-            mapped_fields.append(field+'_handshapefk')
-        elif field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names:
-            mapped_fields.append(field+'_fk')
-        else:
-            mapped_fields.append(field)
-    return mapped_fields
+    return fields
 
 def map_field_name_to_fk_field_name(field):
-    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-        return field
-    gloss_field_names = [f.name for f in Gloss._meta.fields]
-    handshape_field_names = [f.name for f in Handshape._meta.fields]
-    morpheme_field_names = [f.name for f in Morpheme._meta.fields]
-    if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-        return field + '_handshapefk'
-    elif field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names or field+'_fk' in morpheme_field_names:
-        return field+'_fk'
-    else:
-        return field
+    return field
 
 
 def gloss_handshape_fields():

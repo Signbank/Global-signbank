@@ -1034,7 +1034,7 @@ class GlossListView(ListView):
 
             fieldnamemultiVarname = fieldnamemulti + '[]'
             if fieldnamemulti in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                fieldnameQuery = fieldnamemulti + '_handshapefk__machine_value__in'
+                fieldnameQuery = fieldnamemulti + '__machine_value__in'
             else:
                 fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
@@ -1375,17 +1375,17 @@ class GlossDetailView(DetailView):
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
         context['handedness'] = (int(self.object.handedness.machine_value) > 1) \
             if self.object.handedness and self.object.handedness.machine_value else 0  # minimal machine value is 2
-        context['domhndsh'] = (int(self.object.domhndsh_handshapefk.machine_value) > 1) \
-            if self.object.domhndsh_handshapefk and self.object.domhndsh_handshapefk.machine_value else 0        # minimal machine value -s 3
+        context['domhndsh'] = (int(self.object.domhndsh.machine_value) > 1) \
+            if self.object.domhndsh and self.object.domhndsh.machine_value else 0        # minimal machine value -s 3
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
 
         # check for existence of strong hand and weak hand shapes
         try:
-            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh_handshapefk.machine_value)
+            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh.machine_value)
         except (Handshape.DoesNotExist, AttributeError):
             strong_hand_obj = None
-        context['StrongHand'] = self.object.domhndsh_handshapefk.machine_value if strong_hand_obj else 0
-        context['WeakHand'] = self.object.subhndsh_handshapefk.machine_value if self.object.subhndsh_handshapefk else 0
+        context['StrongHand'] = self.object.domhndsh.machine_value if strong_hand_obj else 0
+        context['WeakHand'] = self.object.subhndsh.machine_value if self.object.subhndsh else 0
 
         # context['NamedEntityDefined'] = (int(self.object.namEnt) > 1) if self.object.namEnt else 0        # minimal machine value is 2
         context['SemanticFieldDefined'] =  self.object.semFieldShadow.all().count() > 0
@@ -1698,20 +1698,6 @@ class GlossDetailView(DetailView):
                 gl.dialect.add(d)
 
         gloss_semanticfields = []
-        multiselect_semanticfields = gl.semFieldShadow.all()
-        legacy_semanticfield = gl.semField
-        if legacy_semanticfield and not multiselect_semanticfields:
-            new_semanticfield = semanticfield_fieldchoice_to_multiselect(legacy_semanticfield)
-
-            if new_semanticfield:
-                # the following is only done if the legacy value has not been put in the multiselect semantic fields
-                gl.semFieldShadow.add(new_semanticfield)
-                gl.save()
-            else:
-                # old legacy value does not exist anymore as a field choice, remove it
-                gl.semField = None
-                gl.save()
-
         for sf in gl.semFieldShadow.all():
             gloss_semanticfields.append(sf)
 
@@ -1719,17 +1705,6 @@ class GlossDetailView(DetailView):
 
 
         gloss_derivationhistory = []
-        multiselect_derivationhistory = gl.derivHistShadow.all()
-        legacy_derivationhistory = gl.derivHist
-        if legacy_derivationhistory and not multiselect_derivationhistory:
-
-            new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(legacy_derivationhistory)
-
-            if new_derivationhistory:
-                # the following is only done if the legacy value has not been put in the multiselect derivation history
-                gl.derivHistShadow.add(new_derivationhistory)
-                gl.save()
-
         for sf in gl.derivHistShadow.all():
             gloss_derivationhistory.append(sf)
 
@@ -3252,7 +3227,7 @@ class HomonymListView(ListView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         handedness_filter = 'handedness__name__in'
-        strong_hand_filter = 'domhndsh_handshapefk__name__in'
+        strong_hand_filter = 'domhndsh__name__in'
         empty_value = ['-','N/A']
 
         # this is used to set up the ajax calls, one per each focus gloss in the table
@@ -3267,7 +3242,7 @@ class HomonymListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         handedness_filter = 'handedness__name__in'
-        strong_hand_filter = 'domhndsh_handshapefk__name__in'
+        strong_hand_filter = 'domhndsh__name__in'
         empty_value = ['-','N/A']
 
         glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(
@@ -3449,8 +3424,8 @@ class MinimalPairsListView(ListView):
 
         handedness_filter = 'handedness__name__in'
         handedness_null = 'handedness__isnull'
-        strong_hand_filter = 'domhndsh_handshapefk__name__in'
-        strong_hand_null = 'domhndsh_handshapefk__isnull'
+        strong_hand_filter = 'domhndsh__name__in'
+        strong_hand_null = 'domhndsh__isnull'
         empty_value = ['-','N/A']
 
         glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(
@@ -6219,38 +6194,12 @@ class MorphemeDetailView(DetailView):
         context['morpheme_type'] = translated_morph_type
 
         gloss_semanticfields = []
-        multiselect_semanticfields = gl.semFieldShadow.all()
-        legacy_semanticfield = gl.semField
-        if legacy_semanticfield and not multiselect_semanticfields:
-
-            new_semanticfield = semanticfield_fieldchoice_to_multiselect(legacy_semanticfield)
-
-            if new_semanticfield:
-                # the following is only done if the legacy value has not been put in the multiselect semantic fields
-                gl.semFieldShadow.add(new_semanticfield)
-                gl.save()
-            else:
-                # old legacy value does not exist anymore as a field choice, remove it
-                gl.semField = None
-                gl.save()
-
         for sf in gl.semFieldShadow.all():
             gloss_semanticfields.append(sf)
 
         context['gloss_semanticfields'] = gloss_semanticfields
 
         gloss_derivationhistory = []
-        multiselect_derivationhistory = gl.derivHistShadow.all()
-        legacy_derivationhistory = gl.derivHist
-        if legacy_derivationhistory and not multiselect_derivationhistory:
-
-            new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(legacy_derivationhistory)
-
-            if new_derivationhistory:
-                # the following is only done if the legacy value has not been put in the multiselect derivation history
-                gl.derivHistShadow.add(new_derivationhistory)
-                gl.save()
-
         for sf in gl.derivHistShadow.all():
             gloss_derivationhistory.append(sf)
 

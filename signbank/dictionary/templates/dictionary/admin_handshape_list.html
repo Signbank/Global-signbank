@@ -575,9 +575,9 @@ function do_adminsearch(el) {
 
             {% load field_choice %}
 
-                <td>{{ gloss.handedness_fk.name }}</td>
-                <td>{{ gloss.domhndsh_handshapefk.name }}</td>
-                <td>{{ gloss.subhndsh_handshapefk.name }}</td>
+                <td>{{ gloss.display_handedness }}</td>
+                <td>{{ gloss.display_domhndsh }}</td>
+                <td>{{ gloss.display_subhndsh }}</td>
 
     </tr>
     {% endfor %}

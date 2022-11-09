@@ -611,18 +611,10 @@ class Gloss(models.Model):
         return self.handedness.name if self.handedness else self.handedness
 
     def display_domhndsh(self):
-        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-            field = self._meta.get_field('domhndsh')
-        else:
-            field = self._meta.get_field('domhndsh_handshapefk')
-        return getattr(self,field.name).name
+        return self.domhndsh.name if self.domhndsh else self.domhndsh
 
     def display_subhndsh(self):
-        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-            field = self._meta.get_field('subhndsh')
-        else:
-            field = self._meta.get_field('subhndsh_handshapefk')
-        return getattr(self,field.name).name
+        return self.subhndsh.name if self.subhndsh else self.subhndsh
 
     def display_locprim(self):
         return self.locprim.name if self.locprim else self.locprim
@@ -1438,12 +1430,7 @@ class Gloss(models.Model):
         foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         mapped_phonology_fields = {}
         for field in FIELDS['phonology']:
-            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                mapped_phonology_fields[field] = field + '_handshapefk'
-            elif field+'_fk' in foreign_key_fields:
-                mapped_phonology_fields[field] = field+'_fk'
-            else:
-                mapped_phonology_fields[field] = field
+            mapped_phonology_fields[field] = field
 
         gloss_fields = {}
         # construct a dictionary where the keys are the field names as in the settings
@@ -1504,12 +1491,7 @@ class Gloss(models.Model):
         foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         mapped_minimal_pair_fields = {}
         for mpf in minimal_pairs_fields:
-            if mpf in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                mapped_minimal_pair_fields[mpf] = mpf + '_handshapefk'
-            elif mpf + '_fk' in foreign_key_fields:
-                mapped_minimal_pair_fields[mpf] = mpf + '_fk'
-            else:
-                mapped_minimal_pair_fields[mpf] = mpf
+            mapped_minimal_pair_fields[mpf] = mpf
 
         values_list = []
         for f in minimal_pairs_fields:
@@ -1566,8 +1548,8 @@ class Gloss(models.Model):
         # exclude glosses with empty handedness or empty strong hand
         handedness_filter = 'handedness__name__in'
         handedness_null = 'handedness__isnull'
-        strong_hand_filter = 'domhndsh_handshapefk__name__in'
-        strong_hand_null = 'domhndsh_handshapefk__isnull'
+        strong_hand_filter = 'domhndsh__name__in'
+        strong_hand_null = 'domhndsh__isnull'
         empty_value = ['-','N/A']
 
         q_empty = Q(**{handedness_null: True}) | \
@@ -1582,12 +1564,7 @@ class Gloss(models.Model):
         foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         mapped_minimal_pair_fields = {}
         for mpf in minimal_pairs_fields:
-            if mpf in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                mapped_minimal_pair_fields[mpf] = mpf + '_handshapefk'
-            elif mpf + '_fk' in foreign_key_fields:
-                mapped_minimal_pair_fields[mpf] = mpf + '_fk'
-            else:
-                mapped_minimal_pair_fields[mpf] = mpf
+            mapped_minimal_pair_fields[mpf] = mpf
 
         mapped_minimal_pairs_fields = [mapped_minimal_pair_fields[field] for field in minimal_pairs_fields]
 
@@ -1672,12 +1649,7 @@ class Gloss(models.Model):
         foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         mapped_minimal_pair_fields = {}
         for mpf in settings.MINIMAL_PAIRS_FIELDS:
-            if mpf in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                mapped_minimal_pair_fields[mpf] = mpf + '_handshapefk'
-            elif mpf + '_fk' in foreign_key_fields:
-                mapped_minimal_pair_fields[mpf] = mpf + '_fk'
-            else:
-                mapped_minimal_pair_fields[mpf] = mpf
+            mapped_minimal_pair_fields[mpf] = mpf
 
         mpos = self.minimalpairs_objects()
 
@@ -1741,20 +1713,10 @@ class Gloss(models.Model):
         foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         minimal_pair_fields = []
         for field in settings.MINIMAL_PAIRS_FIELDS:
-            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                minimal_pair_fields.append(field + '_handshapefk')
-            elif field+'_fk' in foreign_key_fields:
-                minimal_pair_fields.append(field+'_fk')
-            else:
-                minimal_pair_fields.append(field)
+            minimal_pair_fields.append(field)
 
         for field in minimal_pair_fields + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-            if field.endswith('_handshapefk'):
-                lookup_key = field.replace('_handshapefk', '')
-            elif field.endswith('_fk'):
-                lookup_key = field.replace('_fk', '')
-            else:
-                lookup_key = field
+            lookup_key = field
             value_of_this_field = phonology_for_gloss.get(lookup_key)
 
             if value_of_this_field is None and field in foreign_key_fields:
@@ -2598,7 +2560,7 @@ class Dataset(models.Model):
         # only map those fields with choices
         for field in fields_to_map:
             if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                mapped_phonology_fields[field] = field + '_handshapefk'
+                mapped_phonology_fields[field] = field
             elif field in foreign_key_fields:
                 mapped_phonology_fields[field] = field
 
