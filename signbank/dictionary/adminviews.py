@@ -303,7 +303,8 @@ class GlossListView(ListView):
                                 settings.FIELDS['semantics']
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
+        fields_with_choices = fields_to_fieldcategory_dict()
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fields_with_choices.keys()]
         other_parameters_keys = [ key for key in other_parameters if key not in multiple_select_gloss_fields ]
 
         context['other_parameters_keys'] = json.dumps(other_parameters_keys)
@@ -380,18 +381,12 @@ class GlossListView(ListView):
         else:
             context['search_by_relation_fields'] = []
 
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
-            fieldnames.remove('derivHist')
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
-            multiple_select_gloss_fields.remove('derivHist')
+        multiple_select_gloss_fields.append('definitionRole')
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
-        multiple_select_gloss_categories = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
-
+        fields_with_choices['definitionRole'] = 'NoteType'
         choices_colors = {}
-        for (fieldname, field_category) in multiple_select_gloss_categories:
+        for (fieldname, field_category) in fields_with_choices.items():
             if fieldname.startswith('semField'):
                 field_choices = SemanticField.objects.all()
             elif fieldname.startswith('derivHist'):
@@ -1025,18 +1020,10 @@ class GlossListView(ListView):
             query_parameters['useInstr'] = get['useInstr']
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
-        multiple_select_gloss_fields = [field.name
-                                        for field in Gloss._meta.fields
-                                        if field.name in fieldnames and hasattr(field, 'field_choice_category')]
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
-            multiple_select_gloss_fields.remove('derivHist')
-        for fieldnamemulti in multiple_select_gloss_fields:
-
+        fields_with_choices = fields_to_fieldcategory_dict()
+        for fieldnamemulti in fields_with_choices.keys():
             fieldnamemultiVarname = fieldnamemulti + '[]'
-            if fieldnamemulti in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                fieldnameQuery = fieldnamemulti + '__machine_value__in'
-            else:
-                fieldnameQuery = fieldnamemulti + '__machine_value__in'
+            fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
             if '' in vals:
@@ -1051,11 +1038,10 @@ class GlossListView(ListView):
                     qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
-        fieldnames = [ f for f in fieldnames if f not in multiple_select_gloss_fields ]
+        fieldnames = [ f for f in fieldnames if f not in fields_with_choices.keys() ]
         for fieldname in fieldnames:
 
             if fieldname in get and get[fieldname] != '':
-
                 field_obj = Gloss._meta.get_field(fieldname)
 
                 if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
@@ -1173,18 +1159,19 @@ class GlossListView(ListView):
             target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType__machine_value=morpheme_type) ]
             qs = qs.filter(id__in=target_morphemes)
 
-        if 'definitionRole' in get and get['definitionRole'] != '' and get['definitionRole'] not in ['', '0']:
-            query_parameters['definitionRole'] = get['definitionRole']
+        if 'definitionRole[]' in get:
 
-            #Find all definitions with this role
-            if get['definitionRole'] == 'all':
-                definitions_with_this_role = Definition.objects.all()
-            else:
-                definitions_with_this_role = Definition.objects.filter(role__machine_value=get['definitionRole'])
+            vals = get.getlist('definitionRole[]')
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                query_parameters['definitionRole[]'] = get.getlist('definitionRole[]')
+                #Find all definitions with this role
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
 
-            #Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
-            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+                #Remember the pk of all glosses that are referenced in the collection definitions
+                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
+                qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
         if 'definitionContains' in get and get['definitionContains'] != '' and get['definitionContains'] not in ['', '0']:
             query_parameters['definitionContains'] = get['definitionContains']
@@ -3270,9 +3257,10 @@ class MinimalPairsListView(ListView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
-            multiple_select_gloss_fields.remove('derivHist')
+        fields_with_choices = fields_to_fieldcategory_dict()
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields
+                                                    if field.name in fieldnames
+                                                    and field.name in fields_with_choices.keys()]
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
         field_names = []
@@ -3468,9 +3456,10 @@ class MinimalPairsListView(ListView):
             qs = qs.filter(translation__translation__text__iregex=val)
 
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
-            multiple_select_gloss_fields.remove('derivHist')
+        fields_with_choices = fields_to_fieldcategory_dict()
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields
+                                                    if field.name in fieldnames
+                                                    and field.name in fields_with_choices.keys()]
 
         for fieldnamemulti in multiple_select_gloss_fields:
             mapped_fieldnamemulti = map_field_name_to_fk_field_name(fieldnamemulti)

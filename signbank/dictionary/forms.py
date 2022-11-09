@@ -9,6 +9,7 @@ from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Rel
                                         MorphologyDefinition, OtherMedia, Handshape, SemanticField, DerivationHistory, \
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage
+from signbank.tools import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
@@ -364,9 +365,13 @@ class GlossSearchForm(forms.ModelForm):
 
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         multiple_select_gloss_fields = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
-
-        for (fieldname, field_category) in multiple_select_gloss_fields:
-            field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+        fields_with_choices = fields_to_fieldcategory_dict()
+        fields_with_choices['definitionRole'] = 'NoteType'
+        for (fieldname, field_category) in fields_with_choices.items():
+            if fieldname == 'definitionRole':
+                field_label = _(u'Note Type')
+            else:
+                field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
             if fieldname.startswith('semField'):
                 field_choices = SemanticField.objects.all()
             elif fieldname.startswith('derivHist'):
@@ -379,14 +384,14 @@ class GlossSearchForm(forms.ModelForm):
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)
-        self.fields['definitionRole'] = forms.ChoiceField(label=_(u'Note Type'),
-                                                          choices=choicelist_queryset_to_translated_dict(
-                                                              list(
-                                                                  FieldChoice.objects.filter(field='NoteType').order_by(
-                                                                      'machine_value')),
-                                                              ordered=False, id_prefix='', shortlist=False
-                                                          ),
-                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        # self.fields['definitionRole'] = forms.ChoiceField(label=_(u'Note Type'),
+        #                                                   choices=choicelist_queryset_to_translated_dict(
+        #                                                       list(
+        #                                                           FieldChoice.objects.filter(field='NoteType').order_by(
+        #                                                               'machine_value')),
+        #                                                       ordered=False, id_prefix='', shortlist=False
+        #                                                   ),
+        #                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         self.fields['hasComponentOfType'] = forms.ChoiceField(label=_(u'Has Compound Component Type'),
                                                           choices=choicelist_queryset_to_translated_dict(
                                                               list(
@@ -1037,9 +1042,11 @@ class FocusGlossSearchForm(forms.ModelForm):
 
         field_language = language_code
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-        multiple_select_gloss_fields = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+        fields_with_choices = fields_to_fieldcategory_dict()
 
-        for (fieldname, field_category) in multiple_select_gloss_fields:
+        for (fieldname, field_category) in fields_with_choices.items():
+            if fieldname not in fieldnames:
+                continue
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
             if fieldname.startswith('semField'):
                 field_choices = SemanticField.objects.all()
