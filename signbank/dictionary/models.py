@@ -679,21 +679,11 @@ class Gloss(models.Model):
     weakdrop = models.NullBooleanField(_("Weak Drop"), null=True, blank=True)
     weakprop = models.NullBooleanField(_("Weak Prop"), null=True, blank=True)
 
-    domhndsh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.HANDSHAPE},
-                                          field_choice_category=FieldChoice.HANDSHAPE,
-                                          verbose_name=_("Strong Hand"),
-                                           related_name="strong_hand")
-    domhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+    domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
                                              verbose_name=_("Strong Hand"),
                                              related_name="strong_hand_handshapefk")
 
-    subhndsh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.HANDSHAPE},
-                                          field_choice_category=FieldChoice.HANDSHAPE,
-                                          verbose_name=_("Weak Hand"),
-                                           related_name="weak_hand")
-    subhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+    subhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
                                              verbose_name=_("Weak Hand"),
                                              related_name="weak_hand_handshapefk")
 
@@ -703,21 +693,11 @@ class Gloss(models.Model):
     subhndsh_number = models.NullBooleanField(_("Weak hand number"), null=True, blank=True)
     subhndsh_letter = models.NullBooleanField(_("Weak hand letter"), null=True, blank=True)
 
-    final_domhndsh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.HANDSHAPE},
-                                          field_choice_category=FieldChoice.HANDSHAPE,
-                                          verbose_name=_("Final Dominant Handshape"),
-                                           related_name="final_dominant_handshape")
-    final_domhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+    final_domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
                                                    verbose_name=_("Final Dominant Handshape"),
                                                    related_name="final_dominant_handshape_handshapefk")
 
-    final_subhndsh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.HANDSHAPE},
-                                          field_choice_category=FieldChoice.HANDSHAPE,
-                                          verbose_name=_("Final Subordinate Handshape"),
-                                           related_name="final_subordinate_handshape")
-    final_subhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+    final_subhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
                                                    verbose_name=_("Final Subordinate Handshape"),
                                                    related_name="final_subordinate_handshape_handshapefk")
 
