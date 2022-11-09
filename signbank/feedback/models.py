@@ -246,10 +246,10 @@ class MissingSignFeedback(models.Model):
                                            related_name="handednessMissingSignFeedback")
 
     handshape = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
-                                              verbose_name=_("Handshape"), related_name="Handshape_handshapefk")
+                                              verbose_name=_("Handshape"), related_name="Handshape")
 
     althandshape = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
-                                                 verbose_name=_("AltHandshape"), related_name="AltHandshape_handshapefk")
+                                                 verbose_name=_("AltHandshape"), related_name="AltHandshape")
 
     location = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                             limit_choices_to={'field': FieldChoice.LOCATION},
