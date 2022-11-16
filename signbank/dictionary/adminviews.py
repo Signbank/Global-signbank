@@ -3446,7 +3446,7 @@ class MinimalPairsListView(ListView):
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields
                                                     if field.name in fieldnames
                                                     and field.name in fields_with_choices.keys()]
-        print(multiple_select_gloss_fields)
+
         for fieldnamemulti in multiple_select_gloss_fields:
             fieldnamemultiVarname = fieldnamemulti + '[]'
             if fieldnamemulti == 'semField':

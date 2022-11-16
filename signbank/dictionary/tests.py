@@ -2488,7 +2488,7 @@ class testFrequencyAnalysis(TestCase):
 
         table_code = str(test_dataset.id) + '_results_'
 
-        frequency_dict = test_dataset.generate_frequency_dict(language.language_code_2char)
+        frequency_dict = test_dataset.generate_frequency_dict()
         for fieldname in frequency_dict.keys():
             self.assertContains(response, table_code + fieldname)
 
@@ -2516,7 +2516,7 @@ class testFrequencyAnalysis(TestCase):
         for language_code in dict(settings.LANGUAGES).keys():
             translation.activate(language_code)
 
-            frequency_dict = test_dataset.generate_frequency_dict(language_code)
+            frequency_dict = test_dataset.generate_frequency_dict()
             frequency_dict_keys = frequency_dict.keys()
 
             frequency_fields = FIELDS['phonology'] + FIELDS['semantics']
@@ -2634,7 +2634,9 @@ class testSettings(TestCase):
                 # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
                 self.assertTrue(hasattr(gloss_fields_names[f], 'choices'))
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if not isinstance(gloss_fields_names[f], FieldChoiceForeignKey):
+                if isinstance(gloss_fields_names[f], models.ForeignKey) and gloss_fields_names[f].related_model == Handshape:
+                    self.assertEqual(fieldname_to_kind_table[f], 'list')
+                elif not isinstance(gloss_fields_names[f], FieldChoiceForeignKey):
                     # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
                     self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
