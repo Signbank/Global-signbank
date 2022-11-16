@@ -17,7 +17,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
-from signbank.tools import map_field_names_to_fk_field_names, map_field_name_to_fk_field_name
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
@@ -116,11 +115,6 @@ def convert_query_parameters_to_filter(query_parameters):
     glosssearch = "glosssearch_"
     lemmasearch = "lemma_"
     keywordsearch = "keyword_"
-
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
-    if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
-        fieldnames.remove('derivHist')
-    mapped_fieldnames = map_field_names_to_fk_field_names(fieldnames)
 
     gloss_fields = {}
     for f in Gloss._meta.fields:
@@ -227,7 +221,7 @@ def convert_query_parameters_to_filter(query_parameters):
             elif get_key[:-2] == 'derivHist':
                 q_filter = 'derivHistShadow__in'
             else:
-                mapped_key = map_field_name_to_fk_field_name(get_key[:-2])
+                mapped_key = get_key[:-2]
                 q_filter = mapped_key + '__machine_value__in'
             query_list.append(Q(** {q_filter: get_value}))
         elif get_key in ['hasRelation']:
@@ -416,7 +410,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
             if key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                 choices_for_category = Handshape.objects.filter(machine_value__in=query_parameters[key])
             else:
-                field = map_field_name_to_fk_field_name(key[:-2])
+                field = key[:-2]
                 field_category = Gloss._meta.get_field(field).field_choice_category
                 choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
             query_dict[key] = [ choice.name for choice in choices_for_category ]

@@ -264,7 +264,7 @@ table {
     <tbody>
     {% for ds in object_list %}
     {% load field_choice %}
-    {% with ds|translated_frequency_list:request.LANGUAGE_CODE as frequency_dict_ds %}
+    {% with ds|translated_frequency_list as frequency_dict_ds %}
         {% for key2, value2 in frequency_dict_ds.items %}
         <tr id="{{ds.id}}_field_{{key2}}" style="display:none">
         <td nowrap>{{ ds.name }}</td>

@@ -40,8 +40,10 @@
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var user_can_add_morpheme = {{ perms.dictionary.add_morpheme|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
+console.log(multiple_select_fields);
 var field_colors = {{field_colors|safe}};
-console.log('Multiple select fields: '+multiple_select_fields);
+console.log(field_colors);
+
 var csrf_token = '{{csrf_token}}';
 
 $(document).ready(function(){
@@ -150,18 +152,6 @@ $(document).ready(function(){
      $('#id_dialects').val(null).trigger('change');
 
 });
-
-{% if perms.dictionary.change_gloss %}
-<!--This id goes inside the Add New Morpheme form. It has no capital letter in id_mrptype-->
-var choice_lists = {{choice_lists|safe}};
-var mrp_data = choice_lists['mrpType'];
-$("#id_mrptype").html("");
-$.each(mrp_data, function(key, value) {
-    var number_only = key.substring(1);
-    $("#id_mrptype").append($('<option>', { value : number_only }).text(value));
-});
-{% endif %}
-
 
 // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
 function clearForm(myFormElement) {
@@ -565,13 +555,13 @@ function do_set_lemma_language(el) {
                   <tr>
                     <td>
                         <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionRole'>{{searchform.createdBefore.label}}</label>
+                            <label class='input-group-addon' for='id_createdBefore'>{{searchform.createdBefore.label}}</label>
                             {{searchform.createdBefore}}
                         </div>
                     </td>
                     <td>
                         <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionContains'>{{searchform.createdAfter.label}}</label>
+                            <label class='input-group-addon' for='id_createdAfter'>{{searchform.createdAfter.label}}</label>
                             {{searchform.createdAfter}}
                         </div>
                     </td>
@@ -589,7 +579,7 @@ function do_set_lemma_language(el) {
                   <tr>
                       <td>
                           <div class='input-group'>
-                            <label class='input-group-addon' for='id_language'>{{searchform.tags.label}}</label>
+                            <label class='input-group-addon' for='id_tags'>{{searchform.tags.label}}</label>
                             {{searchform.tags}}
                           </div>
                       </td>
@@ -654,8 +644,6 @@ function do_set_lemma_language(el) {
                          {% for dataset_lang in dataset_languages %}
                          <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
                          {% endfor %}
-                         <th><label for='id_mrp_type'>Morpheme type</label></th>
-                         <th></th>
                      </tr>
                      <tr>
                          <td>
@@ -726,7 +714,6 @@ function do_set_lemma_language(el) {
                              <input id="morphemecreate_{{ dataset_lang.language_code_2char }}" name="morphemecreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
                          </td>
                          {% endfor %}
-                         <td class="edit edit_list"><select id='id_mrptype' name='mrpType'></select></td>
                          <td><input class='btn btn-primary' type='submit' value='{% trans "Add New Morpheme" %}'></td>
                      </tr>
                  </table>

@@ -20,9 +20,9 @@ from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, map_field_names_to_fk_field_names
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, fields_to_fieldcategory_dict
 
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value, \
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     check_value_to_translated_human_value
 
 import signbank.settings
@@ -756,7 +756,6 @@ def search_morpheme(request):
 def add_new_morpheme(request):
 
     context = {}
-    choicelists = {}
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -777,26 +776,13 @@ def add_new_morpheme(request):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
     else:
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-    context['add_morpheme_form'] = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
-    # Get and save the choice list for mrpType
-    try:
-        field_mrpType = Morpheme._meta.get_field('mrpType')
-        field_category = field_mrpType.field_choice_category
-        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-    except:
-        print('add_new_morpheme request: error getting field category for mrpType, set to empty list. Check models.py for attribute field_choice_category.')
-        choice_list = []
-    if len(choice_list) > 0:
-        ordered_dict = choicelist_queryset_to_translated_dict(choice_list)
-        choicelists['mrpType'] = ordered_dict
-
-    context['choice_lists'] = json.dumps(choicelists)
+    form = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
+    context['add_morpheme_form'] = form
 
     context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
     return render(request,'dictionary/add_morpheme.html',context)
-
 
 
 def import_csv_create(request):
@@ -2712,6 +2698,8 @@ def show_unassigned_glosses(request):
                         "all_datasets":all_datasets
                       })
 
+from django.db import models
+
 def choice_lists(request):
 
     selected_datasets = get_selected_datasets_for_user(request.user)
@@ -2722,50 +2710,62 @@ def choice_lists(request):
     else:
         choices_to_exclude = None
 
-    # Translate the machine values to human values in the correct language, and save the choice lists along the way
-    for topic in ['main', 'phonology', 'semantics', 'frequency']:
-        mapped_topic_fields = map_field_names_to_fk_field_names(FIELDS[topic])
-        fields_with_choices = [(field.name, field.field_choice_category)
-                               for field in Gloss._meta.fields if field.name in mapped_topic_fields and hasattr(field, 'field_choice_category') ]
+    fields_with_choices = fields_to_fieldcategory_dict()
 
-        for (field, fieldchoice_category) in fields_with_choices:
-
-            # Get and save the choice list for this field
+    for (field, fieldchoice_category) in fields_with_choices.items():
+        # Get and save the choice list for this field
+        if fieldchoice_category == 'Handshape':
+            choice_list = Handshape.objects.all()
+        elif fieldchoice_category == 'SemField':
+            choice_list = SemanticField.objects.all()
+        elif fieldchoice_category == 'derivHist':
+            choice_list = DerivationHistory.objects.all()
+        else:
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-            if len(choice_list) > 0:
-                lookup_key = field
-                all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,
-                                                                                 choices_to_exclude=choices_to_exclude)
+        if len(choice_list) == 0:
+            continue
 
-                #Also concatenate the frequencies of all values
-                if 'include_frequencies' in request.GET and request.GET['include_frequencies']:
-                    for choicefield in choice_list:
-                        # print('choice_lists: ', choicefield, field, fieldchoice_category)
-                        machine_value = choicefield.machine_value
-                        choice_list_field = '_' + str(choicefield.machine_value)
+        all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,
+                                                                         choices_to_exclude=choices_to_exclude)
 
-                        if machine_value == 0:
-                            frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
-                                                                       Q(**{field + '__isnull': True}) |
-                                                                       Q(**{field: 0})).count()
+        #Also concatenate the frequencies of all values
+        if 'include_frequencies' in request.GET and request.GET['include_frequencies']:
+            for choicefield in choice_list:
+                machine_value = choicefield.machine_value
+                choice_list_field = '_' + str(choicefield.machine_value)
+                if fieldchoice_category == 'SemField':
+                    null_field = 'semFieldShadow'
+                    filter = 'semFieldShadow__machine_value__in'
+                    value = [machine_value]
+                elif fieldchoice_category == 'derivHist':
+                    null_field = 'derivHistShadow'
+                    filter = 'derivHistShadow__machine_value__in'
+                    value = [machine_value]
+                else:
+                    null_field = field
+                    filter = field + '__machine_value'
+                    value = machine_value
 
-                        else:
-                            filter = field + '__machine_value'
-                            frequency_for_field = Gloss.objects.filter(
-                                lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
+                if machine_value == 0:
+                    frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
+                                                               Q(**{null_field + '__isnull': True}) |
+                                                               Q(**{null_field: 0})).count()
 
-                        if choice_list_field in all_choice_lists[lookup_key].keys():
-                            all_choice_lists[lookup_key][choice_list_field] += ' ['+str(frequency_for_field)+']'
+                else:
+                    frequency_for_field = Gloss.objects.filter(
+                        lemma__dataset__in=selected_datasets).filter(**{filter: value}).count()
 
-    # print(all_choice_lists)
+                if choice_list_field in all_choice_lists[field].keys():
+                    all_choice_lists[field][choice_list_field] += ' ['+str(frequency_for_field)+']'
+
     # Add morphology to choice lists
     all_choice_lists['morphology_role'] = choicelist_queryset_to_translated_dict(
         FieldChoice.objects.filter(field__iexact='MorphologyType'))
 
-    all_choice_lists['morph_type'] = choicelist_queryset_to_translated_dict(
-        FieldChoice.objects.filter(field__iexact='MorphemeType'))
-
+    # all_choice_lists['morph_type'] = choicelist_queryset_to_translated_dict(
+    #     FieldChoice.objects.filter(field__iexact='MorphemeType'))
+    # print(all_choice_lists['morph_type'])
     return HttpResponse(json.dumps(all_choice_lists), content_type='application/json')
 
 def gloss_revision_history(request,gloss_pk):
@@ -2787,6 +2787,10 @@ def gloss_revision_history(request,gloss_pk):
 
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
+        if revision.field_name in Gloss._meta.fields:
+            revision_verbose_fieldname = _(Gloss._meta.get_field(revision.field_name).verbose_name)
+        else:
+            revision_verbose_fieldname = _(revision.field_name)
 
         # field name qualification is stored separately here
         # Django was having a bit of trouble translating it when embeded in the field_name string below
@@ -2809,7 +2813,7 @@ def gloss_revision_history(request,gloss_pk):
             'gloss' : revision.gloss,
             'user' : revision.user,
             'time' : revision.time,
-            'field_name' : fieldname_to_translated_human_value(revision.field_name),
+            'field_name' : revision_verbose_fieldname,
             'field_name_qualification' : field_name_qualification,
             'old_value' : check_value_to_translated_human_value(revision.field_name, revision.old_value),
             'new_value' : check_value_to_translated_human_value(revision.field_name, revision.new_value) }

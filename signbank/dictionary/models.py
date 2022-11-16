@@ -436,7 +436,6 @@ class Handshape(models.Model):
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
-        foreign_key_fields = [f.name for f in self._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         d = dict()
         for f in self._meta.fields:
             if f.name in ['dutch_name', 'chinese_name']:
@@ -444,8 +443,8 @@ class Handshape(models.Model):
                 continue
             try:
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
-            except:
-                pass
+            except KeyError:
+                d[f.name] = _(self._meta.get_field(f.name).name)
         return d
 
     def get_image_path(self, check_existance=True):
@@ -621,13 +620,12 @@ class Gloss(models.Model):
 
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
-        foreign_key_fields = [f.name for f in self._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         d = dict()
         for f in self._meta.fields:
             try:
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
-            except:
-                pass
+            except KeyError:
+                d[f.name] = _(self._meta.get_field(f.name).name)
         return d
 
     lemma = models.ForeignKey("LemmaIdgloss", null=True, on_delete=models.SET_NULL)
@@ -1417,7 +1415,8 @@ class Gloss(models.Model):
 
         variant_relations = self.relation_sources.filter(role__in=['variant'])
 
-        other_relations = self.relation_sources.filter(role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso'])
+        other_relations = self.relation_sources.filter(role__in=['homonym', 'synonyn', 'antonym',
+                                                                 'hyponym', 'hypernym', 'seealso', 'paradigm'])
 
         return (other_relations, variant_relations)
 
@@ -1426,24 +1425,13 @@ class Gloss(models.Model):
         # this method uses string representations for Boolean values
         # in order to distinguish between null values, False values, and Neutral values
 
-        # the following is coded here (it can't call the function in tools.py, which relies on models.py)
-        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
-        mapped_phonology_fields = {}
-        for field in FIELDS['phonology']:
-            mapped_phonology_fields[field] = field
-
         gloss_fields = {}
         # construct a dictionary where the keys are the field names as in the settings
         # and the values are the fields of the gloss, using the new field choice model instead of the original
         # this structure also prevents duplicates
-        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-            for f in Gloss._meta.fields:
-                if f.name in FIELDS['phonology']:
-                    gloss_fields[f.name] = f
-        else:
-            for fname in FIELDS['phonology']:
-                mapped_field_name = mapped_phonology_fields[fname]
-                gloss_fields[fname] = Gloss._meta.get_field(mapped_field_name)
+        for f in Gloss._meta.fields:
+            if f.name in FIELDS['phonology']:
+                gloss_fields[f.name] = f
 
         phonology_dict = dict()
         for field in FIELDS['phonology']:
@@ -1488,15 +1476,10 @@ class Gloss(models.Model):
 
     def minimal_pairs_tuple(self):
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
-        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
-        mapped_minimal_pair_fields = {}
-        for mpf in minimal_pairs_fields:
-            mapped_minimal_pair_fields[mpf] = mpf
 
         values_list = []
         for f in minimal_pairs_fields:
-            mapped_field = mapped_minimal_pair_fields[f]
-            field_value = getattr(self, mapped_field)
+            field_value = getattr(self, f)
             if isinstance(field_value, Handshape):
                 if field_value and field_value.machine_value not in ['0', '1']:
                     values_list.append(str(field_value.machine_value))
@@ -1561,12 +1544,6 @@ class Gloss(models.Model):
                 id__in=finger_spelling_glosses).exclude(id=self.id).filter(q).exclude(q_empty)
 
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
-        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
-        mapped_minimal_pair_fields = {}
-        for mpf in minimal_pairs_fields:
-            mapped_minimal_pair_fields[mpf] = mpf
-
-        mapped_minimal_pairs_fields = [mapped_minimal_pair_fields[field] for field in minimal_pairs_fields]
 
         from django.db.models import When, Case, NullBooleanField, IntegerField
         gloss_fields = {}
@@ -1575,25 +1552,24 @@ class Gloss(models.Model):
         zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
 
         for (field, value_of_this_field) in zipped_tuples:
-            mapped_field = mapped_minimal_pair_fields[field]
-            gloss_field = gloss_fields[mapped_field]
+            gloss_field = gloss_fields[field]
             if isinstance(gloss_field, Handshape):
                 # field is a handshape
-                different_field = 'different_' + mapped_field
-                field_compare = mapped_field + '__exact'
+                different_field = 'different_' + field
+                field_compare = field + '__exact'
                 different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
                 minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
             elif hasattr(gloss_field, 'field_choice_category'):
                 # field is a choice list
-                different_field = 'different_' + mapped_field
-                field_compare = mapped_field + '__exact'
+                different_field = 'different_' + field
+                field_compare = field + '__exact'
                 different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
                 minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
             else:
                 # field is a Boolean
-                different_field = 'different_' + mapped_field
-                field_compare = mapped_field + '__exact'
+                different_field = 'different_' + field
+                field_compare = field + '__exact'
                 if value_of_this_field == True:
                     different_case = Case(When(**{ field_compare : True , 'then' : 0 }), default=1, output_field=IntegerField())
 
@@ -1606,7 +1582,7 @@ class Gloss(models.Model):
                     minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
         # construct extra filter to check that the number of different fields is exactly 1
-        extra_comparison = ' + '.join('different_'+mapped_field for mapped_field in mapped_minimal_pairs_fields)
+        extra_comparison = ' + '.join('different_'+field for field in minimal_pairs_fields)
         extra_comparison = '(' + extra_comparison + ') = 1'
         extra_comparison = [ extra_comparison ]
 
@@ -1646,11 +1622,6 @@ class Gloss(models.Model):
         if handshape_of_this_gloss in empty_handshape:
             return minimal_pairs_fields
 
-        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
-        mapped_minimal_pair_fields = {}
-        for mpf in settings.MINIMAL_PAIRS_FIELDS:
-            mapped_minimal_pair_fields[mpf] = mpf
-
         mpos = self.minimalpairs_objects()
 
         for o in mpos:
@@ -1658,11 +1629,10 @@ class Gloss(models.Model):
             zipped_tuples = zip(settings.MINIMAL_PAIRS_FIELDS, focus_gloss_values_tuple, other_gloss_values_tuple)
 
             for (field_name, field_value, other_field_value) in zipped_tuples:
-                mapped_fieldname = mapped_minimal_pair_fields[field_name]
                 if field_value in [None, '0'] and other_field_value in [None,'0']:
                     continue
                 if field_value != other_field_value:
-                    gloss_field = Gloss._meta.get_field(mapped_fieldname)
+                    gloss_field = Gloss._meta.get_field(field_name)
                     field_label = gloss_field.verbose_name
                     if field_name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                         if field_value is not None:
@@ -1716,8 +1686,7 @@ class Gloss(models.Model):
             minimal_pair_fields.append(field)
 
         for field in minimal_pair_fields + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-            lookup_key = field
-            value_of_this_field = phonology_for_gloss.get(lookup_key)
+            value_of_this_field = phonology_for_gloss.get(field)
 
             if value_of_this_field is None and field in foreign_key_fields:
                 # catch not set FK fields
@@ -2308,19 +2277,32 @@ def generate_fieldname_to_kind_table():
         f_internal_type = f.get_internal_type()
         if f_internal_type in ['NullBooleanField', 'BooleanField']:
             temp_field_to_kind_table[f.name] = 'check'
-        elif f_internal_type in ['CharField', 'TextField'] and not hasattr(f, 'field_choice_category'):
+        elif f_internal_type in ['CharField', 'TextField']:
             temp_field_to_kind_table[f.name] = 'text'
+        elif f_internal_type in ['ForeignKey'] and f.name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            temp_field_to_kind_table[f.name] = 'list'
         elif hasattr(f, 'field_choice_category'):
             temp_field_to_kind_table[f.name] = 'list'
         else:
             temp_field_to_kind_table[f.name] = f_internal_type
-
+    for f in Morpheme._meta.fields:
+        f_internal_type = f.get_internal_type()
+        if f_internal_type in ['NullBooleanField', 'BooleanField']:
+            temp_field_to_kind_table[f.name] = 'check'
+        elif f_internal_type in ['CharField', 'TextField']:
+            temp_field_to_kind_table[f.name] = 'text'
+        elif f_internal_type in ['ForeignKey'] and f.name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            temp_field_to_kind_table[f.name] = 'list'
+        elif hasattr(f, 'field_choice_category'):
+            temp_field_to_kind_table[f.name] = 'list'
+        else:
+            temp_field_to_kind_table[f.name] = f_internal_type
     for h in Handshape._meta.fields:
         h_internal_type = h.get_internal_type()
         if h.name not in temp_field_to_kind_table.keys():
             if h_internal_type in ['NullBooleanField', 'BooleanField']:
                 temp_field_to_kind_table[h.name] = 'check'
-            elif h_internal_type in ['CharField', 'TextField'] and not hasattr(h, 'field_choice_category'):
+            elif h_internal_type in ['CharField', 'TextField']:
                 temp_field_to_kind_table[h.name] = 'text'
             elif hasattr(h, 'field_choice_category'):
                 temp_field_to_kind_table[h.name] = 'list'
@@ -2336,7 +2318,7 @@ def generate_fieldname_to_kind_table():
         if d.name not in temp_field_to_kind_table.keys():
             if d_internal_type in ['NullBooleanField', 'BooleanField']:
                 temp_field_to_kind_table[d.name] = 'check'
-            elif d_internal_type in ['CharField', 'TextField'] and not hasattr(d, 'field_choice_category'):
+            elif d_internal_type in ['CharField', 'TextField']:
                 temp_field_to_kind_table[d.name] = 'text'
             elif hasattr(d, 'field_choice_category'):
                 temp_field_to_kind_table[d.name] = 'list'
@@ -2551,35 +2533,19 @@ class Dataset(models.Model):
         # the order of the reqions needs to be constant everywhere in the code. How?
         return frequency_regions
 
-    def generate_frequency_dict(self, language_code):
+    def generate_frequency_dict(self):
         fields_to_map = FIELDS['phonology'] + FIELDS['semantics']
-
-        # the following is coded here (it can't call the function in tools.py, which relies on models.py)
-        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
-        mapped_phonology_fields = {}
-        # only map those fields with choices
-        for field in fields_to_map:
-            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                mapped_phonology_fields[field] = field
-            elif field in foreign_key_fields:
-                mapped_phonology_fields[field] = field
 
         gloss_fields = {}
         # construct a dictionary where the keys are the field names as in the settings
         # and the values are the fields of the gloss, using the new field choice model instead of the original
         # this structure also prevents duplicates
-        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-            for f in Gloss._meta.fields:
-                if f.name in fields_to_map:
-                    gloss_fields[f.name] = f
-        else:
-            for fname in mapped_phonology_fields.keys():
-                mapped_field_name = mapped_phonology_fields[fname]
-                gloss_fields[fname] = Gloss._meta.get_field(mapped_field_name)
+        for f in Gloss._meta.fields:
+            if f.name in fields_to_map:
+                gloss_fields[f.name] = f
 
         fields_data = []
-        for field in mapped_phonology_fields.keys():
-            # mapped_field = mapped_phonology_fields[field]
+        for field in fields_to_map:
             gloss_field = gloss_fields[field]
             if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                 fields_data.append(
@@ -2592,7 +2558,6 @@ class Dataset(models.Model):
         frequency_lists_phonology_fields = OrderedDict()
         # To generate the correct order, iterate over the ordered fields data, which is ordered by translated verbose name
         for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
-            mapped_field = mapped_phonology_fields[f]
             # Choices: the ones with machine_value 0 and 1 first, the rest is sorted by name, which is the translated name
             if fieldchoice_category == 'Handshape':
                 choice_list_this_field = list(Handshape.objects.filter(machine_value__lte=1).order_by('machine_value')) \
@@ -2606,7 +2571,7 @@ class Dataset(models.Model):
             choice_list_frequencies = OrderedDict()
             for fieldchoice in choice_list_this_field:
                 # variable column is field.name
-                variable_column = mapped_field
+                variable_column = f
                 if variable_column.startswith('semField') and fieldchoice.machine_value > 0:
                     variable_column_query = 'semFieldShadow__machine_value__in'
                     try:

@@ -13,7 +13,7 @@
 
 {% block extrajs %}
     <script type="text/javascript">
-        var url = '{{URL}}{{ PREFIX_URL }}';
+        var url = '{{ PREFIX_URL }}';
         var language_code = '{{LANGUAGE_CODE}}';
         var permission = 0;
         {% for s_dataset in selected_datasets %}
@@ -49,13 +49,6 @@
          });
     });
     var csrf_token = '{{csrf_token}}';
-    var choice_lists = {{choice_lists|safe}};
-    var mrp_data = choice_lists['mrpType'];
-    $("#id_mrptype").html("");
-    $.each(mrp_data, function(key, value) {
-        var number_only = key.substring(1);
-        $("#id_mrptype").append($('<option>', { value : number_only }).text(value));
-    });
 
     /**
      * set the lemma language for the chosen dataset
@@ -77,7 +70,7 @@
 
    <p>{% trans "Please provide some initial data for this new morpheme" %}:</p>
 
-     <form action='{% url "dictionary:add_morpheme" %}' method='post'>
+     <form action='{% url "dictionary:add_new_morpheme" %}' method='post'>
          {% csrf_token %}
          <table class='table' style='width: 1200px;'>
              <tr>
@@ -146,14 +139,6 @@
                  </td>
              </tr>
              {% endfor %}
-             <tr>
-                <th>{% trans "Morpheme type" %}</th>
-                <td>
-                    <select id='id_mrptype' name='mrpType'>
-
-                    </select>
-                </td>
-             </tr>
          </table>
 
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Morpheme" %}'>

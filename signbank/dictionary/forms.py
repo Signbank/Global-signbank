@@ -150,7 +150,7 @@ class MorphemeCreateForm(forms.ModelForm):
 
     class Meta:
         model = Morpheme
-        fields = ['mrpType']
+        fields = []
 
     def __init__(self, queryDict, *args, **kwargs):
         self.languages = kwargs.pop('languages')
@@ -363,8 +363,6 @@ class GlossSearchForm(forms.ModelForm):
         self.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects, widget=Select2,
                     queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
 
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
-        multiple_select_gloss_fields = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
         fields_with_choices = fields_to_fieldcategory_dict()
         fields_with_choices['definitionRole'] = 'NoteType'
         for (fieldname, field_category) in fields_with_choices.items():
@@ -384,14 +382,6 @@ class GlossSearchForm(forms.ModelForm):
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)
-        # self.fields['definitionRole'] = forms.ChoiceField(label=_(u'Note Type'),
-        #                                                   choices=choicelist_queryset_to_translated_dict(
-        #                                                       list(
-        #                                                           FieldChoice.objects.filter(field='NoteType').order_by(
-        #                                                               'machine_value')),
-        #                                                       ordered=False, id_prefix='', shortlist=False
-        #                                                   ),
-        #                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         self.fields['hasComponentOfType'] = forms.ChoiceField(label=_(u'Has Compound Component Type'),
                                                           choices=choicelist_queryset_to_translated_dict(
                                                               list(
@@ -414,7 +404,6 @@ class MorphemeSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
-    # englishGloss = forms.CharField(label=_("English Gloss"))
     lemmaGloss = forms.CharField(label=_("Lemma Gloss")) # used in Morpheme Search
     tags = forms.MultipleChoiceField(choices=tag_choices)
     nottags = forms.MultipleChoiceField(choices=not_tag_choices)
@@ -422,9 +411,6 @@ class MorphemeSearchForm(forms.ModelForm):
     hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_(u'Has Other Media'), choices=NULLBOOLEANCHOICES)
     useInstr = forms.CharField(label=_("Annotation instructions"))
-    # defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
-
-    # defsearch = forms.CharField(label=_(u'Search Definition/Notes'))
 
     relation = forms.CharField(label=_(u'Search for Gloss of Related Signs'),
                                widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
@@ -497,17 +483,27 @@ class MorphemeSearchForm(forms.ModelForm):
         self.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects, widget=Select2,
                     queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
 
-        field_language = language_code
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
-        multiple_select_morpheme_fields = [(field.name, field.field_choice_category) for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
-
-        for (fieldname, field_category) in multiple_select_morpheme_fields:
-            field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+        fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
+        fields_with_choices['definitionRole'] = 'NoteType'
+        for (fieldname, field_category) in fields_with_choices.items():
+            if fieldname == 'definitionRole':
+                field_label = _(u'Note Type')
+            else:
+                field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+            if fieldname.startswith('semField'):
+                field_choices = SemanticField.objects.all()
+            elif fieldname.startswith('derivHist'):
+                field_choices = DerivationHistory.objects.all()
+            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                field_choices = Handshape.objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='',shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)
+
 
 class DefinitionForm(forms.ModelForm):
     class Meta:
@@ -1040,13 +1036,10 @@ class FocusGlossSearchForm(forms.ModelForm):
         self.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects, widget=Select2,
                     queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
 
-        field_language = language_code
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-        fields_with_choices = fields_to_fieldcategory_dict()
+        fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
 
         for (fieldname, field_category) in fields_with_choices.items():
-            if fieldname not in fieldnames:
-                continue
             field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
             if fieldname.startswith('semField'):
                 field_choices = SemanticField.objects.all()

@@ -120,19 +120,6 @@ def machine_value_to_translated_human_value(machine_value,choice_list):
 
     return human_value
 
-def fieldname_to_translated_human_value(field_name):
-    # translates the field name dynamically
-    # used to translate the field names stored in GlossRevision
-    # the Gloss model needs to be imported here, at runtime
-    from signbank.dictionary.models import Gloss
-    gloss_fields = [ field.name for field in Gloss._meta.get_fields() ]
-    if field_name in gloss_fields:
-        # commented out version shows field name of model, if available
-        # verbose_name = _(Gloss._meta.get_field(field_name).verbose_name) + " (" + field_name + ")"
-        verbose_name = _(Gloss._meta.get_field(field_name).verbose_name)
-    else:
-        verbose_name = _(field_name)
-    return verbose_name
 
 def check_value_to_translated_human_value(field_name, check_value):
     # check_value has type CharField

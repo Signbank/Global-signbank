@@ -2523,8 +2523,7 @@ class testFrequencyAnalysis(TestCase):
 
             fields_data = []
             for field_name in frequency_fields:
-                mapped_field_name = map_field_name_to_fk_field_name(field_name)
-                gloss_field = Gloss._meta.get_field(mapped_field_name)
+                gloss_field = Gloss._meta.get_field(field_name)
                 if hasattr(gloss_field, 'field_choice_category'):
                     fields_data.append((field_name, gloss_field.verbose_name.title(), gloss_field.field_choice_category))
                 elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
@@ -2626,7 +2625,7 @@ class testSettings(TestCase):
         # and that there exist field choices for it
         # this test is intended to help find potential errors in templates that use choice lists for fields
         if 'phonology' in settings.FIELDS.keys():
-            phonology_fields = map_field_names_to_fk_field_names(settings.FIELDS['phonology'])
+            phonology_fields = settings.FIELDS['phonology']
             gloss_fields_names = { f.name: f for f in Gloss._meta.fields }
             print('Testing phonology fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in phonology_fields:
@@ -2652,7 +2651,7 @@ class testSettings(TestCase):
                     self.assertGreater(len(fields_for_this_category),0)
 
         if 'semantics' in settings.FIELDS.keys():
-            semantics_fields = map_field_names_to_fk_field_names(settings.FIELDS['semantics'])
+            semantics_fields = settings.FIELDS['semantics']
             gloss_fields_names = { f.name: f for f in Gloss._meta.fields }
             print('Testing semantics fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in semantics_fields:
@@ -2678,7 +2677,7 @@ class testSettings(TestCase):
                     self.assertGreater(len(fields_for_this_category),0)
 
         if 'handshape' in settings.FIELDS.keys():
-            handshape_fields = map_field_names_to_fk_field_names(settings.FIELDS['handshape'])
+            handshape_fields = settings.FIELDS['handshape']
             handshape_fields_names = { f.name: f for f in Handshape._meta.fields }
             print('Testing handshape fields for declaration in Handshape model with field_choice_category in FieldChoice table.')
             for f in handshape_fields:
@@ -2754,8 +2753,7 @@ class RevisionHistoryTests(TestCase):
 
         mapped_categories = []
         for f in gloss_fields:
-            mapped_field = map_field_name_to_fk_field_name(f)
-            gloss_field = gloss_fields_names[mapped_field]
+            gloss_field = gloss_fields_names[f]
 
             if f == 'semField':
                 mapped_category = 'SemField'
@@ -2807,8 +2805,7 @@ class RevisionHistoryTests(TestCase):
         # rather than the gloss model field name
         gloss_update_phonology_keys = []
         for f in gloss_fields:
-            mapped_field = map_field_name_to_fk_field_name(f)
-            gloss_field = gloss_fields_names[mapped_field]
+            gloss_field = gloss_fields_names[f]
             if f == 'semField':
                 new_machine_value_string = '_500'
                 gloss_update_phonology_data.append({'id' : 'semanticfield', 'value' : new_machine_value_string})

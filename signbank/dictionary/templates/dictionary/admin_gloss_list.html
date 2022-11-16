@@ -92,7 +92,6 @@ $(document).ready(function() {
 
      for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = 'id_' + multiple_select_fields[i];
-        console.log('make multiselect '+this_id);
         selectColors(this_id);
         var this_var = multiple_select_fields[i] + '[]';
         makeMultipleSelect(this_id, this_var);
@@ -121,7 +120,6 @@ $(document).ready(function() {
 
      $('.js-example-basic-multiple').each(function() {
          var thisId = this.id;
-         console.log(thisId);
          $(this).select2({
             allowClear: true,
             dropdownAutoWidth: true,

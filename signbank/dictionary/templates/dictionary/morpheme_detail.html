@@ -153,7 +153,6 @@ option:not(:checked) {
     $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?dataset={{morpheme.lemma.dataset}}").done( function (data)
     {
         choice_lists = $.extend(data,{{other_media_field_choices | safe}});
-        console.log("Added field choices");
     });
 
     //Fill choice_lists with frequencies later
@@ -165,8 +164,6 @@ option:not(:checked) {
             // Reload the data in the lists
             $('.edit_list').unbind('click');
             configure_edit();
-
-            console.log("Added field choices");
         });
     });
     </script>
