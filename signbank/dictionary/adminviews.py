@@ -288,7 +288,7 @@ class GlossListView(ListView):
                 self.query_parameters = json.loads(session_query_parameters)
 
         search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
-                                          dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+                                          dialects=dialects)
 
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())
@@ -2305,7 +2305,7 @@ class MorphemeListView(ListView):
             context['show_all'] = False
 
         search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
-                                         dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+                                         dialects=dialects)
 
         context['searchform'] = search_form
 
@@ -2595,21 +2595,6 @@ class MorphemeListView(ListView):
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val)
 
-        # THIS CODE IS NOT USED BY GLOBAL, subsumed by definitionContains
-        # if 'defsearch' in get and get['defsearch'] != '':
-        #
-        #     val = get['defsearch']
-        #
-        #     if 'definitionRole' in get:
-        #         role = get['definitionRole']
-        #     else:
-        #         role = 'all'
-        #
-        #     if role == 'all':
-        #         qs = qs.filter(definition__text__icontains=val)
-        #     else:
-        #         qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
-
         if 'tags' in get and get['tags'] != '':
             vals = get.getlist('tags')
 
@@ -2637,45 +2622,6 @@ class MorphemeListView(ListView):
 
             # exclude all of tqs from qs
             qs = [q for q in qs if q not in tqs]
-
-        if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
-            relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
-            potential_pks = [relation.gloss.pk for relation in relations]
-            qs = qs.filter(pk__in=potential_pks)
-
-        if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
-
-            pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
-
-            if get['hasRelationToForeignSign'] == '1':  # We only want glosses with a relation to a foreign sign
-                qs = qs.filter(pk__in=pks_for_glosses_with_relations)
-            elif get['hasRelationToForeignSign'] == '2':  # We only want glosses without a relation to a foreign sign
-                qs = qs.exclude(pk__in=pks_for_glosses_with_relations)
-
-        if 'relation' in get and get['relation'] != '':
-            potential_targets = Gloss.objects.filter(idgloss__icontains=get['relation'])
-            relations = Relation.objects.filter(target__in=potential_targets)
-            potential_pks = [relation.source.pk for relation in relations]
-            qs = qs.filter(pk__in=potential_pks)
-
-        if 'hasRelation' in get and get['hasRelation'] != '':
-
-            # Find all relations with this role
-            if get['hasRelation'] == 'all':
-                relations_with_this_role = Relation.objects.all()
-            else:
-                relations_with_this_role = Relation.objects.filter(role__exact=get['hasRelation'])
-
-            # Remember the pk of all glosses that take part in the collected relations
-            pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
-            qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
-
-        if 'morpheme' in get and get['morpheme'] != '':
-            potential_morphemes = Gloss.objects.filter(idgloss__icontains=get['morpheme'])
-            potential_morphdefs = MorphologyDefinition.objects.filter(
-                morpheme__in=[morpheme.pk for morpheme in potential_morphemes])
-            potential_pks = [morphdef.parent_gloss.pk for morphdef in potential_morphdefs]
-            qs = qs.filter(pk__in=potential_pks)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
 
@@ -3297,7 +3243,7 @@ class MinimalPairsListView(ListView):
             dialects.append((str(dl.id),dialect_name))
 
         search_form = FocusGlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
-                                      dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+                                      dialects=dialects)
 
         context['searchform'] = search_form
 
@@ -6910,7 +6856,7 @@ class LemmaListView(ListView):
 
         context['search_matches'] = context['search_results'].count()
 
-        search_form = LemmaSearchForm(self.request.GET, languages=dataset_languages, language_code=self.request.LANGUAGE_CODE)
+        search_form = LemmaSearchForm(self.request.GET, languages=dataset_languages)
 
         context['searchform'] = search_form
         context['search_type'] = 'lemma'

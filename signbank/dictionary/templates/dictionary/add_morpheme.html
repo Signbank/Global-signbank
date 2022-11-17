@@ -70,7 +70,7 @@
 
    <p>{% trans "Please provide some initial data for this new morpheme" %}:</p>
 
-     <form action='{% url "dictionary:add_new_morpheme" %}' method='post'>
+     <form action='{% url "dictionary:add_morpheme" %}' method='post'>
          {% csrf_token %}
          <table class='table' style='width: 1200px;'>
              <tr>

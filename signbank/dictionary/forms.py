@@ -334,7 +334,6 @@ class GlossSearchForm(forms.ModelForm):
         languages = kwargs.pop('languages')
         sign_languages = kwargs.pop('sign_languages')
         dialects = kwargs.pop('dialects')
-        language_code = kwargs.pop('language_code')
         super(GlossSearchForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in languages:
@@ -412,20 +411,9 @@ class MorphemeSearchForm(forms.ModelForm):
     hasothermedia = forms.ChoiceField(label=_(u'Has Other Media'), choices=NULLBOOLEANCHOICES)
     useInstr = forms.CharField(label=_("Annotation instructions"))
 
-    relation = forms.CharField(label=_(u'Search for Gloss of Related Signs'),
-                               widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    relationToForeignSign = forms.CharField(label=_(u'Search for Gloss of Foreign Signs'),
-                                            widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    morpheme = forms.CharField(label=_(u'Search for Gloss with This as Morpheme'),
-                               widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     phonOth = forms.CharField(label=_(u'Phonology Other'), widget=forms.TextInput())
 
-    hasRelationToForeignSign = forms.ChoiceField(label=_(u'Related to foreign sign or not'),
-                                                 choices=[(0, '---------'), (1, 'Yes'), (2, 'No')],
-                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hasRelation = forms.ChoiceField(label=_(u'Type of relation'), choices=RELATION_ROLE_CHOICES,
-                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),
                                choices=NULLBOOLEANCHOICES)
@@ -463,7 +451,6 @@ class MorphemeSearchForm(forms.ModelForm):
         languages = kwargs.pop('languages')
         sign_languages = kwargs.pop('sign_languages')
         dialects = kwargs.pop('dialects')
-        language_code = kwargs.pop('language_code')
         super(MorphemeSearchForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in languages:
@@ -846,7 +833,6 @@ class LemmaSearchForm(forms.ModelForm):
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
-        language_code = kwargs.pop('language_code')
         super(LemmaSearchForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in languages:
@@ -1010,7 +996,6 @@ class FocusGlossSearchForm(forms.ModelForm):
         languages = kwargs.pop('languages')
         sign_languages = kwargs.pop('sign_languages')
         dialects = kwargs.pop('dialects')
-        language_code = kwargs.pop('language_code')
         super(FocusGlossSearchForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in languages:
