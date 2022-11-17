@@ -436,10 +436,13 @@ class MorphemeSearchForm(forms.ModelForm):
                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     inWeb = forms.ChoiceField(label=_(u'Is in Web Dictionary'), choices=NULLBOOLEANCHOICES,
                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    excludeFromEcv = forms.ChoiceField(label=_(u'Exclude from ECV'),choices=NULLBOOLEANCHOICES)
+
     definitionRole = forms.ChoiceField(label=_(u'Note Type'), choices=get_definition_role_choices,
                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_(u'Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
 
     createdBefore = forms.DateField(label=_(u'Created Before'))
     createdAfter = forms.DateField(label=_(u'Created After'))

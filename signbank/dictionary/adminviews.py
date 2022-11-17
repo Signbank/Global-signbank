@@ -2409,6 +2409,11 @@ class MorphemeListView(ListView):
 
         context['field_colors'] = choices_colors
 
+        if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated():
+            context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
+        else:
+            context['search_by_publication_fields'] = []
+
         return context
 
 
@@ -2481,11 +2486,23 @@ class MorphemeListView(ListView):
             query_parameters['hasvideo'] = get['hasvideo']
             qs = qs.filter(glossvideo__isnull=val)
 
+        if 'definitionRole[]' in get:
+
+            vals = get.getlist('definitionRole[]')
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                #Find all definitions with this role
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
+
+                #Remember the pk of all glosses that are referenced in the collection definitions
+                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
+                qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+
         if 'defspublished' in get and get['defspublished'] != 'unspecified':
             val = get['defspublished'] == 'yes'
 
             qs = qs.filter(definition__published=val)
-
 
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew']
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
@@ -2514,7 +2531,7 @@ class MorphemeListView(ListView):
             fieldnames.remove('derivHist')
 
         multiple_select_morpheme_categories = fields_to_fieldcategory_dict(fieldnames)
-        multiple_select_morpheme_categories['definitionRole'] = 'NoteType'
+        # multiple_select_morpheme_categories['definitionRole'] = 'NoteType'
 
         multiple_select_morpheme_fields = [ fieldname for (fieldname, category) in multiple_select_morpheme_categories.items() ]
 

@@ -40,9 +40,7 @@
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var user_can_add_morpheme = {{ perms.dictionary.add_morpheme|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
-console.log(multiple_select_fields);
 var field_colors = {{field_colors|safe}};
-console.log(field_colors);
 
 var csrf_token = '{{csrf_token}}';
 
@@ -518,75 +516,22 @@ function do_set_lemma_language(el) {
             </div>
 
             <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
+              <div class="panel-heading" data-toggle="collapse"
+                   data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
 
               <div id='pub_search' class='collapse'>
-              <table class='table'>
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
-                            {{searchform.inWeb}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
-                            {{searchform.isNew}}
-                        </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
-                            {{searchform.definitionRole}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
-                            {{searchform.definitionContains}}
-                        </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_createdBefore'>{{searchform.createdBefore.label}}</label>
-                            {{searchform.createdBefore}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_createdAfter'>{{searchform.createdAfter.label}}</label>
-                            {{searchform.createdAfter}}
-                        </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                      <td>
-                          <div class='input-group'>
-                            <label class='input-group-addon' for='id_createdBy'>{{searchform.createdBy.label}}</label>
-                            {{searchform.createdBy}}
-                          </div>
-                      </td>
-                  </tr>
-
-                  <tr>
-                      <td>
-                          <div class='input-group'>
-                            <label class='input-group-addon' for='id_tags'>{{searchform.tags.label}}</label>
-                            {{searchform.tags}}
-                          </div>
-                      </td>
-                  </tr>
-
+              <table class='table pub-row'>
+              {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
+              <tr>
+                  <td style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
+                  {% if publication_id == 'definitionRole' %}
+                  <td style="width:600px;">{{publication_field}}</td>
+                  {% else %}
+                  <td>{{publication_field}}</td>
+                  {% endif %}
+              </tr>
+              {% endfor %}
               </table>
-
               </div>
             </div>
     </div>
