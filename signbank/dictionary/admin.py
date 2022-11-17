@@ -769,13 +769,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     else:
         show_field_choice_colors = False
 
-    if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
-        show_english_only = True
-        list_display = ['name', 'machine_value','field']
-    else:
-        list_display = ['name'] \
-                       + ['machine_value', 'field']
-        show_english_only = False
+    list_display = ['name'] \
+                   + ['machine_value', 'field']
     list_filter = ['field']
 
     def get_form(self, request, obj=None, **kwargs):

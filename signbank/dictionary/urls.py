@@ -88,11 +88,7 @@ urlpatterns = [
 
     url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
 
-    url(r'configure_derivationhistory/$',
-        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_derivationhistory)),
-
     url(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
-    url(r'all_field_choices.tsv/$',signbank.dictionary.views.list_all_fieldchoice_names),
     url(r'package/$', signbank.dictionary.views.package),
     url(r'info/$', signbank.dictionary.views.info),
     url(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),

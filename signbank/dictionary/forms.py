@@ -1048,7 +1048,7 @@ class FieldChoiceColorForm(forms.Form):
 
     class Meta:
         model = FieldChoice
-        fields = ['field', 'name_en'] \
+        fields = ['field', 'name'] \
                  + ['field_color', 'machine_value', ]
 
 
@@ -1056,7 +1056,6 @@ class FieldChoiceForm(forms.ModelForm):
     # this ModelForm is needed in order to validate against duplicates
 
     show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
-    show_english_only = settings.SHOW_ENGLISH_ONLY
     field_category = ''
     prepopulated_fields = {}
 
@@ -1067,6 +1066,7 @@ class FieldChoiceForm(forms.ModelForm):
                  + ['field_color', 'machine_value', ]
 
     def __init__(self, *args, **kwargs):
+
         super(FieldChoiceForm, self).__init__(*args, **kwargs)
 
         # a new field choice is being created or edited
@@ -1095,27 +1095,6 @@ class FieldChoiceForm(forms.ModelForm):
             field_choices = [(f, f) for f in field_choice_categories]
             self.fields['field'].widget = forms.Select(choices=field_choices)
 
-        if self.show_english_only:
-            if 'name_en' in self.fields.keys():
-                self.fields['name_en'].label = 'Name'
-            else:
-                # there was some weird stuff going on with the behind the scenes Django creation of a form
-                # before getting to __init__
-                # sometimes neither name_en nor name were present in the form
-                print('other case init english only has no name_en field')
-                self.fields['name'] = forms.CharField(max_length=50)
-                self.fields['name'].label = 'Name'
-                self.fields['name'].widget = forms.CharField(max_length=50)
-                if self.instance.id:
-                    self.fields['name'].initial = self.instance.name
-                else:
-                    self.fields['name'].initial = '-'
-            for field_name in self.fields.keys():
-                # there were some problems with the iteration that constructed the field names dynamically
-                # at the moment this is hard coded because of that
-                if field_name in ['name_nl', 'name_zh_hans']:
-                    self.fields[field_name].widget = forms.HiddenInput()
-                    self.fields[field_name].initial = '-'
         if not self.instance.id:
             self.fields['field_color'].initial = '#ffffff'
         else:
@@ -1141,32 +1120,15 @@ class FieldChoiceForm(forms.ModelForm):
             # construct a singleton choice list to prevent user from changing it
             self.fields['field'].widget = forms.Select(choices=[(instance_field, instance_field)])
 
+    def already_exists(self, field, language_field, language_field_value):
+        matches = FieldChoice.objects.filter(field=field).filter(**{language_field: language_field_value}).count()
+        return matches
+
     def clean(self):
         # check that the field category and (english) name does not already occur
         super(FieldChoiceForm, self).clean()
 
         data_fields = self.data
-
-        if self.show_english_only:
-            if 'name_en' not in data_fields.keys():
-                raise forms.ValidationError(_('The Name field is required'))
-            else:
-                en_name = data_fields['name_en']
-        else:
-            for language in [l[0] for l in LANGUAGES]:
-                name_languagecode = 'name_'+ language.replace('-', '_')
-                if name_languagecode not in data_fields.keys():
-                    raise forms.ValidationError(_('The Name fields for all languages are required'))
-            en_name = data_fields['name_en']
-
-        if 'field_color' not in data_fields.keys():
-            print('field color not in data fields')
-        else:
-            new_color = data_fields['field_color']
-            # strip any initial #'s
-            while new_color[0] == '#':
-                new_color = new_color[1:]
-            field_color = new_color
 
         if 'field' not in data_fields.keys() or not data_fields['field']:
             raise forms.ValidationError(_('The Field Choice Category is required'))
@@ -1176,28 +1138,29 @@ class FieldChoiceForm(forms.ModelForm):
         if qs_f.count() == 0:
             raise forms.ValidationError(_('This Field Choice Category does not exist'))
 
-        qs_en = FieldChoice.objects.filter(field=field, name=en_name)
-        if qs_en.count() == 0:
-            # new field choice
-            if not self._errors.keys():
-                return
-            else:
-                raise forms.ValidationError(_('New Field Choice. Please fix the following errors.'))
-        elif qs_en.count() == 1:
-            # found exactly one match
-            fc_obj = qs_en.first()
-            if self.instance and fc_obj.id == self.instance.id:
-                # this is an update
-                # new field choice
-                if not self._errors.keys():
-                    return
-                else:
-                    raise forms.ValidationError(_('Update Field Choice. Please fix the following errors.'))
-            else:
-                raise forms.ValidationError(_('The combination '+field+' -- '+en_name+' already exists'))
+        for language in [l[0] for l in LANGUAGES]:
+            name_languagecode = 'name_'+ language.replace('-', '_')
+            if name_languagecode not in data_fields.keys():
+                raise forms.ValidationError(_('The Name fields for all languages are required'))
+
+        if not self.instance:
+            for language, langauge_name in [(l[0], l[1]) for l in LANGUAGES]:
+                name_languagecode = 'name_'+ language.replace('-', '_')
+                name_languagecode_value = data_fields[name_languagecode]
+                if self.already_exists(field, name_languagecode, name_languagecode_value):
+                    raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
+                                                  + ' already exists for ' + langauge_name))
         else:
-            # multiple duplicates found
-            raise forms.ValidationError(_('The combination '+field+' -- '+en_name+' already exists'))
+            for language, langauge_name in [(l[0], l[1]) for l in LANGUAGES]:
+                name_languagecode = 'name_'+ language.replace('-', '_')
+                name_languagecode_value = data_fields[name_languagecode]
+                if getattr(self.instance, name_languagecode) == name_languagecode_value:
+                    continue
+                if self.already_exists(field, name_languagecode, name_languagecode_value):
+
+                    raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
+                                                  + ' already exists for ' + langauge_name))
+
 
 class SemanticFieldColorForm(forms.Form):
 
@@ -1207,7 +1170,7 @@ class SemanticFieldColorForm(forms.Form):
 
     class Meta:
         model = SemanticField
-        fields = ['name_en'] \
+        fields = ['name'] \
                  + ['field_color', 'machine_value', ]
 
 
@@ -1219,7 +1182,7 @@ class SemanticFieldForm(forms.ModelForm):
 
     class Meta:
         model = SemanticField
-        fields = ['name_' + language.replace('-', '_') for language in [l[0] for l in settings.LANGUAGES]] \
+        fields = ['name'] \
                  + ['field_color', 'machine_value', ]
 
     def __init__(self, *args, **kwargs):
@@ -1248,7 +1211,7 @@ class HandshapeForm(forms.ModelForm):
 
     class Meta:
         model = Handshape
-        fields = ['name_' + language.replace('-', '_') for language in [l[0] for l in settings.LANGUAGES]] \
+        fields = ['name'] \
                  + ['field_color', 'machine_value', ]
 
     def __init__(self, *args, **kwargs):

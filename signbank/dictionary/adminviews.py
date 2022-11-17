@@ -5442,12 +5442,10 @@ class FieldChoiceView(ListView):
         for category in choice_categories:
             if category == 'SemField':
                 field_choices = SemanticField.objects.all()
-                print('SemField field_choices: ', field_choices)
             elif category == 'derivHist':
                 field_choices = DerivationHistory.objects.all()
             elif category == 'Handshape':
                 field_choices = Handshape.objects.all()
-                print(category, field_choices)
             else:
                 field_choices = FieldChoice.objects.filter(field__iexact=category)
             choices_colors[category] = choicelist_queryset_to_colors(field_choices, shortlist=False)

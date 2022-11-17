@@ -1877,17 +1877,12 @@ class FieldChoiceTests(TestCase):
             initial_data['machine_value'] = first_field_choice_option.machine_value
 
             update_data = dict()
-            if settings.SHOW_ENGLISH_ONLY:
-                update_data['name_en'] = 'Test Update Field Choice'
-                update_data['name_nl'] = first_field_choice_option.name_nl
-            else:
-                update_data['name_nl'] = 'Test Update Field Choice'
-                update_data['name_en'] = first_field_choice_option.name_en
+            update_data['name_en'] = 'Test Update Field Choice'
+            update_data['name_nl'] = first_field_choice_option.name_nl
             update_data['name'] = first_field_choice_option.name
             update_data['name_zh_hans'] = first_field_choice_option.name_zh_hans
             # the hash tag is needed in the form interface for display
             update_data['field_color'] = '#' + first_field_choice_option.field_color
-            # update_data['field_color'] = first_field_choice_option.field_color
             update_data['field'] = first_field_choice_option.field
             update_data['machine_value'] = first_field_choice_option.machine_value
 
@@ -1907,15 +1902,10 @@ class FieldChoiceTests(TestCase):
             first_field_choice_option.refresh_from_db()
 
             # check that the updated field is indeed updated
-            if settings.SHOW_ENGLISH_ONLY:
-                self.assertEqual(first_field_choice_option.name_en, update_data['name_en'])
-                self.assertEqual(first_field_choice_option.name_nl, initial_data['name_nl'])
-                # the English-only test updates the name field behind the scenes
-                self.assertEqual(first_field_choice_option.name, update_data['name_en'])
-            else:
-                self.assertEqual(first_field_choice_option.name_nl, update_data['name_nl'])
-                self.assertEqual(first_field_choice_option.name_en, initial_data['name_en'])
-                self.assertEqual(first_field_choice_option.name, initial_data['name'])
+            self.assertEqual(first_field_choice_option.name_en, update_data['name_en'])
+            self.assertEqual(first_field_choice_option.name_nl, initial_data['name_nl'])
+            # the following is true if the override language is en, then name has also been updated
+            # self.assertEqual(first_field_choice_option.name, update_data['name'])
             # check that none of the other fields were updated
             self.assertEqual(first_field_choice_option.name_zh_hans, initial_data['name_zh_hans'])
             self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
