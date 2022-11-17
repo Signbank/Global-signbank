@@ -91,7 +91,7 @@ class RegistrationManager(models.Manager):
         group_guest = Group.objects.get(name='Guest')
         new_user.groups.add(group_guest)
         new_user.save()
-        
+
 
         registration_profile = self.create_profile(new_user)
 

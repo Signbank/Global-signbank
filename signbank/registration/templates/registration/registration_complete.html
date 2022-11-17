@@ -6,7 +6,7 @@
 
 {% block content %}
 <h2>{% trans "Signbank Registration" %}</h2>
-<p>{% trans "The following user registration request has been received:" %}</p>
+<p>{% trans "The following user registration request has been accepted:" %}</p>
 <table>
     <tr><th style='width:12em;'>{% trans "Username:" %}</th><td> {{ request.session.username }} </td></tr>
     <tr><th>{% trans "First name:" %}</th><td>{{ request.session.first_name }}</td></tr>
@@ -28,6 +28,6 @@
     </tr>
 </table>
 <br>
-<p>{% trans "An email has been sent to your nominated address. Please check your email for details of how to complete the registration process." %}</p>
+<p>{% trans "An email has been sent to your nominated address. Please check your email for details." %}</p>
 
 {% endblock %}							
