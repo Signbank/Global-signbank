@@ -7,7 +7,7 @@ has been given access to dataset {{dataset}}.
 Motivation: {{motivation}}
 
 {% endif %}
-You are the dataset manager for {{dataset}}. Please go to the following page to undo access for the user:
+You are the dataset manager for {{dataset}}. Please go to the following page to change access for the user:
 
 https://{{site}}/datasets/manager/
 
