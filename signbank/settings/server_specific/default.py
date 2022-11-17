@@ -64,7 +64,7 @@ gettext = lambda s: s
 LANGUAGES = [('en', gettext('English'))]
 
 LANGUAGES_LANGUAGE_CODE_3CHAR = (
-    ('en', 'eng')
+    ('en', 'eng'),
 )
 
 #Short (abbreviated) version of how language users call their language, to be used in the langauge picker
