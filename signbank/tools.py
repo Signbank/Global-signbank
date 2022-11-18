@@ -702,10 +702,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             try:
                 field = fields[human_key]
                 machine_key = field.name
-                # print('SUCCESS: accessing field name: (', human_key, ')')
 
             except KeyError:
-                # print('field ', human_key, ' not found in fields')
                 # Signbank ID is skipped, for this purpose it was popped from the fields to compare
                 # Skip above fields with complex values: Keywords, Signlanguages, Dialects, Relations to other signs, Relations to foreign signs, Morphology.
 
@@ -721,8 +719,6 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     column_name_error = True
 
                 continue
-
-            # print('SUCCESS: human_key (', human_key, '), machine_key: (', machine_key, '), new_human_value: (', new_human_value, ')')
 
             #Try to translate the value to machine values if needed
             if hasattr(field, 'field_choice_category'):

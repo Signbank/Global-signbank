@@ -1248,7 +1248,6 @@ class GlossDetailView(DetailView):
 
     def get_template_names(self):
         if 'show_colors' in self.request.session.keys() and self.request.session['show_colors']:
-            # print('show colors inside GlossDetailView')
             return ['dictionary/gloss_detail_preview.html']
         return ['dictionary/gloss_detail.html']
 
@@ -1596,7 +1595,6 @@ class GlossDetailView(DetailView):
         notes = context['gloss'].definition_set.all()
         notes_groupedby_role = {}
         for note in notes:
-            # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
             if note.role_fk is not None:
                 translated_note_role = note.role_fk.name
             else:
@@ -1684,7 +1682,6 @@ class GlossDetailView(DetailView):
             gloss_dialect_choices = []
 
         for gd in initial_gloss_dialects:
-            # print('initial gloss dialect: ', gd)
             if gd in gloss_dialect_choices:
                 gloss_dialects.append(gd)
             else:
@@ -2502,8 +2499,6 @@ class MorphemeListView(ListView):
         #If we wanted to get everything, we're done now
         if show_all:
 
-            # return order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
-            # print('queryset language codes: ', self.queryset_language_codes)
             qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
             return qs
@@ -6084,9 +6079,6 @@ class MorphemeDetailView(DetailView):
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
-        # CHECK THIS
-        # print('morpheme detail view get context request session: ', self.request.session.keys())
-        # slef last used dataset is None at this point
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         context['choice_lists'] = {}
@@ -6170,7 +6162,6 @@ class MorphemeDetailView(DetailView):
         notes = context['morpheme'].definition_set.all()
         notes_groupedby_role = {}
         for note in notes:
-            # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
             if note.role_fk is not None:
                 translated_note_role = note.role_fk.name
             else:
@@ -6213,7 +6204,6 @@ class MorphemeDetailView(DetailView):
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         if gl.dataset:
-            # print('morpheme detail view get context dataset: ', gl.dataset)
             for language in gl.dataset.translation_languages.all():
                 context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
         else:
@@ -6292,7 +6282,6 @@ class MorphemeDetailView(DetailView):
             gloss_dialect_choices = []
 
         for gd in initial_gloss_dialects:
-            # print('initial gloss dialect: ', gd)
             if gd in gloss_dialect_choices:
                 morpheme_dialects.append(gd)
             else:
@@ -6490,7 +6479,6 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
                 trans_dict['lemma'] = translation.text
                 lemmas_dict_list.append(trans_dict)
     sorted_lemmas_dict = sorted(lemmas_dict_list, key=lambda x : (x['lemma'], len(x['lemma'])))
-    # print('sorted lemmas dict: ', sorted_lemmas_dict)
     return HttpResponse(json.dumps(sorted_lemmas_dict), {'content-type': 'application/json'})
 
 def homonyms_ajax_complete(request, gloss_id):
@@ -6536,8 +6524,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
     except Exception as e:
         print(e)
         minimalpairs_objects = {}
-
-    # print("MINIMALPAIRS_OBJECTS", minimalpairs_objects)
 
     translation_focus_gloss = ""
     translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)

@@ -286,7 +286,6 @@ def convert_query_parameters_to_filter(query_parameters):
             # this should be the fall through for fields not in multiselect and not covered above
             # it could happen that a ForeignKey field falls through which is not included in multiselect
             if get_key + '_fk' in mapped_fieldnames:
-                # print('else case of query parameters, field has _fk: ', get_key)
                 field_obj = Gloss._meta.get_field(get_key+'_fk')
             else:
                 field_obj = Gloss._meta.get_field(get_key)
