@@ -13,7 +13,7 @@ LANGUAGES = (
 )
 
 LANGUAGES_LANGUAGE_CODE_3CHAR = (
-    ('en', 'eng')
+    ('en', 'eng'),
 )
 
 LANGUAGE_CODE = "en-us"

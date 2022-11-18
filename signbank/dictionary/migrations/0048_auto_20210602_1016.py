@@ -5,6 +5,28 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 
+def add_default_handshapes(apps, schema_editor):
+    """
+    Add 0 and 1 choices to every Handshape category
+    :param apps:
+    :param schema_editor:
+    :return:
+    """
+    Handshape = apps.get_model('dictionary', 'Handshape')
+
+    new_handshape_0, created = Handshape.objects.get_or_create(name='-', machine_value=0)
+    if created:
+        new_handshape_0.name_en = '-'
+        new_handshape_0.name_nl = '-'
+        new_handshape_0.name_zh_hans = '-'
+        new_handshape_0.save()
+
+    new_handshape_1, created = Handshape.objects.get_or_create(name='N/A', machine_value=1)
+    new_handshape_1.name_en = 'N/A'
+    new_handshape_1.name_nl = 'N/A'
+    new_handshape_1.name_zh_hans = 'N/A'
+    new_handshape_1.save()
+
 
 def copy_handshape_values(apps, schema_editor):
     Gloss = apps.get_model('dictionary', 'Gloss')
@@ -33,5 +55,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(add_default_handshapes),
         migrations.RunPython(copy_handshape_values),
     ]
