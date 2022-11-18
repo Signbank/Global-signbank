@@ -13,7 +13,7 @@ from signbank.tools import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
-from signbank.settings.server_specific import DEFAULT_KEYWORDS_LANGUAGE, LANGUAGES
+from signbank.settings.server_specific import DEFAULT_KEYWORDS_LANGUAGE, LANGUAGES, MODELTRANSLATION_LANGUAGES
 from signbank.settings.base import FIELDS
 
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
@@ -1062,7 +1062,7 @@ class FieldChoiceForm(forms.ModelForm):
     class Meta:
         model = FieldChoice
         fields = ['field'] \
-                 + ['name_' + language.replace('-', '_') for language in [l[0] for l in settings.LANGUAGES]] \
+                 + ['name_' + language.replace('-', '_') for language in MODELTRANSLATION_LANGUAGES] \
                  + ['field_color', 'machine_value', ]
 
     def __init__(self, *args, **kwargs):
@@ -1138,20 +1138,20 @@ class FieldChoiceForm(forms.ModelForm):
         if qs_f.count() == 0:
             raise forms.ValidationError(_('This Field Choice Category does not exist'))
 
-        for language in [l[0] for l in LANGUAGES]:
+        for language in MODELTRANSLATION_LANGUAGES:
             name_languagecode = 'name_'+ language.replace('-', '_')
             if name_languagecode not in data_fields.keys():
                 raise forms.ValidationError(_('The Name fields for all languages are required'))
 
         if not self.instance:
-            for language, langauge_name in [(l[0], l[1]) for l in LANGUAGES]:
+            for language, langauge_name in [(l[0], l[1]) for l in LANGUAGES if l[0] in MODELTRANSLATION_LANGUAGES]:
                 name_languagecode = 'name_'+ language.replace('-', '_')
                 name_languagecode_value = data_fields[name_languagecode]
                 if self.already_exists(field, name_languagecode, name_languagecode_value):
                     raise forms.ValidationError(_('The combination ' + field + ' -- ' + name_languagecode_value
                                                   + ' already exists for ' + langauge_name))
         else:
-            for language, langauge_name in [(l[0], l[1]) for l in LANGUAGES]:
+            for language, langauge_name in [(l[0], l[1]) for l in LANGUAGES if l[0] in MODELTRANSLATION_LANGUAGES]:
                 name_languagecode = 'name_'+ language.replace('-', '_')
                 name_languagecode_value = data_fields[name_languagecode]
                 if getattr(self.instance, name_languagecode) == name_languagecode_value:
