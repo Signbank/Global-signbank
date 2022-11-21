@@ -1,6 +1,6 @@
 from modeltranslation.translator import translator, TranslationOptions
 from .models import Language, FieldChoice, Handshape, SemanticField, DerivationHistory
-from signbank.settings.base import LANGUAGES
+from signbank.settings.base import LANGUAGES, MODELTRANSLATION_LANGUAGES
 
 # This file lists settings for django-modeltranslation.
 # Here you can define which fields from which models to translate.
@@ -8,7 +8,7 @@ from signbank.settings.base import LANGUAGES
 
 class LanguageTranslationOptions(TranslationOptions):
     fields = ('name',)
-    required_languages = tuple([t[0] for t in LANGUAGES])
+    required_languages = tuple([t for t in MODELTRANSLATION_LANGUAGES])
 
 
 translator.register(Language, LanguageTranslationOptions)
@@ -16,7 +16,7 @@ translator.register(Language, LanguageTranslationOptions)
 
 class FieldChoiceTranslationOptions(TranslationOptions):
     fields = ('name',)
-    required_languages = tuple([t[0] for t in LANGUAGES])
+    required_languages = tuple([t for t in MODELTRANSLATION_LANGUAGES])
 
 
 translator.register(FieldChoice, FieldChoiceTranslationOptions)
@@ -24,7 +24,7 @@ translator.register(FieldChoice, FieldChoiceTranslationOptions)
 
 class HandshapeTranslationOptions(TranslationOptions):
     fields = ('name',)
-    required_languages = tuple([t[0] for t in LANGUAGES])
+    required_languages = tuple([t for t in MODELTRANSLATION_LANGUAGES])
 
 
 translator.register(Handshape, HandshapeTranslationOptions)
@@ -32,7 +32,7 @@ translator.register(Handshape, HandshapeTranslationOptions)
 
 class SemanticFieldTranslationOptions(TranslationOptions):
     fields = ('name',)
-    required_languages = tuple([t[0] for t in LANGUAGES])
+    required_languages = tuple([t for t in MODELTRANSLATION_LANGUAGES])
 
 
 translator.register(SemanticField, SemanticFieldTranslationOptions)
@@ -40,7 +40,7 @@ translator.register(SemanticField, SemanticFieldTranslationOptions)
 
 class DerivationHistoryTranslationOptions(TranslationOptions):
     fields = ('name',)
-    required_languages = tuple([t[0] for t in LANGUAGES])
+    required_languages = tuple([t for t in MODELTRANSLATION_LANGUAGES])
 
 
 translator.register(DerivationHistory, DerivationHistoryTranslationOptions)

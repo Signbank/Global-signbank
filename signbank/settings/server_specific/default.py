@@ -65,6 +65,8 @@ LANGUAGES = (
     ('en', gettext('English')),
 )
 
+MODELTRANSLATION_LANGUAGES = ['en']
+
 LANGUAGES_LANGUAGE_CODE_3CHAR = (
     ('en', 'eng'),
 )
