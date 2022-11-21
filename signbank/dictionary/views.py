@@ -298,16 +298,13 @@ def gloss(request, glossid):
     if not trans:
         # this prevents an empty title in the template
         # this essentially overrides the "gloss.idgloss" method to prevent it from putting translations between parentheses
-        # print('trans was None, set it to annotation id gloss of default language')
         trans = gloss.annotationidglosstranslation_set.get(language=default_language).text
-    # print('word trans: ', trans)
 
     # Regroup notes
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
     notes = gloss.definition_set.all()
     notes_groupedby_role = {}
     for note in notes:
-        # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
         translated_note_role = machine_value_to_translated_human_value(note.role, note_role_choices,
                                                                        request.LANGUAGE_CODE)
         role_id = (note.role, translated_note_role)
@@ -1185,7 +1182,6 @@ def import_csv_create(request):
                                                                                language=language,
                                                                                text=term).lemma)
                 except ObjectDoesNotExist as e:
-                    # print("Error: {}".format(e))
                     # New lemma will be created
                     pass
             existing_lemmas_set = set(existing_lemmas)
@@ -1533,7 +1529,6 @@ def import_csv_update(request):
             #In case there's no dot, this is not a value we set at the previous page
             except ValueError:
                 # when the database token csrfmiddlewaretoken is passed, there is no dot
-                # print('no dot found')
                 continue
 
             gloss = Gloss.objects.select_related().get(pk=pk)
@@ -1561,7 +1556,6 @@ def import_csv_update(request):
                         lemma_idgloss_string = ''
                     if lemma_idgloss_string != new_value and new_value != 'None' and new_value != '':
                         error_string = 'ERROR: Attempt to update Lemma ID Gloss translations: ' + new_value
-                        # print('error string: ', error_string)
                         if error:
                             error.append(error_string)
                         else:
@@ -2058,8 +2052,6 @@ def import_csv_lemmas(request):
                             lemma_translation.save()
                         # else:
                             # this case should not occur, there is no translation for the language and the user wants to make an empty one
-                            # print('Lemma ', str(lemma.pk), ': No existing translation for language (', language_name, ') and no new value: ', new_value)
-
 
         stage = 2
 

@@ -53,7 +53,7 @@ from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
-    fields_to_categories, fields_to_fieldcategory_dict
+    fields_to_categories, fields_to_fieldcategory_dict, get_interface_language_and_default_language_codes
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -494,11 +494,8 @@ class GlossListView(ListView):
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
 
-        default_language = Language.objects.get(id=get_default_language_id())
-        default_language_code = default_language.language_code_2char
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
-        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-        interface_language_code = interface_language.language_code_2char
+        (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
         dataset_display_languages = []
         for lang in dataset_languages:
             dataset_display_languages.append(lang.language_code_2char)
@@ -1228,7 +1225,6 @@ class GlossDetailView(DetailView):
 
     def get_template_names(self):
         if 'show_colors' in self.request.session.keys() and self.request.session['show_colors']:
-            # print('show colors inside GlossDetailView')
             return ['dictionary/gloss_detail_preview.html']
         return ['dictionary/gloss_detail.html']
 
@@ -1303,12 +1299,9 @@ class GlossDetailView(DetailView):
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
 
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
-        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-        interface_language_code = interface_language.language_code_2char
-
         default_language = Language.objects.get(id=get_default_language_id())
-        default_language_code = default_language.language_code_2char
+
+        (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(self.request)
 
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
@@ -1575,7 +1568,6 @@ class GlossDetailView(DetailView):
         notes = context['gloss'].definition_set.all()
         notes_groupedby_role = {}
         for note in notes:
-            # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
             if note.role is not None:
                 translated_note_role = note.role.name
             else:
@@ -1663,7 +1655,6 @@ class GlossDetailView(DetailView):
             gloss_dialect_choices = []
 
         for gd in initial_gloss_dialects:
-            # print('initial gloss dialect: ', gd)
             if gd in gloss_dialect_choices:
                 gloss_dialects.append(gd)
             else:
@@ -2016,12 +2007,7 @@ class GlossRelationsDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
 
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
-        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-        interface_language_code = interface_language.language_code_2char
-
-        default_language = Language.objects.get(id=get_default_language_id())
-        default_language_code = default_language.language_code_2char
+        (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(self.request)
 
         # Call the base implementation first to get a context
         context = super(GlossRelationsDetailView, self).get_context_data(**kwargs)
@@ -2351,11 +2337,8 @@ class MorphemeListView(ListView):
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
 
-        default_language = Language.objects.get(id=get_default_language_id())
-        default_language_code = default_language.language_code_2char
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
-        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-        interface_language_code = interface_language.language_code_2char
+        (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
         dataset_display_languages = []
         for lang in dataset_languages:
             dataset_display_languages.append(lang.language_code_2char)
@@ -2449,8 +2432,6 @@ class MorphemeListView(ListView):
         #If we wanted to get everything, we're done now
         if show_all:
 
-            # return order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
-            # print('queryset language codes: ', self.queryset_language_codes)
             qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
             return qs
@@ -2916,11 +2897,8 @@ class HandshapeDetailView(DetailView):
 
             qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
-            default_language = Language.objects.get(id=get_default_language_id())
-            default_language_code = default_language.language_code_2char
-            interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
-            interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-            interface_language_code = interface_language.language_code_2char
+            (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
             dataset_display_languages = []
             for lang in dataset_languages:
                 dataset_display_languages.append(lang.language_code_2char)
@@ -3286,11 +3264,8 @@ class MinimalPairsListView(ListView):
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
 
-        default_language = Language.objects.get(id=get_default_language_id())
-        default_language_code = default_language.language_code_2char
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
-        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-        interface_language_code = interface_language.language_code_2char
+        (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
         dataset_display_languages = []
         for lang in dataset_languages:
             dataset_display_languages.append(lang.language_code_2char)
@@ -3818,10 +3793,9 @@ class GlossFrequencyView(DetailView):
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
 
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
-        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-        interface_language_code = interface_language.language_code_2char
         default_language = Language.objects.get(id=get_default_language_id())
+
+        (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(self.request)
 
         #Pass info about which fields we want to see
         gl = context['gloss']
@@ -3977,13 +3951,11 @@ class LemmaFrequencyView(DetailView):
 
     def get_context_data(self, **kwargs):
 
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
         interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
         interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-        interface_language_code = interface_language.language_code_2char
-
         default_language = Language.objects.get(id=get_default_language_id())
-        default_language_code = default_language.language_code_2char
+
+        (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(self.request)
 
         # Call the base implementation first to get a context
         context = super(LemmaFrequencyView, self).get_context_data(**kwargs)
@@ -4083,8 +4055,8 @@ class LemmaFrequencyView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     lemma_dict[language.language_code_2char] = gl_lem.annotationidglosstranslation_set.filter(language=language)
-                if language_code in lemma_dict.keys():
-                    gl_lem_display = lemma_dict[language_code][0].text
+                if interface_language_code in lemma_dict.keys():
+                    gl_lem_display = lemma_dict[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     gl_lem_display = lemma_dict[default_language_code][0].text
@@ -4159,11 +4131,8 @@ class HandshapeListView(ListView):
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
 
-        default_language = Language.objects.get(id=get_default_language_id())
-        default_language_code = default_language.language_code_2char
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
-        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-        interface_language_code = interface_language.language_code_2char
+        (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
         dataset_display_languages = []
         for lang in dataset_languages:
             dataset_display_languages.append(lang.language_code_2char)
@@ -5969,9 +5938,6 @@ class MorphemeDetailView(DetailView):
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
-        # CHECK THIS
-        # print('morpheme detail view get context request session: ', self.request.session.keys())
-        # slef last used dataset is None at this point
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         context['choice_lists'] = {}
@@ -6055,7 +6021,6 @@ class MorphemeDetailView(DetailView):
         notes = context['morpheme'].definition_set.all()
         notes_groupedby_role = {}
         for note in notes:
-            # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
             if note.role is not None:
                 translated_note_role = note.role.name
             else:
@@ -6109,7 +6074,6 @@ class MorphemeDetailView(DetailView):
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         if gl.dataset:
-            # print('morpheme detail view get context dataset: ', gl.dataset)
             for language in gl.dataset.translation_languages.all():
                 context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
         else:
@@ -6159,7 +6123,6 @@ class MorphemeDetailView(DetailView):
             gloss_dialect_choices = []
 
         for gd in initial_gloss_dialects:
-            # print('initial gloss dialect: ', gd)
             if gd in gloss_dialect_choices:
                 morpheme_dialects.append(gd)
             else:
@@ -6357,7 +6320,6 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
                 trans_dict['lemma'] = translation.text
                 lemmas_dict_list.append(trans_dict)
     sorted_lemmas_dict = sorted(lemmas_dict_list, key=lambda x : (x['lemma'], len(x['lemma'])))
-    # print('sorted lemmas dict: ', sorted_lemmas_dict)
     return HttpResponse(json.dumps(sorted_lemmas_dict), {'content-type': 'application/json'})
 
 def homonyms_ajax_complete(request, gloss_id):
@@ -6368,11 +6330,7 @@ def homonyms_ajax_complete(request, gloss_id):
     except ObjectDoesNotExist:
         homonym_objects = []
 
-    default_language = Language.objects.get(id=get_default_language_id())
-    default_language_code = default_language.language_code_2char
-    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
-    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-    interface_language_code = interface_language.language_code_2char
+    (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(request)
     result = []
     for homonym in homonym_objects:
         translations = homonym.get_annotationidglosstranslation_texts()
@@ -6403,8 +6361,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
     except Exception as e:
         print(e)
         minimalpairs_objects = {}
-
-    # print("MINIMALPAIRS_OBJECTS", minimalpairs_objects)
 
     translation_focus_gloss = ""
     translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
@@ -6867,11 +6823,9 @@ class LemmaListView(ListView):
         # the language code is used when more than one is available,
         # otherwise the Default language will be used, if available
         # otherwise the Lemma ID will be used in the scroll bar
-        default_language = Language.objects.get(id=get_default_language_id())
-        default_language_code = default_language.language_code_2char
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[self.request.LANGUAGE_CODE]
-        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-        interface_language_code = interface_language.language_code_2char
+
+        (interface_language_code, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
         dataset_display_languages = []
         for lang in dataset_languages:
             dataset_display_languages.append(lang.language_code_2char)

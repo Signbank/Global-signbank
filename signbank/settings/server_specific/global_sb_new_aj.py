@@ -15,7 +15,7 @@ LANGUAGES = (
   ('nl', gettext('Dutch')),
   ('zh-hans', gettext('Chinese')),
   ('he', gettext('Hebrew')),
-  ('ar', gettext('Arabic'))  
+  ('ar', gettext('Arabic')),
 )
 
 LANGUAGES_LANGUAGE_CODE_3CHAR = (
@@ -23,7 +23,7 @@ LANGUAGES_LANGUAGE_CODE_3CHAR = (
     ('nl', 'nld'),
     ('zh-hans', 'zho'),
     ('he', 'heb'),
-    ('ar', 'ara')
+    ('ar', 'ara'),
 )
 
 INTERFACE_LANGUAGE_SHORT_NAMES = ['EN','NL','官话','עִברִית','عربى']

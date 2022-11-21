@@ -1189,28 +1189,24 @@ class ManageDatasetTests(TestCase):
         # Grant view permission
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'Sign In'.format(self.user2.username))
 
         # Revoke view permission
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                      'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'Sign In'.format(self.user2.username))
 
         # Grant change permission
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                      'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'Sign In'.format(self.user2.username))
 
         # Revoke change permission
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                      'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'Sign In'.format(self.user2.username))
 
     def test_User_is_not_dataset_manager(self):
@@ -1227,7 +1223,6 @@ class ManageDatasetTests(TestCase):
         # Grant view permission
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
                             .format(self.user2.username))
 
@@ -1235,7 +1230,6 @@ class ManageDatasetTests(TestCase):
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                      'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
                             .format(self.user2.username))
 
@@ -1243,7 +1237,6 @@ class ManageDatasetTests(TestCase):
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                      'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
                             .format(self.user2.username))
 
@@ -1251,7 +1244,6 @@ class ManageDatasetTests(TestCase):
         form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                      'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
                             .format(self.user2.username))
 
@@ -1272,27 +1264,23 @@ class ManageDatasetTests(TestCase):
         # Grant view permission
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
 
         # Revoke view permission
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                     'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
 
         # Grant change permission
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
 
         # Revoke change permission
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                     'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
 
     def test_User_is_dataset_manager(self):
@@ -1313,7 +1301,6 @@ class ManageDatasetTests(TestCase):
         # Grant view permission
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'View permission for user successfully granted.'
                             .format(self.user2.username, self.user2.first_name, self.user2.last_name))
 
@@ -1321,14 +1308,12 @@ class ManageDatasetTests(TestCase):
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                     'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'View (and change) permission for user successfully revoked.'
                             .format(self.user2.username))
 
         # Grant change permission without view permission
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'User does not have view permission for this dataset. Please grant view permission first.'
                             .format(self.user2.username, self.user2.first_name, self.user2.last_name))
 
@@ -1339,7 +1324,6 @@ class ManageDatasetTests(TestCase):
         # Grant change permission second
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'Change permission for user successfully granted.'
                             .format(self.user2.username))
 
@@ -1347,7 +1331,6 @@ class ManageDatasetTests(TestCase):
         form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
                     'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'Change permission for user successfully revoked.'
                             .format(self.user2.username))
 
@@ -1365,7 +1348,6 @@ class ManageDatasetTests(TestCase):
 
         # Not a member of the group dataset managers
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.')
 
         # Make the user member of the group dataset managers
@@ -1373,7 +1355,6 @@ class ManageDatasetTests(TestCase):
         dataset_manager_group.user_set.add(self.user)
         assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, 'The default language of')
 
         # Try to add a language that is not in the translation language set of the test dataset
@@ -1381,7 +1362,6 @@ class ManageDatasetTests(TestCase):
         language.save()
         form_data = {'dataset_name': self.test_dataset.name, 'default_language': language.id}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
-        # print("Messages: " + ", ".join([m.message for m in response.context['messages']]))
         self.assertContains(response, '{} is not in the set of languages of dataset {}.'.format(
                                                             language.name, self.test_dataset.acronym))
 
@@ -1606,8 +1586,6 @@ class HandshapeTests(TestCase):
             new_lemmaidglosstranslation.save()
             lemmas[lemma_id] = new_lemma
 
-        # print('created lemmas: ', lemmas)
-
         # Create 10 glosses that start out being the same
         glosses = {}
         for gloss_id in range(1,4):
@@ -1627,8 +1605,6 @@ class HandshapeTests(TestCase):
                 annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
                 annotationIdgloss.save()
             glosses[gloss_id] = new_gloss
-
-        # print('created glosses: ', glosses)
 
         # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
         # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
@@ -2297,7 +2273,6 @@ class FieldChoiceTests(TestCase):
 
         from signbank.tools import fields_with_choices_morpheme_type
         fields_with_choices = fields_with_choices_morpheme_type()
-        # print('fields with choices morpheme type: ', fields_with_choices)
         # create a gloss with and without field choices
 
         # set the test dataset
@@ -3207,8 +3182,6 @@ class MinimalPairsTests(TestCase):
             new_lemmaidglosstranslation.save()
             lemmas[lemma_id] = new_lemma
 
-        # print('created lemmas: ', lemmas)
-
         # Create 10 glosses that start out being the same
         glosses = {}
         for gloss_id in range(1,15):
@@ -3228,8 +3201,6 @@ class MinimalPairsTests(TestCase):
                 annotationIdgloss.text = 'thisisatemporarytestgloss_' + language_code_2char + str(gloss_id)
                 annotationIdgloss.save()
             glosses[gloss_id] = new_gloss
-
-        # print('created glosses: ', glosses)
 
         # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
         # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
@@ -3298,7 +3269,6 @@ class MinimalPairsTests(TestCase):
             minimal_pairs_dict = response_row.context['minimal_pairs_dict']
 
             # uncomment print statement to see what the minimal pairs are
-            # print('minimal pairs ', response_row.context['focus_gloss_translation'])
 
             for minimalpair in minimal_pairs_dict:
                 # check that there is a row for this minimal pair in the html
@@ -3334,8 +3304,6 @@ class MinimalPairsTests(TestCase):
                                                                   lemma=new_lemma, language=language)
             new_lemmaidglosstranslation.save()
             lemmas[lemma_id] = new_lemma
-
-        # print('created lemmas: ', lemmas)
 
         # Create 10 glosses that start out being the same
         glosses = {}
@@ -3414,7 +3382,6 @@ class MinimalPairsTests(TestCase):
         for obj in objects_on_page:
             response_row = self.client.get('/dictionary/ajax/minimalpairs/' + str(obj) + '/')
             minimal_pairs_dict = response_row.context['minimal_pairs_dict']
-            # print(minimal_pairs_dict)
             # if str(obj) == str(glosses[9].id):
             #     # make sure no minimal pairs for this gloss, since handedness is empty
             #     self.assertEqual(minimal_pairs_dict, [])

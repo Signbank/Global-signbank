@@ -162,8 +162,7 @@ def update_gloss(request, glossid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
-    # uncomment for debugging
-    # print('update gloss: ', glossid, field, value)
+
     original_value = '' #will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     field_category = ''
@@ -332,8 +331,7 @@ def update_gloss(request, glossid):
             newvalue = _('No')
     elif field in 'excludeFromEcv':
         original_value = getattr(gloss,field)
-        # uncomment for debugging
-        # print('excludefromecv: ', original_value, ', ', value)
+
         # only modify if we have publish permission
 
         gloss.excludeFromEcv = value.lower() in [_('Yes').lower(),'true',True,1]
@@ -476,8 +474,7 @@ def update_gloss(request, glossid):
             newvalue = ''
         #Regular field updating
         else:
-            # uncomment for debugging
-            # print('update else: ', field, value)
+
             # Alert: Note that if field is idgloss, the following code updates it
             gloss.__setattr__(field,value)
             gloss.save()
@@ -2388,7 +2385,6 @@ def update_excluded_choices(request):
             managed_datasets.append(dataset)
 
     excluded_choices = {dataset.acronym: [] for dataset in managed_datasets}
-    # print('keys: ', request.POST.keys())
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
@@ -2442,7 +2438,7 @@ def update_field_choice_color(request, fieldchoiceid):
         form = FieldChoiceColorForm(request.POST)
 
         thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
-        # print('field choice id: ', fieldchoiceid)
+
         if form.is_valid():
 
             new_color = form.cleaned_data['field_color']
@@ -2455,7 +2451,6 @@ def update_field_choice_color(request, fieldchoiceid):
             thisfieldchoice.field_color = new_color
             thisfieldchoice.save()
             category = thisfieldchoice.field
-            # print('inside update field color: ', original_value, machine_value, new_color, category)
 
             return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
                                 {'content-type': 'text/plain'})

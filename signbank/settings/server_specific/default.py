@@ -61,7 +61,9 @@ PREFIX_URL = ''
 
 #The interface languages supported by your installation
 gettext = lambda s: s
-LANGUAGES = [('en', gettext('English'))]
+LANGUAGES = (
+    ('en', gettext('English')),
+)
 
 LANGUAGES_LANGUAGE_CODE_3CHAR = (
     ('en', 'eng'),
