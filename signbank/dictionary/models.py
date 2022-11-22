@@ -445,6 +445,12 @@ class Handshape(models.Model):
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
             except KeyError:
                 d[f.name] = _(self._meta.get_field(f.name).name)
+        for f in self._meta.many_to_many:
+            field = self._meta.get_field(f.name)
+            if hasattr(field, 'verbose_name'):
+                d[f.name] = _(field.verbose_name)
+            else:
+                d[f.name] = _(field.name)
         return d
 
     def get_image_path(self, check_existance=True):
@@ -626,6 +632,12 @@ class Gloss(models.Model):
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
             except KeyError:
                 d[f.name] = _(self._meta.get_field(f.name).name)
+        for f in self._meta.many_to_many:
+            field = self._meta.get_field(f.name)
+            if hasattr(field, 'verbose_name'):
+                d[f.name] = _(field.verbose_name)
+            else:
+                d[f.name] = _(field.name)
         return d
 
     lemma = models.ForeignKey("LemmaIdgloss", null=True, on_delete=models.SET_NULL)
@@ -1399,14 +1411,6 @@ class Gloss(models.Model):
         # this method uses string representations for Boolean values
         # in order to distinguish between null values, False values, and Neutral values
 
-        # gloss_fields = {}
-        # construct a dictionary where the keys are the field names as in the settings
-        # and the values are the fields of the gloss, using the new field choice model instead of the original
-        # this structure also prevents duplicates
-        # for f in Gloss._meta.fields:
-        #     if f.name in FIELDS['phonology']:
-        #         gloss_fields[f.name] = f
-
         phonology_dict = dict()
         for field in FIELDS['phonology']:
             gloss_field = Gloss._meta.get_field(field)
@@ -1520,9 +1524,7 @@ class Gloss(models.Model):
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
         from django.db.models import When, Case, NullBooleanField, IntegerField
-        # gloss_fields = {}
-        # for f in Gloss._meta.fields:
-        #     gloss_fields[f.name] = f
+
         zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
 
         for (field, value_of_this_field) in zipped_tuples:
@@ -2493,14 +2495,6 @@ class Dataset(models.Model):
     def generate_frequency_dict(self):
         fields_to_map = FIELDS['phonology'] + FIELDS['semantics']
 
-        # gloss_fields = {}
-        # construct a dictionary where the keys are the field names as in the settings
-        # and the values are the fields of the gloss, using the new field choice model instead of the original
-        # this structure also prevents duplicates
-        # for f in Gloss._meta.fields:
-        #     if f.name in fields_to_map:
-        #         gloss_fields[f.name] = f
-        # print(gloss_fields)
         fields_data = []
         for field in fields_to_map:
             gloss_field = Gloss._meta.get_field(field)
