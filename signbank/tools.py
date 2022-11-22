@@ -2125,4 +2125,4 @@ def get_interface_language_and_default_language_codes(request):
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     interface_language_code = interface_language.language_code_2char
 
-    return (interface_language_code, default_language_code)
+    return (interface_language, interface_language_code, default_language, default_language_code)
