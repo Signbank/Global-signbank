@@ -201,6 +201,12 @@ def convert_query_parameters_to_filter(query_parameters):
             # Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_these_definitions))
+        elif get_key[:-2] == 'semField':
+            q_filter = 'semField__in'
+            query_list.append(Q(**{q_filter: get_value}))
+        elif get_key[:-2] == 'derivHist':
+            q_filter = 'derivHist__in'
+            query_list.append(Q(**{q_filter: get_value}))
         elif get_key == 'useInstr':
             query_list.append(Q(useInstr__iregex=get_value))
         elif get_key == 'createdBefore':
@@ -216,13 +222,8 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(pk__in=pks_for_glosses_with_matching_creator))
 
         elif get_key in multiple_select_gloss_fields:
-            if get_key[:-2] == 'semField':
-                q_filter = 'semFieldShadow__in'
-            elif get_key[:-2] == 'derivHist':
-                q_filter = 'derivHistShadow__in'
-            else:
-                mapped_key = get_key[:-2]
-                q_filter = mapped_key + '__machine_value__in'
+            mapped_key = get_key[:-2]
+            q_filter = mapped_key + '__machine_value__in'
             query_list.append(Q(** {q_filter: get_value}))
         elif get_key in ['hasRelation']:
             #Find all relations with this role
@@ -409,6 +410,10 @@ def pretty_print_query_values(dataset_languages,query_parameters):
             # these are all displayed in the Query Parameters display (as non-selectable buttons in the template)
             if key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                 choices_for_category = Handshape.objects.filter(machine_value__in=query_parameters[key])
+            elif key[:-2] in ['semField']:
+                choices_for_category = SemanticField.objects.filter(machine_value__in=query_parameters[key])
+            elif key[:-2] in ['derivHist']:
+                choices_for_category = DerivationHistory.objects.filter(machine_value__in=query_parameters[key])
             else:
                 field = key[:-2]
                 field_category = Gloss._meta.get_field(field).field_choice_category

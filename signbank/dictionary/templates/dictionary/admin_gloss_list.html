@@ -41,6 +41,7 @@
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+console.log(multiple_select_fields);
 var field_colors = {{field_colors|safe}};
 var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};

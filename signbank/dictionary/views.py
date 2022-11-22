@@ -2709,12 +2709,12 @@ def choice_lists(request):
                 machine_value = choicefield.machine_value
                 choice_list_field = '_' + str(choicefield.machine_value)
                 if fieldchoice_category == 'SemField':
-                    null_field = 'semFieldShadow'
-                    filter = 'semFieldShadow__machine_value__in'
+                    null_field = 'semField'
+                    filter = 'semField__machine_value__in'
                     value = [machine_value]
                 elif fieldchoice_category == 'derivHist':
-                    null_field = 'derivHistShadow'
-                    filter = 'derivHistShadow__machine_value__in'
+                    null_field = 'derivHist'
+                    filter = 'derivHist__machine_value__in'
                     value = [machine_value]
                 else:
                     null_field = field

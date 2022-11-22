@@ -79,12 +79,12 @@ class FieldChoice(models.Model):
     ABSORIPALM = 'AbsOriPalm'
     APERTURE = 'Aperture'
     CONTACTTYPE = 'ContactType'
-    DERIVHIST = 'derivHist'
+    # DERIVHIST = 'derivHist'
     DOMINANTHANDFLEXION = 'DominantHandFlexion'
     DOMINANTHANDSELECTEDFINGERS = 'DominantHandSelectedFingers'
     FINGERSELECTION = 'FingerSelection'
     HANDEDNESS = 'Handedness'
-    HANDSHAPE = 'Handshape'
+    # HANDSHAPE = 'Handshape'
     HANDSHAPECHANGE = 'HandshapeChange'
     ICONICITY = 'iconicity'
     JOINTCONFIGURATION = 'JointConfiguration'
@@ -104,7 +104,7 @@ class FieldChoice(models.Model):
     RELORILOC = 'RelOriLoc'
     RELORIMOV = 'RelOriMov'
     RELATARTIC = 'RelatArtic'
-    SEMFIELD = 'SemField'
+    # SEMFIELD = 'SemField'
     SPREADING = 'Spreading'
     THUMB = 'Thumb'
     VALENCE = 'Valence'
@@ -115,12 +115,12 @@ class FieldChoice(models.Model):
         (ABSORIPALM, 'AbsOriPalm'),
         (APERTURE, 'Aperture'),
         (CONTACTTYPE, 'ContactType'),
-        (DERIVHIST, 'derivHist'),
+        # (DERIVHIST, 'derivHist'),
         (DOMINANTHANDFLEXION, 'DominantHandFlexion'),
         (DOMINANTHANDSELECTEDFINGERS, 'DominantHandSelectedFingers'),
         (FINGERSELECTION, 'FingerSelection'),
         (HANDEDNESS, 'Handedness'),
-        (HANDSHAPE, 'Handshape'),
+        # (HANDSHAPE, 'Handshape'),
         (ICONICITY, 'iconicity'),
         (HANDSHAPECHANGE, 'HandshapeChange'),
         (JOINTCONFIGURATION, 'JointConfiguration'),
@@ -140,7 +140,7 @@ class FieldChoice(models.Model):
         (RELORILOC, 'RelOriLoc'),
         (RELORIMOV, 'RelOriMov'),
         (RELATARTIC, 'RelatArtic'),
-        (SEMFIELD, 'SemField'),
+        # (SEMFIELD, 'SemField'),
         (SPREADING, 'Spreading'),
         (THUMB, 'Thumb'),
         (VALENCE, 'Valence'),
@@ -882,13 +882,7 @@ class Gloss(models.Model):
                                           verbose_name=_("Named Entity"),
                                            related_name="named_entity")
 
-    semField = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.SEMFIELD},
-                                          field_choice_category=FieldChoice.SEMFIELD,
-                                          verbose_name=_("Semantic Field"),
-                                           related_name="semantic_field")
-
-    semFieldShadow = models.ManyToManyField(SemanticField)
+    semField = models.ManyToManyField(SemanticField, verbose_name=_("Semantic Field"))
 
     wordClass = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.WORDCLASS},
@@ -902,13 +896,7 @@ class Gloss(models.Model):
                                           verbose_name=_("Word class 2"),
                                            related_name="word_class_2")
 
-
-    derivHist = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.DERIVHIST},
-                                          field_choice_category=FieldChoice.DERIVHIST,
-                                          verbose_name=_("Derivation history"),
-                                           related_name="derivation_history")
-    derivHistShadow = models.ManyToManyField(DerivationHistory)
+    derivHist = models.ManyToManyField(DerivationHistory, verbose_name=_("Derivation history"))
 
     lexCatNotes = models.CharField(_("Lexical category notes"), null=True, blank=True, max_length=300)
 
@@ -921,22 +909,8 @@ class Gloss(models.Model):
     concConcSet = models.CharField(_("Conception Concept Set"), null=True, blank=True, max_length=300)
 
     # Frequency fields
-
     tokNo = models.IntegerField(_("Number of Occurrences"), null=True, blank=True)
     tokNoSgnr = models.IntegerField(_("Number of Signers"), null=True, blank=True)
-    tokNoA = models.IntegerField(_("Number of Occurrences in Amsterdam"), null=True, blank=True)
-    tokNoV = models.IntegerField(_("Number of Occurrences in Voorburg"), null=True, blank=True)
-    tokNoR = models.IntegerField(_("Number of Occurrences in Rotterdam"), null=True, blank=True)
-    tokNoGe = models.IntegerField(_("Number of Occurrences in Gestel"), null=True, blank=True)
-    tokNoGr = models.IntegerField(_("Number of Occurrences in Groningen"), null=True, blank=True)
-    tokNoO = models.IntegerField(_("Number of Occurrences in Other Regions"), null=True, blank=True)
-
-    tokNoSgnrA = models.IntegerField(_("Number of Amsterdam Signers"), null=True, blank=True)
-    tokNoSgnrV = models.IntegerField(_("Number of Voorburg Signers"), null=True, blank=True)
-    tokNoSgnrR = models.IntegerField(_("Number of Rotterdam Signers"), null=True, blank=True)
-    tokNoSgnrGe = models.IntegerField(_("Number of Gestel Signers"), null=True, blank=True)
-    tokNoSgnrGr = models.IntegerField(_("Number of Groningen Signers"), null=True, blank=True)
-    tokNoSgnrO = models.IntegerField(_("Number of Other Region Signers"), null=True, blank=True)
 
     creationDate = models.DateField(_('Creation date'), default=datetime(2015, 1, 1))
     lastUpdated = models.DateTimeField(_('Last updated'), auto_now=True)
@@ -1425,17 +1399,17 @@ class Gloss(models.Model):
         # this method uses string representations for Boolean values
         # in order to distinguish between null values, False values, and Neutral values
 
-        gloss_fields = {}
+        # gloss_fields = {}
         # construct a dictionary where the keys are the field names as in the settings
         # and the values are the fields of the gloss, using the new field choice model instead of the original
         # this structure also prevents duplicates
-        for f in Gloss._meta.fields:
-            if f.name in FIELDS['phonology']:
-                gloss_fields[f.name] = f
+        # for f in Gloss._meta.fields:
+        #     if f.name in FIELDS['phonology']:
+        #         gloss_fields[f.name] = f
 
         phonology_dict = dict()
         for field in FIELDS['phonology']:
-            gloss_field = gloss_fields[field]
+            gloss_field = Gloss._meta.get_field(field)
             if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
                 continue
             field_value = getattr(self, gloss_field.name)
@@ -1546,13 +1520,13 @@ class Gloss(models.Model):
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
         from django.db.models import When, Case, NullBooleanField, IntegerField
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
+        # gloss_fields = {}
+        # for f in Gloss._meta.fields:
+        #     gloss_fields[f.name] = f
         zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
 
         for (field, value_of_this_field) in zipped_tuples:
-            gloss_field = gloss_fields[field]
+            gloss_field = Gloss._meta.get_field(field)
             if isinstance(gloss_field, Handshape):
                 # field is a handshape
                 different_field = 'different_' + field
@@ -2075,29 +2049,6 @@ except:
     pass
 
 
-# def generate_choice_list_table():
-#     temp_choice_list_table = dict()
-#     for f in Gloss._meta.fields:
-#         if f.choices:
-#             temp_choice_list_table[f.name] = f.choices
-#     for h in Handshape._meta.fields:
-#         if h.choices:
-#             if h not in temp_choice_list_table.keys():
-#                 temp_choice_list_table[h.name] = h.choices
-#             else:
-#                 print('generate fieldname to kind table found identical field in Handshape and Gloss: ', h.name)
-#     for k in Definition._meta.fields:
-#         if k not in temp_choice_list_table.keys():
-#             temp_choice_list_table[k.name] = k.choices
-#         else:
-#             print('generate fieldname to kind table found identical field in Handshape or Gloss and Definition: ',
-#                   k.name)
-#     return temp_choice_list_table
-#
-#
-# choice_list_table = generate_choice_list_table()
-
-
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
 def save_info_about_deleted_gloss(sender, instance, using, **kwarsg):
     from signbank.tools import get_default_annotationidglosstranslation
@@ -2273,6 +2224,8 @@ class Morpheme(Gloss):
 
 def generate_fieldname_to_kind_table():
     temp_field_to_kind_table = dict()
+    for fieldname in ['semField', 'derivHist']:
+        temp_field_to_kind_table[fieldname] = 'list'
     for f in Gloss._meta.fields:
         f_internal_type = f.get_internal_type()
         if f_internal_type in ['NullBooleanField', 'BooleanField']:
@@ -2280,6 +2233,8 @@ def generate_fieldname_to_kind_table():
         elif f_internal_type in ['CharField', 'TextField']:
             temp_field_to_kind_table[f.name] = 'text'
         elif f_internal_type in ['ForeignKey'] and f.name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            temp_field_to_kind_table[f.name] = 'list'
+        elif f.name in ['semField', 'derivHist']:
             temp_field_to_kind_table[f.name] = 'list'
         elif hasattr(f, 'field_choice_category'):
             temp_field_to_kind_table[f.name] = 'list'
@@ -2292,6 +2247,8 @@ def generate_fieldname_to_kind_table():
         elif f_internal_type in ['CharField', 'TextField']:
             temp_field_to_kind_table[f.name] = 'text'
         elif f_internal_type in ['ForeignKey'] and f.name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            temp_field_to_kind_table[f.name] = 'list'
+        elif f.name in ['semField', 'derivHist']:
             temp_field_to_kind_table[f.name] = 'list'
         elif hasattr(f, 'field_choice_category'):
             temp_field_to_kind_table[f.name] = 'list'
@@ -2536,22 +2493,28 @@ class Dataset(models.Model):
     def generate_frequency_dict(self):
         fields_to_map = FIELDS['phonology'] + FIELDS['semantics']
 
-        gloss_fields = {}
+        # gloss_fields = {}
         # construct a dictionary where the keys are the field names as in the settings
         # and the values are the fields of the gloss, using the new field choice model instead of the original
         # this structure also prevents duplicates
-        for f in Gloss._meta.fields:
-            if f.name in fields_to_map:
-                gloss_fields[f.name] = f
-
+        # for f in Gloss._meta.fields:
+        #     if f.name in fields_to_map:
+        #         gloss_fields[f.name] = f
+        # print(gloss_fields)
         fields_data = []
         for field in fields_to_map:
-            gloss_field = gloss_fields[field]
+            gloss_field = Gloss._meta.get_field(field)
             if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                 fields_data.append(
                     (field, gloss_field.verbose_name.title(), 'Handshape'))
             elif hasattr(gloss_field, 'field_choice_category'):
                 fields_data.append((field, gloss_field.verbose_name.title(), gloss_field.field_choice_category))
+            elif field == 'semField':
+                fields_data.append((field, gloss_field.verbose_name.title(), 'SemField'))
+            elif field == 'derivHist':
+                fields_data.append((field, gloss_field.verbose_name.title(), 'derivHist'))
+            # else:
+            #     print('generate freq dict: ', field)
 
         # Sort the data by the translated verbose name field
         ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
@@ -2562,6 +2525,12 @@ class Dataset(models.Model):
             if fieldchoice_category == 'Handshape':
                 choice_list_this_field = list(Handshape.objects.filter(machine_value__lte=1).order_by('machine_value')) \
                                          + list(Handshape.objects.filter(machine_value__gt=1).order_by('name'))
+            elif fieldchoice_category == 'SemField':
+                choice_list_this_field = list(SemanticField.objects.filter(machine_value__lte=1).order_by('machine_value')) \
+                                         + list(SemanticField.objects.filter(machine_value__gt=1).order_by('name'))
+            elif fieldchoice_category == 'derivHist':
+                choice_list_this_field = list(DerivationHistory.objects.filter(machine_value__lte=1).order_by('machine_value')) \
+                                         + list(DerivationHistory.objects.filter(machine_value__gt=1).order_by('name'))
             else:
                 choice_list_this_field = list(FieldChoice.objects.filter(field=fieldchoice_category, machine_value__lte=1).order_by('machine_value')) \
                                         + list(FieldChoice.objects.filter(field=fieldchoice_category, machine_value__gt=1).order_by('name'))
@@ -2573,7 +2542,7 @@ class Dataset(models.Model):
                 # variable column is field.name
                 variable_column = f
                 if variable_column.startswith('semField') and fieldchoice.machine_value > 0:
-                    variable_column_query = 'semFieldShadow__machine_value__in'
+                    variable_column_query = 'semField__machine_value__in'
                     try:
                         semantic_field = [sf.machine_value for sf in SemanticField.objects.filter(name__exact=fieldchoice.name)]
                         choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
@@ -2581,6 +2550,16 @@ class Dataset(models.Model):
                                                                                              variable_column_query: semantic_field}).count()
                     except ObjectDoesNotExist:
                         print('not found semantic choice, ignore: ', fieldchoice.name)
+                        continue
+                elif variable_column.startswith('derivHist') and fieldchoice.machine_value > 0:
+                    variable_column_query = 'derivHist__machine_value__in'
+                    try:
+                        derivation_field = [sf.machine_value for sf in DerivationHistory.objects.filter(name__exact=fieldchoice.name)]
+                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                                                                                         **{
+                                                                                             variable_column_query: derivation_field}).count()
+                    except ObjectDoesNotExist:
+                        print('not found derivation history choice, ignore: ', fieldchoice.name)
                         continue
                 # empty values can be either 0 or else null
                 elif fieldchoice.machine_value == 0:

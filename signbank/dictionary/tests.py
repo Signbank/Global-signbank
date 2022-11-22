@@ -1764,8 +1764,8 @@ class MultipleSelectTests(TestCase):
             annotationIdgloss.text = 'thisisatemporaryannotationidgloss_' + language.language_code_2char
             annotationIdgloss.save()
 
-        new_gloss.semFieldShadow.clear()
-        new_gloss.semFieldShadow.add(new_semanticfield)
+        new_gloss.semField.clear()
+        new_gloss.semField.add(new_semanticfield)
         new_gloss.save()
 
         print('New gloss ', new_gloss.idgloss, ' created with semantic field ', new_semanticfield.name)
@@ -1780,7 +1780,7 @@ class MultipleSelectTests(TestCase):
         # Add another semantic field to the gloss
         new_semanticfield_2 = self.create_semanticfield()
 
-        new_gloss.semFieldShadow.add(new_semanticfield_2)
+        new_gloss.semField.add(new_semanticfield_2)
         new_gloss.save()
         print('Semantic field ', new_semanticfield_2.name, ' added to gloss.')
 

@@ -2052,6 +2052,15 @@ def fields_to_categories():
     choice_categories = []
     for topic in ['main', 'phonology', 'semantics']:
         for field in FIELDS[topic]:
+            if field == 'semField':
+                # capitalize it
+                if 'SemField' not in choice_categories:
+                    choice_categories.append('SemField')
+                continue
+            elif field in ['derivHist']:
+                if field not in choice_categories:
+                    choice_categories.append(field)
+                continue
             # the following check will be used when querying is added, at the moment these don't appear in the phonology list
             if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                 continue
@@ -2067,13 +2076,6 @@ def fields_to_categories():
             if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                 if 'Handshape' not in choice_categories:
                     choice_categories.append('Handshape')
-            elif field == 'semField':
-                # capitalize it
-                if 'SemField' not in choice_categories:
-                    choice_categories.append('SemField')
-            elif field in ['derivHist']:
-                if field not in choice_categories:
-                    choice_categories.append(field)
             elif hasattr(field_field, 'field_choice_category'):
                 if field_field.field_choice_category not in choice_categories:
                     choice_categories.append(field_field.field_choice_category)
@@ -2086,6 +2088,12 @@ def fields_to_fieldcategory_dict(fields=[]):
         fields = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics']
     choice_categories = {}
     for field in fields:
+        if field == 'semField':
+            choice_categories[field] = 'SemField'
+            continue
+        elif field in ['derivHist']:
+            choice_categories[field] = 'derivHist'
+            continue
         # the following check will be used when querying is added, at the moment these don't appear in the phonology list
         if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
             continue
@@ -2106,10 +2114,6 @@ def fields_to_fieldcategory_dict(fields=[]):
             continue
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
             choice_categories[field] = 'Handshape'
-        elif field == 'semField':
-            choice_categories[field] = 'SemField'
-        elif field in ['derivHist']:
-            choice_categories[field] = field
         elif hasattr(field_field, 'field_choice_category'):
             choice_categories[field] = field_field.field_choice_category
     return choice_categories

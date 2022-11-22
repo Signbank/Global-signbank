@@ -674,15 +674,15 @@ def update_semanticfield(request, gloss, field, values):
         if value in semanticfield_choices.keys():
             new_semanticfields_to_save.append(semanticfield_choices[value])
 
-    original_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
+    original_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
 
     # clear the old semantic fields only after we've parsed and checked the new ones
-    gloss.semFieldShadow.clear()
+    gloss.semField.clear()
     for sf in new_semanticfields_to_save:
-        gloss.semFieldShadow.add(sf)
+        gloss.semField.add(sf)
     gloss.save()
 
-    new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
+    new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
 
     revision = GlossRevision(old_value=original_semanticfield_value, new_value=new_semanticfield_value, field_name='semField',
                              gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
@@ -712,15 +712,15 @@ def update_derivationhistory(request, gloss, field, values):
         if value in derivationhistory_choices.keys():
             new_derivationhistory_to_save.append(derivationhistory_choices[value])
 
-    original_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
+    original_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
 
     # clear the old derivation histories only after we've parsed and checked the new ones
-    gloss.derivHistShadow.clear()
+    gloss.derivHist.clear()
     for sf in new_derivationhistory_to_save:
-        gloss.derivHistShadow.add(sf)
+        gloss.derivHist.add(sf)
     gloss.save()
 
-    new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
+    new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
 
     revision = GlossRevision(old_value=original_derivationhistory_value, new_value=new_derivationhistory_value, field_name='derivHist',
                              gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
