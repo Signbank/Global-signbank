@@ -2478,7 +2478,7 @@ class testFrequencyAnalysis(TestCase):
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         from django.utils import translation
-        for language_code in dict(settings.LANGUAGES).keys():
+        for language_code in settings.MODELTRANSLATION_LANGUAGES:
             translation.activate(language_code)
 
             frequency_dict = test_dataset.generate_frequency_dict()
@@ -2494,6 +2494,12 @@ class testFrequencyAnalysis(TestCase):
                 elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                     fields_data.append(
                         (field_name, gloss_field.verbose_name.title(), 'Handshape'))
+                elif field_name == 'semField':
+                    fields_data.append(
+                        (field_name, gloss_field.verbose_name.title(), 'SemField'))
+                elif field_name == 'derivHist':
+                    fields_data.append(
+                        (field_name, gloss_field.verbose_name.title(), 'derivHist'))
             fields_data_keys = [f_name for (f_name,v_verbose,c_category) in fields_data]
 
             self.assertNotEqual(len(fields_data),0)
@@ -2505,6 +2511,16 @@ class testFrequencyAnalysis(TestCase):
                     choice_list = list(Handshape.objects.filter(machine_value__lte=1).
                                     order_by('machine_value').distinct()) \
                                 + list(Handshape.objects.filter(machine_value__gt=1)
+                                        .distinct().order_by('name'))
+                elif fieldchoice_category == 'SemField':
+                    choice_list = list(SemanticField.objects.filter(machine_value__lte=1).
+                                    order_by('machine_value').distinct()) \
+                                + list(SemanticField.objects.filter(machine_value__gt=1)
+                                        .distinct().order_by('name'))
+                elif fieldchoice_category == 'derivHist':
+                    choice_list = list(DerivationHistory.objects.filter(machine_value__lte=1).
+                                    order_by('machine_value').distinct()) \
+                                + list(DerivationHistory.objects.filter(machine_value__gt=1)
                                         .distinct().order_by('name'))
                 else:
                     choice_list = list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__lte=1).
@@ -2595,76 +2611,93 @@ class testSettings(TestCase):
             print('Testing phonology fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in phonology_fields:
                 # make sure all phonology fields in settings are defined in Gloss
-                self.assertIn(f, gloss_fields_names.keys())
-                # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
-                self.assertTrue(hasattr(gloss_fields_names[f], 'choices'))
+                try:
+                    gloss_field = Gloss._meta.get_field(f)
+                    field_exists = True
+                except (KeyError, ObjectDoesNotExist):
+                    field_exists = False
+                self.assertTrue(field_exists)
+                if not field_exists:
+                    continue
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if isinstance(gloss_fields_names[f], models.ForeignKey) and gloss_fields_names[f].related_model == Handshape:
+                if isinstance(gloss_field, models.ForeignKey) and gloss_fields_names[f].related_model == Handshape:
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
-                elif not isinstance(gloss_fields_names[f], FieldChoiceForeignKey):
+                elif not isinstance(gloss_field, FieldChoiceForeignKey):
                     # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
-                    self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                    self.assertFalse(hasattr(gloss_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
-                elif not hasattr(gloss_fields_names[f], 'field_choice_category'):
+                elif not hasattr(gloss_field, 'field_choice_category'):
                     # this is not a choice list field
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and to have field_choice_category defined
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
-                    self.assertTrue(hasattr(gloss_fields_names[f], 'field_choice_category'))
-                    fc_category = gloss_fields_names[f].field_choice_category
+                    self.assertTrue(hasattr(gloss_field, 'field_choice_category'))
+                    fc_category = gloss_field.field_choice_category
                     # make sure there are fields for the category
                     fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category)
                     self.assertGreater(len(fields_for_this_category),0)
 
         if 'semantics' in settings.FIELDS.keys():
             semantics_fields = settings.FIELDS['semantics']
-            gloss_fields_names = { f.name: f for f in Gloss._meta.fields }
             print('Testing semantics fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in semantics_fields:
                 # make sure all semantics fields are defined in Gloss
-                self.assertIn(f, gloss_fields_names.keys())
-                # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
-                self.assertTrue(hasattr(gloss_fields_names[f], 'choices'))
+                try:
+                    gloss_field = Gloss._meta.get_field(f)
+                    field_exists = True
+                except (KeyError, ObjectDoesNotExist):
+                    field_exists = False
+                self.assertTrue(field_exists)
+                if not field_exists:
+                    continue
+
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if not isinstance(gloss_fields_names[f], FieldChoiceForeignKey):
+                if f in ['semField', 'derivHist']:
+                    self.assertEqual(fieldname_to_kind_table[f], 'list')
+                elif not isinstance(gloss_field, FieldChoiceForeignKey):
                     # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
-                    self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                    self.assertFalse(hasattr(gloss_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
-                elif not hasattr(gloss_fields_names[f], 'field_choice_category'):
+                elif not hasattr(gloss_field, 'field_choice_category'):
                     # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and have field_choice_category defined
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
-                    self.assertTrue(hasattr(gloss_fields_names[f], 'field_choice_category'))
-                    fc_category = gloss_fields_names[f].field_choice_category
+                    self.assertTrue(hasattr(gloss_field, 'field_choice_category'))
+                    fc_category = gloss_field.field_choice_category
                     # make sure there are fields for the category
                     fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category, machine_value__gt=1)
                     self.assertGreater(len(fields_for_this_category),0)
 
         if 'handshape' in settings.FIELDS.keys():
             handshape_fields = settings.FIELDS['handshape']
-            handshape_fields_names = { f.name: f for f in Handshape._meta.fields }
             print('Testing handshape fields for declaration in Handshape model with field_choice_category in FieldChoice table.')
             for f in handshape_fields:
                 # make sure all handshape fields are defined in Gloss
-                self.assertIn(f, handshape_fields_names.keys())
-                # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
-                self.assertTrue(hasattr(handshape_fields_names[f], 'choices'))
+                try:
+                    handshape_field = Handshape._meta.get_field(f)
+                    field_exists = True
+                except (KeyError, ObjectDoesNotExist):
+                    field_exists = False
+                self.assertTrue(field_exists)
+                if not field_exists:
+                    continue
+
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if not isinstance(handshape_fields_names[f], FieldChoiceForeignKey):
+                if not isinstance(handshape_field, FieldChoiceForeignKey):
                     # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
-                    self.assertFalse(hasattr(handshape_fields_names[f], 'field_choice_category'))
+                    self.assertFalse(hasattr(handshape_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
-                elif not hasattr(handshape_fields_names[f], 'field_choice_category'):
+                elif not hasattr(handshape_field, 'field_choice_category'):
                     # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and have field_choice_category defined
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
-                    self.assertTrue(hasattr(handshape_fields_names[f], 'field_choice_category'))
-                    fc_category = handshape_fields_names[f].field_choice_category
+                    self.assertTrue(hasattr(handshape_field, 'field_choice_category'))
+                    fc_category = handshape_field.field_choice_category
                     # make sure there are fields for the category
                     fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category, machine_value__gt=1)
                     self.assertGreater(len(fields_for_this_category),0)
@@ -2716,11 +2749,10 @@ class RevisionHistoryTests(TestCase):
 
         gloss_update_phonology_data = []
         gloss_fields = settings.FIELDS['phonology']+settings.FIELDS['semantics']+settings.FIELDS['main']+['inWeb', 'isNew', 'excludeFromEcv']
-        gloss_fields_names = {f.name: f for f in Gloss._meta.fields}
 
         mapped_categories = []
         for f in gloss_fields:
-            gloss_field = gloss_fields_names[f]
+            gloss_field = Gloss._meta.get_field(f)
 
             if f == 'semField':
                 mapped_category = 'SemField'
@@ -2772,7 +2804,7 @@ class RevisionHistoryTests(TestCase):
         # rather than the gloss model field name
         gloss_update_phonology_keys = []
         for f in gloss_fields:
-            gloss_field = gloss_fields_names[f]
+            gloss_field = Gloss._meta.get_field(f)
             if f == 'semField':
                 new_machine_value_string = '_500'
                 gloss_update_phonology_data.append({'id' : 'semanticfield', 'value' : new_machine_value_string})
