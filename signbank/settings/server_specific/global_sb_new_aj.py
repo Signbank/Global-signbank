@@ -27,7 +27,7 @@ LANGUAGES_LANGUAGE_CODE_3CHAR = (
 )
 
 INTERFACE_LANGUAGE_SHORT_NAMES = ['EN','NL','官话','עִברִית','عربى']
-MODELTRANSLATION_LANGUAGES = ['en','nl','zh-hans']
+MODELTRANSLATION_LANGUAGES = ['en','nl','zh-hans','ar','he']
 
 ECV_FILE = ECV_FOLDER+'ngt.ecv'
 ECV_SETTINGS = {
