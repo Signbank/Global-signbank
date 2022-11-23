@@ -20,7 +20,8 @@ from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, fields_to_fieldcategory_dict
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     check_value_to_translated_human_value

@@ -46,7 +46,8 @@ from signbank.settings.server_specific import *
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors, \
     choicelist_queryset_to_field_colors
-from signbank.dictionary.field_choices import get_static_choice_lists
+from signbank.dictionary.field_choices import get_static_choice_lists, get_frequencies_for_category, category_to_fields, \
+    fields_to_categories, fields_to_fieldcategory_dict
 
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from django.forms import TypedMultipleChoiceField, ChoiceField
@@ -54,7 +55,7 @@ from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
-    fields_to_categories, fields_to_fieldcategory_dict, get_interface_language_and_default_language_codes
+    get_interface_language_and_default_language_codes
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -5302,95 +5303,21 @@ class FieldChoiceView(ListView):
             context['SHOW_FIELD_CHOICE_COLORS'] = False
 
         choice_categories = fields_to_categories()
-        all_choice_lists = {}
-        for category in choice_categories:
-            # Get and save the choice list for this category
-            if category == 'SemField':
-                field_choices = SemanticField.objects.all()
-            elif category == 'derivHist':
-                field_choices = DerivationHistory.objects.all()
-            elif category == 'Handshape':
-                field_choices = Handshape.objects.all()
-            else:
-                field_choices = FieldChoice.objects.filter(field=category)
-            all_choice_lists[category] = field_choices
-
-        fields_with_choices = fields_to_fieldcategory_dict()
-        all_choice_lists_frequency = {}
-        for (field, category) in fields_with_choices.items():
-            if category not in all_choice_lists.keys() or not all_choice_lists[category]:
-                continue
-            if category not in all_choice_lists_frequency.keys():
-                all_choice_lists_frequency[category] = {}
-            field_choices = all_choice_lists[category]
-            choice_list_machine_values = choicelist_queryset_to_machine_value_dict(field_choices)
-            for choice_list_field, machine_value in choice_list_machine_values:
-                if machine_value == 0:
-                    filter = field + '__machine_value'
-                    frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
-                                                               Q(**{field + '__isnull': True}) |
-                                                               Q(**{filter: 0})).count()
-
-                else:
-                    if field == 'semField':
-                        filter = 'semField__in'
-                        filter_value = [ machine_value ]
-                        frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
-                            **{filter: filter_value}).count()
-                    elif field == 'derivHist':
-                        filter = 'derivHist__in'
-                        filter_value = [machine_value]
-                        frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
-                            **{filter: filter_value}).count()
-                    elif category == 'Handshape':
-                        filter = field + '__machine_value'
-                        filter_value = machine_value
-                        frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
-                            **{filter: filter_value}).count()
-                    else:
-                        filter = field + '__machine_value'
-                        filter_value = machine_value
-                        frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
-                            **{filter: filter_value}).count()
-                if choice_list_field not in all_choice_lists_frequency[category].keys():
-                    all_choice_lists_frequency[category][choice_list_field] = frequency_for_field
-                else:
-                    # this is needed since multiple fields can have the same category
-                    all_choice_lists_frequency[category][choice_list_field] += frequency_for_field
-
+        fields_for_category_table = category_to_fields()
         field_choices = {}
-        for field_choice_category in all_choice_lists.keys():
-            field_choices[field_choice_category] = []
-            choice_objects = all_choice_lists[field_choice_category]
-            choice_list = choicelist_queryset_to_translated_dict(choice_objects)
-            category_choices = []
-            for machine_value_string, frequency in all_choice_lists_frequency[field_choice_category].items():
-                mvid, mvv = machine_value_string.split('_')
-                machine_value = int(mvv)
-                choice_object = choice_objects.get(machine_value=machine_value)
-                choice_name = choice_list[machine_value_string]
-                display_with_frequency = choice_name + ' [' + str(frequency) + ']'
-                category_choices.append((choice_object, display_with_frequency))
-            # the first two choices need to be put at the front
-            choice_machine_value_0 = category_choices[0]
-            choice_machine_value_1 = category_choices[1]
-            # the other choices will be sorted on the name
-            otherchoices = category_choices[2:]
-            field_choices[field_choice_category] = [choice_machine_value_0, choice_machine_value_1] + sorted(otherchoices, key = lambda x: x[1])
-        context['field_choices'] = field_choices
 
-        #Translate the machine values to human values in the correct language, and save the choice lists along the way
-        choice_categories = fields_to_categories()
+        for category in choice_categories:
+            fields = fields_for_category_table[category]
+            choices_for_category = get_frequencies_for_category(category, fields, selected_datasets)
+            field_choices[category] = choices_for_category
+
+        context['field_choices'] = field_choices
 
         choices_colors = {}
         display_choices = {}
         for category in choice_categories:
-            if category == 'SemField':
-                field_choices = SemanticField.objects.all()
-            elif category == 'derivHist':
-                field_choices = DerivationHistory.objects.all()
-            elif category == 'Handshape':
-                field_choices = Handshape.objects.all()
+            if category in CATEGORY_MODELS_MAPPING.keys():
+                field_choices = CATEGORY_MODELS_MAPPING[category].objects.all()
             else:
                 field_choices = FieldChoice.objects.filter(field__iexact=category)
             choices_colors[category] = choicelist_queryset_to_colors(field_choices, shortlist=False)

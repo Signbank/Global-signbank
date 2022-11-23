@@ -79,12 +79,10 @@ class FieldChoice(models.Model):
     ABSORIPALM = 'AbsOriPalm'
     APERTURE = 'Aperture'
     CONTACTTYPE = 'ContactType'
-    # DERIVHIST = 'derivHist'
     DOMINANTHANDFLEXION = 'DominantHandFlexion'
     DOMINANTHANDSELECTEDFINGERS = 'DominantHandSelectedFingers'
     FINGERSELECTION = 'FingerSelection'
     HANDEDNESS = 'Handedness'
-    # HANDSHAPE = 'Handshape'
     HANDSHAPECHANGE = 'HandshapeChange'
     ICONICITY = 'iconicity'
     JOINTCONFIGURATION = 'JointConfiguration'
@@ -104,7 +102,6 @@ class FieldChoice(models.Model):
     RELORILOC = 'RelOriLoc'
     RELORIMOV = 'RelOriMov'
     RELATARTIC = 'RelatArtic'
-    # SEMFIELD = 'SemField'
     SPREADING = 'Spreading'
     THUMB = 'Thumb'
     VALENCE = 'Valence'
@@ -115,12 +112,10 @@ class FieldChoice(models.Model):
         (ABSORIPALM, 'AbsOriPalm'),
         (APERTURE, 'Aperture'),
         (CONTACTTYPE, 'ContactType'),
-        # (DERIVHIST, 'derivHist'),
         (DOMINANTHANDFLEXION, 'DominantHandFlexion'),
         (DOMINANTHANDSELECTEDFINGERS, 'DominantHandSelectedFingers'),
         (FINGERSELECTION, 'FingerSelection'),
         (HANDEDNESS, 'Handedness'),
-        # (HANDSHAPE, 'Handshape'),
         (ICONICITY, 'iconicity'),
         (HANDSHAPECHANGE, 'HandshapeChange'),
         (JOINTCONFIGURATION, 'JointConfiguration'),
@@ -140,7 +135,6 @@ class FieldChoice(models.Model):
         (RELORILOC, 'RelOriLoc'),
         (RELORIMOV, 'RelOriMov'),
         (RELATARTIC, 'RelatArtic'),
-        # (SEMFIELD, 'SemField'),
         (SPREADING, 'Spreading'),
         (THUMB, 'Thumb'),
         (VALENCE, 'Valence'),
@@ -2810,3 +2804,10 @@ class GlossFrequency(models.Model):
     def __str__(self):
 
         return str(self.gloss.id) + ' ' + self.document.identifier + ' ' + self.speaker.identifier + ' ' + str(self.frequency)
+
+
+CATEGORY_MODELS_MAPPING = {
+    'SemField': SemanticField,
+    'derivHist': DerivationHistory,
+    'Handshape': Handshape
+}

@@ -9,7 +9,7 @@ from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Rel
                                         MorphologyDefinition, OtherMedia, Handshape, SemanticField, DerivationHistory, \
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage
-from signbank.tools import fields_to_fieldcategory_dict
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT

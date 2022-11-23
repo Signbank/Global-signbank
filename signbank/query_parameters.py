@@ -17,6 +17,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
