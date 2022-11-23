@@ -143,12 +143,6 @@ class FieldChoice(models.Model):
 
     field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
     name = models.CharField(max_length=50)
-    # the help texts show up in the Admin
-    # these fields are now obsolete; they are disabled, but are still visible
-    dutch_name = models.CharField(max_length=50,
-                                  help_text="Field from the original NGT Signbank.")
-    chinese_name = models.CharField(max_length=50, blank=True,
-                                    help_text="Field from Global Signbank before multilingual model translation.")
     machine_value = models.IntegerField(
                 help_text="The actual numeric value stored in the database. Created automatically.")
     field_color = ColorField(default='ffffff')
@@ -351,8 +345,6 @@ class RelationToForeignSign(models.Model):
 class Handshape(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
     name = models.CharField(max_length=50)
-    dutch_name = models.CharField(_("Dutch name"), max_length=50)
-    chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
     field_color = ColorField(default='ffffff')
     hsNumSel = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                         limit_choices_to={'field': FieldChoice.QUANTITY},
@@ -432,9 +424,6 @@ class Handshape(models.Model):
         """Return the dictionary of field labels for use in a template"""
         d = dict()
         for f in self._meta.fields:
-            if f.name in ['dutch_name', 'chinese_name']:
-                # skip obsolete language fields
-                continue
             try:
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
             except KeyError:

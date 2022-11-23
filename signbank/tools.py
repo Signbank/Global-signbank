@@ -273,8 +273,6 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
     note_reverse_translation = {}
     for nrc in note_role_choices:
         note_reverse_translation[nrc.name] = nrc.machine_value
-        # probably not a good idea because of character set
-        # note_reverse_translation[nrc.chinese_name] = nrc.id
     note_translations = {}
     for nrc in note_role_choices:
         note_translations[str(nrc.machine_value)] = nrc.name
@@ -1021,8 +1019,7 @@ all_notes_display = ', '.join(all_notes)
 note_reverse_translation = {}
 for nrc in note_role_choices:
     note_reverse_translation[nrc.name] = nrc.machine_value
-    # probably not a good idea because of character set
-    # note_reverse_translation[nrc.chinese_name] = nrc.id
+
 note_translations = {}
 for nrc in note_role_choices:
     note_translations[str(nrc.machine_value)] = nrc.name

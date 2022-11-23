@@ -396,7 +396,7 @@ class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
 
 class HandshapeAdmin(VersionAdmin, TranslationAdmin):
 
-    readonly_fields = ['machine_value', 'dutch_name', 'chinese_name']
+    readonly_fields = ['machine_value']
     actions = ['delete_selected']
 
     model = Handshape
@@ -756,7 +756,7 @@ class UserAdmin(UserAdmin):
 
 
 class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
-    readonly_fields=['machine_value', 'dutch_name', 'chinese_name']
+    readonly_fields=['machine_value']
     actions=['delete_selected']
 
     model = FieldChoice
