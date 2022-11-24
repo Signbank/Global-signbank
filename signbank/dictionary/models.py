@@ -475,7 +475,7 @@ class Handshape(models.Model):
         # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingSel
         try:
             fieldSelectionMatch = FieldChoice.objects.filter(field='FingerSelection',
-                                                             machine_value=self.hsFingSel)
+                                                             machine_value=self.hsFingSel.machine_value)
         except:
             print('set_fingerSelection failed for: ', self)
             return
@@ -510,7 +510,7 @@ class Handshape(models.Model):
         # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingSel2
         try:
             fieldSelectionMatch = FieldChoice.objects.filter(field='FingerSelection',
-                                                             machine_value=self.hsFingSel2)
+                                                             machine_value=self.hsFingSel2.machine_value)
         except:
             print('set_fingerSelection2 failed for: ', self)
             return
@@ -545,7 +545,7 @@ class Handshape(models.Model):
         # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingUnsel
         try:
             fieldSelectionMatch = FieldChoice.objects.filter(field='FingerSelection',
-                                                             machine_value=self.hsFingUnsel)
+                                                             machine_value=self.hsFingUnsel.machine_value)
         except:
             print('set_unselectedFingers failed for: ', self)
             return

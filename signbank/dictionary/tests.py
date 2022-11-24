@@ -1844,23 +1844,37 @@ class FieldChoiceTests(TestCase):
                                       '/change/?_changelist_filters=field_exact%3D'+first_field_choice_option.field
 
             initial_data = dict()
-            initial_data['name'] = first_field_choice_option.name
-            initial_data['name_nl'] = first_field_choice_option.name_nl
-            initial_data['name_en'] = first_field_choice_option.name_en
-            initial_data['name_zh_hans'] = first_field_choice_option.name_zh_hans
-            initial_data['field_color'] = first_field_choice_option.field_color
             initial_data['field'] = first_field_choice_option.field
             initial_data['machine_value'] = first_field_choice_option.machine_value
+            initial_data['name'] = first_field_choice_option.name
+            initial_data['field_color'] = first_field_choice_option.field_color
+            for language in MODELTRANSLATION_LANGUAGES:
+                name_languagecode = 'name_' + language.replace('-', '_')
+                field_value = getattr(first_field_choice_option,name_languagecode)
+                if not field_value:
+                    initial_data[name_languagecode] = 'Default value'
+                else:
+                    initial_data[name_languagecode] = field_value
+
+            # data to be given to the form
+            # English is used as the language to be updated
+            LANGUAGE_FIELD_TO_UPDATE = 'name_en'
 
             update_data = dict()
-            update_data['name_en'] = 'Test Update Field Choice'
-            update_data['name_nl'] = first_field_choice_option.name_nl
-            update_data['name'] = first_field_choice_option.name
-            update_data['name_zh_hans'] = first_field_choice_option.name_zh_hans
-            # the hash tag is needed in the form interface for display
-            update_data['field_color'] = '#' + first_field_choice_option.field_color
             update_data['field'] = first_field_choice_option.field
             update_data['machine_value'] = first_field_choice_option.machine_value
+            update_data['name'] = first_field_choice_option.name
+            # the hash tag is needed in the form interface for display
+            update_data['field_color'] = '#' + first_field_choice_option.field_color
+            for language in MODELTRANSLATION_LANGUAGES:
+                name_languagecode = 'name_' + language.replace('-', '_')
+                field_value = getattr(first_field_choice_option,name_languagecode)
+                if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
+                    update_data[LANGUAGE_FIELD_TO_UPDATE] = 'Test Update Field Choice'
+                elif not field_value:
+                    update_data[name_languagecode] = 'Default value'
+                else:
+                    update_data[name_languagecode] = field_value
 
             response = self.client.get('/admin/dictionary/fieldchoice/'+admin_url_change_suffix_1, update_data)
             self.assertEqual(response.status_code, 302)
@@ -1878,15 +1892,22 @@ class FieldChoiceTests(TestCase):
             first_field_choice_option.refresh_from_db()
 
             # check that the updated field is indeed updated
-            self.assertEqual(first_field_choice_option.name_en, update_data['name_en'])
-            self.assertEqual(first_field_choice_option.name_nl, initial_data['name_nl'])
-            # the following is true if the override language is en, then name has also been updated
-            # self.assertEqual(first_field_choice_option.name, update_data['name'])
             # check that none of the other fields were updated
-            self.assertEqual(first_field_choice_option.name_zh_hans, initial_data['name_zh_hans'])
-            self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
             self.assertEqual(first_field_choice_option.field, initial_data['field'])
             self.assertEqual(first_field_choice_option.machine_value, initial_data['machine_value'])
+            self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
+            for language in MODELTRANSLATION_LANGUAGES:
+                name_languagecode = 'name_' + language.replace('-', '_')
+                if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
+                    self.assertEqual(getattr(first_field_choice_option,LANGUAGE_FIELD_TO_UPDATE), update_data[LANGUAGE_FIELD_TO_UPDATE])
+                else:
+                    self.assertEqual(getattr(first_field_choice_option,name_languagecode), initial_data[name_languagecode])
+
+            # the following is true if the override language is en, then name has also been updated
+            # self.assertEqual(first_field_choice_option.name, update_data['name'])
+
+
+
 
     def test_delete_fieldchoice_gloss(self):
 
@@ -2028,7 +2049,6 @@ class FieldChoiceTests(TestCase):
 
         from signbank.tools import fields_with_choices_definition
         fields_with_choices = fields_with_choices_definition()
-        print(fields_with_choices)
         # create a gloss with and without field choices
 
         # set the test dataset
@@ -2061,7 +2081,6 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options.first()
                 for field in fields_with_choices[fieldchoice]:
-                    print('field with choices set defn: ', field)
                     setattr(new_definition, field, field_choice_in_use)
         new_definition.save()
 
