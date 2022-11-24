@@ -49,7 +49,7 @@ urlpatterns = [
     url(r'^update/morpheme/', signbank.dictionary.update.add_morpheme, name='add_morpheme'),
     url(r'^update/blenddefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_blend_definition, name='add_blenddefinition'),
 
-    url(r'^update/field_choice_color/(?P<fieldchoiceid>\d+)$', login_required(signbank.dictionary.update.update_field_choice_color),
+    url(r'^update/field_choice_color/(?P<category>.*)/(?P<fieldchoiceid>\d+)$', login_required(signbank.dictionary.update.update_field_choice_color),
         name='update_field_choice_color'),
 
     # The next one does not have a permission check because it should be accessible from a cronjob 

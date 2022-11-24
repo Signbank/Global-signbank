@@ -1203,6 +1203,28 @@ class SemanticFieldForm(forms.ModelForm):
             # adding a # has already been taken care for an instance object by the get_form of FieldChoiceAdmin
             self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color'})
 
+class DerivationHistoryColorForm(forms.Form):
+
+    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    field_color = forms.CharField(widget=ColorWidget)
+    readonly_fields = ['machine_value']
+
+    class Meta:
+        model = DerivationHistory
+        fields = ['name'] \
+                 + ['field_color', 'machine_value', ]
+
+class HandshapeColorForm(forms.Form):
+
+    show_field_choice_colors = settings.SHOW_FIELD_CHOICE_COLORS
+    field_color = forms.CharField(widget=ColorWidget)
+    readonly_fields = ['machine_value']
+
+    class Meta:
+        model = Handshape
+        fields = ['name'] \
+                 + ['field_color', 'machine_value', ]
+
 class HandshapeForm(forms.ModelForm):
     # this ModelForm is needed in order to validate against duplicates
 

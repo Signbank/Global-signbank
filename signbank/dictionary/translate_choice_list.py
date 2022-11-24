@@ -45,7 +45,6 @@ def choicelist_queryset_to_translated_dict(queryset,ordered=True,id_prefix='_',s
         return sorted_choice_list
 
 def choicelist_queryset_to_colors(queryset,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
-
     # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;
     # Or the queryset is a set of Handshape objects
     # Other functions that call this function expect either a list or an OrderedDict that maps machine values to human values
@@ -71,7 +70,11 @@ def choicelist_queryset_to_colors(queryset,ordered=True,id_prefix='_',shortlist=
 
         if choices_to_exclude == None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
-            raw_choice_list.append((id_prefix + str(choice.machine_value), human_value, getattr(choice, 'field_color')))
+            field_color = getattr(choice, 'field_color')
+            # this should not happen, but it could be a legacy value that has a #
+            if field_color[0] == '#':
+                field_color = field_color[1:]
+            raw_choice_list.append((id_prefix + str(choice.machine_value), human_value, field_color))
 
     list_head = [] if shortlist else [(id_prefix + str(empty_or_NA[v].machine_value), v, 'ffffff') for v in list_head_values]
 
@@ -86,7 +89,6 @@ def choicelist_queryset_to_colors(queryset,ordered=True,id_prefix='_',shortlist=
 
 
 def choicelist_queryset_to_field_colors(queryset):
-
     temp_mapping_dict = {}
     temp_mapping_dict[0] = 'ffffff'
     for choice in queryset:

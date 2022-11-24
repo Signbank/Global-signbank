@@ -2432,12 +2432,21 @@ def update_excluded_choices(request):
 
     return HttpResponseRedirect(reverse('admin_dataset_field_choices'))
 
-def update_field_choice_color(request, fieldchoiceid):
+def update_field_choice_color(request, category, fieldchoiceid):
 
     if request.method == "POST":
-        form = FieldChoiceColorForm(request.POST)
-
-        thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
+        if category == 'SemField':
+            form = SemanticFieldColorForm(request.POST)
+            thisfieldchoice = get_object_or_404(SemanticField, pk=fieldchoiceid)
+        elif category == 'derivHist':
+            form = DerivationHistoryColorForm(request.POST)
+            thisfieldchoice = get_object_or_404(DerivationHistory, pk=fieldchoiceid)
+        elif category == 'Handshape':
+            form = HandshapeColorForm(request.POST)
+            thisfieldchoice = get_object_or_404(Handshape, pk=fieldchoiceid)
+        else:
+            form = FieldChoiceColorForm(request.POST)
+            thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
 
         if form.is_valid():
 
@@ -2450,7 +2459,7 @@ def update_field_choice_color(request, fieldchoiceid):
             machine_value = str(thisfieldchoice.machine_value)
             thisfieldchoice.field_color = new_color
             thisfieldchoice.save()
-            category = thisfieldchoice.field
+            # category = thisfieldchoice.field
 
             return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
                                 {'content-type': 'text/plain'})

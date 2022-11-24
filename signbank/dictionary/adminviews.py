@@ -389,12 +389,8 @@ class GlossListView(ListView):
         fields_with_choices['definitionRole'] = 'NoteType'
         choices_colors = {}
         for (fieldname, field_category) in fields_with_choices.items():
-            if fieldname.startswith('semField'):
-                field_choices = SemanticField.objects.all()
-            elif fieldname.startswith('derivHist'):
-                field_choices = DerivationHistory.objects.all()
-            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                field_choices = Handshape.objects.all()
+            if field_category in CATEGORY_MODELS_MAPPING.keys():
+                field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
             else:
                 field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
@@ -2355,12 +2351,8 @@ class MorphemeListView(ListView):
 
         choices_colors = {}
         for (fieldname, field_category) in multiple_select_morpheme_categories.items():
-            if fieldname.startswith('semField'):
-                field_choices = SemanticField.objects.all()
-            elif fieldname.startswith('derivHist'):
-                field_choices = DerivationHistory.objects.all()
-            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                field_choices = Handshape.objects.all()
+            if field_category in CATEGORY_MODELS_MAPPING.keys():
+                field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
             else:
                 field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
@@ -3609,7 +3601,6 @@ class FrequencyListView(ListView):
                 field_category = gloss_field.field_choice_category
                 field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
             else:
-                print('else case fieldlistview')
                 field_category = field
                 field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='_',shortlist=False)
@@ -7158,76 +7149,4 @@ class LemmaDeleteView(DeleteView):
         else:
             self.object.delete()
         return HttpResponseRedirect(self.get_success_url())
-
-
-def semanticfield_fieldchoice_to_multiselect(machine_value):
-    if not machine_value:
-        return None
-
-    try:
-        # check that there is a SemanticField object defined for the legacy semField FieldChoice of this gloss
-        semanticfield = SemanticField.objects.get(machine_value=machine_value)
-        # already done
-        return semanticfield
-    except ObjectDoesNotExist:
-        # if not, create one
-        # first get the FieldChoice
-        try:
-            semField_fieldchoice = FieldChoice.objects.get(field__iexact='semField', machine_value=machine_value)
-        except ObjectDoesNotExist:
-            # this happens if an invalid machine value is used in the url
-            return None
-    new_machine_value = semField_fieldchoice.machine_value
-    new_english_name = semField_fieldchoice.name
-
-    new_semanticfield = SemanticField(machine_value=new_machine_value, name=new_english_name)
-    new_semanticfield.save()
-
-    for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
-        print(language, language_3charcode)
-        translation_language = Language.objects.get(language_code_3char=language_3charcode)
-
-        semanticfieldtranslation = SemanticFieldTranslation(semField=new_semanticfield,
-                                                            language=translation_language,
-                                                            name=new_english_name)
-        semanticfieldtranslation.save()
-
-    return new_semanticfield
-
-
-
-def derivationhistory_fieldchoice_to_multiselect(machine_value):
-    if not machine_value:
-        return None
-
-    try:
-        # check that there is a DerivationHistory object defined for the legacy derivHist FieldChoice of this gloss
-        derivationhistory = DerivationHistory.objects.get(machine_value=machine_value)
-        # already done
-        return derivationhistory
-    except ObjectDoesNotExist:
-        # if not, create one
-        # first get the FieldChoice
-        try:
-            derivHist_fieldchoice = FieldChoice.objects.get(field__iexact='derivHist', machine_value=machine_value)
-        except ObjectDoesNotExist:
-            # this happens if an invalid machine value is used in the url
-            return None
-
-    new_machine_value = derivHist_fieldchoice.machine_value
-    new_english_name = derivHist_fieldchoice.name
-
-    new_derivationhistory = DerivationHistory(machine_value=new_machine_value, name=new_english_name)
-    new_derivationhistory.save()
-
-    for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
-        print(language, language_3charcode)
-        translation_language = Language.objects.get(language_code_3char=language_3charcode)
-
-        derivationhistorytranslation = DerivationHistoryTranslation(derivHist=new_derivationhistory,
-                                                            language=translation_language,
-                                                            name=new_english_name)
-        derivationhistorytranslation.save()
-
-    return new_derivationhistory
 

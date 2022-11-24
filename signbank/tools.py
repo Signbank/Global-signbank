@@ -1542,10 +1542,6 @@ def fields_with_choices_glosses():
 
     from signbank.dictionary.models import Gloss
     for field in Gloss._meta.fields:
-        # omit the gloss fields to be deleted from FieldChoiceForeignKey model
-        if field.name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh',
-                          'semField', 'derivHist']:
-            continue
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category

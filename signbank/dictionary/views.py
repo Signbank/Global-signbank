@@ -2689,12 +2689,8 @@ def choice_lists(request):
 
     for (field, fieldchoice_category) in fields_with_choices.items():
         # Get and save the choice list for this field
-        if fieldchoice_category == 'Handshape':
-            choice_list = Handshape.objects.all()
-        elif fieldchoice_category == 'SemField':
-            choice_list = SemanticField.objects.all()
-        elif fieldchoice_category == 'derivHist':
-            choice_list = DerivationHistory.objects.all()
+        if fieldchoice_category in CATEGORY_MODELS_MAPPING.keys():
+            choice_list = CATEGORY_MODELS_MAPPING[fieldchoice_category].objects.all()
         else:
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
