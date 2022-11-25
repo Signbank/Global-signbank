@@ -161,9 +161,10 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                                                                 'site': current_site})
 
                             # for debug purposes on local machine
-                            # print('owner of dataset: ', owner.username, ' with email: ', owner.email)
-                            # print('message: ', message)
-                            # print('setting: ', settings.DEFAULT_FROM_EMAIL)
+                            if settings.DEBUG_EMAILS_ON:
+                                print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+                                print('message: ', message)
+                                print('setting: ', settings.DEFAULT_FROM_EMAIL)
 
                             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
 
@@ -195,9 +196,10 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                                                                 'site': current_site})
 
                             # for debug purposes on local machine
-                            # print('owner of dataset: ', owner.username, ' with email: ', owner.email)
-                            # print('message: ', message)
-                            # print('setting: ', settings.DEFAULT_FROM_EMAIL)
+                            if settings.DEBUG_EMAILS_ON:
+                                print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+                                print('message: ', message)
+                                print('setting: ', settings.DEFAULT_FROM_EMAIL)
 
                             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
 

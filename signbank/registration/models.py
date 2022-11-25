@@ -113,8 +113,9 @@ class RegistrationManager(models.Manager):
                                          'url': settings.URL})
 
             # for debug purposes on local machine
-            # print('register subject: ', subject)
-            # print('message: ', message)
+            if settings.DEBUG_EMAILS_ON:
+                print('register subject: ', subject)
+                print('message: ', message)
 
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [new_user.email])
         return new_user

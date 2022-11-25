@@ -4763,7 +4763,6 @@ class DatasetListView(ListView):
         else:
             # this should not happen from the html page. the check is made to catch a user adding a parameter to the url
             may_request_dataset = False
-            print(user_view_datasets)
             messages.add_message(self.request, messages.INFO, _('You can already view this dataset.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
@@ -4801,11 +4800,12 @@ class DatasetListView(ListView):
                                                     'site': current_site})
 
                 # for debug purposes on local machine
-                # print('grant access subject: ', subject)
-                # print('message: ', message)
-                # print('owner of dataset: ', owner.username, ' with email: ', owner.email)
-                # print('user email: ', self.request.user.email)
-                # print('Settings: ', settings.DEFAULT_FROM_EMAIL)
+                if settings.DEBUG_EMAILS_ON:
+                    print('grant access subject: ', subject)
+                    print('message: ', message)
+                    print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+                    print('user email: ', self.request.user.email)
+                    print('Settings: ', settings.DEFAULT_FROM_EMAIL)
 
                 send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
             
@@ -4824,11 +4824,12 @@ class DatasetListView(ListView):
                                                     'site': current_site})
 
                 # for debug purposes on local machine
-                # print('grant access subject: ', subject)
-                # print('message: ', message)
-                # print('owner of dataset: ', owner.username, ' with email: ', owner.email)
-                # print('user email: ', self.request.user.email)
-                # print('Settings: ', settings.DEFAULT_FROM_EMAIL)
+                if settings.DEBUG_EMAILS_ON:
+                    print('grant access subject: ', subject)
+                    print('message: ', message)
+                    print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+                    print('user email: ', self.request.user.email)
+                    print('Settings: ', settings.DEFAULT_FROM_EMAIL)
 
                 send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
 
@@ -5152,10 +5153,11 @@ class DatasetManagerView(ListView):
                                                     'site': current_site})
 
                 # for debug purposes on local machine
-                # print('grant access subject: ', subject)
-                # print('message: ', message)
-                # print('user email: ', user_object.email)
-                # print('Settings: ', settings.DEFAULT_FROM_EMAIL)
+                if settings.DEBUG_EMAILS_ON:
+                    print('grant access subject: ', subject)
+                    print('message: ', message)
+                    print('user email: ', user_object.email)
+                    print('Settings: ', settings.DEFAULT_FROM_EMAIL)
 
                 send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_object.email])
 

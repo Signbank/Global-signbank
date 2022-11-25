@@ -233,3 +233,6 @@ USE_X_SENDFILE = False
 
 # this keeps the browser from crashing
 MAX_SCROLL_BAR = 500
+
+#Print to debug registration / access emails
+DEBUG_EMAILS_ON = False
