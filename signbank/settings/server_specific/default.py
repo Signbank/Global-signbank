@@ -236,3 +236,6 @@ MAX_SCROLL_BAR = 500
 
 #Print to debug registration / access emails
 DEBUG_EMAILS_ON = False
+
+# default url to admin page, specify a hidden one in server_specific to override this
+ADMIN_URL = 'admin'

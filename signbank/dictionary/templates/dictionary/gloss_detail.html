@@ -15,6 +15,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_files.js"></script>
 
     <script type='text/javascript'>
     var url = '{{ PREFIX_URL }}';
@@ -300,6 +301,78 @@ option:not(:checked) {
     background-color: lightgrey;
 }
 </style>
+<style>
+.drop-container {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    padding: 0px;
+    border-radius: 10px;
+    border: 2px dashed #555;
+    color: #444;
+    cursor: pointer;
+    transition: background .2s ease-in-out, border .2s ease-in-out;
+}
+
+.drop-container:hover {
+    background: #ccc;
+    border-color: #111;
+}
+
+.drop-title {
+    color: #444;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    transition: color .2s ease-in-out;
+}
+
+.drop-container.highlight-green {
+    background: #d4e9ce;
+}
+
+.drop-container.highlight-red {
+    background: #F4A19B;
+}
+
+p {
+    margin-top: 0;
+}
+
+.gallery img {
+    width: 100px;
+    margin-right: 10px;
+    vertical-align: right;
+}
+
+.gallery video {
+    width: 100px;
+    margin-right: 10px;
+    vertical-align: right;
+}
+
+.button {
+    display: inline-block;
+    padding: 8px;
+    background: #ccc;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.button:hover {
+    background: #ddd;
+}
+
+#hide{
+    opacity: 0;
+}
+
+</style>
 
 {% endblock %}
 
@@ -561,20 +634,24 @@ option:not(:checked) {
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Video" %}</legend>
-
-            <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
-              {% csrf_token %}
-              <input type='hidden' name='redirect' value='{{request.path}}?edit'>
-            <table id="staffops">
-              <tr>
-                  <td>{{videoform.videofile}}</td>
-              </tr>
-              <tr>
-                  <td><input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
-                      <input class='btn btn-primary' type='submit' value='Upload Video' /></td>
-              </tr>
-            </table>
-            </form>
+            <label for="id_videofile" class="drop-container" id="drop-container-video">
+              <div id="videogallery" class="gallery"></div>
+              <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
+              <label id="drop-container-video-status", class="hide">Status here</label>
+              <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
+                {% csrf_token %}
+                <input type='hidden' name='redirect' value='{{request.path}}?edit'>
+                <table id="staffops">
+                  <tr>
+                    <td>{{videoform.videofile}}</td>
+                  </tr>
+                  <tr>
+                    <td id="video-buttons"><input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
+                    <input class = 'btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>   <input class='btn btn-primary' type='submit' value='Upload' /></td>
+                  </tr>
+                </table>
+              </form>
+            </label>
         </fieldset>
 
     </div>
@@ -585,19 +662,24 @@ option:not(:checked) {
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Citation Form Image" %}</legend>
-            <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
-              {% csrf_token %}
-              <input type='hidden' name='redirect' value='{{request.path}}?edit'>
-            <table id="staffops">
-              <tr>
-                  <td>{{imageform.imagefile}}</td>
-              </tr>
-              <tr>
-                  <td><input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
-                      <input class='btn btn-primary' type='submit' value='Upload Citation Form Image'/></td>
-              </tr>
-            </table>
-            </form>
+            <label for="id_imagefile" class="drop-container" id="drop-container-image">
+              <div id="imagegallery" class="gallery"></div>
+              <span id = "drop-container-title-image"  class="drop-title">Drop image here<br>or...</span>
+              <label id="drop-container-image-status", class="hide">Status here</label>
+              <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type='hidden' name='redirect' value='{{request.path}}?edit'>
+                <table id="staffops">
+                  <tr>
+                    <td>{{imageform.imagefile}}</td>
+                  </tr>
+                  <tr>
+                    <td id="image-buttons"><input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
+                    <input class = 'btn btn-primary' onclick='removeImageUploads(true)' value='Remove'>   <input class='btn btn-primary' type='submit' value='Upload'/></td>
+                  </tr>
+                </table>
+              </form>
+            </label>
         </fieldset>
     </div>
     {% endif %}
