@@ -521,7 +521,6 @@ def update_gloss(request, glossid):
 
 def update_keywords(gloss, field, value):
     """Update the keyword field"""
-
     # Determine the language of the keywords
     language = Language.objects.get(id=get_default_language_id())
     try:
@@ -1809,7 +1808,6 @@ def update_morpheme(request, morphemeid):
     """View to update a morpheme model from the jeditable jquery form
     We are sent one field and value at a time, return the new value
     once we've updated it."""
-
     if not request.user.has_perm('dictionary.change_morpheme'):
         return HttpResponseForbidden("Morpheme Update Not Allowed")
 
@@ -1845,7 +1843,7 @@ def update_morpheme(request, morphemeid):
 
             return update_definition(request, morpheme, field, value)
 
-        elif field.startswith('keywords'):
+        elif field.startswith('keyword'):
 
             return update_keywords(morpheme, field, value)
 
