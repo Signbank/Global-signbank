@@ -38,11 +38,14 @@ def fields_to_categories():
     return choice_categories
 
 
-def fields_to_fieldcategory_dict(fields=[]):
+def fields_to_fieldcategory_dict(fieldnames=[]):
     # allows an optional fields parameter for cases where FieldChoiceForeignKey fields from other classes are needed
     # Normally only Gloss fields are needed
-    if not fields:
+    # use parameter fieldnames as read-only
+    if not fieldnames:
         fields = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics']
+    else:
+        fields = fieldnames
     choice_categories = {}
     for field in fields:
         if field == 'semField':
