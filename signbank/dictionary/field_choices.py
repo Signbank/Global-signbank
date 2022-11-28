@@ -5,6 +5,8 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 
 
 def fields_to_categories():
+    # this function returns a list of all the categories for fields with choices
+    # it gets these based on settings
     choice_categories = []
     for topic in ['main', 'phonology', 'semantics']:
         for field in FIELDS[topic]:
@@ -80,6 +82,11 @@ def fields_to_fieldcategory_dict(fieldnames=[]):
 
 
 def get_static_choice_lists(fieldname):
+    # this function constructs two dictionaries for a given field
+    # if the field does not have choices, these are empty
+    # they are constructed here to be consistent since the colors should match up with the choices
+    # the queried models all have color fields
+    # these are eventually used in the select2 pull-downs
     static_choice_lists = dict()
     static_choice_list_colors = dict()
     if fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
@@ -93,9 +100,15 @@ def get_static_choice_lists(fieldname):
         if hasattr(gloss_field, 'field_choice_category'):
             choice_list = FieldChoice.objects.filter(field__iexact=gloss_field.field_choice_category)
         else:
+            # there are no choices for this field
+            # it does not have a declared category or recognised choices model
             return (static_choice_lists, static_choice_list_colors)
     if len(choice_list) == 0:
+        # there are no choices in the database for this field
         return (static_choice_lists, static_choice_list_colors)
+
+    # there are choices for the fieldname parameter
+    # these functions add the '_' prefix to the machine value key
     display_choice_list = choicelist_queryset_to_translated_dict(choice_list)
     display_choice_list_colors = choicelist_queryset_to_colors(choice_list)
     for (key, value) in display_choice_list.items():
@@ -110,25 +123,40 @@ def get_static_choice_lists(fieldname):
 
 def get_frequencies_for_category(category, fields, selected_datasets):
 
+    # get the field choices and the appropriate filter for querying the Gloss model (next step)
     if category in CATEGORY_MODELS_MAPPING.keys():
         field_choices = CATEGORY_MODELS_MAPPING[category].objects.all()
+        # the Gloss field is a handshape object or a many-to-many relation
         field_filter = '__in'
     else:
         field_choices = FieldChoice.objects.filter(field__iexact=category)
+        # the Gloss field is a FieldChoiceForeignKey
         field_filter = '__machine_value__in'
 
     choices = dict()
 
+    # construct a dictionary that maps each choice to the frequency of that choice in the selected datasets
+    # get the field choices as machine values
+    # this list of tuples that is iterated over
+    # maps machine values (with the '_' prefix) to machine values (that will be looked up)
     choice_list_machine_values = choicelist_queryset_to_machine_value_dict(field_choices)
     for field in fields:
+        # normally fields is just a singleton
+        # but for handshapes multiple fields have the same category, so this is a loop over the fields
+        # the frequencies for all handshape fields for each choice are included
         for choice_list_field, machine_value in choice_list_machine_values:
+
             if machine_value == 0:
+                # if the machine value is 0 or the field has not been set
+                # check for the machine value 0 object or a null field value
+
                 filter = field + '__machine_value'
                 frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
                                                            Q(**{field + '__isnull': True}) |
                                                            Q(**{filter: 0})).count()
 
             else:
+                # otherwise, count the number of matches to the machine value
                 filter = field + field_filter
                 filter_value = [machine_value]
                 frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
@@ -138,9 +166,11 @@ def get_frequencies_for_category(category, fields, selected_datasets):
             else:
                 # this is needed because multiple fields can have the same category
                 choices[choice_list_field] += frequency_for_field
+    # get the choices again
     choice_list = choicelist_queryset_to_translated_dict(field_choices)
     category_choices = []
     for machine_value_string, frequency in choices.items():
+        # concatenate the frequency determined above to the 'name' of the choice
         mvid, mvv = machine_value_string.split('_')
         machine_value = int(mvv)
         choice_object = field_choices.get(machine_value=machine_value)
@@ -158,6 +188,7 @@ def get_frequencies_for_category(category, fields, selected_datasets):
 
 def category_to_fields():
 
+    # this function returns a "flipped" dictionary that maps categories to a list of fields with that category
     category_to_fields_dict = dict()
     field_categories_dict = fields_to_fieldcategory_dict()
 
