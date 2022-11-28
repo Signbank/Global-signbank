@@ -2679,7 +2679,6 @@ class testSettings(TestCase):
                     self.assertFalse(hasattr(gloss_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 elif not hasattr(gloss_field, 'field_choice_category'):
-                    # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and have field_choice_category defined
@@ -2710,7 +2709,6 @@ class testSettings(TestCase):
                     self.assertFalse(hasattr(handshape_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 elif not hasattr(handshape_field, 'field_choice_category'):
-                    # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and have field_choice_category defined

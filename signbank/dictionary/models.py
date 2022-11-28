@@ -30,29 +30,6 @@ from signbank.dictionary.translate_choice_list import choicelist_queryset_to_tra
 import signbank.settings
 # -*- coding: utf-8 -*-
 
-
-# this variable is set later in the code, it needs to be declared before it is used
-# choice_list_table = dict()
-
-
-def build_choice_list(field, list_start=[]):
-    """
-    Build choice list.
-    This function assumes that machine_value 0 denotes a default/emtpy choice ('-----')
-    and machine_value 1 denotes a 'not applicable' choice ('N/A')
-    :param field: The FieldChoice field
-    :param list_start: The choices the list has to start with
-    :return: The choice list for the field, starting with the list_start choices
-    """
-    # return list_start\
-    #        + list(FieldChoice.objects.filter(field=field, machine_value__lte=1)
-    #               .order_by('machine_value').values_list('id', 'name')) \
-    #        + list([(field_choice.id, field_choice.name) for field_choice in
-    #                FieldChoice.objects.filter(field=field, machine_value__gt=1)
-    #               .order_by('name')])
-
-    return list_start
-
 def get_default_language_id():
     language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
     if language is not None:
