@@ -44,13 +44,12 @@ urlpatterns = [
     url(r'^update/relationtoforeignsign/$', signbank.dictionary.update.add_relationtoforeignsign, name='add_relationtoforeignsign'),
     url(r'^update/morphologydefinition/$', signbank.dictionary.update.add_morphology_definition, name='add_morphologydefinition'),
     url(r'^update/morphemedefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_morpheme_definition, name='add_morphemedefinition'),
-    url(r'^update/morphemeappearance/$', signbank.dictionary.update.add_morphemeappearance, name='add_morphemeappearance'),
     url(r'^update/othermedia/', signbank.dictionary.update.add_othermedia, name='add_othermedia'),
     url(r'^update/gloss/', signbank.dictionary.update.add_gloss, name='add_gloss'),
     url(r'^update/morpheme/', signbank.dictionary.update.add_morpheme, name='add_morpheme'),
     url(r'^update/blenddefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_blend_definition, name='add_blenddefinition'),
 
-    url(r'^update/field_choice_color/(?P<fieldchoiceid>\d+)$', login_required(signbank.dictionary.update.update_field_choice_color),
+    url(r'^update/field_choice_color/(?P<category>.*)/(?P<fieldchoiceid>\d+)$', login_required(signbank.dictionary.update.update_field_choice_color),
         name='update_field_choice_color'),
 
     # The next one does not have a permission check because it should be accessible from a cronjob 
@@ -89,11 +88,7 @@ urlpatterns = [
 
     url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
 
-    url(r'configure_derivationhistory/$',
-        permission_required('dictionary.change_gloss')(signbank.dictionary.views.configure_derivationhistory)),
-
     url(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
-    url(r'all_field_choices.tsv/$',signbank.dictionary.views.list_all_fieldchoice_names),
     url(r'package/$', signbank.dictionary.views.package),
     url(r'info/$', signbank.dictionary.views.info),
     url(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),

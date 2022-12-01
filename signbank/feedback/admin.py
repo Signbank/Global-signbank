@@ -19,11 +19,11 @@ class SignFeedbackAdmin(admin.ModelAdmin):
 admin.site.register(SignFeedback, SignFeedbackAdmin)
 
 class MissingSignFeedbackAdmin(admin.ModelAdmin):
-    readonly_fields = ['handform', 'handform_fk_id', 'handshape', 'handshape_fk_id', 'althandshape', 'althandshape_fk_id',
-               'location', 'location_fk_id', 'relativelocation', 'relativelocation_fk_id', 'handbodycontact',
-               'handbodycontact_fk_id', 'handinteraction', 'handinteraction_fk_id', 'direction', 'direction_fk_id',
-               'movementtype', 'movementtype_fk_id', 'smallmovement', 'smallmovement_fk_id', 'repetition',
-               'meaning', 'video', 'comments']
+    # readonly_fields = ['handform', 'handshape', 'althandshape',
+    #            'location', 'relativelocation', 'handbodycontact',
+    #            'handinteraction', 'direction',
+    #            'movementtype', 'smallmovement', 'repetition',
+    #            'meaning', 'video', 'comments']
     list_display = ['user', 'date']
     list_filter = ['user']
 

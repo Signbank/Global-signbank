@@ -273,8 +273,6 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
     note_reverse_translation = {}
     for nrc in note_role_choices:
         note_reverse_translation[nrc.name] = nrc.machine_value
-        # probably not a good idea because of character set
-        # note_reverse_translation[nrc.chinese_name] = nrc.id
     note_translations = {}
     for nrc in note_role_choices:
         note_translations[str(nrc.machine_value)] = nrc.name
@@ -1021,8 +1019,7 @@ all_notes_display = ', '.join(all_notes)
 note_reverse_translation = {}
 for nrc in note_role_choices:
     note_reverse_translation[nrc.name] = nrc.machine_value
-    # probably not a good idea because of character set
-    # note_reverse_translation[nrc.chinese_name] = nrc.id
+
 note_translations = {}
 for nrc in note_role_choices:
     note_translations[str(nrc.machine_value)] = nrc.name
@@ -1082,7 +1079,7 @@ def get_notes_as_string(gloss):
     notes_list = []
     for note in notes_of_gloss:
         # use the notes field choice machine value rather than the translation
-        note_field = note.role_fk.name
+        note_field = note.role.name
         note_tuple = (note_field, str(note.published), str(note.count), note.text)
         notes_list.append(note_tuple)
 
@@ -1526,34 +1523,6 @@ from signbank.settings.server_specific import *
 import re
 import datetime as DT
 
-def map_field_names_to_fk_field_names(fields):
-    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-        return fields
-    gloss_field_names = [f.name for f in Gloss._meta.fields]
-    handshape_field_names = [f.name for f in Handshape._meta.fields]
-    mapped_fields = []
-    for field in fields:
-        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-            mapped_fields.append(field+'_handshapefk')
-        elif field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names:
-            mapped_fields.append(field+'_fk')
-        else:
-            mapped_fields.append(field)
-    return mapped_fields
-
-def map_field_name_to_fk_field_name(field):
-    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
-        return field
-    gloss_field_names = [f.name for f in Gloss._meta.fields]
-    handshape_field_names = [f.name for f in Handshape._meta.fields]
-    morpheme_field_names = [f.name for f in Morpheme._meta.fields]
-    if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-        return field + '_handshapefk'
-    elif field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names or field+'_fk' in morpheme_field_names:
-        return field+'_fk'
-    else:
-        return field
-
 
 def gloss_handshape_fields():
     # returns a list of fields that are Handshape ForeignKeys
@@ -1573,10 +1542,6 @@ def fields_with_choices_glosses():
 
     from signbank.dictionary.models import Gloss
     for field in Gloss._meta.fields:
-        # omit the gloss fields to be deleted from FieldChoiceForeignKey model
-        if field.name in ['domhndsh_fk', 'subhndsh_fk', 'final_domhndsh_fk', 'final_subhndsh_fk',
-                          'semField_fk', 'derivHist_fk']:
-            continue
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
@@ -1726,8 +1691,7 @@ def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies
     if include_phonology_and_frequencies:
 
         for f in ECV_SETTINGS['description_fields']:
-            mapped_description_field = map_field_name_to_fk_field_name(f)
-            gloss_field = getattr(gloss, mapped_description_field)
+            gloss_field = getattr(gloss, f)
             if isinstance(gloss_field, FieldChoice) or isinstance(gloss_field, Handshape):
                 value = getattr(gloss, f).name
             else:
@@ -1774,7 +1738,6 @@ def get_value_for_ecv(gloss, fieldname):
         if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
             value = annotationidglosstranslations[0].text
     else:
-        fieldname = map_field_name_to_fk_field_name(fieldname)
         try:
             value = getattr(gloss, 'get_' + fieldname + '_display')()
 
@@ -1797,9 +1760,7 @@ def get_value_for_ecv(gloss, fieldname):
 def write_csv_for_handshapes(handshapelistview, csvwriter):
 #  called from the HandshapeListView when search_type is handshape
 
-    fieldnames = map_field_names_to_fk_field_names(settings.HANDSHAPE_RESULT_FIELDS)
-
-    fields = [Handshape._meta.get_field(fieldname) for fieldname in fieldnames]
+    fields = [Handshape._meta.get_field(fieldname) for fieldname in settings.HANDSHAPE_RESULT_FIELDS]
 
     activate(LANGUAGES[0][0])
     header = ['Handshape ID'] + [ f.verbose_name.encode('ascii', 'ignore').decode() for f in fields ]
@@ -2080,64 +2041,6 @@ def map_search_results_to_gloss_list(search_results):
     return (gloss_ids, Gloss.objects.filter(id__in=gloss_ids))
 
 
-def fields_to_categories():
-    choice_categories = []
-    for topic in ['main', 'phonology', 'semantics']:
-        for field in FIELDS[topic]:
-            mapped_field = map_field_name_to_fk_field_name(field)
-            # the following check will be used when querying is added, at the moment these don't appear in the phonology list
-            if mapped_field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                continue
-            if mapped_field in [f.name for f in Gloss._meta.fields]:
-                field_field = Gloss._meta.get_field(mapped_field)
-            elif mapped_field in [f.name for f in Handshape._meta.fields]:
-                field_field = Handshape._meta.get_field(mapped_field)
-            elif mapped_field in [f.name for f in Morpheme._meta.fields]:
-                field_field = Morpheme._meta.get_field(mapped_field)
-            else:
-                print('field_to_categories: field not found in Gloss, Handshape, Morpheme: ', field)
-                continue
-            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                if 'Handshape' not in choice_categories:
-                    choice_categories.append('Handshape')
-            elif field == 'semField':
-                # capitalize it
-                if 'SemField' not in choice_categories:
-                    choice_categories.append('SemField')
-            elif field in ['derivHist']:
-                if field not in choice_categories:
-                    choice_categories.append(field)
-            elif hasattr(field_field, 'field_choice_category'):
-                if field_field.field_choice_category not in choice_categories:
-                    choice_categories.append(field_field.field_choice_category)
-    return choice_categories
-
-def fields_to_fieldcategory_dict():
-    choice_categories = {}
-    for topic in ['main', 'phonology', 'semantics']:
-        for field in FIELDS[topic]:
-            mapped_field = map_field_name_to_fk_field_name(field)
-            # the following check will be used when querying is added, at the moment these don't appear in the phonology list
-            if mapped_field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                continue
-            if mapped_field in [f.name for f in Gloss._meta.fields]:
-                field_field = Gloss._meta.get_field(mapped_field)
-            elif mapped_field in [f.name for f in Handshape._meta.fields]:
-                field_field = Handshape._meta.get_field(mapped_field)
-            elif mapped_field in [f.name for f in Morpheme._meta.fields]:
-                field_field = Morpheme._meta.get_field(mapped_field)
-            else:
-                print('field_to_categories: field not found in Gloss, Handshape, Morpheme: ', field)
-                continue
-            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                choice_categories[field] = 'Handshape'
-            elif field == 'semField':
-                choice_categories[field] = 'SemField'
-            elif field in ['derivHist']:
-                choice_categories[field] = field
-            elif hasattr(field_field, 'field_choice_category'):
-                choice_categories[field] = field_field.field_choice_category
-    return choice_categories
 
 def get_interface_language_and_default_language_codes(request):
     default_language = Language.objects.get(id=get_default_language_id())

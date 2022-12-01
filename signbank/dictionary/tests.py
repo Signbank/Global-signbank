@@ -41,7 +41,7 @@ class BasicCRUDTests(TestCase):
         #Is the gloss there before?
         found = 0
         total_nr_of_glosses = 0
-        for gloss in Gloss.objects.filter(handedness_fk=self.handedness_fieldchoice_1):
+        for gloss in Gloss.objects.filter(handedness=self.handedness_fieldchoice_1):
             if gloss.idgloss == 'thisisatemporarytestlemmaidglosstranslation':
                 found += 1
             total_nr_of_glosses += 1
@@ -65,20 +65,20 @@ class BasicCRUDTests(TestCase):
 
         #Create the gloss
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
         #Is the gloss there now?
         found = 0
-        for gloss in Gloss.objects.filter(handedness_fk=self.handedness_fieldchoice_1):
+        for gloss in Gloss.objects.filter(handedness=self.handedness_fieldchoice_1):
             if gloss.idgloss == 'thisisatemporarytestlemmaidglosstranslation':
                 found += 1
 
         self.assertEqual(found, 1)
 
         #The handedness before was 4
-        self.assertEqual(new_gloss.handedness_fk,self.handedness_fieldchoice_1)
+        self.assertEqual(new_gloss.handedness,self.handedness_fieldchoice_1)
 
         #If you run an update post request, you can change the gloss
         new_value_handedness = '_'+str(self.handedness_fieldchoice_2.machine_value)
@@ -87,7 +87,7 @@ class BasicCRUDTests(TestCase):
         client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'handedness','value':new_value_handedness})
 
         changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
-        self.assertEqual(changed_gloss.handedness_fk, self.handedness_fieldchoice_2)
+        self.assertEqual(changed_gloss.handedness, self.handedness_fieldchoice_2)
 
         # set up keyword search parameter for default language
         default_language = Language.objects.get(id=get_default_language_id())
@@ -131,7 +131,7 @@ class BasicCRUDTests(TestCase):
         #Throwing stuff away with the update functionality
         client.post(settings.PREFIX_URL + '/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'deletegloss','value':'confirmed'})
         found = 0
-        for gloss in Gloss.objects.filter(handedness_fk=self.handedness_fieldchoice_1):
+        for gloss in Gloss.objects.filter(handedness=self.handedness_fieldchoice_1):
             if gloss.idgloss == 'thisisatemporarytestgloss':
                 found += 1
 
@@ -210,7 +210,7 @@ class BasicCRUDTests(TestCase):
 
 
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -224,7 +224,7 @@ class BasicCRUDTests(TestCase):
             annotationIdgloss.save()
 
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -238,7 +238,7 @@ class BasicCRUDTests(TestCase):
             annotationIdgloss.save()
 
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_2
+        new_gloss.handedness = self.handedness_fieldchoice_2
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -308,8 +308,8 @@ class BasicCRUDTests(TestCase):
         # to test the package functionality of phonology fields, add some to settings.API_FIELDS
         # for this test, the local settings file has added these two fields
         # they are visible in the result if they appear in API_FIELDS
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
-        new_gloss.locprim_fk = self.locprim_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
+        new_gloss.locprim = self.locprim_fieldchoice_1
 
         new_gloss.lemma = new_lemma
         new_gloss.save()
@@ -381,7 +381,7 @@ class BasicQueryTests(TestCase):
 
         # #Create the gloss
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
         for language in test_dataset.translation_languages.all():
@@ -845,7 +845,7 @@ class VideoTests(TestCase):
 
         #Create the gloss
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -919,7 +919,7 @@ class VideoTests(TestCase):
 
         #Create the gloss
         new_gloss = Gloss()
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -1591,9 +1591,9 @@ class HandshapeTests(TestCase):
         for gloss_id in range(1,4):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
-                'handedness_fk': self.field_choice_handedness_1,
-                'domhndsh_handshapefk' : self.test_handshape1,
-                'subhndsh_handshapefk': self.test_handshape2,
+                'handedness': self.field_choice_handedness_1,
+                'domhndsh': self.test_handshape1,
+                'subhndsh': self.test_handshape2,
             }
             new_gloss = Gloss(**gloss_data)
             new_gloss.save()
@@ -1625,7 +1625,7 @@ class HandshapeTests(TestCase):
 
         changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
         print('Confirm the gloss was updated to the new handshape.')
-        self.assertEqual(changed_gloss.domhndsh_handshapefk.machine_value, new_handshape.machine_value)
+        self.assertEqual(changed_gloss.domhndsh.machine_value, new_handshape.machine_value)
 
     def test_delete_handshape(self):
 
@@ -1751,7 +1751,7 @@ class MultipleSelectTests(TestCase):
         #Create the gloss
         new_gloss = Gloss()
         new_gloss.lemma = new_lemma
-        new_gloss.handedness_fk = self.handedness_fieldchoice_1
+        new_gloss.handedness = self.handedness_fieldchoice_1
         # save the gloss so it can be used in the ManyToMany relation of SemanticField added to the gloss below
         new_gloss.save()
 
@@ -1764,8 +1764,8 @@ class MultipleSelectTests(TestCase):
             annotationIdgloss.text = 'thisisatemporaryannotationidgloss_' + language.language_code_2char
             annotationIdgloss.save()
 
-        new_gloss.semFieldShadow.clear()
-        new_gloss.semFieldShadow.add(new_semanticfield)
+        new_gloss.semField.clear()
+        new_gloss.semField.add(new_semanticfield)
         new_gloss.save()
 
         print('New gloss ', new_gloss.idgloss, ' created with semantic field ', new_semanticfield.name)
@@ -1780,7 +1780,7 @@ class MultipleSelectTests(TestCase):
         # Add another semantic field to the gloss
         new_semanticfield_2 = self.create_semanticfield()
 
-        new_gloss.semFieldShadow.add(new_semanticfield_2)
+        new_gloss.semField.add(new_semanticfield_2)
         new_gloss.save()
         print('Semantic field ', new_semanticfield_2.name, ' added to gloss.')
 
@@ -1844,28 +1844,37 @@ class FieldChoiceTests(TestCase):
                                       '/change/?_changelist_filters=field_exact%3D'+first_field_choice_option.field
 
             initial_data = dict()
-            initial_data['name'] = first_field_choice_option.name
-            initial_data['name_nl'] = first_field_choice_option.name_nl
-            initial_data['name_en'] = first_field_choice_option.name_en
-            initial_data['name_zh_hans'] = first_field_choice_option.name_zh_hans
-            initial_data['field_color'] = first_field_choice_option.field_color
             initial_data['field'] = first_field_choice_option.field
             initial_data['machine_value'] = first_field_choice_option.machine_value
+            initial_data['name'] = first_field_choice_option.name
+            initial_data['field_color'] = first_field_choice_option.field_color
+            for language in MODELTRANSLATION_LANGUAGES:
+                name_languagecode = 'name_' + language.replace('-', '_')
+                field_value = getattr(first_field_choice_option,name_languagecode)
+                if not field_value:
+                    initial_data[name_languagecode] = 'Default value'
+                else:
+                    initial_data[name_languagecode] = field_value
+
+            # data to be given to the form
+            # English is used as the language to be updated
+            LANGUAGE_FIELD_TO_UPDATE = 'name_en'
 
             update_data = dict()
-            if settings.SHOW_ENGLISH_ONLY:
-                update_data['name_en'] = 'Test Update Field Choice'
-                update_data['name_nl'] = first_field_choice_option.name_nl
-            else:
-                update_data['name_nl'] = 'Test Update Field Choice'
-                update_data['name_en'] = first_field_choice_option.name_en
-            update_data['name'] = first_field_choice_option.name
-            update_data['name_zh_hans'] = first_field_choice_option.name_zh_hans
-            # the hash tag is needed in the form interface for display
-            update_data['field_color'] = '#' + first_field_choice_option.field_color
-            # update_data['field_color'] = first_field_choice_option.field_color
             update_data['field'] = first_field_choice_option.field
             update_data['machine_value'] = first_field_choice_option.machine_value
+            update_data['name'] = first_field_choice_option.name
+            # the hash tag is needed in the form interface for display
+            update_data['field_color'] = '#' + first_field_choice_option.field_color
+            for language in MODELTRANSLATION_LANGUAGES:
+                name_languagecode = 'name_' + language.replace('-', '_')
+                field_value = getattr(first_field_choice_option,name_languagecode)
+                if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
+                    update_data[LANGUAGE_FIELD_TO_UPDATE] = 'Test Update Field Choice'
+                elif not field_value:
+                    update_data[name_languagecode] = 'Default value'
+                else:
+                    update_data[name_languagecode] = field_value
 
             response = self.client.get('/admin/dictionary/fieldchoice/'+admin_url_change_suffix_1, update_data)
             self.assertEqual(response.status_code, 302)
@@ -1883,20 +1892,22 @@ class FieldChoiceTests(TestCase):
             first_field_choice_option.refresh_from_db()
 
             # check that the updated field is indeed updated
-            if settings.SHOW_ENGLISH_ONLY:
-                self.assertEqual(first_field_choice_option.name_en, update_data['name_en'])
-                self.assertEqual(first_field_choice_option.name_nl, initial_data['name_nl'])
-                # the English-only test updates the name field behind the scenes
-                self.assertEqual(first_field_choice_option.name, update_data['name_en'])
-            else:
-                self.assertEqual(first_field_choice_option.name_nl, update_data['name_nl'])
-                self.assertEqual(first_field_choice_option.name_en, initial_data['name_en'])
-                self.assertEqual(first_field_choice_option.name, initial_data['name'])
             # check that none of the other fields were updated
-            self.assertEqual(first_field_choice_option.name_zh_hans, initial_data['name_zh_hans'])
-            self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
             self.assertEqual(first_field_choice_option.field, initial_data['field'])
             self.assertEqual(first_field_choice_option.machine_value, initial_data['machine_value'])
+            self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
+            for language in MODELTRANSLATION_LANGUAGES:
+                name_languagecode = 'name_' + language.replace('-', '_')
+                if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
+                    self.assertEqual(getattr(first_field_choice_option,LANGUAGE_FIELD_TO_UPDATE), update_data[LANGUAGE_FIELD_TO_UPDATE])
+                else:
+                    self.assertEqual(getattr(first_field_choice_option,name_languagecode), initial_data[name_languagecode])
+
+            # the following is true if the override language is en, then name has also been updated
+            # self.assertEqual(first_field_choice_option.name, update_data['name'])
+
+
+
 
     def test_delete_fieldchoice_gloss(self):
 
@@ -2038,7 +2049,6 @@ class FieldChoiceTests(TestCase):
 
         from signbank.tools import fields_with_choices_definition
         fields_with_choices = fields_with_choices_definition()
-        print(fields_with_choices)
         # create a gloss with and without field choices
 
         # set the test dataset
@@ -2071,7 +2081,6 @@ class FieldChoiceTests(TestCase):
             if field_options:
                 field_choice_in_use = field_options.first()
                 for field in fields_with_choices[fieldchoice]:
-                    print('field with choices set defn: ', field)
                     setattr(new_definition, field, field_choice_in_use)
         new_definition.save()
 
@@ -2414,10 +2423,10 @@ class testFrequencyAnalysis(TestCase):
         for gloss_id in range(1,10):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
-                'handedness_fk': self.handedness_fieldchoice_1,
-                'domhndsh_handshapefk' : self.test_handshape1,
-                'subhndsh_handshapefk': self.test_handshape2,
-                'locprim_fk': self.locprim_fieldchoice_1,
+                'handedness': self.handedness_fieldchoice_1,
+                'domhndsh': self.test_handshape1,
+                'subhndsh': self.test_handshape2,
+                'locprim': self.locprim_fieldchoice_1,
             }
             new_gloss = Gloss(**gloss_data)
             new_gloss.save()
@@ -2430,28 +2439,28 @@ class testFrequencyAnalysis(TestCase):
                 annotationIdgloss.save()
             glosses[gloss_id] = new_gloss
 
-        glosses[2].locprim_fk = self.locprim_fieldchoice_2
+        glosses[2].locprim = self.locprim_fieldchoice_2
         glosses[2].save()
 
-        glosses[3].handedness_fk = self.handedness_fieldchoice_2
+        glosses[3].handedness = self.handedness_fieldchoice_2
         glosses[3].save()
 
-        glosses[4].handCh_fk = self.handch_fieldchoice_1
+        glosses[4].handCh = self.handch_fieldchoice_1
         glosses[4].save()
 
-        glosses[5].domhndsh_handshapefk = self.test_handshape2
+        glosses[5].domhndsh = self.test_handshape2
         glosses[5].save()
 
-        glosses[6].handedness_fk = self.handedness_fieldchoice_1
+        glosses[6].handedness = self.handedness_fieldchoice_1
         glosses[6].save()
 
-        glosses[7].domhndsh_handshapefk = self.test_handshape2
+        glosses[7].domhndsh = self.test_handshape2
         glosses[7].save()
 
-        glosses[8].namEnt_fk = self.nament_fieldchoice_1
+        glosses[8].namEnt = self.nament_fieldchoice_1
         glosses[8].save()
 
-        glosses[9].handedness_fk = self.handedness_fieldchoice_2
+        glosses[9].handedness = self.handedness_fieldchoice_2
         glosses[9].save()
 
         self.client.login(username='test-user', password='test-user')
@@ -2463,7 +2472,7 @@ class testFrequencyAnalysis(TestCase):
 
         table_code = str(test_dataset.id) + '_results_'
 
-        frequency_dict = test_dataset.generate_frequency_dict(language.language_code_2char)
+        frequency_dict = test_dataset.generate_frequency_dict()
         for fieldname in frequency_dict.keys():
             self.assertContains(response, table_code + fieldname)
 
@@ -2488,23 +2497,28 @@ class testFrequencyAnalysis(TestCase):
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         from django.utils import translation
-        for language_code in dict(settings.LANGUAGES).keys():
+        for language_code in settings.MODELTRANSLATION_LANGUAGES:
             translation.activate(language_code)
 
-            frequency_dict = test_dataset.generate_frequency_dict(language_code)
+            frequency_dict = test_dataset.generate_frequency_dict()
             frequency_dict_keys = frequency_dict.keys()
 
             frequency_fields = FIELDS['phonology'] + FIELDS['semantics']
 
             fields_data = []
             for field_name in frequency_fields:
-                mapped_field_name = map_field_name_to_fk_field_name(field_name)
-                gloss_field = Gloss._meta.get_field(mapped_field_name)
+                gloss_field = Gloss._meta.get_field(field_name)
                 if hasattr(gloss_field, 'field_choice_category'):
                     fields_data.append((field_name, gloss_field.verbose_name.title(), gloss_field.field_choice_category))
                 elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                     fields_data.append(
                         (field_name, gloss_field.verbose_name.title(), 'Handshape'))
+                elif field_name == 'semField':
+                    fields_data.append(
+                        (field_name, gloss_field.verbose_name.title(), 'SemField'))
+                elif field_name == 'derivHist':
+                    fields_data.append(
+                        (field_name, gloss_field.verbose_name.title(), 'derivHist'))
             fields_data_keys = [f_name for (f_name,v_verbose,c_category) in fields_data]
 
             self.assertNotEqual(len(fields_data),0)
@@ -2516,6 +2530,16 @@ class testFrequencyAnalysis(TestCase):
                     choice_list = list(Handshape.objects.filter(machine_value__lte=1).
                                     order_by('machine_value').distinct()) \
                                 + list(Handshape.objects.filter(machine_value__gt=1)
+                                        .distinct().order_by('name'))
+                elif fieldchoice_category == 'SemField':
+                    choice_list = list(SemanticField.objects.filter(machine_value__lte=1).
+                                    order_by('machine_value').distinct()) \
+                                + list(SemanticField.objects.filter(machine_value__gt=1)
+                                        .distinct().order_by('name'))
+                elif fieldchoice_category == 'derivHist':
+                    choice_list = list(DerivationHistory.objects.filter(machine_value__lte=1).
+                                    order_by('machine_value').distinct()) \
+                                + list(DerivationHistory.objects.filter(machine_value__gt=1)
                                         .distinct().order_by('name'))
                 else:
                     choice_list = list(FieldChoice.objects.filter(field__iexact=fieldchoice_category, machine_value__lte=1).
@@ -2601,79 +2625,96 @@ class testSettings(TestCase):
         # and that there exist field choices for it
         # this test is intended to help find potential errors in templates that use choice lists for fields
         if 'phonology' in settings.FIELDS.keys():
-            phonology_fields = map_field_names_to_fk_field_names(settings.FIELDS['phonology'])
+            phonology_fields = settings.FIELDS['phonology']
             gloss_fields_names = { f.name: f for f in Gloss._meta.fields }
             print('Testing phonology fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in phonology_fields:
                 # make sure all phonology fields in settings are defined in Gloss
-                self.assertIn(f, gloss_fields_names.keys())
-                # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
-                self.assertTrue(hasattr(gloss_fields_names[f], 'choices'))
+                try:
+                    gloss_field = Gloss._meta.get_field(f)
+                    field_exists = True
+                except (KeyError, ObjectDoesNotExist):
+                    field_exists = False
+                self.assertTrue(field_exists)
+                if not field_exists:
+                    continue
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if not isinstance(gloss_fields_names[f], FieldChoiceForeignKey):
+                if isinstance(gloss_field, models.ForeignKey) and gloss_fields_names[f].related_model == Handshape:
+                    self.assertEqual(fieldname_to_kind_table[f], 'list')
+                elif not isinstance(gloss_field, FieldChoiceForeignKey):
                     # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
-                    self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                    self.assertFalse(hasattr(gloss_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
-                elif not hasattr(gloss_fields_names[f], 'field_choice_category'):
+                elif not hasattr(gloss_field, 'field_choice_category'):
                     # this is not a choice list field
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and to have field_choice_category defined
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
-                    self.assertTrue(hasattr(gloss_fields_names[f], 'field_choice_category'))
-                    fc_category = gloss_fields_names[f].field_choice_category
+                    self.assertTrue(hasattr(gloss_field, 'field_choice_category'))
+                    fc_category = gloss_field.field_choice_category
                     # make sure there are fields for the category
                     fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category)
                     self.assertGreater(len(fields_for_this_category),0)
 
         if 'semantics' in settings.FIELDS.keys():
-            semantics_fields = map_field_names_to_fk_field_names(settings.FIELDS['semantics'])
-            gloss_fields_names = { f.name: f for f in Gloss._meta.fields }
+            semantics_fields = settings.FIELDS['semantics']
             print('Testing semantics fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in semantics_fields:
                 # make sure all semantics fields are defined in Gloss
-                self.assertIn(f, gloss_fields_names.keys())
-                # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
-                self.assertTrue(hasattr(gloss_fields_names[f], 'choices'))
+                try:
+                    gloss_field = Gloss._meta.get_field(f)
+                    field_exists = True
+                except (KeyError, ObjectDoesNotExist):
+                    field_exists = False
+                self.assertTrue(field_exists)
+                if not field_exists:
+                    continue
+
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if not isinstance(gloss_fields_names[f], FieldChoiceForeignKey):
+                if f in ['semField', 'derivHist']:
+                    self.assertEqual(fieldname_to_kind_table[f], 'list')
+                elif not isinstance(gloss_field, FieldChoiceForeignKey):
                     # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
-                    self.assertFalse(hasattr(gloss_fields_names[f], 'field_choice_category'))
+                    self.assertFalse(hasattr(gloss_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
-                elif not hasattr(gloss_fields_names[f], 'field_choice_category'):
-                    # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
+                elif not hasattr(gloss_field, 'field_choice_category'):
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and have field_choice_category defined
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
-                    self.assertTrue(hasattr(gloss_fields_names[f], 'field_choice_category'))
-                    fc_category = gloss_fields_names[f].field_choice_category
+                    self.assertTrue(hasattr(gloss_field, 'field_choice_category'))
+                    fc_category = gloss_field.field_choice_category
                     # make sure there are fields for the category
                     fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category, machine_value__gt=1)
                     self.assertGreater(len(fields_for_this_category),0)
 
         if 'handshape' in settings.FIELDS.keys():
-            handshape_fields = map_field_names_to_fk_field_names(settings.FIELDS['handshape'])
-            handshape_fields_names = { f.name: f for f in Handshape._meta.fields }
+            handshape_fields = settings.FIELDS['handshape']
             print('Testing handshape fields for declaration in Handshape model with field_choice_category in FieldChoice table.')
             for f in handshape_fields:
                 # make sure all handshape fields are defined in Gloss
-                self.assertIn(f, handshape_fields_names.keys())
-                # the following is true, which is weird, but just to state it explicitly since it's assumed sometimes in the code
-                self.assertTrue(hasattr(handshape_fields_names[f], 'choices'))
+                try:
+                    handshape_field = Handshape._meta.get_field(f)
+                    field_exists = True
+                except (KeyError, ObjectDoesNotExist):
+                    field_exists = False
+                self.assertTrue(field_exists)
+                if not field_exists:
+                    continue
+
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if not isinstance(handshape_fields_names[f], FieldChoiceForeignKey):
+                if not isinstance(handshape_field, FieldChoiceForeignKey):
                     # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
-                    self.assertFalse(hasattr(handshape_fields_names[f], 'field_choice_category'))
+                    self.assertFalse(hasattr(handshape_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
-                elif not hasattr(handshape_fields_names[f], 'field_choice_category'):
-                    # the models declaration of the field was not constructed using build_choice_list or the choices list is empty
+                elif not hasattr(handshape_field, 'field_choice_category'):
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 else:
                     # we expect the field to be a choice list field and have field_choice_category defined
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
-                    self.assertTrue(hasattr(handshape_fields_names[f], 'field_choice_category'))
-                    fc_category = handshape_fields_names[f].field_choice_category
+                    self.assertTrue(hasattr(handshape_field, 'field_choice_category'))
+                    fc_category = handshape_field.field_choice_category
                     # make sure there are fields for the category
                     fields_for_this_category = FieldChoice.objects.filter(field__iexact=fc_category, machine_value__gt=1)
                     self.assertGreater(len(fields_for_this_category),0)
@@ -2725,12 +2766,10 @@ class RevisionHistoryTests(TestCase):
 
         gloss_update_phonology_data = []
         gloss_fields = settings.FIELDS['phonology']+settings.FIELDS['semantics']+settings.FIELDS['main']+['inWeb', 'isNew', 'excludeFromEcv']
-        gloss_fields_names = {f.name: f for f in Gloss._meta.fields}
 
         mapped_categories = []
         for f in gloss_fields:
-            mapped_field = map_field_name_to_fk_field_name(f)
-            gloss_field = gloss_fields_names[mapped_field]
+            gloss_field = Gloss._meta.get_field(f)
 
             if f == 'semField':
                 mapped_category = 'SemField'
@@ -2782,8 +2821,7 @@ class RevisionHistoryTests(TestCase):
         # rather than the gloss model field name
         gloss_update_phonology_keys = []
         for f in gloss_fields:
-            mapped_field = map_field_name_to_fk_field_name(f)
-            gloss_field = gloss_fields_names[mapped_field]
+            gloss_field = Gloss._meta.get_field(f)
             if f == 'semField':
                 new_machine_value_string = '_500'
                 gloss_update_phonology_data.append({'id' : 'semanticfield', 'value' : new_machine_value_string})
@@ -2899,7 +2937,7 @@ class Corpus_Tests(TestCase):
             gloss_data = {
                 'id': glosses[gloss_id],
                 'lemma' : lemmas[gloss_id],
-                'handedness_fk': self.handedness_fieldchoice_1,
+                'handedness': self.handedness_fieldchoice_1,
                 'tokNo': 0,
                 'tokNoSgnr': 0
             }
@@ -3198,9 +3236,9 @@ class MinimalPairsTests(TestCase):
         for gloss_id in range(1,15):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
-                'handedness_fk': self.handedness_fieldchoice_1,
-                'domhndsh_handshapefk' : self.test_handshape1,
-                'locprim_fk': self.locprim_fieldchoice_1,
+                'handedness': self.handedness_fieldchoice_1,
+                'domhndsh' : self.test_handshape1,
+                'locprim': self.locprim_fieldchoice_1,
             }
             new_gloss = Gloss(**gloss_data)
             new_gloss.save()
@@ -3216,13 +3254,13 @@ class MinimalPairsTests(TestCase):
         # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
         # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
 
-        glosses[2].locprim_fk = self.locprim_fieldchoice_2
+        glosses[2].locprim = self.locprim_fieldchoice_2
         glosses[2].save()
 
         glosses[3].repeat = True
         glosses[3].save()
 
-        glosses[4].handedness_fk = self.handedness_fieldchoice_2
+        glosses[4].handedness = self.handedness_fieldchoice_2
         glosses[4].save()
 
         glosses[5].domhndsh_letter = True
@@ -3237,25 +3275,25 @@ class MinimalPairsTests(TestCase):
         glosses[8].altern = True
         glosses[8].save()
 
-        glosses[9].handCh_fk = self.handch_fieldchoice_1
+        glosses[9].handCh = self.handch_fieldchoice_1
         glosses[9].save()
 
-        glosses[10].domhndsh_handshapefk = self.test_handshape2
+        glosses[10].domhndsh = self.test_handshape2
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
-        glosses[11].handedness_fk = self.handedness_fieldchoice_2
+        glosses[11].handedness = self.handedness_fieldchoice_2
         glosses[11].weakdrop = False
         glosses[11].save()
 
-        glosses[12].handedness_fk = self.handedness_fieldchoice_2
+        glosses[12].handedness = self.handedness_fieldchoice_2
         glosses[12].weakdrop = True
         glosses[12].save()
 
-        glosses[13].handedness_fk = self.handedness_fieldchoice_2
+        glosses[13].handedness = self.handedness_fieldchoice_2
         glosses[13].save()
 
-        glosses[14].domhndsh_handshapefk = self.test_handshape2
+        glosses[14].domhndsh = self.test_handshape2
         glosses[14].domhndsh_letter = False
         glosses[14].save()
 
@@ -3321,9 +3359,9 @@ class MinimalPairsTests(TestCase):
         for gloss_id in range(1,15):
             gloss_data = {
                 'lemma' : lemmas[gloss_id],
-                'handedness_fk': self.handedness_fieldchoice_1,
-                'domhndsh_handshapefk' : self.test_handshape1,
-                'locprim_fk': self.locprim_fieldchoice_1,
+                'handedness': self.handedness_fieldchoice_1,
+                'domhndsh' : self.test_handshape1,
+                'locprim': self.locprim_fieldchoice_1,
                 'tokNo': 0,
                 'tokNoSgnr': 0
             }
@@ -3341,32 +3379,32 @@ class MinimalPairsTests(TestCase):
         # Set up the fields of the new glosses to differ by one phonology field to glosses[1]
         # gloss 1 doesn't set the repeat or altern fields, they are left as whatever the default is
 
-        glosses[3].locprim_fk = None
+        glosses[3].locprim = None
         glosses[3].save()
 
         # gloss 9 has an empty handedness, it has no minimal pairs
-        glosses[9].handedness_fk = None
+        glosses[9].handedness = None
         glosses[9].save()
 
-        glosses[10].domhndsh_handshapefk = self.test_handshape2
+        glosses[10].domhndsh = self.test_handshape2
         glosses[10].domhndsh_letter = True
         glosses[10].save()
 
-        glosses[11].handedness_fk = self.handedness_fieldchoice_2
+        glosses[11].handedness = self.handedness_fieldchoice_2
         glosses[11].weakdrop = False
         glosses[11].save()
 
-        glosses[12].handedness_fk = self.handedness_fieldchoice_2
+        glosses[12].handedness = self.handedness_fieldchoice_2
         glosses[12].weakdrop = True
         glosses[12].save()
 
-        glosses[13].domhndsh_handshapefk = self.test_handshape2
-        glosses[13].handedness_fk = self.handedness_fieldchoice_2
+        glosses[13].domhndsh = self.test_handshape2
+        glosses[13].handedness = self.handedness_fieldchoice_2
         glosses[13].save()
 
-        glosses[14].domhndsh_handshapefk = self.test_handshape2
-        glosses[14].handedness_fk = self.handedness_fieldchoice_2
-        glosses[14].subhndsh_handshapefk = self.test_handshape2
+        glosses[14].domhndsh = self.test_handshape2
+        glosses[14].handedness = self.handedness_fieldchoice_2
+        glosses[14].subhndsh = self.test_handshape2
         glosses[14].save()
 
         glosses_to_ids = {}

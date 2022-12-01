@@ -20,8 +20,8 @@ import signbank.settings
 from django.conf import settings
 
 from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value
-from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, map_field_names_to_fk_field_names, map_field_name_to_fk_field_name
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
 from django.utils.translation import ugettext_lazy as _
@@ -364,7 +364,7 @@ def update_gloss(request, glossid):
     else:
 
 
-        if not field in [f.name for f in Gloss._meta.get_fields()]:
+        if field not in [f.name for f in Gloss._meta.get_fields()]:
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
         whitespace = tuple(' \n\r\t')
@@ -410,9 +410,8 @@ def update_gloss(request, glossid):
                 newvalue = value
         # special value of 'notset' or -1 means remove the value
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
-        mapped_fieldnames = map_field_names_to_fk_field_names(fieldnames)
         fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
-                                        if f.name in mapped_fieldnames
+                                        if f.name in fieldnames
                                         and isinstance(Gloss._meta.get_field(f.name), FieldChoiceForeignKey)]
         fields_empty_null = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields ]
@@ -434,28 +433,18 @@ def update_gloss(request, glossid):
         # The following code relies on the order of if else testing
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
-        if not settings.USE_FIELD_CHOICE_FOREIGN_KEY and field + '_fk' in fieldchoiceforeignkey_fields:
-
-            gloss_field = Gloss._meta.get_field(field + '_fk')
-            try:
-                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('Update field choice no unique machine value found: ', gloss_field.name, gloss_field.field_choice_category, value)
-                print('Setting to machine value 0')
-                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
-            gloss.__setattr__(field+'_fk', fieldchoice)
-            gloss.save()
-            newvalue = fieldchoice.name
-        elif field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-
-            gloss_field = Gloss._meta.get_field(field + '_handshapefk')
+        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            # leave this print statement for debugging purposes
+            # uncomment for debugging
+            # print('gloss update handshape foreign key ', gloss, field, value)
+            gloss_field = Gloss._meta.get_field(field)
             try:
                 handshape = Handshape.objects.get(machine_value=value)
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 print('Update handshape no unique machine value found: ', gloss_field.name, value)
                 print('Setting to machine value 0')
                 handshape = Handshape.objects.get(machine_value=0)
-            gloss.__setattr__(field+'_handshapefk', handshape)
+            gloss.__setattr__(field, handshape)
             gloss.save()
             newvalue = handshape.name
         elif field in fieldchoiceforeignkey_fields:
@@ -516,14 +505,10 @@ def update_gloss(request, glossid):
         glossrevision_newvalue = value
     else:
         glossrevision_newvalue = newvalue
-    if field.endswith('_fk'):
-        # make sure the original field names are used in the revision history
-        lookup_key = field.replace('_fk', '')
-    else:
-        lookup_key = field
+
     revision = GlossRevision(old_value=original_human_value,
                              new_value=glossrevision_newvalue,
-                             field_name=lookup_key,
+                             field_name=field,
                              gloss=gloss,
                              user=request.user,
                              time=datetime.now(tz=get_current_timezone()))
@@ -688,15 +673,15 @@ def update_semanticfield(request, gloss, field, values):
         if value in semanticfield_choices.keys():
             new_semanticfields_to_save.append(semanticfield_choices[value])
 
-    original_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
+    original_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
 
     # clear the old semantic fields only after we've parsed and checked the new ones
-    gloss.semFieldShadow.clear()
+    gloss.semField.clear()
     for sf in new_semanticfields_to_save:
-        gloss.semFieldShadow.add(sf)
+        gloss.semField.add(sf)
     gloss.save()
 
-    new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
+    new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
 
     revision = GlossRevision(old_value=original_semanticfield_value, new_value=new_semanticfield_value, field_name='semField',
                              gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
@@ -726,15 +711,15 @@ def update_derivationhistory(request, gloss, field, values):
         if value in derivationhistory_choices.keys():
             new_derivationhistory_to_save.append(derivationhistory_choices[value])
 
-    original_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
+    original_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
 
     # clear the old derivation histories only after we've parsed and checked the new ones
-    gloss.derivHistShadow.clear()
+    gloss.derivHist.clear()
     for sf in new_derivationhistory_to_save:
-        gloss.derivHistShadow.add(sf)
+        gloss.derivHist.add(sf)
     gloss.save()
 
-    new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
+    new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
 
     revision = GlossRevision(old_value=original_derivationhistory_value, new_value=new_derivationhistory_value, field_name='derivHist',
                              gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
@@ -917,10 +902,10 @@ def subst_notes(gloss, field, values):
         is_published = (published == 'True')
         note_role = note_reverse_translation[role]
         index_count = int(count)
-        defn = Definition(gloss=gloss, count=index_count, role_fk=note_role, text=text, published=is_published)
+        defn = Definition(gloss=gloss, count=index_count, role=note_role, text=text, published=is_published)
         defn.save()
 
-    new_notes_refresh = [(note.role_fk.name, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
+    new_notes_refresh = [(note.role.name, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
     notes_by_role = []
     for note in new_notes_refresh:
         notes_by_role.append(':'.join(note))
@@ -1199,9 +1184,9 @@ def update_definition(request, gloss, field, value):
         else:
             newvalue = 'No'
     elif what == 'definitionrole':
-        defn.role_fk = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
+        defn.role = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
         defn.save()
-        newvalue = defn.role_fk.name
+        newvalue = defn.role.name
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -1225,7 +1210,7 @@ def update_other_media(request,gloss,field,value):
     elif action_or_fieldname == 'other-media-type':
         # value is the (str) machine value of the Other Media Type from the choice list in the template
         other_media_type = FieldChoice.objects.filter(field='OtherMediaType', machine_value=int(value))
-        other_media.type_fk = other_media_type
+        other_media.type = other_media_type
         value = other_media_type.name
 
     elif action_or_fieldname == 'other-media-alternative-gloss':
@@ -1351,7 +1336,7 @@ def add_definition(request, glossid):
             role = FieldChoice.objects.get(field='NoteType', machine_value=int(form.cleaned_data['note']))
             text = form.cleaned_data['text']
             
-            defn = Definition(gloss=thisgloss, count=count, role_fk=role, text=text, published=published)
+            defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
             defn.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
@@ -1372,7 +1357,7 @@ def add_morphology_definition(request):
             thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
 
             # create definition, default to not published
-            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role_fk=role, morpheme=morpheme)
+            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
@@ -1426,27 +1411,6 @@ def add_morpheme_definition(request, glossid):
     # If we get here the request method has apparently been changed to get instead of post, can this happen?
     raise Http404('Incorrect request')
 
-def add_morphemeappearance(request):
-
-    if request.method == "POST":
-        form = GlossMorphologyForm(request.POST)
-
-        if form.is_valid():
-
-            parent_gloss = form.cleaned_data['parent_gloss_id']
-            role = form.cleaned_data['role']
-            morpheme_id = form.cleaned_data['morpheme_id']
-            morpheme = gloss_from_identifier(morpheme_id)
-
-            thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
-
-            # create definition, default to not published
-            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role_fk=role, morpheme=morpheme)
-            morphdef.save()
-
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
-
-    raise Http404('Incorrect request')
 
 # Add a 'blend' (according to the Blend model)
 def add_blend_definition(request, glossid):
@@ -1492,7 +1456,7 @@ def update_handshape(request, handshapeid):
         value = str(value)
         newPattern = ''
 
-        field = map_field_name_to_fk_field_name(get_field)
+        field = get_field
 
         if len(value) == 0:
             value = ' '
@@ -1716,7 +1680,7 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
         morph_def.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morphology_definition_role':
-        morph_def.role_fk = value
+        morph_def.role = value
         morph_def.save()
 
         choice_list = FieldChoice.objects.filter(field='MorphologyType')
@@ -1741,105 +1705,103 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
 
 def add_morpheme(request):
     """Create a new morpheme and redirect to the edit view"""
+    if request.method != "POST":
+        return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
+    dataset = None
+    if 'dataset' in request.POST and request.POST['dataset'] is not None:
+        dataset = Dataset.objects.get(pk=request.POST['dataset'])
+        selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
+    else:
+        selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    if request.method == "POST":
-        dataset = None
-        if 'dataset' in request.POST and request.POST['dataset'] is not None:
-            dataset = Dataset.objects.get(pk=request.POST['dataset'])
-            selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
-        else:
-            selected_datasets = get_selected_datasets_for_user(request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+    default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
-        default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
-        default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+    if len(selected_datasets) == 1:
+        last_used_dataset = selected_datasets[0]
+    elif 'last_used_dataset' in request.session.keys():
+        last_used_dataset = request.session['last_used_dataset']
+    else:
+        last_used_dataset = default_dataset
 
-        if len(selected_datasets) == 1:
-            last_used_dataset = selected_datasets[0]
-        elif 'last_used_dataset' in request.session.keys():
-            last_used_dataset = request.session['last_used_dataset']
-        else:
-            last_used_dataset = default_dataset
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+    form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
-        form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
-
-        # Check for 'change_dataset' permission
-        if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
-                and ('change_dataset' not in get_group_perms(request.user, dataset))\
-                and not request.user.is_staff:
-            messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
+    # Lemma handling
+    lemmaidgloss = None
+    lemma_form = None
+    if request.POST['select_or_new_lemma'] == 'new':
+        lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
+    else:
+        try:
+            lemmaidgloss_id = request.POST['idgloss']
+            lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
+        except:
+            messages.add_message(request, messages.ERROR,
+                                 _("The given Lemma Idgloss ID is unknown."))
             return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
-        elif not dataset:
-            # Dataset is empty, this is an error
-            messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
-            return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
 
-        # if we get to here a dataset has been chosen for the new gloss
+    # Check for 'change_dataset' permission
+    if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
+            and ('change_dataset' not in get_group_perms(request.user, dataset))\
+            and not request.user.is_staff:
+        messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
+        return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
+    elif not dataset:
+        # Dataset is empty, this is an error
+        messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
+        return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
 
-        # Lemma handling
-        lemmaidgloss = None
-        lemma_form = None
-        if request.POST['select_or_new_lemma'] == 'new':
-            lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
-        else:
-            try:
-                lemmaidgloss_id = request.POST['idgloss']
-                lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
-            except:
-                messages.add_message(request, messages.ERROR,
-                                     _("The given Lemma Idgloss ID is unknown."))
-                return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
+    # if we get to here a dataset has been chosen for the new gloss
 
-        for item, value in request.POST.items():
-            if item.startswith(form.morpheme_create_field_prefix):
-                language_code_2char = item[len(form.morpheme_create_field_prefix):]
-                language = Language.objects.get(language_code_2char=language_code_2char)
-                morphemes_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
-                    annotationidglosstranslation__language=language,
-                    annotationidglosstranslation__text__exact=value.upper())
-                if len(morphemes_for_this_language_and_annotation_idgloss) != 0:
-                    translated_message = _('Annotation ID Gloss not unique.')
-                    return render(request, 'dictionary/warning.html',
-                           {'warning': translated_message,
-                            'dataset_languages': dataset_languages,
-                            'selected_datasets': selected_datasets,
-                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+    for item, value in request.POST.items():
+        if item.startswith(form.morpheme_create_field_prefix):
+            language_code_2char = item[len(form.morpheme_create_field_prefix):]
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            morphemes_for_this_language_and_annotation_idgloss = Morpheme.objects.filter(
+                annotationidglosstranslation__language=language,
+                annotationidglosstranslation__text__exact=value.upper())
+            if len(morphemes_for_this_language_and_annotation_idgloss) != 0:
+                translated_message = _('Annotation ID Gloss not unique.')
+                return render(request, 'dictionary/warning.html',
+                       {'warning': translated_message,
+                        'dataset_languages': dataset_languages,
+                        'selected_datasets': selected_datasets,
+                        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
-        if form.is_valid() and (lemmaidgloss or lemma_form.is_valid()):
-            try:
-                morpheme = form.save()
-                morpheme.creationDate = datetime.now()
-                morpheme.creator.add(request.user)
-                if lemma_form:
-                    lemmaidgloss = lemma_form.save()
-                morpheme.lemma = lemmaidgloss
-                morpheme.save()
-            except ValidationError as ve:
-                messages.add_message(request, messages.ERROR, ve.message)
-                return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form,
-                                                     'dataset_languages': dataset_languages,
-                                                     'selected_datasets': get_selected_datasets_for_user(request.user),
-                                                     'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    if form.is_valid() and (lemmaidgloss or lemma_form.is_valid()):
+        try:
+            morpheme = form.save()
+            morpheme.creationDate = datetime.now()
+            morpheme.creator.add(request.user)
+            if lemma_form:
+                lemmaidgloss = lemma_form.save()
+            morpheme.lemma = lemmaidgloss
+            morpheme.save()
+        except ValidationError as ve:
+            messages.add_message(request, messages.ERROR, ve.message)
+            return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form,
+                                                 'dataset_languages': dataset_languages,
+                                                 'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                 'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-            if not ('search_results' in request.session.keys()):
-                request.session['search_results'] = None
-            if not ('search_type' in request.session.keys()):
-                request.session['search_type'] = None
-            request.session['last_used_dataset'] = dataset.name
+        if not ('search_results' in request.session.keys()):
+            request.session['search_results'] = None
+        if not ('search_type' in request.session.keys()):
+            request.session['search_type'] = None
+        request.session['last_used_dataset'] = dataset.name
 
-            return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id})+'?edit')
-        else:
-            return render(request,'dictionary/add_morpheme.html', {'add_morpheme_form': form,
-                                                                    'dataset_languages': dataset_languages,
-                                                                    'selected_datasets': get_selected_datasets_for_user(request.user),
-                                                                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
-
-    return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
+        return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id})+'?edit')
+    else:
+        return render(request,'dictionary/add_morpheme.html', {'add_morpheme_form': form,
+                                                                'dataset_languages': dataset_languages,
+                                                                'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                               'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def update_morpheme(request, morphemeid):
@@ -2010,7 +1972,7 @@ def update_morpheme(request, morphemeid):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         else:
-            if not field in [f.name for f in Morpheme._meta.get_fields()]:
+            if field not in [f.name for f in Morpheme._meta.get_fields()]:
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
             whitespace = tuple(' \n\r\t')
@@ -2033,16 +1995,54 @@ def update_morpheme(request, morphemeid):
                 value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
             # special value of 'notset' or -1 means remove the value
-            fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew']
+            fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
 
             if field in FIELDS['phonology']:
                 # this is used as part of the feedback to the interface, to alert the user to refresh the display
                 category_value = 'phonology'
 
-            char_fields_not_null = [f.name for f in Morpheme._meta.fields
-                                    if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
+            fieldchoiceforeignkey_fields = [f.name for f in Morpheme._meta.fields
+                                            if f.name in fieldnames
+                                            and isinstance(Morpheme._meta.get_field(f.name), FieldChoiceForeignKey)]
+            fields_empty_null = [f.name for f in Morpheme._meta.fields
+                                 if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields]
 
-            if value in ['notset',''] and field not in char_fields_not_null:
+            char_fields_not_null = [f.name for f in Morpheme._meta.fields
+                                    if f.name in fieldnames and f.name not in fieldchoiceforeignkey_fields and not f.null]
+
+            # The following code relies on the order of if else testing
+            # The updates ignore Placeholder empty fields of '-' and '------'
+            # The Placeholders are needed in the template Edit view so the user can "see" something to edit
+            print(field)
+            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                # leave this print statement for debugging purposes
+                # uncomment for debugging
+                # print('gloss update handshape foreign key ', gloss, field, value)
+                gloss_field = Morpheme._meta.get_field(field)
+                try:
+                    handshape = Handshape.objects.get(machine_value=value)
+                except (ObjectDoesNotExist, MultipleObjectsReturned):
+                    print('Update handshape no unique machine value found: ', gloss_field.name, value)
+                    print('Setting to machine value 0')
+                    handshape = Handshape.objects.get(machine_value=0)
+                morpheme.__setattr__(field, handshape)
+                morpheme.save()
+                newvalue = handshape.name
+            elif field in fieldchoiceforeignkey_fields:
+                print(field)
+                gloss_field = Morpheme._meta.get_field(field)
+                try:
+                    fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+                except (ObjectDoesNotExist, MultipleObjectsReturned):
+                    print('Update field choice no unique machine value found: ', gloss_field.name,
+                          gloss_field.field_choice_category, value)
+                    print('Setting to machine value 0')
+                    fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
+                morpheme.__setattr__(field, fieldchoice)
+                morpheme.save()
+                newvalue = fieldchoice.name
+
+            elif value in ['notset',''] and field not in char_fields_not_null:
                 morpheme.__setattr__(field, None)
                 morpheme.save()
                 newvalue = ''
@@ -2430,12 +2430,21 @@ def update_excluded_choices(request):
 
     return HttpResponseRedirect(reverse('admin_dataset_field_choices'))
 
-def update_field_choice_color(request, fieldchoiceid):
+def update_field_choice_color(request, category, fieldchoiceid):
 
     if request.method == "POST":
-        form = FieldChoiceColorForm(request.POST)
-
-        thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
+        if category == 'SemField':
+            form = SemanticFieldColorForm(request.POST)
+            thisfieldchoice = get_object_or_404(SemanticField, pk=fieldchoiceid)
+        elif category == 'derivHist':
+            form = DerivationHistoryColorForm(request.POST)
+            thisfieldchoice = get_object_or_404(DerivationHistory, pk=fieldchoiceid)
+        elif category == 'Handshape':
+            form = HandshapeColorForm(request.POST)
+            thisfieldchoice = get_object_or_404(Handshape, pk=fieldchoiceid)
+        else:
+            form = FieldChoiceColorForm(request.POST)
+            thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
 
         if form.is_valid():
 
@@ -2448,7 +2457,7 @@ def update_field_choice_color(request, fieldchoiceid):
             machine_value = str(thisfieldchoice.machine_value)
             thisfieldchoice.field_color = new_color
             thisfieldchoice.save()
-            category = thisfieldchoice.field
+            # category = thisfieldchoice.field
 
             return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
                                 {'content-type': 'text/plain'})

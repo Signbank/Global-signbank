@@ -82,7 +82,6 @@ function clearForm(myFormElement) {
 function do_sort_column(field_name, action, frmName) {
   // Combine @field_name and @action into [sOrder]
   var sOrder = field_name;
-  <!--console.log("sOrder: " + sOrder);-->
 
   if (action == 'desc') {
     // Descending sort order is signified by a '-' prefix
@@ -106,11 +105,9 @@ function do_sort_column(field_name, action, frmName) {
 function do_adminsearch(el) {
  var sSearchType = $(el).attr('value');
  $(el).selected = true;
- <!--console.log("inside of do_adminsearch with sSearchType: " + sSearchType);-->
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "sign_handshape":
-        <!--console.log("request to search sign");-->
         $("#adminsearch").attr('action', '{{PREFIX_URL}}/dictionary/handshapes/');
         break;
     case "handshape":
@@ -575,9 +572,9 @@ function do_adminsearch(el) {
 
             {% load field_choice %}
 
-                <td>{{ gloss.handedness_fk.name }}</td>
-                <td>{{ gloss.domhndsh_handshapefk.name }}</td>
-                <td>{{ gloss.subhndsh_handshapefk.name }}</td>
+                <td>{{ gloss.display_handedness }}</td>
+                <td>{{ gloss.display_domhndsh }}</td>
+                <td>{{ gloss.display_subhndsh }}</td>
 
     </tr>
     {% endfor %}

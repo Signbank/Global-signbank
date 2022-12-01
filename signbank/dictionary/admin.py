@@ -396,7 +396,7 @@ class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
 
 class HandshapeAdmin(VersionAdmin, TranslationAdmin):
 
-    readonly_fields = ['machine_value', 'dutch_name', 'chinese_name']
+    readonly_fields = ['machine_value']
     actions = ['delete_selected']
 
     model = Handshape
@@ -756,7 +756,7 @@ class UserAdmin(UserAdmin):
 
 
 class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
-    readonly_fields=['machine_value', 'dutch_name', 'chinese_name']
+    readonly_fields=['machine_value']
     actions=['delete_selected']
 
     model = FieldChoice
@@ -769,13 +769,8 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     else:
         show_field_choice_colors = False
 
-    if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
-        show_english_only = True
-        list_display = ['name', 'machine_value','field']
-    else:
-        list_display = ['name'] \
-                       + ['machine_value', 'field']
-        show_english_only = False
+    list_display = ['name'] \
+                   + ['machine_value', 'field']
     list_filter = ['field']
 
     def get_form(self, request, obj=None, **kwargs):

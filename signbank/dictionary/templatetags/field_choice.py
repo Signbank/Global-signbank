@@ -31,6 +31,6 @@ def normalise_empty(machine_value):
 
 
 @register.filter
-def translated_frequency_list(dataset, language_code):
-    generated_dict = dataset.generate_frequency_dict(language_code)
+def translated_frequency_list(dataset):
+    generated_dict = dataset.generate_frequency_dict()
     return generated_dict
