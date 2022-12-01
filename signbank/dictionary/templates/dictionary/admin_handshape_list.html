@@ -15,26 +15,10 @@
 
     <script type='text/javascript'>
     var url = '{{PREFIX_URL}}';
-    var language_code = '{{ LANGUAGE_CODE }}';
 
     <!--var edit_mode_str = '{% trans "Edit" %}'-->
     <!--var turn_off_edit_mode_str = '{% trans "Turn Off Edit Mode" %}'-->
     var saving_str = '{% trans "Saving..." %}'
-    var current_language_code = '{{ request.LANGUAGE_CODE }}'
-    if (current_language_code == 'nl') {
-        current_language_code = 'dutch'
-    }
-    else if (current_language_code == 'zh-hans') {
-        current_language_code = 'chinese'
-    }
-    else {
-        current_language_code = 'english'
-
-    }
-
-    var choice_lists = {{choice_lists|safe}};
-    <!--console.log(JSON.stringify(choice_lists));-->
-    var csrf_token = '{{csrf_token}}';
 
     </script>
 
@@ -98,7 +82,6 @@ function clearForm(myFormElement) {
 function do_sort_column(field_name, action, frmName) {
   // Combine @field_name and @action into [sOrder]
   var sOrder = field_name;
-  <!--console.log("sOrder: " + sOrder);-->
 
   if (action == 'desc') {
     // Descending sort order is signified by a '-' prefix
@@ -122,11 +105,9 @@ function do_sort_column(field_name, action, frmName) {
 function do_adminsearch(el) {
  var sSearchType = $(el).attr('value');
  $(el).selected = true;
- <!--console.log("inside of do_adminsearch with sSearchType: " + sSearchType);-->
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "sign_handshape":
-        <!--console.log("request to search sign");-->
         $("#adminsearch").attr('action', '{{PREFIX_URL}}/dictionary/handshapes/');
         break;
     case "handshape":
@@ -168,42 +149,16 @@ function do_adminsearch(el) {
             <input name='sortOrder' class='form-control' value='machine_value' >
             <input name='search_type' class='form-control' value='handshape'>
         </div>
-     {% with request.LANGUAGE_CODE as language %}
-                {% if language == 'nl' %}
                 <div id='handshape_name'>
                     {% csrf_token %}
                     <table class='table'>
                         <tr id='handshape_name_field'>
-                            <td><label for='id_dutch_name'>{% trans "Handshape Name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='dutch_name' type='text'
-                                       value='{{searchform.dutch_name.value|default:'' }}'/></td>
+                            <td><label for='id_name'>{% trans "Handshape Name" %}</label></td>
+                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='name' type='text'
+                                       value="{{searchform.name.value|default:'' }}"/></td>
                         </tr>
                     </table>
                 </div>
-                {% elif language == 'zh-hans' %}
-                <div id='handshape_name'>
-                    {% csrf_token %}
-                    <table class='table'>
-                        <tr id='handshape_name_field'>
-                            <td><label for='id_chinese_name'>{% trans "Handshape Name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='chinese_name' type='text'
-                                       value='{{searchform.chinese_name.value|default:'' }}'/></td>
-                        </tr>
-                    </table>
-                </div>
-                {% else %}
-                <div id='handshape_name'>
-                    {% csrf_token %}
-                    <table class='table'>
-                        <tr id='handshape_name_field'>
-                            <td><label for='id_english_name'>{% trans "Handshape Name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='english_name' type='text'
-                                       value='{{searchform.english_name.value|default:'' }}'/></td>
-                        </tr>
-                    </table>
-                </div>
-                {% endif %}
-    {% endwith %}
                 {# spacing div to allow room for typeahead dropdown #}
                 <div style='height: 4em'></div>
 
@@ -413,9 +368,6 @@ function do_adminsearch(el) {
 
 {% load field_choice %}
 
-{% with request.LANGUAGE_CODE as language %}
-
-
 <table class='table table-condensed'>
     <thead>
       <tr>
@@ -433,43 +385,17 @@ function do_adminsearch(el) {
       </tr>
     <tr>
        <th></th>
-        {% if language == 'nl' %}
        <th>
-         <a href="#" onclick="do_sort_column('dutch_name','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'dutch_name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+         <a href="#" onclick="do_sort_column('name','asc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == 'name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
          </a>
-         <a href="#" onclick="do_sort_column('dutch_name','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-dutch_name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+         <a href="#" onclick="do_sort_column('name','desc', 'adminsearch')">
+           {% if searchform.sortOrder and searchform.sortOrder.value == '-name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
          </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-dutch_name' or searchform.sortOrder and searchform.sortOrder.value == 'dutch_name'  %}
-           <a href="#" onclick="do_sort_column('dutch_name','del', 'adminsearch')">x</a>
+         {% if searchform.sortOrder and searchform.sortOrder.value == '-name' or searchform.sortOrder and searchform.sortOrder.value == 'name'  %}
+           <a href="#" onclick="do_sort_column('name','del', 'adminsearch')">x</a>
          {% endif %}
        </th>
-        {% elif language == 'zh-hans' %}
-        <th>
-         <a href="#" onclick="do_sort_column('chinese_name','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'chinese_name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('chinese_name','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-chinese_name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-chinese_name' or searchform.sortOrder and searchform.sortOrder.value == 'chinese_name'  %}
-           <a href="#" onclick="do_sort_column('chinese_name','del', 'adminsearch')">x</a>
-         {% endif %}
-       </th>
-        {% else %}
-       <th>
-         <a href="#" onclick="do_sort_column('english_name','asc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == 'english_name' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-         </a>
-         <a href="#" onclick="do_sort_column('english_name','desc', 'adminsearch')">
-           {% if searchform.sortOrder and searchform.sortOrder.value == '-english_name' %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-         </a>
-         {% if searchform.sortOrder and searchform.sortOrder.value == '-english_name' or searchform.sortOrder and searchform.sortOrder.value == 'english_name'  %}
-           <a href="#" onclick="do_sort_column('english_name','del', 'adminsearch')">x</a>
-         {% endif %}
-       </th>
-        {% endif %}
         <th>
          <a href="#" onclick="do_sort_column('hsFingSel','asc', 'adminsearch')">
            {% if searchform.sortOrder and searchform.sortOrder.value == 'hsFingSel' %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
@@ -582,80 +508,17 @@ function do_adminsearch(el) {
           {% endif %}
       </td>
 
-        {% if language == 'nl' %}
-        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.dutch_name}}</a></td>
-        {% elif language == 'zh-hans' %}
-        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.chinese_name}}</a></td>
-        {% else %}
-        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.english_name}}</a></td>
-        {% endif %}
-            {% with handshape.hsFingSel as field_value %}
-            {% with "FingerSelection " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsFingConf as field_value %}
-            {% with "JointConfiguration " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsFingSel2 as field_value %}
-            {% with "FingerSelection " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsFingConf2 as field_value %}
-            {% with "JointConfiguration " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsNumSel as field_value %}
-            {% with "Quantity " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            <!--{% with handshape.hsThumb as field_value %}-->
-            <!--{% with "Thumb " as field_category %}-->
-            <!--{% with field_category|add:language as args %}-->
-            <!--<td>{{ field_value|machine_field_translate:args }}</td>-->
-            <!--{% endwith %}-->
-            <!--{% endwith %}-->
-            <!--{% endwith %}-->
-            {% with handshape.hsFingUnsel as field_value %}
-            {% with "FingerSelection " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsSpread as field_value %}
-            {% with "Spreading " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% with handshape.hsAperture as field_value %}
-            {% with "Aperture " as field_category %}
-            {% with field_category|add:language as args %}
-            <td>{{ field_value|machine_field_translate:args }}</td>
-            {% endwith %}
-            {% endwith %}
+        <td><a href="{{PREFIX_URL}}/dictionary/handshape/{{handshape.machine_value}}/">{{handshape.name}}</a></td>
+            {% with handshape_to_fields|keyvalue:handshape as handshape_fields %}
+            {% for handshape_field, handshape_field_value in handshape_fields %}
+            <td>
+                {{ handshape_field_value.name }}
+            </td>
+            {% endfor %}
             {% endwith %}
     </tr>
     {% endfor %}
   </tbody>
-    {% endwith %}
 </table>
 
 {% endif %}
@@ -686,9 +549,6 @@ function do_adminsearch(el) {
 
     </thead>
     <tbody>
-
-    {% with request.LANGUAGE_CODE as language %}
-
     {% for gloss in object_list %}
 
     <tr>
@@ -708,27 +568,16 @@ function do_adminsearch(el) {
       </td>
         {% endwith %}
         {% endfor %}
-        <td>{{ gloss.dataset.name }}</td>
+        <td>{{ gloss.dataset.acronym }}</td>
 
             {% load field_choice %}
 
-            {% if request.LANGUAGE_CODE == 'nl' %}
-                <td>{{ gloss.handedness|translate_to_dutch:"Handedness" }}</td>
-                <td>{{ gloss.domhndsh|translate_to_dutch:"Handshape" }}</td>
-                <td>{{ gloss.subhndsh|translate_to_dutch:"Handshape" }}</td>
-            {% elif request.LANGUAGE_CODE == 'zh-hans' %}
-                <td>{{ gloss.handedness|translate_to_chinese:"Handedness" }}</td>
-                <td>{{ gloss.domhndsh|translate_to_chinese:"Handshape" }}</td>
-                <td>{{ gloss.subhndsh|translate_to_chinese:"Handshape" }}</td>
-            {% else %}
-                <td>{{ gloss.handedness|translate_to_english:"Handedness" }}</td>
-                <td>{{ gloss.domhndsh|translate_to_english:"Handshape" }}</td>
-                <td>{{ gloss.subhndsh|translate_to_english:"Handshape" }}</td>
-            {% endif %}
+                <td>{{ gloss.display_handedness }}</td>
+                <td>{{ gloss.display_domhndsh }}</td>
+                <td>{{ gloss.display_subhndsh }}</td>
 
     </tr>
     {% endfor %}
-    {% endwith %}
   </tbody>
 </table>
 

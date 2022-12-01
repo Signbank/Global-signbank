@@ -15,11 +15,19 @@ LANGUAGES = (
   ('nl', gettext('Dutch')),
   ('zh-hans', gettext('Chinese')),
   ('he', gettext('Hebrew')),
-  ('ar', gettext('Arabic'))  
+  ('ar', gettext('Arabic')),
+)
+
+LANGUAGES_LANGUAGE_CODE_3CHAR = (
+    ('en', 'eng'),
+    ('nl', 'nld'),
+    ('zh-hans', 'zho'),
+    ('he', 'heb'),
+    ('ar', 'ara'),
 )
 
 INTERFACE_LANGUAGE_SHORT_NAMES = ['EN','NL','官话','עִברִית','عربى']
-MODELTRANSLATION_LANGUAGES = ['en','nl','zh-hans']
+MODELTRANSLATION_LANGUAGES = ['en','nl','zh-hans','ar','he']
 
 ECV_FILE = ECV_FOLDER+'ngt.ecv'
 ECV_SETTINGS = {

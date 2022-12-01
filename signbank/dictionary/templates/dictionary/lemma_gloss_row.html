@@ -24,7 +24,7 @@
     <td>{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
     {% endfor %}
 
-    {% for value in column_values %}
+    {% for field,value in column_values %}
     <td>{{value}}</td>
     {% endfor %}
 

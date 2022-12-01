@@ -6,6 +6,7 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.db.models import Q, F, ExpressionWrapper, IntegerField, Count
 from django.db.models import CharField, TextField, Value as V
 from django.db.models import OuterRef, Subquery
+from django.db.models.query import QuerySet
 from django.db.models.functions import Concat
 from django.db.models.fields import NullBooleanField, BooleanField
 from django.db.models.sql.where import NothingNode, WhereNode
@@ -14,8 +15,8 @@ from django.template import RequestContext
 from django.core.urlresolvers import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.paginator import Paginator
-from django.utils.translation import override, ugettext_lazy as _
-from django.forms.fields import TypedChoiceField, ChoiceField
+from django.utils.translation import override, ugettext_lazy as _, activate
+from django.forms.fields import ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
 from django.contrib.sites.models import Site
@@ -37,19 +38,24 @@ from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForGlossForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
+from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, \
+    LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP, LANGUAGES, LANGUAGES_LANGUAGE_CODE_3CHAR
 from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors, \
     choicelist_queryset_to_field_colors
+from signbank.dictionary.field_choices import get_static_choice_lists, get_frequencies_for_category, category_to_fields, \
+    fields_to_categories, fields_to_fieldcategory_dict
 
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
+from django.forms import TypedMultipleChoiceField, ChoiceField
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
-    searchform_panels, map_search_results_to_gloss_list
+    searchform_panels, map_search_results_to_gloss_list, \
+    get_interface_language_and_default_language_codes
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -69,27 +75,21 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     Its value is changed by clicking the up/down buttons in the second row of the search result table
     """
 
-    def get_string_from_tuple_list(lstTuples, number):
-        """Get the string value corresponding to a number in a list of number-string tuples"""
-        sBack = [tup[1] for tup in lstTuples if tup[0] == number]
-        return sBack
-
     # Helper: order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]
     def order_queryset_by_tuple_list(qs, sOrder, sListName, bReversed):
         """Order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]"""
 
         # Get a list of tuples for this sort-order
-        tpList = build_choice_list(sListName)
+        tpList = list(FieldChoice.objects.filter(field=sListName).values_list('machine_value', 'name'))
         # Determine sort order: ascending is default
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
 
-        # Order the list of tuples alphabetically
-        # (NOTE: they are alphabetical from 'build_choice_list()', except for the values 0,1)
-        tpList = sorted(tpList, key=operator.itemgetter(1))
         # Order by the string-values in the tuple list
-        return sorted(qs, key=lambda x: ( getattr(x, sOrder) is None or bReversed, get_string_from_tuple_list(tpList, getattr(x, sOrder))), reverse=bReversed)
+        return sorted(qs, key=lambda x: (getattr(x, sOrder) is None or getattr(x, sOrder).machine_value in [0, 1]
+                                         or bReversed, dict(tpList)[getattr(x, sOrder).machine_value]),
+                      reverse=bReversed)
 
     def order_queryset_by_annotationidglosstranslation(qs, sOrder):
         language_code_2char = sOrder[-2:]
@@ -162,39 +162,23 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     else:
         # Use straightforward ordering on field [sOrder]
         if default_sort_order:
-            from signbank.tools import convert_language_code_to_language_minus_locale
-            lang_attr_name = convert_language_code_to_language_minus_locale(settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+            lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
             sort_language = 'annotationidglosstranslation__language__language_code_2char'
+            if len(queryset_language_codes) == 0:
+                ordered = qs
+            else:
+                if lang_attr_name not in queryset_language_codes:
+                    lang_attr_name = queryset_language_codes[0]
 
-            if queryset_language_codes and lang_attr_name not in queryset_language_codes:
-                # this is actually checking if English (Default Keywords Language) is available
-                lang_attr_name = queryset_language_codes[0]
-            empty_text_filter = sOrder+'__exact'
-            qs_empty = qs.filter(**{empty_text_filter:''})
-            # sorting is done separately instead of in query
-            qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
-            qs_letters_tuple = []
-            for qso in qs_letters:
-                annotationidglosstranslation = qso.annotationidglosstranslation_set.filter(language__language_code_2char=lang_attr_name)
-                if annotationidglosstranslation and len(annotationidglosstranslation) > 0:
-                    label = annotationidglosstranslation[0].text
-                else:
-                    # this happens if there is no annotation for the language
-                    # however, the value of an annotation can be an empty string
-                    label = ''
-                qs_letters_tuple.append((label, qso))
-            # manually do the sort based on the annotation in the sort language
-            sorted_qs_letters_tuples = sorted(qs_letters_tuple, key=lambda tup : tup[0])
-            # remove the labels that were used for sorting, just get the objects
-            just_the_objects = []
-            for x in sorted_qs_letters_tuples:
-                just_the_objects.append(x[1])
+                qs_empty = qs.filter(**{sOrder+'__isnull': True})
+                qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]', sort_language:lang_attr_name})
+                qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name})
 
-            qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]', sort_language:lang_attr_name}).order_by(sOrder)
-
-            ordered = just_the_objects
-            ordered += list(qs_special)
-            ordered += list(qs_empty)
+                # sort_key = sOrder
+                # # Using the order_by here results in duplicating the objects!
+                ordered = list(qs_letters) #.order_by(sort_key))
+                ordered += list(qs_special) #.order_by(sort_key))
+                ordered += list(qs_empty)
         else:
             ordered = qs
     if bReversed and bText:
@@ -262,11 +246,9 @@ class GlossListView(ListView):
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
-        from signbank.tools import convert_language_code_to_language_minus_locale
         for lang in dataset_languages:
-            lang_code = convert_language_code_to_language_minus_locale(lang.language_code_2char)
-            if lang_code not in self.queryset_language_codes:
-                self.queryset_language_codes.append(lang_code)
+            if lang.language_code_2char not in self.queryset_language_codes:
+                self.queryset_language_codes.append(lang.language_code_2char)
         if self.queryset_language_codes is None:
             self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
 
@@ -308,7 +290,7 @@ class GlossListView(ListView):
                 self.query_parameters = json.loads(session_query_parameters)
 
         search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
-                                          dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+                                          dialects=dialects)
 
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())
@@ -323,7 +305,8 @@ class GlossListView(ListView):
                                 settings.FIELDS['semantics']
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
+        fields_with_choices = fields_to_fieldcategory_dict()
+        multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
         other_parameters_keys = [ key for key in other_parameters if key not in multiple_select_gloss_fields ]
 
         context['other_parameters_keys'] = json.dumps(other_parameters_keys)
@@ -352,30 +335,6 @@ class GlossListView(ListView):
             keyword_field_name = keyword_search_field_prefix + language.language_code_2char
             language_query_keys.append(keyword_field_name)
         context['language_query_keys'] = json.dumps(language_query_keys)
-
-        #Translations for field choices dropdown menu
-        fields_that_need_translated_options = ['hasComponentOfType','hasMorphemeOfType']
-
-        for field_group in FIELDS.values():
-            for field in field_group:
-                fields_that_need_translated_options.append(field)
-
-        for field in fields_that_need_translated_options:
-            try:
-                if isinstance(search_form.fields[field], TypedChoiceField):
-                    gloss_field = search_form.fields[field]
-                    if hasattr(gloss_field, 'field_choice_category'):
-                        fieldchoice_category = gloss_field.field_choice_category
-                    else:
-                        fieldchoice_category = field
-                    choices = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                    translated_choices = [('','---------')]+choicelist_queryset_to_translated_dict(choices,self.request.LANGUAGE_CODE,
-                                                                                ordered=False,id_prefix='')
-                    search_form.fields[field] = forms.ChoiceField(label=search_form.fields[field].label,
-                                                                    choices=translated_choices,
-                                                                    widget=forms.Select(attrs={'class':'form-control'}))
-            except KeyError:
-                continue
 
         context['searchform'] = search_form
         context['search_type'] = self.search_type
@@ -424,19 +383,16 @@ class GlossListView(ListView):
         else:
             context['search_by_relation_fields'] = []
 
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
-            fieldnames.remove('derivHist')
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
-            multiple_select_gloss_fields.remove('derivHist')
+        multiple_select_gloss_fields.append('definitionRole')
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
-        multiple_select_gloss_categories = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
-
+        fields_with_choices['definitionRole'] = 'NoteType'
         choices_colors = {}
-        for (fieldname, field_category) in multiple_select_gloss_categories:
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+        for (fieldname, field_category) in fields_with_choices.items():
+            if field_category in CATEGORY_MODELS_MAPPING.keys():
+                field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
 
         context['field_colors'] = choices_colors
@@ -495,7 +451,11 @@ class GlossListView(ListView):
 
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
-        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
+        # it is necessary to sort the object list by lemma_id in order for all glosses with the same lemma to be grouped
+        # correctly in the template
+        list_of_object_ids = [ g.id for g in self.object_list ]
+        glosses_ordered_by_lemma_id = Gloss.objects.filter(id__in=list_of_object_ids).order_by('lemma_id')
+        context['glosses_ordered_by_lemma_id'] = glosses_ordered_by_lemma_id
 
         if self.search_type == 'sign' or not self.request.user.is_authenticated():
             # Only count the none-morpheme glosses
@@ -514,7 +474,6 @@ class GlossListView(ListView):
 
         this_page_number = context['page_obj'].number
         this_paginator = context['page_obj'].paginator
-
         if len(self.object_list) > settings.MAX_SCROLL_BAR:
             this_page = this_paginator.page(this_page_number)
             if this_page.has_previous():
@@ -525,16 +484,25 @@ class GlossListView(ListView):
                 next_objects = this_paginator.page(this_page_number + 1).object_list
             else:
                 next_objects = []
-            list_of_objects = previous_objects + context['page_obj'].object_list + next_objects
+            list_of_objects = previous_objects + list(context['page_obj'].object_list) + next_objects
         else:
             list_of_objects = self.object_list
 
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
-        from signbank.tools import convert_language_code_to_language_minus_locale
-        lang_attr_name = convert_language_code_to_language_minus_locale(
-            settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
         items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -645,6 +613,11 @@ class GlossListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
+        if 'show_all' in self.kwargs.keys():
+            # this ended up not being set sometimes in the call to get_queryset below
+            # in the case that the url is /signs/show_all/
+            self.show_all = True
+
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="dictionary-export.csv"'
@@ -665,8 +638,9 @@ class GlossListView(ListView):
                                                for language in dataset_languages]
         writer = csv.writer(response)
 
-        with override(LANGUAGE_CODE):
-            header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
+        # CSV should be the first language in the settings
+        activate(LANGUAGES[0][0])
+        header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
                                                     + keyword_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
 
         for extra_column in ['SignLanguages','Dialects', 'Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
@@ -675,7 +649,17 @@ class GlossListView(ListView):
 
         writer.writerow(header)
 
-        for gloss in self.get_queryset():
+        if self.object_list:
+            query_set = self.object_list
+        else:
+            query_set = self.get_queryset()
+
+        # for some reason when show_all has been selected, the object list has become a list instead of a QuerySet
+        # it was also missing elements
+        # in order to simply debug print statements, it's converted to a list here to make sure it always has the same type
+        if isinstance(query_set, QuerySet):
+            query_set = list(query_set)
+        for gloss in query_set:
             row = [str(gloss.pk), gloss.lemma.dataset.acronym]
 
             for language in dataset_languages:
@@ -703,29 +687,18 @@ class GlossListView(ListView):
                     row.append("")
 
             for f in fields:
-
                 #Try the value of the choicelist
                 if hasattr(f, 'field_choice_category'):
-                    value = getattr(gloss, 'get_' + f.name + '_display')()
+                    if hasattr(gloss, 'get_' + f.name + '_display'):
+                        value = getattr(gloss, 'get_' + f.name + '_display')()
+                    else:
+                        value = getattr(gloss, f.name).name
                 else:
                     value = getattr(gloss, f.name)
 
-                # print('export csv ', gloss.id, ' field ', f.name, ' value ', value)
-                # for csv export, the text fields need quotes around them to stop e.g., semicolons from spliting the data into multiple columns
-
-                fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-
-                # is this needed?
-                char_fields_not_null = [f.name for f in Gloss._meta.fields
-                                        if f.name in fieldnames and f.__class__.__name__ == 'CharField' and not f.null]
-
-                # is this needed?
-                if f.name in char_fields_not_null and value and not isinstance(value,str):
-                    value = str(value)
-
                 # some legacy glosses have empty text fields of other formats
                 if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
-                        and (value == '-' or value == '------' or value == ' '):
+                        and value in ['-','------',' ']:
                     value = ''
 
                 if value is None:
@@ -821,7 +794,7 @@ class GlossListView(ListView):
             notes_of_gloss = gloss.definition_set.all()
             notes_list = []
             for note in notes_of_gloss:
-                translated_note_role = machine_value_to_translated_human_value(note.role, note_role_choices, 'en')
+                translated_note_role = note.role.name
                 note_string = translated_note_role + ": (" + str(note.published) +","+ str(note.count) +","+ note.text + ")"
                 notes_list.append(note_string)
             sorted_notes_list = sorted(notes_list)
@@ -845,11 +818,8 @@ class GlossListView(ListView):
         get = self.request.GET
 
         #First check whether we want to show everything or a subset
-        try:
-            if self.kwargs['show_all']:
-                show_all = True
-        except (KeyError,TypeError):
-            show_all = False
+        if 'show_all' in self.kwargs.keys():
+            self.show_all = True
 
         #Then check what kind of stuff we want
         if 'search_type' in get:
@@ -892,7 +862,7 @@ class GlossListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         #Get the initial selection
-        if show_all or (len(get) > 0 and 'query' not in self.request.GET):
+        if self.show_all or (len(get) > 0 and 'query' not in self.request.GET):
             # anonymous users can search signs, make sure no morphemes are in the results
             if self.search_type == 'sign' or not self.request.user.is_authenticated():
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
@@ -932,7 +902,7 @@ class GlossListView(ListView):
             qs = qs.filter(inWeb__exact=True)
 
         #If we wanted to get everything, we're done now
-        if show_all:
+        if self.show_all:
             # sort the results
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
@@ -959,6 +929,8 @@ class GlossListView(ListView):
 
         # Evaluate all gloss/language search fields
         for get_key, get_value in get.items():
+            if get_key == 'csrfmiddlewaretoken':
+                continue
             if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
                 query_parameters[get_key] = get_value
                 language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
@@ -1016,7 +988,6 @@ class GlossListView(ListView):
             query_parameters['defspublished'] = get['defspublished']
             qs = qs.filter(definition__published=val)
 
-
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
             fieldnames.remove('derivHist')
@@ -1042,14 +1013,10 @@ class GlossListView(ListView):
             query_parameters['useInstr'] = get['useInstr']
             qs = qs.filter(useInstr__iregex=get['useInstr'])
 
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
-            multiple_select_gloss_fields.remove('derivHist')
-
-        for fieldnamemulti in multiple_select_gloss_fields:
-
+        fields_with_choices = fields_to_fieldcategory_dict()
+        for fieldnamemulti in fields_with_choices.keys():
             fieldnamemultiVarname = fieldnamemulti + '[]'
-            fieldnameQuery = fieldnamemulti + '__in'
+            fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
             if '' in vals:
@@ -1057,18 +1024,17 @@ class GlossListView(ListView):
             if vals != []:
                 query_parameters[fieldnamemultiVarname] = get.getlist(fieldnamemultiVarname)
                 if fieldnamemulti == 'semField':
-                    qs = qs.filter(semFieldShadow__in=vals)
+                    qs = qs.filter(semField__in=vals)
                 elif fieldnamemulti == 'derivHist':
-                    qs = qs.filter(derivHistShadow__in=vals)
+                    qs = qs.filter(derivHist__in=vals)
                 else:
                     qs = qs.filter(**{ fieldnameQuery: vals })
 
         ## phonology and semantics field filters
-        fieldnames = [ f for f in fieldnames if f not in multiple_select_gloss_fields ]
+        fieldnames = [ f for f in fieldnames if f not in fields_with_choices.keys() ]
         for fieldname in fieldnames:
 
             if fieldname in get and get[fieldname] != '':
-
                 field_obj = Gloss._meta.get_field(fieldname)
 
                 if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
@@ -1170,37 +1136,37 @@ class GlossListView(ListView):
                 # If the user attempts to input a string, it is ignored by the gloss list search form
                 print("Morpheme not found: ", str(input_morpheme))
 
-        if 'hasComponentOfType' in get and get['hasComponentOfType'] != '':
+        if 'hasComponentOfType' in get and get['hasComponentOfType'] not in ['', '0']:
             query_parameters['hasComponentOfType'] = get['hasComponentOfType']
 
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get['hasComponentOfType'])
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value=get['hasComponentOfType'])
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
             qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
-        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] != '':
+        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] not in ['', '0']:
             query_parameters['hasMorphemeOfType'] = get['hasMorphemeOfType']
 
             morpheme_type = get['hasMorphemeOfType']
             # Get all Morphemes of the indicated mrpType
-            target_morphemes = Morpheme.objects.filter(mrpType__exact=morpheme_type)
-
+            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType__machine_value=morpheme_type) ]
             qs = qs.filter(id__in=target_morphemes)
 
-        if 'definitionRole' in get and get['definitionRole'] != '':
-            query_parameters['definitionRole'] = get['definitionRole']
+        if 'definitionRole[]' in get:
 
-            #Find all definitions with this role
-            if get['definitionRole'] == 'all':
-                definitions_with_this_role = Definition.objects.all()
-            else:
-                definitions_with_this_role = Definition.objects.filter(role__exact=get['definitionRole'])
+            vals = get.getlist('definitionRole[]')
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                query_parameters['definitionRole[]'] = get.getlist('definitionRole[]')
+                #Find all definitions with this role
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
 
-            #Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
-            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+                #Remember the pk of all glosses that are referenced in the collection definitions
+                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
+                qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
-        if 'definitionContains' in get and get['definitionContains'] != '':
+        if 'definitionContains' in get and get['definitionContains'] != '' and get['definitionContains'] not in ['', '0']:
             query_parameters['definitionContains'] = get['definitionContains']
 
             definitions_with_this_text = Definition.objects.filter(text__iregex=get['definitionContains'])
@@ -1258,7 +1224,6 @@ class GlossDetailView(DetailView):
 
     def get_template_names(self):
         if 'show_colors' in self.request.session.keys() and self.request.session['show_colors']:
-            # print('show colors inside GlossDetailView')
             return ['dictionary/gloss_detail_preview.html']
         return ['dictionary/gloss_detail.html']
 
@@ -1333,11 +1298,8 @@ class GlossDetailView(DetailView):
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
 
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
-        language = Language.objects.get(id=get_default_language_id())
-        default_language_code = language.language_code_2char
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
 
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
@@ -1346,15 +1308,13 @@ class GlossDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        phonology_matrix = context['gloss'].phonology_matrix_homonymns()
+        phonology_matrix = context['gloss'].phonology_matrix_homonymns(use_machine_value=True)
         phonology_focus = [field for field in phonology_matrix.keys()
-                           if phonology_matrix[field] != None and phonology_matrix[field] not in ['False', 'Neutral']]
+                           if phonology_matrix[field] != None
+                                and phonology_matrix[field] not in ['Neutral',  '0', '1', 'False'] ]
         default_query_parameters = query_parameters_this_gloss(phonology_focus, phonology_matrix)
-
         default_query_parameters_mapping = pretty_print_query_fields(dataset_languages, default_query_parameters.keys())
-
-        default_query_parameters_values_mapping = pretty_print_query_values(dataset_languages, default_query_parameters,
-                                                                            self.request.LANGUAGE_CODE)
+        default_query_parameters_values_mapping = pretty_print_query_values(dataset_languages, default_query_parameters)
         context['default_query_parameters'] = default_query_parameters
         context['default_query_parameters_mapping'] = default_query_parameters_mapping
         context['default_query_parameters_values_mapping'] = default_query_parameters_values_mapping
@@ -1369,8 +1329,7 @@ class GlossDetailView(DetailView):
 
         query_parameters_mapping = pretty_print_query_fields(dataset_languages, self.query_parameters.keys())
 
-        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, self.query_parameters,
-                                                                    self.request.LANGUAGE_CODE)
+        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, self.query_parameters)
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
 
@@ -1380,12 +1339,7 @@ class GlossDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
-
         context['morphologyform'] = GlossMorphologyForm()
-        context['morphologyform'].fields['role'] = forms.ChoiceField(label='Type', widget=forms.Select(attrs=ATTRS_FOR_FORMS),
-            choices=choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
-                                                                   self.request.LANGUAGE_CODE,ordered=False,id_prefix=''), required=True)
-
         context['morphemeform'] = GlossMorphemeForm()
         context['blendform'] = GlossBlendForm()
         context['othermediaform'] = OtherMediaForm()
@@ -1394,28 +1348,26 @@ class GlossDetailView(DetailView):
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
-        context['handedness'] = (int(self.object.handedness) > 1) if self.object.handedness else 0  # minimal machine value is 2
-        context['domhndsh'] = (int(self.object.domhndsh) > 2) if self.object.domhndsh else 0        # minimal machine value -s 3
-        if self.object.tokNo:
-            # in the model this field can be null or blank, which is not a number
-            # the template compares it to 1
-            context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
-        else:
-            context['tokNo'] = 0
+        context['handedness'] = (int(self.object.handedness.machine_value) > 1) \
+            if self.object.handedness and self.object.handedness.machine_value else 0  # minimal machine value is 2
+        context['domhndsh'] = (int(self.object.domhndsh.machine_value) > 1) \
+            if self.object.domhndsh and self.object.domhndsh.machine_value else 0        # minimal machine value -s 3
+        context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
+
         # check for existence of strong hand and weak hand shapes
-        if self.object.domhndsh:
-            try:
-                strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh)
-            except Handshape.DoesNotExist:
-                strong_hand_obj = None
-        else:
-                strong_hand_obj = None
-        context['StrongHand'] = self.object.domhndsh if strong_hand_obj else 0
-        context['WeakHand'] = self.object.subhndsh
+        try:
+            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh.machine_value)
+        except (Handshape.DoesNotExist, AttributeError):
+            strong_hand_obj = None
+        context['StrongHand'] = self.object.domhndsh.machine_value if strong_hand_obj else 0
+        context['WeakHand'] = self.object.subhndsh.machine_value if self.object.subhndsh else 0
 
-        context['SemanticFieldDefined'] =  self.object.semFieldShadow.all().count() > 0
+        # context['NamedEntityDefined'] = (int(self.object.namEnt) > 1) if self.object.namEnt else 0        # minimal machine value is 2
+        context['SemanticFieldDefined'] =  self.object.semField.all().count() > 0
+        # context['ValenceDefined'] = (int(self.object.valence) > 1) if self.object.valence else 0          # minimal machine value is 2
+        # context['IconicImageDefined'] = self.object.iconImage                                             # exists if not emtpy
 
-        context['DerivationHistoryDefined'] = self.object.derivHistShadow.all().count() > 0
+        context['DerivationHistoryDefined'] = self.object.derivHist.all().count() > 0
 
         next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
         if next_gloss == None:
@@ -1439,6 +1391,7 @@ class GlossDetailView(DetailView):
             self.request.session['datasetid'] = gl.dataset.id
             self.last_used_dataset = gl.dataset.acronym
         else:
+            print('error function get default language is assigned to context datasetid')
             self.request.session['datasetid'] = get_default_language_id()
 
         # CHECK THIS
@@ -1468,10 +1421,6 @@ class GlossDetailView(DetailView):
         context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
         context['etymology_fields_sub'].append([subhndsh_number,'subhndsh_number',labels['subhndsh_number'],'check'])
 
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
-
         phonology_list_kinds = []
         gloss_phonology = []
 
@@ -1491,54 +1440,42 @@ class GlossDetailView(DetailView):
             context[topic+'_fields'] = []
             for field in FIELDS[topic]:
                 # the following check will be used when querying is added, at the moment these don't appear in the phonology list
-                if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS + ['semField', 'derivHist']:
+                if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                    kind = fieldname_to_kind(field)
+
                     if topic == 'phonology':
                         gloss_phonology.append(field)
-                    choice_list = []
-                    #Get and save the choice list for this field
-                    gloss_field = gloss_fields[field]
-                    if hasattr(gloss_field, 'field_choice_category'):
-                        fieldchoice_category = gloss_field.field_choice_category
-                        choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                        # Add the kind of field
+                        if kind == 'list':
+                            phonology_list_kinds.append(field)
 
-                    context['static_choice_lists'][field] = {}
-                    context['static_choice_list_colors'][field] = {}
+                    (static_choice_lists, static_choice_list_colors) = get_static_choice_lists(field)
+
+                    context['static_choice_lists'][field] = static_choice_lists
+                    context['static_choice_list_colors'][field] = static_choice_list_colors
+
+                    if field in ['semField', 'derivHist']:
+                        # these are many to many fields and not in the gloss table of the database
+                        # they are not fields of Gloss
+                        continue
 
                     #Take the human value in the language we are using
-                    machine_value = getattr(gl,field)
-                    if len(choice_list) > 0:
-                        # if there is a choice list, the value stored in the field is a code
-                        human_value = machine_value_to_translated_human_value(machine_value, choice_list,
-                                                                              self.request.LANGUAGE_CODE)
-
-                        # The static_choice_lists structure is used in the Detail View to reverse map in javascript
-                        # It's only needed for choice lists.
-                        # In the template, choice lists are generated by Ajax calls
-                        # But the javascript needs this when generating the page
-                        display_choice_list = choicelist_queryset_to_translated_dict(choice_list,
-                                                                                     self.request.LANGUAGE_CODE)
-                        display_choice_list_colors = choicelist_queryset_to_colors(choice_list,
-                                                                                   self.request.LANGUAGE_CODE)
-                        # print('field ', field, ' display chice list: ', display_choice_list)
-                        for (key, value) in display_choice_list.items():
-                            this_value = value
-                            context['static_choice_lists'][field][key] = this_value
-
-                        for (key, value) in display_choice_list_colors.items():
-                            this_value = value
-                            context['static_choice_list_colors'][field][key] = this_value
+                    field_value = getattr(gl,field)
+                    if isinstance(field_value, FieldChoice) or isinstance(field_value, Handshape):
+                        if field_value:
+                            # this is a FieldChoice object
+                            human_value = field_value.name
+                        else:
+                            # if this is a field choice field, it is empty
+                            human_value = field_value
                     else:
-                        # otherwise, it's a value, not a choice
+                        # otherwise, it's not a fieldchoice
                         # take care of different representations of empty text in database
-                        if fieldname_to_kind(field) == 'text' and (machine_value is None or machine_value in ['-',' ','------','']):
+                        if fieldname_to_kind(field) == 'text' and (field_value is None or field_value in ['-',' ','------','']):
                             human_value = ''
                         else:
-                            human_value = machine_value
+                            human_value = field_value
 
-                    #And add the kind of field
-                    kind = fieldname_to_kind(field)
-                    if kind == 'list' and topic == 'phonology':
-                        phonology_list_kinds.append(field)
                     context[topic+'_fields'].append([human_value,field,labels[field],kind])
 
         context['gloss_phonology'] = gloss_phonology
@@ -1550,13 +1487,13 @@ class GlossDetailView(DetailView):
 
         for morphdef in context['gloss'].parent_glosses.all():
 
-            translated_role = machine_value_to_translated_human_value(morphdef.role,morphdef_roles,self.request.LANGUAGE_CODE)
+            translated_role = morphdef.role.name
 
             sign_display = str(morphdef.morpheme.id)
             morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
             if morph_texts.keys():
-                if language_code in morph_texts.keys():
-                    sign_display = morph_texts[language_code]
+                if interface_language_code in morph_texts.keys():
+                    sign_display = morph_texts[interface_language_code]
                 else:
                     sign_display = morph_texts[default_language_code]
 
@@ -1576,8 +1513,8 @@ class GlossDetailView(DetailView):
             else:
                 language = Language.objects.get(id=get_default_language_id())
                 homo_trans[language.language_code_2char] = saved_gl.annotationidglosstranslation_set.filter(language=language)
-            if language_code in homo_trans:
-                homo_display = homo_trans[language_code][0].text
+            if interface_language_code in homo_trans:
+                homo_display = homo_trans[interface_language_code][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
                 homo_display = homo_trans[default_language_code][0].text
@@ -1596,8 +1533,8 @@ class GlossDetailView(DetailView):
             else:
                 language = Language.objects.get(id=get_default_language_id())
                 homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
-            if language_code in homo_trans:
-                homo_display = homo_trans[language_code][0].text
+            if interface_language_code in homo_trans:
+                homo_display = homo_trans[interface_language_code][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
                 homo_display = homo_trans[default_language_code][0].text
@@ -1611,8 +1548,10 @@ class GlossDetailView(DetailView):
         notes = context['gloss'].definition_set.all()
         notes_groupedby_role = {}
         for note in notes:
-            # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
-            translated_note_role = machine_value_to_translated_human_value(note.role,note_role_choices,self.request.LANGUAGE_CODE)
+            if note.role is not None:
+                translated_note_role = note.role.name
+            else:
+                translated_note_role = ''
             role_id = (note.role, translated_note_role)
             if role_id not in notes_groupedby_role:
                 notes_groupedby_role[role_id] = []
@@ -1627,7 +1566,7 @@ class GlossDetailView(DetailView):
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
 
-            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
+            human_value_media_type = other_media.type.name
 
             import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
@@ -1636,8 +1575,7 @@ class GlossDetailView(DetailView):
 
             # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
             context['other_media_field_choices'][
-                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(
-                other_media_type_choice_list, self.request.LANGUAGE_CODE)
+                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
 
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
 
@@ -1663,13 +1601,14 @@ class GlossDetailView(DetailView):
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
+        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
             except (ObjectDoesNotExist):
-                annotation_text = ''
+                annotation_text = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_text
 
         # Put translations (keywords) per language in the context
@@ -1696,7 +1635,6 @@ class GlossDetailView(DetailView):
             gloss_dialect_choices = []
 
         for gd in initial_gloss_dialects:
-            # print('initial gloss dialect: ', gd)
             if gd in gloss_dialect_choices:
                 gloss_dialects.append(gd)
             else:
@@ -1714,39 +1652,14 @@ class GlossDetailView(DetailView):
                 gl.dialect.add(d)
 
         gloss_semanticfields = []
-        multiselect_semanticfields = gl.semFieldShadow.all()
-        legacy_semanticfield = gl.semField
-        if legacy_semanticfield and not multiselect_semanticfields:
-            new_semanticfield = semanticfield_fieldchoice_to_multiselect(legacy_semanticfield)
-
-            if new_semanticfield:
-                # the following is only done if the legacy value has not been put in the multiselect semantic fields
-                gl.semFieldShadow.add(new_semanticfield)
-                gl.save()
-            else:
-                # old legacy value does not exist anymore as a field choice, remove it
-                gl.semField = None
-                gl.save()
-
-        for sf in gl.semFieldShadow.all():
+        for sf in gl.semField.all():
             gloss_semanticfields.append(sf)
 
         context['gloss_semanticfields'] = gloss_semanticfields
 
 
         gloss_derivationhistory = []
-        multiselect_derivationhistory = gl.derivHistShadow.all()
-        legacy_derivationhistory = gl.derivHist
-        if legacy_derivationhistory and not multiselect_derivationhistory:
-
-            new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(legacy_derivationhistory)
-
-            if new_derivationhistory:
-                # the following is only done if the legacy value has not been put in the multiselect derivation history
-                gl.derivHistShadow.add(new_derivationhistory)
-                gl.save()
-
-        for sf in gl.derivHistShadow.all():
+        for sf in gl.derivHist.all():
             gloss_derivationhistory.append(sf)
 
         context['gloss_derivationhistory'] = gloss_derivationhistory
@@ -1757,7 +1670,7 @@ class GlossDetailView(DetailView):
 
         if gl.simultaneous_morphology:
             for sim_morph in gl.simultaneous_morphology.all():
-                translated_morph_type = machine_value_to_translated_human_value(sim_morph.morpheme.mrpType,sim_morph_typ_choices,self.request.LANGUAGE_CODE)
+                translated_morph_type = sim_morph.morpheme.mrpType.name
 
                 morpheme_annotation_idgloss = {}
                 if sim_morph.morpheme.dataset:
@@ -1766,8 +1679,8 @@ class GlossDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-                if language_code in morpheme_annotation_idgloss.keys():
-                    morpheme_display = morpheme_annotation_idgloss[language_code][0].text
+                if interface_language_code in morpheme_annotation_idgloss.keys():
+                    morpheme_display = morpheme_annotation_idgloss[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     morpheme_display = morpheme_annotation_idgloss[default_language_code][0].text
@@ -1794,8 +1707,8 @@ class GlossDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     glosses_annotation_idgloss[language.language_code_2char] = ble_morph.glosses.annotationidglosstranslation_set.filter(language=language)
-                if language_code in glosses_annotation_idgloss.keys():
-                    morpheme_display = glosses_annotation_idgloss[language_code][0].text
+                if interface_language_code in glosses_annotation_idgloss.keys():
+                    morpheme_display = glosses_annotation_idgloss[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     morpheme_display = glosses_annotation_idgloss[default_language_code][0].text
@@ -1816,8 +1729,8 @@ class GlossDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
-                if language_code in other_relations_dict.keys():
-                    target_display = other_relations_dict[language_code][0].text
+                if interface_language_code in other_relations_dict.keys():
+                    target_display = other_relations_dict[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     target_display = other_relations_dict[default_language_code][0].text
@@ -1851,8 +1764,6 @@ class GlossDetailView(DetailView):
         else:
             context['USE_DERIVATIONHISTORY'] = False
 
-        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
-
         if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
         else:
@@ -1867,7 +1778,7 @@ class GlossDetailView(DetailView):
         default_parameters = request.POST.get('default_parameters')
         request.session['query_parameters'] = default_parameters
         request.session.modified = True
-        return redirect(URL + settings.PREFIX_URL + '/signs/search/?query')
+        return redirect(settings.PREFIX_URL + '/signs/search/?query')
 
 
 class GlossVideosView(DetailView):
@@ -1947,12 +1858,6 @@ class GlossVideosView(DetailView):
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
 
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
-        language = Language.objects.get(id=get_default_language_id())
-        default_language_code = language.language_code_2char
-
         # Call the base implementation first to get a context
         context = super(GlossVideosView, self).get_context_data(**kwargs)
 
@@ -1978,7 +1883,7 @@ class GlossVideosView(DetailView):
 
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
-            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
+            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list)
 
             import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
@@ -1986,8 +1891,7 @@ class GlossVideosView(DetailView):
 
             # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
             context['other_media_field_choices'][
-                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(
-                other_media_type_choice_list, self.request.LANGUAGE_CODE)
+                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
 
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
@@ -1996,7 +1900,7 @@ class GlossVideosView(DetailView):
             self.request.session['datasetid'] = gl.dataset.id
             self.last_used_dataset = gl.dataset.acronym
         else:
-            self.request.session['datasetid'] = get_default_language_id()
+            self.request.session['datasetid'] = settings.DEFAULT_DATASET_PK
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
@@ -2076,23 +1980,13 @@ class GlossRelationsDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
 
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
-        language = Language.objects.get(id=get_default_language_id())
-        default_language_code = language.language_code_2char
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
 
         # Call the base implementation first to get a context
         context = super(GlossRelationsDetailView, self).get_context_data(**kwargs)
 
-        if self.request.LANGUAGE_CODE == 'zh-hans':
-            languages = Language.objects.filter(language_code_2char='zh')
-        else:
-            languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
-        if languages:
-            context['language'] = languages[0]
-        else:
-            context['language'] = Language.objects.get(id=get_default_language_id())
+        context['language'] = interface_language
 
         context['navigation'] = context['gloss'].navigation(True)
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
@@ -2104,36 +1998,34 @@ class GlossRelationsDetailView(DetailView):
 
         context['choice_lists'] = {}
 
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
-
         #Translate the machine values to human values in the correct language, and save the choice lists along the way
         for topic in ['main','phonology','semantics','frequency']:
             context[topic+'_fields'] = []
 
             for field in FIELDS[topic]:
                 choice_list = []
-                gloss_field = gloss_fields[field]
+                gloss_field = Gloss._meta.get_field(field)
                 #Get and save the choice list for this field
                 if hasattr(gloss_field, 'field_choice_category'):
                     fieldchoice_category = gloss_field.field_choice_category
                     choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+                elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
+                    choice_list = Handshape.objects.all()
 
                 if len(choice_list) > 0:
-                    context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
+                    context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list)
 
                 #Take the human value in the language we are using
                 machine_value = getattr(gl,field)
-                human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
+                human_value = machine_value.name if isinstance(machine_value, FieldChoice) or isinstance(machine_value, Handshape) \
+                                                 else machine_value
 
                 #And add the kind of field
                 kind = fieldname_to_kind(field)
                 context[topic+'_fields'].append([human_value,field,labels[field],kind])
 
         #Add morphology to choice lists
-        context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'),
-                                                                                       self.request.LANGUAGE_CODE)
+        context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'))
 
         #Collect all morphology definitions for th sequential morphology section, and make some translations in advance
         morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
@@ -2141,13 +2033,13 @@ class GlossRelationsDetailView(DetailView):
 
         for morphdef in context['gloss'].parent_glosses.all():
 
-            translated_role = machine_value_to_translated_human_value(morphdef.role,morphdef_roles,self.request.LANGUAGE_CODE)
+            translated_role = morphdef.role.name
 
             sign_display = str(morphdef.morpheme.id)
             morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
             if morph_texts.keys():
-                if language_code in morph_texts.keys():
-                    sign_display = morph_texts[language_code]
+                if interface_language_code in morph_texts.keys():
+                    sign_display = morph_texts[interface_language_code]
                 else:
                     sign_display = morph_texts[default_language_code]
 
@@ -2189,8 +2081,8 @@ class GlossRelationsDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     lemma_dict[language.language_code_2char] = gl_lem.annotationidglosstranslation_set.filter(language=language)
-                if language_code in lemma_dict.keys():
-                    gl_lem_display = lemma_dict[language_code][0].text
+                if interface_language_code in lemma_dict.keys():
+                    gl_lem_display = lemma_dict[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     gl_lem_display = lemma_dict[default_language_code][0].text
@@ -2210,8 +2102,8 @@ class GlossRelationsDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
-                if language_code in other_relations_dict.keys():
-                    target_display = other_relations_dict[language_code][0].text
+                if interface_language_code in other_relations_dict.keys():
+                    target_display = other_relations_dict[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     target_display = other_relations_dict[default_language_code][0].text
@@ -2246,8 +2138,8 @@ class GlossRelationsDetailView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     variants_dict[language.language_code_2char] = gl_var.annotationidglosstranslation_set.filter(language=language)
-                if language_code in variants_dict.keys():
-                    gl_var_display = variants_dict[language_code][0].text
+                if interface_language_code in variants_dict.keys():
+                    gl_var_display = variants_dict[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     gl_var_display = variants_dict[default_language_code][0].text
@@ -2267,8 +2159,8 @@ class GlossRelationsDetailView(DetailView):
             else:
                 language = Language.objects.get(id=get_default_language_id())
                 minimal_pairs_trans[language.language_code_2char] = mpg.annotationidglosstranslation_set.filter(language=language)
-            if language_code in minimal_pairs_trans.keys():
-                minpar_display = minimal_pairs_trans[language_code][0].text
+            if interface_language_code in minimal_pairs_trans.keys():
+                minpar_display = minimal_pairs_trans[interface_language_code][0].text
             else:
                 # This should be set to the default language if the interface language hasn't been set for this gloss
                 minpar_display = minimal_pairs_trans[default_language_code][0].text
@@ -2281,18 +2173,19 @@ class GlossRelationsDetailView(DetailView):
         compounds = []
         reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl.id)
         for rm in reverse_morphdefs:
-            translated_role = machine_value_to_translated_human_value(rm.role,morphdef_roles,self.request.LANGUAGE_CODE)
+            translated_role = machine_value_to_translated_human_value(rm.role,morphdef_roles)
 
             compounds.append((rm.parent_gloss, translated_role))
         context['compounds'] = compounds
 
+        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
             except (ObjectDoesNotExist):
-                annotation_text = ''
+                annotation_text = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_text
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -2335,11 +2228,9 @@ class MorphemeListView(ListView):
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
-        from signbank.tools import convert_language_code_to_2char
         for lang in dataset_languages:
-            lang_code = convert_language_code_to_2char(lang.language_code_2char)
-            if lang_code not in self.queryset_language_codes:
-                self.queryset_language_codes.append(lang_code)
+            if lang.language_code_2char not in self.queryset_language_codes:
+                self.queryset_language_codes.append(lang.language_code_2char)
         if self.queryset_language_codes is None:
             self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
 
@@ -2370,7 +2261,7 @@ class MorphemeListView(ListView):
             context['show_all'] = False
 
         search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
-                                         dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+                                         dialects=dialects)
 
         context['searchform'] = search_form
 
@@ -2379,19 +2270,6 @@ class MorphemeListView(ListView):
         self.request.session['search_type'] = self.search_type
 
         context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
-
-        # make sure that the morpheme-type options are available to the listview
-        oChoiceLists = {}
-        field_category = Morpheme._meta.get_field('mrpType').field_choice_category
-        choice_list = FieldChoice.objects.filter(field__iexact = field_category)
-        if (len(choice_list) > 0):
-            ordered_dict = choicelist_queryset_to_translated_dict(choice_list, self.request.LANGUAGE_CODE)
-            oChoiceLists['mrpType'] = ordered_dict
-        else:
-            oChoiceLists['mrpType'] = {}
-
-        # Make all choice lists available in the context (currently only mrpType)
-        context['choice_lists'] = json.dumps(oChoiceLists)
 
         context['input_names_fields_and_labels'] = {}
 
@@ -2428,9 +2306,18 @@ class MorphemeListView(ListView):
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
-        from signbank.tools import convert_language_code_to_language_minus_locale
-        lang_attr_name = convert_language_code_to_language_minus_locale(
-            settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
         items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -2454,18 +2341,28 @@ class MorphemeListView(ListView):
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
             fieldnames.remove('derivHist')
-        multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
+
+        multiple_select_morpheme_categories = fields_to_fieldcategory_dict(fieldnames)
+        multiple_select_morpheme_categories['definitionRole'] = 'NoteType'
+
+        multiple_select_morpheme_fields = [ fieldname for (fieldname, category) in multiple_select_morpheme_categories.items() ]
+
         context['MULTIPLE_SELECT_MORPHEME_FIELDS'] = multiple_select_morpheme_fields
 
-
-        multiple_select_morpheme_categories = [(field.name, field.field_choice_category) for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category') ]
-
         choices_colors = {}
-        for (fieldname, field_category) in multiple_select_morpheme_categories:
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+        for (fieldname, field_category) in multiple_select_morpheme_categories.items():
+            if field_category in CATEGORY_MODELS_MAPPING.keys():
+                field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
 
         context['field_colors'] = choices_colors
+
+        if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated():
+            context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
+        else:
+            context['search_by_publication_fields'] = []
 
         return context
 
@@ -2502,8 +2399,6 @@ class MorphemeListView(ListView):
         #If we wanted to get everything, we're done now
         if show_all:
 
-            # return order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
-            # print('queryset language codes: ', self.queryset_language_codes)
             qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
             return qs
@@ -2539,13 +2434,25 @@ class MorphemeListView(ListView):
             query_parameters['hasvideo'] = get['hasvideo']
             qs = qs.filter(glossvideo__isnull=val)
 
+        if 'definitionRole[]' in get:
+
+            vals = get.getlist('definitionRole[]')
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                #Find all definitions with this role
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
+
+                #Remember the pk of all glosses that are referenced in the collection definitions
+                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
+                qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+
         if 'defspublished' in get and get['defspublished'] != 'unspecified':
             val = get['defspublished'] == 'yes'
 
             qs = qs.filter(definition__published=val)
 
-
-        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew']
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
             fieldnames.remove('derivHist')
 
@@ -2567,20 +2474,27 @@ class MorphemeListView(ListView):
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
 
-        multiple_select_morpheme_fields = [field.name for field in Morpheme._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
-        for fieldnamemulti in multiple_select_morpheme_fields:
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
+            fieldnames.remove('derivHist')
 
+        multiple_select_morpheme_categories = fields_to_fieldcategory_dict(fieldnames)
+        # multiple_select_morpheme_categories['definitionRole'] = 'NoteType'
+
+        multiple_select_morpheme_fields = [ fieldname for (fieldname, category) in multiple_select_morpheme_categories.items() ]
+
+        for fieldnamemulti in multiple_select_morpheme_fields:
             fieldnamemultiVarname = fieldnamemulti + '[]'
-            fieldnameQuery = fieldnamemulti + '__in'
+            fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
             if '' in vals:
                 vals.remove('')
             if vals != []:
                 if fieldnamemulti == 'semField':
-                    qs = qs.filter(semFieldShadow__in=vals)
+                    qs = qs.filter(semField__in=vals)
                 elif fieldnamemulti == 'derivHist':
-                    qs = qs.filter(derivHistShadow__in=vals)
+                    qs = qs.filter(derivHist__in=vals)
                 else:
                     qs = qs.filter(**{ fieldnameQuery: vals })
 
@@ -2629,21 +2543,6 @@ class MorphemeListView(ListView):
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val)
 
-        # THIS CODE IS NOT USED BY GLOBAL, subsumed by definitionContains
-        # if 'defsearch' in get and get['defsearch'] != '':
-        #
-        #     val = get['defsearch']
-        #
-        #     if 'definitionRole' in get:
-        #         role = get['definitionRole']
-        #     else:
-        #         role = 'all'
-        #
-        #     if role == 'all':
-        #         qs = qs.filter(definition__text__icontains=val)
-        #     else:
-        #         qs = qs.filter(definition__text__icontains=val, definition__role__exact=role)
-
         if 'tags' in get and get['tags'] != '':
             vals = get.getlist('tags')
 
@@ -2671,45 +2570,6 @@ class MorphemeListView(ListView):
 
             # exclude all of tqs from qs
             qs = [q for q in qs if q not in tqs]
-
-        if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
-            relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
-            potential_pks = [relation.gloss.pk for relation in relations]
-            qs = qs.filter(pk__in=potential_pks)
-
-        if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
-
-            pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
-
-            if get['hasRelationToForeignSign'] == '1':  # We only want glosses with a relation to a foreign sign
-                qs = qs.filter(pk__in=pks_for_glosses_with_relations)
-            elif get['hasRelationToForeignSign'] == '2':  # We only want glosses without a relation to a foreign sign
-                qs = qs.exclude(pk__in=pks_for_glosses_with_relations)
-
-        if 'relation' in get and get['relation'] != '':
-            potential_targets = Gloss.objects.filter(idgloss__icontains=get['relation'])
-            relations = Relation.objects.filter(target__in=potential_targets)
-            potential_pks = [relation.source.pk for relation in relations]
-            qs = qs.filter(pk__in=potential_pks)
-
-        if 'hasRelation' in get and get['hasRelation'] != '':
-
-            # Find all relations with this role
-            if get['hasRelation'] == 'all':
-                relations_with_this_role = Relation.objects.all()
-            else:
-                relations_with_this_role = Relation.objects.filter(role__exact=get['hasRelation'])
-
-            # Remember the pk of all glosses that take part in the collected relations
-            pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
-            qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
-
-        if 'morpheme' in get and get['morpheme'] != '':
-            potential_morphemes = Gloss.objects.filter(idgloss__icontains=get['morpheme'])
-            potential_morphdefs = MorphologyDefinition.objects.filter(
-                morpheme__in=[morpheme.pk for morpheme in potential_morphemes])
-            potential_pks = [morphdef.parent_gloss.pk for morphdef in potential_morphdefs]
-            qs = qs.filter(pk__in=potential_pks)
 
         if 'definitionRole' in get and get['definitionRole'] != '':
 
@@ -2903,50 +2763,13 @@ class HandshapeDetailView(DetailView):
             # see if Handshape object exists for this machine_value
             self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
-            # SEE IF THERE IS A FIELDCHOICE FOR THIS HANDSHAPE MACHINE VALUE
-            # check to see if this handshape has been created but not yet viewed
-            # if that is the case, create a new handshape object and view that,
-            # otherwise return an error
-            handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
-            handshape_not_created = 1
-
-            for o in handshapes:
-                # look for this handshape machine value inside of FieldChoice Handshapes
-                if o.machine_value == match_machine_value: # only one match
-                    new_id = o.machine_value
-                    new_machine_value = o.machine_value
-                    new_english_name = o.english_name
-                    new_dutch_name = o.dutch_name
-                    new_chinese_name = o.chinese_name
-
-                    new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name,
-                                              dutch_name=new_dutch_name, chinese_name=new_chinese_name)
-                    new_handshape.save()
-                    handshape_not_created = 0
-                    self.object = new_handshape
-                    break
-            if handshape_not_created:
-                # The handshape machine value does not exist as a Handshape
-                translated_message = _('Handshape not configured.')
-                return render(request, 'dictionary/warning.html',
-                              {'warning': translated_message,
-                               'dataset_languages': dataset_languages,
-                               'selected_datasets': selected_datasets,
-                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-
-        try:
-            # THE HANDSHAPE OBJECT EXISTS, MAKE SURE IT'S IN FIELDCHOICES
-            handshape_for_this_object = FieldChoice.objects.get(field__iexact='Handshape', machine_value=match_machine_value)
-        except ObjectDoesNotExist:
-            print('Configure Handshape ', match_machine_value, ' in FieldChoice table.')
-            # the handshape object with the machine value has been either fetched or created and stored in self.object
-            this_handshape = self.object
-            this_field_choice = FieldChoice(machine_value=this_handshape.machine_value,
-                                            field='Handshape',
-                                            english_name=this_handshape.english_name,
-                                            dutch_name=this_handshape.dutch_name,
-                                            chinese_name=this_handshape.chinese_name)
-            this_field_choice.save()
+            # The handshape machine value does not exist as a Handshape
+            translated_message = _('Handshape not configured.')
+            return render(request, 'dictionary/warning.html',
+                          {'warning': translated_message,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -2964,12 +2787,15 @@ class HandshapeDetailView(DetailView):
 
         setattr(self.request.session, 'search_type', self.search_type)
 
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
         labels = hs.field_labels()
         context['imageform'] = ImageUploadForHandshapeForm()
 
         context['choice_lists'] = {}
         context['handshape_fields'] = []
-        oChoiceLists = {}
 
         context['handshape_fields_FS1'] = []
         context['handshape_fields_FS2'] = []
@@ -2977,12 +2803,16 @@ class HandshapeDetailView(DetailView):
         context['handshape_fields_FC2'] = []
         context['handshape_fields_UF'] = []
 
+        FINGER_SELECTION_FIELDS = ['hsFingSel', 'fsT','fsI','fsM','fsR','fsP']
+        FINGER_SELECTION_2_FIELDS = ['hsFingSel2', 'fs2T','fs2I','fs2M','fs2R','fs2P']
+        UNSELECTED_FINGERS_FIELDS = ['hsFingUnsel', 'ufT','ufI','ufM','ufR','ufP']
+
         handshape_fields = {}
         for f in Handshape._meta.fields:
-            handshape_fields[f.name] = f
+            if f.name in settings.FIELDS['handshape']:
+                handshape_fields[f.name] = f
 
-        for field in FIELDS['handshape']:
-
+        for field in handshape_fields.keys():
             handshape_field = handshape_fields[field]
             # Get and save the choice list for this field
             if hasattr(handshape_field, 'field_choice_category'):
@@ -2993,28 +2823,26 @@ class HandshapeDetailView(DetailView):
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
 
             if len(choice_list) > 0:
-                context['choice_lists'][field] = choicelist_queryset_to_translated_dict (choice_list,self.request.LANGUAGE_CODE)
+                context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list)
 
             #Take the human value in the language we are using
             machine_value = getattr(hs, field)
-            human_value = machine_value_to_translated_human_value(machine_value,choice_list,self.request.LANGUAGE_CODE)
+            human_value = machine_value.name if isinstance(machine_value, FieldChoice) else machine_value
 
             #And add the kind of field
             kind = fieldname_to_kind(field)
 
             field_label = labels[field]
-            if field_label in ['Finger selection', 'T', 'I', 'M', 'R', 'P']:
-                if field_label != 'Finger selection':
-                    context['handshape_fields_FS1'].append([human_value, field, field_label, kind])
-            elif field_label in ['Finger selection 2', 'T2', 'I2', 'M2', 'R2', 'P2']:
-                if field_label != 'Finger selection 2':
-                    context['handshape_fields_FS2'].append([human_value, field, field_label, kind])
-            elif field_label in ['Unselected fingers', 'Tu', 'Iu', 'Mu', 'Ru', 'Pu']:
-                if field_label != 'Unselected fingers':
-                    context['handshape_fields_UF'].append([human_value, field, field_label, kind])
-            # elif field_label == 'Finger configuration 1':
-                # context['handshape_fields_FC1'].append([human_value, field, field_label, kind])
-            elif field_label == 'Finger configuration 2':
+
+            if field in FINGER_SELECTION_FIELDS and field != 'hsFingSel':
+                context['handshape_fields_FS1'].append([human_value, field, field_label, kind])
+            elif field in FINGER_SELECTION_2_FIELDS and field != 'hsFingSel2':
+                context['handshape_fields_FS2'].append([human_value, field, field_label, kind])
+            elif field in UNSELECTED_FINGERS_FIELDS and field != 'hsFingUnsel':
+                context['handshape_fields_UF'].append([human_value, field, field_label, kind])
+            elif field == 'hsFingConf':
+                context['handshape_fields_FC1'].append([human_value, field, field_label, kind])
+            elif field == 'hsFingConf2':
                 context['handshape_fields_FC2'].append([human_value, field, field_label, kind])
             else:
                 context['handshape_fields'].append([human_value, field, field_label, kind])
@@ -3034,17 +2862,21 @@ class HandshapeDetailView(DetailView):
         if 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
             # there are no handshapes in the scrollbar, put some there
 
-            qs = Handshape.objects.all().order_by('machine_value')
+            qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
-            from signbank.tools import convert_language_code_to_language_minus_locale
-            lang_attr_name = convert_language_code_to_language_minus_locale(
-                settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+            (interface_language, interface_language_code,
+             default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+            dataset_display_languages = []
+            for lang in dataset_languages:
+                dataset_display_languages.append(lang.language_code_2char)
+            if interface_language_code in dataset_display_languages:
+                lang_attr_name = interface_language_code
+            else:
+                lang_attr_name = default_language_code
+
             items = construct_scrollbar(qs, self.search_type, lang_attr_name)
             self.request.session['search_results'] = items
-
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-        context['dataset_languages'] = dataset_languages
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -3078,57 +2910,12 @@ class SemanticFieldDetailView(DetailView):
             self.object = SemanticField.objects.get(machine_value=match_machine_value)
         except ObjectDoesNotExist:
             # No SemanticField exists for this machine value
-            # See if there is a fieldChoice for the SemField category with this machine value
-            # check to see if this semantic field has been created in FieldChoice but not yet viewed
-            # if that is the case, create a new SemanticField object and view that,
-            # otherwise return an error
-
-            new_semanticfield = semanticfield_fieldchoice_to_multiselect(match_machine_value)
-
-            if not new_semanticfield:
-                translated_message = _('SemanticField not configured for this machine value.')
-                return render(request, 'dictionary/warning.html',
-                              {'warning': translated_message,
-                               'dataset_languages': dataset_languages,
-                               'selected_datasets': selected_datasets,
-                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-
-        try:
-            # The semantic field object exists, make sure it's in FieldChoices
-            fieldchoice_for_this_object = FieldChoice.objects.get(field__iexact='SemField', machine_value=match_machine_value)
-        except ObjectDoesNotExist:
-            # the semantic field object with the machine value has been either fetched or created and stored in self.object
-            print('field choice not found for SemField with machine value ', match_machine_value)
-            this_semanticfield = self.object
-
-            dutch_language = Language.objects.get(language_code_2char='nl')
-            chinese_language = Language.objects.get(language_code_2char='zh')
-
-            dutch_translation = SemanticFieldTranslation.objects.filter(semField=this_semanticfield, language=dutch_language).first()
-
-            if not dutch_translation:
-                # this SemanticField was created without a translation, use English
-                dutch_translation = this_semanticfield.name
-                dutch_semanticfieldtranslation = SemanticFieldTranslation(semField=new_semanticfield, language=dutch_language,
-                                                             name=dutch_translation)
-                dutch_semanticfieldtranslation.save()
-
-            chinese_translation = SemanticFieldTranslation.objects.filter(semField=this_semanticfield, language=chinese_language).first()
-
-            if not chinese_translation:
-                # this SemanticField was created without a translation, use English
-                chinese_translation = this_semanticfield.name
-                chinese_semanticfieldtranslation = SemanticFieldTranslation(semField=new_semanticfield, language=chinese_language,
-                                                               name=new_chinese_name)
-                chinese_semanticfieldtranslation.save()
-
-            # for the purposes of FieldChoice choice lists, make sure the translations have values
-            this_field_choice = FieldChoice(machine_value=this_semanticfield.machine_value,
-                                            field='SemField',
-                                            english_name=this_semanticfield.name,
-                                            dutch_name=dutch_translation,
-                                            chinese_name=chinese_translation)
-            this_field_choice.save()
+            translated_message = _('SemanticField not configured for this machine value.')
+            return render(request, 'dictionary/warning.html',
+                          {'warning': translated_message,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -3144,7 +2931,8 @@ class SemanticFieldDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
 
-        context['translations'] = [ (translation.language.name, translation.name) for translation in self.object.semanticfieldtranslation_set.all() ]
+        context['translations'] = [ (translation.language.name, translation.name)
+                                    for translation in self.object.semanticfieldtranslation_set.all() ]
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -3165,12 +2953,8 @@ class SemanticFieldListView(ListView):
         # Call the base implementation first to get a context
         context = super(SemanticFieldListView, self).get_context_data(**kwargs)
 
-        context['semanticfieldchoicecount'] = FieldChoice.objects.filter(field__iexact='semField').count()
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
-
-        context['semanticfieldcount'] = SemanticField.objects.count()
 
         # this is needed to avoid crashing the browser if you go to the last page
         # of an extremely long list and go to Detail View on the objects
@@ -3195,29 +2979,7 @@ class SemanticFieldListView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
-        qs = SemanticField.objects.all().order_by('name')
-
-        semantic_fields = FieldChoice.objects.filter(field__iexact='semField')
-        # Find out if any SemanticFields exist for which no SemanticField object has been created
-        # this can happen if new semField choices are created in Admin
-
-        existing_semanticfield_objects_machine_values = [ o.machine_value for o in qs ]
-
-        new_semanticfield_created = 0
-
-        for s in semantic_fields:
-            if s.machine_value in existing_semanticfield_objects_machine_values:
-                pass
-            else:
-                # create a new SemanticField object
-                new_semanticfield = semanticfield_fieldchoice_to_multiselect(s.machine_value)
-
-                if new_semanticfield:
-                    new_semanticfield_created = 1
-
-        if new_semanticfield_created: # if a new SemanticField object was created, reload the query result
-
-            qs = SemanticField.objects.all().order_by('name')
+        qs = SemanticField.objects.filter(machine_value__gt=1).order_by('name')
 
         return qs
 
@@ -3247,57 +3009,12 @@ class DerivationHistoryDetailView(DetailView):
             self.object = DerivationHistory.objects.get(machine_value=match_machine_value)
         except ObjectDoesNotExist:
             # No DerivationHistory exists for this machine value
-            # See if there is a fieldChoice for the derivHist category with this machine value
-            # check to see if this semantic field has been created in FieldChoice but not yet viewed
-            # if that is the case, create a new DerivationHistory object and view that,
-            # otherwise return an error
-
-            new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(match_machine_value)
-
-            if not new_derivationhistory:
-                translated_message = _('DerivationHistory not configured for this machine value.')
-                return render(request, 'dictionary/warning.html',
-                              {'warning': translated_message,
-                               'dataset_languages': dataset_languages,
-                               'selected_datasets': selected_datasets,
-                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-
-        try:
-            # The semantic field object exists, make sure it's in FieldChoices
-            fieldchoice_for_this_object = FieldChoice.objects.get(field__iexact='derivHist', machine_value=match_machine_value)
-        except (ObjectDoesNotExist, MultipleObjectsReturned):
-            # the semantic field object with the machine value has been either fetched or created and stored in self.object
-            print('field choice not found for derivHist with machine value ', match_machine_value)
-            this_derivationhistory = self.object
-
-            dutch_language = Language.objects.get(language_code_2char='nl')
-            chinese_language = Language.objects.get(language_code_2char='zh')
-
-            dutch_translation = DerivationHistoryTranslation.objects.filter(derivHist=this_derivationhistory, language=dutch_language).first()
-
-            if not dutch_translation:
-                # this DerivationHistory was created without a translation, use English
-                dutch_translation = this_derivationhistory.name
-                dutch_derivationhistorytranslation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=dutch_language,
-                                                             name=dutch_translation)
-                dutch_derivationhistorytranslation.save()
-
-            chinese_translation = DerivationHistoryTranslation.objects.filter(derivHist=this_derivationhistory, language=chinese_language).first()
-
-            if not chinese_translation:
-                # this DerivationHistory was created without a translation, use English
-                chinese_translation = this_derivationhistory.name
-                chinese_derivationhistorytranslation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=chinese_language,
-                                                               name=new_chinese_name)
-                chinese_derivationhistorytranslation.save()
-
-            # for the purposes of FieldChoice choice lists, make sure the translations have values
-            this_field_choice = FieldChoice(machine_value=this_derivationhistory.machine_value,
-                                            field='derivHist',
-                                            english_name=this_derivationhistory.name,
-                                            dutch_name=dutch_translation,
-                                            chinese_name=chinese_translation)
-            this_field_choice.save()
+            translated_message = _('DerivationHistory not configured for this machine value.')
+            return render(request, 'dictionary/warning.html',
+                          {'warning': translated_message,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -3313,7 +3030,8 @@ class DerivationHistoryDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
 
-        context['translations'] = [ (translation.language.name, translation.name) for translation in self.object.derivationhistorytranslation_set.all() ]
+        context['translations'] = [ (translation.language.name, translation.name)
+                                    for translation in self.object.derivationhistorytranslation_set.all() ]
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -3334,12 +3052,8 @@ class DerivationHistoryListView(ListView):
         # Call the base implementation first to get a context
         context = super(DerivationHistoryListView, self).get_context_data(**kwargs)
 
-        context['derivationhistoryfieldchoicecount'] = FieldChoice.objects.filter(field__iexact='derivHist').count()
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
-
-        context['derivationhistorycount'] = DerivationHistory.objects.count()
 
         # this is needed to avoid crashing the browser if you go to the last page
         # of an extremely long list and go to Detail View on the objects
@@ -3364,32 +3078,9 @@ class DerivationHistoryListView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
-        qs = DerivationHistory.objects.all().order_by('name')
-
-        derivationhistory_fields = FieldChoice.objects.filter(field__iexact='derivHist')
-        # Find out if any DerivationHistorys exist for which no DerivationHistory object has been created
-        # this can happen if new derivHist choices are created in Admin
-
-        existing_derivationhistory_objects_machine_values = [ o.machine_value for o in qs ]
-
-        new_derivationhistory_created = 0
-
-        for s in derivationhistory_fields:
-            if s.machine_value in existing_derivationhistory_objects_machine_values:
-                pass
-            else:
-                # create a new DerivationHistory object
-                new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(s.machine_value)
-
-                if new_derivationhistory:
-                    new_derivationhistory_created = 1
-
-        if new_derivationhistory_created: # if a new DerivationHistory object was created, reload the query result
-
-            qs = DerivationHistory.objects.all().order_by('name')
+        qs = DerivationHistory.objects.filter(machine_value__gt=1).order_by('name')
 
         return qs
-
 
 
 class HomonymListView(ListView):
@@ -3418,19 +3109,28 @@ class HomonymListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        handedness_filter = 'handedness__name__in'
+        strong_hand_filter = 'domhndsh__name__in'
+        empty_value = ['-','N/A']
+
         # this is used to set up the ajax calls, one per each focus gloss in the table
-        context['ids_of_all_glosses'] = [ g.id for g in Gloss.none_morpheme_objects().select_related('lemma').filter(lemma__dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}))).exclude((Q(**{'domhndsh__isnull': True}))) ]
+        context['ids_of_all_glosses'] = [ g.id for g in Gloss.none_morpheme_objects().select_related('lemma').filter(
+            lemma__dataset__in=selected_datasets).exclude(
+            (Q(**{handedness_filter: empty_value}))).exclude((Q(**{strong_hand_filter: empty_value}))) ]
 
         return context
 
     def get_queryset(self):
 
-        # Get all existing saved Homonyms
-        # relation_homonyms = Relation.objects.filter(role='homonym')
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(lemma__dataset__in=selected_datasets).exclude((Q(**{'handedness__isnull': True}))).exclude((Q(**{'domhndsh__isnull': True})))
+        handedness_filter = 'handedness__name__in'
+        strong_hand_filter = 'domhndsh__name__in'
+        empty_value = ['-','N/A']
+
+        glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(
+            lemma__dataset__in=selected_datasets).exclude(
+            (Q(**{handedness_filter: empty_value}))).exclude((Q(**{strong_hand_filter: empty_value})))
 
         return glosses_with_phonology
 
@@ -3441,22 +3141,7 @@ class MinimalPairsListView(ListView):
     filter = False
 
     def get_context_data(self, **kwargs):
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
-        language = Language.objects.get(id=get_default_language_id())
-        default_language_code = language.language_code_2char
-
-        # Refresh the "constant" translated choice lists table
-        translated_choice_lists_table = generate_translated_choice_list_table()
-
         context = super(MinimalPairsListView, self).get_context_data(**kwargs)
-
-        languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
-        if languages:
-            context['language'] = languages[0]
-        else:
-            context['language'] = Language.objects.get(id=get_default_language_id())
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -3468,18 +3153,16 @@ class MinimalPairsListView(ListView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
-            multiple_select_gloss_fields.remove('derivHist')
+        fields_with_choices = fields_to_fieldcategory_dict()
+        multiple_select_gloss_fields = [fieldname for fieldname in fieldnames
+                                                  if fieldname in fields_with_choices.keys()]
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
-
-        context['translated_choice_lists_table'] = generate_translated_choice_list_table()
 
         field_names = []
         for field in FIELDS['phonology']:
-            field_object = [f for f in Gloss._meta.fields if f.name == field].pop()
+            field_object = Gloss._meta.get_field(field)
             # don't consider text fields that are not choice lists
-            if (isinstance(field_object, models.CharField) and not hasattr(field_object, 'field_choice_category')) or isinstance(field_object, models.TextField):
+            if isinstance(field_object, models.CharField) or isinstance(field_object, models.TextField):
                 continue
             field_names.append(field)
 
@@ -3505,7 +3188,7 @@ class MinimalPairsListView(ListView):
             dialects.append((str(dl.id),dialect_name))
 
         search_form = FocusGlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
-                                      dialects=dialects, language_code=self.request.LANGUAGE_CODE)
+                                      dialects=dialects)
 
         context['searchform'] = search_form
 
@@ -3547,9 +3230,18 @@ class MinimalPairsListView(ListView):
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
         # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
-        from signbank.tools import convert_language_code_to_language_minus_locale
-        lang_attr_name = convert_language_code_to_language_minus_locale(
-            settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
         items = construct_scrollbar(list_of_objects, 'sign', lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -3610,7 +3302,20 @@ class MinimalPairsListView(ListView):
 
         finger_spelling_glosses = [ a_idgloss_trans.gloss_id for a_idgloss_trans in AnnotationIdglossTranslation.objects.filter(text__startswith="#") ]
 
-        glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(lemma__dataset__in=selected_datasets).exclude(id__in=finger_spelling_glosses).exclude((Q(**{'handedness__isnull': True}))).exclude((Q(**{'domhndsh__isnull': True})))
+        handedness_filter = 'handedness__name__in'
+        handedness_null = 'handedness__isnull'
+        strong_hand_filter = 'domhndsh__name__in'
+        strong_hand_null = 'domhndsh__isnull'
+        empty_value = ['-','N/A']
+
+        glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(
+                                        lemma__dataset__in=selected_datasets).exclude(
+                                        id__in=finger_spelling_glosses)
+        glosses_with_phonology = glosses_with_phonology.exclude(
+                        (Q(**{handedness_null: True}))).exclude(
+                        (Q(**{strong_hand_null: True}))).exclude(
+                        (Q(**{handedness_filter: empty_value}))).exclude(
+                        (Q(**{strong_hand_filter: empty_value})))
 
         if 'filter' in get or len(get) > 0:
             self.filter = True
@@ -3643,14 +3348,17 @@ class MinimalPairsListView(ListView):
             qs = qs.filter(translation__translation__text__iregex=val)
 
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if field.name in fieldnames and hasattr(field, 'field_choice_category')]
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
-            multiple_select_gloss_fields.remove('derivHist')
+        fields_with_choices = fields_to_fieldcategory_dict()
+        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields
+                                                    if field.name in fieldnames
+                                                    and field.name in fields_with_choices.keys()]
 
         for fieldnamemulti in multiple_select_gloss_fields:
-
             fieldnamemultiVarname = fieldnamemulti + '[]'
-            fieldnameQuery = fieldnamemulti + '__in'
+            if fieldnamemulti == 'semField':
+                fieldnameQuery = 'semField' + '__machine_value__in'
+            else:
+                fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
             if '' in vals:
@@ -3660,10 +3368,10 @@ class MinimalPairsListView(ListView):
 
         ## phonology and semantics field filters
         fieldnames = [ f for f in fieldnames if f not in multiple_select_gloss_fields ]
+
         for fieldname in fieldnames:
 
             if fieldname in get and get[fieldname] != '':
-
                 field_obj = Gloss._meta.get_field(fieldname)
 
                 if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
@@ -3698,12 +3406,6 @@ class QueryListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        codes_to_adjectives = dict(settings.LANGUAGES)
-        if language_code not in codes_to_adjectives.keys():
-            adjective = 'english'
-        else:
-            adjective = codes_to_adjectives[language_code].lower()
-
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
@@ -3713,12 +3415,6 @@ class QueryListView(ListView):
             context['GLOSS_LIST_DISPLAY_FIELDS'] = settings.GLOSS_LIST_DISPLAY_FIELDS
         else:
             context['GLOSS_LIST_DISPLAY_FIELDS'] = []
-
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
-            fieldnames.remove('derivHist')
-        multiple_select_gloss_fields = [field.name + '[]' for field in Gloss._meta.fields if
-                                        field.name in fieldnames and hasattr(field, 'field_choice_category')]
 
         if 'search_results' in self.request.session.keys():
             search_results = self.request.session['search_results']
@@ -3747,8 +3443,7 @@ class QueryListView(ListView):
 
         query_parameters_mapping = pretty_print_query_fields(dataset_languages, query_parameters.keys())
 
-        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters,
-                                                                    self.request.LANGUAGE_CODE)
+        query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters)
 
         gloss_search_field_prefix = "glosssearch_"
         lemma_search_field_prefix = "lemma_"
@@ -3821,7 +3516,6 @@ class QueryListView(ListView):
         context['object_list'] = object_list
         context['display_fields'] = phonology_focus
         context['query_fields_parameters'] = query_fields_parameters
-        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
         context['TOGGLE_QUERY_PARAMETER_FIELDS'] = toggle_query_parameter_fields
         context['TOGGLE_PUBLICATION_FIELDS'] = toggle_publication_fields
         context['TOGGLE_GLOSS_LIST_DISPLAY_FIELDS'] = toggle_gloss_list_display_fields
@@ -3858,26 +3552,9 @@ class FrequencyListView(ListView):
         # Call the base implementation first to get a context
         context = super(FrequencyListView, self).get_context_data(**kwargs)
 
-        language_code = self.request.LANGUAGE_CODE
-        if self.request.LANGUAGE_CODE == 'zh-hans':
-            languages = Language.objects.filter(language_code_2char='zh')
-            language_code = 'zh'
-        else:
-            languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
-        if languages:
-            context['language'] = languages[0]
-        else:
-            context['language'] = Language.objects.get(id=get_default_language_id())
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
-
-        codes_to_adjectives = dict(settings.LANGUAGES)
-        if language_code not in codes_to_adjectives.keys():
-            adjective = 'english'
-        else:
-            adjective = codes_to_adjectives[language_code].lower()
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -3890,10 +3567,13 @@ class FrequencyListView(ListView):
         # this is used for display in the template, by lookup
         field_labels = dict()
         for field in FIELDS['phonology']:
-            if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                if fieldname_to_kind(field) == 'list':
-                    field_label = Gloss._meta.get_field(field).verbose_name
-                    field_labels[field] = field_label.encode('utf-8').decode()
+            if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                continue
+            if field not in [f.name for f in Gloss._meta.fields]:
+                continue
+            if fieldname_to_kind(field) == 'list':
+                field_label = Gloss._meta.get_field(field).verbose_name
+                field_labels[field] = field_label.encode('utf-8').decode()
 
         # note on context variables below: there are two variables for the same data
         # the context variable field_labels_list is iterated over in the template to generate the pull-down menu
@@ -3908,23 +3588,22 @@ class FrequencyListView(ListView):
         context['field_labels'] = field_labels
         context['field_labels_list'] = field_labels_list
 
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
-
         # sort the field choices based on the designated language
         # this is used for display in the template, by lookup
         field_labels_choices = dict()
         for field, label in field_labels.items():
-            gloss_field = gloss_fields[field]
+            gloss_field = Gloss._meta.get_field(field)
+
             # Get and save the choice list for this field
-            if hasattr(gloss_field, 'field_choice_category'):
+            if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
+                field_choices = Handshape.objects.all().order_by('name')
+            elif hasattr(gloss_field, 'field_choice_category'):
                 field_category = gloss_field.field_choice_category
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
             else:
                 field_category = field
-
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
-            translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='_',shortlist=False)
             field_labels_choices[field] = dict(translated_choices)
 
         context['field_labels_choices'] = field_labels_choices
@@ -3945,22 +3624,25 @@ class FrequencyListView(ListView):
 
         field_labels_semantics_choices = dict()
         for field, label in field_labels_semantics.items():
-            gloss_field = gloss_fields[field]
+            gloss_field = Gloss._meta.get_field(field)
             # Get and save the choice list for this field
             if hasattr(gloss_field, 'field_choice_category'):
                 field_category = gloss_field.field_choice_category
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
+            elif field in ['semField']:
+                field_choices = SemanticField.objects.all()
+            elif field in ['derivHist']:
+                field_choices = DerivationHistory.objects.all()
             else:
-                field_category = field
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by(adjective+'_name')
-            translated_choices = choicelist_queryset_to_translated_dict(field_choices,self.request.LANGUAGE_CODE,ordered=False,id_prefix='_',shortlist=False)
+                field_choices = []
+
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='_',shortlist=False)
             field_labels_semantics_choices[field] = dict(translated_choices)
 
         context['field_labels_semantics_choices'] = field_labels_semantics_choices
 
         # for ease of implementation in the template, the results of the two kinds of frequencies
         # (phonology fields, semantics fields) are displayed in the same table, the lookup tables are merged so only one loop is needed
-
-        context['all_field_labels_choices'] = dict(field_labels_choices, **field_labels_semantics_choices)
 
         context['all_field_labels'] = dict(field_labels, **field_labels_semantics)
 
@@ -4082,13 +3764,8 @@ class GlossFrequencyView(DetailView):
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
 
-        default_language = Language.objects.get(id=get_default_language_id())
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        try:
-            interface_language = Language.objects.get(language_code_2char=convert_language_code_to_2char(self.request.LANGUAGE_CODE))
-        except:
-            interface_language = Language.objects.get(id=get_default_language_id())
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
 
         #Pass info about which fields we want to see
         gl = context['gloss']
@@ -4212,13 +3889,14 @@ class GlossFrequencyView(DetailView):
         else:
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
 
+        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_translation = gl.annotationidglosstranslation_set.get(language=language).text
             except (ValueError):
-                annotation_translation = ''
+                annotation_translation = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_translation
 
         if interface_language in context['annotation_idgloss'].keys():
@@ -4226,8 +3904,6 @@ class GlossFrequencyView(DetailView):
         else:
             gloss_idgloss = context['annotation_idgloss'][default_language]
         context['gloss_idgloss'] = gloss_idgloss
-
-        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
 
         context['view_type'] = 'percentage'
 
@@ -4245,15 +3921,8 @@ class LemmaFrequencyView(DetailView):
 
     def get_context_data(self, **kwargs):
 
-        # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-        from signbank.tools import convert_language_code_to_2char
-        language_code = convert_language_code_to_2char(self.request.LANGUAGE_CODE)
-        default_language = Language.objects.get(id=get_default_language_id())
-        default_language_code = default_language.language_code_2char
-        try:
-            interface_language = Language.objects.get(language_code_2char=language_code)
-        except:
-            interface_language = default_language
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
 
         # Call the base implementation first to get a context
         context = super(LemmaFrequencyView, self).get_context_data(**kwargs)
@@ -4304,12 +3973,13 @@ class LemmaFrequencyView(DetailView):
             context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
 
         # Put annotation_idgloss per language in the context
+        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
             except (ObjectDoesNotExist):
-                annotation_text = ''
+                annotation_text = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_text
         if interface_language in context['annotation_idgloss'].keys():
             gloss_idgloss = context['annotation_idgloss'][interface_language]
@@ -4352,8 +4022,8 @@ class LemmaFrequencyView(DetailView):
                 else:
                     language = Language.objects.get(id=get_default_language_id())
                     lemma_dict[language.language_code_2char] = gl_lem.annotationidglosstranslation_set.filter(language=language)
-                if language_code in lemma_dict.keys():
-                    gl_lem_display = lemma_dict[language_code][0].text
+                if interface_language_code in lemma_dict.keys():
+                    gl_lem_display = lemma_dict[interface_language_code][0].text
                 else:
                     # This should be set to the default language if the interface language hasn't been set for this gloss
                     gl_lem_display = lemma_dict[default_language_code][0].text
@@ -4370,8 +4040,6 @@ class LemmaFrequencyView(DetailView):
         context['num_occurrences'] = total_occurrences
 
         context['glosses_in_lemma_group'] = glosses_in_lemma_group
-
-        context['generate_translated_choice_list_table'] = generate_translated_choice_list_table()
 
         return context
 
@@ -4400,12 +4068,8 @@ class HandshapeListView(ListView):
 
         context['searchform'] = search_form
         context['search_type'] = self.search_type
-        # if self.search_type == 'sign_handshape':
-        #     context['glosscount'] = Gloss.none_morpheme_objects().count()   # Only count the none-morpheme glosses
-        # else:
-        #     context['glosscount'] = Gloss.objects.count()  # Count the glosses + morphemes
 
-        context['handshapefieldchoicecount'] = FieldChoice.objects.filter(field__iexact='Handshape').count()
+        context['handshapefieldchoicecount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -4413,64 +4077,61 @@ class HandshapeListView(ListView):
 
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
 
-        context['handshape_fields_FS1'] = []
-
-        context['choice_lists'] = {}
-
-        handshape_fields = {}
-        for f in Handshape._meta.fields:
-            handshape_fields[f.name] = f
-
-        for field in FIELDS['handshape']:
-
-            handshape_field = handshape_fields[field]
-            # Get and save the choice list for this field
-            if hasattr(handshape_field, 'field_choice_category'):
-                fieldchoice_category = handshape_field.field_choice_category
-            else:
-                fieldchoice_category = field
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
-
-            if len(choice_list) > 0:
-                context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list,
-                                                                                        self.request.LANGUAGE_CODE, id_prefix='')
-
-        context['choice_lists'] = json.dumps(context['choice_lists'])
-
         try:
             if self.kwargs['show_all']:
                 context['show_all'] = True
         except KeyError:
             context['show_all'] = False
 
-        context['handshapescount'] = Handshape.objects.count()
-
-        # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Detail View on the objects
-
-        if len(self.object_list) > settings.MAX_SCROLL_BAR:
-            list_of_objects = context['page_obj'].object_list
-        else:
-            list_of_objects = self.object_list
-
-        # construct scroll bar
-        # the following retrieves language code for English (or DEFAULT LANGUAGE)
-        # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
-        from signbank.tools import convert_language_code_to_language_minus_locale
-        lang_attr_name = convert_language_code_to_language_minus_locale(
-            settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
-        items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
-        self.request.session['search_results'] = items
+        context['handshapescount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
+
+        # this is needed to avoid crashing the browser if you go to the last page
+        # of an extremely long list and go to Detail View on the objects
+
+        list_of_objects = self.object_list
+
+        # construct scroll bar
+        # the following retrieves language code for English (or DEFAULT LANGUAGE)
+        # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        # this is a shorthand for use in the template
+        handshape_to_fields = dict()
+        if list_of_objects:
+            for handshape in list_of_objects:
+                if isinstance(handshape, Handshape):
+                    # the list of objects might be glosses that have the handshape that was queried
+                    handshape_fields = []
+                    for handshape_field in settings.HANDSHAPE_RESULT_FIELDS:
+                        if handshape_field in ['machine_value', 'name']:
+                            continue
+                        mapped_handshape_value = getattr(handshape, handshape_field)
+                        handshape_fields.append((handshape_field, mapped_handshape_value))
+                    handshape_to_fields[handshape] = handshape_fields
+
+        context['handshape_to_fields'] = handshape_to_fields
         return context
 
     def render_to_response(self, context):
@@ -4501,26 +4162,9 @@ class HandshapeListView(ListView):
 
     def get_queryset(self):
 
-        choice_lists = {}
-
         handshape_fields = {}
         for f in Handshape._meta.fields:
             handshape_fields[f.name] = f
-
-        for field in FIELDS['handshape']:
-
-            handshape_field = handshape_fields[field]
-            # Get and save the choice list for this field
-            if hasattr(handshape_field, 'field_choice_category'):
-                fieldchoice_category = handshape_field.field_choice_category
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
-            else:
-                fieldchoice_category = field
-                choice_list = []
-
-            if len(choice_list) > 0:
-                choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,
-                                                                                        self.request.LANGUAGE_CODE, id_prefix='')
 
         # get query terms from self.request
         get = self.request.GET
@@ -4540,7 +4184,7 @@ class HandshapeListView(ListView):
 
         setattr(self.request.session, 'search_type', self.search_type)
 
-        qs = Handshape.objects.all().order_by('machine_value')
+        qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
         if show_all:
             if ('sortOrder' in get and get['sortOrder'] != 'machine_value'):
@@ -4548,88 +4192,57 @@ class HandshapeListView(ListView):
                 qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
             else:
                 # The default is to order the signs alphabetically by whether there is an angle bracket
-                qs = order_handshape_by_angle(qs, self.request.LANGUAGE_CODE)
+                qs = order_handshape_by_angle(qs)
             return qs
 
-        handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
-        # Find out if any Handshapes exist for which no Handshape object has been created
-
-        existing_handshape_objects_machine_values = [ o.machine_value for o in qs ]
-
-
-        new_handshape_created = 0
-
-        for h in handshapes:
-            if h.machine_value in existing_handshape_objects_machine_values:
-                pass
-            else:
-                # create a new Handshape object
-                new_id = h.machine_value
-                new_machine_value = h.machine_value
-                new_english_name = h.english_name
-                new_dutch_name = h.dutch_name
-                new_chinese_name = h.chinese_name
-
-                new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name,
-                                          dutch_name=new_dutch_name, chinese_name=new_chinese_name)
-                new_handshape.save()
-                new_handshape_created = 1
-
-
-        if new_handshape_created: # if a new Handshape object was created, reload the query result
-
-            qs = Handshape.objects.all().order_by('machine_value')
-
-        fieldnames = ['machine_value', 'english_name', 'dutch_name', 'chinese_name']+FIELDS['handshape']
+        fieldnames = ['machine_value', 'name']+FIELDS['handshape']
 
         ## phonology and semantics field filters
         for fieldname in fieldnames:
-
+            field = handshape_fields[fieldname]
             if fieldname in get:
                 key = fieldname + '__exact'
                 val = get[fieldname]
 
                 if fieldname == 'hsNumSel' and val != '':
-                    fieldlabel = choice_lists[fieldname][val]
+                    query_hsNumSel = field.name
+                    with override('en'):
+                        # the override is necessary in order to use the total fingers rather than each finger
+                        try:
+                            fieldlabel = FieldChoice.objects.get(field=field.field_choice_category,
+                                                                          machine_value=val).name
+                        except (ObjectDoesNotExist, KeyError):
+                            fieldlabel = ''
+
                     if fieldlabel == 'one':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=1) | Q(hsNumSel=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=1) | Q(**{query_hsNumSel:val}))
                     elif fieldlabel == 'two':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=2) | Q(hsNumSel=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=2) | Q(**{query_hsNumSel:val}))
                     elif fieldlabel == 'three':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=3) | Q(hsNumSel=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=3) | Q(**{query_hsNumSel:val}))
                     elif fieldlabel == 'four':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=4) | Q(hsNumSel=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=4) | Q(**{query_hsNumSel:val}))
                     elif fieldlabel == 'all':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(hsNumSel=val))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(**{query_hsNumSel:val}))
 
                 if isinstance(Handshape._meta.get_field(fieldname), NullBooleanField):
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': '' }[val]
 
-
-                if self.request.LANGUAGE_CODE == 'nl' and fieldname == 'dutch_name' and val != '':
-                    query = Q(dutch_name__icontains=val)
+                if fieldname == 'name' and val != '':
+                    query = Q(name__iregex=val)
                     qs = qs.filter(query)
 
-                if self.request.LANGUAGE_CODE == 'zh-hans' and fieldname == 'chinese_name' and val != '':
-                    query = Q(chinese_name__icontains=val)
-                    qs = qs.filter(query)
-
-                if fieldname == 'english_name' and val != '':
-                    query = Q(english_name__icontains=val)
-                    qs = qs.filter(query)
-
-
-                if val != '' and fieldname != 'hsNumSel' and fieldname != 'dutch_name' and fieldname != 'chinese_name' and fieldname != 'english_name':
+                if val not in ['', '0'] and fieldname not in ['hsNumSel', 'name']:
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
 
@@ -4638,7 +4251,7 @@ class HandshapeListView(ListView):
             qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
         else:
             # The default is to order the signs alphabetically by whether there is an angle bracket
-            qs = order_handshape_by_angle(qs, self.request.LANGUAGE_CODE)
+            qs = order_handshape_by_angle(qs)
 
         if self.search_type == 'sign_handshape':
 
@@ -4647,14 +4260,15 @@ class HandshapeListView(ListView):
             selected_handshapes = [ h.machine_value for h in qs ]
             selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-            if len(selected_handshapes) == (Handshape.objects.all().count()):
+            # set up filters, obscuring whether the _fk field names are used
+            strong_hand = 'domhndsh'
+            strong_hand_in = strong_hand + '__machine_value__in'
+            weak_hand = 'subhndsh'
+            weak_hand_in = weak_hand + '__machine_value__in'
 
-                qs = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(Q(domhndsh__in=selected_handshapes)
-                                          | Q(domhndsh__isnull=True) | Q(domhndsh__exact='0')
-                                          | Q(subhndsh__in=selected_handshapes) | Q(subhndsh__isnull=True) | Q(subhndsh__exact='0'))
-
-            else:
-                qs = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(Q(domhndsh__in=selected_handshapes) | Q(subhndsh__in=selected_handshapes))
+            qs = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
+                        (Q(**{strong_hand_in: selected_handshapes}) |
+                         Q(**{weak_hand_in: selected_handshapes}) ))
 
         self.request.session['search_type'] = self.search_type
 
@@ -5547,16 +5161,15 @@ class DatasetFieldChoiceView(ListView):
         for topic in ['main', 'phonology', 'semantics', 'frequency']:
 
             fields_with_choices = [(field, field.field_choice_category) for field in Gloss._meta.fields if
-                                   field.name in FIELDS[topic] and hasattr(field, 'field_choice_category')]
+                                   field.name in FIELDS[topic] and hasattr(field, 'field_choice_category')
+                                   and field.name not in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh'] ]
 
             for (field, fieldchoice_category) in fields_with_choices:
 
                 # Get and save the choice list for this field
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 if len(choice_list) > 0:
-                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list,
-                                                                                                    self.request.LANGUAGE_CODE,
-                                                                                                    choices_to_exclude=[])
+                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list, choices_to_exclude=[])
                     choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
 
                     for choice_list_field, machine_value in choice_list_machine_values:
@@ -5680,105 +5293,29 @@ class FieldChoiceView(ListView):
         else:
             context['SHOW_FIELD_CHOICE_COLORS'] = False
 
-        all_choice_lists = {}
-        for topic in ['main', 'phonology', 'semantics', 'frequency']:
-
-            fields_with_choices = [(field, field.field_choice_category) for field in Gloss._meta.fields if
-                                   field.name in FIELDS[topic] and hasattr(field, 'field_choice_category')]
-
-            for (field, fieldchoice_category) in fields_with_choices:
-
-                # Get and save the choice list for this field
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                if len(choice_list) > 0:
-                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list,
-                                                                                                    self.request.LANGUAGE_CODE,
-                                                                                                    choices_to_exclude=[])
-                    choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
-
-                    for choice_list_field, machine_value in choice_list_machine_values:
-
-                        if machine_value == 0:
-                            frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
-                                                                       Q(**{field.name + '__isnull': True}) |
-                                                                       Q(**{field.name: 0})).count()
-
-                        else:
-                            variable_column = field.name
-                            search_filter = 'exact'
-                            filter = variable_column + '__' + search_filter
-                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
-                                **{filter: machine_value}).count()
-
-                        try:
-                            all_choice_lists[fieldchoice_category][choice_list_field] += ' [' + str(
-                                frequency_for_field) + ']'
-                        except KeyError:
-                            continue
-
+        choice_categories = fields_to_categories()
+        fields_for_category_table = category_to_fields()
         field_choices = {}
-        for field_choice_category in all_choice_lists.keys():
-            field_choices[field_choice_category] = []
 
-        for field_choice_category in all_choice_lists.keys():
-            for machine_value_string, display_with_frequency in all_choice_lists[field_choice_category].items():
-                if machine_value_string != '_0' and machine_value_string != '_1':
-                    mvid, mvv = machine_value_string.split('_')
-                    machine_value = int(mvv)
+        for category in choice_categories:
+            fields = fields_for_category_table[category]
+            choices_for_category = get_frequencies_for_category(category, fields, selected_datasets)
+            field_choices[category] = choices_for_category
 
-                    try:
-                        field_choice_object = FieldChoice.objects.get(field=field_choice_category,
-                                                                      machine_value=machine_value)
-                    except (ObjectDoesNotExist, MultipleObjectsReturned):
-                        try:
-                            field_choice_object = \
-                            FieldChoice.objects.filter(field=field_choice_category, machine_value=machine_value)[0]
-                        except (ObjectDoesNotExist, IndexError):
-                            print('Multiple ', field_choice_category, ' objects share the same machine value: ',
-                                  machine_value)
-                            continue
-                    # field_display_with_frequency = field_choice_object.field + ': ' + display_with_frequency
-                    field_choices[field_choice_category].append((field_choice_object, display_with_frequency))
         context['field_choices'] = field_choices
 
-        gloss_labels = dict()
-        for f in Gloss._meta.fields:
-            try:
-                gloss_labels[f.name] = _(Gloss._meta.get_field(f.name).verbose_name)
-            except:
-                pass
+        choices_colors = {}
+        display_choices = {}
+        for category in choice_categories:
+            if category in CATEGORY_MODELS_MAPPING.keys():
+                field_choices = CATEGORY_MODELS_MAPPING[category].objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=category)
+            choices_colors[category] = choicelist_queryset_to_colors(field_choices, shortlist=False)
+            display_choices[category] = choicelist_queryset_to_translated_dict(field_choices, shortlist=False)
 
-        gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
-
-        context['static_choice_lists'] = {}
-        context['static_choice_list_colors'] = {}
-
-        #Translate the machine values to human values in the correct language, and save the choice lists along the way
-        for topic in ['main','phonology','semantics']:
-            for field in FIELDS[topic]:
-                # the following check will be used when querying is added, at the moment these don't appear in the phonology list
-                if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                    choice_list = []
-                    #Get and save the choice list for this field
-                    gloss_field = gloss_fields[field]
-                    if hasattr(gloss_field, 'field_choice_category'):
-                        fieldchoice_category = gloss_field.field_choice_category
-                        choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
-
-                        display_choice_list = choicelist_queryset_to_translated_dict(choice_list,
-                                                                                     self.request.LANGUAGE_CODE)
-
-                        display_choice_list_colors = choicelist_queryset_to_colors(choice_list,
-                                                                                     self.request.LANGUAGE_CODE)
-
-                        context['static_choice_lists'][fieldchoice_category] = display_choice_list
-                        context['static_choice_list_colors'][fieldchoice_category] = display_choice_list_colors
-                    else:
-                        # otherwise, it's a value, not a choice
-                        pass
+        context['static_choice_lists'] = display_choices
+        context['static_choice_list_colors'] = choices_colors
 
         return context
 
@@ -6103,98 +5640,61 @@ class DatasetFrequencyView(DetailView):
 def order_handshape_queryset_by_sort_order(get, qs):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
 
-    This function is used both by HandshapeListView.
+    This function is used by by HandshapeListView.
     The value of [sortOrder] is 'machine_value' by default.
     [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_handshape_list.html
     Its value is changed by clicking the up/down buttons in the second row of the search result table
     """
 
-    def get_string_from_tuple_list(lstTuples, number):
-        """Get the string value corresponding to a number in a list of number-string tuples"""
-        sBack = [tup[1] for tup in lstTuples if tup[0] == number]
-        return sBack
-
-    # Helper: order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]
-    def order_queryset_by_tuple_list(qs, sOrder, sListName):
-        """Order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]"""
-
-        # Get a list of tuples for this sort-order
-        tpList = build_choice_list(sListName)
-        # Determine sort order: ascending is default
-        bReversed = False
-        if (sOrder[0:1] == '-'):
-            # A starting '-' sign means: descending order
-            sOrder = sOrder[1:]
-            bReversed = True
-
-        # Order the list of tuples alphabetically
-        # (NOTE: they are alphabetical from 'build_choice_list()', except for the values 0,1)
-        tpList = sorted(tpList, key=operator.itemgetter(1))
-        # Order by the string-values in the tuple list
-        return sorted(qs, key=lambda x: get_string_from_tuple_list(tpList, getattr(x, sOrder)), reverse=bReversed)
-
     # Set the default sort order
-    sOrder = 'machine_value'  # Default sort order if nothing is specified
+    sort_order = 'machine_value'  # Default sort order if nothing is specified
     # See if the form contains any sort-order information
     if ('sortOrder' in get and get['sortOrder'] != ''):
         # Take the user-indicated sort order
-        sOrder = get['sortOrder']
+        sort_order = get['sortOrder']
 
-    # The ordering method depends on the kind of field:
-    # (1) text fields are ordered straightforwardly
-    # (2) fields made from a choice_list need special treatment
-    if (sOrder.endswith('hsThumb')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Thumb")
-    elif (sOrder.endswith('hsFingConf') or sOrder.endswith('hsFingConf2')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "JointConfiguration")
-    elif (sOrder.endswith('hsAperture')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Aperture")
-    elif (sOrder.endswith('hsSpread')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Spreading")
-    elif (sOrder.endswith('hsNumSel')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "Quantity")
-    elif (sOrder.endswith('hsFingSel') or sOrder.endswith('hsFingSel2') or sOrder.endswith('hsFingUnsel')):
-        ordered = order_queryset_by_tuple_list(qs, sOrder, "FingerSelection")
+    reverse = False
+    if sort_order[0] == '-':
+        # A starting '-' sign means: descending order
+        sort_order = sort_order[1:]
+        reverse = True
+
+    if hasattr(Handshape._meta.get_field(sort_order), 'field_choice_category'):
+        # The Handshape field is a FK to a FieldChoice
+        field_choice_category = Handshape._meta.get_field(sort_order).field_choice_category
+        order_dict = dict([(v, i) for i, v in enumerate(
+            list(FieldChoice.objects.filter(field=field_choice_category, machine_value__lt=2)
+                 .values_list('machine_value', flat=True))
+            + list(FieldChoice.objects.filter(field=field_choice_category, machine_value__gt=1)
+                   .order_by('name').values_list('machine_value', flat=True))
+        )])
+
+        ordered_handshapes = sorted(qs, key=lambda handshape_obj: order_dict[getattr(handshape_obj, sort_order).id]
+                            if getattr(handshape_obj, sort_order) else -1, reverse=reverse)
+
     else:
-        # Use straightforward ordering on field [sOrder]
+        # Not a FK to FieldChoice field; sort by
+        qs_letters = qs.filter(**{sort_order+'__regex':r'^[a-zA-Z]'})
+        qs_special = qs.filter(**{sort_order+'__regex':r'^[^a-zA-Z]'})
 
-        bReversed = False
-        if (sOrder[0:1] == '-'):
-            # A starting '-' sign means: descending order
-            sOrder = sOrder[1:]
-            bReversed = True
+        ordered_handshapes = sorted(qs_letters, key=lambda x: getattr(x, sort_order))
+        ordered_handshapes += sorted(qs_special, key=lambda x: getattr(x, sort_order))
 
-        qs_letters = qs.filter(**{sOrder+'__regex':r'^[a-zA-Z]'})
-        qs_special = qs.filter(**{sOrder+'__regex':r'^[^a-zA-Z]'})
-
-        ordered = sorted(qs_letters, key=lambda x: getattr(x, sOrder))
-        ordered += sorted(qs_special, key=lambda x: getattr(x, sOrder))
-
-        if bReversed:
-            ordered.reverse()
+        if reverse:
+            ordered_handshapes.reverse()
 
     # return the ordered list
-    return ordered
+    return ordered_handshapes
 
-def order_handshape_by_angle(qs, language_code):
+
+def order_handshape_by_angle(qs):
     # put the handshapes with an angle bracket > in the name after the others
     # the language code is that of the interface
 
-    if language_code == 'nl':
-        qs_no_angle = qs.filter(**{'dutch_name__regex':r'^[^>]+$'})
-        qs_angle = qs.filter(**{'dutch_name__regex':r'^.+>.+$'})
-        ordered = sorted(qs_no_angle, key=lambda x: x.dutch_name)
-        ordered += sorted(qs_angle, key=lambda x: x.dutch_name)
-    elif language_code == 'zh-hans':
-        qs_no_angle = qs.filter(**{'chinese_name__regex':r'^[^>]*$'})
-        qs_angle = qs.filter(**{'chinese_name__regex':r'^.+>.+$'})
-        ordered = sorted(qs_no_angle, key=lambda x: x.chinese_name)
-        ordered += sorted(qs_angle, key=lambda x: x.chinese_name)
-    else:
-        qs_no_angle = qs.filter(**{'english_name__regex':r'^[^>]+$'})
-        qs_angle = qs.filter(**{'english_name__regex':r'^.+>.+$'})
-        ordered = sorted(qs_no_angle, key=lambda x: x.english_name)
-        ordered += sorted(qs_angle, key=lambda x: x.english_name)
+    qs_no_angle = qs.filter(**{'name__regex':r'^[^>]+$'})
+    qs_angle = qs.filter(**{'name__regex':r'^.+>.+$'})
+    ordered = sorted(qs_no_angle, key=lambda x: x.name)
+    ordered += sorted(qs_angle, key=lambda x: x.name)
 
     return ordered
 
@@ -6286,7 +5786,6 @@ class MorphemeDetailView(DetailView):
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
-        context['morphologyform'] = MorphemeMorphologyForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['morpheme'].navigation(True)
         context['interpform'] = InterpreterFeedbackForm()
@@ -6296,12 +5795,10 @@ class MorphemeDetailView(DetailView):
         other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__exact=context['morpheme'].id)
         context['appears_in'] = []
 
-        word_class_choices = FieldChoice.objects.filter(field__iexact='WordClass')
-
         for sim_morph in other_glosses_that_point_to_morpheme:
             parent_gloss = sim_morph.parent_gloss
             if parent_gloss.wordClass:
-                translated_word_class = machine_value_to_translated_human_value(parent_gloss.wordClass,word_class_choices,self.request.LANGUAGE_CODE)
+                translated_word_class = parent_gloss.wordClass.name
             else:
                 translated_word_class = ''
 
@@ -6335,18 +5832,11 @@ class MorphemeDetailView(DetailView):
         else:
             self.request.session['datasetid'] = get_default_language_id()
 
-        # CHECK THIS
-        # print('morpheme detail view get context request session: ', self.request.session.keys())
-        # slef last used dataset is None at this point
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         context['choice_lists'] = {}
 
         phonology_list_kinds = []
-
-        gloss_fields = {}
-        for f in Morpheme._meta.fields:
-            gloss_fields[f.name] = f
 
         context['static_choice_lists'] = {}
         context['static_choice_list_colors'] = {}
@@ -6354,64 +5844,64 @@ class MorphemeDetailView(DetailView):
         for topic in ['phonology', 'semantics']:
             context[topic + '_fields'] = []
         for field in settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics']:
-            # This test was easier than changing all the datastructures
-            if field == 'semField' or field == 'derivHist':
-                # ignore this field, the multiselect field semFieldShadow or derivHistShadow is used instead
-                # no choice lists are computed for it
-                # this is the data for the input fields that have choices
-                continue
+            # handshapes are not included in the morphemedetailview #638
+            kind = fieldname_to_kind(field)
+
             if field in FIELDS['phonology']:
                 topic = 'phonology'
+                if kind == 'list':
+                    phonology_list_kinds.append(field)
             else:
                 topic = 'semantics'
 
-            choice_list = []
-            # Get and save the choice list for this field
-            gloss_field = gloss_fields[field]
-            if hasattr(gloss_field, 'field_choice_category'):
-                fieldchoice_category = gloss_field.field_choice_category
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
+            (static_choice_lists, static_choice_list_colors) = get_static_choice_lists(field)
 
-            context['static_choice_lists'][field] = {}
-            context['static_choice_list_colors'][field] = {}
+            context['static_choice_lists'][field] = static_choice_lists
+            context['static_choice_list_colors'][field] = static_choice_list_colors
+
+            if field in ['semField', 'derivHist']:
+                # these are many to many fields and not in the gloss/morpheme table of the database
+                # they are not fields of Gloss
+                continue
 
             # Take the human value in the language we are using
-            machine_value = getattr(gl, field)
-            if len(choice_list) > 0:
-                # if there is a choice list, the value stored in the field is a code
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list,
-                                                                      self.request.LANGUAGE_CODE)
+            gloss_field = Morpheme._meta.get_field(field)
 
-                # The static_choice_lists structure is used in the Detail View to reverse map in javascript
-                # It's only needed for choice lists.
-                # In the template, choice lists are generated by Ajax calls
-                # But the javascript needs this when generating the page
-                display_choice_list = choicelist_queryset_to_translated_dict(choice_list, self.request.LANGUAGE_CODE)
-                display_choice_list_colors = choicelist_queryset_to_colors(choice_list,
-                                                                           self.request.LANGUAGE_CODE)
-                # print('field ', field, ' display chice list: ', display_choice_list)
-                for (key, value) in display_choice_list.items():
-                    this_value = value
-                    context['static_choice_lists'][field][key] = this_value
-
-                for (key, value) in display_choice_list_colors.items():
-                    this_value = value
-                    context['static_choice_list_colors'][field][key] = this_value
+            field_value = getattr(gl, gloss_field.name)
+            if isinstance(field_value, FieldChoice):
+                if field_value:
+                    # this is a FieldChoice object
+                    human_value = field_value.name
+                else:
+                    # if this is a field choice field, it is empty
+                    human_value = field_value
             else:
                 # otherwise, it's a value, not a choice
                 # take care of different representations of empty text in database
-                if fieldname_to_kind(field) == 'text' and (machine_value is None or machine_value in ['-',' ','------','']):
+                if fieldname_to_kind(field) == 'text' and (field_value is None or field_value in ['-',' ','------','']):
                     human_value = ''
                 else:
-                    human_value = machine_value
+                    human_value = field_value
 
             # And add the kind of field
-            kind = fieldname_to_kind(field)
-            if kind == 'list' and topic == 'phonology':
-                phonology_list_kinds.append(field)
             context[topic + '_fields'].append([human_value, field, labels[field], kind])
 
         context['phonology_list_kinds'] = phonology_list_kinds
+
+        # Regroup notes
+        note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+        notes = context['morpheme'].definition_set.all()
+        notes_groupedby_role = {}
+        for note in notes:
+            if note.role is not None:
+                translated_note_role = note.role.name
+            else:
+                translated_note_role = ''
+            role_id = (note.role, translated_note_role)
+            if role_id not in notes_groupedby_role:
+                notes_groupedby_role[role_id] = []
+            notes_groupedby_role[role_id].append(note)
+        context['notes_groupedby_role'] = notes_groupedby_role
 
         # Gather the OtherMedia
         context['other_media'] = []
@@ -6421,7 +5911,7 @@ class MorphemeDetailView(DetailView):
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
 
-            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list,self.request.LANGUAGE_CODE)
+            human_value_media_type = other_media.type.name
 
             import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
@@ -6430,14 +5920,24 @@ class MorphemeDetailView(DetailView):
 
             # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
             context['other_media_field_choices'][
-                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(
-                other_media_type_choice_list, self.request.LANGUAGE_CODE)
-
-        morph_type_list = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphemeType'),self.request.LANGUAGE_CODE)
-
-        context['morph_type'] = json.dumps(morph_type_list)
-
+                'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
+
+        # Get the list of choices for this field
+        # this code used to be a method in models.py
+        li = list(FieldChoice.objects.filter(field='MorphemeType', machine_value__lte=1)
+                         .order_by('machine_value').values_list('machine_value', 'name')) \
+                  + list([(field_choice.machine_value, field_choice.name) for field_choice in
+                          FieldChoice.objects.filter(field='MorphemeType', machine_value__gt=1)
+                         .order_by('name')])
+
+        # Sort the list
+        sorted_li = sorted(li, key=lambda x: x[1])
+
+        # Put it in another format
+        reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
+
+        context['morph_type'] = json.dumps(OrderedDict(reformatted_li))
 
         # make lemma group empty for Morpheme (ask Onno about this)
         context['lemma_group'] = False
@@ -6446,56 +5946,24 @@ class MorphemeDetailView(DetailView):
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         if gl.dataset:
-            # print('morpheme detail view get context dataset: ', gl.dataset)
             for language in gl.dataset.translation_languages.all():
                 context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
         else:
             language = Language.objects.get(id=get_default_language_id())
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
-        morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
-
-        if gl.mrpType:
-            translated_morph_type = machine_value_to_translated_human_value(gl.mrpType,morph_typ_choices,self.request.LANGUAGE_CODE)
-        else:
-            translated_morph_type = ''
+        translated_morph_type = gl.mrpType.name if gl.mrpType else ''
 
         context['morpheme_type'] = translated_morph_type
 
         gloss_semanticfields = []
-        multiselect_semanticfields = gl.semFieldShadow.all()
-        legacy_semanticfield = gl.semField
-        if legacy_semanticfield and not multiselect_semanticfields:
-
-            new_semanticfield = semanticfield_fieldchoice_to_multiselect(legacy_semanticfield)
-
-            if new_semanticfield:
-                # the following is only done if the legacy value has not been put in the multiselect semantic fields
-                gl.semFieldShadow.add(new_semanticfield)
-                gl.save()
-            else:
-                # old legacy value does not exist anymore as a field choice, remove it
-                gl.semField = None
-                gl.save()
-
-        for sf in gl.semFieldShadow.all():
+        for sf in gl.semField.all():
             gloss_semanticfields.append(sf)
 
         context['gloss_semanticfields'] = gloss_semanticfields
 
         gloss_derivationhistory = []
-        multiselect_derivationhistory = gl.derivHistShadow.all()
-        legacy_derivationhistory = gl.derivHist
-        if legacy_derivationhistory and not multiselect_derivationhistory:
-
-            new_derivationhistory = derivationhistory_fieldchoice_to_multiselect(legacy_derivationhistory)
-
-            if new_derivationhistory:
-                # the following is only done if the legacy value has not been put in the multiselect derivation history
-                gl.derivHistShadow.add(new_derivationhistory)
-                gl.save()
-
-        for sf in gl.derivHistShadow.all():
+        for sf in gl.derivHist.all():
             gloss_derivationhistory.append(sf)
 
         context['gloss_derivationhistory'] = gloss_derivationhistory
@@ -6527,7 +5995,6 @@ class MorphemeDetailView(DetailView):
             gloss_dialect_choices = []
 
         for gd in initial_gloss_dialects:
-            # print('initial gloss dialect: ', gd)
             if gd in gloss_dialect_choices:
                 morpheme_dialects.append(gd)
             else:
@@ -6614,27 +6081,24 @@ def gloss_ajax_complete(request, prefix):
     dataset = Dataset.objects.get(id=datasetid)
     default_language = dataset.default_language
 
-    from signbank.tools import convert_language_code_to_2char
-    try:
-        language_code = convert_language_code_to_2char(request.LANGUAGE_CODE)
-    except:
-        language_code = default_language.language_code_2char
-    language = Language.objects.get(language_code_2char=language_code)
+    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
 
     # language is not empty
     # the following query only retrieves annotations for the language that match the prefix
     query = Q(annotationidglosstranslation__text__istartswith=prefix,
-              annotationidglosstranslation__language=language)
+              annotationidglosstranslation__language=interface_language)
     qs = Gloss.objects.filter(query).distinct()
 
     result = []
     for g in qs:
         if g.dataset == dataset:
             try:
-                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=language)
+                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=interface_language)
                 default_annotationidglosstranslation = annotationidglosstranslation.text
-            except:
-                continue
+            except ObjectDoesNotExist:
+                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=default_language)
+                default_annotationidglosstranslation = annotationidglosstranslation.text
             result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % (g.id)})
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
@@ -6644,19 +6108,11 @@ def gloss_ajax_complete(request, prefix):
 def handshape_ajax_complete(request, prefix):
     """Return a list of handshapes matching the search term
     as a JSON structure suitable for typeahead."""
-
-    if request.LANGUAGE_CODE == 'nl':
-        query = Q(dutch_name__istartswith=prefix)
-    elif request.LANGUAGE_CODE == 'zh-hans':
-        query = Q(chinese_name__istartswith=prefix)
-    else:
-        query = Q(english_name__istartswith=prefix)
-
-    qs = Handshape.objects.filter(query)
+    qs = Handshape.objects.filter(name__istartswith=prefix)
 
     result = []
     for g in qs:
-        result.append({'dutch_name': g.dutch_name, 'english_name': g.english_name, 'machine_value': g.machine_value, 'chinese_name': g.chinese_name})
+        result.append({'name': g.name, 'machine_value': g.machine_value})
 
     return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
 
@@ -6708,18 +6164,20 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
 
     # the following code allows for specifying a language for the dataset in the add_gloss.html template
 
-    # print('inside lemma ajax complete language code: ', language_code)
-
-    from signbank.tools import convert_language_code_to_2char
-    language_code = convert_language_code_to_2char(language_code)
+    # other code uses the language code in request
+    # the language code parameter in the url is needed for some reason in order to parse the url
+    # otherwise it thinks the q parameter is part of the dataset id
+    # this may have something to do with dynamic construction of the url path in the javascript functions that call this routine
+    # via the url
+    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+    interface_language_id = interface_language.id
 
     dataset = Dataset.objects.get(id=dataset_id)
-    try:
-        language_id = Language.objects.get(language_code_2char=language_code).id
-    except:
-        language_id = dataset.default_language.id
+    dataset_default_language_id = dataset.default_language.id
+
     lemmas = LemmaIdgloss.objects.filter(dataset_id=dataset_id,
-                                         lemmaidglosstranslation__language_id=language_id,
+                                         lemmaidglosstranslation__language_id=interface_language_id,
                                          lemmaidglosstranslation__text__istartswith=q)\
         .order_by('lemmaidglosstranslation__text')
     # lemmas_dict = [{'pk': lemma.pk, 'lemma': str(lemma)} for lemma in set(lemmas)]
@@ -6728,40 +6186,33 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
     for lemma in set(lemmas):
         trans_dict = {}
         for translation in lemma.lemmaidglosstranslation_set.all():
-            if translation.language.id == language_id:
+            if translation.language.id == interface_language_id:
                 trans_dict['pk'] = lemma.pk
                 trans_dict['lemma'] = translation.text
                 lemmas_dict_list.append(trans_dict)
     sorted_lemmas_dict = sorted(lemmas_dict_list, key=lambda x : (x['lemma'], len(x['lemma'])))
-    # print('sorted lemmas dict: ', sorted_lemmas_dict)
     return HttpResponse(json.dumps(sorted_lemmas_dict), {'content-type': 'application/json'})
 
 def homonyms_ajax_complete(request, gloss_id):
 
-    language_code = request.LANGUAGE_CODE
-
-    if language_code == "zh-hans":
-        language_code = "zh"
-
     try:
         this_gloss = Gloss.objects.get(id=gloss_id)
         homonym_objects = this_gloss.homonym_objects()
-    except:
+    except ObjectDoesNotExist:
         homonym_objects = []
+
+    (interface_language, interface_language_code,
+     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
 
     result = []
     for homonym in homonym_objects:
-        translation = ""
-        translations = homonym.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
-        if translations is not None and len(translations) > 0:
-            translation = translations[0].text
-        else:
-            translations = homonym.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
-            if translations is not None and len(translations) > 0:
-                translation = translations[0].text
+        translations = homonym.get_annotationidglosstranslation_texts()
 
+        if interface_language_code in translations.keys():
+            translation = translations[interface_language_code]
+        else:
+            translation = translations[default_language_code]
         result.append({ 'id': str(homonym.id), 'gloss': translation })
-        # result.append({ 'id': str(homonym.id), 'gloss': str(homonym) })
 
     homonyms_dict = { str(gloss_id) : result }
 
@@ -6778,10 +6229,10 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
         language_code = "zh"
 
     this_gloss = Gloss.objects.get(id=gloss_id)
-
     try:
         minimalpairs_objects = this_gloss.minimal_pairs_dict()
-    except:
+    except Exception as e:
+        print(e)
         minimalpairs_objects = {}
 
     translation_focus_gloss = ""
@@ -6805,7 +6256,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             other_gloss_dict['field_display'] = values[0]
             other_gloss_dict['field_category'] = values[1]
 
-            from signbank.dictionary.models import translated_choice_lists_table
             focus_gloss_choice = values[2]
             other_gloss_choice = values[3]
 
@@ -6820,14 +6270,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
             field_kind = values[4]
             if field_kind == 'list':
-                if focus_gloss_choice:
-
-                    try:
-                        focus_gloss_value = translated_choice_lists_table[field][int(focus_gloss_choice)][language_code]
-                    except:
-                        focus_gloss_value = 'ERROR_' + focus_gloss_choice
-                else:
-                    focus_gloss_value = '-'
+                focus_gloss_value = focus_gloss_choice
             elif field_kind == 'check':
                 # the value is a Boolean or it might not be set
                 if focus_gloss_choice == 'True' or focus_gloss_choice == True:
@@ -6841,14 +6284,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
                 focus_gloss_value = focus_gloss_choice
             other_gloss_dict['focus_gloss_value'] = focus_gloss_value
             if field_kind == 'list':
-                if other_gloss_choice:
-
-                    try:
-                        other_gloss_value = translated_choice_lists_table[field][int(other_gloss_choice)][language_code]
-                    except:
-                        other_gloss_value = 'ERROR_' + other_gloss_choice
-                else:
-                    other_gloss_value = '-'
+                other_gloss_value = other_gloss_choice
             elif field_kind == 'check':
                 # the value is a Boolean or it might not be set
                 if other_gloss_choice == 'True' or other_gloss_choice == True:
@@ -6892,7 +6328,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
 def glosslist_ajax_complete(request, gloss_id):
 
-    language_code = request.LANGUAGE_CODE
     user = request.user
 
     display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
@@ -6903,9 +6338,6 @@ def glosslist_ajax_complete(request, gloss_id):
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
     is_anonymous = user.is_authenticated()
-
-    if language_code == "zh-hans":
-        language_code = "zh"
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
@@ -6924,12 +6356,11 @@ def glosslist_ajax_complete(request, gloss_id):
 
     column_values = []
     for fieldname in display_fields:
-
         if fieldname == 'semField':
-            semanticfields = ", ".join([str(sf.name) for sf in this_gloss.semFieldShadow.all()])
+            semanticfields = ", ".join([str(sf.name) for sf in this_gloss.semField.all()])
             column_values.append((fieldname, semanticfields))
         elif fieldname == 'derivHist':
-            derivationhistories = ", ".join([str(dh.name) for dh in this_gloss.derivHistShadow.all()])
+            derivationhistories = ", ".join([str(dh.name) for dh in this_gloss.derivHist.all()])
             column_values.append((fieldname, derivationhistories))
         elif fieldname == 'dialect':
             dialects = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in this_gloss.dialect.all()])
@@ -6938,6 +6369,10 @@ def glosslist_ajax_complete(request, gloss_id):
             # this is a ManyToManyField field
             signlanguages = ", ".join([str(sl.name) for sl in this_gloss.signlanguage.all()])
             column_values.append((fieldname, signlanguages))
+        elif fieldname == 'definitionRole':
+            # this is a Note
+            definitions_this_gloss = ", ".join([str(df.role.name) for df in this_gloss.definition_set.all()])
+            column_values.append((fieldname, definitions_this_gloss))
         elif fieldname == 'hasothermedia':
             other_media_paths = []
             for other_media in this_gloss.othermedia_set.all():
@@ -6955,8 +6390,8 @@ def glosslist_ajax_complete(request, gloss_id):
             target_morphemes = Morpheme.objects.filter(id=this_gloss.id)
             if target_morphemes:
                 morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
-                morpheme_type = target_morphemes[0].mrpType
-                translated_morph_type = machine_value_to_translated_human_value(morpheme_type, morph_typ_choices, request.LANGUAGE_CODE)
+                morpheme_type = target_morphemes[0].mrpType.machine_value
+                translated_morph_type = machine_value_to_translated_human_value(morpheme_type, morph_typ_choices)
             else:
                 translated_morph_type = ''
             column_values.append((fieldname, translated_morph_type))
@@ -6985,24 +6420,18 @@ def glosslist_ajax_complete(request, gloss_id):
         elif fieldname not in [ f.name for f in Gloss._meta.fields ]:
             continue
         else:
-            # this is a field of Gloss
-            machine_value = getattr(this_gloss,fieldname)
+            machine_value = getattr(this_gloss, fieldname)
             gloss_field = Gloss._meta.get_field(fieldname)
-            if hasattr(gloss_field, 'field_choice_category'):
-                fieldchoice_category = gloss_field.field_choice_category
+            if machine_value and isinstance(machine_value, Handshape):
+                human_value = machine_value.name
+            elif machine_value and isinstance(machine_value, FieldChoice):
+                human_value = machine_value.name
             else:
-                fieldchoice_category = fieldname
-            if fieldchoice_category == 'Handshape':
-                choice_list = Handshape.objects.all()
-            else:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
-            human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
+                human_value = machine_value
             if human_value:
-                column_values.append((fieldname, human_value))
+                column_values.append((fieldname,human_value))
             else:
-                column_values.append((fieldname, '-'))
-
+                column_values.append((fieldname,'-'))
     return render(request, 'dictionary/gloss_row.html', { 'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
                                                           'selected_datasets': selected_datasets,
@@ -7012,7 +6441,6 @@ def glosslist_ajax_complete(request, gloss_id):
 
 def glosslistheader_ajax(request):
 
-    language_code = request.LANGUAGE_CODE
     user = request.user
 
     display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
@@ -7024,8 +6452,6 @@ def glosslistheader_ajax(request):
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
     is_anonymous = user.is_authenticated()
-    if language_code == "zh-hans":
-        language_code = "zh"
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
         SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -7037,6 +6463,7 @@ def glosslistheader_ajax(request):
 
     fieldname_to_column_header = {'dialect': _("Dialect"),
                                   'signlanguage': _("Sign Language"),
+                                  'definitionRole': _("Note Type"),
                                   'hasothermedia': _("Other Media"),
                                   'hasComponentOfType': _("Sequential Morphology"),
                                   'morpheme': _("Simultaneous Morphology"),
@@ -7079,7 +6506,6 @@ def glosslistheader_ajax(request):
 
 def glossrow_ajax_complete_colors(request, gloss_id, show_colors=True):
 
-    language_code = request.LANGUAGE_CODE
     user = request.user
 
     if show_colors:
@@ -7088,9 +6514,6 @@ def glossrow_ajax_complete_colors(request, gloss_id, show_colors=True):
         glossrow_template = 'dictionary/gloss_row.html'
 
     is_anonymous = user.is_authenticated()
-
-    if language_code == "zh-hans":
-        language_code = "zh"
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
@@ -7111,17 +6534,8 @@ def glossrow_ajax_complete_colors(request, gloss_id, show_colors=True):
     for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
 
         machine_value = getattr(this_gloss,fieldname)
-        gloss_field = Gloss._meta.get_field(fieldname)
-        if hasattr(gloss_field, 'field_choice_category'):
-            fieldchoice_category = gloss_field.field_choice_category
-        else:
-            fieldchoice_category = fieldname
-        if fieldchoice_category == 'Handshape':
-            choice_list = Handshape.objects.all()
-        else:
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-        human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
+        human_value = machine_value.name if isinstance(machine_value, FieldChoice) else machine_value
         if human_value:
             column_values.append((fieldname, human_value))
         else:
@@ -7135,13 +6549,9 @@ def glossrow_ajax_complete_colors(request, gloss_id, show_colors=True):
 
 def lemmaglosslist_ajax_complete(request, gloss_id):
 
-    language_code = request.LANGUAGE_CODE
     user = request.user
 
     is_anonymous = user.is_authenticated()
-
-    if language_code == "zh-hans":
-        language_code = "zh"
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
@@ -7159,20 +6569,18 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
         translations_per_language[language] = this_gloss.translation_set.filter(language=language).order_by('translation__text')
 
     column_values = []
-    for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+    gloss_list_display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+    for fieldname in gloss_list_display_fields:
 
         machine_value = getattr(this_gloss,fieldname)
-        gloss_field = Gloss._meta.get_field(fieldname)
-        if hasattr(gloss_field, 'field_choice_category'):
-            fieldchoice_category = gloss_field.field_choice_category
-        else:
-            fieldchoice_category = fieldname
-        if fieldchoice_category == 'Handshape':
-            choice_list = Handshape.objects.all()
-        else:
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
-        human_value = machine_value_to_translated_human_value(machine_value, choice_list, language_code)
+        gloss_field = Gloss._meta.get_field(fieldname)
+        if machine_value and isinstance(machine_value, Handshape):
+            human_value = machine_value.name
+        elif machine_value and isinstance(machine_value, FieldChoice):
+            human_value = machine_value.name
+        else:
+            human_value = machine_value
         if human_value:
             column_values.append((fieldname, human_value))
         else:
@@ -7275,14 +6683,12 @@ class LemmaListView(ListView):
 
         context['search_matches'] = context['search_results'].count()
 
-        search_form = LemmaSearchForm(self.request.GET, languages=dataset_languages, language_code=self.request.LANGUAGE_CODE)
+        search_form = LemmaSearchForm(self.request.GET, languages=dataset_languages)
 
         context['searchform'] = search_form
         context['search_type'] = 'lemma'
 
         list_of_objects = self.object_list
-
-        from signbank.tools import convert_language_code_to_language_minus_locale
 
         # to accomodate putting lemma's in the scroll bar in the LemmaUpdateView (aka LemmaDetailView),
         # look at available translations, choose the Interface language if it is a Dataset language
@@ -7290,19 +6696,21 @@ class LemmaListView(ListView):
         # the language code is used when more than one is available,
         # otherwise the Default language will be used, if available
         # otherwise the Lemma ID will be used in the scroll bar
-        display_language_code = convert_language_code_to_language_minus_locale(self.request.LANGUAGE_CODE)
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
         dataset_display_languages = []
         for lang in dataset_languages:
-            lang_code = convert_language_code_to_language_minus_locale(lang.language_code_2char)
-            dataset_display_languages.append(lang_code)
-        if display_language_code in dataset_display_languages:
-            lang_attr_name = display_language_code
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
         else:
             # construct scroll bar
             # the following retrieves language code for English (or DEFAULT LANGUAGE)
             # so the sorting of the scroll bar matches the default sorting of the results in Lemma List View
-            lang_attr_name = convert_language_code_to_language_minus_locale(
-                settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
+            lang_attr_name = default_language_code
+
         items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -7741,88 +7149,4 @@ class LemmaDeleteView(DeleteView):
         else:
             self.object.delete()
         return HttpResponseRedirect(self.get_success_url())
-
-
-def semanticfield_fieldchoice_to_multiselect(machine_value):
-    if not machine_value:
-        return None
-
-    try:
-        # check that there is a SemanticField object defined for the legacy semField FieldChoice of this gloss
-        semanticfield = SemanticField.objects.get(machine_value=machine_value)
-        # already done
-        return semanticfield
-    except ObjectDoesNotExist:
-        # if not, create one
-        # first get the FieldChoice
-        try:
-            semField_fieldchoice = FieldChoice.objects.get(field__iexact='semField', machine_value=machine_value)
-        except ObjectDoesNotExist:
-            # this happens if an invalid machine value is used in the url
-            return None
-    new_machine_value = semField_fieldchoice.machine_value
-    new_english_name = semField_fieldchoice.english_name
-    # legacy values
-    new_dutch_name = semField_fieldchoice.dutch_name
-    dutch_language = Language.objects.get(language_code_2char='nl')
-    new_chinese_name = semField_fieldchoice.chinese_name
-    chinese_language = Language.objects.get(language_code_2char='zh')
-
-    new_semanticfield = SemanticField(machine_value=new_machine_value, name=new_english_name)
-    new_semanticfield.save()
-
-    if new_dutch_name:
-        dutch_translation = SemanticFieldTranslation(semField=new_semanticfield, language=dutch_language,
-                                                     name=new_dutch_name)
-        dutch_translation.save()
-
-    if new_chinese_name:
-        chinese_translation = SemanticFieldTranslation(semField=new_semanticfield, language=chinese_language,
-                                                       name=new_chinese_name)
-        chinese_translation.save()
-
-    return new_semanticfield
-
-
-
-def derivationhistory_fieldchoice_to_multiselect(machine_value):
-    if not machine_value:
-        return None
-
-    try:
-        # check that there is a DerivationHistory object defined for the legacy derivHist FieldChoice of this gloss
-        derivationhistory = DerivationHistory.objects.get(machine_value=machine_value)
-        # already done
-        return derivationhistory
-    except ObjectDoesNotExist:
-        # if not, create one
-        # first get the FieldChoice
-        try:
-            derivHist_fieldchoice = FieldChoice.objects.get(field__iexact='derivHist', machine_value=machine_value)
-        except ObjectDoesNotExist:
-            # this happens if an invalid machine value is used in the url
-            return None
-
-    new_machine_value = derivHist_fieldchoice.machine_value
-    new_english_name = derivHist_fieldchoice.english_name
-    # legacy values
-    new_dutch_name = derivHist_fieldchoice.dutch_name
-    dutch_language = Language.objects.get(language_code_2char='nl')
-    new_chinese_name = derivHist_fieldchoice.chinese_name
-    chinese_language = Language.objects.get(language_code_2char='zh')
-
-    new_derivationhistory = DerivationHistory(machine_value=new_machine_value, name=new_english_name)
-    new_derivationhistory.save()
-
-    if new_dutch_name:
-        dutch_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=dutch_language,
-                                                     name=new_dutch_name)
-        dutch_translation.save()
-
-    if new_chinese_name:
-        chinese_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=chinese_language,
-                                                       name=new_chinese_name)
-        chinese_translation.save()
-
-    return new_derivationhistory
 

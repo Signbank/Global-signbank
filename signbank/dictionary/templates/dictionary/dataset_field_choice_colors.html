@@ -284,7 +284,7 @@ input[type="color"] {
 
                         <form id="update_color_{{category}}_{{choice.pk}}"
                             name="update_color_{{category}}_{{choice.pk}}"
-                            method='post' action="{% url 'dictionary:update_field_choice_color' choice.pk %}"
+                            method='post' action="{% url 'dictionary:update_field_choice_color' category choice.pk %}"
                         >
                         {% csrf_token %}
 

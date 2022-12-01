@@ -41,7 +41,7 @@ var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"tr
 var user_can_add_morpheme = {{ perms.dictionary.add_morpheme|yesno:"true,false" }};
 var multiple_select_fields = {{MULTIPLE_SELECT_MORPHEME_FIELDS|safe}};
 var field_colors = {{field_colors|safe}};
-console.log('Multiple select fields: '+multiple_select_fields);
+
 var csrf_token = '{{csrf_token}}';
 
 $(document).ready(function(){
@@ -150,18 +150,6 @@ $(document).ready(function(){
      $('#id_dialects').val(null).trigger('change');
 
 });
-
-{% if perms.dictionary.change_gloss %}
-<!--This id goes inside the Add New Morpheme form. It has no capital letter in id_mrptype-->
-var choice_lists = {{choice_lists|safe}};
-var mrp_data = choice_lists['mrpType'];
-$("#id_mrptype").html("");
-$.each(mrp_data, function(key, value) {
-    var number_only = key.substring(1);
-    $("#id_mrptype").append($('<option>', { value : number_only }).text(value));
-});
-{% endif %}
-
 
 // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
 function clearForm(myFormElement) {
@@ -483,120 +471,22 @@ function do_set_lemma_language(el) {
             </div>
 
             <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#rel_search">{% trans "Search by Relation" %}</div>
-
-              <div id='rel_search' class='collapse'>
-              <table class='table'>
-                <tr>
-
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_relation'>{{searchform.relation.label}}</label>
-                                {{searchform.relation}}
-                            </div>
-                        </td>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_hasRelation'>{{searchform.hasRelation.label}}</label>
-                                {{searchform.hasRelation}}
-                            </div>
-                        </td>
-                      </tr>
-
-                      <tr>
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_relationToForeignSign'>{{searchform.relationToForeignSign.label}}</label>
-                                {{searchform.relationToForeignSign}}
-                            </div>
-                        </td>
-
-                        <td>
-                            <div class='input-group'>
-                                <label class='input-group-addon' for='id_hasRelationToForeignSign'>{{searchform.hasRelationToForeignSign.label}}</label>
-                                {{searchform.hasRelationToForeignSign}}
-                            </div>
-                        </td>
-
-                      </tr>
-
-
-                </tr>
-              </table>
-              </div>
-            </div>
-
-            <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
+              <div class="panel-heading" data-toggle="collapse"
+                   data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
 
               <div id='pub_search' class='collapse'>
-              <table class='table'>
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_inWeb'>{{searchform.inWeb.label}}</label>
-                            {{searchform.inWeb}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_isNew'>{{searchform.isNew.label}}</label>
-                            {{searchform.isNew}}
-                        </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionRole'>{{searchform.definitionRole.label}}</label>
-                            {{searchform.definitionRole}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionContains'>{{searchform.definitionContains.label}}</label>
-                            {{searchform.definitionContains}}
-                        </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionRole'>{{searchform.createdBefore.label}}</label>
-                            {{searchform.createdBefore}}
-                        </div>
-                    </td>
-                    <td>
-                        <div class='input-group'>
-                            <label class='input-group-addon' for='id_definitionContains'>{{searchform.createdAfter.label}}</label>
-                            {{searchform.createdAfter}}
-                        </div>
-                    </td>
-                  </tr>
-
-                  <tr>
-                      <td>
-                          <div class='input-group'>
-                            <label class='input-group-addon' for='id_createdBy'>{{searchform.createdBy.label}}</label>
-                            {{searchform.createdBy}}
-                          </div>
-                      </td>
-                  </tr>
-
-                  <tr>
-                      <td>
-                          <div class='input-group'>
-                            <label class='input-group-addon' for='id_language'>{{searchform.tags.label}}</label>
-                            {{searchform.tags}}
-                          </div>
-                      </td>
-                  </tr>
-
+              <table class='table pub-row'>
+              {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
+              <tr>
+                  <td style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
+                  {% if publication_id == 'definitionRole' %}
+                  <td style="width:600px;">{{publication_field}}</td>
+                  {% else %}
+                  <td>{{publication_field}}</td>
+                  {% endif %}
+              </tr>
+              {% endfor %}
               </table>
-
               </div>
             </div>
     </div>
@@ -654,8 +544,6 @@ function do_set_lemma_language(el) {
                          {% for dataset_lang in dataset_languages %}
                          <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
                          {% endfor %}
-                         <th><label for='id_mrp_type'>Morpheme type</label></th>
-                         <th></th>
                      </tr>
                      <tr>
                          <td>
@@ -726,7 +614,6 @@ function do_set_lemma_language(el) {
                              <input id="morphemecreate_{{ dataset_lang.language_code_2char }}" name="morphemecreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
                          </td>
                          {% endfor %}
-                         <td class="edit edit_list"><select id='id_mrptype' name='mrpType'></select></td>
                          <td><input class='btn btn-primary' type='submit' value='{% trans "Add New Morpheme" %}'></td>
                      </tr>
                  </table>
@@ -843,7 +730,7 @@ function do_set_lemma_language(el) {
       <td>{%if morpheme.get_image_path %}<div class="thumbnail_container"><img class="thumbnail" src="{{protected_media_url}}{{morpheme.get_image_path}}"></div>{% endif %}</td>
 
       {% for dataset_lang in dataset_languages %}
-        {% with morpheme.gloss_ptr|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
+        {% with morpheme.gloss_ptr|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
       <td>
           {% ifnotequal annotationidglosstranslation "" %}
             <a href="{{PREFIX_URL}}/dictionary/morpheme/{{morpheme.pk}}/">{{ annotationidglosstranslation }}</a>

@@ -17,6 +17,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
@@ -48,15 +49,13 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
     # when the user is looking at a specific gloss and no query parameters are active, this determines what to show
     # the function gets parameters for non-empty fields of the gloss
     # it then determines for each field what the relevant field of the Gloss Search Form is
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-    if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
-        fieldnames.remove('derivHist')
-    multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields if
-                                    field.name in fieldnames and hasattr(field, 'field_choice_category')]
+
+    fields_with_choices = fields_to_fieldcategory_dict()
+
     query_parameters = dict()
     for field_key in phonology_focus:
         field_value = phonology_matrix[field_key]
-        if field_key in multiple_select_gloss_fields:
+        if field_key in fields_with_choices.keys():
             # this assumes the field_key is unique
             # the value the key is mapped to ends up being a list inside a list, as needed by the Gloss Search Form
             # for multiselect values
@@ -118,13 +117,15 @@ def convert_query_parameters_to_filter(query_parameters):
     lemmasearch = "lemma_"
     keywordsearch = "keyword_"
 
-    gloss_fields = [ field.name for field in Gloss._meta.fields ]
-    multiple_select_gloss_fields = [field.name + '[]' for field in Gloss._meta.fields if hasattr(field, 'field_choice_category')]
-    if not settings.USE_DERIVATIONHISTORY and 'derivHist' in multiple_select_gloss_fields:
-        multiple_select_gloss_fields.remove('derivHist[]')
+    gloss_fields = {}
+    for f in Gloss._meta.fields:
+        gloss_fields[f.name] = f
+
+    fields_with_choices = fields_to_fieldcategory_dict()
+    multiple_select_gloss_fields = [field.name + '[]' for field in Gloss._meta.fields
+                                    if field.name in fields_with_choices.keys()]
 
     query_list = []
-
     for get_key, get_value in query_parameters.items():
         if get_key == 'search_type':
             continue
@@ -195,7 +196,18 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(dialect__in=get_value))
         elif get_key == 'signlanguage[]':
             query_list.append(Q(signlanguage__in=get_value))
-
+        elif get_key == 'definitionRole[]':
+            # Find all definitions with this role
+            definitions_with_this_role = Definition.objects.filter(role__machine_value__in=get_value)
+            # Remember the pk of all glosses that are referenced in the collection definitions
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
+            query_list.append(Q(pk__in=pks_for_glosses_with_these_definitions))
+        elif get_key[:-2] == 'semField':
+            q_filter = 'semField__in'
+            query_list.append(Q(**{q_filter: get_value}))
+        elif get_key[:-2] == 'derivHist':
+            q_filter = 'derivHist__in'
+            query_list.append(Q(**{q_filter: get_value}))
         elif get_key == 'useInstr':
             query_list.append(Q(useInstr__iregex=get_value))
         elif get_key == 'createdBefore':
@@ -211,22 +223,9 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(pk__in=pks_for_glosses_with_matching_creator))
 
         elif get_key in multiple_select_gloss_fields:
-            if get_key[:-2] == 'semField':
-                q_filter = 'semFieldShadow__in'
-            elif get_key[:-2] == 'derivHist':
-                q_filter = 'derivHistShadow__in'
-            else:
-                q_filter = get_key[:-2] + '__in'
+            mapped_key = get_key[:-2]
+            q_filter = mapped_key + '__machine_value__in'
             query_list.append(Q(** {q_filter: get_value}))
-        elif get_key in ['definitionRole']:
-            # Find all definitions with this role
-            if get_value == 'all':
-                definitions_with_this_role = Definition.objects.all()
-            else:
-                definitions_with_this_role = Definition.objects.filter(role__exact=get_value)
-            # Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
-            query_list.append(Q(pk__in=pks_for_glosses_with_these_definitions))
         elif get_key in ['hasRelation']:
             #Find all relations with this role
             if get_value == 'all':
@@ -255,12 +254,12 @@ def convert_query_parameters_to_filter(query_parameters):
                 continue
         elif get_key in ['hasComponentOfType']:
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__exact=get_value)
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value=get_value)
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_morphdefs_with_correct_role))
         elif get_key in ['hasMorphemeOfType']:
             # Get all Morphemes of the indicated mrpType
-            target_morphemes = Morpheme.objects.filter(mrpType__exact=get_value)
+            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType__machine_value=get_value) ]
             # this only works in the query is Sign or Morpheme
             query_list.append(Q(id__in=target_morphemes))
         elif get_key in ['tags']:
@@ -271,20 +270,26 @@ def convert_query_parameters_to_filter(query_parameters):
                 pks_for_glosses_with_tags = [ item.object_id for item in TaggedItem.objects.filter(tag_id=tag_id) ]
                 query_list.append(Q(pk__in=pks_for_glosses_with_tags))
 
-        elif get_key in gloss_fields:
-                field_obj = Gloss._meta.get_field(get_key)
+        elif get_key in gloss_fields.keys():
+            # not sure if this is needed, this case is Gloss fields rather than GlossSearchForm fields
+            # this should be the fall through for fields not in multiselect and not covered above
+            # it could happen that a ForeignKey field falls through which is not included in multiselect
+            field_obj = Gloss._meta.get_field(get_key)
 
-                if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
-                    q_filter = get_key + '__iregex'
-                else:
-                    q_filter = get_key + '__exact'
+            if type(field_obj) in [CharField,TextField]:
+                q_filter = get_key + '__iregex'
+            elif hasattr(field_obj, 'field_choice_category'):
+                # just in case, field choice field that is not multi-select
+                q_filter = get_key + '__machine_value'
+            else:
+                q_filter = get_key + '__exact'
 
-                if isinstance(field_obj,NullBooleanField):
-                    q_value = {'0':'','1': None, '2': True, '3': False}[get_value]
-                else:
-                    q_value = get_value
-                kwargs = {q_filter:q_value}
-                query_list.append(Q(**kwargs))
+            if isinstance(field_obj,NullBooleanField):
+                q_value = {'0':'','1': None, '2': True, '3': False}[get_value]
+            else:
+                q_value = get_value
+            kwargs = {q_filter:q_value}
+            query_list.append(Q(**kwargs))
         else:
             print('convert_query_parameters_to_filter: not implemented for ', get_key)
             pass
@@ -324,6 +329,8 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
             query_dict[key] = gettext("Dialect")
         elif key == 'signlanguage[]':
             query_dict[key] = gettext("Sign Language")
+        elif key == 'definitionRole[]':
+            query_dict[key] = gettext("Note Type")
         elif key[-2:] == '[]':
             if key[:-2] in gloss_fields:
                 query_dict[key] = Gloss._meta.get_field(key[:-2]).verbose_name.encode('utf-8').decode()
@@ -354,21 +361,8 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
 
     return query_dict
 
-def pretty_print_query_values(dataset_languages,query_parameters,language_code):
+def pretty_print_query_values(dataset_languages,query_parameters):
     # this function maps the Gloss Search Form field values back to a human readable value for display in Query Parameters
-    codes_to_adjectives = dict(settings.LANGUAGES)
-
-    if language_code not in codes_to_adjectives.keys():
-        adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
-    else:
-        adjective = codes_to_adjectives[language_code].lower()
-
-    def get_field_value(selected_field_choice, adjective):
-        try:
-            human_value = getattr(selected_field_choice, adjective + '_name')
-        except AttributeError:
-            human_value = getattr(selected_field_choice, 'english_name')
-        return human_value
 
     # set up some mappings
     # if Query Parameters is made into a model, these will eventually become coded elsewhere
@@ -408,12 +402,24 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
         elif key == 'signlanguage[]':
             choices_for_category = SignLanguage.objects.filter(id__in=query_parameters[key])
             query_dict[key] = [ choice.name for choice in choices_for_category ]
+        elif key == 'definitionRole[]':
+            # this is a Note
+            choices_for_category = FieldChoice.objects.filter(field__iexact='NoteType', machine_value__in=query_parameters[key])
+            query_dict[key] = [choice.name for choice in choices_for_category]
         elif key[-2:] == '[]':
             # in the Gloss Search Form, multiple choice fields have a list of values
             # these are all displayed in the Query Parameters display (as non-selectable buttons in the template)
-            field_category = Gloss._meta.get_field(key[:-2]).field_choice_category
-            choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
-            query_dict[key] = [ get_field_value(choice, adjective) for choice in choices_for_category ]
+            if key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                choices_for_category = Handshape.objects.filter(machine_value__in=query_parameters[key])
+            elif key[:-2] in ['semField']:
+                choices_for_category = SemanticField.objects.filter(machine_value__in=query_parameters[key])
+            elif key[:-2] in ['derivHist']:
+                choices_for_category = DerivationHistory.objects.filter(machine_value__in=query_parameters[key])
+            else:
+                field = key[:-2]
+                field_category = Gloss._meta.get_field(field).field_choice_category
+                choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
+            query_dict[key] = [ choice.name for choice in choices_for_category ]
         elif key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):
             continue
         elif key in ['weakdrop', 'weakprop']:
@@ -433,19 +439,12 @@ def pretty_print_query_values(dataset_languages,query_parameters,language_code):
             query_dict[key] = YESNOCHOICES[query_parameters[key]]
         elif key in ['hasRelation']:
             query_dict[key] = RELATION_ROLE_CHOICES[query_parameters[key]]
-        elif key in ['definitionRole']:
-            # this is a Note
-            if query_parameters[key] == 'all':
-                query_dict[key] = _('All')
-            else:
-                choices_for_category = FieldChoice.objects.filter(field__iexact='NoteType', machine_value=query_parameters[key])
-                query_dict[key] = [get_field_value(choice, adjective) for choice in choices_for_category][0]
         elif key in ['hasComponentOfType']:
             choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', machine_value=query_parameters[key])
-            query_dict[key] = [get_field_value(choice, adjective) for choice in choices_for_category][0]
+            query_dict[key] = [choice.name for choice in choices_for_category][0]
         elif key in ['hasMorphemeOfType']:
             choices_for_category = FieldChoice.objects.filter(field__iexact='MorphemeType', machine_value=query_parameters[key])
-            query_dict[key] = [get_field_value(choice, adjective) for choice in choices_for_category][0]
+            query_dict[key] = [choice.name for choice in choices_for_category][0]
         elif key in ['morpheme']:
             try:
                 morpheme_object = Gloss.objects.get(pk=int(query_parameters[key]))

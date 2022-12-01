@@ -73,8 +73,6 @@
     var static_choice_lists = {{static_choice_lists|safe}};
     var static_choice_list_colors = {{static_choice_list_colors|safe}};
 
-    var generate_translated_choice_list_table = {{generate_translated_choice_list_table|safe}};
-
     var csrf_token = '{{csrf_token}}';
     var next_gloss_id = {{nextglossid}};
     var next_morpheme_id;
@@ -621,12 +619,6 @@ p {
         {% if gloss.get_image_path %}
             <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}" style="height:259px;width:auto;">
         {% endif %}
-    </div>
-
-    <div id="feedback">
-        <ul>
-            <li><a href="{{PREFIX_URL}}/feedback/gloss/{{gloss.id}}?return=/dictionary/gloss/{{gloss.id}}/">{% trans "Provide Feedback About This Sign" %}</a></li>
-        </ul>
     </div>
 
     {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
@@ -1207,22 +1199,10 @@ p {
                     <tr >
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >
-                            {% with generate_translated_choice_list_table|get_item:name as choices_for_field %}
-                            {% with gloss.domhndsh|to_int as domhndsh_value %}
-                            {% with choices_for_field|keyvalue:domhndsh_value as translates_for_field %}
-                            {% if translates_for_field %}
-                            {% with request.LANGUAGE_CODE as language %}
-                            {% with translates_for_field|get_item:language as translated_field %}
                             <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
-                               href="{{PREFIX_URL}}/dictionary/handshape/{% if StrongHand %}{{StrongHand}}{% else %}{{value}}{% endif %}/">{{ translated_field }}</a>
-                            {% endwith %}
-                            {% endwith %}
-                            {% else %}
-                            <span style="color:red">{{domhndsh_value}}</span>
-                            {% endif %}
-                            {% endwith %}
-                            {% endwith %}
-                            {% endwith %}
+                                            {% if StrongHand %}
+                                                href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/"
+                                            {% endif %}>{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
@@ -1257,7 +1237,10 @@ p {
                     <tr >
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >
-                            <a id="weak_hand_link" style="color: inherit; display: visible;" href="{{PREFIX_URL}}/dictionary/handshape/{{WeakHand}}/">{{value}}</a>
+                            <a id="weak_hand_link" style="color: inherit; display: visible;"
+                                {% if WeakHand %}
+                                    href="{{PREFIX_URL}}/dictionary/handshape/{{WeakHand}}/"
+                                {% endif %}>{{value}}</a>
                         </td>
                         {% for value,name,label,kind in etymology_fields_sub %}
                             {% if name == 'subhndsh_letter' %}
@@ -1569,7 +1552,7 @@ p {
                   <th style='width:10em'>{% trans "Type" %}</th>
                   <th>{% trans "Text" %}</th>
               </tr>
-            {% for role_id, note_list in notes_groupedby_role.items %}
+                {% for role_id, note_list in notes_groupedby_role.items %}
 
               {% for def in note_list %}
               <tr>
@@ -1751,5 +1734,15 @@ p {
     </div>
 </div>
 
-
+<footer class="footer">
+<div class="container">
+    <div class='pull-right'>
+        <div id="feedback">
+            <ul>
+                <li><a href="{{PREFIX_URL}}/feedback/gloss/{{gloss.id}}/">{% trans "Provide Feedback About This Sign" %}</a></li>
+            </ul>
+        </div>
+    </div>
+</div>
+</footer>
 {% endblock %}

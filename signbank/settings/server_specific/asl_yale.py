@@ -12,6 +12,13 @@ LANGUAGES = (
   ('en_US', 'American English'),
 )
 
+MODELTRANSLATION_LANGUAGES = ['en-us']
+
+# Documented to be 'eng'. Use 'ame' to be unique in multilingual database.
+LANGUAGES_LANGUAGE_CODE_3CHAR = (
+    ('en-us', 'ame'),
+)
+
 LANGUAGE_CODE = "en-us"
 
 DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en_US'}

@@ -61,7 +61,15 @@ PREFIX_URL = ''
 
 #The interface languages supported by your installation
 gettext = lambda s: s
-LANGUAGES = [('en', gettext('English'))]
+LANGUAGES = (
+    ('en', gettext('English')),
+)
+
+MODELTRANSLATION_LANGUAGES = ['en']
+
+LANGUAGES_LANGUAGE_CODE_3CHAR = (
+    ('en', 'eng'),
+)
 
 #Short (abbreviated) version of how language users call their language, to be used in the langauge picker
 INTERFACE_LANGUAGE_SHORT_NAMES = ['EN','NL','官话','עִברִית','عربى']
@@ -211,6 +219,9 @@ USE_HANDSHAPE = True
 
 #whether the Derivation History functionality should be present in the interface
 USE_DERIVATIONHISTORY = True
+
+# Only set this to true after the foreign key field choices have replaced the machine value field choices in the migration
+USE_FIELD_CHOICE_FOREIGN_KEY = True
 
 #Gloss fields used in the API
 API_FIELDS = ['idgloss']
