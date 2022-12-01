@@ -139,10 +139,10 @@
 			  {% endfor %}
 
 			  <td id='src_keywords'>{% for trn in gloss.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-					<td id='src_handedness'>{{ gloss.get_handedness_display }}</td>
-					<td id='src_domhndsh'>{{ gloss.get_domhndsh_display }}</td>
-					<td id='src_subhndsh'>{{ gloss.get_subhndsh_display }}</td>
-					<td id='src_locprim'>{{ gloss.get_locprim_display }}</td>
+					<td id='src_handedness'>{{ gloss.display_handedness }}</td>
+					<td id='src_domhndsh'>{{ gloss.display_domhndsh }}</td>
+					<td id='src_subhndsh'>{{ gloss.display_subhndsh }}</td>
+					<td id='src_locprim'>{{ gloss.display_locprim }}</td>
 
 			  {% load underscore_to_space %}
 			  <td>{% for tag in gloss.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
@@ -207,10 +207,10 @@
 			  <td id='homo_dataset'>{{gl.dataset}}</td>
 			  <td id='homo_keywords'>{% for trn in gl.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
 
-					<td id='homo_handedness'>{{ gl.get_handedness_display }}</td>
-					<td id='homo_domhndsh'>{{ gl.get_domhndsh_display }}</td>
-					<td id='homo_subhndsh'>{{ gl.get_subhndsh_display }}</td>
-					<td id='homo_locprim'>{{ gl.get_locprim_display }}</td>
+					<td id='homo_handedness'>{{ gl.display_handedness }}</td>
+					<td id='homo_domhndsh'>{{ gl.display_domhndsh }}</td>
+					<td id='homo_subhndsh'>{{ gl.display_subhndsh }}</td>
+					<td id='homo_locprim'>{{ gl.display_locprim }}</td>
 			  {% load underscore_to_space %}
 			  <td>{% for tag in gl.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
 		  </tr>
@@ -250,10 +250,10 @@
 			  <td id='syno_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
 			  <td id='syno_dataset'>{{rel.target.dataset}}</td>
 			  <td id='syno_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-					<td id='syno_handedness'>{{ rel.target.get_handedness_display }}</td>
-					<td id='syno_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
-					<td id='syno_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
-					<td id='syno_locprim'>{{ rel.target.get_locprim_display }}</td>
+					<td id='syno_handedness'>{{ rel.target.display_handedness }}</td>
+					<td id='syno_domhndsh'>{{ rel.target.display_domhndsh }}</td>
+					<td id='syno_subhndsh'>{{ rel.target.display_subhndsh }}</td>
+					<td id='syno_locprim'>{{ rel.target.display_locprim }}</td>
 			  {% load underscore_to_space %}
 			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
 		  </tr>
@@ -293,10 +293,10 @@
 			  <td id='anto_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
 			  <td id='anto_dataset'>{{rel.target.dataset}}</td>
 			  <td id='anto_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-					<td id='anto_handedness'>{{ rel.target.get_handedness_display }}</td>
-					<td id='anto_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
-					<td id='anto_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
-					<td id='anto_locprim'>{{ rel.target.get_locprim_display }}</td>
+					<td id='anto_handedness'>{{ rel.target.display_handedness }}</td>
+					<td id='anto_domhndsh'>{{ rel.target.display_domhndsh }}</td>
+					<td id='anto_subhndsh'>{{ rel.target.display_subhndsh }}</td>
+					<td id='anto_locprim'>{{ rel.target.display_locprim }}</td>
 			  {% load underscore_to_space %}
 			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
 		  </tr>
@@ -336,10 +336,10 @@
 			  <td id='hypo_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
 			  <td id='hypo_dataset'>{{rel.target.dataset}}</td>
 			  <td id='hypo_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-					<td id='hypo_handedness'>{{ rel.target.get_handedness_display }}</td>
-					<td id='hypo_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
-					<td id='hypo_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
-					<td id='hypo_locprim'>{{ rel.target.get_locprim_display }}</td>
+					<td id='hypo_handedness'>{{ rel.target.display_handedness }}</td>
+					<td id='hypo_domhndsh'>{{ rel.target.display_domhndsh }}</td>
+					<td id='hypo_subhndsh'>{{ rel.target.display_subhndsh }}</td>
+					<td id='hypo_locprim'>{{ rel.target.display_locprim }}</td>
 			  {% load underscore_to_space %}
 			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
 		  </tr>
@@ -379,10 +379,10 @@
 			  <td id='hyper_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
 			  <td id='hyper_dataset'>{{rel.target.dataset}}</td>
 			  <td id='hyper_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-					<td id='hyper_handedness'>{{ rel.target.get_handedness_display }}</td>
-					<td id='hyper_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
-					<td id='hyper_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
-					<td id='hyper_locprim'>{{ rel.target.get_locprim_display }}</td>
+					<td id='hyper_handedness'>{{ rel.target.display_handedness }}</td>
+					<td id='hyper_domhndsh'>{{ rel.target.display_domhndsh }}</td>
+					<td id='hyper_subhndsh'>{{ rel.target.display_subhndsh }}</td>
+					<td id='hyper_locprim'>{{ rel.target.display_locprim }}</td>
 			  {% load underscore_to_space %}
 			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
 		  </tr>
@@ -423,10 +423,10 @@
 			  <td id='paradigm_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
 			  <td id='paradigm_dataset'>{{rel.target.dataset}}</td>
 			  <td id='paradigm_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-					<td id='paradigm_handedness'>{{ rel.target.get_handedness_display }}</td>
-					<td id='paradigm_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
-					<td id='paradigm_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
-					<td id='paradigm_locprim'>{{ rel.target.get_locprim_display }}</td>
+					<td id='paradigm_handedness'>{{ rel.target.display_handedness }}</td>
+					<td id='paradigm_domhndsh'>{{ rel.target.display_domhndsh }}</td>
+					<td id='paradigm_subhndsh'>{{ rel.target.display_subhndsh }}</td>
+					<td id='paradigm_locprim'>{{ rel.target.display_locprim }}</td>
 			  {% load underscore_to_space %}
 			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
 		  </tr>
@@ -467,10 +467,10 @@
 			  <td id='seealso_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a></td>
 			  <td id='seealso_dataset'>{{rel.target.dataset}}</td>
 			  <td id='seealso_keywords'>{% for trn in rel.target.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-					<td id='seealso_handedness'>{{ rel.target.get_handedness_display }}</td>
-					<td id='seealso_domhndsh'>{{ rel.target.get_domhndsh_display }}</td>
-					<td id='seealso_subhndsh'>{{ rel.target.get_subhndsh_display }}</td>
-					<td id='seealso_locprim'>{{ rel.target.get_locprim_display }}</td>
+					<td id='seealso_handedness'>{{ rel.target.display_handedness }}</td>
+					<td id='seealso_domhndsh'>{{ rel.target.display_domhndsh }}</td>
+					<td id='seealso_subhndsh'>{{ rel.target.display_subhndsh }}</td>
+					<td id='seealso_locprim'>{{ rel.target.display_locprim }}</td>
 			  {% load underscore_to_space %}
 			  <td>{% for tag in rel.target.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
 		  </tr>
@@ -509,10 +509,10 @@
 			  <td id='var_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{gl_display}}</a></td>
 			  <td id='var_dataset'>{{gl.dataset}}</td>
 			  <td id='var_keywords'>{% for trn in gl.translation_set.all %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-					<td id='var_handedness'>{{ gl.get_handedness_display }}</td>
-					<td id='var_domhndsh'>{{ gl.get_domhndsh_display }}</td>
-					<td id='var_subhndsh'>{{ gl.get_subhndsh_display }}</td>
-					<td id='var_locprim'>{{ gl.get_locprim_display }}</td>
+					<td id='var_handedness'>{{ gl.display_handedness }}</td>
+					<td id='var_domhndsh'>{{ gl.display_domhndsh }}</td>
+					<td id='var_subhndsh'>{{ gl.display_subhndsh }}</td>
+					<td id='var_locprim'>{{ gl.display_locprim }}</td>
 			  {% load underscore_to_space %}
 			  <td>{% for tag in gl.tags %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</td>
 		  </tr>

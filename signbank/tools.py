@@ -11,12 +11,13 @@ import csv
 from django.db.models import Q
 from django.http import QueryDict
 
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, ugettext_lazy as _, activate
 
 from django.http import HttpResponse, HttpResponseRedirect
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
+from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
@@ -263,20 +264,20 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
     all_tags_display = ', '.join([t.replace('_',' ') for t in all_tags])
     note_type_error = False
     note_tuple_error = False
+    activate(LANGUAGES[0][0])
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
-    all_notes = [ n.english_name for n in note_role_choices]
+    all_notes = [ n.name for n in note_role_choices]
     all_notes_display = ', '.join(all_notes)
     # this is used to speedup matching updates to Notes
     # it allows the type of note to be in either English or Dutch in the CSV file
     note_reverse_translation = {}
     for nrc in note_role_choices:
-        note_reverse_translation[nrc.english_name] = nrc.machine_value
-        note_reverse_translation[nrc.dutch_name] = nrc.machine_value
+        note_reverse_translation[nrc.name] = nrc.machine_value
         # probably not a good idea because of character set
         # note_reverse_translation[nrc.chinese_name] = nrc.id
     note_translations = {}
     for nrc in note_role_choices:
-        note_translations[str(nrc.machine_value)] = nrc.english_name
+        note_translations[str(nrc.machine_value)] = nrc.name
 
     #Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
@@ -375,7 +376,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
                     language = languages[0]
-                    translations = [t.translation.text for t in gloss.translation_set.filter(language=language)]
+                    translations = [t.translation.text for t in gloss.translation_set.filter(language=language).order_by('translation__text')]
                     current_keyword_string = ", ".join(translations)
                 else:
                     error_string = 'ERROR: Non-existant language specified for Keywords column: ' + human_key
@@ -701,10 +702,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             try:
                 field = fields[human_key]
                 machine_key = field.name
-                # print('SUCCESS: accessing field name: (', human_key, ')')
 
             except KeyError:
-                # print('field ', human_key, ' not found in fields')
                 # Signbank ID is skipped, for this purpose it was popped from the fields to compare
                 # Skip above fields with complex values: Keywords, Signlanguages, Dialects, Relations to other signs, Relations to foreign signs, Morphology.
 
@@ -721,24 +720,16 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
                 continue
 
-            # print('SUCCESS: human_key (', human_key, '), machine_key: (', machine_key, '), new_human_value: (', new_human_value, ')')
-
             #Try to translate the value to machine values if needed
             if hasattr(field, 'field_choice_category'):
-                field_choices = build_choice_list(field.field_choice_category)
-                human_to_machine_values = {human_value: machine_value for machine_value, human_value in field_choices}
                 if new_human_value in ['', '0', ' ', None, 'None']:
                     new_human_value = '-'
+
+                try:
+                    field_choice = FieldChoice.objects.get(name=new_human_value, field=field.field_choice_category)
+                    new_machine_value = field_choice.machine_value
+                except ObjectDoesNotExist:
                     new_machine_value = None
-
-                # Because some Handshape names can start with =, a special character ' is tested for in the name
-                if new_human_value[:1] == '\'':
-                    new_human_value = new_human_value[1:]
-
-                if new_human_value in human_to_machine_values.keys():
-                    new_machine_value = human_to_machine_values[new_human_value]
-                else:
-                    new_machine_value = '0'
                     error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
                         gloss_id) + '), could not find option ' + str(new_human_value) + ' for ' + human_key
 
@@ -801,18 +792,17 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
             try:
 
                 if hasattr(field, 'field_choice_category'):
-                    # print('gloss ', gloss.__dict__)
+                    # machine_key should be the same as field.name
                     original_machine_value = getattr(gloss, machine_key)
-                    if original_machine_value is None:
-                        original_machine_value = '0'
-
-                    field_choices = build_choice_list(field.field_choice_category)
+                    if original_machine_value:
+                        original_machine_value = original_machine_value.machine_value
                     try:
-                        original_human_value = dict(field_choices)[original_machine_value]
-                    except:
+                        # this is a bit confusing as to why a try is used instead of combining with the previous
+                        original_human_value = getattr(gloss, field.name).name
+                    except KeyError:
                         original_human_value = '-'
                         print('CSV Update: Original machine value for gloss ', gloss_id, ' has an undefined choice for field ', field.name, ': ', original_machine_value)
-                        original_machine_value = '0'
+                        original_machine_value = None
 
                 elif field.__class__.__name__ == 'NullBooleanField':
                     if original_machine_value is None and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
@@ -1023,20 +1013,19 @@ try:
 except (OperationalError, ProgrammingError) as e:
     note_role_choices = []
 
-all_notes = [ n.english_name for n in note_role_choices]
+all_notes = [ n.name for n in note_role_choices]
 
 all_notes_display = ', '.join(all_notes)
 # this is used to speedup matching updates to Notes
 # it allows the type of note to be in either English or Dutch in the CSV file
 note_reverse_translation = {}
 for nrc in note_role_choices:
-    note_reverse_translation[nrc.english_name] = nrc.machine_value
-    note_reverse_translation[nrc.dutch_name] = nrc.machine_value
+    note_reverse_translation[nrc.name] = nrc.machine_value
     # probably not a good idea because of character set
     # note_reverse_translation[nrc.chinese_name] = nrc.id
 note_translations = {}
 for nrc in note_role_choices:
-    note_translations[str(nrc.machine_value)] = nrc.english_name
+    note_translations[str(nrc.machine_value)] = nrc.name
 
 def check_existence_notes(gloss, values, note_type_error, note_tuple_error, default_annotationidglosstranslation):
     # convert new Notes csv value to proper format
@@ -1047,7 +1036,6 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
 
     split_human_values = re.findall(r'([^:]+:[^)]*\)),?\s?', values)
 
-    # print('new split human values for notes: ', split_human_values)
     for split_value in split_human_values:
         take_apart = re.match("([^:]+):\s?\((False|True),(\d),([^)]*)\)", split_value)
         if take_apart:
@@ -1089,11 +1077,12 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
 
 
 def get_notes_as_string(gloss):
+    activate(LANGUAGES[0][0])
     notes_of_gloss = gloss.definition_set.all()
     notes_list = []
     for note in notes_of_gloss:
         # use the notes field choice machine value rather than the translation
-        note_field = note_translations[note.role]
+        note_field = note.role_fk.name
         note_tuple = (note_field, str(note.published), str(note.count), note.text)
         notes_list.append(note_tuple)
 
@@ -1248,10 +1237,10 @@ def check_existance_blend_morphology(gloss, values):
     return (checked, errors)
 
 
-RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant',
+RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant', 'paradigm', 'Handshape Paradigm',
                          'antonym', 'Antonym', 'hyponym', 'Hyponym', 'hypernym', 'Hypernym', 'seealso', 'See Also']
 
-RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, antonym, hyponym, hypernym, seealso'
+RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, paradigm, antonym, hyponym, hypernym, seealso'
 
 def check_existance_relations(gloss, relations, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
@@ -1530,44 +1519,51 @@ def get_default_annotationidglosstranslation(gloss):
         default_annotationidglosstranslation = annotationidglosstranslations[0].text
     return default_annotationidglosstranslation
 
-def convert_language_code_to_2char(language_code):
-
-    # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-    if '-' in language_code:
-        language_code_parts = language_code.split('-')
-    elif '_' in language_code:
-        language_code_parts = language_code.split('_')
-    else:
-        # only one part
-        language_code_parts = [language_code]
-    if len(language_code_parts) > 1:
-        new_language_code = language_code_parts[0]
-        new_language_code += '_' + language_code_parts[1].upper()
-    else:
-        new_language_code = language_code_parts[0]
-
-    return new_language_code
-
-def convert_language_code_to_language_minus_locale(language_code):
-    # this is used for default sort in GlossListView, only the first two characters
-    # reformat LANGUAGE_CODE for use in dictionary domain, accomodate multilingual codings
-    if '-' in language_code:
-        language_code_parts = language_code.split('-')
-    elif '_' in language_code:
-        language_code_parts = language_code.split('_')
-    else:
-        # only one part
-        language_code_parts = [language_code]
-
-    new_language_code = language_code_parts[0]
-
-    return new_language_code
 
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
 from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 import re
 import datetime as DT
+
+def map_field_names_to_fk_field_names(fields):
+    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+        return fields
+    gloss_field_names = [f.name for f in Gloss._meta.fields]
+    handshape_field_names = [f.name for f in Handshape._meta.fields]
+    mapped_fields = []
+    for field in fields:
+        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            mapped_fields.append(field+'_handshapefk')
+        elif field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names:
+            mapped_fields.append(field+'_fk')
+        else:
+            mapped_fields.append(field)
+    return mapped_fields
+
+def map_field_name_to_fk_field_name(field):
+    if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+        return field
+    gloss_field_names = [f.name for f in Gloss._meta.fields]
+    handshape_field_names = [f.name for f in Handshape._meta.fields]
+    morpheme_field_names = [f.name for f in Morpheme._meta.fields]
+    if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+        return field + '_handshapefk'
+    elif field+'_fk' in gloss_field_names or field+'_fk' in handshape_field_names or field+'_fk' in morpheme_field_names:
+        return field+'_fk'
+    else:
+        return field
+
+
+def gloss_handshape_fields():
+    # returns a list of fields that are Handshape ForeignKeys
+    fields_list = []
+
+    from signbank.dictionary.models import Gloss
+    for gloss_field in Gloss._meta.fields:
+        if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
+            fields_list.append(gloss_field.name)
+    return fields_list
 
 
 def fields_with_choices_glosses():
@@ -1577,7 +1573,11 @@ def fields_with_choices_glosses():
 
     from signbank.dictionary.models import Gloss
     for field in Gloss._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        # omit the gloss fields to be deleted from FieldChoiceForeignKey model
+        if field.name in ['domhndsh_fk', 'subhndsh_fk', 'final_domhndsh_fk', 'final_subhndsh_fk',
+                          'semField_fk', 'derivHist_fk']:
+            continue
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1593,7 +1593,7 @@ def fields_with_choices_handshapes():
 
     from signbank.dictionary.models import Handshape
     for field in Handshape._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1609,7 +1609,7 @@ def fields_with_choices_definition():
 
     from signbank.dictionary.models import Definition
     for field in Definition._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1625,7 +1625,7 @@ def fields_with_choices_morphology_definition():
 
     from signbank.dictionary.models import MorphologyDefinition
     for field in MorphologyDefinition._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1641,7 +1641,7 @@ def fields_with_choices_other_media_type():
 
     from signbank.dictionary.models import OtherMedia
     for field in OtherMedia._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1657,7 +1657,10 @@ def fields_with_choices_morpheme_type():
 
     from signbank.dictionary.models import Morpheme
     for field in Morpheme._meta.fields:
-        if hasattr(field, 'field_choice_category'):
+        if field in Gloss._meta.fields:
+            # skip fields that are also in superclass Gloss
+            continue
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
             if field_category in fields_dict.keys():
@@ -1717,25 +1720,16 @@ def write_ecv_file_for_dataset(dataset_name):
     return ecv_file
 
 def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies=False):
+    activate(lang)
+
     desc = ""
     if include_phonology_and_frequencies:
-        fields_data = []
-        for field in Gloss._meta.fields:
-            if field.name in ECV_SETTINGS['description_fields']:
-                if hasattr(field, 'field_choice_category'):
-                    fc_category = field.field_choice_category
-                else:
-                    fc_category = None
-                fields_data.append((field.name, fc_category))
 
-        for (f, fieldchoice_category) in fields_data:
-
-            if fieldchoice_category:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                machine_value = getattr(gloss, f)
-                value = machine_value_to_translated_human_value(machine_value, choice_list, lang)
-                if value is None:
-                    value = ' '
+        for f in ECV_SETTINGS['description_fields']:
+            mapped_description_field = map_field_name_to_fk_field_name(f)
+            gloss_field = getattr(gloss, mapped_description_field)
+            if isinstance(gloss_field, FieldChoice) or isinstance(gloss_field, Handshape):
+                value = getattr(gloss, f).name
             else:
                 value = get_value_for_ecv(gloss, f)
 
@@ -1780,6 +1774,7 @@ def get_value_for_ecv(gloss, fieldname):
         if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
             value = annotationidglosstranslations[0].text
     else:
+        fieldname = map_field_name_to_fk_field_name(fieldname)
         try:
             value = getattr(gloss, 'get_' + fieldname + '_display')()
 
@@ -1802,34 +1797,44 @@ def get_value_for_ecv(gloss, fieldname):
 def write_csv_for_handshapes(handshapelistview, csvwriter):
 #  called from the HandshapeListView when search_type is handshape
 
-    fieldnames = settings.HANDSHAPE_RESULT_FIELDS
+    fieldnames = map_field_names_to_fk_field_names(settings.HANDSHAPE_RESULT_FIELDS)
 
     fields = [Handshape._meta.get_field(fieldname) for fieldname in fieldnames]
 
-    with override(LANGUAGE_CODE):
-        header = ['Handshape ID'] + [ f.verbose_name.encode('ascii', 'ignore').decode() for f in fields ]
+    activate(LANGUAGES[0][0])
+    header = ['Handshape ID'] + [ f.verbose_name.encode('ascii', 'ignore').decode() for f in fields ]
 
     csvwriter.writerow(header)
 
     # case search result is list of handshapes
 
-    handshape_list = handshapelistview.get_queryset()
+    handshape_list = handshapelistview.object_list
 
     for handshape in handshape_list:
         row = [str(handshape.pk)]
 
         for f in fields:
-
             # Try the value of the choicelist
-            try:
-                value = getattr(handshape, 'get_' + f.name + '_display')()
-
-            # If it's not there, try the raw value
-            except AttributeError:
+            if hasattr(f, 'field_choice_category'):
+                if hasattr(handshape, 'get_' + f.name + '_display'):
+                    value = getattr(handshape, 'get_' + f.name + '_display')()
+                else:
+                    value = getattr(handshape, f.name)
+                    if value is not None:
+                        value = value.name
+            else:
                 value = getattr(handshape, f.name)
 
             if not isinstance(value, str):
                 value = str(value)
+
+            if value is None:
+                if f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
+                    value = ''
+                elif f.__class__.__name__ == 'IntegerField':
+                    value = 0
+                else:
+                    value = ''
 
             row.append(value)
 
@@ -1887,8 +1892,7 @@ def construct_scrollbar(qs, search_type, language_code):
 
     elif search_type in ['handshape']:
         for item in qs:
-            # if language_code == 'nl':
-            data_label = item.dutch_name
+            data_label = item.name
             items.append(dict(id = item.machine_value, data_label = data_label, href_type = 'handshape'))
     elif search_type in ['lemma']:
         # there is no lemma detail view, so the href goes to lemma/update
@@ -1993,7 +1997,6 @@ def minimalpairs_focusgloss(gloss_id, language_code):
             other_gloss_dict['field_display'] = values[0]
             other_gloss_dict['field_category'] = values[1]
 
-            from signbank.dictionary.models import translated_choice_lists_table
             focus_gloss_choice = values[2]
             other_gloss_choice = values[3]
 
@@ -2008,14 +2011,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
 
             field_kind = values[4]
             if field_kind == 'list':
-                if focus_gloss_choice:
-
-                    try:
-                        focus_gloss_value = translated_choice_lists_table[field][int(focus_gloss_choice)][language_code]
-                    except:
-                        focus_gloss_value = 'ERROR_' + focus_gloss_choice
-                else:
-                    focus_gloss_value = '-'
+                focus_gloss_value = focus_gloss_choice
             elif field_kind == 'check':
                 # the value is a Boolean or it might not be set
                 if focus_gloss_choice == 'True' or focus_gloss_choice == True:
@@ -2029,14 +2025,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
                 focus_gloss_value = focus_gloss_choice
             other_gloss_dict['focus_gloss_value'] = focus_gloss_value
             if field_kind == 'list':
-                if other_gloss_choice:
-
-                    try:
-                        other_gloss_value = translated_choice_lists_table[field][int(other_gloss_choice)][language_code]
-                    except:
-                        other_gloss_value = 'ERROR_' + other_gloss_choice
-                else:
-                    other_gloss_value = '-'
+                other_gloss_value = other_gloss_choice
             elif field_kind == 'check':
                 # the value is a Boolean or it might not be set
                 if other_gloss_choice == 'True' or other_gloss_choice == True:
@@ -2083,7 +2072,78 @@ def searchform_panels(searchform, searchfields) :
 
 def map_search_results_to_gloss_list(search_results):
 
+    if not search_results:
+        return ([], [])
     gloss_ids = []
     for search_result in search_results:
         gloss_ids.append(search_result['id'])
     return (gloss_ids, Gloss.objects.filter(id__in=gloss_ids))
+
+
+def fields_to_categories():
+    choice_categories = []
+    for topic in ['main', 'phonology', 'semantics']:
+        for field in FIELDS[topic]:
+            mapped_field = map_field_name_to_fk_field_name(field)
+            # the following check will be used when querying is added, at the moment these don't appear in the phonology list
+            if mapped_field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                continue
+            if mapped_field in [f.name for f in Gloss._meta.fields]:
+                field_field = Gloss._meta.get_field(mapped_field)
+            elif mapped_field in [f.name for f in Handshape._meta.fields]:
+                field_field = Handshape._meta.get_field(mapped_field)
+            elif mapped_field in [f.name for f in Morpheme._meta.fields]:
+                field_field = Morpheme._meta.get_field(mapped_field)
+            else:
+                print('field_to_categories: field not found in Gloss, Handshape, Morpheme: ', field)
+                continue
+            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                if 'Handshape' not in choice_categories:
+                    choice_categories.append('Handshape')
+            elif field == 'semField':
+                # capitalize it
+                if 'SemField' not in choice_categories:
+                    choice_categories.append('SemField')
+            elif field in ['derivHist']:
+                if field not in choice_categories:
+                    choice_categories.append(field)
+            elif hasattr(field_field, 'field_choice_category'):
+                if field_field.field_choice_category not in choice_categories:
+                    choice_categories.append(field_field.field_choice_category)
+    return choice_categories
+
+def fields_to_fieldcategory_dict():
+    choice_categories = {}
+    for topic in ['main', 'phonology', 'semantics']:
+        for field in FIELDS[topic]:
+            mapped_field = map_field_name_to_fk_field_name(field)
+            # the following check will be used when querying is added, at the moment these don't appear in the phonology list
+            if mapped_field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                continue
+            if mapped_field in [f.name for f in Gloss._meta.fields]:
+                field_field = Gloss._meta.get_field(mapped_field)
+            elif mapped_field in [f.name for f in Handshape._meta.fields]:
+                field_field = Handshape._meta.get_field(mapped_field)
+            elif mapped_field in [f.name for f in Morpheme._meta.fields]:
+                field_field = Morpheme._meta.get_field(mapped_field)
+            else:
+                print('field_to_categories: field not found in Gloss, Handshape, Morpheme: ', field)
+                continue
+            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                choice_categories[field] = 'Handshape'
+            elif field == 'semField':
+                choice_categories[field] = 'SemField'
+            elif field in ['derivHist']:
+                choice_categories[field] = field
+            elif hasattr(field_field, 'field_choice_category'):
+                choice_categories[field] = field_field.field_choice_category
+    return choice_categories
+
+def get_interface_language_and_default_language_codes(request):
+    default_language = Language.objects.get(id=get_default_language_id())
+    default_language_code = default_language.language_code_2char
+    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+    interface_language_code = interface_language.language_code_2char
+
+    return (interface_language, interface_language_code, default_language, default_language_code)

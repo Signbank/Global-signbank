@@ -20,7 +20,7 @@ from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, map_field_names_to_fk_field_names
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value, \
     check_value_to_translated_human_value
@@ -298,16 +298,13 @@ def gloss(request, glossid):
     if not trans:
         # this prevents an empty title in the template
         # this essentially overrides the "gloss.idgloss" method to prevent it from putting translations between parentheses
-        # print('trans was None, set it to annotation id gloss of default language')
         trans = gloss.annotationidglosstranslation_set.get(language=default_language).text
-    # print('word trans: ', trans)
 
     # Regroup notes
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
     notes = gloss.definition_set.all()
     notes_groupedby_role = {}
     for note in notes:
-        # print('note: ', note.id, ', ', note.role, ', ', note.published, ', ', note.text, ', ', note.count)
         translated_note_role = machine_value_to_translated_human_value(note.role, note_role_choices,
                                                                        request.LANGUAGE_CODE)
         role_id = (note.role, translated_note_role)
@@ -788,7 +785,7 @@ def add_new_morpheme(request):
         print('add_new_morpheme request: error getting field category for mrpType, set to empty list. Check models.py for attribute field_choice_category.')
         choice_list = []
     if len(choice_list) > 0:
-        ordered_dict = choicelist_queryset_to_translated_dict(choice_list, request.LANGUAGE_CODE)
+        ordered_dict = choicelist_queryset_to_translated_dict(choice_list)
         choicelists['mrpType'] = ordered_dict
 
     context['choice_lists'] = json.dumps(choicelists)
@@ -1199,7 +1196,6 @@ def import_csv_create(request):
                                                                                language=language,
                                                                                text=term).lemma)
                 except ObjectDoesNotExist as e:
-                    # print("Error: {}".format(e))
                     # New lemma will be created
                     pass
             existing_lemmas_set = set(existing_lemmas)
@@ -1547,7 +1543,6 @@ def import_csv_update(request):
             #In case there's no dot, this is not a value we set at the previous page
             except ValueError:
                 # when the database token csrfmiddlewaretoken is passed, there is no dot
-                # print('no dot found')
                 continue
 
             gloss = Gloss.objects.select_related().get(pk=pk)
@@ -1575,7 +1570,6 @@ def import_csv_update(request):
                         lemma_idgloss_string = ''
                     if lemma_idgloss_string != new_value and new_value != 'None' and new_value != '':
                         error_string = 'ERROR: Attempt to update Lemma ID Gloss translations: ' + new_value
-                        # print('error string: ', error_string)
                         if error:
                             error.append(error_string)
                         else:
@@ -2072,8 +2066,6 @@ def import_csv_lemmas(request):
                             lemma_translation.save()
                         # else:
                             # this case should not occur, there is no translation for the language and the user wants to make an empty one
-                            # print('Lemma ', str(lemma.pk), ': No existing translation for language (', language_name, ') and no new value: ', new_value)
-
 
         stage = 2
 
@@ -2103,6 +2095,8 @@ def switch_to_language(request,language):
 def recently_added_glosses(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 	
     try:
@@ -2114,6 +2108,7 @@ def recently_added_glosses(request):
                       {'glosses': recent_glosses,
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
+                       'language': interface_language,
                         'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
@@ -2122,6 +2117,7 @@ def recently_added_glosses(request):
                       {'glosses':Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
                        'dataset_languages': dataset_languages,
                         'selected_datasets':selected_datasets,
+                       'language': interface_language,
                         'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
                         'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
@@ -2458,44 +2454,6 @@ def find_and_save_variants(request):
     return HttpResponse(gloss_table_prefix+gloss_table_rows+gloss_table_suffix)
 
 
-
-def configure_handshapes(request):
-
-    # check if the Handshape table has been filled
-    already_filled_handshapes = Handshape.objects.count()
-    if request.user.is_superuser and not already_filled_handshapes:
-
-        handshapes = FieldChoice.objects.filter(field__iexact='Handshape')
-
-        for o in handshapes:
-
-            new_id = o.machine_value
-            new_machine_value = o.machine_value
-            new_english_name = o.english_name
-            new_dutch_name = o.dutch_name
-            new_chinese_name = o.chinese_name
-
-            new_handshape = Handshape(machine_value=new_machine_value, english_name=new_english_name, dutch_name=new_dutch_name, chinese_name=new_chinese_name)
-            new_handshape.save()
-
-    selected_datasets = get_selected_datasets_for_user(request.user)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
-
-    return render(request, 'dictionary/admin_configure_handshapes.html',
-                  { 'USE_HANDSHAPE': settings.USE_HANDSHAPE,
-                    'already_set_up': already_filled_handshapes,
-                    'handshapes':FieldChoice.objects.filter(field__iexact='Handshape'),
-                   'dataset_languages': dataset_languages,
-                   'selected_datasets': selected_datasets,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
-                   })
-
-
 def get_unused_videos(request):
 
     selected_datasets = get_selected_datasets_for_user(request.user)
@@ -2536,7 +2494,9 @@ def list_all_fieldchoice_names(request):
     for fieldchoice in FieldChoice.objects.all():
         columns = []
 
-        for column in [fieldchoice.field,fieldchoice.english_name,fieldchoice.dutch_name,fieldchoice.chinese_name]:
+        for column in [fieldchoice.field, fieldchoice.name] \
+                      + [getattr(fieldchoice, 'name_' + language.replace('-', '_'))
+                         for language in [l[0] for l in LANGUAGES]]:
             if column not in [None,'']:
                 columns.append(column)
             else:
@@ -2756,8 +2716,9 @@ def choice_lists(request):
 
     # Translate the machine values to human values in the correct language, and save the choice lists along the way
     for topic in ['main', 'phonology', 'semantics', 'frequency']:
-
-        fields_with_choices = [(field.name, field.field_choice_category) for field in Gloss._meta.fields if field.name in FIELDS[topic] and hasattr(field, 'field_choice_category') ]
+        mapped_topic_fields = map_field_names_to_fk_field_names(FIELDS[topic])
+        fields_with_choices = [(field.name, field.field_choice_category)
+                               for field in Gloss._meta.fields if field.name in mapped_topic_fields and hasattr(field, 'field_choice_category') ]
 
         for (field, fieldchoice_category) in fields_with_choices:
 
@@ -2765,13 +2726,18 @@ def choice_lists(request):
             choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
 
             if len(choice_list) > 0:
-                all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,request.LANGUAGE_CODE,
+                if field.endswith('_fk'):
+                    lookup_key = field.replace('_fk','')
+                else:
+                    lookup_key = field
+                all_choice_lists[lookup_key] = choicelist_queryset_to_translated_dict(choice_list,
                                                                                  choices_to_exclude=choices_to_exclude)
-                choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
 
                 #Also concatenate the frequencies of all values
                 if 'include_frequencies' in request.GET and request.GET['include_frequencies']:
-                    for choice_list_field, machine_value in choice_list_machine_values:
+                    for choicefield in choice_list:
+                        machine_value = choicefield.machine_value
+                        choice_list_field = '_' + str(choicefield.machine_value)
 
                         if machine_value == 0:
                             frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
@@ -2779,22 +2745,19 @@ def choice_lists(request):
                                                                        Q(**{field: 0})).count()
 
                         else:
-                            variable_column = field
-                            search_filter = 'exact'
-                            filter = variable_column + '__' + search_filter
-                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
+                            filter = field + '__machine_value'
+                            frequency_for_field = Gloss.objects.filter(
+                                lemma__dataset__in=selected_datasets).filter(**{filter: machine_value}).count()
 
-                        try:
-                            all_choice_lists[field][choice_list_field] += ' ['+str(frequency_for_field)+']'
-                        except KeyError: #This might an excluded field
-                            continue
+                        if choice_list_field in all_choice_lists[lookup_key].keys():
+                            all_choice_lists[lookup_key][choice_list_field] += ' ['+str(frequency_for_field)+']'
 
     # Add morphology to choice lists
     all_choice_lists['morphology_role'] = choicelist_queryset_to_translated_dict(
-        FieldChoice.objects.filter(field__iexact='MorphologyType'),request.LANGUAGE_CODE)
+        FieldChoice.objects.filter(field__iexact='MorphologyType'))
 
     all_choice_lists['morph_type'] = choicelist_queryset_to_translated_dict(
-        FieldChoice.objects.filter(field__iexact='MorphemeType'),request.LANGUAGE_CODE)
+        FieldChoice.objects.filter(field__iexact='MorphemeType'))
 
     return HttpResponse(json.dumps(all_choice_lists), content_type='application/json')
 
@@ -2934,7 +2897,11 @@ def configure_derivationhistory(request):
                                                (44, 'Motivated shape'), (45, 'Spiral'), (6, 'Straight'), (12, 'Zigzag')]
 
             for (machine_value, name) in derivationhistory_initial_choices:
-                dhfc = FieldChoice(field='derivHist', machine_value=machine_value, english_name=name, dutch_name=name, chinese_name=name)
+                new_name_translations = dict()
+                for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
+                    name_languagecode = 'name_' + language.replace('-', '_')
+                    new_name_translations[name_languagecode] = name
+                dhfc = FieldChoice(field='derivHist', machine_value=machine_value, name=name, **new_name_translations)
                 dhfc.save()
 
         derivationhistory = FieldChoice.objects.filter(field__iexact='derivHist')
@@ -2942,28 +2909,20 @@ def configure_derivationhistory(request):
         for derivHist_fieldchoice in derivationhistory:
 
             new_machine_value = derivHist_fieldchoice.machine_value
-            new_english_name = derivHist_fieldchoice.english_name
-
-            new_dutch_name = derivHist_fieldchoice.dutch_name
-            dutch_language = Language.objects.get(language_code_2char='nl')
-            new_chinese_name = derivHist_fieldchoice.chinese_name
-            chinese_language = Language.objects.get(language_code_2char='zh')
+            new_english_name = derivHist_fieldchoice.name
 
             new_derivationhistory = DerivationHistory(machine_value=new_machine_value, name=new_english_name)
             new_derivationhistory.save()
 
-            if new_dutch_name:
-                dutch_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory,
-                                                                 language=dutch_language,
-                                                                 name=new_dutch_name)
-                dutch_translation.save()
+            for language, language_3charcode in LANGUAGES_LANGUAGE_CODE_3CHAR:
+                translation_language = Language.objects.get(language_code_3char=language_3charcode)
+                translation = DerivationHistoryTranslation.objects.filter(derivHist=new_derivationhistory, language=translation_language).first()
 
-            if new_chinese_name:
-                chinese_translation = DerivationHistoryTranslation(derivHist=new_derivationhistory,
-                                                                   language=chinese_language,
-                                                                   name=new_chinese_name)
-                chinese_translation.save()
-
+                if not translation:
+                    # this DerivationHistory was created without a translation, use English
+                    derivationhistorytranslation = DerivationHistoryTranslation(derivHist=new_derivationhistory, language=translation_language,
+                                                                 name=new_english_name)
+                    derivationhistorytranslation.save()
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()

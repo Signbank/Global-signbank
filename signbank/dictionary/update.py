@@ -19,9 +19,9 @@ from signbank.dictionary.forms import *
 import signbank.settings
 from django.conf import settings
 
-from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY
+from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, fieldname_to_translated_human_value
-from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
+from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, map_field_names_to_fk_field_names, map_field_name_to_fk_field_name
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
 from django.utils.translation import ugettext_lazy as _
@@ -109,6 +109,19 @@ def add_gloss(request):
                 if lemma_form:
                     lemmaidgloss = lemma_form.save()
                 gloss.lemma = lemmaidgloss
+
+                # Set a default for all FieldChoice fields
+                for field in [f for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]:
+                    field_value = getattr(gloss, field.name)
+                    if field_value is None:
+                        field_choice_category = field.field_choice_category
+                        try:
+                            fieldchoice = FieldChoice.objects.get(field=field_choice_category, machine_value=0)
+                        except ObjectDoesNotExist:
+                            fieldchoice = FieldChoice.objects.create(field=field_choice_category, machine_value=0,
+                                                                     name='-')
+                        setattr(gloss, field.name, fieldchoice)
+
                 gloss.save()
                 gloss.creator.add(request.user)
             except ValidationError as ve:
@@ -149,6 +162,7 @@ def update_gloss(request, glossid):
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
+
     original_value = '' #will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     field_category = ''
@@ -229,12 +243,12 @@ def update_gloss(request, glossid):
     elif field == 'semanticfield':
         # expecting possibly multiple values
 
-        return update_semanticfield(gloss, field, values)
+        return update_semanticfield(request, gloss, field, values)
 
     elif field == 'derivationhistory':
         # expecting possibly multiple values
 
-        return update_derivationhistory(gloss, field, values)
+        return update_derivationhistory(request, gloss, field, values)
 
     elif field == 'dataset':
         original_value = getattr(gloss,field)
@@ -317,7 +331,7 @@ def update_gloss(request, glossid):
             newvalue = _('No')
     elif field in 'excludeFromEcv':
         original_value = getattr(gloss,field)
-        print('excludefromecv: ', original_value, ', ', value)
+
         # only modify if we have publish permission
 
         gloss.excludeFromEcv = value.lower() in [_('Yes').lower(),'true',True,1]
@@ -395,20 +409,21 @@ def update_gloss(request, glossid):
                 value = (value.lower() in [_('Yes').lower(),'true',True,1])
                 newvalue = value
         # special value of 'notset' or -1 means remove the value
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-
-        # this is dangerous because Field CHoice fields are actually CharFields
-
+        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
+        mapped_fieldnames = map_field_names_to_fk_field_names(fieldnames)
+        fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
+                                        if f.name in mapped_fieldnames
+                                        and isinstance(Gloss._meta.get_field(f.name), FieldChoiceForeignKey)]
         fields_empty_null = [f.name for f in Gloss._meta.fields
-                                if f.name in fieldnames and f.null and not hasattr(f, 'field_choice_category') ]
+                                if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields ]
 
         char_fields_not_null = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.__class__.__name__ == 'CharField'
-                                    and not hasattr(f, 'field_choice_category') and not f.null]
+                                    and f.name not in fieldchoiceforeignkey_fields and not f.null]
 
         char_fields = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.__class__.__name__ == 'CharField'
-                                    and not hasattr(f, 'field_choice_category')]
+                                    and f.name not in fieldchoiceforeignkey_fields]
 
         text_fields = [f.name for f in Gloss._meta.fields
                                 if f.name in fieldnames and f.__class__.__name__ == 'TextField' ]
@@ -419,7 +434,42 @@ def update_gloss(request, glossid):
         # The following code relies on the order of if else testing
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
-        if value in ['notset','','-','------'] and field in fields_empty_null:
+        if not settings.USE_FIELD_CHOICE_FOREIGN_KEY and field + '_fk' in fieldchoiceforeignkey_fields:
+
+            gloss_field = Gloss._meta.get_field(field + '_fk')
+            try:
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('Update field choice no unique machine value found: ', gloss_field.name, gloss_field.field_choice_category, value)
+                print('Setting to machine value 0')
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
+            gloss.__setattr__(field+'_fk', fieldchoice)
+            gloss.save()
+            newvalue = fieldchoice.name
+        elif field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+
+            gloss_field = Gloss._meta.get_field(field + '_handshapefk')
+            try:
+                handshape = Handshape.objects.get(machine_value=value)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('Update handshape no unique machine value found: ', gloss_field.name, value)
+                print('Setting to machine value 0')
+                handshape = Handshape.objects.get(machine_value=0)
+            gloss.__setattr__(field+'_handshapefk', handshape)
+            gloss.save()
+            newvalue = handshape.name
+        elif field in fieldchoiceforeignkey_fields:
+            gloss_field = Gloss._meta.get_field(field)
+            try:
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('Update field choice no unique machine value found: ', gloss_field.name, gloss_field.field_choice_category, value)
+                print('Setting to machine value 0')
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
+            gloss.__setattr__(field, fieldchoice)
+            gloss.save()
+            newvalue = fieldchoice.name
+        elif value in ['notset','','-','------'] and field in fields_empty_null:
             gloss.__setattr__(field, None)
             gloss.save()
             newvalue = ''
@@ -435,6 +485,7 @@ def update_gloss(request, glossid):
             newvalue = ''
         #Regular field updating
         else:
+
             # Alert: Note that if field is idgloss, the following code updates it
             gloss.__setattr__(field,value)
             gloss.save()
@@ -442,21 +493,11 @@ def update_gloss(request, glossid):
             #If the value is not a Boolean, get the human readable value
             if not isinstance(value,bool):
                 # if we get to here, field is a valid field of Gloss
-                # field is a choice list and we need to get the translated human value
-
-                changed_field = [ f for f in Gloss._meta.fields if f.name == field].pop()
-
-                if hasattr(changed_field, 'field_choice_category'):
-                    field_category = getattr(changed_field, 'field_choice_category')
-                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                    # if the choice_list happens to be empty, the following call results in 'value' being assigned
-                    newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
-                else:
-                    newvalue = value
+                newvalue = value
 
     if field in FIELDS['phonology']:
 
-         category_value = 'phonology'
+        category_value = 'phonology'
 
     # the gloss has been updated, now prepare values for saving to GlossHistory and display in template
     #This is because you cannot concat none to a string in py3
@@ -468,13 +509,24 @@ def update_gloss(request, glossid):
         newvalue = ''
 
     # if choice_list is empty, the original_value is returned by the called function
-    original_human_value = machine_value_to_translated_human_value(original_value,choice_list,request.LANGUAGE_CODE)
+    # Remember this change for the history books
+    original_human_value = original_value.name if isinstance(original_value, FieldChoice) else original_value
     if isinstance(value, bool) and field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
     # store a boolean in the Revision History rather than a human value as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
     else:
         glossrevision_newvalue = newvalue
-    revision = GlossRevision(old_value=original_human_value, new_value=glossrevision_newvalue,field_name=field,gloss=gloss,user=request.user,time=datetime.now(tz=get_current_timezone()))
+    if field.endswith('_fk'):
+        # make sure the original field names are used in the revision history
+        lookup_key = field.replace('_fk', '')
+    else:
+        lookup_key = field
+    revision = GlossRevision(old_value=original_human_value,
+                             new_value=glossrevision_newvalue,
+                             field_name=lookup_key,
+                             gloss=gloss,
+                             user=request.user,
+                             time=datetime.now(tz=get_current_timezone()))
     revision.save()
     # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
     return HttpResponse(
@@ -614,7 +666,7 @@ def update_dialect(gloss, field, values):
 
     return HttpResponse(str(signlanguage_value) + '\t' + str(new_dialects_value), {'content-type': 'text/plain'})
 
-def update_semanticfield(gloss, field, values):
+def update_semanticfield(request, gloss, field, values):
     # field is 'semanticfield'
     # expecting possibly multiple values
     # values is a list of strings
@@ -636,6 +688,8 @@ def update_semanticfield(gloss, field, values):
         if value in semanticfield_choices.keys():
             new_semanticfields_to_save.append(semanticfield_choices[value])
 
+    original_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
+
     # clear the old semantic fields only after we've parsed and checked the new ones
     gloss.semFieldShadow.clear()
     for sf in new_semanticfields_to_save:
@@ -644,9 +698,13 @@ def update_semanticfield(gloss, field, values):
 
     new_semanticfield_value = ", ".join([str(sf.name) for sf in gloss.semFieldShadow.all()])
 
+    revision = GlossRevision(old_value=original_semanticfield_value, new_value=new_semanticfield_value, field_name='semField',
+                             gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+
     return HttpResponse(str(new_semanticfield_value), {'content-type': 'text/plain'})
 
-def update_derivationhistory(gloss, field, values):
+def update_derivationhistory(request, gloss, field, values):
     # field is 'derivationhistory'
     # expecting possibly multiple values
     # values is a list of strings
@@ -668,6 +726,8 @@ def update_derivationhistory(gloss, field, values):
         if value in derivationhistory_choices.keys():
             new_derivationhistory_to_save.append(derivationhistory_choices[value])
 
+    original_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
+
     # clear the old derivation histories only after we've parsed and checked the new ones
     gloss.derivHistShadow.clear()
     for sf in new_derivationhistory_to_save:
@@ -675,6 +735,10 @@ def update_derivationhistory(gloss, field, values):
     gloss.save()
 
     new_derivationhistory_value = ", ".join([str(sf.name) for sf in gloss.derivHistShadow.all()])
+
+    revision = GlossRevision(old_value=original_derivationhistory_value, new_value=new_derivationhistory_value, field_name='derivHist',
+                             gloss=gloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+    revision.save()
 
     return HttpResponse(str(new_derivationhistory_value), {'content-type': 'text/plain'})
 
@@ -825,13 +889,13 @@ def update_blend_morphology(gloss, field, values):
 def subst_notes(gloss, field, values):
     # this is called by csv_import to modify the notes for a gloss
 
-    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+    note_role_choices = FieldChoice.objects.filter(field='NoteType')
     # this is used to speedup matching updates to Notes
     # it allows the type of note to be in either English or Dutch in the CSV file
     note_reverse_translation = {}
     for nrc in note_role_choices:
-        note_reverse_translation[nrc.english_name] = nrc.machine_value
-        note_reverse_translation[nrc.dutch_name] = nrc.machine_value
+        for language in [l[0] for l in LANGUAGES]:
+            note_reverse_translation[getattr(nrc, 'name_'+language.replace('-', '_'))] = nrc
 
     for original_note in gloss.definition_set.all():
         original_note.delete()
@@ -851,12 +915,12 @@ def subst_notes(gloss, field, values):
 
     for (role, published, count, text) in new_notes_values:
         is_published = (published == 'True')
-        note_role = str(note_reverse_translation[role])
+        note_role = note_reverse_translation[role]
         index_count = int(count)
-        defn = Definition(gloss=gloss, count=index_count, role=note_role, text=text, published=is_published)
+        defn = Definition(gloss=gloss, count=index_count, role_fk=note_role, text=text, published=is_published)
         defn.save()
 
-    new_notes_refresh = [(note.role, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
+    new_notes_refresh = [(note.role_fk.name, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
     notes_by_role = []
     for note in new_notes_refresh:
         notes_by_role.append(':'.join(note))
@@ -1135,10 +1199,9 @@ def update_definition(request, gloss, field, value):
         else:
             newvalue = 'No'
     elif what == 'definitionrole':
-        defn.role = value
+        defn.role_fk = FieldChoice.objects.get(field='NoteType', machine_value=int(value))
         defn.save()
-        choice_list = FieldChoice.objects.filter(field__iexact='NoteType')
-        newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
+        newvalue = defn.role_fk.name
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -1160,9 +1223,10 @@ def update_other_media(request,gloss,field,value):
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'?editothermedia')
 
     elif action_or_fieldname == 'other-media-type':
-        other_media.type = value
-        choice_list = FieldChoice.objects.filter(field__iexact='OtherMediaType')
-        value = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
+        # value is the (str) machine value of the Other Media Type from the choice list in the template
+        other_media_type = FieldChoice.objects.filter(field='OtherMediaType', machine_value=int(value))
+        other_media.type_fk = other_media_type
+        value = other_media_type.name
 
     elif action_or_fieldname == 'other-media-alternative-gloss':
         other_media.alternative_gloss = value
@@ -1284,10 +1348,10 @@ def add_definition(request, glossid):
             
             published = form.cleaned_data['published']
             count = form.cleaned_data['count']
-            role = form.cleaned_data['note']
+            role = FieldChoice.objects.get(field='NoteType', machine_value=int(form.cleaned_data['note']))
             text = form.cleaned_data['text']
             
-            defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
+            defn = Definition(gloss=thisgloss, count=count, role_fk=role, text=text, published=published)
             defn.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
@@ -1308,7 +1372,7 @@ def add_morphology_definition(request):
             thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
 
             # create definition, default to not published
-            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
+            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role_fk=role, morpheme=morpheme)
             morphdef.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
@@ -1377,7 +1441,7 @@ def add_morphemeappearance(request):
             thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
 
             # create definition, default to not published
-            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
+            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role_fk=role, morpheme=morpheme)
             morphdef.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
@@ -1422,11 +1486,13 @@ def update_handshape(request, handshapeid):
         hs = get_object_or_404(Handshape, machine_value=handshapeid)
         hs.save() # This updates the lastUpdated field
 
-        field = request.POST.get('id', '')
+        get_field = request.POST.get('id', '')
         value = request.POST.get('value', '')
         original_value = ''
         value = str(value)
         newPattern = ''
+
+        field = map_field_name_to_fk_field_name(get_field)
 
         if len(value) == 0:
             value = ' '
@@ -1440,6 +1506,14 @@ def update_handshape(request, handshapeid):
             hs.__setattr__(field, None)
             hs.save()
             newvalue = ''
+        elif isinstance(Handshape._meta.get_field(field), FieldChoiceForeignKey):
+            # this is needed because the new value is a machine value, not an id
+            field_choice_category = Handshape._meta.get_field(field).field_choice_category
+            original_value = getattr(hs, field)
+            field_choice = FieldChoice.objects.get(field=field_choice_category, machine_value=int(value))
+            setattr(hs, field, field_choice)
+            hs.save()
+            newvalue = field_choice.name
         else:
             original_value = getattr(hs, field)
             hs.__setattr__(field, value)
@@ -1448,16 +1522,7 @@ def update_handshape(request, handshapeid):
 
             if not isinstance(value, bool):
                 # field is a choice list and we need to get the translated human value
-
-                changed_field = [f for f in Handshape._meta.fields if f.name == field].pop()
-
-                if hasattr(changed_field, 'field_choice_category'):
-                    field_category = getattr(changed_field, 'field_choice_category')
-                    choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                    # if the choice_list happens to be empty, the following call results in value being assigned
-                    newvalue = machine_value_to_translated_human_value(value, choice_list, request.LANGUAGE_CODE)
-                else:
-                    newvalue = value
+                newvalue = value.name if isinstance(value, FieldChoice) else value
 
         # Finger selections are saved as both boolean values per finger and as patterns that include the fingers
         # The patterns, such as TIM, are stored as choice lists in FieldChoice.
@@ -1470,7 +1535,7 @@ def update_handshape(request, handshapeid):
             if newvalue != original_value:
                 hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
                 newPattern = hs_mod.get_fingerSelection_display()
-                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection', english_name__iexact=newPattern)
+                object_fingSelection = FieldChoice.objects.filter(field='FingerSelection', name__iexact=newPattern)
                 if object_fingSelection:
                     mv = object_fingSelection[0].machine_value
                     hs_mod.__setattr__('hsFingSel', mv)
@@ -1483,8 +1548,8 @@ def update_handshape(request, handshapeid):
             if newvalue != original_value:
                 hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
                 newPattern = hs_mod.get_fingerSelection2_display()
-                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection',
-                                                                  english_name__iexact=newPattern)
+                object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
+                                                                  name__iexact=newPattern)
                 if object_fingSelection:
                     mv = object_fingSelection[0].machine_value
                     hs_mod.__setattr__('hsFingSel2', mv)
@@ -1497,8 +1562,8 @@ def update_handshape(request, handshapeid):
             if newvalue != original_value:
                 hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
                 newPattern = hs_mod.get_unselectedFingers_display()
-                object_fingSelection = FieldChoice.objects.filter(field__iexact='FingerSelection',
-                                                                  english_name__iexact=newPattern)
+                object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
+                                                                  name__iexact=newPattern)
                 if object_fingSelection:
                     mv = object_fingSelection[0].machine_value
                     hs_mod.__setattr__('hsFingUnsel', mv)
@@ -1651,11 +1716,11 @@ def update_morphology_definition(gloss, field, value, language_code = 'en'):
         morph_def.delete()
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'morphology_definition_role':
-        morph_def.role = value
+        morph_def.role_fk = value
         morph_def.save()
 
-        choice_list = FieldChoice.objects.filter(field__iexact='MorphologyType')
-        newvalue = machine_value_to_translated_human_value(value, choice_list, language_code)
+        choice_list = FieldChoice.objects.filter(field='MorphologyType')
+        newvalue = machine_value_to_translated_human_value(value, choice_list)
 
 
     elif what == 'morphology_definition_morpheme':
@@ -1849,12 +1914,12 @@ def update_morpheme(request, morphemeid):
         elif field == 'semanticfield':
             # expecting possibly multiple values
 
-            return update_semanticfield(morpheme, field, values)
+            return update_semanticfield(request, morpheme, field, values)
 
         elif field == 'derivationhistory':
             # expecting possibly multiple values
 
-            return update_derivationhistory(morpheme, field, values)
+            return update_derivationhistory(request, morpheme, field, values)
 
         elif field == 'dataset':
             # this has been hidden
@@ -1990,16 +2055,7 @@ def update_morpheme(request, morphemeid):
                 # If the value is not a Boolean, return the new value
                 if not isinstance(value, bool):
                     # field is a choice list and we need to get the translated human value
-
-                    changed_field = [ f for f in Morpheme._meta.fields if f.name == field].pop()
-
-                    if hasattr(changed_field, 'field_choice_category'):
-                        field_category = getattr(changed_field, 'field_choice_category')
-                        choice_list = FieldChoice.objects.filter(field__iexact=field_category)
-                        # if the choice_list happens to be empty, the following call results in value being assigned
-                        newvalue = machine_value_to_translated_human_value(value,choice_list,request.LANGUAGE_CODE)
-                    else:
-                        newvalue = value
+                    newvalue = newvalue.name if isinstance(value, FieldChoice) else value
 
         return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group), {'content-type': 'text/plain'})
 
@@ -2327,7 +2383,6 @@ def update_excluded_choices(request):
             managed_datasets.append(dataset)
 
     excluded_choices = {dataset.acronym: [] for dataset in managed_datasets}
-    # print('keys: ', request.POST.keys())
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
@@ -2378,10 +2433,10 @@ def update_excluded_choices(request):
 def update_field_choice_color(request, fieldchoiceid):
 
     if request.method == "POST":
-        form = FieldChoiceForm(request.POST)
+        form = FieldChoiceColorForm(request.POST)
 
         thisfieldchoice = get_object_or_404(FieldChoice, pk=fieldchoiceid)
-        # print('field choice id: ', fieldchoiceid)
+
         if form.is_valid():
 
             new_color = form.cleaned_data['field_color']
@@ -2394,7 +2449,6 @@ def update_field_choice_color(request, fieldchoiceid):
             thisfieldchoice.field_color = new_color
             thisfieldchoice.save()
             category = thisfieldchoice.field
-            # print('inside update field color: ', original_value, machine_value, new_color, category)
 
             return HttpResponse(category + '\t' + fieldchoiceid + '\t' + str(original_value) + '\t' + str(new_color) + '\t' + machine_value,
                                 {'content-type': 'text/plain'})

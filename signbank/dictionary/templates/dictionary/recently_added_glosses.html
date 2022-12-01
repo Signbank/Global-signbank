@@ -39,7 +39,7 @@
          <td id='idgloss'>
              {% value gloss.idgloss %}
          </td>
-            {% with gloss|get_annotation_idgloss_translation:1 as annotationidglosstranslation %}
+            {% with gloss|get_annotation_idgloss_translation:language as annotationidglosstranslation %}
           <td>
               {% ifnotequal annotationidglosstranslation "" %}
                 {% if gloss.is_morpheme %}

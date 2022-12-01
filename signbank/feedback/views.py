@@ -64,7 +64,7 @@ def interpreterfeedback(request, glossid=None):
         general = GeneralFeedback.objects.filter(status='unread', user__groups__name='Interpreter')
         missing = MissingSignFeedback.objects.filter(status='unread', user__groups__name='Interpreter')
         signfb = SignFeedback.objects.filter(status='unread', user__groups__name='Interpreter')
-        
+
         return render(request,'feedback/interpreter.html',
                                    {'notes': notes,
                                     'general': general,
@@ -135,7 +135,7 @@ def missingsign(request):
         fb.user = request.user
         
         form = MissingSignFeedbackForm(request.POST, request.FILES)
-        
+
         if form.is_valid(): 
             
             # either we get video of the new sign or we get the 
@@ -243,11 +243,23 @@ def recordsignfeedback(request, trans, n, total, glossid=None):
     request_path = request.path
     morpheme_toggle = 1 if 'morpheme' in request_path else 0
 
-    if glossid and not trans:
-        if morpheme_toggle:
-            sign_or_morpheme = get_object_or_404(Morpheme, id=glossid)
-        else:
-            sign_or_morpheme = get_object_or_404(Gloss, id=glossid)
+    is_sign_or_morpheme = morpheme_toggle
+    if not glossid:
+        messages.add_message(request, messages.ERROR, 'There was an error processing your feedback data.')
+        return render(request, '/', {'selected_datasets': get_selected_datasets_for_user(request.user),
+                                     'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+    if morpheme_toggle:
+        sign_or_morpheme = get_object_or_404(Morpheme, id=glossid)
+    else:
+        sign_or_morpheme = get_object_or_404(Gloss, id=glossid)
+
+    try:
+        signlanguage = sign_or_morpheme.lemma.dataset.signlanguage
+    except (ObjectDoesNotExist, None):
+        signlanguage = None
+
+    if not trans:
         default_language = Language.objects.get(language_code_2char=DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
         # if there are no keywords for this gloss, create empty keywords (Keyword '' has default language)
         # original feedback about signs assumes users are giving feedback about keywords
@@ -258,7 +270,8 @@ def recordsignfeedback(request, trans, n, total, glossid=None):
     valid = False
     
     if request.method == "POST":
-        feedback_form = SignFeedbackForm(request.POST)
+        feedback_form = SignFeedbackForm(request.POST, is_sign_or_morpheme=is_sign_or_morpheme,
+                                         signlanguage=signlanguage)
         
         if feedback_form.is_valid():
             # get the clean (normalised) data from the feedback_form
@@ -281,9 +294,11 @@ def recordsignfeedback(request, trans, n, total, glossid=None):
                 valid = True
                 # redirect to the original page
                 if 'morpheme' in request_path:
-                    messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'+sourcepage+'">Return to Morpheme</a>'))
+                    morphemepage = settings.PREFIX_URL + '/dictionary/morpheme/' + str(glossid)
+                    messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'+morphemepage+'">Return to Morpheme</a>'))
                 else:
-                    messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'+sourcepage+'">Return to Sign</a>'))
+                    glosspage = settings.PREFIX_URL + '/dictionary/gloss/' + str(glossid)
+                    messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'+glosspage+'">Return to Sign</a>'))
 
                 return render(request, 'feedback/signfeedback.html', { 'feedback_form': feedback_form,
                                                                        'sourcepage': sourcepage,
@@ -295,8 +310,8 @@ def recordsignfeedback(request, trans, n, total, glossid=None):
                                                                        'sourcepage': sourcepage,
                                                                        'selected_datasets': get_selected_datasets_for_user(request.user),
                                                                         'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
-    feedback_form = SignFeedbackForm()
-        
+    feedback_form = SignFeedbackForm(is_sign_or_morpheme=is_sign_or_morpheme, signlanguage=signlanguage)
+
     return render(request,"feedback/signfeedback.html",
                               {'translation': trans,
                                'n': n, 

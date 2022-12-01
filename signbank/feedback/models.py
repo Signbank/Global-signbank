@@ -5,6 +5,8 @@ from signbank.settings.base import COMMENT_VIDEO_LOCATION, WRITABLE_FOLDER
 import os
 from signbank.video.fields import VideoUploadToFLVField
 
+from django.utils.translation import ugettext_lazy as _
+
 from signbank.dictionary.models import *
 #from signbank.dictionary.models import Gloss
 # models to represent the feedback from users in the site
@@ -78,13 +80,11 @@ class GeneralFeedbackForm(forms.Form):
     video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size':'60'}))
     
 
-try:
-	signLanguageChoices = [ (0, '---------') ] + [ ( sl.id, sl.name ) for sl in SignLanguage.objects.all() ]
-except (OperationalError, ProgrammingError) as e:
-	signLanguageChoices = []
+signLanguageChoices = [ ('0', 'N/A') ] + [ ( str(sl.id), sl.name ) for sl in SignLanguage.objects.all() ]
 
 if settings.LANGUAGE_NAME == "BSL":
-    whereusedChoices = (('Belfast', 'Belfast'),
+    whereusedChoices = (('N/A', 'N/A'),
+                        ('Belfast', 'Belfast'),
                         ('Birmingham', 'Birmingham'),
                         ('Bristol', 'Bristol'),
                         ('Cardiff', 'Cardiff'),
@@ -94,54 +94,25 @@ if settings.LANGUAGE_NAME == "BSL":
                         ('Newcastle', 'Newcastle'),
                         ('Other', 'Other (note in comments)'),
                         ("Don't Know", "Don't Know"),
-                        ('N/A', 'N/A'),
-                        )
-elif settings.LANGUAGE_NAME == "Global":
-    whereusedChoices = (
-                            (0, (
-                                    ('n/a', 'N/A'),
-                                )
-                             ),
-                            (1, (
-                                        ('1', 'Groningen'),
-                                        ('2', 'Amsterdam'),
-                                        ('3', 'Voorburg'),
-                                        ('4', 'Rotterdam'),
-                                        ('5', 'Gestel'),
-                                        ('6', 'Unknown'),
-                                )
-                            ),
-                            (4, (
-                                        ('7', 'Beijing'),
-                                        ('8', 'Shanghai'),
-                                        ('9', 'Nanjing'),
-                                        ('10', 'Unknown'),
-                                )
-                             ),
-                            (7, (
-                                        ('11', 'Ambon'),
-                                        ('12', 'Makassar'),
-                                        ('13', 'Padang'),
-                                        ('14', 'Pontianak'),
-                                        ('15', 'Singaradja'),
-                                        ('16', 'Solo'),
-                                )
-                             ),
                         )
 else:
-    whereusedChoices = (('auswide', 'Australia Wide'),
-                        ('dialectN', 'Dialect Sign (North)'),
-                        ('dialectS', 'Dialect Sign (South)'),
-                        ('nsw', "New South Wales"),
-                        ('vic', "Victoria"),
-                        ('qld', "Queensland"),
-                        ('wa', "Western Australia"),
-                        ('sa', "South Australia"),
-                        ('tas', "Tasmania"),
-                        ('nt', "Northern Territory"),
-                        ('act', "Australian Capital Territory"),
-                        ('dk', "Don't Know"),
-                        ('n/a', "N/A")
+    whereusedChoices = (('N/A', 'N/A'),
+                        ('Groningen', 'Groningen'),
+                        ('Amsterdam', 'Amsterdam'),
+                        ('Voorburg', 'Voorburg'),
+                        ('Rotterdam', 'Rotterdam'),
+                        ('Gestel', 'Gestel'),
+                        ('Unknown', 'Unknown'),
+                        ('Beijing', 'Beijing'),
+                        ('Shanghai', 'Shanghai'),
+                        ('Nanjing', 'Nanjing'),
+                        ('Unknown', 'Unknown'),
+                        ('Ambon', 'Ambon'),
+                        ('Makassar', 'Makassar'),
+                        ('Padang', 'Padang'),
+                        ('Pontianak', 'Pontianak'),
+                        ('Singaradja', 'Singaradja'),
+                        ('Solo', 'Solo'),
                         )
 
 likedChoices =    ( (1, "Morpheme"),
@@ -201,9 +172,9 @@ class SignFeedbackForm(forms.Form):
     """Form for input of sign feedback"""
 
     # isAuslan now stores Sign Language
-    isAuslan = forms.ChoiceField(choices=signLanguageChoices, initial=0)
+    isAuslan = forms.ChoiceField(choices=signLanguageChoices)
     # whereused now stores Dialect
-    whereused = forms.ChoiceField(choices=whereusedChoices, initial="n/a")
+    whereused = forms.ChoiceField(choices=whereusedChoices)
     #whereused = forms.CharField(initial='n/a', widget=forms.HiddenInput)
     like = forms.ChoiceField(choices=likedChoices, widget=forms.RadioSelect)
     #like = forms.IntegerField(initial=0, widget=forms.HiddenInput)
@@ -216,7 +187,22 @@ class SignFeedbackForm(forms.Form):
     kwnotbelong = forms.CharField(label="List keywords", required=False, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
     comment = forms.CharField(label="Comment or new keywords", required=True, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
 
- 
+    def __init__(self, *args, **kwargs):
+        is_sign_or_morpheme = kwargs.pop('is_sign_or_morpheme')
+        signlanguage = kwargs.pop('signlanguage')
+        super(SignFeedbackForm, self).__init__(*args, **kwargs)
+        self.fields['like'].initial = is_sign_or_morpheme
+        if signlanguage:
+            # problems getting this to work correctly
+            index_of_signlanguage = [ signLanguageChoices.index(tupl)
+                                      for tupl in signLanguageChoices if tupl[0] == str(signlanguage.id) ]
+            self.fields['isAuslan'].initial = 0
+
+def build_choice_list(field_category):
+    # this is a dummy choices list to allow type-checking of obsolete old field choice fields
+    choices = [('','---------')]
+    return choices
+
 handformChoices = build_choice_list("Handedness")
 
 handshapeChoices = build_choice_list("Handshape")
@@ -243,26 +229,27 @@ handinteractionChoices = build_choice_list("RelatArtic")
 
                        
 class MissingSignFeedbackForm(forms.Form):   
-    handform = forms.ChoiceField(choices=handformChoices,  required=False,
-        label='How many hands are used to make this sign?')
-    handshape = forms.ChoiceField(choices=handshapeChoices, required=False,
-        label='What is the handshape?')
-    althandshape = forms.ChoiceField(choices=handshapeChoices, required=False, 
-        label='What is the handshape of the left hand?')    
-    location = forms.ChoiceField(choices=locationChoices, required=False,
-        label='Choose the location of the sign on, or near the body')
-    relativelocation = forms.ChoiceField(choices=relativelocationChoices, 
-        label='Choose the location of the right hand on, or near the left hand', required=False)
-    handbodycontact = forms.ChoiceField(choices=handbodycontactChoices, 
-        label='Contact between hands and body', required=False)
-    handinteraction = forms.ChoiceField(choices=handinteractionChoices, 
-        label='Interaction between hands', required=False)
-    direction = forms.ChoiceField(choices=directionChoices, 
-        label='Movement direction of the hand(s)', required=False)
-    movementtype = forms.ChoiceField(choices=movementtypeChoices, 
-        label='Type of movement', required=False)
-    smallmovement = forms.ChoiceField(choices=smallmovementChoices, 
-        label='Small movements of the hand(s) and fingers', required=False)
+    handform = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDEDNESS),
+                                      required=False, label='How many hands are used to make this sign?')
+    handshape = forms.ModelChoiceField(queryset=Handshape.objects.filter(),
+                                       required=False, label='What is the handshape?')
+    althandshape = forms.ModelChoiceField(queryset=Handshape.objects.filter(),
+                                          required=False, label='What is the handshape of the left hand?')
+    location = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.LOCATION),
+                                      required=False, label='Choose the location of the sign on, or near the body')
+    relativelocation = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.LOCATION),
+                                              label='Choose the location of the right hand on, or near the left hand',
+                                              required=False)
+    handbodycontact = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.CONTACTTYPE),
+                                             label='Contact between hands and body', required=False)
+    handinteraction = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.RELATARTIC),
+                                             label='Interaction between hands', required=False)
+    direction = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.MOVEMENTDIR),
+                                       label='Movement direction of the hand(s)', required=False)
+    movementtype = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.MOVEMENTSHAPE),
+                                          label='Type of movement', required=False)
+    smallmovement = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.JOINTCONFIGURATION),
+                                           label='Small movements of the hand(s) and fingers', required=False)
     repetition = forms.ChoiceField(choices=repetitionChoices, 
         label='Number of movements', required=False)
     
@@ -275,15 +262,81 @@ class MissingSignFeedback(models.Model):
     user = models.ForeignKey(authmodels.User)
     date = models.DateTimeField(auto_now_add=True)
     handform = models.IntegerField(choices=handformChoices, blank=True, default=0)
+    handform_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.HANDEDNESS},
+                                          field_choice_category=FieldChoice.HANDEDNESS,
+                                          verbose_name=_("Handedness"),
+                                           related_name="handednessMissingSignFeedback")
+
     handshape = models.IntegerField(choices=handshapeChoices, blank=True, default=0)
-    althandshape = models.IntegerField(choices=handshapeChoices, blank=True, default=0)    
+    handshape_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                     limit_choices_to={'field': FieldChoice.HANDSHAPE},
+                                     field_choice_category=FieldChoice.HANDSHAPE,
+                                     verbose_name=_("Handshape"),
+                                     related_name="Handshape")
+
+    handshape_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                              verbose_name=_("Handshape"), related_name="Handshape_handshapefk")
+
+    althandshape = models.IntegerField(choices=handshapeChoices, blank=True, default=0)
+    althandshape_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.HANDSHAPE},
+                                            field_choice_category=FieldChoice.HANDSHAPE,
+                                            verbose_name=_("AltHandshape"),
+                                            related_name="AltHandshape")
+
+    althandshape_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                                 verbose_name=_("AltHandshape"), related_name="AltHandshape_handshapefk")
+
     location = models.IntegerField(choices=locationChoices, blank=True, default=0)
+    location_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.LOCATION},
+                                            field_choice_category=FieldChoice.LOCATION,
+                                            verbose_name=_("Location"),
+                                            related_name="LocationMissingSignFeedback")
+
     relativelocation = models.IntegerField(choices=relativelocationChoices, blank=True, default=0)
+    relativelocation_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.LOCATION},
+                                            field_choice_category=FieldChoice.LOCATION,
+                                            verbose_name=_("Location"),
+                                            related_name="Location")
+
     handbodycontact = models.IntegerField(choices=handbodycontactChoices, blank=True, default=0)
+    handbodycontact_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.CONTACTTYPE},
+                                            field_choice_category=FieldChoice.CONTACTTYPE,
+                                            verbose_name=_("HandBodyContact"),
+                                            related_name="HandBodyContact")
+
     handinteraction = models.IntegerField(choices=handinteractionChoices, blank=True, default=0)
+    handinteraction_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.RELATARTIC},
+                                            field_choice_category=FieldChoice.RELATARTIC,
+                                            verbose_name=_("HandInteraction"),
+                                            related_name="HandInteraction")
+
     direction = models.IntegerField(choices=directionChoices, blank=True, default=0)
+    direction_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.MOVEMENTDIR},
+                                            field_choice_category=FieldChoice.MOVEMENTDIR,
+                                            verbose_name=_("Direction"),
+                                            related_name="Direction")
+
     movementtype = models.IntegerField(choices=movementtypeChoices, blank=True, default=0)
+    movementtype_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
+                                            field_choice_category=FieldChoice.MOVEMENTSHAPE,
+                                            verbose_name=_("MovementType"),
+                                            related_name="MovementType")
+
     smallmovement = models.IntegerField(choices=smallmovementChoices, blank=True, default=0)
+    smallmovement_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                            limit_choices_to={'field': FieldChoice.JOINTCONFIGURATION},
+                                            field_choice_category=FieldChoice.JOINTCONFIGURATION,
+                                            verbose_name=_("SmallMovement"),
+                                            related_name="SmallMovement")
+
     repetition = models.IntegerField(choices=repetitionChoices, blank=True, default=0)
     meaning = models.TextField()
     comments = models.TextField(blank=True)

@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load stylesheet %}
 {% load annotation_idgloss_translation %}
+{% load underscore_to_space %}
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}
@@ -17,29 +18,36 @@
 <p>{% trans "Handshapes are not supported by your Signbank configuration." %}</p>
 {% elif not user.is_superuser %}
 <p>{% trans "You do not have permission to configure Handshapes." %}</p>
-{% elif already_set_up %}
-<p>{% trans "Handshapes are already configured." %}</p>
-{% elif not revisions %}
+{% elif not handshapes %}
 <p>{% trans "No choices found for Handshape in FieldChoice." %}</p>
 {% else %}
+{% if already_set_up %}
+<p>{% trans "Handshapes are already configured." %}</p>
+{% endif %}
 <p>{% trans "The following field choices have been set up for handshapes. They can be modified in Admin." %}</p>
-<div id="definitionblock" style="z-index:0;padding-top: 100px;">
+<div id="definitionblock" style="z-index:0;padding-top: 20px;">
     <table class="table table-condensed">
         <thead>
             <tr>
                 <th style="width:20em; text-align:left;">{% trans "Machine Value" %}</th>
-                <th style="width:25em; text-align:left;">{% trans "English Name" %}</th>
-                <th style="width:40em; text-align:left;">{% trans "Dutch Name" %}</th>
-                <th style="width:40em; text-align:left;">{% trans "Chinese Name" %}</th>
+                <th style="width:20em; text-align:left;">Name</th>
+                {% for lang in LANGUAGES %}
+                <th style="width:25em; text-align:left;">{{ lang.1 }} {% trans "Name" %}</th>
+                {% endfor %}
             </tr>
         </thead>
 
         {% for handshape in handshapes %}
             <tr>
                 <td>{{handshape.machine_value}}</td>
-                <td>{{handshape.english_name}}</td>
-                <td>{{handshape.dutch_name}}</td>
-                <td>{{handshape.chinese_name}}</td>
+                <td>{{handshape.name}}</td>
+                {% for lang in LANGUAGES %}
+                {% with lang.0|hyphen_to_underscore as language_code %}
+                {% with "name_"|add:language_code as name_field %}
+                <td>{{handshape|getattr:name_field}}</td>
+                {% endwith %}
+                {% endwith %}
+                {% endfor %}
             </tr>
         {% endfor %}
 

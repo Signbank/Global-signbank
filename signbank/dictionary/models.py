@@ -7,7 +7,7 @@ from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, get_language
 from django.utils.timezone import now
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
@@ -25,41 +25,146 @@ from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE, \
     WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, STATIC_URL, DATASET_EAF_DIRECTORY
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 
 import signbank.settings
 # -*- coding: utf-8 -*-
 
 
 # this variable is set later in the code, it needs to be declared before it is used
-choice_list_table = dict()
+# choice_list_table = dict()
 
 
-def build_choice_list(field):
+def build_choice_list(field, list_start=[]):
+    """
+    Build choice list.
+    This function assumes that machine_value 0 denotes a default/emtpy choice ('-----')
+    and machine_value 1 denotes a 'not applicable' choice ('N/A')
+    :param field: The FieldChoice field
+    :param list_start: The choices the list has to start with
+    :return: The choice list for the field, starting with the list_start choices
+    """
+    # return list_start\
+    #        + list(FieldChoice.objects.filter(field=field, machine_value__lte=1)
+    #               .order_by('machine_value').values_list('id', 'name')) \
+    #        + list([(field_choice.id, field_choice.name) for field_choice in
+    #                FieldChoice.objects.filter(field=field, machine_value__gt=1)
+    #               .order_by('name')])
 
-    choice_list = []
-
-    #See if there are any field choices there, but don't crash if there isn't even a table
-    try:
-        field_choices = list(FieldChoice.objects.filter(field__exact=field))
-    except:
-        field_choices = []
-
-    # Get choices for a certain field in FieldChoices, append machine_value and english_name
-    for choice in field_choices:
-        choice_list.append((str(choice.machine_value),choice.english_name))
-
-    choice_list = sorted(choice_list, key=lambda x: x[1])
-    built_choice_list = [('0', '-'), ('1', 'N/A')] + choice_list
-
-    return built_choice_list
-
+    return list_start
 
 def get_default_language_id():
     language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
     if language is not None:
         return language.id
     return None
+
+
+class FieldChoiceForeignKey(models.ForeignKey):
+    """
+    Extend ForeignKey to also hold field_choice_category
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.field_choice_category = "---"
+        if 'field_choice_category' in kwargs:
+            self.field_choice_category = kwargs.pop('field_choice_category')
+        super().__init__(*args, **kwargs)
+
+
+class FieldChoice(models.Model):
+
+    # field categories
+    ABSORIFING = 'AbsOriFing'
+    ABSORIPALM = 'AbsOriPalm'
+    APERTURE = 'Aperture'
+    CONTACTTYPE = 'ContactType'
+    DERIVHIST = 'derivHist'
+    DOMINANTHANDFLEXION = 'DominantHandFlexion'
+    DOMINANTHANDSELECTEDFINGERS = 'DominantHandSelectedFingers'
+    FINGERSELECTION = 'FingerSelection'
+    HANDEDNESS = 'Handedness'
+    HANDSHAPE = 'Handshape'
+    HANDSHAPECHANGE = 'HandshapeChange'
+    ICONICITY = 'iconicity'
+    JOINTCONFIGURATION = 'JointConfiguration'
+    LOCATION = 'Location'
+    MINORLOCATION = 'MinorLocation'
+    MORPHEMETYPE = 'MorphemeType'
+    MORPHOLOGYTYPE = 'MorphologyType'
+    MOVEMENTDIR = 'MovementDir'
+    MOVEMENTMAN = 'MovementMan'
+    MOVEMENTSHAPE = 'MovementShape'
+    NAMEDENTITY = 'NamedEntity'
+    NOTETYPE = 'NoteType'
+    ORICHANGE = 'OriChange'
+    OTHERMEDIATYPE = 'OtherMediaType'
+    PATHONPATH = 'PathOnPath'
+    QUANTITY = 'Quantity'
+    RELORILOC = 'RelOriLoc'
+    RELORIMOV = 'RelOriMov'
+    RELATARTIC = 'RelatArtic'
+    SEMFIELD = 'SemField'
+    SPREADING = 'Spreading'
+    THUMB = 'Thumb'
+    VALENCE = 'Valence'
+    WORDCLASS = 'WordClass'
+
+    FIELDCHOICE_FIELDS = [
+        (ABSORIFING, 'AbsOriFing'),
+        (ABSORIPALM, 'AbsOriPalm'),
+        (APERTURE, 'Aperture'),
+        (CONTACTTYPE, 'ContactType'),
+        (DERIVHIST, 'derivHist'),
+        (DOMINANTHANDFLEXION, 'DominantHandFlexion'),
+        (DOMINANTHANDSELECTEDFINGERS, 'DominantHandSelectedFingers'),
+        (FINGERSELECTION, 'FingerSelection'),
+        (HANDEDNESS, 'Handedness'),
+        (HANDSHAPE, 'Handshape'),
+        (ICONICITY, 'iconicity'),
+        (HANDSHAPECHANGE, 'HandshapeChange'),
+        (JOINTCONFIGURATION, 'JointConfiguration'),
+        (LOCATION, 'Location'),
+        (MINORLOCATION, 'MinorLocation'),
+        (MORPHEMETYPE, 'MorphemeType'),
+        (MORPHOLOGYTYPE, 'MorphologyType'),
+        (MOVEMENTDIR, 'MovementDir'),
+        (MOVEMENTMAN, 'MovementMan'),
+        (MOVEMENTSHAPE, 'MovementShape'),
+        (NAMEDENTITY, 'NamedEntity'),
+        (NOTETYPE, 'NoteType'),
+        (ORICHANGE, 'OriChange'),
+        (OTHERMEDIATYPE, 'OtherMediaType'),
+        (PATHONPATH, 'PathOnPath'),
+        (QUANTITY, 'Quantity'),
+        (RELORILOC, 'RelOriLoc'),
+        (RELORIMOV, 'RelOriMov'),
+        (RELATARTIC, 'RelatArtic'),
+        (SEMFIELD, 'SemField'),
+        (SPREADING, 'Spreading'),
+        (THUMB, 'Thumb'),
+        (VALENCE, 'Valence'),
+        (WORDCLASS, 'WordClass')
+    ]
+
+    field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
+    name = models.CharField(max_length=50)
+    # the help texts show up in the Admin
+    # these fields are now obsolete; they are disabled, but are still visible
+    dutch_name = models.CharField(max_length=50,
+                                  help_text="Field from the original NGT Signbank.")
+    chinese_name = models.CharField(max_length=50, blank=True,
+                                    help_text="Field from Global Signbank before multilingual model translation.")
+    machine_value = models.IntegerField(
+                help_text="The actual numeric value stored in the database. Created automatically.")
+    field_color = ColorField(default='ffffff')
+
+    def __str__(self):
+        name = self.field + ': ' + self.name + ' (' + str(self.machine_value) + ')'
+        return name
+
+    class Meta:
+        ordering = ['machine_value']
 
 
 class Translation(models.Model):
@@ -97,7 +202,7 @@ class Translation(models.Model):
 
 
 class Keyword(models.Model):
-    """A Dutch keyword that is a possible translation equivalent of a sign"""
+    """A keyword that is a possible translation equivalent of a sign"""
 
     def __str__(self):
         return self.text
@@ -155,12 +260,16 @@ class Definition(models.Model):
     """An English text associated with a gloss. It's called a note in the web interface"""
 
     def __str__(self):
-        return str(self.gloss) + "/" + self.role
+        return str(self.gloss) + "/" + str(self.role_fk)
 
     gloss = models.ForeignKey("Gloss")
     text = models.TextField()
     role = models.CharField(_("Type"), blank=True, null=True, choices=build_choice_list("NoteType"), max_length=5)
     role.field_choice_category = 'NoteType'
+    role_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.NOTETYPE},
+                                    field_choice_category=FieldChoice.NOTETYPE,
+                                    verbose_name=_("Type"), related_name="definition")
     count = models.IntegerField(default=3)
     published = models.BooleanField(default=True)
 
@@ -172,6 +281,11 @@ class Definition(models.Model):
         list_filter = ['role']
         search_fields = ['gloss__idgloss']
 
+    def get_role_display(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            return self.role.name if self.role else self.role
+        else:
+            return self.role_fk.name if self.role_fk else self.role_fk
 
 class SignLanguage(models.Model):
     """A sign language name"""
@@ -205,6 +319,7 @@ class SemanticField(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
 
     name = models.CharField(max_length=20, unique=True)
+    field_color = ColorField(default='ffffff')
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -216,6 +331,7 @@ class DerivationHistory(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
 
     name = models.CharField(max_length=20, unique=True)
+    field_color = ColorField(default='ffffff')
     description = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -242,54 +358,92 @@ class RelationToForeignSign(models.Model):
         search_fields = ['gloss__idgloss']
 
 
-class FieldChoice(models.Model):
-    field = models.CharField(max_length=50)
-    english_name = models.CharField(max_length=50)
-    dutch_name = models.CharField(max_length=50)
-    chinese_name = models.CharField(max_length=50, blank=True)
-    machine_value = models.IntegerField(
-        help_text="The actual numeric value stored in the database. Created automatically.")
-    field_color = ColorField(default='ffffff')
-
-    def __str__(self):
-        name = self.field + ': ' + self.english_name + ', ' + self.dutch_name + ' (' + str(self.machine_value) + ')'
-        return name
-
-    class Meta:
-        ordering = ['machine_value']
-
-
 class Handshape(models.Model):
     machine_value = models.IntegerField(_("Machine value"), primary_key=True)
-    english_name = models.CharField(_("English name"), max_length=50)
+    name = models.CharField(max_length=50)
     dutch_name = models.CharField(_("Dutch name"), max_length=50)
     chinese_name = models.CharField(_("Chinese name"), max_length=50, blank=True)
+    field_color = ColorField(default='ffffff')
     hsNumSel = models.CharField(_("Quantity"), null=True, blank=True, choices=build_choice_list("Quantity"),
-                                max_length=5)
+                                max_length = 5)
     hsNumSel.field_choice_category = 'Quantity'
+    hsNumSel_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                        limit_choices_to={'field': FieldChoice.QUANTITY},
+                                        field_choice_category=FieldChoice.QUANTITY,
+                                        verbose_name=_("Quantity"),
+                                        related_name="quantity")
+
     hsFingSel = models.CharField(_("Finger selection"), blank=True, null=True,
                                  choices=build_choice_list("FingerSelection"), max_length=5)
     hsFingSel.field_choice_category = 'FingerSelection'
+    hsFingSel_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                         limit_choices_to={'field': FieldChoice.FINGERSELECTION},
+                                         field_choice_category=FieldChoice.FINGERSELECTION,
+                                         verbose_name=_("Finger selection"),
+                                         related_name="finger_selection")
+
     hsFingSel2 = models.CharField(_("Finger selection 2"), blank=True, null=True,
                                   choices=build_choice_list("FingerSelection"), max_length=5)
     hsFingSel2.field_choice_category = 'FingerSelection'
+    hsFingSel2_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.FINGERSELECTION},
+                                          field_choice_category=FieldChoice.FINGERSELECTION,
+                                          verbose_name=_("Finger selection 2"),
+                                          related_name="finger_selection_2")
+
     hsFingConf = models.CharField(_("Finger configuration"), blank=True, null=True,
                                   choices=build_choice_list("JointConfiguration"), max_length=5)
     hsFingConf.field_choice_category = 'JointConfiguration'
+    hsFingConf_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.JOINTCONFIGURATION},
+                                          field_choice_category=FieldChoice.JOINTCONFIGURATION,
+                                          verbose_name=_("Finger configuration"),
+                                          related_name="finger_configuration")
+
     hsFingConf2 = models.CharField(_("Finger configuration 2"), blank=True, null=True,
                                    choices=build_choice_list("JointConfiguration"), max_length=5)
     hsFingConf2.field_choice_category = 'JointConfiguration'
+    hsFingConf2_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.JOINTCONFIGURATION},
+                                          field_choice_category=FieldChoice.JOINTCONFIGURATION,
+                                          verbose_name=_("Finger configuration 2"),
+                                           related_name="finger_configuration_2")
+
     hsAperture = models.CharField(_("Aperture"), blank=True, null=True, choices=build_choice_list("Aperture"),
                                   max_length=5)
     hsAperture.field_choice_category = 'Aperture'
+    hsAperture_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.APERTURE},
+                                          field_choice_category=FieldChoice.APERTURE,
+                                          verbose_name=_("Aperture"),
+                                          related_name="aperture")
+
     hsThumb = models.CharField(_("Thumb"), blank=True, null=True, choices=build_choice_list("Thumb"), max_length=5)
     hsThumb.field_choice_category = 'Thumb'
+    hsThumb_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.THUMB},
+                                          field_choice_category=FieldChoice.THUMB,
+                                          verbose_name=_("Thumb"),
+                                       related_name="thumb")
+
     hsSpread = models.CharField(_("Spreading"), blank=True, null=True, choices=build_choice_list("Spreading"),
                                 max_length=5)
     hsSpread.field_choice_category = 'Spreading'
+    hsSpread_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.SPREADING},
+                                          field_choice_category=FieldChoice.SPREADING,
+                                          verbose_name=_("Spreading"),
+                                        related_name="spreading")
+
     hsFingUnsel = models.CharField(_("Unselected fingers"), blank=True, null=True,
                                    choices=build_choice_list("FingerSelection"), max_length=5)
     hsFingUnsel.field_choice_category = 'FingerSelection'
+    hsFingUnsel_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.FINGERSELECTION},
+                                          field_choice_category=FieldChoice.FINGERSELECTION,
+                                          verbose_name=_("Unselected fingers"),
+                                           related_name="unselected_fingers")
+
     fsT = models.NullBooleanField(_("T"), null=True, default=False)
     fsI = models.NullBooleanField(_("I"), null=True, default=False)
     fsM = models.NullBooleanField(_("M"), null=True, default=False)
@@ -306,16 +460,25 @@ class Handshape(models.Model):
     ufR = models.NullBooleanField(_("Ru"), null=True, default=False)
     ufP = models.NullBooleanField(_("Pu"), null=True, default=False)
 
+    def __str__(self):
+        name = 'Handshape: ' + self.name + ' (' + str(self.machine_value) + ')'
+        return name
+
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
-
+        foreign_key_fields = [f.name for f in self._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         d = dict()
         for f in self._meta.fields:
+            if f.name + '_fk' in foreign_key_fields:
+                # skip original obsolete field choice fields
+                continue
+            if f.name in ['dutch_name', 'chinese_name']:
+                # skip obsolete language fields
+                continue
             try:
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
             except:
                 pass
-
         return d
 
     def get_image_path(self, check_existance=True):
@@ -356,7 +519,7 @@ class Handshape(models.Model):
     def set_fingerSelection_display(self):
         # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingSel
         try:
-            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection',
+            fieldSelectionMatch = FieldChoice.objects.filter(field='FingerSelection',
                                                              machine_value=self.hsFingSel)
         except:
             print('set_fingerSelection failed for: ', self)
@@ -365,7 +528,7 @@ class Handshape(models.Model):
             # no finger selection
             return
         # get the pattern, only one match is returned, in a list because of filter
-        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        fingerSelectionPattern = fieldSelectionMatch[0].name
         self.fsT = 'T' in fingerSelectionPattern
         self.fsI = 'I' in fingerSelectionPattern
         self.fsM = 'M' in fingerSelectionPattern
@@ -391,7 +554,7 @@ class Handshape(models.Model):
     def set_fingerSelection2_display(self):
         # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingSel2
         try:
-            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection',
+            fieldSelectionMatch = FieldChoice.objects.filter(field='FingerSelection',
                                                              machine_value=self.hsFingSel2)
         except:
             print('set_fingerSelection2 failed for: ', self)
@@ -400,7 +563,7 @@ class Handshape(models.Model):
             # no finger selection
             return
         # get the pattern, only one match is returned, in a list because of filter
-        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        fingerSelectionPattern = fieldSelectionMatch[0].name
         self.fs2T = 'T' in fingerSelectionPattern
         self.fs2I = 'I' in fingerSelectionPattern
         self.fs2M = 'M' in fingerSelectionPattern
@@ -426,7 +589,7 @@ class Handshape(models.Model):
     def set_unselectedFingers_display(self):
         # set the Boolean fields corresponding to the Finger Selection pattern stored in hsFingUnsel
         try:
-            fieldSelectionMatch = FieldChoice.objects.filter(field__iexact='FingerSelection',
+            fieldSelectionMatch = FieldChoice.objects.filter(field='FingerSelection',
                                                              machine_value=self.hsFingUnsel)
         except:
             print('set_unselectedFingers failed for: ', self)
@@ -435,7 +598,7 @@ class Handshape(models.Model):
             # no finger selection
             return
         # get the pattern, only one match is returned, in a list because of filter
-        fingerSelectionPattern = fieldSelectionMatch[0].english_name
+        fingerSelectionPattern = fieldSelectionMatch[0].name
         self.ufT = 'T' in fingerSelectionPattern
         self.ufI = 'I' in fingerSelectionPattern
         self.ufM = 'M' in fingerSelectionPattern
@@ -477,16 +640,46 @@ class Gloss(models.Model):
     def __str__(self):
         return self.idgloss
 
+    def display_handedness(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            field = self._meta.get_field('handedness')
+        else:
+            field = self._meta.get_field('handedness_fk')
+        return getattr(self,field.name).name
+
+    def display_domhndsh(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            field = self._meta.get_field('domhndsh')
+        else:
+            field = self._meta.get_field('domhndsh_handshapefk')
+        return getattr(self,field.name).name
+
+    def display_subhndsh(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            field = self._meta.get_field('subhndsh')
+        else:
+            field = self._meta.get_field('subhndsh_handshapefk')
+        return getattr(self,field.name).name
+
+    def display_locprim(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            field = self._meta.get_field('locprim')
+        else:
+            field = self._meta.get_field('locprim_fk')
+        return getattr(self,field.name).name
+
     def field_labels(self):
         """Return the dictionary of field labels for use in a template"""
-
+        foreign_key_fields = [f.name for f in self._meta.fields if isinstance(f, FieldChoiceForeignKey)]
         d = dict()
         for f in self._meta.fields:
+            # skip obsolete field choice fields
+            if f.name + '_fk' in foreign_key_fields:
+                continue
             try:
                 d[f.name] = _(self._meta.get_field(f.name).verbose_name)
             except:
                 pass
-
         return d
 
     lemma = models.ForeignKey("LemmaIdgloss", null=True, on_delete=models.SET_NULL)
@@ -524,15 +717,38 @@ class Gloss(models.Model):
     handedness = models.CharField(_("Handedness"), blank=True, null=True, choices=build_choice_list("Handedness"),
                                   max_length=5)
     handedness.field_choice_category = 'Handedness'
+    handedness_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.HANDEDNESS},
+                                          field_choice_category=FieldChoice.HANDEDNESS,
+                                          verbose_name=_("Handedness"),
+                                           related_name="handedness")
+
     weakdrop = models.NullBooleanField(_("Weak Drop"), null=True, blank=True)
     weakprop = models.NullBooleanField(_("Weak Prop"), null=True, blank=True)
 
     domhndsh = models.CharField(_("Strong Hand"), blank=True, null=True, choices=build_choice_list("Handshape"),
                                 max_length=5)
     domhndsh.field_choice_category = 'Handshape'
+    domhndsh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.HANDSHAPE},
+                                          field_choice_category=FieldChoice.HANDSHAPE,
+                                          verbose_name=_("Strong Hand"),
+                                           related_name="strong_hand")
+    domhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                             verbose_name=_("Strong Hand"),
+                                             related_name="strong_hand_handshapefk")
+
     subhndsh = models.CharField(_("Weak Hand"), null=True, choices=build_choice_list("Handshape"), blank=True,
                                 max_length=5)
     subhndsh.field_choice_category = 'Handshape'
+    subhndsh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.HANDSHAPE},
+                                          field_choice_category=FieldChoice.HANDSHAPE,
+                                          verbose_name=_("Weak Hand"),
+                                           related_name="weak_hand")
+    subhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                             verbose_name=_("Weak Hand"),
+                                             related_name="weak_hand_handshapefk")
 
     # Support for handshape etymology
     domhndsh_number = models.NullBooleanField(_("Strong hand number"), null=True, blank=True)
@@ -543,29 +759,75 @@ class Gloss(models.Model):
     final_domhndsh = models.CharField(_("Final Dominant Handshape"), blank=True, null=True,
                                       choices=build_choice_list("Handshape"), max_length=5)
     final_domhndsh.field_choice_category = 'Handshape'
+    final_domhndsh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.HANDSHAPE},
+                                          field_choice_category=FieldChoice.HANDSHAPE,
+                                          verbose_name=_("Final Dominant Handshape"),
+                                           related_name="final_dominant_handshape")
+    final_domhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                                   verbose_name=_("Final Dominant Handshape"),
+                                                   related_name="final_dominant_handshape_handshapefk")
+
     final_subhndsh = models.CharField(_("Final Subordinate Handshape"), null=True,
                                       choices=build_choice_list("Handshape"), blank=True, max_length=5)
     final_subhndsh.field_choice_category = 'Handshape'
+    final_subhndsh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.HANDSHAPE},
+                                          field_choice_category=FieldChoice.HANDSHAPE,
+                                          verbose_name=_("Final Subordinate Handshape"),
+                                           related_name="final_subordinate_handshape")
+    final_subhndsh_handshapefk = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
+                                                   verbose_name=_("Final Subordinate Handshape"),
+                                                   related_name="final_subordinate_handshape_handshapefk")
 
     locprim = models.CharField(_("Location"), choices=build_choice_list("Location"), null=True, blank=True,
                                max_length=20)
     locprim.field_choice_category = 'Location'
+    locprim_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.LOCATION},
+                                          field_choice_category=FieldChoice.LOCATION,
+                                          verbose_name=_("Location"),
+                                           related_name="location")
+
     final_loc = models.IntegerField(_("Final Primary Location"), choices=build_choice_list("Location"), null=True,
                                     blank=True)
     final_loc.field_choice_category = 'Location'
+    final_loc_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.LOCATION},
+                                          field_choice_category=FieldChoice.LOCATION,
+                                          verbose_name=_("Final Primary Location"),
+                                           related_name="final_primary_location")
+
     locVirtObj = models.CharField(_("Virtual Object"), blank=True, null=True, max_length=50)
 
     locsecond = models.IntegerField(_("Secondary Location"), choices=build_choice_list("Location"), null=True,
                                     blank=True)
     locsecond.field_choice_category = 'Location'
+    locsecond_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.LOCATION},
+                                          field_choice_category=FieldChoice.LOCATION,
+                                          verbose_name=_("Secondary Location"),
+                                           related_name="secondary_location")
 
     initial_secondary_loc = models.CharField(_("Initial Subordinate Location"),
                                              choices=build_choice_list("MinorLocation"), max_length=20, null=True,
                                              blank=True)
     initial_secondary_loc.field_choice_category = 'MinorLocation'
+    initial_secondary_loc_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.MINORLOCATION},
+                                          field_choice_category=FieldChoice.MINORLOCATION,
+                                          verbose_name=_("Initial Subordinate Location"),
+                                           related_name="initial_subordinate_location")
+
     final_secondary_loc = models.CharField(_("Final Subordinate Location"), choices=build_choice_list("MinorLocation"),
                                            max_length=20, null=True, blank=True)
     final_secondary_loc.field_choice_category = 'MinorLocation'
+    final_secondary_loc_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.MINORLOCATION},
+                                          field_choice_category=FieldChoice.MINORLOCATION,
+                                          verbose_name=_("Final Subordinate Location"),
+                                           related_name="final_subordinate_location")
+
 
     initial_palm_orientation = models.CharField(_("Initial Palm Orientation"), max_length=20, null=True, blank=True)
     final_palm_orientation = models.CharField(_("Final Palm Orientation"), max_length=20, null=True, blank=True)
@@ -579,9 +841,21 @@ class Gloss(models.Model):
                              choices=build_choice_list("DominantHandSelectedFingers"), null=True, blank=True,
                              max_length=5)
     domSF.field_choice_category = 'DominantHandSelectedFingers'
+    domSF_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.DOMINANTHANDSELECTEDFINGERS},
+                                          field_choice_category=FieldChoice.DOMINANTHANDSELECTEDFINGERS,
+                                          verbose_name="Dominant hand - Selected Fingers",
+                                           related_name="dominant_hand_selected_fingers")
+
     domFlex = models.CharField("Dominant hand - Flexion", choices=build_choice_list("DominantHandFlexion"), null=True,
                                blank=True, max_length=5)
     domFlex.field_choice_category = 'DominantHandFlexion'
+    domFlex_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.DOMINANTHANDFLEXION},
+                                          field_choice_category=FieldChoice.DOMINANTHANDFLEXION,
+                                          verbose_name="Dominant hand - Flexion",
+                                           related_name="dominant_hand_flexion")
+
     oriChAbd = models.NullBooleanField(_("Abduction change"), null=True, blank=True)
     oriChFlex = models.NullBooleanField(_("Flexion change"), null=True, blank=True)
 
@@ -616,28 +890,69 @@ class Gloss(models.Model):
     relatArtic = models.CharField(_("Relation between Articulators"), choices=build_choice_list("RelatArtic"),
                                   null=True, blank=True, max_length=5)
     relatArtic.field_choice_category = 'RelatArtic'
+    relatArtic_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.RELATARTIC},
+                                          field_choice_category=FieldChoice.RELATARTIC,
+                                          verbose_name=_("Relation between Articulators"),
+                                           related_name="relation_between_articulators")
+
 
     absOriPalm = models.CharField(_("Absolute Orientation: Palm"), choices=build_choice_list("AbsOriPalm"), null=True,
                                   blank=True, max_length=5)
     absOriPalm.field_choice_category = 'AbsOriPalm'
+    absOriPalm_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.ABSORIPALM},
+                                          field_choice_category=FieldChoice.ABSORIPALM,
+                                          verbose_name=_("Absolute Orientation: Palm"),
+                                           related_name="absolute_orientation_palm")
+
     absOriFing = models.CharField(_("Absolute Orientation: Fingers"), choices=build_choice_list("AbsOriFing"),
                                   null=True, blank=True, max_length=5)
     absOriFing.field_choice_category = 'AbsOriFing'
+    absOriFing_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.ABSORIFING},
+                                          field_choice_category=FieldChoice.ABSORIFING,
+                                          verbose_name=_("Absolute Orientation: Fingers"),
+                                           related_name="absolute_orientation_fingers")
 
     relOriMov = models.CharField(_("Relative Orientation: Movement"), choices=build_choice_list("RelOriMov"), null=True,
                                  blank=True, max_length=5)
     relOriMov.field_choice_category = 'RelOriMov'
+    relOriMov_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.RELORIMOV},
+                                          field_choice_category=FieldChoice.RELORIMOV,
+                                          verbose_name=_("Relative Orientation: Movement"),
+                                           related_name="relative_orientation_movement")
+
     relOriLoc = models.CharField(_("Relative Orientation: Location"), choices=build_choice_list("RelOriLoc"), null=True,
                                  blank=True, max_length=5)
     relOriLoc.field_choice_category = 'RelOriLoc'
+    relOriLoc_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.RELORILOC},
+                                          field_choice_category=FieldChoice.RELORILOC,
+                                          verbose_name=_("Relative Orientation: Location"),
+                                           related_name="relative_orientation_location")
+
 
     oriCh = models.CharField(_("Orientation Change"), choices=build_choice_list("OriChange"), null=True, blank=True,
                              max_length=5)
     oriCh.field_choice_category = 'OriChange'
+    oriCh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.ORICHANGE},
+                                          field_choice_category=FieldChoice.ORICHANGE,
+                                          verbose_name=_("Orientation Change"),
+                                           related_name="orientation_change")
+
 
     handCh = models.CharField(_("Handshape Change"), choices=build_choice_list("HandshapeChange"), null=True,
                               blank=True, max_length=5)
     handCh.field_choice_category = 'HandshapeChange'
+    handCh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.HANDSHAPECHANGE},
+                                          field_choice_category=FieldChoice.HANDSHAPECHANGE,
+                                          verbose_name=_("Handshape Change"),
+                                           related_name="handshape_change")
+
 
     repeat = models.NullBooleanField(_("Repeated Movement"), null=True, default=False)
     altern = models.NullBooleanField(_("Alternating Movement"), null=True, default=False)
@@ -645,15 +960,39 @@ class Gloss(models.Model):
     movSh = models.CharField(_("Movement Shape"), choices=build_choice_list("MovementShape"), null=True, blank=True,
                              max_length=5)
     movSh.field_choice_category = 'MovementShape'
+    movSh_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
+                                          field_choice_category=FieldChoice.MOVEMENTSHAPE,
+                                          verbose_name=_("Movement Shape"),
+                                           related_name="movement_shape")
+
     movDir = models.CharField(_("Movement Direction"), choices=build_choice_list("MovementDir"), null=True, blank=True,
                               max_length=5)
     movDir.field_choice_category = 'MovementDir'
+    movDir_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.MOVEMENTDIR},
+                                          field_choice_category=FieldChoice.MOVEMENTDIR,
+                                          verbose_name=_("Movement Direction"),
+                                           related_name="movement_direction")
+
     movMan = models.CharField(_("Movement Manner"), choices=build_choice_list("MovementMan"), null=True, blank=True,
                               max_length=5)
     movMan.field_choice_category = 'MovementMan'
+    movMan_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.MOVEMENTMAN},
+                                          field_choice_category=FieldChoice.MOVEMENTMAN,
+                                          verbose_name=_("Movement Manner"),
+                                           related_name="movement_manner")
+
     contType = models.CharField(_("Contact Type"), choices=build_choice_list("ContactType"), null=True, blank=True,
                                 max_length=5)
     contType.field_choice_category = 'ContactType'
+    contType_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.CONTACTTYPE},
+                                          field_choice_category=FieldChoice.CONTACTTYPE,
+                                          verbose_name=_("Contact Type"),
+                                           related_name="contact_type")
+
 
     phonOth = models.TextField(_("Phonology Other"), null=True, blank=True)
 
@@ -664,6 +1003,12 @@ class Gloss(models.Model):
     locPrimLH = models.CharField(_("Placement Active Articulator LH"), choices=build_choice_list("Location"), null=True,
                                  blank=True, max_length=5)
     locPrimLH.field_choice_category = 'Location'
+    locPrimLH_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.LOCATION},
+                                          field_choice_category=FieldChoice.LOCATION,
+                                          verbose_name=_("Placement Active Articulator LH"),
+                                           related_name="placement_active_articulator_lh")
+
     locFocSite = models.CharField(_("Placement Focal Site RH"), null=True, blank=True, max_length=5)
     locFocSiteLH = models.CharField(_("Placement Focal site LH"), null=True, blank=True, max_length=5)
     initArtOri = models.CharField(_("Orientation RH (initial)"), null=True, blank=True, max_length=5)
@@ -677,31 +1022,70 @@ class Gloss(models.Model):
     iconType = models.CharField(_("Type of iconicity"), choices=build_choice_list("iconicity"), null=True, blank=True,
                                 max_length=5)
     iconType.field_choice_category = 'iconicity'
+    iconType_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.ICONICITY},
+                                          field_choice_category=FieldChoice.ICONICITY,
+                                          verbose_name=_("Type of iconicity"),
+                                           related_name="type_of_iconicity")
+
 
     namEnt = models.CharField(_("Named Entity"), choices=build_choice_list("NamedEntity"), null=True, blank=True,
                               max_length=5)
     namEnt.field_choice_category = 'NamedEntity'
+    namEnt_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.NAMEDENTITY},
+                                          field_choice_category=FieldChoice.NAMEDENTITY,
+                                          verbose_name=_("Named Entity"),
+                                           related_name="named_entity")
+
     semField = models.CharField(_("Semantic Field"), choices=build_choice_list("SemField"), null=True, blank=True,
                                 max_length=5)
     semField.field_choice_category = 'SemField'
+    semField_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.SEMFIELD},
+                                          field_choice_category=FieldChoice.SEMFIELD,
+                                          verbose_name=_("Semantic Field"),
+                                           related_name="semantic_field")
 
     semFieldShadow = models.ManyToManyField(SemanticField)
 
     wordClass = models.CharField(_("Word class"), null=True, blank=True, max_length=5,
                                  choices=build_choice_list('WordClass'))
     wordClass.field_choice_category = 'WordClass'
+    wordClass_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.WORDCLASS},
+                                          field_choice_category=FieldChoice.WORDCLASS,
+                                          verbose_name=_("Word class"),
+                                           related_name="word_class")
+
     wordClass2 = models.CharField(_("Word class 2"), null=True, blank=True, max_length=5,
                                   choices=build_choice_list('WordClass'))
     wordClass2.field_choice_category = 'WordClass'
+    wordClass2_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.WORDCLASS},
+                                          field_choice_category=FieldChoice.WORDCLASS,
+                                          verbose_name=_("Word class 2"),
+                                           related_name="word_class_2")
+
     derivHist = models.CharField(_("Derivation history"), choices=build_choice_list("derivHist"), max_length=50,
                                  blank=True)
     derivHist.field_choice_category = 'derivHist'
-
+    derivHist_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.DERIVHIST},
+                                          field_choice_category=FieldChoice.DERIVHIST,
+                                          verbose_name=_("Derivation history"),
+                                           related_name="derivation_history")
     derivHistShadow = models.ManyToManyField(DerivationHistory)
 
     lexCatNotes = models.CharField(_("Lexical category notes"), null=True, blank=True, max_length=300)
     valence = models.CharField(_("Valence"), choices=build_choice_list("Valence"), null=True, blank=True, max_length=50)
     valence.field_choice_category = 'Valence'
+    valence_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                          limit_choices_to={'field': FieldChoice.VALENCE},
+                                          field_choice_category=FieldChoice.VALENCE,
+                                          verbose_name=_("Valence"),
+                                           related_name="valence")
+
     concConcSet = models.CharField(_("Conception Concept Set"), null=True, blank=True, max_length=300)
 
     # Frequency fields
@@ -754,23 +1138,25 @@ class Gloss(models.Model):
         # this function is used in Relations View to dynamically get the Annotation of related glosses
         # it is called by a template tag on the gloss using the interface language code
 
-        from signbank.tools import convert_language_code_to_language_minus_locale
-        # take care of zh-hans
-        language_code = convert_language_code_to_language_minus_locale(language_code)
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+        default_language = Language.objects.get(id=get_default_language_id())
 
-        interface_language = Language.objects.get(language_code_2char=language_code)
-
-        dataset_languages = self.lemma.dataset.translation_languages.all()
-
-        if interface_language not in dataset_languages:
-            # use English
-            language = Language.objects.get(language_code_2char=settings.LANGUAGE_CODE)
-        else:
-            language = interface_language
         try:
-            return self.annotationidglosstranslation_set.get(language=language).text
-        except:
-            return str(self.id)
+            default_dataset_language = self.lemma.dataset.default_language
+        except (KeyError, ObjectDoesNotExist, None):
+            default_dataset_language = default_language
+
+        try:
+            return self.annotationidglosstranslation_set.get(language=interface_language).text
+        except ObjectDoesNotExist:
+            try:
+                return self.annotationidglosstranslation_set.get(language=default_dataset_language).text
+            except ObjectDoesNotExist:
+                try:
+                    return self.annotationidglosstranslation_set.get(language=default_language).text
+                except ObjectDoesNotExist:
+                    return str(self.id)
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
@@ -789,10 +1175,10 @@ class Gloss(models.Model):
         fields = {}
         for (f, field_verbose_name, fieldchoice_category) in fields_data:
             if fieldchoice_category:
-                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                machine_value = str(getattr(self, f))
-                field_value = machine_value_to_translated_human_value(machine_value, choice_list, settings.LANGUAGE_CODE)
-                if field_value is None:
+                fieldchoice = getattr(self, f)
+                if fieldchoice:
+                    field_value = fieldchoice.name
+                else:
                     field_value = ' '
             else:
                 field_value = str(getattr(self, f))
@@ -1202,40 +1588,60 @@ class Gloss(models.Model):
         return (other_relations, variant_relations)
 
 
-    def phonology_matrix_homonymns(self):
+    def phonology_matrix_homonymns(self, use_machine_value=False):
         # this method uses string representations for Boolean values
         # in order to distinguish between null values, False values, and Neutral values
 
-        phonology_dict = dict()
+        # the following is coded here (it can't call the function in tools.py, which relies on models.py)
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_phonology_fields = {}
+        for field in FIELDS['phonology']:
+            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                mapped_phonology_fields[field] = field + '_handshapefk'
+            elif field+'_fk' in foreign_key_fields:
+                mapped_phonology_fields[field] = field+'_fk'
+            else:
+                mapped_phonology_fields[field] = field
 
         gloss_fields = {}
-        for f in Gloss._meta.fields:
-            gloss_fields[f.name] = f
+        # construct a dictionary where the keys are the field names as in the settings
+        # and the values are the fields of the gloss, using the new field choice model instead of the original
+        # this structure also prevents duplicates
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            for f in Gloss._meta.fields:
+                if f.name in FIELDS['phonology']:
+                    gloss_fields[f.name] = f
+        else:
+            for fname in FIELDS['phonology']:
+                mapped_field_name = mapped_phonology_fields[fname]
+                gloss_fields[fname] = Gloss._meta.get_field(mapped_field_name)
+
+        phonology_dict = dict()
         for field in FIELDS['phonology']:
             gloss_field = gloss_fields[field]
-            if (isinstance(gloss_field, models.CharField) and not hasattr(gloss_field, 'field_choice_category')) or isinstance(gloss_field, models.TextField):
+            if isinstance(gloss_field, models.CharField) or isinstance(gloss_field, models.TextField):
                 continue
-            phonology_dict[field] = None
-            machine_value = getattr(self, field)
-            if hasattr(gloss_field, 'field_choice_category'):
-                fieldchoice_category = gloss_field.field_choice_category
-                if fieldchoice_category == 'Handshape':
-                    choice_list = Handshape.objects.all()
-                else:
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-
-                human_value = machine_value_to_translated_human_value(machine_value, choice_list, LANGUAGE_CODE)
-                if not (human_value == '-' or human_value == ' ' or human_value == '' or human_value == None or human_value == '0' or human_value == 'None'):
-                    phonology_dict[field] = str(machine_value)
-                else:
+            field_value = getattr(self, gloss_field.name)
+            if isinstance(field_value, Handshape):
+                if field_value is None:
+                    # this differentiates between null field choice fields (here) versus null Boolean fields
+                    # which get mapped to either 'False' or 'Neutral'
                     phonology_dict[field] = None
+                else:
+                    phonology_dict[field] = str(field_value.machine_value)
+            elif hasattr(gloss_field, 'field_choice_category'):
+                if field_value is None:
+                    # this differentiates between null field choice fields (here) versus null Boolean fields
+                    # which get mapped to either 'False' or 'Neutral'
+                    phonology_dict[field] = None
+                else:
+                    phonology_dict[field] = str(field_value.machine_value if use_machine_value else field_value.id)
             else:
                 # gloss_field is a Boolean
                 # TO DO: check these conversions to Strings instead of Booleans
 
-                if machine_value is not None:
-
-                    if machine_value:
+                if field_value is not None:
+                    if field_value:
                         # machine value is 1
                         phonology_dict[field] = 'True'
                     else:
@@ -1252,14 +1658,33 @@ class Gloss(models.Model):
         return phonology_dict
 
     def minimal_pairs_tuple(self):
+        minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_minimal_pair_fields = {}
+        for mpf in minimal_pairs_fields:
+            if mpf in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                mapped_minimal_pair_fields[mpf] = mpf + '_handshapefk'
+            elif mpf + '_fk' in foreign_key_fields:
+                mapped_minimal_pair_fields[mpf] = mpf + '_fk'
+            else:
+                mapped_minimal_pair_fields[mpf] = mpf
 
         values_list = []
-        for f in settings.MINIMAL_PAIRS_FIELDS:
-            field_value = getattr(self,f)
-            # print('minimal_pairs_tuple ', f, field_value)
-            if f not in ['altern', 'repeat'] and field_value in ['0']:
-                values_list.append(None)
-            #     print(f, ' changed to None')
+        for f in minimal_pairs_fields:
+            mapped_field = mapped_minimal_pair_fields[f]
+            field_value = getattr(self, mapped_field)
+            if isinstance(field_value, Handshape):
+                if field_value and field_value.machine_value not in ['0', '1']:
+                    values_list.append(str(field_value.machine_value))
+                else:
+                    # if the field choice value is None or '-' or 'N/A' use None for computing minimal pairs
+                    values_list.append(None)
+            elif isinstance(field_value, FieldChoice):
+                if field_value and field_value.machine_value not in ['0', '1']:
+                    values_list.append(str(field_value.id))
+                else:
+                    # if the field choice value is None or '-' or 'N/A' use None for computing minimal pairs
+                    values_list.append(None)
             else:
                 values_list.append(field_value)
         values_tuple = tuple(values_list)
@@ -1277,21 +1702,18 @@ class Gloss(models.Model):
         index_of_handedness = settings.MINIMAL_PAIRS_FIELDS.index('handedness')
         handedness_of_this_gloss = focus_gloss_values_tuple[index_of_handedness]
 
-        minimalpairs_objects_list = []
-
-        # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
+        # Ignore minimal pairs when the Handedness of this gloss is X, if it's a possible field choice
         try:
-            handedness_X = str(
-                FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
-        except:
-            # We want to ignore handshape X, so return an empty value if it doesn't exist since empty is also ignored
-            handedness_X = '0'
+            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
 
-        # not sure whether these things appear in the database
-        # there are lots of different values for undefined, this handles legacy values
-        # if handedness is not defined, do not compute minimal pairs for this gloss
+        except ObjectDoesNotExist:
+            # print('minimalpairs_objects: Handedness X is not defined')
+            handedness_X = ''
 
-        if handedness_of_this_gloss in [None, '0', handedness_X, '-', '', 'None', 0]:
+        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
+
+        if (handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X):
+            # ignore gloss with empty or X handedness
             return minimalpairs_objects_list
 
         # the next few lines to determine the initial minimal_pairs_fields_qs look long-winded
@@ -1299,45 +1721,60 @@ class Gloss(models.Model):
                                    AnnotationIdglossTranslation.objects.filter(text__startswith="#")]
         q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
+        # exclude glosses with empty handedness or empty strong hand
+        handedness_filter = 'handedness_fk__name__in'
+        handedness_null = 'handedness_fk__isnull'
+        strong_hand_filter = 'domhndsh_handshapefk__name__in'
+        strong_hand_null = 'domhndsh_handshapefk__isnull'
+        empty_value = ['-','N/A']
+
+        q_empty = Q(**{handedness_null: True}) | \
+                  Q(**{strong_hand_null: True}) | \
+                  Q(**{handedness_filter: empty_value}) | \
+                  Q(**{strong_hand_filter: empty_value})
+
         minimal_pairs_fields_qs = Gloss.objects.select_related('lemma').exclude(
-                id__in=finger_spelling_glosses).exclude(id=self.id).filter(q)
+                id__in=finger_spelling_glosses).exclude(id=self.id).filter(q).exclude(q_empty)
+
+        minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_minimal_pair_fields = {}
+        for mpf in minimal_pairs_fields:
+            if mpf in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                mapped_minimal_pair_fields[mpf] = mpf + '_handshapefk'
+            elif mpf + '_fk' in foreign_key_fields:
+                mapped_minimal_pair_fields[mpf] = mpf + '_fk'
+            else:
+                mapped_minimal_pair_fields[mpf] = mpf
+
+        mapped_minimal_pairs_fields = [mapped_minimal_pair_fields[field] for field in minimal_pairs_fields]
 
         from django.db.models import When, Case, NullBooleanField, IntegerField
         gloss_fields = {}
         for f in Gloss._meta.fields:
             gloss_fields[f.name] = f
-        zipped_tuples = zip(settings.MINIMAL_PAIRS_FIELDS, focus_gloss_values_tuple)
+        zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
+
         for (field, value_of_this_field) in zipped_tuples:
-            gloss_field = gloss_fields[field]
-
-            if hasattr(gloss_field, 'field_choice_category'):
+            mapped_field = mapped_minimal_pair_fields[field]
+            gloss_field = gloss_fields[mapped_field]
+            if isinstance(gloss_field, Handshape):
+                # field is a handshape
+                different_field = 'different_' + mapped_field
+                field_compare = mapped_field + '__exact'
+                different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
+                minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
+            elif hasattr(gloss_field, 'field_choice_category'):
                 # field is a choice list
-                if value_of_this_field != None:
-                    different_field = 'different_' + field
-                    field_compare = field + '__exact'
-
-                    different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
-                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
-
-                else:
-                    different_field = 'different_' + field
-                    field_compare = field + '__exact'
-                    field_isnull = field + '__isnull'
-                    # due to legacy data, possible empty_values are: None, '', '0', 'None', ' ', '-'
-                    different_case = Case(When(**{ field_compare : '' , 'then' : 0 }),
-                                          When(**{field_isnull: True, 'then': 0}),
-                                          When(**{field_compare: 0, 'then': 0}),
-                                          When(**{field_compare: '0', 'then': 0}),
-                                          When(**{field_compare: '-', 'then': 0}),
-                                          When(**{field_compare: ' ', 'then': 0}),
-                                          When(**{field_compare: 'None', 'then': 0}),
-                                          default=1, output_field=IntegerField())
-                    minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
+                different_field = 'different_' + mapped_field
+                field_compare = mapped_field + '__exact'
+                different_case = Case(When(**{ field_compare : value_of_this_field , 'then' : 0 }), default=1, output_field=IntegerField())
+                minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
             else:
                 # field is a Boolean
-                different_field = 'different_' + field
-                field_compare = field + '__exact'
+                different_field = 'different_' + mapped_field
+                field_compare = mapped_field + '__exact'
                 if value_of_this_field == True:
                     different_case = Case(When(**{ field_compare : True , 'then' : 0 }), default=1, output_field=IntegerField())
 
@@ -1350,7 +1787,7 @@ class Gloss(models.Model):
                     minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
 
         # construct extra filter to check that the number of different fields is exactly 1
-        extra_comparison = ' + '.join('different_'+field for field in settings.MINIMAL_PAIRS_FIELDS)
+        extra_comparison = ' + '.join('different_'+mapped_field for mapped_field in mapped_minimal_pairs_fields)
         extra_comparison = '(' + extra_comparison + ') = 1'
         extra_comparison = [ extra_comparison ]
 
@@ -1369,27 +1806,61 @@ class Gloss(models.Model):
 
         focus_gloss_values_tuple = self.minimal_pairs_tuple()
 
+        index_of_handedness = settings.MINIMAL_PAIRS_FIELDS.index('handedness')
+        handedness_of_this_gloss = focus_gloss_values_tuple[index_of_handedness]
+
         minimal_pairs_fields = dict()
 
+        empty_handedness = [str(fc.id) for fc in
+                            FieldChoice.objects.filter(field='Handedness', name__in=['-', 'N/A'])]
+
         # If handedness is not defined for this gloss, don't bother to look up minimal pairs
-        if (self.handedness is None or self.handedness == '0'):
+        if handedness_of_this_gloss in empty_handedness:
             return minimal_pairs_fields
 
         # Restrict minimal pairs search if gloss has empty phonology field for Strong Hand
-        if (self.domhndsh is None or self.domhndsh == '0'):
+        index_of_handshape = settings.MINIMAL_PAIRS_FIELDS.index('domhndsh')
+        handshape_of_this_gloss = focus_gloss_values_tuple[index_of_handshape]
+        empty_handshape = [str(fc.machine_value) for fc in
+                            Handshape.objects.filter(name__in=['-', 'N/A'])]
+
+        if handshape_of_this_gloss in empty_handshape:
             return minimal_pairs_fields
+
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_minimal_pair_fields = {}
+        for mpf in settings.MINIMAL_PAIRS_FIELDS:
+            if mpf in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                mapped_minimal_pair_fields[mpf] = mpf + '_handshapefk'
+            elif mpf + '_fk' in foreign_key_fields:
+                mapped_minimal_pair_fields[mpf] = mpf + '_fk'
+            else:
+                mapped_minimal_pair_fields[mpf] = mpf
 
         mpos = self.minimalpairs_objects()
 
         for o in mpos:
             other_gloss_values_tuple = o.minimal_pairs_tuple()
             zipped_tuples = zip(settings.MINIMAL_PAIRS_FIELDS, focus_gloss_values_tuple, other_gloss_values_tuple)
+
             for (field_name, field_value, other_field_value) in zipped_tuples:
+                mapped_fieldname = mapped_minimal_pair_fields[field_name]
                 if field_value in [None, '0'] and other_field_value in [None,'0']:
                     continue
                 if field_value != other_field_value:
-                    field_label = Gloss._meta.get_field(field_name).verbose_name
-                    minimal_pairs_fields[o] = { field_name: (field_label, field_name, field_value, other_field_value, fieldname_to_kind(field_name)) }
+                    gloss_field = Gloss._meta.get_field(mapped_fieldname)
+                    field_label = gloss_field.verbose_name
+                    if field_name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                        if field_value is not None:
+                            field_value = Handshape.objects.get(machine_value=int(field_value)).name
+                        if other_field_value is not None:
+                            other_field_value = Handshape.objects.get(machine_value=int(other_field_value)).name
+                    if hasattr(gloss_field, 'field_choice_category'):
+                        if field_value is not None:
+                            field_value = FieldChoice.objects.get(id=int(field_value)).name
+                        if other_field_value is not None:
+                            other_field_value = FieldChoice.objects.get(id=int(other_field_value)).name
+                    minimal_pairs_fields[o] = {field_name: (field_label, field_name, field_value, other_field_value, fieldname_to_kind(field_name))}
 
         return minimal_pairs_fields
 
@@ -1411,28 +1882,49 @@ class Gloss(models.Model):
 
         # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
         try:
-            handedness_X = str(
-                FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
-        except:
+            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
+
+        except ObjectDoesNotExist:
+            # print('homonym_objects: Handedness X is not defined')
             handedness_X = ''
 
-        # there are lots of different values for undefined
-        if (handedness_of_this_gloss == 'None' or
-                handedness_of_this_gloss == '0' or handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
-                handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
+        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
+
+        if (handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X):
+            # ignore gloss with empty or X handedness
             return homonym_objects_list
 
         q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
-        for field in settings.MINIMAL_PAIRS_FIELDS + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        minimal_pair_fields = []
+        for field in settings.MINIMAL_PAIRS_FIELDS:
+            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                minimal_pair_fields.append(field + '_handshapefk')
+            elif field+'_fk' in foreign_key_fields:
+                minimal_pair_fields.append(field+'_fk')
+            else:
+                minimal_pair_fields.append(field)
 
-            value_of_this_field = str(phonology_for_gloss.get(field))
-            if (value_of_this_field == 'False' and field in settings.HANDEDNESS_ARTICULATION_FIELDS):
+        for field in minimal_pair_fields + settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+            if field.endswith('_handshapefk'):
+                lookup_key = field.replace('_handshapefk', '')
+            elif field.endswith('_fk'):
+                lookup_key = field.replace('_fk', '')
+            else:
+                lookup_key = field
+            value_of_this_field = phonology_for_gloss.get(lookup_key)
+
+            if value_of_this_field is None and field in foreign_key_fields:
+                # catch not set FK fields
+                comparison = field + '__isnull'
+                q.add(Q(**{comparison: True}), q.AND)
+            elif value_of_this_field == 'False' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
                 # fields weakdrop and weakprop use 3-valued logic, False only matches False, not Null
                 comparison1 = field + '__exact'
                 q.add(Q(**{comparison1: False}), q.AND)
-            elif (value_of_this_field == '-' or value_of_this_field == ' ' or value_of_this_field == ''
-                  or value_of_this_field == 'None' or value_of_this_field == 'False'):
+            elif value_of_this_field in ['-',' ','','None','False', None]:
+                # field is repeat or altern
                 comparison1 = field + '__isnull'
                 comparison2 = field + '__exact'
                 comparison3 = field + '__exact'
@@ -1448,7 +1940,12 @@ class Gloss(models.Model):
                 comparison = field + '__exact'
                 q.add(Q(**{comparison: True}), q.AND)
             else:
+                # FK fields are str(int) and fall through to here
                 comparison = field + '__exact'
+                if field in foreign_key_fields:
+                    # look up based on field choice id
+                    value_of_this_field = int(value_of_this_field)
+                    comparison = field + '_id__exact'
                 q.add(Q(**{comparison: value_of_this_field}), q.AND)
 
         qs = Gloss.objects.select_related('lemma').exclude(id=self.id).filter(q)
@@ -1482,18 +1979,24 @@ class Gloss(models.Model):
 
         # Ignore homonyms when the Handedness of this gloss is X, if it's a possible field choice
         try:
-            handedness_X = str(
-                FieldChoice.objects.get(field__iexact='Handedness', english_name__exact='X').machine_value)
-        except:
-            handedness_X = ''
+            handedness_X = str(FieldChoice.objects.get(field='Handedness', name__exact='X').id)
 
-        # there are lots of different values for undefined
-        if (handedness_of_this_gloss == 'None' or
-                handedness_of_this_gloss == '0' or handedness_of_this_gloss == '-' or handedness_of_this_gloss == ' ' or handedness_of_this_gloss == '' or
-                handedness_of_this_gloss == None or handedness_of_this_gloss == handedness_X):
+        except ObjectDoesNotExist:
+            print('homonyms: Handedness X is not defined')
             return ([], [], [])
 
-        if (self.domhndsh == None or self.domhndsh == '-' or self.domhndsh == '0'):
+        empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
+
+        if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
+            # ignore gloss with empty or X handedness
+            return ([], [], [])
+
+        handshape_of_this_gloss = phonology_for_gloss['domhndsh']
+
+        empty_handshape = [str(fc.machine_value) for fc in
+                            Handshape.objects.filter(name__in=['-', 'N/A'])]
+
+        if handshape_of_this_gloss in empty_handshape:
             return ([], [], [])
 
         homonyms_of_this_gloss = [g for g in self.homonym_objects()]
@@ -1657,8 +2160,11 @@ class Gloss(models.Model):
 
     def definition_role_choices_json(self):
         """Return JSON for the definition role choice list"""
-        from signbank.dictionary.forms import DEFN_ROLE_CHOICES
-        return self.options_to_json(DEFN_ROLE_CHOICES)
+        definition_role_choices = choicelist_queryset_to_translated_dict(
+                                 FieldChoice.objects.filter(field='NoteType'),
+                                 ordered=False, id_prefix=''
+                             )
+        return self.options_to_json(definition_role_choices)
 
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""
@@ -1701,7 +2207,11 @@ class Gloss(models.Model):
         """Return JSON for wordclass choices"""
 
         # Get the list of choices for this field
-        li = self._meta.get_field("wordClass").choices
+        li = list(FieldChoice.objects.filter(field='WordClass', machine_value__lte=1)
+                         .order_by('machine_value').values_list('id', 'name')) \
+                  + list([(field_choice.id, field_choice.name) for field_choice in
+                          FieldChoice.objects.filter(field='WordClass', machine_value__gt=1)
+                         .order_by('name')])
 
         # Sort the list
         sorted_li = sorted(li, key=lambda x: x[1])
@@ -1792,27 +2302,27 @@ except:
     pass
 
 
-def generate_choice_list_table():
-    temp_choice_list_table = dict()
-    for f in Gloss._meta.fields:
-        if f.choices:
-            temp_choice_list_table[f.name] = f.choices
-    for h in Handshape._meta.fields:
-        if h.choices:
-            if h not in temp_choice_list_table.keys():
-                temp_choice_list_table[h.name] = h.choices
-            else:
-                print('generate fieldname to kind table found identical field in Handshape and Gloss: ', h.name)
-    for k in Definition._meta.fields:
-        if k not in temp_choice_list_table.keys():
-            temp_choice_list_table[k.name] = k.choices
-        else:
-            print('generate fieldname to kind table found identical field in Handshape or Gloss and Definition: ',
-                  k.name)
-    return temp_choice_list_table
-
-
-choice_list_table = generate_choice_list_table()
+# def generate_choice_list_table():
+#     temp_choice_list_table = dict()
+#     for f in Gloss._meta.fields:
+#         if f.choices:
+#             temp_choice_list_table[f.name] = f.choices
+#     for h in Handshape._meta.fields:
+#         if h.choices:
+#             if h not in temp_choice_list_table.keys():
+#                 temp_choice_list_table[h.name] = h.choices
+#             else:
+#                 print('generate fieldname to kind table found identical field in Handshape and Gloss: ', h.name)
+#     for k in Definition._meta.fields:
+#         if k not in temp_choice_list_table.keys():
+#             temp_choice_list_table[k.name] = k.choices
+#         else:
+#             print('generate fieldname to kind table found identical field in Handshape or Gloss and Definition: ',
+#                   k.name)
+#     return temp_choice_list_table
+#
+#
+# choice_list_table = generate_choice_list_table()
 
 
 @receiver(pre_delete, sender=Gloss, dispatch_uid='gloss_delete_signal')
@@ -1865,82 +2375,6 @@ def fieldname_to_kind(fieldname):
     return field_kind
 
 
-def generate_translated_choice_list_table():
-    # Result of the line below is a list in this format {'en-us':'english'}
-    codes_to_adjectives = dict(
-        [(language.lower().replace('_', '-'), adjective) for language, adjective in settings.LANGUAGES])
-
-    temp_translated_choice_lists_table = dict()
-    for f in Gloss._meta.fields:
-        # print('inside first for loop')
-        if f.choices:
-            # print('inside if, field ', f.name)
-            #         # if there are choices for the field, get the human values from the FieldChoice table
-            try:
-                f_category = f.field_choice_category
-            except AttributeError:
-                print('generate_translated_choice_list_table AttributeError on field ', f.name, '. Missing field_choice_category.')
-                continue
-
-            #Tro to get the choice list, but don't crash if the table is not there (yet)
-            try:
-                if f_category == 'Handshape':
-                    choice_list = list(Handshape.objects.all())
-                else:
-                    choice_list = list(FieldChoice.objects.filter(field__iexact=f_category))
-            except (OperationalError, ProgrammingError) as e:
-                choice_list = []
-
-            # print('after getting choice_list: ', choice_list)
-            field_translated_choice_list = dict()
-
-            # add choices for 0 and 1
-            human_value_0 = '-'
-            translations_for_choice_0 = dict()
-            for (l_name, l_adjective) in codes_to_adjectives.items():
-                translations_for_choice_0[l_name] = human_value_0
-            field_translated_choice_list[0] = translations_for_choice_0
-            human_value_1 = 'N/A'
-            translations_for_choice_1 = dict()
-            for (l_name, l_adjective) in codes_to_adjectives.items():
-                translations_for_choice_1[l_name] = human_value_1
-            field_translated_choice_list[1] = translations_for_choice_1
-
-            if len(choice_list) > 0:
-                # print('choices found')
-                for c in choice_list:
-                    # c is either a Handshape or a FieldChoice object, get the translations from it
-                    # print('choice is: ', c.english_name)
-                    choices_machine_value = getattr(c, 'machine_value')
-                    translations_for_choice = dict()
-                    for (l_name, l_adjective) in codes_to_adjectives.items():
-                        adjective = l_adjective.lower()
-                        try:
-                            human_value = getattr(c, adjective + '_name')
-                        except AttributeError:
-                            # in case the language name is empty for the field choice
-                            human_value = getattr(c, 'english_name')
-                        except:
-                            # this should not happen, it seems the english_name field was removed from the model
-                            # probably a default setting is needed
-                            print('There is no field english_name in the FieldChoice table.')
-                            human_value = ''
-                        translations_for_choice[l_name] = human_value
-                    field_translated_choice_list[choices_machine_value] = translations_for_choice
-                #
-                temp_translated_choice_lists_table[f.name] = field_translated_choice_list
-            else:
-                if f.name in FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']:
-                    # if there are no choices for fields we expect choices for, print something to the log
-                    temp_translated_choice_lists_table[f.name] = field_translated_choice_list
-                    print('There are no choices for ', f_category, ' in the FieldChoice table of the database.')
-
-    return temp_translated_choice_lists_table
-
-
-translated_choice_lists_table = generate_translated_choice_list_table()
-
-
 class Relation(models.Model):
     """A relation between two glosses"""
 
@@ -1970,6 +2404,10 @@ class MorphologyDefinition(models.Model):
     parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses")
     role = models.CharField(max_length=5, choices=build_choice_list('MorphologyType'))
     role.field_choice_category = 'MorphologyType'
+    role_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.MORPHOLOGYTYPE},
+                                    field_choice_category=FieldChoice.MORPHOLOGYTYPE,
+                                    verbose_name=_("MorphologyType"))
     morpheme = models.ForeignKey(Gloss, related_name="morphemes")
 
     def __str__(self):
@@ -1984,6 +2422,10 @@ class Morpheme(Gloss):
     mrpType = models.CharField(_("Has morpheme type"), max_length=5, blank=True, null=True,
                                choices=build_choice_list('MorphemeType'))
     mrpType.field_choice_category = 'MorphemeType'
+    mrpType_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                       limit_choices_to={'field': FieldChoice.MORPHEMETYPE},
+                                       field_choice_category=FieldChoice.MORPHEMETYPE,
+                                       verbose_name=_("Has morpheme type"), related_name='morpheme_type')
 
     def __str__(self):
         """Morpheme string is like a gloss but with a marker identifying it as a morpheme"""
@@ -1993,6 +2435,24 @@ class Morpheme(Gloss):
         # We won't use this method in the interface but leave it for debugging purposes
 
         return self.idgloss
+
+    def get_mrpType_display(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            return self.mrpType.name if self.mrpType else self.mrpType
+        else:
+            return self.mrpType_fk.name if self.mrpType_fk else self.mrpType_fk
+
+    def get_handedness_display(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            return self.handedness.name if self.handedness else self.handedness
+        else:
+            return self.handedness_fk.name if self.handedness_fk else self.handedness_fk
+
+    def get_locprim_display(self):
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            return self.locprim.name if self.locprim else self.locprim
+        else:
+            return self.locprim_fk.name if self.locprim_fk else self.locprim_fk
 
     def admin_next_morpheme(self):
         """next morpheme in the admin view, shortcut for next_dictionary_morpheme with staff=True"""
@@ -2025,7 +2485,11 @@ class Morpheme(Gloss):
         """Return JSON for mrptype choices"""
 
         # Get the list of choices for this field
-        li = self._meta.get_field("mrpType").choices
+        li = list(FieldChoice.objects.filter(field='MorphemeType', machine_value__lte=1)
+                         .order_by('machine_value').values_list('id', 'name')) \
+                  + list([(field_choice.id, field_choice.name) for field_choice in
+                          FieldChoice.objects.filter(field='MorphemeType', machine_value__gt=1)
+                         .order_by('name')])
 
         # Sort the list
         sorted_li = sorted(li, key=lambda x: x[1])
@@ -2122,6 +2586,10 @@ class OtherMedia(models.Model):
     parent_gloss = models.ForeignKey(Gloss)
     type = models.CharField(max_length=5, choices=build_choice_list('OtherMediaType'))
     type.field_choice_category = 'OtherMediaType'
+    type_fk = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.OTHERMEDIATYPE},
+                                    field_choice_category=FieldChoice.OTHERMEDIATYPE,
+                                    verbose_name=_("Type"), related_name='other_media')
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
 
@@ -2296,71 +2764,82 @@ class Dataset(models.Model):
         return frequency_regions
 
     def generate_frequency_dict(self, language_code):
+        fields_to_map = FIELDS['phonology'] + FIELDS['semantics']
 
-        codes_to_adjectives = dict(settings.LANGUAGES)
+        # the following is coded here (it can't call the function in tools.py, which relies on models.py)
+        foreign_key_fields = [f.name for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]
+        mapped_phonology_fields = {}
+        # only map those fields with choices
+        for field in fields_to_map:
+            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                mapped_phonology_fields[field] = field + '_handshapefk'
+            elif field+'_fk' in foreign_key_fields:
+                mapped_phonology_fields[field] = field+'_fk'
 
-        if language_code not in codes_to_adjectives.keys():
-            adjective = settings.FALLBACK_FIELDCHOICE_HUMAN_LANGUAGE
+        gloss_fields = {}
+        # construct a dictionary where the keys are the field names as in the settings
+        # and the values are the fields of the gloss, using the new field choice model instead of the original
+        # this structure also prevents duplicates
+        if settings.USE_FIELD_CHOICE_FOREIGN_KEY:
+            for f in Gloss._meta.fields:
+                if f.name in fields_to_map:
+                    gloss_fields[f.name] = f
         else:
-            adjective = codes_to_adjectives[language_code].lower()
+            for fname in mapped_phonology_fields.keys():
+                mapped_field_name = mapped_phonology_fields[fname]
+                gloss_fields[fname] = Gloss._meta.get_field(mapped_field_name)
 
-        # sort the phonology fields based on field label in the designated language
         fields_data = []
-        for field in Gloss._meta.fields:
-            if field.name in FIELDS['phonology'] + FIELDS['semantics']:
-                if hasattr(field, 'field_choice_category'):
-                    fc_category = field.field_choice_category
-                    fields_data.append((field.name, field.verbose_name.title(), fc_category))
-
-        # CHOICE_LISTS dictionary, maps from field name to pairs of ( _ machine value , translated verbose name )
-        # The choice list will be sorted on the translated verbose name
-        choice_lists = dict()
-        for (f, field_verbose_name, fieldchoice_category) in fields_data:
-            if fieldchoice_category:
-                choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
-                # make a dictionary using the field name so we can look up the translated choices later
-                choice_lists[f] = choicelist_queryset_to_translated_dict(choice_list_this_field, language_code, ordered=False)
+        for field in mapped_phonology_fields.keys():
+            # mapped_field = mapped_phonology_fields[field]
+            gloss_field = gloss_fields[field]
+            if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
+                fields_data.append(
+                    (field, gloss_field.verbose_name.title(), 'Handshape'))
+            elif hasattr(gloss_field, 'field_choice_category'):
+                fields_data.append((field, gloss_field.verbose_name.title(), gloss_field.field_choice_category))
 
         # Sort the data by the translated verbose name field
         ordered_fields_data = sorted(fields_data, key=lambda x: x[1])
-
         frequency_lists_phonology_fields = OrderedDict()
         # To generate the correct order, iterate over the ordered fields data, which is ordered by translated verbose name
         for (f, field_verbose_name, fieldchoice_category) in ordered_fields_data:
+            mapped_field = mapped_phonology_fields[f]
+            # Choices: the ones with machine_value 0 and 1 first, the rest is sorted by name, which is the translated name
+            if fieldchoice_category == 'Handshape':
+                choice_list_this_field = list(Handshape.objects.filter(machine_value__lte=1).order_by('machine_value')) \
+                                         + list(Handshape.objects.filter(machine_value__gt=1).order_by('name'))
+            else:
+                choice_list_this_field = list(FieldChoice.objects.filter(field=fieldchoice_category, machine_value__lte=1).order_by('machine_value')) \
+                                        + list(FieldChoice.objects.filter(field=fieldchoice_category, machine_value__gt=1).order_by('name'))
 
-            choice_list_this_field = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by(adjective + '_name')
-
-            # We now basically construct a duplicate of the choice_lists dict, but with the machine values instead of the labels
-            # The machine value is what is stored as the value of the field in the Gloss objects
-            # We take the count of the machine value in the Gloss objects
-
-            # ordered = True means return an OrderedDict instead of a list
-            choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list_this_field, ordered=True)
-
-            # get dictionary of translated field choices CHOICE_LISTS for this field in sorted order (as per the language code)
-            sorted_field_choices = copy.deepcopy(choice_lists[f])
-
-            # Because we're dealing with multiple languages and we want the fields to be sorted for the language,
+            # Because we're dealing with multiple languages, we want the fields to be sorted for the language,
             # we maintain the order of the fields established for the choice_lists dict of field choice names
             choice_list_frequencies = OrderedDict()
-            for choice, label in sorted_field_choices:
-
-                machine_value = choice_list_machine_values[choice]
+            for fieldchoice in choice_list_this_field:
+                # variable column is field.name
+                variable_column = mapped_field
+                if variable_column.startswith('semField') and fieldchoice.machine_value > 0:
+                    variable_column_query = 'semFieldShadow__machine_value__in'
+                    try:
+                        semantic_field = [sf.machine_value for sf in SemanticField.objects.filter(name__exact=fieldchoice.name)]
+                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                                                                                         **{
+                                                                                             variable_column_query: semantic_field}).count()
+                    except ObjectDoesNotExist:
+                        print('not found semantic choice, ignore: ', fieldchoice.name)
+                        continue
                 # empty values can be either 0 or else null
-                # the raw query is constructed for this case separately from the case for actual values
-                if machine_value == 0:
-                    choice_list_frequencies[choice] = Gloss.objects.filter(Q(lemma__dataset=self),
-                                                                           Q(**{f + '__isnull': True}) |
-                                                                           Q(**{f: 0})).count()
+                elif fieldchoice.machine_value == 0:
+                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(Q(lemma__dataset=self),
+                                                                                     Q(**{variable_column + '__isnull': True}) |
+                                                                                     Q(**{variable_column: fieldchoice})).count()
                 else:
-                    variable_column = f
-                    search_filter = 'exact'
-                    filter = variable_column + '__' + search_filter
-                    choice_list_frequencies[choice] = Gloss.objects.filter(lemma__dataset=self.id).filter(
-                        **{filter: machine_value}).count()
+                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                                                                                     **{variable_column: fieldchoice}).count()
 
-                # the new frequencies for this field are added using the update method to insure the order is maintained
-                frequency_lists_phonology_fields.update({f: copy.deepcopy(choice_list_frequencies)})
+            # the new frequencies for this field are added using the update method to insure the order is maintained
+            frequency_lists_phonology_fields[f] = copy.deepcopy(choice_list_frequencies)
 
         return frequency_lists_phonology_fields
 
@@ -2553,6 +3032,13 @@ class GlossRevision(models.Model):
 
         #return str(self.user)
         return str(self.user) + " changed " + str(self.field_name) + " to " + str(self.new_value)
+
+    @property
+    def dataset(self):
+        try:
+            return self.gloss.lemma.dataset
+        except (KeyError, AttributeError, LookupError):
+            return None
 
 class Corpus(models.Model):
 

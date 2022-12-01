@@ -4,15 +4,17 @@ from django.forms import TextInput, Textarea, CharField
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
-from signbank.dictionary.forms import DefinitionForm
+from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm, SemanticFieldForm, HandshapeForm
 from reversion.admin import VersionAdmin
 from signbank.settings import server_specific
-from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD
+from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGES, LANGUAGE_CODE
 from modeltranslation.admin import TranslationAdmin
 from guardian.admin import GuardedModelAdmin
 from django.contrib.auth import get_permission_codename
 from django.contrib import messages
-
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.utils.translation import override, ugettext_lazy as _
 
 class DatasetAdmin(GuardedModelAdmin):
     model = Dataset
@@ -70,7 +72,7 @@ class DefinitionInline(admin.TabularInline):
             this_role = int(obj.role)
             this_choice = self.choice_list.filter(machine_value=this_role)[0]
             # just choose English for now
-            human_value = getattr(this_choice, 'english_name')
+            human_value = getattr(this_choice, 'name')
         except (TypeError, ValueError, AttributeError):
             human_value = '-'
         return human_value
@@ -86,7 +88,7 @@ class DefinitionInline(admin.TabularInline):
 class RelationInline(admin.TabularInline):
     model = Relation
     readonly_fields = ['id', 'role', 'target']
-    fk_name = 'source' 
+    fk_name = 'source'
     raw_id_fields = ['target']
     fields = ['id', 'role', 'target']
     verbose_name_plural = "Relations to other Glosses"
@@ -210,7 +212,6 @@ class LanguageInline(admin.TabularInline):
 
     extra = 0
 
-from django.utils.translation import ugettext_lazy as _
 from django.contrib.admin import SimpleListFilter
 
 class SenseNumberListFilter(SimpleListFilter):
@@ -244,8 +245,8 @@ class SenseNumberListFilter(SimpleListFilter):
             return queryset.filter(sense__isnull=True)
         if self.value() == 'morethanone':
             return queryset.filter(sense__gte=1)
-        
-        
+
+
 
 class GlossAdminForm(forms.ModelForm):
     readonly_fields = ['id', 'lemma', 'signlanguage', 'dialect'] + FIELDS['main'] \
@@ -393,9 +394,54 @@ class SimultaneousMorphologyDefinitionAdmin(VersionAdmin):
                 translations.append("{}".format(translation.text))
         return ", ".join(translations)
 
-class HandshapeAdmin(VersionAdmin):
+class HandshapeAdmin(VersionAdmin, TranslationAdmin):
 
-    list_display = ['machine_value', 'english_name', 'dutch_name']
+    readonly_fields = ['machine_value', 'dutch_name', 'chinese_name']
+    actions = ['delete_selected']
+
+    model = Handshape
+    fields = ['name', 'field_color', 'machine_value']
+    form = HandshapeForm
+
+    if hasattr(server_specific, 'SHOW_FIELD_CHOICE_COLORS') and server_specific.SHOW_FIELD_CHOICE_COLORS:
+        show_handshape_colors = True
+    else:
+        show_handshape_colors = False
+
+    list_display = ['machine_value', 'name', 'gloss_count']
+    ordering = ['machine_value']
+
+    def gloss_count(self, obj):
+
+        gloss_count = 0
+        if not obj:
+            return gloss_count
+        else:
+            machine_value = int(obj.machine_value)
+            from signbank.tools import gloss_handshape_fields
+
+            gloss_handshape_fields = gloss_handshape_fields()
+            for field_name in gloss_handshape_fields:
+                queries = [Q(**{field_name + '__machine_value': machine_value})]
+                query = queries.pop()
+                for item in queries:
+                    query |= item
+                count_in_use = Gloss.objects.filter(query).count()
+                gloss_count += count_in_use
+
+            return gloss_count
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(HandshapeAdmin, self).get_form(request, obj, **kwargs)
+
+        if obj:
+            # for display in the HTML color picker, the field color needs to be prefixed with #
+            # in the database,only the hex number is stored
+            # check whether there is already an initial # before adding one
+            obj_color = obj.field_color
+            if obj_color[0] != '#':
+                obj.field_color = '#'+obj.field_color
+        return form
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -403,26 +449,33 @@ class HandshapeAdmin(VersionAdmin):
             del actions['delete_selected']
         return actions
 
-class SemanticFieldAdminForm(forms.ModelForm):
+    def has_delete_permission(self, request, obj=None):
+        if not obj:
+            # print('ADMIN has_delete_permission obj is None')
+            # just return False if there is no object, prevent arbitrary deletion of field choices
+            return False
 
-    class Meta:
-        model = SemanticField
-        fields = ['name', 'description']
+        machine_value = obj.__dict__.get('machine_value', 0)
+        if not machine_value:
+            print('ADMIN has_delete_permission: handshape ', obj.name, ' has an empty machine value')
 
-    def __init__(self, *args, **kwargs):
-        super(SemanticFieldAdminForm, self).__init__(*args, **kwargs)
+        # check if this is a duplicate, if so allow deletion
+        handshapes_with_same_machine_value = Handshape.objects.filter(machine_value=machine_value).count()
+        if handshapes_with_same_machine_value > 1:
+            return True
 
-    def clean(self):
-        # check that the name is not empty
-        name = self.cleaned_data.get('name')
-        if not name:
-            raise forms.ValidationError(_('The semantic field name is required'))
+        from signbank.tools import gloss_handshape_fields
 
-    def get_form(self, request, obj=None, **kwargs):
-
-        form = super(SemanticFieldAdminForm, self).get_form(request, obj, **kwargs)
-        return form
-
+        gloss_handshape_fields = gloss_handshape_fields()
+        for field_name in gloss_handshape_fields:
+            queries = [Q(**{ field_name + '__machine_value' : machine_value })]
+            query = queries.pop()
+            for item in queries:
+                query |= item
+            count_in_use = Gloss.objects.filter(query).count()
+            if count_in_use > 0:
+                return False
+        return True
 
 class SemanticFieldTranslationInline(admin.TabularInline):
 
@@ -438,20 +491,33 @@ class SemanticFieldTranslationInline(admin.TabularInline):
         }
 
 
-class SemanticFieldAdmin(VersionAdmin):
+class SemanticFieldAdmin(VersionAdmin, TranslationAdmin):
 
     model = SemanticField
-    form = SemanticFieldAdminForm
+    fields = ['machine_value', 'name', 'field_color', 'description']
+    form = SemanticFieldForm
 
-    readonly_fields=['machine_value']
+    readonly_fields = ['machine_value']
 
     list_display = ['machine_value', 'name', 'description']
 
     inlines = [SemanticFieldTranslationInline,]
 
     formfield_overrides = {
-        models.TextField: {'widget': Textarea(attrs={'rows':1, 'cols':40}) }
+        models.TextField: {'widget': Textarea(attrs={'rows': 1, 'cols': 40}) }
     }
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(SemanticFieldAdmin, self).get_form(request, obj, **kwargs)
+
+        if obj:
+            # for display in the HTML color picker, the field color needs to be prefixed with #
+            # in the database,only the hex number is stored
+            # check whether there is already an initial # before adding one
+            obj_color = obj.field_color
+            if obj_color[0] != '#':
+                obj.field_color = '#'+obj.field_color
+        return form
 
     def get_actions(self, request):
         actions = super().get_actions(request)
@@ -467,7 +533,7 @@ class SemanticFieldTranslationAdmin(VersionAdmin):
 
     model = SemanticFieldTranslation
 
-    readonly_fields=['semField', 'language', 'name']
+    readonly_fields = ['semField', 'language', 'name']
 
     list_display = ['semField', 'name', 'language']
 
@@ -521,7 +587,7 @@ class DerivationHistoryTranslationInline(admin.TabularInline):
         }
 
 
-class DerivationHistoryAdmin(VersionAdmin):
+class DerivationHistoryAdmin(VersionAdmin, TranslationAdmin):
 
     model = DerivationHistory
     form = DerivationHistoryAdminForm
@@ -568,20 +634,63 @@ class DerivationHistoryTranslationAdmin(VersionAdmin):
     def has_add_permission(self, request):
         return False
 
+class GlossRevisionUserFilter(admin.SimpleListFilter):
+
+    title = _('User')
+    parameter_name = 'revisions_per_user'
+
+    def lookups(self, request, model_admin):
+        # filter on users who have actually changed things
+        users_present = GlossRevision.objects.all().values('user').distinct()
+        user_tuples = [ (u.id, u.username) for u in User.objects.filter(id__in=users_present) ]
+        return (tuple(
+            (user_id, user_username) for (user_id, user_username) in user_tuples
+        ))
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(user_id=self.value())
+        return queryset.all()
+
+class GlossRevisionDatasetFilter(admin.SimpleListFilter):
+
+    title = _('Dataset')
+    parameter_name = 'revisions_per_dataset'
+
+    def lookups(self, request, model_admin):
+        datasets = Dataset.objects.all()
+        return (tuple(
+            (dataset.id, dataset.acronym) for dataset in datasets
+        ))
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(gloss__lemma__dataset_id=self.value())
+        return queryset.all()
 
 class GlossRevisionAdmin(VersionAdmin):
 
     model = GlossRevision
 
+    list_display = ['time', 'user', 'dataset', 'gloss', 'field_name', 'old_value', 'new_value']
+    readonly_fields = ['user', 'gloss', 'field_name', 'old_value', 'new_value', 'time', 'old_value']
+    list_filter = (GlossRevisionDatasetFilter, GlossRevisionUserFilter,)
+
     def has_add_permission(self, request):
         return False
+
+    def get_list_display_links(self, request, list_display):
+        # do not allow the user to view individual revisions in list
+        self.list_display_links = (None, )
+        return self.list_display_links
+
 
 class RegistrationProfileAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'activation_key_expired', )
     search_fields = ('user__username', 'user__first_name', )
- 
+
 class DialectInline(admin.TabularInline):
-    
+
     model = Dialect
     fields = ['id', 'signlanguage', 'name', 'description']
     extra = 0
@@ -646,69 +755,14 @@ class UserAdmin(UserAdmin):
     inlines = (UserProfileInline, )
 
 
-class FieldChoiceAdminForm(forms.ModelForm):
-
-    # this form is needed in order to validate against duplicates
-    # hide some fields
-
-    show_field_choice_colors = server_specific.SHOW_FIELD_CHOICE_COLORS
-    show_english_only = server_specific.SHOW_ENGLISH_ONLY
-
-    def __init__(self, *args, **kwargs):
-        super(FieldChoiceAdminForm, self).__init__(*args, **kwargs)
-        if self.instance.field:
-            self.fields['field'].disabled = True
-        if not self.show_field_choice_colors:
-            self.fields['field_color'].widget = forms.HiddenInput()
-        if self.show_english_only:
-            self.fields['dutch_name'].widget = forms.HiddenInput()
-            self.fields['chinese_name'].widget = forms.HiddenInput()
-
-    class Meta:
-        model = FieldChoice
-        fields = ['field', 'english_name', 'dutch_name', 'chinese_name', 'field_color', 'machine_value']
-
-    def clean(self):
-        # check that the field category and (english) name does not already occur
-        en_name = self.cleaned_data['english_name']
-        field = self.cleaned_data['field']
-
-        if not field:
-            raise forms.ValidationError(_('The field name category is required'))
-
-        qs_f = FieldChoice.objects.filter(field=field)
-
-        if len(qs_f) == 0:
-            raise forms.ValidationError(_('This field category does not exist'))
-
-        qs_en = FieldChoice.objects.filter(field=field, english_name=en_name)
-
-        if len(qs_en) == 0:
-            # new field choice
-            return self.cleaned_data
-        elif len(qs_en) == 1:
-            # found exactly one match
-            fc_obj = qs_en[0]
-            if fc_obj.id == self.instance.id:
-                return self.cleaned_data
-            else:
-                raise forms.ValidationError(_('This field choice already exists'))
-        else:
-            # multiple duplicates found
-            raise forms.ValidationError(_('This field choice already exists'))
-
-    def get_form(self, request, obj=None, **kwargs):
-
-        form = super(FieldChoiceAdminForm, self).get_form(request, obj, **kwargs)
-        return form
-
-
-class FieldChoiceAdmin(VersionAdmin):
-    readonly_fields=['machine_value']
+class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
+    readonly_fields=['machine_value', 'dutch_name', 'chinese_name']
     actions=['delete_selected']
 
     model = FieldChoice
-    form = FieldChoiceAdminForm
+    fields = ['field', 'name'] \
+             + ['field_color', 'machine_value' ]
+    form = FieldChoiceForm
 
     if hasattr(server_specific, 'SHOW_FIELD_CHOICE_COLORS') and server_specific.SHOW_FIELD_CHOICE_COLORS:
         show_field_choice_colors = True
@@ -717,59 +771,23 @@ class FieldChoiceAdmin(VersionAdmin):
 
     if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
         show_english_only = True
-        list_display = ['english_name', 'machine_value','field']
+        list_display = ['name', 'machine_value','field']
     else:
-        list_display = ['english_name', 'dutch_name', 'machine_value', 'field']
+        list_display = ['name'] \
+                       + ['machine_value', 'field']
         show_english_only = False
     list_filter = ['field']
 
     def get_form(self, request, obj=None, **kwargs):
-        # for display in the HTML color picker, the field color needs to be prefixed with #
-        # in the database,only the hex number is stored
-        # because Django loads the form multiple times (why?), check whether there is already an initial # before adding one
+        form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
+
         if obj:
+            # for display in the HTML color picker, the field color needs to be prefixed with #
+            # in the database,only the hex number is stored
+            # check whether there is already an initial # before adding one
             obj_color = obj.field_color
             if obj_color[0] != '#':
                 obj.field_color = '#'+obj.field_color
-
-        if self.show_english_only:
-            self.exclude = ('dutch_name', 'chinese_name')
-        if self.show_field_choice_colors:
-            self.exclude = ('field_color')
-
-        form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
-        form_base_fields = form.__dict__['base_fields']
-        if not obj:
-            # a new field choice is being created
-            # see if the user is inside a category
-            try:
-                changelist_filters = request.GET['_changelist_filters']
-            except:
-                changelist_filters = ''
-            from urllib.parse import parse_qsl
-            query_params = dict(parse_qsl(changelist_filters))
-            if query_params:
-                new_field_category = query_params.get('field')
-                form_base_fields['field'].initial = new_field_category
-                form_base_fields['field'].disabled = True
-            else:
-                # restrict categories to those already existing
-                # categories are determined by the fields in the Models, the user does not create categories
-                field_choice_categories = FieldChoice.objects.all().values('field').distinct()
-                field_choice_categories = [ f['field'] for f in field_choice_categories]
-                field_choice_categories = sorted(list(set(field_choice_categories)))
-                field_choices = [(f, f) for f in field_choice_categories]
-                form_base_fields['field'].widget = forms.Select(choices=field_choices)
-
-        if self.show_field_choice_colors:
-            # SHOW_FIELD_COLORS
-            # set up the HTML color picker widget
-            form_base_fields['field_color'].widget = forms.TextInput(attrs={'type': 'color' })
-
-            # in the model, the default value is ffffff
-            # in the admin, the default value is a display value, so needs the #
-            form_base_fields['field_color'].initial = '#ffffff'
-
         return form
 
     def get_actions(self, request):
@@ -780,7 +798,7 @@ class FieldChoiceAdmin(VersionAdmin):
             del actions['delete_selected']
         return actions
 
-    def get_action_choices(self, request):
+    def get_action_choices(self, request, **kwargs):
         # remove the empty choice '---------' from actions
         choices = super(FieldChoiceAdmin, self).get_action_choices(request)
         choices.pop(0)
@@ -797,6 +815,10 @@ class FieldChoiceAdmin(VersionAdmin):
         if not field_machine_value:
             print('ADMIN has_delete_permission: field ', field_value, ' has an empty machine value')
 
+        # do not allow deletion of choices in to be removed field choice categories
+        if field_value in ['Handshape', 'SemField', 'derivHist']:
+            return False
+
         # check if this is a duplicate, if so allow deletion
         fieldchoices_with_same_machine_value = FieldChoice.objects.filter(field=field_value,machine_value=field_machine_value).count()
         if fieldchoices_with_same_machine_value > 1:
@@ -808,7 +830,8 @@ class FieldChoiceAdmin(VersionAdmin):
 
         fields_with_choices_glosses = fields_with_choices_glosses()
         if field_value in fields_with_choices_glosses.keys():
-            queries = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_glosses[field_value]]
+            queries = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                       for field_name in fields_with_choices_glosses[field_value]]
             query = queries.pop()
             for item in queries:
                 query |= item
@@ -817,7 +840,8 @@ class FieldChoiceAdmin(VersionAdmin):
 
         fields_with_choices_handshapes = fields_with_choices_handshapes()
         if field_value in fields_with_choices_handshapes.keys():
-            queries_h = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_handshapes[field_value]]
+            queries_h = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                         for field_name in fields_with_choices_handshapes[field_value]]
             query_h = queries_h.pop()
             for item in queries_h:
                 query_h |= item
@@ -826,7 +850,8 @@ class FieldChoiceAdmin(VersionAdmin):
 
         fields_with_choices_definition = fields_with_choices_definition()
         if field_value in fields_with_choices_definition.keys():
-            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_definition[field_value]]
+            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                                for field_name in fields_with_choices_definition[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
                 query_d |= item
@@ -835,7 +860,8 @@ class FieldChoiceAdmin(VersionAdmin):
 
         fields_with_choices_morphology_definition = fields_with_choices_morphology_definition()
         if field_value in fields_with_choices_morphology_definition.keys():
-            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_morphology_definition[field_value]]
+            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                         for field_name in fields_with_choices_morphology_definition[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
                 query_d |= item
@@ -844,7 +870,8 @@ class FieldChoiceAdmin(VersionAdmin):
 
         fields_with_choices_other_media_type = fields_with_choices_other_media_type()
         if field_value in fields_with_choices_other_media_type.keys():
-            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_other_media_type[field_value]]
+            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                         for field_name in fields_with_choices_other_media_type[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
                 query_d |= item
@@ -853,7 +880,8 @@ class FieldChoiceAdmin(VersionAdmin):
 
         fields_with_choices_morpheme_type = fields_with_choices_morpheme_type()
         if field_value in fields_with_choices_morpheme_type.keys():
-            queries_d = [Q(**{ field_name : field_machine_value }) for field_name in fields_with_choices_morpheme_type[field_value]]
+            queries_d = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                         for field_name in fields_with_choices_morpheme_type[field_value]]
             query_d = queries_d.pop()
             for item in queries_d:
                 query_d |= item
@@ -876,6 +904,9 @@ class FieldChoiceAdmin(VersionAdmin):
             # print('ADMIN has_change_permission is False for FingerSelection')
             return False
 
+        if obj is not None and obj.machine_value in [0,1]:
+            return False
+
         opts = self.opts
         codename = get_permission_codename('change', opts)
         return request.user.has_perm("%s.%s" % (opts.app_label, codename))
@@ -893,7 +924,7 @@ class FieldChoiceAdmin(VersionAdmin):
         if obj.machine_value == None:
             # Check out the query-set and make sure that it exists
             qs = FieldChoice.objects.filter(field=obj.field)
-            if len(qs) == 0:
+            if qs.count() == 0:
                 # The field does not yet occur within FieldChoice
                 # Future: ask user if that is what he wants (don't know how...)
                 # For now: assume user wants to add a new field (e.g: wordClass)
@@ -904,16 +935,39 @@ class FieldChoiceAdmin(VersionAdmin):
                 highest_machine_value = max([field_choice.machine_value for field_choice in qs])
                 # The automatic machine value we calculate is 1 higher
                 obj.machine_value= highest_machine_value+1
-        if self.show_field_choice_colors:
-            # the color in the database needs to be without the #, which is for display
-            if form and form.cleaned_data.get('field_color'):
-                new_color = form.cleaned_data['field_color']
-                # strip any initial #'s
-                while new_color[0] == '#':
-                    new_color = new_color[1:]
-                # store only the hex part
-                obj.field_color = new_color
-        obj.save()
+        elif obj.machine_value < 2:
+            # this case is prevented in the interface via Permission Denied
+            # it may be possible during testing
+            print('Not allowed to update field choices with machine value 0 or 1.')
+            return
+
+        if 'field_color' in form.data.keys():
+            new_color = form.data['field_color']
+            # strip any initial #'s
+            while new_color[0] == '#':
+                new_color = new_color[1:]
+            # store only the hex part
+            original_color = getattr(obj, 'field_color')
+            if new_color != original_color:
+                setattr(obj, 'field_color', new_color)
+
+        with override(LANGUAGE_CODE):
+            for name_field in form.data.keys():
+                if name_field not in form.fields:
+                    continue
+                if name_field == 'field_color' or name_field == 'csrfmiddlewaretoken':
+                    continue
+                new_name_value = form.data[name_field]
+                original_value = getattr(obj, name_field)
+                if new_name_value != original_value:
+                    setattr(obj, name_field, new_name_value)
+
+            try:
+                obj.save()
+            except Exception as e:
+                print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
+
+
 
 class LanguageAdmin(TranslationAdmin):
 
@@ -1053,7 +1107,7 @@ class LemmaIdglossTranslationAdmin(VersionAdmin):
 
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
-admin.site.register(Gloss, GlossAdmin) 
+admin.site.register(Gloss, GlossAdmin)
 admin.site.register(Morpheme, GlossAdmin)
 admin.site.register(Keyword, KeywordAdmin)
 admin.site.register(FieldChoice,FieldChoiceAdmin)

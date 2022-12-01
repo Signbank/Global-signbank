@@ -12,7 +12,6 @@
 {% block extrajs %}
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
     var url = '{{ URL }}'
@@ -117,7 +116,7 @@
     <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;margin-top:15px;">
         <fieldset>
             <table class='table table-condensed'>
-                <tr><th style="width:18em;">{% trans "Handshape " %}</th><td id='idhandshape'>{% value handshape.english_name %}</td></tr>
+                <tr><th style="width:18em;">{% trans "Handshape " %}</th><td id='idhandshape'>{% value handshape.name %}</td></tr>
                 <tr><th style="width:18em;">Finger selection</th>
                     <td id="#fingerSelection1">{{ handshape.get_fingerSelection_display }}</td></tr>
                 <tr class="empty_row">
@@ -135,7 +134,7 @@
                 </tr>
 
 		{% for value,name,label,kind in handshape_fields %}
-                {% if value == '-' or value == ' ' or value == '' or value == None or value == False %}
+                {% if value == '-' or value == 'N/A' %}
                     <tr value="{{value}}" class="empty_row">
                     <th style="width:18em;">{{label}}</th>
                     <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>

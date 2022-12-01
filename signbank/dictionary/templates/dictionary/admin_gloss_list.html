@@ -903,7 +903,7 @@ function do_toggle_annotation(el) {
 
 {% if object_list %}
 
-{% regroup object_list by lemma as lemma_groups %}
+{% regroup glosses_ordered_by_lemma_id by lemma as lemma_groups %}
 
 <table class='table table-condensed' id = 'lemmalist_table'>
 <thead id = 'lemmalist_table_header'>
@@ -923,7 +923,7 @@ function do_toggle_annotation(el) {
     </th>
     {% endfor %}
 
-    {% for column in column_headers %}
+    {% for field, column in column_headers %}
     <th>{{column}}</th>
     {% endfor %}
 
@@ -936,7 +936,6 @@ function do_toggle_annotation(el) {
 
 <tbody>
 {% for lemma in lemma_groups %}
-{% if lemma.list|length > 1 %}
 <tr>
 
 <td>{{lemma.grouper}}</td>
@@ -946,7 +945,6 @@ function do_toggle_annotation(el) {
     <tr id = "lemmagloss_{{gloss.id}}">
     </tr>
   {% endfor %}
-{% endif %}
 {% endfor %}
 </tbody>
 </table>
