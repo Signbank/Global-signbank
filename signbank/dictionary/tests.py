@@ -17,9 +17,11 @@ from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages.storage.cookie import CookieStorage
 from itertools import *
-
+from pathlib import Path
 
 from guardian.shortcuts import assign_perm
+
+from signbank.video.models import GlossVideo
 
 class BasicCRUDTests(TestCase):
 
@@ -3467,3 +3469,85 @@ def decode_messages(data):
         hash, value = bits
         return value
     return None
+
+
+
+class GlossApiTest(TestCase):
+
+    dataset = 0
+    gloss_name = 'test'
+    video_url = 'test_video_url'
+    file_path = settings.WRITABLE_FOLDER + video_url
+
+    @classmethod
+    def setUpTestData(cls):
+
+        # Create a language for the dataset and sign language models
+        language = Language.objects.create()
+
+        # Create a sign language for the dataset
+        sign_language = SignLanguage.objects.create()
+
+        # Create a dataset and save the id for the filter
+        test_dataset = Dataset.objects.create(name=cls.gloss_name, signlanguage_id=sign_language.id,  default_language_id=language.id)
+        test_dataset.translation_languages.add(language)
+        cls.dataset = test_dataset.id
+
+        # Create a lemma and a translation so the api method can filter on the text
+        test_lemma = LemmaIdgloss.objects.create(dataset_id=test_dataset.id)
+        LemmaIdglossTranslation.objects.create(text=cls.gloss_name, lemma_id=test_lemma.id, language=language)
+
+        # Create a with a video that the api should return
+        gloss = Gloss.objects.create(lemma=test_lemma, inWeb=True)
+        GlossVideo.objects.create(gloss_id=gloss.id, videofile=cls.video_url)
+        
+        # Create the file for the video which the gloss will return when get_video_url is called
+        Path(cls.file_path).mkdir()
+
+        # Create extra data which the api should not return because they are filtert out of the data
+        # Gloss without a video
+        Gloss.objects.create(lemma=test_lemma, inWeb=True)
+        # Gloss that is not in the public dictionary
+        Gloss.objects.create(lemma=test_lemma, inWeb=False)
+
+    @classmethod
+    def tearDownClass(cls):
+        # Remove video path
+        Path(cls.file_path).rmdir()
+        
+    def test_no_data_set_selected(self):
+        """
+        Check if an error is returned if no dataset is selected.
+        """
+        assert_json = '[{"error":"No dataset selected"}]'
+        data = {"search":"test"}
+        response = self.client.get(reverse('dictionary:gloss_api'), data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content,assert_json)
+
+    def test_no_search_term_provided(self):
+        """
+        Check if an error is returned if no search term is provided.
+        """
+        assert_json = '[{"error":"No search term found"}]'
+        data = {"dataset":self.dataset}
+        response = self.client.get(reverse('dictionary:gloss_api'), data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content,assert_json)
+
+    def test_json_data_structure(self):
+        """
+        Check that if the returned json is correct if the dataset and the search term are provided
+        """
+        assert_json = []
+        sign_json = {
+                "sign_name" : self.gloss_name,
+                "image_url" : "",
+                "video_url" : self.video_url
+                }
+        assert_json.append(sign_json)
+
+        data = {"dataset":self.dataset,"search":self.gloss_name}
+        response = self.client.get(reverse('dictionary:gloss_api'), data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content,assert_json)

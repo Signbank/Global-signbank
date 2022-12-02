@@ -1,7 +1,9 @@
+from django.conf import empty
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
+from django.utils.datastructures import MultiValueDictKeyError
 from tagging.models import Tag, TaggedItem
 from django.utils.http import urlquote
 from django.contrib import messages
@@ -9,6 +11,7 @@ from pathlib import Path
 
 import csv
 import time
+from signbank.dictionary.adminviews import order_queryset_by_sort_order
 
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
@@ -31,7 +34,7 @@ from signbank.settings.base import *
 from django.utils.translation import override, ugettext_lazy as _
 
 from urllib.parse import urlencode, urlparse
-from wsgiref.util import FileWrapper
+from wsgiref.util import FileWrapper, request_uri
 import datetime as DT
 
 
@@ -2856,4 +2859,52 @@ def gif_prototype(request):
 
     return render(request,'dictionary/gif_prototype.html')
 
+def gloss_api(request):
+    """
+    API endpoint for the sign app that returns a json object with all the signs names and urls
+    """
 
+    dataset = 0 
+    max_number_of_results = 100
+    response = []
+    glosses = []
+
+    if request.GET: 
+
+        try:
+            max_number_of_results = int(request.GET['results'])
+        except MultiValueDictKeyError:
+            print('Maximum number of results is not set so default to 100')
+
+        try:
+            dataset = request.GET['dataset']
+        except MultiValueDictKeyError:
+            response.append({"error":"No dataset selected"})
+            return HttpResponse(json.dumps(response), content_type="application/json")
+
+        try:
+            search = request.GET['search']
+            glosses = Gloss.objects \
+                    .filter(inWeb = True) \
+                    .filter(lemma__lemmaidglosstranslation__text__startswith = search) \
+                    .filter(lemma__dataset = dataset) \
+                    .order_by('lemma__lemmaidglosstranslation__text')[0:max_number_of_results]
+        except MultiValueDictKeyError:
+            response.append({"error":"No search term found"})
+            return HttpResponse(json.dumps(response), content_type="application/json")
+
+    for gloss in glosses:
+        gloss_name = gloss.__str__()
+        video_url= gloss.get_video_url()
+        image_url = gloss.get_image_url()
+
+        if video_url:
+            dict = {
+                    "sign_name": gloss_name, 
+                    "video_url": video_url, 
+                    "image_url": image_url
+                    }
+
+            response.append(dict)
+
+    return HttpResponse(json.dumps(response), content_type="application/json")
