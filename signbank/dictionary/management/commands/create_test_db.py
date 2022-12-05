@@ -27,11 +27,10 @@ class Command(BaseCommand):
     help = 'Creates a smaller faster database for unit tests'
 
     def handle(self, *args, **options):
+        # find databases
+        SOURCE_DB = settings.DATABASES['default']['NAME']
+        TEST_DB_FILENAME = settings.DATABASES['default']['TEST']['NAME']
 
-        # Static settings
-        WRITABLE_FOLDER = '/var/www/writable/database/'
-        SOURCE_DB = WRITABLE_FOLDER + 'signbank.db'
-        TEST_DB_FILENAME = WRITABLE_FOLDER + 'test-signbank.db'
         SMALL = True
 
         if isfile(TEST_DB_FILENAME):
