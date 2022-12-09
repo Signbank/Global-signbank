@@ -72,7 +72,6 @@ urlpatterns = [
     url(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete, name='homonyms_ajax_complete'),
     url(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.minimalpairs_ajax_complete, name='minimalpairs_ajax_complete'),
     url(r'^ajax/glossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.glosslist_ajax_complete, name='glosslist_ajax_complete'),
-    url(r'^ajax/glosspreview/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.glossrow_ajax_complete_colors,{'show_colors':True}),
     url(r'^ajax/glosslistheader/$', signbank.dictionary.adminviews.glosslistheader_ajax, name='glosslistheader_ajax'),
     url(r'^ajax/lemmaglossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.lemmaglosslist_ajax_complete, name='lemmaglosslist_ajax_complete'),
     url(r'^ajax/choice_lists/$', signbank.dictionary.views.choice_lists,name='choice_lists'),
@@ -111,10 +110,8 @@ urlpatterns = [
     url(r'^morpheme/(?P<pk>\d+)', MorphemeDetailView.as_view(), name='admin_morpheme_view'),
     url(r'^handshape/(?P<pk>\d+)', HandshapeDetailView.as_view(), name='admin_handshape_view'),
     url(r'^semanticfield/(?P<pk>\d+)', SemanticFieldDetailView.as_view(), name='admin_semanticfield_view'),
-    url(r'^semanticfields/$', permission_required('dictionary.search_gloss')(SemanticFieldListView.as_view()), name='admin_semanticfield_list'),
     url(r'^derivationhistory/(?P<pk>\d+)', DerivationHistoryDetailView.as_view(), name='admin_derivationhistory_view'),
-    url(r'^derivationhistory_list/$', permission_required('dictionary.search_gloss')(DerivationHistoryListView.as_view()),
-        name='admin_derivationhistory_list'),
+
     # Lemma Idgloss views
     url(r'^lemma/$', login_required(LemmaListView.as_view()), name='admin_lemma_list'),
     url(r'^lemma/add/$', permission_required('dictionary.add_lemmaidgloss')(LemmaCreateView.as_view()), name='create_lemma'),
