@@ -124,7 +124,7 @@ def add_gloss(request):
                                                              'selected_datasets': get_selected_datasets_for_user(request.user),
                                                              'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-    if not lemma_form.is_valid():
+    if lemma_form and not lemma_form.is_valid():
         messages.add_message(request, messages.ERROR, _("The new lemma form is not valid."))
         return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
                                                              'dataset_languages': dataset_languages,
