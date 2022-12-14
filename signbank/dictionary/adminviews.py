@@ -697,7 +697,15 @@ class GlossListView(ListView):
                     if hasattr(gloss, 'get_' + f.name + '_display'):
                         value = getattr(gloss, 'get_' + f.name + '_display')()
                     else:
-                        value = getattr(gloss, f.name).name
+                        field_value = getattr(gloss, f.name)
+                        value = field_value.name if field_value else '-'
+                elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+                    handshape_field_value = getattr(gloss, f.name)
+                    value = handshape_field_value.name if handshape_field_value else '-'
+                elif f.related_model == SemanticField:
+                    value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
+                elif f.related_model == DerivationHistory:
+                    value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
                 else:
                     value = getattr(gloss, f.name)
 
@@ -2692,24 +2700,25 @@ class MorphemeListView(ListView):
                     row.append("")
 
             for f in fields:
-
-                # Try the value of the choicelist
-                try:
-                    row.append(getattr(gloss, 'get_' + f.name + '_display')())
-
-                # If it's not there, try the raw value
-                except AttributeError:
+                #Try the value of the choicelist
+                if hasattr(f, 'field_choice_category'):
+                    if hasattr(gloss, 'get_' + f.name + '_display'):
+                        value = getattr(gloss, 'get_' + f.name + '_display')()
+                    else:
+                        field_value = getattr(gloss, f.name)
+                        value = field_value.name if field_value else '-'
+                elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+                    handshape_field_value = getattr(gloss, f.name)
+                    value = handshape_field_value.name if handshape_field_value else '-'
+                elif f.related_model == SemanticField:
+                    value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
+                elif f.related_model == DerivationHistory:
+                    value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
+                else:
                     value = getattr(gloss, f.name)
-
-
-                    # This was disabled with the move to Python 3... might not be needed anymore?
-                    # if isinstance(value, unicode):
-                    #     value = str(value.encode('ascii', 'xmlcharrefreplace'))
-                    # elif not isinstance(value, str):
-
                     value = str(value)
 
-                    row.append(value)
+                row.append(value)
 
             # get languages
             signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
