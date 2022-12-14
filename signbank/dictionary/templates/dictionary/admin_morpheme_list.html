@@ -737,9 +737,10 @@ function do_set_lemma_language(el) {
         {% endwith %}
       {% endfor %}
             <td>{{ morpheme.get_mrpType_display }}</td>
-
             {% for lang, translations in morpheme.abstract_meaning %}
+            {% if lang in dataset_languages %}
             <td>{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            {% endif %}
             {% endfor %}
 
             <td>{% if morpheme.handedness %}{{ morpheme.get_handedness_display }}{% else %}-{% endif %}</td>

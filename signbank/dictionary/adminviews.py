@@ -85,11 +85,18 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
+        def lambda_sort_tuple(x, bReversed):
+            # Order by the string-values in the tuple list
+            getattr_sOrder = getattr(x, sOrder)
+            if getattr_sOrder is None:
+                # if the field is not set, use the machine value 0 choice
+                return (True, dict(tpList)[0])
+            elif getattr_sOrder.machine_value in [0,1]:
+                return (True, dict(tpList)[getattr_sOrder.machine_value])
+            else:
+                return(bReversed, dict(tpList)[getattr(x, sOrder).machine_value])
 
-        # Order by the string-values in the tuple list
-        return sorted(qs, key=lambda x: (getattr(x, sOrder) is None or getattr(x, sOrder).machine_value in [0, 1]
-                                         or bReversed, dict(tpList)[getattr(x, sOrder).machine_value]),
-                      reverse=bReversed)
+        return sorted(qs, key=lambda x: lambda_sort_tuple(x, bReversed), reverse=bReversed)
 
     def order_queryset_by_annotationidglosstranslation(qs, sOrder):
         language_code_2char = sOrder[-2:]
@@ -5688,7 +5695,7 @@ def order_handshape_queryset_by_sort_order(get, qs):
                    .order_by('name').values_list('machine_value', flat=True))
         )])
 
-        ordered_handshapes = sorted(qs, key=lambda handshape_obj: order_dict[getattr(handshape_obj, sort_order).id]
+        ordered_handshapes = sorted(qs, key=lambda handshape_obj: order_dict[getattr(handshape_obj, sort_order).machine_value]
                             if getattr(handshape_obj, sort_order) else -1, reverse=reverse)
 
     else:
