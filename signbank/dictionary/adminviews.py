@@ -6865,7 +6865,11 @@ class LemmaCreateView(CreateView):
                 print("LEMMA " + str(lemma.pk))
             except ValidationError as ve:
                 messages.add_message(request, messages.ERROR, ve.message)
-                return render(request, 'dictionary/add_lemma.html', {'add_lemma_form': LemmaCreateForm(request.POST, user=request.user, last_used_dataset=self.last_used_dataset),
+                return render(request, 'dictionary/add_lemma.html',
+                              {'add_lemma_form': LemmaCreateForm(request.POST,
+                                                                 languages=dataset_languages,
+                                                                 user=request.user,
+                                                                 last_used_dataset=self.last_used_dataset),
                                                                      'dataset_languages': dataset_languages,
                                                                      'selected_datasets': get_selected_datasets_for_user(request.user),
                                                                         'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })

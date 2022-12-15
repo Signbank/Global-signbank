@@ -2694,7 +2694,7 @@ class LemmaIdglossTranslation(models.Model):
         if dataset:
             # Before an item is saved the language is checked against the languages of the dataset the lemma is in.
             dataset_languages = dataset.translation_languages.all()
-            if not self.language in dataset_languages:
+            if self.language not in dataset_languages:
                 msg = "Language %s is not in the set of language of the dataset gloss %s belongs to" \
                       % (self.language.name, self.lemma.id)
                 raise ValidationError(msg)
@@ -2702,9 +2702,7 @@ class LemmaIdglossTranslation(models.Model):
             # The lemma idgloss translation text for a language must be unique within a dataset.
             lemmas_with_same_text = dataset.lemmaidgloss_set.filter(lemmaidglosstranslation__text__exact=self.text,
                                                                     lemmaidglosstranslation__language=self.language)
-            if not (
-                    (len(lemmas_with_same_text) == 1 and lemmas_with_same_text[0] == self.lemma)
-                    or lemmas_with_same_text is None or len(lemmas_with_same_text) == 0):
+            if lemmas_with_same_text.count() > 1:
                 msg = "The lemma idgloss translation text '%s' is not unique within dataset '%s' for lemma '%s'." \
                       % (self.text, dataset.acronym, self.lemma.id)
                 raise ValidationError(msg)
