@@ -72,7 +72,6 @@ urlpatterns = [
     url(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete, name='homonyms_ajax_complete'),
     url(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.minimalpairs_ajax_complete, name='minimalpairs_ajax_complete'),
     url(r'^ajax/glossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.glosslist_ajax_complete, name='glosslist_ajax_complete'),
-    url(r'^ajax/glosspreview/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.glossrow_ajax_complete_colors,{'show_colors':True}),
     url(r'^ajax/glosslistheader/$', signbank.dictionary.adminviews.glosslistheader_ajax, name='glosslistheader_ajax'),
     url(r'^ajax/lemmaglossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.lemmaglosslist_ajax_complete, name='lemmaglosslist_ajax_complete'),
     url(r'^ajax/choice_lists/$', signbank.dictionary.views.choice_lists,name='choice_lists'),

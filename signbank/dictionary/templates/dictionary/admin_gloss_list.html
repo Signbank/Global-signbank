@@ -19,7 +19,6 @@
     var language_code = '{{ LANGUAGE_CODE }}';
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
     var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
-    var last_used_dataset = '{{last_used_dataset}}';
 </script>
 
 <style>
@@ -84,6 +83,7 @@ $(document).ready(function() {
 
     function makeMultipleSelect(fieldId,fieldVar) {
         var target_pulldown = document.getElementById(fieldId);
+        if (!target_pulldown) { return; }
         target_pulldown.setAttribute('multiple','multiple');
         target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
         target_pulldown.setAttribute('name',fieldVar);
@@ -671,7 +671,7 @@ function do_toggle_annotation(el) {
                       </table>
                       </div>
                     </div>
-
+                    {% if not user.is_anonymous %}
                     <div  class="panel panel-default">
                       <div class="panel-heading" data-toggle="collapse"
                            data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
@@ -691,6 +691,7 @@ function do_toggle_annotation(el) {
                       </table>
                       </div>
                     </div>
+                    {% endif %}
                 </div>
 
         </div>
@@ -787,13 +788,11 @@ function do_toggle_annotation(el) {
                       <td>
                       <select id="id_dataset" name="dataset" required="">
                      {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-                         <option value=""
-                                 dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
                          {% for s_dataset in selected_datasets %}
 
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
                          {% if "change_dataset" in dataset_perms %}
-                         {% if last_used_dataset == s_dataset.acronym %}
+                         {% if last_used_dataset and last_used_dataset == s_dataset.acronym %}
                          <option value="{{ s_dataset.id }}" selected="selected"
                                  dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
                          {% else %}
