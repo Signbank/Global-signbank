@@ -1346,21 +1346,23 @@ def add_morphology_definition(request):
 
     if request.method == "POST":
         form = GlossMorphologyForm(request.POST)
-
         if form.is_valid():
 
             parent_gloss = form.cleaned_data['parent_gloss_id']
-            role = form.cleaned_data['role']
+            role_id = form.cleaned_data['role']
             morpheme_id = form.cleaned_data['morpheme_id'] # This is now a gloss ID
             morpheme = Gloss.objects.get(id=morpheme_id)
 
             thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
+            role = get_object_or_404(FieldChoice, pk=role_id, field='MorphologyType')
 
             # create definition, default to not published
             morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
             morphdef.save()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+        else:
+            print(form.errors, form.data, form.cleaned_data)
 
     raise Http404('Incorrect request')
 

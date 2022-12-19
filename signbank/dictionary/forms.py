@@ -546,27 +546,19 @@ def get_morphology_type_choices():
     return choices
 
 
-class GlossMorphologyForm(forms.ModelForm):
+class GlossMorphologyForm(forms.Form):
     """Morphology specification of a Gloss"""
 
     parent_gloss_id = forms.CharField(label=_(u'Parent Gloss'))
-    # role = forms.ChoiceField(label=_(u'Type'),choices=get_morphology_type_choices,
-    #                          widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    role = forms.ChoiceField(label=_(u'Type'),choices=[],
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
     morpheme_id = forms.CharField(label=_(u'Morpheme'))
-
-    class Meta:
-        model = MorphologyDefinition
-        fields = []
 
     def __init__(self, *args, **kwargs):
         super(GlossMorphologyForm, self).__init__(*args, **kwargs)
-        self.fields['role'] = forms.ChoiceField(label=_(u'Type'),
-                                                choices= choicelist_queryset_to_translated_dict(
-                                                    list(FieldChoice.objects.filter(field='MorphologyType').order_by(
-                                                        'machine_value')),
-                                                    ordered=False, id_prefix='', shortlist=False
-                                                ),
-                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+        self.fields['role'].choices = list(FieldChoice.objects.filter(field='MorphologyType').order_by('machine_value')
+                                           .values_list('pk', 'name'))
+
 
 class GlossMorphemeForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
