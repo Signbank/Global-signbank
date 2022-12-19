@@ -156,12 +156,13 @@ class MorphemeCreateForm(forms.ModelForm):
         self.languages = kwargs.pop('languages')
         self.user = kwargs.pop('user')
         self.last_used_dataset = kwargs.pop('last_used_dataset')
-
         super(MorphemeCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         if 'dataset' in queryDict:
             self.fields['dataset'] = forms.ModelChoiceField(queryset=Dataset.objects.all())
             self.fields['dataset'].initial = queryDict['dataset']
+        if self.last_used_dataset:
+            self.fields['dataset'] = forms.ModelChoiceField(queryset=Dataset.objects.filter(acronym=self.last_used_dataset))
 
         for language in self.languages:
             morphemecreate_field_name = self.morpheme_create_field_prefix + language.language_code_2char
@@ -841,6 +842,7 @@ class LemmaCreateForm(forms.ModelForm):
     lemma_create_field_prefix = "lemmacreate_"
     languages = None # Languages to use for lemma idgloss translations
     user = None
+    last_used_dataset = None
 
     class Meta:
         model = LemmaIdgloss
@@ -850,6 +852,8 @@ class LemmaCreateForm(forms.ModelForm):
         if 'languages' in kwargs:
             self.languages = kwargs.pop('languages')
         self.user = kwargs.pop('user')
+        self.last_used_dataset = kwargs.pop('last_used_dataset')
+
         super(LemmaCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         from signbank.tools import get_selected_datasets_for_user
@@ -863,19 +867,24 @@ class LemmaCreateForm(forms.ModelForm):
             if lemmacreate_field_name in queryDict:
                 self.fields[lemmacreate_field_name].initial = queryDict[lemmacreate_field_name]
 
+        if self.last_used_dataset:
+            self.fields['dataset'] = forms.ModelChoiceField(queryset=Dataset.objects.filter(acronym=self.last_used_dataset))
+
     @atomic  # This rolls back the lemma creation if creating lemmaidglosstranslations fails
     def save(self, commit=True):
         lemma = super(LemmaCreateForm, self).save(commit)
+        # get initial translations before saving new ones
+        existing_lemma_translations = lemma.lemmaidglosstranslation_set.all()
         for language in self.languages:
             lemmacreate_field_name = self.lemma_create_field_prefix + language.language_code_2char
             lemma_idgloss_text = self[lemmacreate_field_name].value()
-            existing_lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
-            if existing_lemmaidglosstranslations is None or len(existing_lemmaidglosstranslations) == 0:
+            existing_lemmaidglosstranslations = existing_lemma_translations.filter(language=language)
+            if existing_lemmaidglosstranslations.count() == 0:
                 lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma, language=language,
                                                                             text=lemma_idgloss_text)
                 lemmaidglosstranslation.save()
-            elif len(existing_lemmaidglosstranslations) == 1:
-                lemmaidglosstranslation = existing_lemmaidglosstranslations[0]
+            elif existing_lemmaidglosstranslations.count() == 1:
+                lemmaidglosstranslation = existing_lemmaidglosstranslations.first()
                 lemmaidglosstranslation.text = lemma_idgloss_text
                 lemmaidglosstranslation.save()
             else:

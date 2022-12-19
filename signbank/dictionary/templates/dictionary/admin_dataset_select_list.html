@@ -53,7 +53,7 @@ function select_no_datasets() {
           {% get_obj_perms request.user for dataset as "dataset_perms" %}
             {% if "view_dataset" in dataset_perms %}
             <tr>
-                <td><input type="checkbox" name="dataset_{{ dataset.name }}" value="true" {% if dataset.user.0.user %}checked{% endif %}/></td>
+                <td><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.user.0.user %}checked{% endif %}/></td>
                 <td>
                     <a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.acronym }}</a>
                 </td>
@@ -68,7 +68,7 @@ function select_no_datasets() {
     <tbody>
         {% for dataset in object_list %}
             <tr>
-                <td><input type="checkbox" name="dataset_{{ dataset.name }}" value="true" {% if dataset.checked %}checked{% endif %}/></td>
+                <td><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.checked %}checked{% endif %}/></td>
                 <td>
                     <a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.acronym }}</a>
                 </td>

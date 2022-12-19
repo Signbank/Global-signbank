@@ -21,7 +21,8 @@ import django_summernote.urls
 from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
                                             HomonymListView, MinimalPairsListView, DatasetManagerView, \
                                             DatasetDetailView, FrequencyListView, DatasetFieldChoiceView, \
-                                            dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView, QueryListView
+                                            dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView, \
+                                            QueryListView, SemanticFieldListView, DerivationHistoryListView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -76,7 +77,8 @@ urlpatterns = [
     url(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
     url(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
     url(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
-    url(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
+    url(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()),
+                name='admin_handshape_list'),
     url(r'^morphemes/dictionary/$', signbank.dictionary.views.search_morpheme),
     url(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view())),
     url(r'^morphemes/show_all/$', login_required(MorphemeListView.as_view()), {'show_all': True}),
@@ -97,8 +99,12 @@ urlpatterns = [
 
     url(r'^settings/field_colors/$', login_required(FieldChoiceView.as_view()), {'color': True},
         name='admin_dataset_field_choice_colors'),
-    url(r'^settings/glosslist_colors/$', login_required(GlossListView.as_view()), {'settings': True},
-        name='admin_settings_glosslist_colors_preview'),
+    url(r'^settings/semanticfields/$',
+                  permission_required('dictionary.search_gloss')(SemanticFieldListView.as_view()),
+                  name='admin_semanticfield_list'),
+    url(r'^settings/derivationhistory_list/$',
+                  permission_required('dictionary.search_gloss')(DerivationHistoryListView.as_view()),
+                  name='admin_derivationhistory_list'),
 
     # special admin sub site
     url(r'^publisher/', include(publisher_admin.urls)),
