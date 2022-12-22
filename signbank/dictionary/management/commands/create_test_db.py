@@ -28,18 +28,18 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # find databases
-        SOURCE_DB = settings.DATABASES['default']['NAME']
-        TEST_DB_FILENAME = settings.DATABASES['default']['TEST']['NAME']
+        source_db = settings.DATABASES['default']['NAME']
+        test_db_filename = settings.DATABASES['default']['TEST']['NAME']
 
         SMALL = True
 
-        if isfile(TEST_DB_FILENAME):
+        if isfile(test_db_filename):
             self.stdout.write('Making backup of old test database')
-            move(TEST_DB_FILENAME, TEST_DB_FILENAME + '_save')
+            move(test_db_filename, test_db_filename + '_save')
 
         self.stdout.write('Copying database file')
-        copyfile(SOURCE_DB, TEST_DB_FILENAME)
+        copyfile(source_db, test_db_filename)
 
         if SMALL:
             self.stdout.write('Emptying tables, for faster tests')
-            make_db_small(TEST_DB_FILENAME)
+            make_db_small(test_db_filename)
