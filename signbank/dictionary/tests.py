@@ -51,6 +51,9 @@ class BasicCRUDTests(TestCase):
 
         # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
+        print(Dataset.objects.count())
+        print(dataset_name)
+        print(Dataset.objects.all())
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma
@@ -263,7 +266,7 @@ class BasicCRUDTests(TestCase):
         response = client.get('/signs/search/',{'handedness[]':search_value_handedness})
         self.assertEqual(len(response.context['object_list']), 0) #Nothing without dataset permission
 
-        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('can_view_dataset', self.user, test_dataset)
         response = client.get('/signs/search/',{'handedness[]':search_value_handedness})
         self.assertEqual(len(response.context['object_list']), 2)
 
@@ -286,7 +289,7 @@ class BasicCRUDTests(TestCase):
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('can_view_dataset', self.user, test_dataset)
         assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.search_gloss', self.user)
         assign_perm('dictionary.add_gloss', self.user)
@@ -364,7 +367,7 @@ class BasicQueryTests(TestCase):
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('can_view_dataset', self.user, test_dataset)
         assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
@@ -1097,7 +1100,7 @@ class FrontEndTests(TestCase):
                             .format(self.hidden_gloss.pk))
 
         #With permissions you also see something
-        assign_perm('view_dataset', self.user, self.test_dataset)
+        assign_perm('can_view_dataset', self.user, self.test_dataset)
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         self.assertNotEqual(len(response.content),0)
 
@@ -1107,7 +1110,7 @@ class FrontEndTests(TestCase):
         self.client = Client()
         self.client.login(username='test-user', password='test-user')
 
-        assign_perm('view_dataset', self.user, self.test_dataset)
+        assign_perm('can_view_dataset', self.user, self.test_dataset)
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
 
         invalid_patterns = ['= ;','= var']
@@ -1438,7 +1441,7 @@ class LemmaTests(TestCase):
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('can_view_dataset', self.user, test_dataset)
         self.user.save()
 
         # search for the lemma without glosses: test_lemma_without_gloss
@@ -1548,7 +1551,7 @@ class HandshapeTests(TestCase):
         # set the test dataset
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('can_view_dataset', self.user, test_dataset)
         assign_perm('change_dataset', self.user, test_dataset)
 
         self.client.login(username='test-user', password='test-user')
@@ -1572,7 +1575,7 @@ class HandshapeTests(TestCase):
         # set the test dataset
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('can_view_dataset', self.user, test_dataset)
         assign_perm('change_dataset', self.user, test_dataset)
 
         # Create 10 lemmas for use in testing
@@ -1734,7 +1737,7 @@ class MultipleSelectTests(TestCase):
         #Create a client and log in
         client = Client(enforce_csrf_checks=False)
         client.login(username='test-user', password='test-user')
-        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('can_view_dataset', self.user, test_dataset)
 
         # Create a lemma
         new_lemma = LemmaIdgloss(dataset=test_dataset)
@@ -2465,7 +2468,7 @@ class testFrequencyAnalysis(TestCase):
 
         self.client.login(username='test-user', password='test-user')
 
-        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('can_view_dataset', self.user, test_dataset)
 
         response = self.client.get('/analysis/frequencies/', follow=True)
         self.assertEqual(response.status_code,200)
@@ -2642,7 +2645,7 @@ class testSettings(TestCase):
                 if isinstance(gloss_field, models.ForeignKey) and gloss_fields_names[f].related_model == Handshape:
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
                 elif not isinstance(gloss_field, FieldChoiceForeignKey):
-                    # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
+                    # field is instance of: BooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
                     self.assertFalse(hasattr(gloss_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 elif not hasattr(gloss_field, 'field_choice_category'):
@@ -2675,7 +2678,7 @@ class testSettings(TestCase):
                 if f in ['semField', 'derivHist']:
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
                 elif not isinstance(gloss_field, FieldChoiceForeignKey):
-                    # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
+                    # field is instance of: BooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
                     self.assertFalse(hasattr(gloss_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 elif not hasattr(gloss_field, 'field_choice_category'):
@@ -2705,7 +2708,7 @@ class testSettings(TestCase):
 
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
                 if not isinstance(handshape_field, FieldChoiceForeignKey):
-                    # field is instance of: NullBooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
+                    # field is instance of: BooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
                     self.assertFalse(hasattr(handshape_field, 'field_choice_category'))
                     self.assertNotEqual(fieldname_to_kind_table[f], 'list')
                 elif not hasattr(handshape_field, 'field_choice_category'):
@@ -2850,7 +2853,7 @@ class RevisionHistoryTests(TestCase):
                 new_machine_value_string = '2'
                 gloss_update_phonology_data.append({'id': f, 'value': new_machine_value_string})
                 gloss_update_phonology_keys.append(f)
-            elif isinstance(gloss_field, NullBooleanField):
+            elif isinstance(gloss_field, BooleanField):
                 new_machine_value_string = 'true'
                 gloss_update_phonology_data.append({'id' : f, 'value' : new_machine_value_string})
                 gloss_update_phonology_keys.append(f)
@@ -3299,7 +3302,7 @@ class MinimalPairsTests(TestCase):
 
         self.client.login(username='test-user', password='test-user')
 
-        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('can_view_dataset', self.user, test_dataset)
         response = self.client.get('/analysis/minimalpairs/', {'paginate_by':20}, follow=True)
 
         objects_on_page = response.__dict__['context_data']['objects_on_page']
@@ -3414,7 +3417,7 @@ class MinimalPairsTests(TestCase):
 
         self.client.login(username='test-user', password='test-user')
 
-        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('can_view_dataset', self.user, test_dataset)
         response = self.client.get('/analysis/minimalpairs/', {'paginate_by':20}, follow=True)
 
         objects_on_page = response.__dict__['context_data']['objects_on_page']

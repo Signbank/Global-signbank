@@ -2,13 +2,13 @@
 import os
 from signbank.feedback.models import *
 from django import forms
-from django.shortcuts import render, get_object_or_404, redirect, render_to_response
+from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Context, RequestContext, loader
 from django.conf import settings 
 from django.core.mail import send_mail
 from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse, HttpResponseRedirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from signbank.tools import get_selected_datasets_for_user

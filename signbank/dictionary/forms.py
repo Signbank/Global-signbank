@@ -1,7 +1,7 @@
 from colorfield.fields import ColorWidget
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _, get_language
+from django.utils.translation import gettext_lazy as _, get_language
 from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
@@ -156,12 +156,13 @@ class MorphemeCreateForm(forms.ModelForm):
         self.languages = kwargs.pop('languages')
         self.user = kwargs.pop('user')
         self.last_used_dataset = kwargs.pop('last_used_dataset')
-
         super(MorphemeCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         if 'dataset' in queryDict:
             self.fields['dataset'] = forms.ModelChoiceField(queryset=Dataset.objects.all())
             self.fields['dataset'].initial = queryDict['dataset']
+        if self.last_used_dataset:
+            self.fields['dataset'] = forms.ModelChoiceField(queryset=Dataset.objects.filter(acronym=self.last_used_dataset))
 
         for language in self.languages:
             morphemecreate_field_name = self.morpheme_create_field_prefix + language.language_code_2char
@@ -546,27 +547,18 @@ def get_morphology_type_choices():
     return choices
 
 
-class GlossMorphologyForm(forms.ModelForm):
+class GlossMorphologyForm(forms.Form):
     """Morphology specification of a Gloss"""
 
     parent_gloss_id = forms.CharField(label=_(u'Parent Gloss'))
-    # role = forms.ChoiceField(label=_(u'Type'),choices=get_morphology_type_choices,
-    #                          widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    role = forms.ChoiceField(label=_(u'Type'),choices=[],
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
     morpheme_id = forms.CharField(label=_(u'Morpheme'))
-
-    class Meta:
-        model = MorphologyDefinition
-        fields = []
 
     def __init__(self, *args, **kwargs):
         super(GlossMorphologyForm, self).__init__(*args, **kwargs)
-        self.fields['role'] = forms.ChoiceField(label=_(u'Type'),
-                                                choices= choicelist_queryset_to_translated_dict(
-                                                    list(FieldChoice.objects.filter(field='MorphologyType').order_by(
-                                                        'machine_value')),
-                                                    ordered=False, id_prefix='', shortlist=False
-                                                ),
-                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+        self.fields['role'].choices = list(FieldChoice.objects.filter(field='MorphologyType').order_by('machine_value')
+                                           .values_list('pk', 'name'))
 
 class GlossMorphemeForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
@@ -849,6 +841,8 @@ class LemmaCreateForm(forms.ModelForm):
     lemma_create_field_prefix = "lemmacreate_"
     languages = None # Languages to use for lemma idgloss translations
     user = None
+    last_used_dataset = None
+
 
     class Meta:
         model = LemmaIdgloss
@@ -858,6 +852,8 @@ class LemmaCreateForm(forms.ModelForm):
         if 'languages' in kwargs:
             self.languages = kwargs.pop('languages')
         self.user = kwargs.pop('user')
+        self.last_used_dataset = kwargs.pop('last_used_dataset')
+
         super(LemmaCreateForm, self).__init__(queryDict, *args, **kwargs)
 
         from signbank.tools import get_selected_datasets_for_user
@@ -871,19 +867,24 @@ class LemmaCreateForm(forms.ModelForm):
             if lemmacreate_field_name in queryDict:
                 self.fields[lemmacreate_field_name].initial = queryDict[lemmacreate_field_name]
 
+        if self.last_used_dataset:
+            self.fields['dataset'] = forms.ModelChoiceField(queryset=Dataset.objects.filter(acronym=self.last_used_dataset))
+
     @atomic  # This rolls back the lemma creation if creating lemmaidglosstranslations fails
     def save(self, commit=True):
         lemma = super(LemmaCreateForm, self).save(commit)
+        # get initial translations before saving new ones
+        existing_lemma_translations = lemma.lemmaidglosstranslation_set.all()
         for language in self.languages:
             lemmacreate_field_name = self.lemma_create_field_prefix + language.language_code_2char
             lemma_idgloss_text = self[lemmacreate_field_name].value()
-            existing_lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
-            if existing_lemmaidglosstranslations is None or len(existing_lemmaidglosstranslations) == 0:
+            existing_lemmaidglosstranslations = existing_lemma_translations.filter(language=language)
+            if existing_lemmaidglosstranslations.count() == 0:
                 lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma, language=language,
                                                                             text=lemma_idgloss_text)
                 lemmaidglosstranslation.save()
-            elif len(existing_lemmaidglosstranslations) == 1:
-                lemmaidglosstranslation = existing_lemmaidglosstranslations[0]
+            elif existing_lemmaidglosstranslations.count() == 1:
+                lemmaidglosstranslation = existing_lemmaidglosstranslations.first()
                 lemmaidglosstranslation.text = lemma_idgloss_text
                 lemmaidglosstranslation.save()
             else:

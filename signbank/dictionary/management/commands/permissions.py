@@ -14,7 +14,7 @@ create_signs = Permission.objects.get(codename='add_gloss', content_type__model_
 publish = Permission.objects.get(codename='can_publish', content_type__model__exact='gloss')
 delete_unpublished = Permission.objects.get(codename='can_delete_unpublished', content_type__model__exact='gloss')
 delete_published = Permission.objects.get(codename='can_delete_published', content_type__model__exact='gloss')
-view_interp_note = Permission.objects.get(codename='view_interpreterfeedback', content_type__model__exact='interpreterfeedback')
+view_interp_note = Permission.objects.get(codename='can_view_interpreterfeedback', content_type__model__exact='interpreterfeedback')
 create_interp_note = Permission.objects.get(codename='add_interpreterfeedback', content_type__model__exact='interpreterfeedback')
 delete_interp_note = Permission.objects.get(codename='delete_interpreterfeedback', content_type__model__exact='interpreterfeedback')
 delete_gen_feedback = Permission.objects.get(codename='delete_generalfeedback', content_type__model__exact='generalfeedback')

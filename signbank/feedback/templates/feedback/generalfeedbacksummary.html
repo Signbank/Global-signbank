@@ -16,7 +16,7 @@
       <tr>
         <td>{{feedback.date}}</td>
         <td>{{feedback.user}}</td>
-        <td>{{feedback.comment}}{% ifnotequal feedback.video "" %}<br /><br /><a href="upload/{{feedback.video}}">{{feedback.video}}</a>{% endifnotequal %}</td>
+        <td>{{feedback.comment}}{% if feedback.video != "" %}<br /><br /><a href="upload/{{feedback.video}}">{{feedback.video}}</a>{% endif %}</td>
       </tr>
 
       {% end for %}      

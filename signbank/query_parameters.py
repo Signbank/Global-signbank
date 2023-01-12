@@ -11,7 +11,7 @@ import csv
 from django.db.models import Q
 from django.http import QueryDict
 
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, gettext_lazy as _
 
 from django.http import HttpResponse, HttpResponseRedirect
 
@@ -22,9 +22,9 @@ from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
 from django.db.models import CharField, TextField, Value as V
-from django.db.models.fields import NullBooleanField, BooleanField
+from django.db.models.fields import BooleanField, BooleanField
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
@@ -284,7 +284,7 @@ def convert_query_parameters_to_filter(query_parameters):
             else:
                 q_filter = get_key + '__exact'
 
-            if isinstance(field_obj,NullBooleanField):
+            if isinstance(field_obj,BooleanField):
                 q_value = {'0':'','1': None, '2': True, '3': False}[get_value]
             else:
                 q_value = get_value

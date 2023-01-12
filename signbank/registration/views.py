@@ -6,9 +6,9 @@ Views which allow users to create and activate accounts.
 
 from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponse
-from django.shortcuts import render, get_object_or_404, render_to_response
+from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.middleware.csrf import get_token
 
 from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
@@ -228,9 +228,10 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         form = EmailAuthenticationForm(request)
 
     request.session.set_test_cookie()
-    if Site._meta.installed:
-        current_site = Site.objects.get_current()
-    else:
+    try:
+        if Site._meta.installed:
+            current_site = Site.objects.get_current()
+    except AttributeError:
         current_site = RequestSite(request)
 
     # For logging in API clients
@@ -264,7 +265,7 @@ def users_without_dataset(request):
                 continue
 
             user = User.objects.get(pk=int(user.split('_')[-1]))
-            assign_perm('view_dataset', user, main_dataset)
+            assign_perm('can_view_dataset', user, main_dataset)
 
             users_with_access.append(user.first_name + ' ' + user.last_name)
 
@@ -290,7 +291,7 @@ def user_profile(request):
     else:
         delta = None
     selected_datasets = get_selected_datasets_for_user(user)
-    view_permit_datasets = get_objects_for_user(user, 'view_dataset', Dataset)
+    view_permit_datasets = get_objects_for_user(user, 'can_view_dataset', Dataset)
     change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
 
     return render (request, 'user_profile.html', {'selected_datasets': selected_datasets,

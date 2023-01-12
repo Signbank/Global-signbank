@@ -10,7 +10,7 @@
 {% block content %}
 
 	    <div id="matches">
-	        {% ifequal viewname "words" %}
+	        {% if viewname == "words" %}
 	            <h2>Search: <em>{{translation.translation}}</em></h2> 
              
 	            <div id='matcheslinks' data-role="controlgroup" data-type="horizontal">
@@ -26,14 +26,14 @@
 	            <div id='matcheslinks' data-role="controlgroup" data-type="horizontal">	            
 	             <a  data-role='button' data-inline='true' href="{{PREFIX_URL}}/dictionary/words/{{lastmatch}}.html">Return to Matches</a>
 	            </div>
-	        {% endifequal %}
+	        {% endif %}
 	        
 	    </div><!-- End #matches -->
 
 		<div id="keywords"> 
 	         <p><strong>Keywords:</strong>
 	         {% for kwd in allkwds %}
-	           {% ifequal translation.translation kwd.translation %}<b>{{ kwd.translation }}</b>{% else %}{{ kwd.translation }}{% endifequal %}{% if not forloop.last %},{% endif %}
+	           {% if translation.translation == kwd.translation %}<b>{{ kwd.translation }}</b>{% else %}{{ kwd.translation }}{% endif %}{% if not forloop.last %},{% endif %}
 	         {% endfor %}
 	         </p>
 	    </div>
@@ -165,13 +165,13 @@
         <div>
            <h4>Sign Distribution</h4> 
                 <ul>
-                {% ifequal dialect_image "images/maps/allstates.gif" %}
+                {% if dialect_image == "images/maps/allstates.gif" %}
                   <li>All States</li>
                 {% else %}
 	                {% for dialect in gloss.dialect.all %}
 	                  <li>{{ dialect.name }}</li>
 	                {% endfor %}
-                {% endifequal %}
+                {% endif %}
                 </ul>  
         </div>
 

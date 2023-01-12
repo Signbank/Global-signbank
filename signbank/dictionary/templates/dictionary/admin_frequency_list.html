@@ -29,36 +29,36 @@ $(document).ready(function() {
         target_pulldown.style.width = '100%';
     }
 
-     for (var i = 0; i < multiple_select_fields.length; i++) {
+    for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = 'id_' + multiple_select_fields[i];
         var this_var = multiple_select_fields[i] + '[]';
         makeMultipleSelect(this_id, this_var);
-     }
+    }
 
-     $('.js-example-basic-multiple').select2({
+    $('.js-example-basic-multiple').select2({
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve'
-     });
-     $('.js-example-basic-multiple').val(null).trigger('change');
+    });
+    $('.js-example-basic-multiple').val(null).trigger('change');
 
-     $('.js-example-basic-multiple').on('select2:select', function(e) {
+    $('.js-example-basic-multiple').on('select2:select', function(e) {
         var data = e.params.data;
         var field_key = data.element.id;
         for (i = 0; i < field_ds.length; i++) {
             var elt_row_id = '#' + field_ds[i] + '_field_' + field_key;
             $(elt_row_id).toggle();
-        }
-     });
+    }
+    });
 
-     $('.js-example-basic-multiple').on('select2:unselect', function(e) {
+    $('.js-example-basic-multiple').on('select2:unselect', function(e) {
         var data = e.params.data;
         var field_key = data.element.id;
         for (i = 0; i < field_ds.length; i++) {
             var elt_row_id = '#' + field_ds[i] + '_field_' + field_key;
             $(elt_row_id).toggle();
-        }
-     });
+    }
+    });
 });
 
 function toggle_empty_frequencies(e) {

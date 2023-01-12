@@ -5,7 +5,7 @@ from signbank.dictionary.models import Dataset
 
 def url(request):
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         # for anonymous users, show datasets with public glosses in header
         viewable_datasets = get_datasets_with_public_glosses()
 

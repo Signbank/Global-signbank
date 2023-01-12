@@ -1,9 +1,9 @@
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from tagging.models import Tag, TaggedItem
-from django.utils.http import urlquote
+from urllib.parse import quote
 from django.contrib import messages
 from pathlib import Path
 
@@ -28,7 +28,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 
 import signbank.settings
 from signbank.settings.base import *
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, gettext_lazy as _
 
 from urllib.parse import urlencode, urlparse
 from wsgiref.util import FileWrapper
@@ -460,10 +460,10 @@ def search(request):
 
         glossQuery = form.cleaned_data['glossQuery']
         # Issue #153: make sure + and - signs are translated correctly into the search URL
-        glossQuery = urlquote(glossQuery)
+        glossQuery = quote(glossQuery)
         term = form.cleaned_data['query']
         # Issue #153: do the same with the Translation, encoded by 'query'
-        term = urlquote(term)
+        term = quote(term)
 
         return HttpResponseRedirect('../../signs/search/?search='+glossQuery+'&keyword='+term)
 
@@ -707,7 +707,6 @@ def import_authors(request):
 
 # this method is called from the Signbank menu bar
 def add_new_sign(request):
-    print('inside views add_new_sign')
     context = {}
 
     selected_datasets = get_selected_datasets_for_user(request.user)
@@ -716,12 +715,13 @@ def add_new_sign(request):
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
     if len(selected_datasets) == 1:
-        last_used_dataset = selected_datasets[0]
+        last_used_dataset = selected_datasets[0].acronym
     elif 'last_used_dataset' in request.session.keys():
         last_used_dataset = request.session['last_used_dataset']
     else:
-        last_used_dataset = default_dataset
+        last_used_dataset = None
     context['last_used_dataset'] = last_used_dataset
+
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
     context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
@@ -744,10 +744,10 @@ def search_morpheme(request):
 
         morphQuery = form.cleaned_data['morphQuery']
         # Issue #153: make sure + and - signs are translated correctly into the search URL
-        morphQuery = urlquote(morphQuery)
+        morphQuery = quote(morphQuery)
         term = form.cleaned_data['query']
         # Issue #153: do the same with the Translation, encoded by 'query'
-        term = urlquote(term)
+        term = quote(term)
 
         return HttpResponseRedirect('../../morphemes/search/?search='+morphQuery+'&keyword='+term)
 
@@ -763,11 +763,11 @@ def add_new_morpheme(request):
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
     if len(selected_datasets) == 1:
-        last_used_dataset = selected_datasets[0]
+        last_used_dataset = selected_datasets[0].acronym
     elif 'last_used_dataset' in request.session.keys():
         last_used_dataset = request.session['last_used_dataset']
     else:
-        last_used_dataset = default_dataset
+        last_used_dataset = None
     context['last_used_dataset'] = last_used_dataset
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -1686,7 +1686,7 @@ def import_csv_update(request):
             with override(settings.LANGUAGE_CODE):
 
                 #Replace the value for bools
-                if fieldname in Gloss._meta.get_fields() and Gloss._meta.get_field(fieldname).__class__.__name__ == 'NullBooleanField':
+                if fieldname in Gloss._meta.get_fields() and Gloss._meta.get_field(fieldname).__class__.__name__ == 'BooleanField':
 
                     if new_value in ['true','True', 'TRUE']:
                         new_value = True
@@ -2212,8 +2212,7 @@ def add_image(request):
                 f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
                 destination = File(f)
             except:
-                import urllib.parse
-                quoted_filename = urllib.parse.quote(gloss.idgloss, safe='')
+                quoted_filename = quote(gloss.idgloss, safe='')
                 filename = quoted_filename + '-' + str(gloss.pk) + extension
                 goal_location_str = os.path.join(goal_path, filename)
                 try:
@@ -2554,7 +2553,7 @@ def info(request):
 
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
 
         # If we are not logged in, try to find if this maybe belongs to a gloss that is free to see for everbody?
         (name, ext) = os.path.splitext(os.path.basename(filename))
@@ -2583,8 +2582,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     if not exists:
         # quote the filename instead to resolve special characters in the url
         (head, tail) = os.path.split(filename)
-        import urllib.parse
-        quoted_filename = urllib.parse.quote(tail, safe='')
+        quoted_filename = quote(tail, safe='')
         quoted_path = os.path.join(dir_path, head, quoted_filename)
         exists = os.path.exists(quoted_path)
         if not exists:

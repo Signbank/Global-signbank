@@ -11,7 +11,7 @@ import csv
 from django.db.models import Q
 from django.http import QueryDict
 
-from django.utils.translation import override, ugettext_lazy as _, activate
+from django.utils.translation import override, gettext_lazy as _, activate
 
 from django.http import HttpResponse, HttpResponseRedirect
 
@@ -22,9 +22,9 @@ from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
 from django.db.models import CharField, TextField, Value as V
-from django.db.models.fields import NullBooleanField, BooleanField
+from django.db.models.fields import BooleanField, BooleanField
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
@@ -742,7 +742,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 except ValueError:
                     new_human_value = 'None'
                     new_machine_value = None
-            elif field.__class__.__name__ == 'NullBooleanField':
+            elif field.__class__.__name__ == 'BooleanField':
 
                 new_human_value_lower = new_human_value.lower()
                 if new_human_value_lower == 'neutral' and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
@@ -802,7 +802,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                         print('CSV Update: Original machine value for gloss ', gloss_id, ' has an undefined choice for field ', field.name, ': ', original_machine_value)
                         original_machine_value = None
 
-                elif field.__class__.__name__ == 'NullBooleanField':
+                elif field.__class__.__name__ == 'BooleanField':
                     if original_machine_value is None and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
                         original_human_value = 'Neutral'
                     elif original_machine_value:
@@ -1448,7 +1448,7 @@ def get_datasets_with_public_glosses():
 def get_selected_datasets_for_user(user, readonly=False):
     if user.is_authenticated:
         user_profile = UserProfile.objects.get(user=user)
-        viewable_datasets = get_objects_for_user(user, 'view_dataset', Dataset)
+        viewable_datasets = get_objects_for_user(user, 'can_view_dataset', Dataset)
         selected_datasets = user_profile.selected_datasets.all()
         if not selected_datasets:
             return viewable_datasets
@@ -1480,7 +1480,7 @@ def get_users_without_dataset():
     users_with_no_dataset = []
 
     for user in User.objects.all():
-        if user.is_active and len(get_objects_for_user(user, 'view_dataset', Dataset)) == 0:
+        if user.is_active and len(get_objects_for_user(user, 'can_view_dataset', Dataset)) == 0:
             users_with_no_dataset.append(user)
 
     return users_with_no_dataset
@@ -1823,7 +1823,7 @@ def get_users_who_can_view_dataset(dataset_name):
     for user in all_users:
         import guardian
         from guardian.shortcuts import get_objects_for_user
-        user_view_datasets = guardian.shortcuts.get_objects_for_user(user, 'view_dataset', Dataset)
+        user_view_datasets = guardian.shortcuts.get_objects_for_user(user, 'can_view_dataset', Dataset)
         if dataset in user_view_datasets:
             users_who_can_view_dataset.append(user.username)
 

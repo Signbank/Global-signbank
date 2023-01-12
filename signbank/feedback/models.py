@@ -5,7 +5,7 @@ from signbank.settings.base import COMMENT_VIDEO_LOCATION, WRITABLE_FOLDER
 import os
 from signbank.video.fields import VideoUploadToFLVField
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from signbank.dictionary.models import *
 #from signbank.dictionary.models import Gloss
@@ -35,11 +35,11 @@ class InterpreterFeedback(models.Model):
 
     class Meta:
         ordering = ['-date']
-        permissions = (('view_interpreterfeedback', "Can View Interpreter Feedback"),)
+        permissions = (('can_view_interpreterfeedback', "Can View Interpreter Feedback"),)
 
     #gloss = models.ForeignKey(Gloss)
     comment = models.TextField('Note')
-    user = models.ForeignKey(authmodels.User)
+    user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
     
@@ -55,7 +55,7 @@ class GeneralFeedback(models.Model):
  
     comment = models.TextField(blank=True)
     video = models.FileField(upload_to=settings.COMMENT_VIDEO_LOCATION, blank=True) 
-    user = models.ForeignKey(authmodels.User)
+    user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
            
@@ -145,10 +145,10 @@ correctChoices =  ( (1, "Yes"),
 class SignFeedback(models.Model):
     """Store feedback on a particular sign"""
     
-    user = models.ForeignKey(authmodels.User, editable=False)
+    user = models.ForeignKey(authmodels.User, editable=False, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     
-    translation = models.ForeignKey(Translation, editable=False)
+    translation = models.ForeignKey(Translation, editable=False, on_delete=models.CASCADE)
     
     comment = models.TextField("Comment or new keywords.", blank=True)
     kwnotbelong = models.TextField("List of keywords that DO NOT belong", blank=True)
@@ -237,7 +237,7 @@ class MissingSignFeedbackForm(forms.Form):
     
 
 class MissingSignFeedback(models.Model):    
-    user = models.ForeignKey(authmodels.User)
+    user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     handform = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.HANDEDNESS},

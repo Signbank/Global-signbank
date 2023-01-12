@@ -562,9 +562,9 @@ function do_adminsearch(el) {
         {% for dataset_lang in dataset_languages %}
         {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
       <td>
-          {% ifnotequal annotationidglosstranslation "" %}
+          {% if annotationidglosstranslation != "" %}
           <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
-          {% endifnotequal %}
+          {% endif %}
       </td>
         {% endwith %}
         {% endfor %}

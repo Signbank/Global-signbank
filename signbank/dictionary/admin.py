@@ -14,7 +14,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, gettext_lazy as _
 
 class DatasetAdmin(GuardedModelAdmin):
     model = Dataset
@@ -685,9 +685,10 @@ class GlossRevisionAdmin(VersionAdmin):
         return self.list_display_links
 
 
-class RegistrationProfileAdmin(admin.ModelAdmin):
-    list_display = ('__str__', 'activation_key_expired', )
-    search_fields = ('user__username', 'user__first_name', )
+# Not used?
+# class RegistrationProfileAdmin(admin.ModelAdmin):
+#     list_display = ('__str__', 'activation_key_expired', )
+#     search_fields = ('user__username', 'user__first_name', )
 
 class DialectInline(admin.TabularInline):
 

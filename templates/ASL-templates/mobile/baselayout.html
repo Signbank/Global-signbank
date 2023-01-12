@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="{{ STATIC_URL }}css/mobile.css">
 
     
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-3.6.2.min.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}jquery-mobile/jquery.mobile-1.4.2.min.js"></script>
 
 {% block extrahead %}
@@ -65,9 +65,9 @@
         <ul>
   	      {% for item in menu %}
 	         {# don't include Home, since we have a link for that in the header #}
-	         {% ifnotequal item.url "/" %}
+	         {% if item.url != "/" %}
 	         <li><a {% if item.current %}class='ui-btn-active'{% endif %} href="{{item.url}}">{{item.title}}</a></li>
-	         {% endifnotequal %}
+	         {% endif %}
 	      {% endfor %}
         </ul>
       </div>

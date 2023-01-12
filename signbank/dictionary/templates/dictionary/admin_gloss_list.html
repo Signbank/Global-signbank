@@ -19,7 +19,6 @@
     var language_code = '{{ LANGUAGE_CODE }}';
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
     var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
-    var last_used_dataset = '{{last_used_dataset}}';
 </script>
 
 <style>
@@ -84,18 +83,18 @@ $(document).ready(function() {
 
     function makeMultipleSelect(fieldId,fieldVar) {
         var target_pulldown = document.getElementById(fieldId);
+        if (!target_pulldown) { return; }
         target_pulldown.setAttribute('multiple','multiple');
         target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
         target_pulldown.setAttribute('name',fieldVar);
         target_pulldown.style.width = '100%';
     }
 
-     for (var i = 0; i < multiple_select_fields.length; i++) {
+    for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = 'id_' + multiple_select_fields[i];
-        selectColors(this_id);
         var this_var = multiple_select_fields[i] + '[]';
         makeMultipleSelect(this_id, this_var);
-     }
+    }
 
      function addOptionColor(optionNode) {
         var color_text = optionNode.text;
@@ -672,6 +671,7 @@ function do_toggle_annotation(el) {
                       </div>
                     </div>
 
+                    {% if not user.is_anonymous %}
                     <div  class="panel panel-default">
                       <div class="panel-heading" data-toggle="collapse"
                            data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
@@ -691,6 +691,7 @@ function do_toggle_annotation(el) {
                       </table>
                       </div>
                     </div>
+                    {% endif %}
                 </div>
 
         </div>
@@ -787,13 +788,11 @@ function do_toggle_annotation(el) {
                       <td>
                       <select id="id_dataset" name="dataset" required="">
                      {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-                         <option value=""
-                                 dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
                          {% for s_dataset in selected_datasets %}
 
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
                          {% if "change_dataset" in dataset_perms %}
-                         {% if last_used_dataset == s_dataset.acronym %}
+                         {% if last_used_dataset and last_used_dataset == s_dataset.acronym %}
                          <option value="{{ s_dataset.id }}" selected="selected"
                                  dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
                          {% else %}
@@ -961,7 +960,7 @@ function do_toggle_annotation(el) {
 
         <ul class='pagination pagination-sm'>
         {% if page_obj.has_previous %}
-            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&laquo;</a></li>
+            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
         {% endif %}
 
           {% if  page_obj.number > 10 %}
@@ -971,8 +970,8 @@ function do_toggle_annotation(el) {
           {% for p in page_obj.paginator.page_range %}
 
              {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
-             <li {% ifequal p page_obj.number %}class='active'{% endifequal %}>
-             <a href='?page={{ p }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
+             <li {% if p == page_obj.number %}class='active'{% endif %}>
+             <a href='?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}'>{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
              </li>
              {% endif %}
 
@@ -981,12 +980,12 @@ function do_toggle_annotation(el) {
           {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
             <li><a>...</a></li>
             <li>
-            <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
+            <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
 
         {% if page_obj.has_next %}
-            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% ifnotequal key 'page' %}&{{ key }}={{ value }}{% endifnotequal %}{% endfor %}">&raquo;</a></li>
+            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
 
 
       </ul>

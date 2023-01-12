@@ -49,7 +49,7 @@ STATICFILES_FINDERS = (
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
 #    'debug_toolbar.middleware.DebugToolbarMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -63,7 +63,7 @@ MIDDLEWARE_CLASSES = (
 #    'django_mobile.middleware.MobileDetectionMiddleware',
 #    'django_mobile.middleware.SetFlavourMiddleware',
 #    'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'reversion.middleware.RevisionMiddleware',
+    'reversion.middleware.RevisionMiddleware'
 )
 
 TEMPLATES = [
@@ -127,7 +127,7 @@ INSTALLED_APPS = (
     # 'easy_select2',
     'signbank.dictionary',
     'signbank.feedback',
-    #'signbank.registration',
+    # 'signbank.registration',
     'signbank.pages',
     'signbank.attachments',
     'signbank.video',
@@ -286,3 +286,12 @@ DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES = 200
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+
+# django-tagging is outdated and does not support django>4 so this has to be changed manually
+import django
+from django.utils.encoding import smart_str
+django.utils.encoding.smart_text = smart_str
+
+# set a default autofield for models
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

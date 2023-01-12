@@ -3,10 +3,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
 from django.template import Context, RequestContext, loader
 from django.shortcuts import render, get_object_or_404
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from django.contrib.auth.decorators import permission_required
-from django.db.models.fields import NullBooleanField
+from django.db.models.fields import BooleanField
 
 from tagging.models import TaggedItem, Tag
 import os, shutil, re
@@ -24,7 +24,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
 
@@ -32,117 +32,144 @@ from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_
 # this method is called from the GlossListView (Add Gloss button on the page)
 def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
-    if request.method == "POST":
-        dataset = None
-        if 'dataset' in request.POST and request.POST['dataset'] is not None:
-            dataset = Dataset.objects.get(pk=request.POST['dataset'])
-            selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
-        else:
-            selected_datasets = get_selected_datasets_for_user(request.user)
-        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add gloss method must be POST")
 
-        default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
-        default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+    dataset = None
+    if 'dataset' in request.POST and request.POST['dataset'] is not None:
+        dataset = Dataset.objects.get(pk=request.POST['dataset'])
+        selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
+    else:
+        selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-        if len(selected_datasets) == 1:
-            last_used_dataset = selected_datasets[0]
-        elif 'last_used_dataset' in request.session.keys():
-            last_used_dataset = request.session['last_used_dataset']
-        else:
-            last_used_dataset = default_dataset
+    if dataset:
+        last_used_dataset = dataset.acronym
+    elif len(selected_datasets) == 1:
+        last_used_dataset = selected_datasets[0].acronym
+    elif 'last_used_dataset' in request.session.keys():
+        last_used_dataset = request.session['last_used_dataset']
+    else:
+        last_used_dataset = None
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
 
-        form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
+    form = GlossCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
-        # Lemma handling
-        lemmaidgloss = None
-        lemma_form = None
-        if request.POST['select_or_new_lemma'] == 'new':
-            lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
-        else:
-            try:
-                lemmaidgloss_id = request.POST['idgloss']
-                lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
-            except:
-                messages.add_message(request, messages.ERROR,
-                                     _("The given Lemma Idgloss ID is unknown."))
-                return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
-
-        # Check for 'change_dataset' permission
-        if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
-                and ('change_dataset' not in get_group_perms(request.user, dataset))\
-                and not request.user.is_staff:
+    # Lemma handling
+    lemma_form = None
+    if request.POST['select_or_new_lemma'] == 'new':
+        lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
+        if not lemma_form.is_valid():
             messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
-            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
-        elif not dataset:
-            # Dataset is empty, this is an error
-            messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
-            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form})
+            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
+                                                                 'dataset_languages': dataset_languages,
+                                                                 'selected_datasets': get_selected_datasets_for_user(
+                                                                     request.user),
+                                                                 'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+        lemmaidgloss = lemma_form.save()
+    else:
+        try:
+            lemmaidgloss_id = request.POST['idgloss']
+            lemmaidgloss = LemmaIdgloss.objects.get(id=lemmaidgloss_id)
+        except ObjectDoesNotExist:
+            messages.add_message(request, messages.ERROR,
+                                 _("The given Lemma Idgloss ID is unknown."))
+            return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
+                                                           'dataset_languages': dataset_languages,
+                                                           'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-        # if we get to here a dataset has been chosen for the new gloss
+    # Check for 'change_dataset' permission
+    if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
+            and ('change_dataset' not in get_group_perms(request.user, dataset))\
+            and not request.user.is_staff:
+        messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
+        return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
+                                                           'dataset_languages': dataset_languages,
+                                                           'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    elif not dataset:
+        # Dataset is empty, this is an error
+        messages.add_message(request, messages.ERROR, _("Please provide a dataset."))
+        return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
+                                                           'dataset_languages': dataset_languages,
+                                                           'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-        for item, value in request.POST.items():
-            if item.startswith(form.gloss_create_field_prefix):
-                language_code_2char = item[len(form.gloss_create_field_prefix):]
-                language = Language.objects.get(language_code_2char=language_code_2char)
-                glosses_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
-                    annotationidglosstranslation__language=language,
-                    annotationidglosstranslation__text__exact=value.upper(),
-                    lemma__dataset=dataset)
-                if len(glosses_for_this_language_and_annotation_idgloss) != 0:
-                    translated_message = _('Annotation ID Gloss not unique.')
-                    return render(request, 'dictionary/warning.html',
-                           {'warning': translated_message,
-                            'dataset_languages': dataset_languages,
-                            'selected_datasets': selected_datasets,
-                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+    # if we get to here a dataset has been chosen for the new gloss
+    for item, value in request.POST.items():
+        if item.startswith(form.gloss_create_field_prefix):
+            language_code_2char = item[len(form.gloss_create_field_prefix):]
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            glosses_for_this_language_and_annotation_idgloss = Gloss.objects.filter(
+                annotationidglosstranslation__language=language,
+                annotationidglosstranslation__text__exact=value.upper(),
+                lemma__dataset=dataset)
+            if len(glosses_for_this_language_and_annotation_idgloss) != 0:
+                translated_message = _('Annotation ID Gloss not unique.')
+                return render(request, 'dictionary/warning.html',
+                       {'warning': translated_message,
+                        'dataset_languages': dataset_languages,
+                        'selected_datasets': selected_datasets,
+                        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
-        if form.is_valid() and (lemmaidgloss or lemma_form.is_valid()):
-            try:
-                gloss = form.save()
-                gloss.creationDate = datetime.now()
-                gloss.excludeFromEcv = False
-                if lemma_form:
-                    lemmaidgloss = lemma_form.save()
-                gloss.lemma = lemmaidgloss
+    if not form.is_valid():
+        messages.add_message(request, messages.ERROR, _("The add gloss form is not valid."))
+        return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
+                                                             'dataset_languages': dataset_languages,
+                                                             'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                             'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-                # Set a default for all FieldChoice fields
-                for field in [f for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]:
-                    field_value = getattr(gloss, field.name)
-                    if field_value is None:
-                        field_choice_category = field.field_choice_category
-                        try:
-                            fieldchoice = FieldChoice.objects.get(field=field_choice_category, machine_value=0)
-                        except ObjectDoesNotExist:
-                            fieldchoice = FieldChoice.objects.create(field=field_choice_category, machine_value=0,
-                                                                     name='-')
-                        setattr(gloss, field.name, fieldchoice)
+    if lemma_form and not lemma_form.is_valid():
+        messages.add_message(request, messages.ERROR, _("The new lemma form is not valid."))
+        return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
+                                                             'dataset_languages': dataset_languages,
+                                                             'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                             'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-                gloss.save()
-                gloss.creator.add(request.user)
-            except ValidationError as ve:
-                messages.add_message(request, messages.ERROR, ve.message)
-                return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
-                                                                     'dataset_languages': dataset_languages,
-                                                                     'selected_datasets': get_selected_datasets_for_user(request.user)})
+    if not lemmaidgloss:
+        messages.add_message(request, messages.ERROR, _("Please select or create a lemma."))
+        return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
+                                                             'dataset_languages': dataset_languages,
+                                                             'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                             'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+    try:
+        gloss = form.save()
+        gloss.creationDate = datetime.now()
+        gloss.excludeFromEcv = False
+        gloss.lemma = lemmaidgloss
+
+        # Set a default for all FieldChoice fields
+        for field in [f for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]:
+            field_value = getattr(gloss, field.name)
+            if field_value is None:
+                field_choice_category = field.field_choice_category
+                try:
+                    fieldchoice = FieldChoice.objects.get(field=field_choice_category, machine_value=0)
+                except ObjectDoesNotExist:
+                    fieldchoice = FieldChoice.objects.create(field=field_choice_category, machine_value=0,name='-')
+                setattr(gloss, field.name, fieldchoice)
+
+        gloss.save()
+        gloss.creator.add(request.user)
+    except ValidationError as ve:
+        messages.add_message(request, messages.ERROR, ve.message)
+        return render(request, 'dictionary/add_gloss.html', {'add_gloss_form': form,
+                                                             'dataset_languages': dataset_languages,
+                                                             'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                             'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
-            # context variables need to be set before GlossDetailView
-            if not ('search_results' in request.session.keys()):
-                request.session['search_results'] = None
-            request.session['last_used_dataset'] = dataset.name
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
-        else:
-            return render(request,'dictionary/add_gloss.html',{'add_gloss_form': form,
-                                                               'dataset_languages': dataset_languages,
-                                                               'selected_datasets': get_selected_datasets_for_user(request.user),
-                                                               'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
-        
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
+    if not ('search_results' in request.session.keys()):
+        request.session['search_results'] = None
+
+    # new gloss created successfully, go to GlossDetailView
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
 
 def update_gloss(request, glossid):
@@ -154,8 +181,7 @@ def update_gloss(request, glossid):
         return HttpResponseForbidden("Gloss Update Not Allowed")
 
     if not request.method == "POST":
-        print('update gloss is not POST')
-        return HttpResponseForbidden("Gloss Update Not Allowed")
+        return HttpResponseForbidden("Gloss Update method must be POST")
 
     gloss = get_object_or_404(Gloss, id=glossid)
     gloss.save() # This updates the lastUpdated field
@@ -216,7 +242,7 @@ def update_gloss(request, glossid):
 
     elif field.startswith('morphology-definition'):
 
-        return update_morphology_definition(gloss, field, value, request.LANGUAGE_CODE)
+        return update_morphology_definition(gloss, field, value)
 
     elif field.startswith('morpheme-definition'):
 
@@ -228,7 +254,7 @@ def update_gloss(request, glossid):
 
     elif field.startswith('other-media'):
 
-        return update_other_media(request,gloss, field, value)
+        return update_other_media(gloss, field, value)
 
     elif field == 'signlanguage':
         # expecting possibly multiple values
@@ -265,17 +291,17 @@ def update_gloss(request, glossid):
             setattr(gloss, field, ds)
             gloss.save()
 
-            request.session['last_used_dataset'] = ds.name
+            request.session['last_used_dataset'] = ds.acronym
 
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
         import guardian
-        if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
+        if ds in guardian.shortcuts.get_objects_for_user(request.user, 'can_view_dataset', Dataset):
             newvalue = value
             setattr(gloss, field, ds)
             gloss.save()
 
-            request.session['last_used_dataset'] = ds.name
+            request.session['last_used_dataset'] = ds.acronym
 
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
@@ -386,7 +412,7 @@ def update_gloss(request, glossid):
         #Translate the value if a boolean
         # Language values are needed here!
         newvalue = value
-        if isinstance(gloss._meta.get_field(field),NullBooleanField):
+        if isinstance(gloss._meta.get_field(field),BooleanField):
             # value is the html 'value' received during editing
             # value gets converted to a Boolean by the following statement
             if field in ['weakdrop', 'weakprop']:
@@ -1038,21 +1064,19 @@ def subst_relations(gloss, field, values):
 
 ## This function is called from the Gloss Detail View template when updating Relations to Other Signs
 def update_relation(gloss, field, value):
-    """Update one of the relations for this gloss"""
-    
+    """Update one of the relations for this gloss"""   
     (what, relid) = field.split('_')
     what = what.replace('-','_')
 
     try:
         rel = Relation.objects.get(id=relid)
-    except:
+    except ObjectDoesNotExist:
         return HttpResponseBadRequest("Bad Relation ID '%s'" % relid, {'content-type': 'text/plain'})
 
     if not rel.source == gloss:
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
     
     if what == 'relationdelete':
-        print("DELETE relation: ", rel)
         rel.delete()
 
         # Also delete the reverse relation
@@ -1061,7 +1085,7 @@ def update_relation(gloss, field, value):
         if reverse_relations.count() > 0:
             reverse_relations[0].delete()
 
-        return HttpResponse('', {'content-type': 'text/plain'})
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrel')
     elif what == 'relationrole':
         rel.role = value
         rel.save()
@@ -1093,17 +1117,15 @@ def update_relationtoforeignsign(gloss, field, value):
 
     try:
         rel = RelationToForeignSign.objects.get(id=relid)
-    except:
+    except ObjectDoesNotExist:
         return HttpResponseBadRequest("Bad RelationToForeignSign ID '%s'" % relid, {'content-type': 'text/plain'})
 
     if not rel.gloss == gloss:
         return HttpResponseBadRequest("Relation doesn't match gloss", {'content-type': 'text/plain'})
     
     if what == 'relationforeign_delete':
-        print("DELETE Relation to Foreign Sign: ", rel)
         rel.delete()
-        # return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
-        return HttpResponse('', {'content-type': 'text/plain'})
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
     elif what == 'relationforeign_loan':
         rel.loan = value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1]
         rel.save()
@@ -1154,7 +1176,7 @@ def update_definition(request, gloss, field, value):
     (what, defid) = field.split('_')
     try:
         defn = Definition.objects.get(id=defid)
-    except:
+    except ObjectDoesNotExist:
         return HttpResponseBadRequest("Bad Definition ID '%s'" % defid, {'content-type': 'text/plain'})
 
     if not defn.gloss == gloss:
@@ -1190,14 +1212,14 @@ def update_definition(request, gloss, field, value):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-def update_other_media(request,gloss,field,value):
+def update_other_media(gloss,field,value):
 
     action_or_fieldname, other_media_id = field.split('_')
 
     other_media = None
     try:
         other_media = OtherMedia.objects.get(id=other_media_id)
-    except:
+    except ObjectDoesNotExist:
         return HttpResponseBadRequest("Bad OtherMedia ID '%s'" % other_media, {'content-type': 'text/plain'})
 
     if not other_media.parent_gloss == gloss:
@@ -1223,445 +1245,455 @@ def update_other_media(request,gloss,field,value):
 def add_relation(request):
     """Add a new relation instance"""
     
-    if request.method == "POST":
-        
-        form = RelationForm(request.POST)
-        
-        if form.is_valid():
-            
-            role = form.cleaned_data['role']
-            sourceid = form.cleaned_data['sourceid']
-            targetid = form.cleaned_data['targetid'] # This is a gloss ID now
-            
-            try:
-                source = Gloss.objects.get(pk=int(sourceid))
-            except:
-                print("source gloss not found")
-                return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
-            
-            target = Gloss.objects.get(id=targetid)
-            if target:
-                rel = Relation(source=source, target=target, role=role)
-                rel.save()
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add relation method must be POST")
 
-                # Also add the reverse relation
-                reverse_relation = Relation(source=target, target=source, role=Relation.get_reverse_role(role))
-                reverse_relation.save()
+    form = RelationForm(request.POST)
 
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
+    if not form.is_valid():
+        # fallback to the requesting page
+        return HttpResponseRedirect('/')
 
-            else:
-                print("target gloss not found")
-                return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
-        else:
-            print(form)
+    role = form.cleaned_data['role']
+    sourceid = form.cleaned_data['sourceid']
+    targetid = form.cleaned_data['targetid']
 
-    # fallback to redirecting to the requesting page
-    return HttpResponseRedirect('/')
+    try:
+        source = Gloss.objects.get(pk=int(sourceid))
+    except ObjectDoesNotExist:
+        return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
+
+    try:
+        target = Gloss.objects.get(id=int(targetid))
+    except ObjectDoesNotExist:
+        return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
+
+    rel = Relation(source=source, target=target, role=role)
+    rel.save()
+
+    # Also add the reverse relation
+    reverse_relation = Relation(source=target, target=source, role=Relation.get_reverse_role(role))
+    reverse_relation.save()
+
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': source.id})+'?editrel')
 
 
 @permission_required('dictionary.change_gloss')
 def variants_of_gloss(request):
 
-#    thisgloss = get_object_or_404(Gloss, id=glossid)
+    if not request.method == "POST":
+        return HttpResponseForbidden("Variants of gloss method must be POST")
 
-    if request.method == "POST":
+    form = VariantsForm(request.POST)
 
-        form = VariantsForm(request.POST)
+    if not form.is_valid():
+        return HttpResponseRedirect('/')
 
-        if form.is_valid():
-            role = 'variant'
-            sourceid = form.cleaned_data['sourceid']
-            targetid = form.cleaned_data['targetid']
+    role = 'variant'
+    sourceid = form.cleaned_data['sourceid']
+    targetid = form.cleaned_data['targetid']
 
-            source = str(sourceid)
-            target = str(targetid)
+    try:
+        source = Gloss.objects.get(pk=int(sourceid))
+    except ObjectDoesNotExist:
+        return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
 
-            source_object = Gloss.objects.get(pk=int(source))
-            target_object = Gloss.objects.get(pk=int(target))
+    try:
+        target = Gloss.objects.get(id=int(targetid))
+    except ObjectDoesNotExist:
+        return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
 
-            rel = Relation(source=source_object, target=target_object, role=role)
-            rel.save()
+    rel = Relation(source=source, target=target, role=role)
+    rel.save()
 
-            return HttpResponse(json.dumps(rel), content_type="application/json")
-        else:
-#            print('invalid form')
-            print(form)
+    return HttpResponse(json.dumps(rel), content_type="application/json")
 
-    return HttpResponseRedirect('/')
 
 def add_relationtoforeignsign(request):
     """Add a new relationtoforeignsign instance"""
     
-    if request.method == "POST":
-        
-        form = RelationToForeignSignForm(request.POST)
-        
-        if form.is_valid():
-            
-            sourceid = form.cleaned_data['sourceid']
-            loan = form.cleaned_data['loan']
-            other_lang = form.cleaned_data['other_lang']
-            other_lang_gloss = form.cleaned_data['other_lang_gloss']
-            
-            try:
-                gloss = Gloss.objects.get(pk=int(sourceid))
-            except:
-                return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
-            
-            rel = RelationToForeignSign(gloss=gloss,loan=loan,other_lang=other_lang,other_lang_gloss=other_lang_gloss)
-            rel.save()
-                
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add relation to foreign sign method must be POST")
 
-        else:
-            print(form)
-            return HttpResponseBadRequest("Form not valid", {'content-type': 'text/plain'})
+    form = RelationToForeignSignForm(request.POST)
 
-    # fallback to redirecting to the requesting page
-    return HttpResponseRedirect('/')
+    if not form.is_valid():
+        # fallback to the requesting page
+        return HttpResponseRedirect('/')
+
+    sourceid = form.cleaned_data['sourceid']
+    loan = form.cleaned_data['loan']
+    other_lang = form.cleaned_data['other_lang']
+    other_lang_gloss = form.cleaned_data['other_lang_gloss']
+
+    try:
+        gloss = Gloss.objects.get(pk=int(sourceid))
+    except ObjectDoesNotExist:
+        return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
+
+    rel = RelationToForeignSign(gloss=gloss,loan=loan,other_lang=other_lang,other_lang_gloss=other_lang_gloss)
+    rel.save()
+
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editrelforeign')
+
 
 def add_definition(request, glossid):
     """Add a new definition for this gloss"""
 
     thisgloss = get_object_or_404(Gloss, id=glossid)
     
-    if request.method == "POST":
-        form = DefinitionForm(request.POST)
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add definition method must be POST")
+
+    form = DefinitionForm(request.POST)
         
-        if form.is_valid():
-            
-            published = form.cleaned_data['published']
-            count = form.cleaned_data['count']
-            role = FieldChoice.objects.get(field='NoteType', machine_value=int(form.cleaned_data['note']))
-            text = form.cleaned_data['text']
-            
-            defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
-            defn.save()
+    if not form.is_valid():
+        # fallback to the requesting page
+        return HttpResponseRedirect('/')
+
+    published = form.cleaned_data['published']
+    count = form.cleaned_data['count']
+    role = FieldChoice.objects.get(field='NoteType', machine_value=int(form.cleaned_data['note']))
+    text = form.cleaned_data['text']
+
+    defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
+    defn.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
 
 
 def add_morphology_definition(request):
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add morphology definition method must be POST")
 
-    if request.method == "POST":
-        form = GlossMorphologyForm(request.POST)
+    form = GlossMorphologyForm(request.POST)
 
-        if form.is_valid():
+    if not form.is_valid():
+        # fallback to the requesting page
+        return HttpResponseRedirect('/')
 
-            parent_gloss = form.cleaned_data['parent_gloss_id']
-            role = form.cleaned_data['role']
-            morpheme_id = form.cleaned_data['morpheme_id'] # This is now a gloss ID
-            morpheme = Gloss.objects.get(id=morpheme_id)
+    parent_gloss = form.cleaned_data['parent_gloss_id']
+    role_id = form.cleaned_data['role']
+    morpheme_id = form.cleaned_data['morpheme_id']
+    # This is now a gloss ID
+    morpheme = Gloss.objects.get(id=morpheme_id)
 
-            thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
+    thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
+    role = get_object_or_404(FieldChoice, pk=role_id, field='MorphologyType')
 
-            # create definition, default to not published
-            morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
-            morphdef.save()
+    # create definition, default to not published
+    morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
+    morphdef.save()
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
-    raise Http404('Incorrect request')
 
 # Add a 'morpheme' (according to the Morpheme model)
 def add_morpheme_definition(request, glossid):
 
-    if request.method == "POST":
-        form = GlossMorphemeForm(request.POST)
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add morpheme definition method must be POST")
 
-        # Get the glossid at any rate
-        thisgloss = get_object_or_404(Gloss, pk=glossid)
+    form = GlossMorphemeForm(request.POST)
 
-        # check availability of morpheme before continuing
-        if form.data['morph_id'] == "":
-            # The user has not selected a morpheme
-            # Check if there are morphemes available for this dataset
-            if 'datasetid' in request.session.keys():
-                datasetid = request.session['datasetid']
-                dataset_id = Dataset.objects.get(name=datasetid)
-                count_morphemes_in_dataset = Morpheme.objects.filter(lemma__dataset=dataset_id).count()
-                if count_morphemes_in_dataset < 1:
-                    messages.add_message(request, messages.INFO, _('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
-                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+    # Get the glossid at any rate
+    thisgloss = get_object_or_404(Gloss, pk=glossid)
 
-            messages.add_message(request, messages.INFO, _('Edit Simultaneuous Morphology: No morpheme selected.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
-
-        if form.is_valid():
-
-            morph_id = form.cleaned_data['morph_id'] ## This is a morpheme ID now
-
-            try:
-                morph = Morpheme.objects.get(id=morph_id)
-            except ObjectDoesNotExist:
-
-                # The user has tryed to type in a name themself rather than select from the list.
-                messages.add_message(request, messages.ERROR, _('Simultaneuous morphology: no morpheme found with identifier {}.'.format(morph_id)))
-
+    # check availability of morpheme before continuing
+    if form.data['morph_id'] == "":
+        # The user has not selected a morpheme
+        # Check if there are morphemes available for this dataset
+        if 'datasetid' in request.session.keys():
+            datasetid = request.session['datasetid']
+            dataset_id = Dataset.objects.get(name=datasetid)
+            count_morphemes_in_dataset = Morpheme.objects.filter(lemma__dataset=dataset_id).count()
+            if count_morphemes_in_dataset < 1:
+                messages.add_message(request, messages.INFO, _('Edit Simultaneuous Morphology: The dataset of this gloss has no morphemes.'))
                 return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
-            definition = SimultaneousMorphologyDefinition()
-            definition.parent_gloss = thisgloss
-            definition.morpheme = morph
-            definition.role = form.cleaned_data['description']
-            definition.save()
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+        messages.add_message(request, messages.INFO, _('Edit Simultaneuous Morphology: No morpheme selected.'))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
-    # If we get here the request method has apparently been changed to get instead of post, can this happen?
-    raise Http404('Incorrect request')
+    if not form.is_valid():
+        # fallback to the requesting page
+        return HttpResponseRedirect('/')
+
+    morph_id = form.cleaned_data['morph_id'] ## This is a morpheme ID now
+
+    try:
+        morph = Morpheme.objects.get(id=morph_id)
+    except ObjectDoesNotExist:
+
+        # The user has tried to type in a name rather than select from the list.
+        messages.add_message(request, messages.ERROR, _('Simultaneuous morphology: no morpheme found with identifier {}.'.format(morph_id)))
+
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+
+    definition = SimultaneousMorphologyDefinition()
+    definition.parent_gloss = thisgloss
+    definition.morpheme = morph
+    definition.role = form.cleaned_data['description']
+    definition.save()
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
 
 # Add a 'blend' (according to the Blend model)
 def add_blend_definition(request, glossid):
 
-    if request.method == "POST":
-        form = GlossBlendForm(request.POST)
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add blend definition method must be POST")
 
-        # Get the glossid at any rate
-        thisgloss = get_object_or_404(Gloss, pk=glossid)
+    form = GlossBlendForm(request.POST)
 
-        # check availability of morpheme before continuing
-        if form.data['blend_id'] == "":
-            # The user has obviously not selected a morpheme
-            # Desired action (Issue #199): nothing happens
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+    # Get the glossid at any rate
+    thisgloss = get_object_or_404(Gloss, pk=glossid)
 
-        if form.is_valid():
+    # check availability of morpheme before continuing
+    if form.data['blend_id'] == "":
+        # The user has obviously not selected a morpheme
+        # Desired action (Issue #199): nothing happens
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
-            blend_id = form.cleaned_data['blend_id'] # This is a gloss ID now
-            blend = Gloss.objects.get(id=blend_id)
+    if not form.is_valid():
+        # fallback to the requesting page
+        return HttpResponseRedirect('/')
 
-            if blend != None:
-                definition = BlendMorphology()
-                definition.parent_gloss = thisgloss
-                definition.glosses = blend
-                definition.role = form.cleaned_data['role']
-                definition.save()
+    blend_id = form.cleaned_data['blend_id'] # This is a gloss ID now
+    blend = Gloss.objects.get(id=blend_id)
 
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
+    if blend != None:
+        definition = BlendMorphology()
+        definition.parent_gloss = thisgloss
+        definition.glosses = blend
+        definition.role = form.cleaned_data['role']
+        definition.save()
 
-    raise Http404('Incorrect request')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
 def update_handshape(request, handshapeid):
 
-    if request.method == "POST":
+    if not request.method == "POST":
+        return HttpResponseForbidden("Update handshape method must be POST")
 
-        hs = get_object_or_404(Handshape, machine_value=handshapeid)
-        hs.save() # This updates the lastUpdated field
+    hs = get_object_or_404(Handshape, machine_value=handshapeid)
+    hs.save() # This updates the lastUpdated field
 
-        get_field = request.POST.get('id', '')
-        value = request.POST.get('value', '')
-        original_value = ''
-        value = str(value)
-        newPattern = ''
+    get_field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+    original_value = ''
+    value = str(value)
+    newPattern = ''
 
-        field = get_field
+    field = get_field
 
-        if len(value) == 0:
-            value = ' '
+    if len(value) == 0:
+        value = ' '
 
-        elif value[0] == '_':
-            value = value[1:]
+    elif value[0] == '_':
+        value = value[1:]
 
-        values = request.POST.getlist('value[]')  # in case we need multiple values
+    values = request.POST.getlist('value[]')  # in case we need multiple values
 
-        if value == '':
-            hs.__setattr__(field, None)
-            hs.save()
-            newvalue = ''
-        elif isinstance(Handshape._meta.get_field(field), FieldChoiceForeignKey):
-            # this is needed because the new value is a machine value, not an id
-            field_choice_category = Handshape._meta.get_field(field).field_choice_category
-            original_value = getattr(hs, field)
-            field_choice = FieldChoice.objects.get(field=field_choice_category, machine_value=int(value))
-            setattr(hs, field, field_choice)
-            hs.save()
-            newvalue = field_choice.name
-        else:
-            original_value = getattr(hs, field)
-            hs.__setattr__(field, value)
-            hs.save()
-            newvalue = value
+    if value == '':
+        hs.__setattr__(field, None)
+        hs.save()
+        newvalue = ''
+    elif isinstance(Handshape._meta.get_field(field), FieldChoiceForeignKey):
+        # this is needed because the new value is a machine value, not an id
+        field_choice_category = Handshape._meta.get_field(field).field_choice_category
+        original_value = getattr(hs, field)
+        field_choice = FieldChoice.objects.get(field=field_choice_category, machine_value=int(value))
+        setattr(hs, field, field_choice)
+        hs.save()
+        newvalue = field_choice.name
+    else:
+        original_value = getattr(hs, field)
+        hs.__setattr__(field, value)
+        hs.save()
+        newvalue = value
 
-            if not isinstance(value, bool):
-                # field is a choice list and we need to get the translated human value
-                newvalue = value.name if isinstance(value, FieldChoice) else value
+        if not isinstance(value, bool):
+            # field is a choice list and we need to get the translated human value
+            newvalue = value.name if isinstance(value, FieldChoice) else value
 
-        # Finger selections are saved as both boolean values per finger and as patterns that include the fingers
-        # The patterns, such as TIM, are stored as choice lists in FieldChoice.
-        # This is done automatically for display and sorting purposes.
-        # A user always modifies the selected fingers data per finger.
+    # Finger selections are saved as both boolean values per finger and as patterns that include the fingers
+    # The patterns, such as TIM, are stored as choice lists in FieldChoice.
+    # This is done automatically for display and sorting purposes.
+    # A user always modifies the selected fingers data per finger.
 
-        if field in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP']:
-            category_value = 'fingerSelection1'
+    if field in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP']:
+        category_value = 'fingerSelection1'
 
-            if newvalue != original_value:
-                hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
-                newPattern = hs_mod.get_fingerSelection_display()
-                object_fingSelection = FieldChoice.objects.filter(field='FingerSelection', name__iexact=newPattern)
-                if object_fingSelection:
-                    mv = object_fingSelection[0].machine_value
-                    hs_mod.__setattr__('hsFingSel', mv)
-                    hs_mod.save()
-                else:
-                    print("finger selection not found: ", newPattern)
-        elif field in ['fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P']:
-            category_value = 'fingerSelection2'
+        if newvalue != original_value:
+            hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
+            newPattern = hs_mod.get_fingerSelection_display()
+            object_fingSelection = FieldChoice.objects.filter(field='FingerSelection', name__iexact=newPattern)
+            if object_fingSelection:
+                mv = object_fingSelection[0].machine_value
+                hs_mod.__setattr__('hsFingSel', mv)
+                hs_mod.save()
+            else:
+                print("finger selection not found: ", newPattern)
+    elif field in ['fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P']:
+        category_value = 'fingerSelection2'
 
-            if newvalue != original_value:
-                hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
-                newPattern = hs_mod.get_fingerSelection2_display()
-                object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
-                                                                  name__iexact=newPattern)
-                if object_fingSelection:
-                    mv = object_fingSelection[0].machine_value
-                    hs_mod.__setattr__('hsFingSel2', mv)
-                    hs_mod.save()
-                else:
-                    print("finger selection not found: ", newPattern)
-        elif field in ['ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
-            category_value = 'unselectedFingers'
+        if newvalue != original_value:
+            hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
+            newPattern = hs_mod.get_fingerSelection2_display()
+            object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
+                                                                name__iexact=newPattern)
+            if object_fingSelection:
+                mv = object_fingSelection[0].machine_value
+                hs_mod.__setattr__('hsFingSel2', mv)
+                hs_mod.save()
+            else:
+                print("finger selection not found: ", newPattern)
+    elif field in ['ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
+        category_value = 'unselectedFingers'
 
-            if newvalue != original_value:
-                hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
-                newPattern = hs_mod.get_unselectedFingers_display()
-                object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
-                                                                  name__iexact=newPattern)
-                if object_fingSelection:
-                    mv = object_fingSelection[0].machine_value
-                    hs_mod.__setattr__('hsFingUnsel', mv)
-                    hs_mod.save()
-        else:
-            category_value = 'fieldChoice'
+        if newvalue != original_value:
+            hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
+            newPattern = hs_mod.get_unselectedFingers_display()
+            object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
+                                                                name__iexact=newPattern)
+            if object_fingSelection:
+                mv = object_fingSelection[0].machine_value
+                hs_mod.__setattr__('hsFingUnsel', mv)
+                hs_mod.save()
+    else:
+        category_value = 'fieldChoice'
 
-        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
+
 
 def add_othermedia(request):
-    if request.method == "POST":
 
-        form = OtherMediaForm(request.POST,request.FILES)
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add other media method must be POST")
 
-        morpheme__or_gloss = Gloss.objects.get(id=request.POST['gloss'])
-        if morpheme__or_gloss.is_morpheme():
-            reverse_url = 'dictionary:admin_morpheme_view'
-        else:
-            reverse_url = 'dictionary:admin_gloss_view'
+    form = OtherMediaForm(request.POST,request.FILES)
 
-        if form.is_valid():
+    if not form.is_valid():
+        # fallback to the requesting page
+        return HttpResponseRedirect('/')
 
-            #Create the folder if needed
-            import os
-            goal_directory = os.path.join(OTHER_MEDIA_DIRECTORY,request.POST['gloss'])
+    morpheme__or_gloss = Gloss.objects.get(id=request.POST['gloss'])
+    if morpheme__or_gloss.is_morpheme():
+        reverse_url = 'dictionary:admin_morpheme_view'
+    else:
+        reverse_url = 'dictionary:admin_gloss_view'
 
-            filename = request.FILES['file'].name
-            filetype = request.FILES['file'].content_type
+    #Create the folder if needed
+    import os
+    goal_directory = os.path.join(OTHER_MEDIA_DIRECTORY,request.POST['gloss'])
 
-            if not filetype:
-                # unrecognised file type has been uploaded
-                messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
-                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+    filename = request.FILES['file'].name
+    filetype = request.FILES['file'].content_type
 
-            norm_filename = os.path.normpath(filename)
-            split_norm_filename = norm_filename.split('.')
+    if not filetype:
+        # unrecognised file type has been uploaded
+        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
-            if len(split_norm_filename) == 1:
-                # file has no extension
-                messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has no extension."))
-                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+    norm_filename = os.path.normpath(filename)
+    split_norm_filename = norm_filename.split('.')
 
-            extension = split_norm_filename[-1]
-            filename_base = '.'.join(split_norm_filename[:-1])
+    if len(split_norm_filename) == 1:
+        # file has no extension
+        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has no extension."))
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
-            if filetype == 'video/mp4':
-                # handle 'm4v' extension
-                extension = 'mp4'
+    extension = split_norm_filename[-1]
+    filename_base = '.'.join(split_norm_filename[:-1])
 
-            if not os.path.isdir(goal_directory):
-                os.mkdir(goal_directory)
+    if filetype == 'video/mp4':
+        # handle 'm4v' extension
+        extension = 'mp4'
 
-            # use '+' to concatinate
-            # if the source filename is right to left, the extension is at the end
-            destination_filename = filename_base + '.' + extension
-            goal_path = os.path.join(goal_directory, destination_filename)
+    if not os.path.isdir(goal_directory):
+        os.mkdir(goal_directory)
 
+    # use '+' to concatinate
+    # if the source filename is right to left, the extension is at the end
+    destination_filename = filename_base + '.' + extension
+    goal_path = os.path.join(goal_directory, destination_filename)
 
-            # create the destination file
-            try:
-                if os.path.exists(goal_path):
-                    raise OSError
-                f = open(goal_path, 'wb+')
-                filename_plus_extension = destination_filename
-            except (UnicodeEncodeError, IOError, OSError):
-                import urllib.parse
-                quoted_filename = urllib.parse.quote(filename_base, safe='')
-                filename_plus_extension = quoted_filename + '.' + extension
-                goal_location_str = os.path.join(goal_directory, filename_plus_extension)
+    # create the destination file
+    try:
+        if os.path.exists(goal_path):
+            raise OSError
+        f = open(goal_path, 'wb+')
+        filename_plus_extension = destination_filename
+    except (UnicodeEncodeError, IOError, OSError):
+        import urllib.parse
+        quoted_filename = urllib.parse.quote(filename_base, safe='')
+        filename_plus_extension = quoted_filename + '.' + extension
+        goal_location_str = os.path.join(goal_directory, filename_plus_extension)
 
-                try:
-                    if os.path.exists(goal_location_str):
-                        raise OSError
-                    f = open(goal_location_str, 'wb+')
-                except (UnicodeEncodeError, IOError, OSError):
-                    messages.add_message(request, messages.ERROR,
-                                _("The other media file could not be uploaded. Please use a different filename."))
-                    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-
-            destination = File(f)
-            # Save the file
-            for chunk in request.FILES['file'].chunks():
-                destination.write(chunk)
-            destination.close()
-
-            destination_location = os.path.join(goal_directory,filename_plus_extension)
-
-            import magic
-            magic_file_type = magic.from_buffer(open(destination_location,"rb").read(2040), mime=True)
-
-            if not magic_file_type:
-                # unrecognised file type has been uploaded
-                os.remove(destination_location)
-                messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
-                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-            if magic_file_type == 'video/quicktime':
-                # convert using ffmpeg
-                temp_destination_location = destination_location + ".mov"
-                os.rename(destination_location, temp_destination_location)
-
-                from signbank.video.convertvideo import convert_video
-                # convert the quicktime video to h264
-                success = convert_video(temp_destination_location, destination_location)
-
-                if success:
-                    # the destination filename already has the extension mp4
-                    os.remove(temp_destination_location)
-                else:
-                    # problems converting a quicktime media to h264
-                    os.remove(temp_destination_location)
-                    os.remove(destination_location)
-                    messages.add_message(request, messages.ERROR,
-                                         _("Upload other media failed: The Quicktime file could not be converted to H264."))
-                    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-
-            if filetype.split('/')[0] != magic_file_type.split('/')[0]:
-                # the uploaded file extension does not match its type
-                os.remove(destination_location)
-                messages.add_message(request, messages.ERROR, _("Upload other media failed: The file extension does not match its type."))
-                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-
-            #Save the database record
-            parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
-            other_media_path = request.POST['gloss']+'/'+filename_plus_extension
-            OtherMedia(path=other_media_path,alternative_gloss=request.POST['alternative_gloss'],type=request.POST['type'],parent_gloss=parent_gloss).save()
-
-            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
-        else:
-            # form is not valid
-            messages.add_message(request, messages.ERROR, _("Please choose a type description when uploading other media."))
+        try:
+            if os.path.exists(goal_location_str):
+                raise OSError
+            f = open(goal_location_str, 'wb+')
+        except (UnicodeEncodeError, IOError, OSError):
+            messages.add_message(request, messages.ERROR,
+                        _("The other media file could not be uploaded. Please use a different filename."))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-    raise Http404('Incorrect request')
 
-def update_morphology_definition(gloss, field, value, language_code = 'en'):
+    destination = File(f)
+    # Save the file
+    for chunk in request.FILES['file'].chunks():
+        destination.write(chunk)
+    destination.close()
+
+    destination_location = os.path.join(goal_directory,filename_plus_extension)
+
+    import magic
+    magic_file_type = magic.from_buffer(open(destination_location,"rb").read(2040), mime=True)
+
+    if not magic_file_type:
+        # unrecognised file type has been uploaded
+        os.remove(destination_location)
+        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+
+    if magic_file_type == 'video/quicktime':
+        # convert using ffmpeg
+        temp_destination_location = destination_location + ".mov"
+        os.rename(destination_location, temp_destination_location)
+
+        from signbank.video.convertvideo import convert_video
+        # convert the quicktime video to h264
+        success = convert_video(temp_destination_location, destination_location)
+
+        if success:
+            # the destination filename already has the extension mp4
+            os.remove(temp_destination_location)
+        else:
+            # problems converting a quicktime media to h264
+            os.remove(temp_destination_location)
+            os.remove(destination_location)
+            messages.add_message(request, messages.ERROR,
+                                 _("Upload other media failed: The Quicktime file could not be converted to H264."))
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+
+    if filetype.split('/')[0] != magic_file_type.split('/')[0]:
+        # the uploaded file extension does not match its type
+        os.remove(destination_location)
+        messages.add_message(request, messages.ERROR, _("Upload other media failed: The file extension does not match its type."))
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+
+    #Save the database record
+    parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
+    other_media_path = request.POST['gloss']+'/'+filename_plus_extension
+    OtherMedia(path=other_media_path,
+               alternative_gloss=request.POST['alternative_gloss'],
+               type=request.POST['type'],
+               parent_gloss=parent_gloss).save()
+
+    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
+
+
+def update_morphology_definition(gloss, field, value):
     """Update one of the relations for this gloss"""
 
     (what, morph_def_id) = field.split('_')
@@ -1715,15 +1747,12 @@ def add_morpheme(request):
         selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
-    default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
-
     if len(selected_datasets) == 1:
-        last_used_dataset = selected_datasets[0]
+        last_used_dataset = selected_datasets[0].acronym
     elif 'last_used_dataset' in request.session.keys():
         last_used_dataset = request.session['last_used_dataset']
     else:
-        last_used_dataset = default_dataset
+        last_used_dataset = None
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
         show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -1794,7 +1823,7 @@ def add_morpheme(request):
             request.session['search_results'] = None
         if not ('search_type' in request.session.keys()):
             request.session['search_type'] = None
-        request.session['last_used_dataset'] = dataset.name
+        request.session['last_used_dataset'] = dataset.acronym
 
         return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id})+'?edit')
     else:
@@ -1811,188 +1840,189 @@ def update_morpheme(request, morphemeid):
     if not request.user.has_perm('dictionary.change_morpheme'):
         return HttpResponseForbidden("Morpheme Update Not Allowed")
 
-    if request.method == "POST":
+    if not request.method == "POST":
+        return HttpResponseForbidden("Update morpheme method must be POST")
 
-        morpheme = get_object_or_404(Morpheme, id=morphemeid)
+    morpheme = get_object_or_404(Morpheme, id=morphemeid)
 
-        field = request.POST.get('id', '')
-        value = request.POST.get('value', '')
-        original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
-        category_value = ''
-        lemma_gloss_group = False
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+    original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
+    category_value = ''
+    lemma_gloss_group = False
 
-        if len(value) == 0:
-            value = ' '
+    if len(value) == 0:
+        value = ' '
 
-        elif value[0] == '_':
-            value = value[1:]
+    elif value[0] == '_':
+        value = value[1:]
 
-        values = request.POST.getlist('value[]')  # in case we need multiple values
+    values = request.POST.getlist('value[]')  # in case we need multiple values
 
-        # validate
-        # field is a valid field
-        # value is a valid value for field
+    # validate
+    # field is a valid field
+    # value is a valid value for field
 
-        if field == 'deletemorpheme':
-            if value == 'confirmed':
-                # delete the morpheme and redirect back to morpheme list
-                morpheme.delete()
-                return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
+    if field == 'deletemorpheme':
+        if value == 'confirmed':
+            # delete the morpheme and redirect back to morpheme list
+            morpheme.delete()
+            return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
 
-        if field.startswith('definition'):
+    if field.startswith('definition'):
 
-            return update_definition(request, morpheme, field, value)
+        return update_definition(request, morpheme, field, value)
 
-        elif field.startswith('keyword'):
+    elif field.startswith('keyword'):
 
-            return update_keywords(morpheme, field, value)
+        return update_keywords(morpheme, field, value)
 
-        elif field.startswith('relationforeign'):
+    elif field.startswith('relationforeign'):
 
-            return update_relationtoforeignsign(morpheme, field, value)
+         return update_relationtoforeignsign(morpheme, field, value)
 
-        elif field.startswith('relation'):
+    elif field.startswith('relation'):
 
-            return update_relation(morpheme, field, value)
+        return update_relation(morpheme, field, value)
 
-        elif field.startswith('morphology-definition'):
+    elif field.startswith('morphology-definition'):
 
-            return update_morphology_definition(morpheme, field, value, request.LANGUAGE_CODE)
+        return update_morphology_definition(morpheme, field, value)
 
-        elif field.startswith('other-media'):
+    elif field.startswith('other-media'):
 
-            return update_other_media(request, morpheme, field, value)
+        return update_other_media(morpheme, field, value)
 
-        elif field == 'signlanguage':
-            # expecting possibly multiple values
+    elif field == 'signlanguage':
+        # expecting possibly multiple values
 
-            return update_signlanguage(morpheme, field, values)
+        return update_signlanguage(morpheme, field, values)
 
-        elif field == 'dialect':
-            # expecting possibly multiple values
+    elif field == 'dialect':
+        # expecting possibly multiple values
 
-            return update_dialect(morpheme, field, values)
+        return update_dialect(morpheme, field, values)
 
-        elif field == 'semanticfield':
-            # expecting possibly multiple values
+    elif field == 'semanticfield':
+        # expecting possibly multiple values
 
-            return update_semanticfield(request, morpheme, field, values)
+        return update_semanticfield(request, morpheme, field, values)
 
-        elif field == 'derivationhistory':
-            # expecting possibly multiple values
+    elif field == 'derivationhistory':
+        # expecting possibly multiple values
 
-            return update_derivationhistory(request, morpheme, field, values)
+        return update_derivationhistory(request, morpheme, field, values)
 
-        elif field == 'dataset':
-            # this has been hidden
-            original_value = getattr(morpheme,field)
+    elif field == 'dataset':
+        # this has been hidden
+        original_value = getattr(morpheme,field)
 
-            # in case somebody tries an empty or non-existent dataset name
-            try:
-                ds = Dataset.objects.get(name=value)
-            except:
-                return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+        # in case somebody tries an empty or non-existent dataset name
+        try:
+            ds = Dataset.objects.get(name=value)
+        except:
+            return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
-            if ds.is_public:
-                newvalue = value
-                setattr(morpheme, field, ds)
-                morpheme.save()
+        if ds.is_public:
+            newvalue = value
+            setattr(morpheme, field, ds)
+            morpheme.save()
 
-                request.session['last_used_dataset'] = ds.name
+            request.session['last_used_dataset'] = ds.acronym
 
-                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-            import guardian
-            if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
-                newvalue = value
-                setattr(morpheme, field, ds)
-                morpheme.save()
-
-                request.session['last_used_dataset'] = ds.name
-
-                return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
-            print('no permission for chosen dataset')
-            newvalue = original_value
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-        elif field == "sn":
-            # sign number must be unique, return error message if this SN is
-            # already taken
+        import guardian
+        if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
+            newvalue = value
+            setattr(morpheme, field, ds)
+            morpheme.save()
 
-            if value == '':
-                morpheme.__setattr__(field, None)
-                morpheme.save()
-                newvalue = ''
-            else:
-                try:
-                    value = int(value)
-                except:
-                    return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
+            request.session['last_used_dataset'] = ds.acronym
 
-                existing_morpheme = Morpheme.objects.filter(sn__exact=value)
-                if existing_morpheme.count() > 0:
-                    g = existing_morpheme[0].idgloss
-                    return HttpResponseBadRequest("SN value already taken for morpheme %s" % g,
-                                                  {'content-type': 'text/plain'})
-                else:
-                    morpheme.sn = value
-                    morpheme.save()
-                    newvalue = value
+            return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
+        print('no permission for chosen dataset')
+        newvalue = original_value
+        return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-        elif field == 'inWeb':
-            # only modify if we have publish permission
-            if request.user.has_perm('dictionary.can_publish'):
-                morpheme.inWeb = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
-                morpheme.save()
+    elif field == "sn":
+        # sign number must be unique, return error message if this SN is
+        # already taken
 
-            if morpheme.inWeb:
-                newvalue = 'Yes'
-            else:
-                newvalue = 'No'
-
-        elif field.startswith('annotation_idgloss'):
-
-            return update_annotation_idgloss(morpheme, field, value)
-
-        elif field.startswith('lemmaidgloss'):
-            # Set new lemmaidgloss for this gloss
-            # First check whether the morpheme dataset is the same as the lemma dataset
-            try:
-                dataset = morpheme.dataset
-                lemma = LemmaIdgloss.objects.get(pk=value)
-                if dataset is None or dataset == lemma.dataset:
-                    morpheme.lemma = lemma
-                    morpheme.save()
-                else:
-                    messages.add_message(messages.ERROR, _("The dataset of the morpheme is not the same as that of the lemma."))
-            except ObjectDoesNotExist:
-                messages.add_message(messages.ERROR, _("The specified lemma does not exist."))
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
+        if value == '':
+            morpheme.__setattr__(field, None)
+            morpheme.save()
+            newvalue = ''
         else:
-            if field not in [f.name for f in Morpheme._meta.get_fields()]:
-                return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
+            try:
+                value = int(value)
+            except:
+                return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
 
-            whitespace = tuple(' \n\r\t')
-            if value.startswith(whitespace) or value.endswith(whitespace):
-                value = value.strip()
-            original_value = getattr(morpheme,field)
-
-            if field == 'idgloss' and value == '':
-                # don't allow user to set Lemma ID Gloss to empty
-                return HttpResponse(str(original_value), {'content-type': 'text/plain'})
-            # special cases
-            # - Foreign Key fields (Language, Dialect)
-            # - keywords
-            # - videos
-            # - tags
-
-            # Translate the value if a boolean
-            if isinstance(morpheme._meta.get_field(field), NullBooleanField):
+            existing_morpheme = Morpheme.objects.filter(sn__exact=value)
+            if existing_morpheme.count() > 0:
+                g = existing_morpheme[0].idgloss
+                return HttpResponseBadRequest("SN value already taken for morpheme %s" % g,
+                                              {'content-type': 'text/plain'})
+            else:
+                morpheme.sn = value
+                morpheme.save()
                 newvalue = value
-                value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+
+    elif field == 'inWeb':
+        # only modify if we have publish permission
+        if request.user.has_perm('dictionary.can_publish'):
+            morpheme.inWeb = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+            morpheme.save()
+
+        if morpheme.inWeb:
+            newvalue = 'Yes'
+        else:
+            newvalue = 'No'
+
+
+    elif field.startswith('annotation_idgloss'):
+
+        return update_annotation_idgloss(morpheme, field, value)
+
+    elif field.startswith('lemmaidgloss'):
+        # Set new lemmaidgloss for this gloss
+        # First check whether the morpheme dataset is the same as the lemma dataset
+        try:
+            dataset = morpheme.dataset
+            lemma = LemmaIdgloss.objects.get(pk=value)
+            if dataset is None or dataset == lemma.dataset:
+                morpheme.lemma = lemma
+                morpheme.save()
+            else:
+                messages.add_message(messages.ERROR, _("The dataset of the morpheme is not the same as that of the lemma."))
+        except ObjectDoesNotExist:
+            messages.add_message(messages.ERROR, _("The specified lemma does not exist."))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    else:
+        if field not in [f.name for f in Morpheme._meta.get_fields()]:
+            return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
+
+        whitespace = tuple(' \n\r\t')
+        if value.startswith(whitespace) or value.endswith(whitespace):
+            value = value.strip()
+        original_value = getattr(morpheme,field)
+
+        if field == 'idgloss' and value == '':
+            # don't allow user to set Lemma ID Gloss to empty
+            return HttpResponse(str(original_value), {'content-type': 'text/plain'})
+        # special cases
+        # - Foreign Key fields (Language, Dialect)
+        # - keywords
+        # - videos
+        # - tags
+
+        # Translate the value if a boolean
+        if isinstance(morpheme._meta.get_field(field), NullBooleanField):
+            newvalue = value
+            value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
             # special value of 'notset' or -1 means remove the value
             fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
@@ -2001,63 +2031,63 @@ def update_morpheme(request, morphemeid):
                 # this is used as part of the feedback to the interface, to alert the user to refresh the display
                 category_value = 'phonology'
 
-            fieldchoiceforeignkey_fields = [f.name for f in Morpheme._meta.fields
-                                            if f.name in fieldnames
-                                            and isinstance(Morpheme._meta.get_field(f.name), FieldChoiceForeignKey)]
-            fields_empty_null = [f.name for f in Morpheme._meta.fields
-                                 if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields]
+        fieldchoiceforeignkey_fields = [f.name for f in Morpheme._meta.fields
+                                        if f.name in fieldnames
+                                        and isinstance(Morpheme._meta.get_field(f.name), FieldChoiceForeignKey)]
+        fields_empty_null = [f.name for f in Morpheme._meta.fields
+                             if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields]
 
-            char_fields_not_null = [f.name for f in Morpheme._meta.fields
-                                    if f.name in fieldnames and f.name not in fieldchoiceforeignkey_fields and not f.null]
+        char_fields_not_null = [f.name for f in Morpheme._meta.fields
+                                if f.name in fieldnames and f.name not in fieldchoiceforeignkey_fields and not f.null]
 
-            # The following code relies on the order of if else testing
-            # The updates ignore Placeholder empty fields of '-' and '------'
-            # The Placeholders are needed in the template Edit view so the user can "see" something to edit
+        # The following code relies on the order of if else testing
+        # The updates ignore Placeholder empty fields of '-' and '------'
+        # The Placeholders are needed in the template Edit view so the user can "see" something to edit
+        print(field)
+        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            # leave this print statement for debugging purposes
+            # uncomment for debugging
+            # print('gloss update handshape foreign key ', gloss, field, value)
+            gloss_field = Morpheme._meta.get_field(field)
+            try:
+                handshape = Handshape.objects.get(machine_value=value)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('Update handshape no unique machine value found: ', gloss_field.name, value)
+                print('Setting to machine value 0')
+                handshape = Handshape.objects.get(machine_value=0)
+            morpheme.__setattr__(field, handshape)
+            morpheme.save()
+            newvalue = handshape.name
+        elif field in fieldchoiceforeignkey_fields:
             print(field)
-            if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                # leave this print statement for debugging purposes
-                # uncomment for debugging
-                # print('gloss update handshape foreign key ', gloss, field, value)
-                gloss_field = Morpheme._meta.get_field(field)
-                try:
-                    handshape = Handshape.objects.get(machine_value=value)
-                except (ObjectDoesNotExist, MultipleObjectsReturned):
-                    print('Update handshape no unique machine value found: ', gloss_field.name, value)
-                    print('Setting to machine value 0')
-                    handshape = Handshape.objects.get(machine_value=0)
-                morpheme.__setattr__(field, handshape)
-                morpheme.save()
-                newvalue = handshape.name
-            elif field in fieldchoiceforeignkey_fields:
-                print(field)
-                gloss_field = Morpheme._meta.get_field(field)
-                try:
-                    fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
-                except (ObjectDoesNotExist, MultipleObjectsReturned):
-                    print('Update field choice no unique machine value found: ', gloss_field.name,
-                          gloss_field.field_choice_category, value)
-                    print('Setting to machine value 0')
-                    fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
-                morpheme.__setattr__(field, fieldchoice)
-                morpheme.save()
-                newvalue = fieldchoice.name
+            gloss_field = Morpheme._meta.get_field(field)
+            try:
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('Update field choice no unique machine value found: ', gloss_field.name,
+                      gloss_field.field_choice_category, value)
+                print('Setting to machine value 0')
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
+            morpheme.__setattr__(field, fieldchoice)
+            morpheme.save()
+            newvalue = fieldchoice.name
 
-            elif value in ['notset',''] and field not in char_fields_not_null:
-                morpheme.__setattr__(field, None)
-                morpheme.save()
-                newvalue = ''
+        elif value in ['notset',''] and field not in char_fields_not_null:
+            morpheme.__setattr__(field, None)
+            morpheme.save()
+            newvalue = ''
 
-            # Regular field updating
-            else:
-                morpheme.__setattr__(field, value)
-                morpheme.save()
+        # Regular field updating
+        else:
+            morpheme.__setattr__(field, value)
+            morpheme.save()
 
-                # If the value is not a Boolean, return the new value
-                if not isinstance(value, bool):
-                    # field is a choice list and we need to get the translated human value
-                    newvalue = newvalue.name if isinstance(value, FieldChoice) else value
+            # If the value is not a Boolean, return the new value
+            if not isinstance(value, bool):
+                # field is a choice list and we need to get the translated human value
+                newvalue = newvalue.name if isinstance(value, FieldChoice) else value
 
-        return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group), {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group), {'content-type': 'text/plain'})
 
 
 def update_morpheme_definition(gloss, field, value):
@@ -2113,39 +2143,44 @@ def add_tag(request, glossid):
     # default response
     response = HttpResponse('invalid', {'content-type': 'text/plain'})
 
-    if request.method == "POST":
-        thisgloss = get_object_or_404(Gloss, id=glossid)
-        tags_label = 'Tags'
-        form = TagUpdateForm(request.POST)
-        if form.is_valid():
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add tag method must be POST")
 
-            tag = form.cleaned_data['tag']
+    thisgloss = get_object_or_404(Gloss, id=glossid)
+    tags_label = 'Tags'
+    form = TagUpdateForm(request.POST)
 
-            if form.cleaned_data['delete']:
-                old_tags_string = tag
+    if not form.is_valid():
+        # fallback to the requesting page
+        return HttpResponseRedirect('/')
 
-                # get the relevant TaggedItem
-                ti = get_object_or_404(TaggedItem, object_id=thisgloss.id, tag__name=tag)
-                ti.delete()
-                new_tags_string = ''
+    tag = form.cleaned_data['tag']
 
-                revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                         gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
-                revision.save()
-                response = HttpResponse('deleted', {'content-type': 'text/plain'})
-            else:
-                old_tags_string = ''
+    if form.cleaned_data['delete']:
+        old_tags_string = tag
 
-                # we need to wrap the tag name in quotes since it might contain spaces
-                Tag.objects.add_tag(thisgloss, '"%s"' % tag)
-                new_tags_string = tag
-                revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                         gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
-                revision.save()
-                # response is new HTML for the tag list and form
-                response = render(request,'dictionary/glosstags.html',
-                                              {'gloss': thisgloss,
-                                               'tagform': TagUpdateForm()})
+        # get the relevant TaggedItem
+        ti = get_object_or_404(TaggedItem, object_id=thisgloss.id, tag__name=tag)
+        ti.delete()
+        new_tags_string = ''
+
+        revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+        revision.save()
+        response = HttpResponse('deleted', {'content-type': 'text/plain'})
+    else:
+        old_tags_string = ''
+
+        # we need to wrap the tag name in quotes since it might contain spaces
+        Tag.objects.add_tag(thisgloss, '"%s"' % tag)
+        new_tags_string = tag
+        revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+        revision.save()
+        # response is new HTML for the tag list and form
+        response = render(request,'dictionary/glosstags.html',
+                                      {'gloss': thisgloss,
+                                       'tagform': TagUpdateForm()})
             
     return response
 
@@ -2156,83 +2191,89 @@ def add_morphemetag(request, morphemeid):
     # default response
     response = HttpResponse('invalid', {'content-type': 'text/plain'})
 
-    if request.method == "POST":
-        thismorpheme= get_object_or_404(Morpheme, id=morphemeid)
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add morpheme tag method must be POST")
 
-        form = TagUpdateForm(request.POST)
-        if form.is_valid():
+    thismorpheme = get_object_or_404(Morpheme, id=morphemeid)
 
-            tag = form.cleaned_data['tag']
+    form = TagUpdateForm(request.POST)
 
-            if form.cleaned_data['delete']:
-                # get the relevant TaggedItem
-                ti = get_object_or_404(TaggedItem, object_id=thismorpheme.id, tag__name=tag)
-                ti.delete()
-                response = HttpResponse('deleted', {'content-type': 'text/plain'})
-            else:
-                # we need to wrap the tag name in quotes since it might contain spaces
-                Tag.objects.add_tag(thismorpheme, '"%s"' % tag)
-                # response is new HTML for the tag list and form
-                response = render(request,'dictionary/morphemetags.html',
-                                              {'morpheme': thismorpheme,
-                                               'tagform': TagUpdateForm()})
-        else:
-            print("invalid form")
-            print(form.as_table())
+    if not form.is_valid():
+        # fallback to the requesting page
+        return HttpResponseRedirect('/')
 
+    tag = form.cleaned_data['tag']
+
+    if form.cleaned_data['delete']:
+        # get the relevant TaggedItem
+        ti = get_object_or_404(TaggedItem, object_id=thismorpheme.id, tag__name=tag)
+        ti.delete()
+        response = HttpResponse('deleted', {'content-type': 'text/plain'})
+    else:
+        # we need to wrap the tag name in quotes since it might contain spaces
+        Tag.objects.add_tag(thismorpheme, '"%s"' % tag)
+        # response is new HTML for the tag list and form
+        response = render(request,'dictionary/morphemetags.html',
+                                      {'morpheme': thismorpheme,
+                                       'tagform': TagUpdateForm()})
     return response
 
 def change_dataset_selection(request):
     """View to change dataset selection"""
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Change dataset selection method must be POST")
+
     dataset_prefix = 'dataset_'
 
-    if request.method == "POST":
-        user = request.user
-        if user.is_authenticated():
+    user = request.user
+    if user.is_authenticated:
+        user_profile = UserProfile.objects.get(user=user)
+
+        user_profile.selected_datasets.clear()
+        selected_dataset_acronyms = []
+        for attribute in request.POST:
+            if attribute[:len(dataset_prefix)] == dataset_prefix:
+                dataset_name = attribute[len(dataset_prefix):]
+                selected_dataset_acronyms.append(dataset_name)
+
+        if selected_dataset_acronyms:
             user_profile = UserProfile.objects.get(user=user)
-
-            user_profile.selected_datasets.clear()
-            selected_datasets = []
-            for attribute in request.POST:
-                if attribute[:len(dataset_prefix)] == dataset_prefix:
-                    dataset_name = attribute[len(dataset_prefix):]
-                    selected_datasets.append(dataset_name)
-
-            if selected_datasets:
-                user_profile = UserProfile.objects.get(user=user)
-                for dataset_name in selected_datasets:
-                    try:
-                        dataset = Dataset.objects.get(name=dataset_name)
-                        user_profile.selected_datasets.add(dataset)
-                    except ObjectDoesNotExist:
-                        print('exception to updating selected datasets')
-                        pass
-                user_profile.save()
-        else:
-            # clear old selection
-            selected_datasets = []
-            for attribute in request.POST:
-                if attribute[:len(dataset_prefix)] == dataset_prefix:
-                    dataset_name = attribute[len(dataset_prefix):]
-                    selected_datasets.append(dataset_name)
-            new_selection = []
-            for dataset_name in selected_datasets:
+            for dataset_name in selected_dataset_acronyms:
+                print(dataset_name, type(dataset_name))
                 try:
-                    dataset = Dataset.objects.get(name=dataset_name)
-                    new_selection.append(dataset.acronym)
+                    dataset = Dataset.objects.get(acronym=dataset_name)
+                    user_profile.selected_datasets.add(dataset)
                 except ObjectDoesNotExist:
-                    print('exception to updating selected datasets anonymous user')
+                    print('exception to updating selected datasets')
                     pass
-            request.session['selected_datasets'] = new_selection
+            user_profile.save()
+    else:
+        # clear old selection
+        selected_dataset_acronyms = []
+        for attribute in request.POST:
+            if attribute[:len(dataset_prefix)] == dataset_prefix:
+                dataset_name = attribute[len(dataset_prefix):]
+                selected_dataset_acronyms.append(dataset_name)
+        new_selection = []
+        for dataset_name in selected_dataset_acronyms:
+            try:
+                dataset = Dataset.objects.get(acronym=dataset_name)
+                new_selection.append(dataset.acronym)
+            except ObjectDoesNotExist:
+                print('exception to updating selected datasets anonymous user')
+                pass
+        request.session['selected_datasets'] = new_selection
 
-        # check whether the last used dataset is still in the selected datasets
-        if 'last_used_dataset' in request.session.keys():
-            if not (request.session['last_used_dataset'] in selected_datasets):
-                request.session['last_used_dataset'] = None
-        else:
-            # set the last_used_dataset?
-            pass
+    # check whether the last used dataset is still in the selected datasets
+    if 'last_used_dataset' in request.session.keys():
+        if not (request.session['last_used_dataset'] in selected_dataset_acronyms):
+            request.session['last_used_dataset'] = None
+    else:
+        # set the last_used_dataset?
+        pass
     return HttpResponseRedirect(reverse('admin_dataset_select'))
+
 
 def update_dataset(request, datasetid):
     """View to update a dataset model from the jeditable jquery form

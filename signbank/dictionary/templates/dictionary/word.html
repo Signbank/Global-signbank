@@ -118,7 +118,7 @@
             <th>{% blocktrans %}Translation equivalents{% endblocktrans %}</th>
             <td>
              {% for kwd in allkwds %}
-               {% ifequal translation kwd.translation.text %}<strong>{{ kwd.translation.text|safe }}</strong>{% else %}{{ kwd.translation.text|safe }}{% endifequal %}{% if not forloop.last %},{% endif %}
+               {% if translation == kwd.translation.text %}<strong>{{ kwd.translation.text|safe }}</strong>{% else %}{{ kwd.translation.text|safe }}{% endif %}{% if not forloop.last %},{% endif %}
              {% endfor %}
              </td>
         </tr>
@@ -180,7 +180,7 @@
         
                  {% for role in roles %}
               
-                      {% ifequal deftype role.grouper %}  
+                      {% if deftype == role.grouper %}  
                   
                           <h3>{{role.list.0.get_role_display}}</h3>
                   
@@ -190,7 +190,7 @@
                           {% endfor %}
                           </ol>
                   
-                      {% endifequal %}
+                      {% endif %}
                  {% endfor %}
             {% endfor %}
         

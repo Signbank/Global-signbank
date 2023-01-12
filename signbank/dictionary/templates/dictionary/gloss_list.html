@@ -42,11 +42,11 @@
           {% if page.has_next or page.has_previous %} 
           <p>{% trans "Jump to results page:" %}
           {% for p in paginator.page_range %}
-             {% ifequal p page.number %}
-             <strong>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</strong>
+             {% if p == page.number %}
+             <strong>{% if p == 0 %}Start{% else %}{{p}}{% endif %}</strong>
              {% else %}
-             <a href='?query={{query}}&page={{p}}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
-             {% endifequal %}
+             <a href='?query={{query}}&page={{p}}'>{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+             {% endif %}
           {% endfor %}
           </p>
 

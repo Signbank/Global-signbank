@@ -54,7 +54,7 @@ def copy_fieldchoice_names(apps, schema_editor):
     """
 
     FieldChoice = apps.get_model('dictionary', 'FieldChoice')
-
+    
     semanticfields = SemanticField.objects.all()
     for obj in semanticfields:
         try:

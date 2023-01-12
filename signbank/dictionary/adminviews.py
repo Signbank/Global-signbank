@@ -8,14 +8,14 @@ from django.db.models import CharField, TextField, Value as V
 from django.db.models import OuterRef, Subquery
 from django.db.models.query import QuerySet
 from django.db.models.functions import Concat
-from django.db.models.fields import NullBooleanField, BooleanField
+from django.db.models.fields import BooleanField, BooleanField
 from django.db.models.sql.where import NothingNode, WhereNode
 from django.http import HttpResponse, HttpResponseRedirect, QueryDict
 from django.template import RequestContext
-from django.core.urlresolvers import reverse_lazy
+from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.paginator import Paginator
-from django.utils.translation import override, ugettext_lazy as _, activate
+from django.utils.translation import override, gettext_lazy as _, activate
 from django.forms.fields import ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
@@ -85,11 +85,18 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
+        def lambda_sort_tuple(x, bReversed):
+            # Order by the string-values in the tuple list
+            getattr_sOrder = getattr(x, sOrder)
+            if getattr_sOrder is None:
+                # if the field is not set, use the machine value 0 choice
+                return (True, dict(tpList)[0])
+            elif getattr_sOrder.machine_value in [0,1]:
+                return (True, dict(tpList)[getattr_sOrder.machine_value])
+            else:
+                return(bReversed, dict(tpList)[getattr(x, sOrder).machine_value])
 
-        # Order by the string-values in the tuple list
-        return sorted(qs, key=lambda x: (getattr(x, sOrder) is None or getattr(x, sOrder).machine_value in [0, 1]
-                                         or bReversed, dict(tpList)[getattr(x, sOrder).machine_value]),
-                      reverse=bReversed)
+        return sorted(qs, key=lambda x: lambda_sort_tuple(x, bReversed), reverse=bReversed)
 
     def order_queryset_by_annotationidglosstranslation(qs, sOrder):
         language_code_2char = sOrder[-2:]
@@ -204,18 +211,11 @@ class GlossListView(ListView):
     search_form_data = QueryDict(mutable=True)
 
     def get_template_names(self):
-        if 'settings' in self.kwargs:
-            return ['dictionary/admin_gloss_list_colors.html']
         return ['dictionary/admin_gloss_list.html']
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(GlossListView, self).get_context_data(**kwargs)
-
-        if 'settings' in self.kwargs:
-            self.request.session['show_colors'] = True
-        else:
-            self.request.session['show_colors'] = False
 
         # Retrieve the search_type,so that we know whether the search should be restricted to Gloss or not
         if 'search_type' in self.request.GET:
@@ -235,11 +235,16 @@ class GlossListView(ListView):
         if 'inWeb' in self.request.GET:
             # user is searching for signs / morphemes visible to anonymous uers
             self.web_search = self.request.GET['inWeb'] == '2'
-        elif not self.request.user.is_authenticated():
+        elif not self.request.user.is_authenticated:
             self.web_search = True
         context['web_search'] = self.web_search
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        if self.request.user.is_authenticated:
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
+        elif 'selected_datasets' in self.request.session.keys():
+            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
+        else:
+            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -252,8 +257,8 @@ class GlossListView(ListView):
         if self.queryset_language_codes is None:
             self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
 
-        if len(selected_datasets) > 0:
-            self.last_used_dataset = selected_datasets[0]
+        if len(selected_datasets) == 1:
+            self.last_used_dataset = selected_datasets[0].acronym
         elif 'last_used_dataset' in self.request.session.keys():
             self.last_used_dataset = self.request.session['last_used_dataset']
 
@@ -363,22 +368,22 @@ class GlossListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
-        if hasattr(settings, 'SHOW_MORPHEME_SEARCH') and self.request.user.is_authenticated():
+        if hasattr(settings, 'SHOW_MORPHEME_SEARCH') and self.request.user.is_authenticated:
             context['SHOW_MORPHEME_SEARCH'] = settings.SHOW_MORPHEME_SEARCH
         else:
             context['SHOW_MORPHEME_SEARCH'] = False
 
-        if hasattr(settings, 'GLOSS_LIST_DISPLAY_HEADER') and self.request.user.is_authenticated():
+        if hasattr(settings, 'GLOSS_LIST_DISPLAY_HEADER') and self.request.user.is_authenticated:
             context['GLOSS_LIST_DISPLAY_HEADER'] = settings.GLOSS_LIST_DISPLAY_HEADER
         else:
             context['GLOSS_LIST_DISPLAY_HEADER'] = []
 
-        if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated():
+        if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated:
             context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
         else:
             context['search_by_publication_fields'] = []
 
-        if hasattr(settings, 'SEARCH_BY') and 'relations' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated():
+        if hasattr(settings, 'SEARCH_BY') and 'relations' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated:
             context['search_by_relation_fields'] = searchform_panels(search_form, settings.SEARCH_BY['relations'])
         else:
             context['search_by_relation_fields'] = []
@@ -457,7 +462,7 @@ class GlossListView(ListView):
         glosses_ordered_by_lemma_id = Gloss.objects.filter(id__in=list_of_object_ids).order_by('lemma_id')
         context['glosses_ordered_by_lemma_id'] = glosses_ordered_by_lemma_id
 
-        if self.search_type == 'sign' or not self.request.user.is_authenticated():
+        if self.search_type == 'sign' or not self.request.user.is_authenticated:
             # Only count the none-morpheme glosses
             # this branch is slower than the other one
             context['glosscount'] = Gloss.none_morpheme_objects().select_related('lemma').select_related('dataset').filter(lemma__dataset__in=selected_datasets).count()
@@ -568,7 +573,7 @@ class GlossListView(ListView):
     def render_to_ecv_export_response(self, context):
 
         # check that the user is logged in
-        if self.request.user.is_authenticated():
+        if self.request.user.is_authenticated:
             pass
         else:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
@@ -692,7 +697,15 @@ class GlossListView(ListView):
                     if hasattr(gloss, 'get_' + f.name + '_display'):
                         value = getattr(gloss, 'get_' + f.name + '_display')()
                     else:
-                        value = getattr(gloss, f.name).name
+                        field_value = getattr(gloss, f.name)
+                        value = field_value.name if field_value else '-'
+                elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+                    handshape_field_value = getattr(gloss, f.name)
+                    value = handshape_field_value.name if handshape_field_value else '-'
+                elif f.related_model == SemanticField:
+                    value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
+                elif f.related_model == DerivationHistory:
+                    value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
                 else:
                     value = getattr(gloss, f.name)
 
@@ -841,7 +854,7 @@ class GlossListView(ListView):
         if 'inWeb' in self.request.GET:
             # user is searching for signs / morphemes visible to anonymous uers
             self.web_search = self.request.GET['inWeb'] == '2'
-        elif not self.request.user.is_authenticated():
+        elif not self.request.user.is_authenticated:
             self.web_search = True
 
         setattr(self.request, 'web_search', self.web_search)
@@ -858,15 +871,19 @@ class GlossListView(ListView):
         else:
             self.query_parameters = dict()
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        if self.request.user.is_authenticated:
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
+        elif 'selected_datasets' in self.request.session.keys():
+            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
+        else:
+            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         #Get the initial selection
         if self.show_all or (len(get) > 0 and 'query' not in self.request.GET):
             # anonymous users can search signs, make sure no morphemes are in the results
-            if self.search_type == 'sign' or not self.request.user.is_authenticated():
+            if self.search_type == 'sign' or not self.request.user.is_authenticated:
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
-
                 if SPEED_UP_RETRIEVING_ALL_SIGNS:
                     qs = Gloss.none_morpheme_objects().select_related('lemma').prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
                 else:
@@ -896,7 +913,7 @@ class GlossListView(ListView):
         else:
             qs = Gloss.objects.none()
 
-        if self.request.user.is_authenticated() and self.request.user.has_perm('dictionary.search_gloss'):
+        if self.request.user.is_authenticated and self.request.user.has_perm('dictionary.search_gloss'):
             pass
         else:
             qs = qs.filter(inWeb__exact=True)
@@ -1044,7 +1061,7 @@ class GlossListView(ListView):
 
                 val = get[fieldname]
 
-                if isinstance(field_obj,NullBooleanField):
+                if isinstance(field_obj,BooleanField):
                     val = {'0':'','1': None, '2': True, '3': False}[val]
 
                 if val != '':
@@ -1220,11 +1237,8 @@ class GlossDetailView(DetailView):
     context_object_name = 'gloss'
     last_used_dataset = None
     query_parameters = dict()
-    # template_name = 'dictionary/gloss_detail_preview.html'
 
     def get_template_names(self):
-        if 'show_colors' in self.request.session.keys() and self.request.session['show_colors']:
-            return ['dictionary/gloss_detail_preview.html']
         return ['dictionary/gloss_detail.html']
 
     #Overriding the get method get permissions right
@@ -1255,14 +1269,14 @@ class GlossDetailView(DetailView):
                            'selected_datasets': selected_datasets,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 return HttpResponseRedirect(reverse('registration:auth_login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
@@ -1384,17 +1398,21 @@ class GlossDetailView(DetailView):
         context['active_id'] = gl.id
         labels = gl.field_labels()
 
+        # the lemma field is non-empty because it's caught in the get method
+        dataset_of_requested_gloss = gl.lemma.dataset
+
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
-        if gl.dataset:
-            self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.acronym
+        if dataset_of_requested_gloss:
+            self.request.session['datasetid'] = dataset_of_requested_gloss.pk
+            self.last_used_dataset = dataset_of_requested_gloss.acronym
         else:
-            print('error function get default language is assigned to context datasetid')
-            self.request.session['datasetid'] = get_default_language_id()
+            # in this case the gloss does not have a dataset assigned
+            print("Alert: The gloss does not have a dataset. The default dataset is assigned to session variable 'datasetid'")
+            self.request.session['datasetid'] = settings.DEFAULT_DATASET_PK
+            self.last_used_dataset = settings.DEFAULT_DATASET_ACRONYM
 
-        # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # set up weak drop weak prop fields
@@ -1742,8 +1760,8 @@ class GlossDetailView(DetailView):
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
             user = self.request.user
-            if user.is_authenticated():
-                qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
+            if user.is_authenticated:
+                qs = get_objects_for_user(user, 'can_view_dataset', Dataset, accept_global_perms=False)
                 dataset_choices = {}
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
@@ -1815,14 +1833,14 @@ class GlossVideosView(DetailView):
                            'selected_datasets': selected_datasets,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 return HttpResponseRedirect(reverse('registration:auth_login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
@@ -1893,14 +1911,20 @@ class GlossVideosView(DetailView):
             context['other_media_field_choices'][
                 'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
 
+        # the lemma field is non-empty because it's caught in the get method
+        dataset_of_requested_gloss = gl.lemma.dataset
+
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
-        if gl.dataset:
-            self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.acronym
+        if dataset_of_requested_gloss:
+            self.request.session['datasetid'] = dataset_of_requested_gloss.pk
+            self.last_used_dataset = dataset_of_requested_gloss.acronym
         else:
+            # in this case the gloss does not have a dataset assigned
+            print("Alert: The gloss does not have a dataset. The default dataset is assigned to session variable 'datasetid'")
             self.request.session['datasetid'] = settings.DEFAULT_DATASET_PK
+            self.last_used_dataset = settings.DEFAULT_DATASET_ACRONYM
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
@@ -1948,14 +1972,14 @@ class GlossRelationsDetailView(DetailView):
                            'selected_datasets': selected_datasets,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 return HttpResponseRedirect(reverse('registration:auth_login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
@@ -2235,11 +2259,10 @@ class MorphemeListView(ListView):
             self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
 
         if len(selected_datasets) == 1:
-            self.last_used_dataset = selected_datasets[0]
+            self.last_used_dataset = selected_datasets[0].acronym
         elif 'last_used_dataset' in self.request.session.keys():
             self.last_used_dataset = self.request.session['last_used_dataset']
-        else:
-            self.last_used_dataset = default_dataset
+
         context['last_used_dataset'] = self.last_used_dataset
 
         selected_datasets_signlanguage = [ ds.signlanguage for ds in selected_datasets ]
@@ -2359,7 +2382,7 @@ class MorphemeListView(ListView):
 
         context['field_colors'] = choices_colors
 
-        if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated():
+        if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated:
             context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
         else:
             context['search_by_publication_fields'] = []
@@ -2506,7 +2529,7 @@ class MorphemeListView(ListView):
                 key = fieldname + '__exact'
                 val = get[fieldname]
 
-                if isinstance(Gloss._meta.get_field(fieldname), NullBooleanField):
+                if isinstance(Gloss._meta.get_field(fieldname), BooleanField):
                     val = {'0': '', '1': None, '2': True, '3': False}[val]
 
                 if val != '':
@@ -2677,24 +2700,25 @@ class MorphemeListView(ListView):
                     row.append("")
 
             for f in fields:
-
-                # Try the value of the choicelist
-                try:
-                    row.append(getattr(gloss, 'get_' + f.name + '_display')())
-
-                # If it's not there, try the raw value
-                except AttributeError:
+                #Try the value of the choicelist
+                if hasattr(f, 'field_choice_category'):
+                    if hasattr(gloss, 'get_' + f.name + '_display'):
+                        value = getattr(gloss, 'get_' + f.name + '_display')()
+                    else:
+                        field_value = getattr(gloss, f.name)
+                        value = field_value.name if field_value else '-'
+                elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+                    handshape_field_value = getattr(gloss, f.name)
+                    value = handshape_field_value.name if handshape_field_value else '-'
+                elif f.related_model == SemanticField:
+                    value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
+                elif f.related_model == DerivationHistory:
+                    value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
+                else:
                     value = getattr(gloss, f.name)
-
-
-                    # This was disabled with the move to Python 3... might not be needed anymore?
-                    # if isinstance(value, unicode):
-                    #     value = str(value.encode('ascii', 'xmlcharrefreplace'))
-                    # elif not isinstance(value, str):
-
                     value = str(value)
 
-                    row.append(value)
+                row.append(value)
 
             # get languages
             signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
@@ -3381,7 +3405,7 @@ class MinimalPairsListView(ListView):
 
                 val = get[fieldname]
 
-                if isinstance(field_obj,NullBooleanField):
+                if isinstance(field_obj,BooleanField):
                     val = {'0':'','1': None, '2': True, '3': False}[val]
 
                 if val != '':
@@ -3657,7 +3681,7 @@ class FrequencyListView(ListView):
 
         user = self.request.user
 
-        if user.is_authenticated():
+        if user.is_authenticated:
             selected_datasets = get_selected_datasets_for_user(self.request.user)
             from django.db.models import Prefetch
             qs = Dataset.objects.filter(id__in=selected_datasets).prefetch_related(
@@ -3673,7 +3697,7 @@ class FrequencyListView(ListView):
             checker.prefetch_perms(qs)
 
             for dataset in qs:
-                checker.has_perm('view_dataset', dataset)
+                checker.has_perm('can_view_dataset', dataset)
 
             return qs
         else:
@@ -3718,14 +3742,14 @@ class GlossFrequencyView(DetailView):
                            'selected_datasets': selected_datasets,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 return HttpResponseRedirect(reverse('registration:auth_login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
@@ -3797,8 +3821,8 @@ class GlossFrequencyView(DetailView):
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
             user = self.request.user
-            if user.is_authenticated():
-                qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
+            if user.is_authenticated:
+                qs = get_objects_for_user(user, 'can_view_dataset', Dataset, accept_global_perms=False)
                 dataset_choices = {}
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
@@ -3955,8 +3979,8 @@ class LemmaFrequencyView(DetailView):
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
             user = self.request.user
-            if user.is_authenticated():
-                qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
+            if user.is_authenticated:
+                qs = get_objects_for_user(user, 'can_view_dataset', Dataset, accept_global_perms=False)
                 dataset_choices = {}
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
@@ -4071,8 +4095,17 @@ class HandshapeListView(ListView):
 
         context['handshapefieldchoicecount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        if self.request.user.is_authenticated:
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
+        elif 'selected_datasets' in self.request.session.keys():
+            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
+        else:
+            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         context['selected_datasets'] = selected_datasets
+        
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
         context['signscount'] = Gloss.objects.filter(lemma__dataset__in=selected_datasets).count()
 
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
@@ -4084,10 +4117,6 @@ class HandshapeListView(ListView):
             context['show_all'] = False
 
         context['handshapescount'] = Handshape.objects.filter(machine_value__gt=1).count()
-
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-        context['dataset_languages'] = dataset_languages
 
         # this is needed to avoid crashing the browser if you go to the last page
         # of an extremely long list and go to Detail View on the objects
@@ -4235,7 +4264,7 @@ class HandshapeListView(ListView):
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
                                                         output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(**{query_hsNumSel:val}))
 
-                if isinstance(Handshape._meta.get_field(fieldname), NullBooleanField):
+                if isinstance(Handshape._meta.get_field(fieldname), BooleanField):
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': '' }[val]
 
                 if fieldname == 'name' and val != '':
@@ -4258,7 +4287,13 @@ class HandshapeListView(ListView):
             # search for signs with found hadnshapes
             # find relevant machine values for handshapes
             selected_handshapes = [ h.machine_value for h in qs ]
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
+            
+            if self.request.user.is_authenticated:
+                selected_datasets = get_selected_datasets_for_user(self.request.user)
+            elif 'selected_datasets' in self.request.session.keys():
+                selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
+            else:
+                selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
 
             # set up filters, obscuring whether the _fk field names are used
             strong_hand = 'domhndsh'
@@ -4285,10 +4320,10 @@ class DatasetListView(ListView):
         # Call the base implementation first to get a context
         context = super(DatasetListView, self).get_context_data(**kwargs)
 
-        if not self.request.user.is_authenticated():
+        if not self.request.user.is_authenticated:
             if 'selected_datasets' in self.request.session.keys():
-                selected_datasets = self.request.session['selected_datasets']
-                selected_datasets = Dataset.objects.filter(acronym__in=selected_datasets)
+                selected_dataset_acronyms = self.request.session['selected_datasets']
+                selected_datasets = Dataset.objects.filter(acronym__in=selected_dataset_acronyms)
             else:
                 selected_datasets = get_selected_datasets_for_user(self.request.user)
                 self.request.session['selected_datasets'] = [ ds.acronym for ds in selected_datasets ]
@@ -4331,7 +4366,7 @@ class DatasetListView(ListView):
     def render_to_request_response(self, context):
 
         # check that the user is logged in
-        if self.request.user.is_authenticated():
+        if self.request.user.is_authenticated:
             pass
         else:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
@@ -4354,7 +4389,7 @@ class DatasetListView(ListView):
 
         # make sure the user can write to this dataset
         # from guardian.shortcuts import get_objects_for_user
-        user_view_datasets = get_objects_for_user(self.request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        user_view_datasets = get_objects_for_user(self.request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
         if user_view_datasets and not dataset_object in user_view_datasets:
             # the user currently has no view permission for the requested dataset
             pass
@@ -4413,7 +4448,7 @@ class DatasetListView(ListView):
     def render_to_ecv_export_response(self, context):
 
         # check that the user is logged in
-        if self.request.user.is_authenticated():
+        if self.request.user.is_authenticated:
             pass
         else:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
@@ -4473,7 +4508,7 @@ class DatasetListView(ListView):
         # not sure what this accomplishes
         # setattr(self.request, 'dataset_name', self.dataset_name)
 
-        if user.is_authenticated():
+        if user.is_authenticated:
             from django.db.models import Prefetch
             qs = Dataset.objects.all().prefetch_related(
                 Prefetch(
@@ -4488,7 +4523,7 @@ class DatasetListView(ListView):
             checker.prefetch_perms(qs)
 
             for dataset in qs:
-                checker.has_perm('view_dataset', dataset)
+                checker.has_perm('can_view_dataset', dataset)
 
             qs = qs.annotate(Count('lemmaidgloss__gloss')).order_by('acronym')
 
@@ -4564,7 +4599,7 @@ class DatasetManagerView(ListView):
         :return: 
         """
         # check that the user is logged in
-        if self.request.user.is_authenticated():
+        if self.request.user.is_authenticated:
             pass
         else:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
@@ -4689,7 +4724,7 @@ class DatasetManagerView(ListView):
 
         from guardian.shortcuts import assign_perm, remove_perm
         datasets_user_can_change = get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False)
-        datasets_user_can_view = get_objects_for_user(user_object, 'view_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_view = get_objects_for_user(user_object, 'can_view_dataset', Dataset, accept_global_perms=False)
         groups_user_is_in = Group.objects.filter(user=user_object)
 
         if 'add_view_perm' in self.request.GET:
@@ -4704,7 +4739,7 @@ class DatasetManagerView(ListView):
                 return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
 
             try:
-                assign_perm('view_dataset', user_object, dataset_object)
+                assign_perm('can_view_dataset', user_object, dataset_object)
                 messages.add_message(self.request, messages.INFO,
                                  _('View permission for user successfully granted.'))
 
@@ -4789,7 +4824,7 @@ class DatasetManagerView(ListView):
                     try:
                         # also need to remove change_dataset perm in this case
                         from guardian.shortcuts import remove_perm
-                        remove_perm('view_dataset', user_object, dataset_object)
+                        remove_perm('can_view_dataset', user_object, dataset_object)
                         remove_perm('change_dataset', user_object, dataset_object)
                         messages.add_message(self.request, messages.INFO,
                                              _('View (and change) permission for user successfully revoked.'))
@@ -4843,7 +4878,7 @@ class DatasetManagerView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        if not self.request.user.is_authenticated():
+        if not self.request.user.is_authenticated:
             raise PermissionDenied
 
         dataset_object, response = self.get_dataset_from_request()
@@ -4925,7 +4960,7 @@ class DatasetManagerView(ListView):
 
         setattr(self.request, 'dataset_name', self.dataset_name)
 
-        if user.is_authenticated():
+        if user.is_authenticated:
 
             # determine if user is a dataset manager
             from django.contrib.auth.models import Group, User
@@ -5046,7 +5081,7 @@ class DatasetDetailView(DetailView):
     def render_to_request_access(self, context):
         dataset = context['dataset']
         # check that the user is logged in
-        if self.request.user.is_authenticated() or not dataset.is_public:
+        if self.request.user.is_authenticated or not dataset.is_public:
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/' + dataset.acronym)
         else:
             self.request.session['requested_datasets'] = [dataset.name]
@@ -5055,7 +5090,7 @@ class DatasetDetailView(DetailView):
     def render_to_add_owner_response(self, context):
 
         # check that the user is logged in
-        if self.request.user.is_authenticated():
+        if self.request.user.is_authenticated:
             pass
         else:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
@@ -5232,7 +5267,7 @@ class DatasetFieldChoiceView(ListView):
 
         setattr(self.request, 'dataset_name', self.dataset_name)
 
-        if user.is_authenticated():
+        if user.is_authenticated:
 
             # determine if user is a dataset manager
             from django.contrib.auth.models import Group, User
@@ -5322,7 +5357,7 @@ class FieldChoiceView(ListView):
     def get_queryset(self):
         user = self.request.user
 
-        if user.is_authenticated():
+        if user.is_authenticated:
 
             if user.is_superuser:
 
@@ -5369,11 +5404,11 @@ class DatasetFrequencyView(DetailView):
                            'selected_datasets': selected_datasets,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return HttpResponseRedirect(reverse('registration:auth_login'))
 
         dataset = self.object
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
 
         if dataset not in datasets_user_can_view:
                 translated_message = _('You do not have permission to view this corpus.')
@@ -5513,7 +5548,7 @@ class DatasetFrequencyView(DetailView):
 
     def render_to_process_speakers_response(self, context):
         # check that the user is logged in
-        if not self.request.user.is_authenticated():
+        if not self.request.user.is_authenticated:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
@@ -5552,7 +5587,7 @@ class DatasetFrequencyView(DetailView):
     def render_to_create_corpus_response(self, context):
 
         # check that the user is logged in
-        if not self.request.user.is_authenticated():
+        if not self.request.user.is_authenticated:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
@@ -5592,7 +5627,7 @@ class DatasetFrequencyView(DetailView):
 
     def render_to_update_corpus_response(self, context):
         # check that the user is logged in
-        if not self.request.user.is_authenticated():
+        if not self.request.user.is_authenticated:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
@@ -5669,7 +5704,7 @@ def order_handshape_queryset_by_sort_order(get, qs):
                    .order_by('name').values_list('machine_value', flat=True))
         )])
 
-        ordered_handshapes = sorted(qs, key=lambda handshape_obj: order_dict[getattr(handshape_obj, sort_order).id]
+        ordered_handshapes = sorted(qs, key=lambda handshape_obj: order_dict[getattr(handshape_obj, sort_order).machine_value]
                             if getattr(handshape_obj, sort_order) else -1, reverse=reverse)
 
     else:
@@ -5733,14 +5768,14 @@ class MorphemeDetailView(DetailView):
                            'selected_datasets': selected_datasets,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 return HttpResponseRedirect(reverse('registration:auth_login'))
 
         dataset_of_requested_morpheme = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
 
         if dataset_of_requested_morpheme not in selected_datasets:
             translated_message = _('The morpheme you are trying to view is not in your selected datasets.')
@@ -6015,8 +6050,8 @@ class MorphemeDetailView(DetailView):
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
             user = self.request.user
-            if user.is_authenticated():
-                qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=False)
+            if user.is_authenticated:
+                qs = get_objects_for_user(user, 'can_view_dataset', Dataset, accept_global_perms=False)
                 dataset_choices = dict()
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
@@ -6156,7 +6191,7 @@ def user_ajax_complete(request, prefix):
 def lemma_ajax_complete(request, dataset_id, language_code, q):
 
     # check that the user is logged in
-    if request.user.is_authenticated():
+    if request.user.is_authenticated:
         pass
     else:
         messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
@@ -6332,12 +6367,12 @@ def glosslist_ajax_complete(request, gloss_id):
 
     display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
 
-    if request.is_ajax() and request.method == 'GET':
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
         if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
             display_fields = json.loads(request.GET['display_fields'])
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
-    is_anonymous = user.is_authenticated()
+    is_anonymous = user.is_authenticated
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
@@ -6446,12 +6481,12 @@ def glosslistheader_ajax(request):
     display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
     query_fields_parameters = []
 
-    if request.is_ajax() and request.method == 'GET':
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
         if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
             display_fields = json.loads(request.GET['display_fields'])
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
-    is_anonymous = user.is_authenticated()
+    is_anonymous = user.is_authenticated
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
         SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -6504,54 +6539,12 @@ def glosslistheader_ajax(request):
                                                                     'sortOrder': str(sortOrder),
                                                                     'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
 
-def glossrow_ajax_complete_colors(request, gloss_id, show_colors=True):
-
-    user = request.user
-
-    if show_colors:
-        glossrow_template = 'dictionary/gloss_row_colors.html'
-    else:
-        glossrow_template = 'dictionary/gloss_row.html'
-
-    is_anonymous = user.is_authenticated()
-
-    this_gloss = Gloss.objects.get(id=gloss_id)
-
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        SHOW_DATASET_INTERFACE_OPTIONS = False
-
-    selected_datasets = get_selected_datasets_for_user(request.user)
-    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-
-    # Put translations (keywords) per language in the context
-    translations_per_language = []
-    for language in dataset_languages:
-        translations_per_language.append((language,this_gloss.translation_set.filter(language=language).order_by('translation__text')))
-
-    column_values = []
-    for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
-
-        machine_value = getattr(this_gloss,fieldname)
-
-        human_value = machine_value.name if isinstance(machine_value, FieldChoice) else machine_value
-        if human_value:
-            column_values.append((fieldname, human_value))
-        else:
-            column_values.append((fieldname, '-'))
-
-    return render(request, glossrow_template, { 'focus_gloss': this_gloss,
-                                                'dataset_languages': dataset_languages,
-                                                'translations_per_language': translations_per_language,
-                                                'column_values': column_values,
-                                                'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
 
 def lemmaglosslist_ajax_complete(request, gloss_id):
 
     user = request.user
 
-    is_anonymous = user.is_authenticated()
+    is_anonymous = user.is_authenticated
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
@@ -6806,6 +6799,7 @@ class LemmaListView(ListView):
 class LemmaCreateView(CreateView):
     model = LemmaIdgloss
     template_name = 'dictionary/add_lemma.html'
+    last_used_dataset = None
     fields = []
 
     def get_context_data(self, **kwargs):
@@ -6820,8 +6814,17 @@ class LemmaCreateView(CreateView):
         context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
-        context['add_lemma_form'] = LemmaCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user)
+        
+        if len(selected_datasets) == 1:
+            self.last_used_dataset = selected_datasets[0].acronym
+        elif 'last_used_dataset' in self.request.session.keys():
+            self.last_used_dataset = self.request.session['last_used_dataset']
+
+        context['last_used_dataset'] = self.last_used_dataset
+
+        context['add_lemma_form'] = LemmaCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -6838,7 +6841,7 @@ class LemmaCreateView(CreateView):
         else:
             show_dataset_interface = False
 
-        form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
+        form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=self.last_used_dataset)
 
         for item, value in request.POST.items():
             if item.startswith(form.lemma_create_field_prefix):
@@ -6862,7 +6865,11 @@ class LemmaCreateView(CreateView):
                 print("LEMMA " + str(lemma.pk))
             except ValidationError as ve:
                 messages.add_message(request, messages.ERROR, ve.message)
-                return render(request, 'dictionary/add_lemma.html', {'add_lemma_form': LemmaCreateForm(request.POST, user=request.user),
+                return render(request, 'dictionary/add_lemma.html',
+                              {'add_lemma_form': LemmaCreateForm(request.POST,
+                                                                 languages=dataset_languages,
+                                                                 user=request.user,
+                                                                 last_used_dataset=self.last_used_dataset),
                                                                      'dataset_languages': dataset_languages,
                                                                      'selected_datasets': get_selected_datasets_for_user(request.user),
                                                                         'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
@@ -6870,7 +6877,7 @@ class LemmaCreateView(CreateView):
             # return HttpResponseRedirect(reverse('dictionary:admin_lemma_list', kwargs={'pk': lemma.id}))
             return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
         else:
-            return render(request, 'dictionary/add_gloss.html', {'add_lemma_form': form,
+            return render(request, 'dictionary/add_lemma.html', {'add_lemma_form': form,
                                                              'dataset_languages': dataset_languages,
                                                              'selected_datasets': get_selected_datasets_for_user(request.user),
                                                                 'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
@@ -6888,7 +6895,7 @@ def create_lemma_for_gloss(request, glossid):
 
     dataset = gloss.dataset
     dataset_languages = dataset.translation_languages.all()
-    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
+    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=self.last_used_dataset)
     for item, value in request.POST.items():
         value = value.strip()
         if item.startswith(form.lemma_create_field_prefix):
@@ -6954,26 +6961,28 @@ class LemmaUpdateView(UpdateView):
 
         # get the page of the lemma list on which this lemma appears in order ro return to it after update
         request_path = self.request.META.get('HTTP_REFERER')
-        path_parms = request_path.split('?page=')
-        if len(path_parms) > 1:
-            self.page_in_lemma_list = str(path_parms[1])
-        if 'gloss' in path_parms[0]:
-            self.gloss_found = True
-            context['caller'] = 'gloss_detail_view'
-            # caller was Gloss Detail View
-            import re
-            try:
-                m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
-                gloss_id_pattern = m.group(1)
-                self.gloss_id = gloss_id_pattern
-            except (AttributeError):
-                # it is unknown what gloss we were looking at, something went wrong with pattern matching on the url
-                print('LemmaUpdateView get_context_data gloss id match failed: ', path_parms[0])
-                # restore callback to lemma list
-                context['caller'] = 'lemma_list'
-                self.gloss_found = False
-        else:
+        if not request_path:
             context['caller'] = 'lemma_list'
+        else:
+            path_parms = request_path.split('?page=')
+            if len(path_parms) > 1:
+                self.page_in_lemma_list = str(path_parms[1])
+            if 'gloss' in path_parms[0]:
+                self.gloss_found = True
+                context['caller'] = 'gloss_detail_view'
+                # caller was Gloss Detail View
+                import re
+                try:
+                    m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
+                    gloss_id_pattern = m.group(1)
+                    self.gloss_id = gloss_id_pattern
+                except (AttributeError):
+                    # it is unknown what gloss we were looking at, something went wrong with pattern matching on the url
+                    # restore callback to lemma list
+                    context['caller'] = 'lemma_list'
+                    self.gloss_found = False
+            else:
+                context['caller'] = 'lemma_list'
         # These are needed for return to the Gloss Detail View
         # They are passed to the POST handling via hidden variables in the template
         context['gloss_id'] = self.gloss_id
@@ -7114,11 +7123,11 @@ class LemmaUpdateView(UpdateView):
                            'selected_datasets': selected_datasets,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             return HttpResponseRedirect(reverse('registration:auth_login'))
 
         dataset_of_requested_lemma = self.object.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
 
         if dataset_of_requested_lemma not in selected_datasets:
             translated_message = _('The lemma you are trying to view is not in your selected datasets.')
