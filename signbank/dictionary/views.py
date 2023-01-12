@@ -306,8 +306,7 @@ def gloss(request, glossid):
     notes = gloss.definition_set.all()
     notes_groupedby_role = {}
     for note in notes:
-        translated_note_role = machine_value_to_translated_human_value(note.role, note_role_choices,
-                                                                       request.LANGUAGE_CODE)
+        translated_note_role = machine_value_to_translated_human_value(note.role.machine_value, note_role_choices)
         role_id = (note.role, translated_note_role)
         if role_id not in notes_groupedby_role:
             notes_groupedby_role[role_id] = []
@@ -2169,7 +2168,7 @@ def add_image(request):
                 params = {'warning':'File extension not supported! Please convert to png or jpg'}
                 return redirect(add_params_to_url(url,params))
 
-            elif imagefile._size > settings.MAXIMUM_UPLOAD_SIZE:
+            elif imagefile.size > settings.MAXIMUM_UPLOAD_SIZE:
 
                 params = {'warning':'Uploaded file too large!'}
                 return redirect(add_params_to_url(url,params))
@@ -2289,7 +2288,7 @@ def add_handshape_image(request):
                 params = {'warning':'File extension not supported! Please convert to png or jpg'}
                 return redirect(add_params_to_url(url,params))
 
-            elif imagefile._size > settings.MAXIMUM_UPLOAD_SIZE:
+            elif imagefile.size > settings.MAXIMUM_UPLOAD_SIZE:
 
                 params = {'warning':'Uploaded file too large!'}
                 return redirect(add_params_to_url(url,params))

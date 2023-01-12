@@ -4,7 +4,7 @@ Forms and validation code for user registration.
 """
 
 from django import forms
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, gettext as __
 from django.contrib.auth.models import User
 from django.conf import settings
 from signbank.settings.server_specific import *
@@ -91,7 +91,7 @@ class RegistrationForm(forms.Form):
 
     tos_choices = [(True, 'Agree'), (False, 'Disagree')]
     href_hyperlink = settings.URL + settings.PREFIX_URL + '/about/conditions/'
-    tos_hyperlink = _(u'I have read and agree to the <a href="' + href_hyperlink + '" target="_blank">Terms of Service</a>')
+    tos_hyperlink = __(u'I have read and agree to the <a href="' + href_hyperlink + '" target="_blank">Terms of Service</a>')
     tos = forms.BooleanField(label=mark_safe_lazy(tos_hyperlink),
                              widget=forms.RadioSelect(choices=tos_choices),
                              error_messages={'required': 'Error: You must agree to the Terms of Service in order to register'})

@@ -60,7 +60,7 @@ urlpatterns = [
 
                        re_path(r'^register/$',
                            register,
-                           name='registration_register',
+                           name='register',
                            kwargs = {
                                'form_class': RegistrationForm,
                              },
