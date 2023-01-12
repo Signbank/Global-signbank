@@ -843,7 +843,6 @@ class LemmaCreateForm(forms.ModelForm):
     user = None
     last_used_dataset = None
 
-
     class Meta:
         model = LemmaIdgloss
         fields = ['dataset']

@@ -2755,7 +2755,7 @@ def gloss_revision_history(request,gloss_pk):
 
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
-        if revision.field_name in Gloss._meta.fields:
+        if revision.field_name in [f.name for f in Gloss._meta.fields]:
             revision_verbose_fieldname = _(Gloss._meta.get_field(revision.field_name).verbose_name)
         else:
             revision_verbose_fieldname = _(revision.field_name)

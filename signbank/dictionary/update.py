@@ -1064,7 +1064,7 @@ def subst_relations(gloss, field, values):
 
 ## This function is called from the Gloss Detail View template when updating Relations to Other Signs
 def update_relation(gloss, field, value):
-    """Update one of the relations for this gloss"""   
+    """Update one of the relations for this gloss"""
     (what, relid) = field.split('_')
     what = what.replace('-','_')
 
@@ -1470,6 +1470,7 @@ def add_blend_definition(request, glossid):
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
+
 def update_handshape(request, handshapeid):
 
     if not request.method == "POST":
@@ -1541,7 +1542,7 @@ def update_handshape(request, handshapeid):
             hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
             newPattern = hs_mod.get_fingerSelection2_display()
             object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
-                                                                name__iexact=newPattern)
+                                                              name__iexact=newPattern)
             if object_fingSelection:
                 mv = object_fingSelection[0].machine_value
                 hs_mod.__setattr__('hsFingSel2', mv)
@@ -1555,7 +1556,7 @@ def update_handshape(request, handshapeid):
             hs_mod = get_object_or_404(Handshape, machine_value=handshapeid)
             newPattern = hs_mod.get_unselectedFingers_display()
             object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
-                                                                name__iexact=newPattern)
+                                                              name__iexact=newPattern)
             if object_fingSelection:
                 mv = object_fingSelection[0].machine_value
                 hs_mod.__setattr__('hsFingUnsel', mv)
@@ -1564,7 +1565,6 @@ def update_handshape(request, handshapeid):
         category_value = 'fieldChoice'
 
     return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
-
 
 def add_othermedia(request):
 
@@ -1655,7 +1655,6 @@ def add_othermedia(request):
         os.remove(destination_location)
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-
     if magic_file_type == 'video/quicktime':
         # convert using ffmpeg
         temp_destination_location = destination_location + ".mov"
@@ -1879,7 +1878,7 @@ def update_morpheme(request, morphemeid):
 
     elif field.startswith('relationforeign'):
 
-         return update_relationtoforeignsign(morpheme, field, value)
+        return update_relationtoforeignsign(morpheme, field, value)
 
     elif field.startswith('relation'):
 
@@ -1981,7 +1980,6 @@ def update_morpheme(request, morphemeid):
         else:
             newvalue = 'No'
 
-
     elif field.startswith('annotation_idgloss'):
 
         return update_annotation_idgloss(morpheme, field, value)
@@ -2024,12 +2022,12 @@ def update_morpheme(request, morphemeid):
             newvalue = value
             value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
-            # special value of 'notset' or -1 means remove the value
-            fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
+        # special value of 'notset' or -1 means remove the value
+        fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
 
-            if field in FIELDS['phonology']:
-                # this is used as part of the feedback to the interface, to alert the user to refresh the display
-                category_value = 'phonology'
+        if field in FIELDS['phonology']:
+            # this is used as part of the feedback to the interface, to alert the user to refresh the display
+            category_value = 'phonology'
 
         fieldchoiceforeignkey_fields = [f.name for f in Morpheme._meta.fields
                                         if f.name in fieldnames

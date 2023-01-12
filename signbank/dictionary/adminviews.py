@@ -4102,10 +4102,6 @@ class HandshapeListView(ListView):
         else:
             selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         context['selected_datasets'] = selected_datasets
-        
-        dataset_languages = get_dataset_languages(selected_datasets)
-        context['dataset_languages'] = dataset_languages
-
         context['signscount'] = Gloss.objects.filter(lemma__dataset__in=selected_datasets).count()
 
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
@@ -4287,13 +4283,7 @@ class HandshapeListView(ListView):
             # search for signs with found hadnshapes
             # find relevant machine values for handshapes
             selected_handshapes = [ h.machine_value for h in qs ]
-            
-            if self.request.user.is_authenticated:
-                selected_datasets = get_selected_datasets_for_user(self.request.user)
-            elif 'selected_datasets' in self.request.session.keys():
-                selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
-            else:
-                selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
 
             # set up filters, obscuring whether the _fk field names are used
             strong_hand = 'domhndsh'
@@ -6814,15 +6804,7 @@ class LemmaCreateView(CreateView):
         context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
-        
-        if len(selected_datasets) == 1:
-            self.last_used_dataset = selected_datasets[0].acronym
-        elif 'last_used_dataset' in self.request.session.keys():
-            self.last_used_dataset = self.request.session['last_used_dataset']
-
-        context['last_used_dataset'] = self.last_used_dataset
-
-        context['add_lemma_form'] = LemmaCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
+        context['add_lemma_form'] = LemmaCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user)
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         return context
