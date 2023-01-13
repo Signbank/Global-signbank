@@ -92,6 +92,7 @@ $(document).ready(function() {
 
      for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = 'id_' + multiple_select_fields[i];
+        selectColors(this_id);
         var this_var = multiple_select_fields[i] + '[]';
         makeMultipleSelect(this_id, this_var);
      }
