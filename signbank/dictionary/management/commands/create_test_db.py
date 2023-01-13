@@ -29,17 +29,18 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         # Static settings
-        source_db = settings.DATABASES['default']['NAME']
-        test_db_filename = settings.DATABASES['default']['TEST']['NAME']
+        WRITABLE_FOLDER = '/var/www/writable/database/'
+        SOURCE_DB = WRITABLE_FOLDER + 'signbank.db'
+        TEST_DB_FILENAME = WRITABLE_FOLDER + 'test-signbank.db'
         SMALL = True
 
-        if isfile(test_db_filename):
+        if isfile(TEST_DB_FILENAME):
             self.stdout.write('Making backup of old test database')
-            move(test_db_filename, test_db_filename + '_save')
+            move(TEST_DB_FILENAME, TEST_DB_FILENAME + '_save')
 
         self.stdout.write('Copying database file')
-        copyfile(source_db, test_db_filename)
+        copyfile(SOURCE_DB, TEST_DB_FILENAME)
 
         if SMALL:
             self.stdout.write('Emptying tables, for faster tests')
-            make_db_small(test_db_filename)
+            make_db_small(TEST_DB_FILENAME)

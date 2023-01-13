@@ -555,6 +555,7 @@ p {
         </li>
     </ul>
     </div>
+    
     {% if "change_dataset" in dataset_perms %}
     <div class='pull-right' style="margin-right:15px;margin-top:10px;">
 
@@ -1460,13 +1461,8 @@ p {
                 <a data-toggle='collapse' href='#relationsforeign'>{% trans "Relations to Foreign Signs" %}</a>
                 {% if gloss.relationtoforeignsign_set.all %}
                 <div class="pull-right">
-<<<<<<< HEAD
-                    <span id="forrelations-icon"><img id='forrelations-arrows'
-                        src='{{ STATIC_URL }}images/left_right_triangleheaded_arrow.png' style="width:30px; height:auto; margin: 0px;"></span>
-=======
                 <span id="forrelations-icon"><img id='forrelations-arrows'
                                                   src='{{ STATIC_URL }}images/left_right_triangleheaded_arrow.png' style="width:30px; height:auto; margin: 0px;"></span>
->>>>>>> master
                 </div>
                 {% endif %}
             </div>

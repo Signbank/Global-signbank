@@ -93,8 +93,6 @@ urlpatterns = [
     # compatibility with old links - intercept and return 401
     re_path(r'^index.cfm', TemplateView.as_view(template_name='compat.html')),
 
-   # (r'^accounts/login/', 'django.contrib.auth.views.LoginView'),
-
     re_path(r'^accounts/', include(signbank.registration.urls)),
     re_path(r'^'+settings.ADMIN_URL+r'/doc/', include(django.contrib.admindocs.urls)),
     re_path(r'^'+settings.ADMIN_URL+r'/', admin.site.urls),

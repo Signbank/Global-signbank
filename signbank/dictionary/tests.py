@@ -51,9 +51,6 @@ class BasicCRUDTests(TestCase):
 
         # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
-        print(Dataset.objects.count())
-        print(dataset_name)
-        print(Dataset.objects.all())
         test_dataset = Dataset.objects.get(name=dataset_name)
 
         # Create a lemma

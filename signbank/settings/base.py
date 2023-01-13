@@ -63,7 +63,7 @@ MIDDLEWARE = (
 #    'django_mobile.middleware.MobileDetectionMiddleware',
 #    'django_mobile.middleware.SetFlavourMiddleware',
 #    'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'reversion.middleware.RevisionMiddleware'
+    'reversion.middleware.RevisionMiddleware',
 )
 
 TEMPLATES = [
@@ -127,7 +127,7 @@ INSTALLED_APPS = (
     # 'easy_select2',
     'signbank.dictionary',
     'signbank.feedback',
-    # 'signbank.registration',
+    #'signbank.registration',
     'signbank.pages',
     'signbank.attachments',
     'signbank.video',

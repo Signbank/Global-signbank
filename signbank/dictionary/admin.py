@@ -685,10 +685,9 @@ class GlossRevisionAdmin(VersionAdmin):
         return self.list_display_links
 
 
-# Not used?
-# class RegistrationProfileAdmin(admin.ModelAdmin):
-#     list_display = ('__str__', 'activation_key_expired', )
-#     search_fields = ('user__username', 'user__first_name', )
+class RegistrationProfileAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'activation_key_expired', )
+    search_fields = ('user__username', 'user__first_name', )
 
 class DialectInline(admin.TabularInline):
 

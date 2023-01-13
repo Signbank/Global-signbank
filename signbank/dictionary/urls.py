@@ -1,6 +1,5 @@
 from django.conf.urls import *
 from django.contrib.auth.decorators import login_required, permission_required
-
 from django.urls import re_path, path, include
 
 from signbank.dictionary.models import *

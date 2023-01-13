@@ -23,19 +23,19 @@ def copy_semanticfield_names_to_translations(apps, schema_editor):
     for semfield in semanticfields:
         translations_for_semfield = [sft.language for sft in SemanticFieldTranslation.objects.filter(semField=semfield)]
         if semfield.name_en and translation_language_eng not in translations_for_semfield:
-            semanticfieldtranslation_eng, _ = SemanticFieldTranslation.objects.get_or_create(
+            semanticfieldtranslation_eng, created = SemanticFieldTranslation.objects.get_or_create(
                                                         semField=semfield,
                                                         language=translation_language_eng,
                                                         name=semfield.name_en)
             semanticfieldtranslation_eng.save()
         if semfield.name_nl and translation_language_nld not in translations_for_semfield:
-            semanticfieldtranslation_nld, _ = SemanticFieldTranslation.objects.get_or_create(
+            semanticfieldtranslation_nld, created = SemanticFieldTranslation.objects.get_or_create(
                                                         semField=semfield,
                                                         language=translation_language_nld,
                                                         name=semfield.name_nl)
             semanticfieldtranslation_nld.save()
         if semfield.name_zh_hans and translation_language_zho not in translations_for_semfield:
-            semanticfieldtranslation_zho, _ = SemanticFieldTranslation.objects.get_or_create(
+            semanticfieldtranslation_zho, created = SemanticFieldTranslation.objects.get_or_create(
                                                         semField=semfield,
                                                         language=translation_language_zho,
                                                         name=semfield.name_zh_hans)
@@ -58,19 +58,19 @@ def copy_derivationhistory_names_to_translations(apps, schema_editor):
     for derivhist in derivationhistories:
         translations_for_derivhist = [dht.language for dht in DerivationHistoryTranslation.objects.filter(derivHist=derivhist)]
         if derivhist.name_en and translation_language_eng not in translations_for_derivhist:
-            derivationhistorytranslation_eng, _ = DerivationHistoryTranslation.objects.get_or_create(
+            derivationhistorytranslation_eng, created = DerivationHistoryTranslation.objects.get_or_create(
                                                         derivHist=derivhist,
                                                         language=translation_language_eng,
                                                         name=derivhist.name_en)
             derivationhistorytranslation_eng.save()
         if derivhist.name_nl and translation_language_nld not in translations_for_derivhist:
-            derivationhistorytranslation_nld, _ = DerivationHistoryTranslation.objects.get_or_create(
+            derivationhistorytranslation_nld, created = DerivationHistoryTranslation.objects.get_or_create(
                                                         derivHist=derivhist,
                                                         language=translation_language_nld,
                                                         name=derivhist.name_nl)
             derivationhistorytranslation_nld.save()
         if derivhist.name_zh_hans and translation_language_zho not in translations_for_derivhist:
-            derivationhistorytranslation_zho, _ = DerivationHistoryTranslation.objects.get_or_create(
+            derivationhistorytranslation_zho, created = DerivationHistoryTranslation.objects.get_or_create(
                                                         derivHist=derivhist,
                                                         language=translation_language_zho,
                                                         name=derivhist.name_zh_hans)

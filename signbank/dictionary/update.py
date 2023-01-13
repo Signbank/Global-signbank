@@ -1618,6 +1618,7 @@ def add_othermedia(request):
     destination_filename = filename_base + '.' + extension
     goal_path = os.path.join(goal_directory, destination_filename)
 
+
     # create the destination file
     try:
         if os.path.exists(goal_path):
@@ -1968,6 +1969,7 @@ def update_morpheme(request, morphemeid):
                 morpheme.sn = value
                 morpheme.save()
                 newvalue = value
+
 
     elif field == 'inWeb':
         # only modify if we have publish permission

@@ -212,6 +212,7 @@ DEFAULT_DATASET = 'Your Dataset'
 DEFAULT_DATASET_ACRONYM = 'YDS'
 DEFAULT_DATASET_LANGUAGE_ID = 1
 DEFAULT_DATASET_PK = 1
+TEST_DATASET_ACRONYM = 'TESTDB'
 
 #whether the Handshape functionality should be present in the interface
 USE_HANDSHAPE = True
