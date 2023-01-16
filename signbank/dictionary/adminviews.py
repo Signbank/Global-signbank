@@ -1542,22 +1542,22 @@ class GlossDetailView(DetailView):
         context['homonyms_different_phonology'] = homonyms_different_phonology
 
         homonyms_but_not_saved = []
-
-        for homonym in homonyms_not_saved:
-            homo_trans = {}
-            if homonym.dataset:
-                for language in homonym.dataset.translation_languages.all():
+        if homonyms_but_not_saved:
+            for homonym in homonyms_not_saved:
+                homo_trans = {}
+                if homonym.dataset:
+                    for language in homonym.dataset.translation_languages.all():
+                        homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
+                else:
+                    language = Language.objects.get(id=get_default_language_id())
                     homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
-            else:
-                language = Language.objects.get(id=get_default_language_id())
-                homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
-            if interface_language_code in homo_trans:
-                homo_display = homo_trans[interface_language_code][0].text
-            else:
-                # This should be set to the default language if the interface language hasn't been set for this gloss
-                homo_display = homo_trans[default_language_code][0].text
+                if interface_language_code in homo_trans.keys():
+                    homo_display = homo_trans[interface_language_code][0].text
+                else:
+                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    homo_display = homo_trans[default_language_code][0].text
 
-            homonyms_but_not_saved.append((homonym,homo_display))
+                homonyms_but_not_saved.append((homonym,homo_display))
 
         context['homonyms_but_not_saved'] = homonyms_but_not_saved
 
@@ -1901,7 +1901,8 @@ class GlossVideosView(DetailView):
 
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
-            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list)
+            other_media_type_machine_value = other_media.type.machine_value if other_media.type else 0
+            human_value_media_type = machine_value_to_translated_human_value(other_media_type_machine_value,other_media_type_choice_list)
 
             import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
@@ -2196,10 +2197,12 @@ class GlossRelationsDetailView(DetailView):
         morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
         compounds = []
         reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl.id)
-        for rm in reverse_morphdefs:
-            translated_role = machine_value_to_translated_human_value(rm.role,morphdef_roles)
+        if reverse_morphdefs:
+            for rm in reverse_morphdefs:
+                morphdef_role_machine_value = rm.role.machine_value if rm.role else 0
+                translated_role = machine_value_to_translated_human_value(morphdef_role_machine_value,morphdef_roles)
 
-            compounds.append((rm.parent_gloss, translated_role))
+                compounds.append((rm.parent_gloss, translated_role))
         context['compounds'] = compounds
 
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
@@ -6425,8 +6428,9 @@ def glosslist_ajax_complete(request, gloss_id):
             target_morphemes = Morpheme.objects.filter(id=this_gloss.id)
             if target_morphemes:
                 morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
-                morpheme_type = target_morphemes[0].mrpType.machine_value
-                translated_morph_type = machine_value_to_translated_human_value(morpheme_type, morph_typ_choices)
+                target_morpheme = target_morphemes.first()
+                morpheme_type_machine_value = target_morpheme.mrpType.machine_value if target_morpheme.mrpType else 0
+                translated_morph_type = machine_value_to_translated_human_value(morpheme_type_machine_value, morph_typ_choices)
             else:
                 translated_morph_type = ''
             column_values.append((fieldname, translated_morph_type))

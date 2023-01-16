@@ -306,7 +306,8 @@ def gloss(request, glossid):
     notes = gloss.definition_set.all()
     notes_groupedby_role = {}
     for note in notes:
-        translated_note_role = machine_value_to_translated_human_value(note.role, note_role_choices)
+        note_role_machine_value = note.role.machine_value if note.role else 0
+        translated_note_role = machine_value_to_translated_human_value(note_role_machine_value, note_role_choices)
         role_id = (note.role, translated_note_role)
         if role_id not in notes_groupedby_role:
             notes_groupedby_role[role_id] = []

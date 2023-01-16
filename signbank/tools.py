@@ -17,7 +17,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
