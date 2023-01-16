@@ -18,6 +18,7 @@ from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages.storage.cookie import CookieStorage
 from itertools import *
 from pathlib import Path
+from os import path
 
 from guardian.shortcuts import assign_perm
 
@@ -3471,13 +3472,12 @@ def decode_messages(data):
     return None
 
 
-
 class GlossApiTest(TestCase):
 
     dataset = 0
     gloss_name = 'test'
     video_url = 'test_video_url'
-    file_path = settings.WRITABLE_FOLDER + video_url
+    file_path = path.join(settings.WRITABLE_FOLDER, video_url)
 
     @classmethod
     def setUpTestData(cls):
@@ -3500,7 +3500,7 @@ class GlossApiTest(TestCase):
         # Create a with a video that the api should return
         gloss = Gloss.objects.create(lemma=test_lemma, inWeb=True)
         GlossVideo.objects.create(gloss_id=gloss.id, videofile=cls.video_url)
-        
+
         # Create the file for the video which the gloss will return when get_video_url is called
         Path(cls.file_path).mkdir()
 
@@ -3514,26 +3514,36 @@ class GlossApiTest(TestCase):
     def tearDownClass(cls):
         # Remove video path
         Path(cls.file_path).rmdir()
-        
+
+    def test_other_request_methode_then_GET(self):
+        """
+        Check if an error is returned with another request methode than GET
+        """
+        assert_json = '[{"Error": "Tried anohter request methoded then GET, please only use GET for this endpoint."}]'
+        data = {"search": "test"}
+        response = self.client.post(reverse('dictionary:gloss_api'), data, format='json')
+        self.assertEqual(response.status_code, 405)
+        self.assertJSONEqual(response.content, assert_json)
+
     def test_no_data_set_selected(self):
         """
         Check if an error is returned if no dataset is selected.
         """
-        assert_json = '[{"error":"No dataset selected"}]'
-        data = {"search":"test"}
+        assert_json = '[{"Error": "No dataset selected"}]'
+        data = {"search": "test"}
         response = self.client.get(reverse('dictionary:gloss_api'), data, format='json')
-        self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content,assert_json)
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, assert_json)
 
     def test_no_search_term_provided(self):
         """
         Check if an error is returned if no search term is provided.
         """
-        assert_json = '[{"error":"No search term found"}]'
-        data = {"dataset":self.dataset}
+        assert_json = '[{"Error": "No search term found"}]'
+        data = {"dataset": self.dataset}
         response = self.client.get(reverse('dictionary:gloss_api'), data, format='json')
-        self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content,assert_json)
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, assert_json)
 
     def test_json_data_structure(self):
         """
@@ -3541,13 +3551,13 @@ class GlossApiTest(TestCase):
         """
         assert_json = []
         sign_json = {
-                "sign_name" : self.gloss_name,
-                "image_url" : "",
-                "video_url" : self.video_url
+                "sign_name": self.gloss_name,
+                "image_url": "",
+                "video_url": self.video_url
                 }
         assert_json.append(sign_json)
 
-        data = {"dataset":self.dataset,"search":self.gloss_name}
-        response = self.client.get(reverse('dictionary:gloss_api'), data, format='json')
+        data = {"dataset": self.dataset, "search": self.gloss_name}
+        response = self.client.get(reverse('dictionary: gloss_api'), data, format='json')
         self.assertEqual(response.status_code, 200)
-        self.assertJSONEqual(response.content,assert_json)
+        self.assertJSONEqual(response.content, assert_json)

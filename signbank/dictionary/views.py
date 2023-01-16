@@ -1,5 +1,5 @@
 from django.conf import empty
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
@@ -2859,52 +2859,49 @@ def gif_prototype(request):
 
     return render(request,'dictionary/gif_prototype.html')
 
-def gloss_api(request):
+
+def gloss_api_get_sign_name_and_media_info(request):
     """
     API endpoint for the sign app that returns a json object with all the signs names and urls
     """
 
-    dataset = 0 
+    dataset = 0
     max_number_of_results = 100
-    response = []
-    glosses = []
 
-    if request.GET: 
+    if not request.GET:
+        return HttpResponseNotAllowed(['GET'],
+                json.dumps({"Error": "Tried anohter request methoded then GET, please only use GET for this endpoint."}),content_type="application/json")
 
-        try:
-            max_number_of_results = int(request.GET['results'])
-        except MultiValueDictKeyError:
-            print('Maximum number of results is not set so default to 100')
+    # Try to get the results data for the query. This variable dictates how many results are allowed to be return
+    # If the results variable is not set in the GET request return a error
+    try:
+        max_number_of_results = int(request.GET['results'])
+    except MultiValueDictKeyError:
+        return HttpResponseBadRequest(json.dumps({"Error": "No amount of search results given"}), content_type="application/json")
 
-        try:
-            dataset = request.GET['dataset']
-        except MultiValueDictKeyError:
-            response.append({"error":"No dataset selected"})
-            return HttpResponse(json.dumps(response), content_type="application/json")
+    # Get the dataset that is used to return the sign of the right signlanguage like NGT
+    try:
+        dataset = request.GET['dataset']
+    except MultiValueDictKeyError:
+        return HttpResponseBadRequest(json.dumps({"Error": "No dataset selected"}), content_type="application/json")
 
-        try:
-            search = request.GET['search']
-            glosses = Gloss.objects \
-                    .filter(inWeb = True) \
-                    .filter(lemma__lemmaidglosstranslation__text__startswith = search) \
-                    .filter(lemma__dataset = dataset) \
-                    .order_by('lemma__lemmaidglosstranslation__text')[0:max_number_of_results]
-        except MultiValueDictKeyError:
-            response.append({"error":"No search term found"})
-            return HttpResponse(json.dumps(response), content_type="application/json")
+    # Get the search item. This is the name of the sign that the user wants to find
+    try:
+        search = request.GET['search']
+    except MultiValueDictKeyError:
+        return HttpResponseBadRequest(json.dumps({"Error": "No search term found"}), content_type="application/json")
 
-    for gloss in glosses:
-        gloss_name = gloss.__str__()
-        video_url= gloss.get_video_url()
-        image_url = gloss.get_image_url()
+    # Run the query to get all the gloss data in a list
+    glosses = Gloss.objects \
+        .filter(inWeb=True) \
+        .filter(lemma__lemmaidglosstranslation__text__startswith=search) \
+        .filter(lemma__dataset=dataset) \
+        .order_by('lemma__lemmaidglosstranslation__text')[0:max_number_of_results]
 
-        if video_url:
-            dict = {
-                    "sign_name": gloss_name, 
-                    "video_url": video_url, 
-                    "image_url": image_url
-                    }
-
-            response.append(dict)
+    response = [
+            {'sign_name': str(gloss),
+             'video_url': gloss.get_video_url(),
+             'image_url': gloss.get_image_url()}
+            for gloss in glosses if gloss.get_video_url()]
 
     return HttpResponse(json.dumps(response), content_type="application/json")
