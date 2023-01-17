@@ -1351,6 +1351,8 @@ class Gloss(models.Model):
 
     def get_stems(self):
 
+        if not self.lemma or not self.lemma.dataset:
+            return []
         this_sign_language = self.lemma.dataset.default_language
         stems = [(x.language, x.text[:-2])
                  for x in self.annotationidglosstranslation_set.all() if x.text[-2] == '-' and x.language == this_sign_language ]
