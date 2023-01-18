@@ -565,6 +565,62 @@ p {
 
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
 
+         {% if perms.dictionary.add_gloss %}
+         <button id='copy_gloss_btn' class='btn btn-default' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
+
+          <div class="modal fade" id="copy_gloss_modal" role="dialog" aria-labelledby="#modalGlossCopy" aria-hidden="true">
+             <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalGlossCopy'>{% trans "Copy Gloss" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        {% if gloss_is_duplicate %}
+                        <p>{% trans "This gloss is already a duplicate. Please modify the annotation fields before creating a new duplicate." %}</p>
+                        {% else %}
+                        <p>{% trans "This will create a new gloss with identical phonology." %}</p>
+                        {% endif %}
+                     </div>
+                  <form id="copy_gloss" method='get'>
+                      {% csrf_token %}
+                      <table class='table' style='width: 1200px;margin-left:20px;'>
+                         <tr>
+                             <th>{% trans "Source Dataset" %}</th>
+                             <th>{{gloss.lemma.dataset.acronym}}</th>
+                         </tr>
+                         <tr>
+                             <th><label for='dataset'>{% trans "Target Dataset" %}</label></th>
+                             <td><span>
+                                 {% for s_dataset in selected_datasets %}
+                                 {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
+                                 {% if "change_dataset" in dataset_perms %}
+                                 {% if gloss.lemma.dataset == s_dataset or last_used_dataset == s_dataset.acronym %}
+                                <input type="radio" name="dataset"
+                                       id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}" checked>
+                                 {% else %}
+                                 <input type="radio" name="dataset"
+                                        id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}">
+                                 {% endif %}
+                                <label for="dataset_{{s_dataset.id}}">{{ s_dataset.acronym }}</label>
+                                 {% endif %}
+                                 {% endfor %}
+                            </span></td>
+                         </tr>
+                      </table>
+                      <input type='hidden' name='format' value='Copy'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        {% if not gloss_is_duplicate %}
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Copy Create" %}'>
+                        {% endif %}
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
+        {% endif %}
     </div>
     {% endif %}
 

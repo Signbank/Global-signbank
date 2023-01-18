@@ -584,8 +584,8 @@ def update_annotation_idgloss(gloss, field, value):
     language = Language.objects.get(id=get_default_language_id())
     try:
         language_code_2char = field[len('annotation_idgloss_'):]
-        language = Language.objects.filter(language_code_2char=language_code_2char)[0]
-    except:
+        language = Language.objects.filter(language_code_2char=language_code_2char).first()
+    except ObjectDoesNotExist:
         pass
 
     # value might be empty string
@@ -593,8 +593,13 @@ def update_annotation_idgloss(gloss, field, value):
     if value.startswith(whitespace) or value.endswith(whitespace):
         value = value.strip()
 
-    annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
-    original_value = annotation_idgloss_translation.text
+    try:
+        annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
+        original_value = annotation_idgloss_translation.text
+    except ObjectDoesNotExist:
+        # create an empty annotation for this gloss and language
+        annotation_idgloss_translation = AnnotationIdglossTranslation(gloss=gloss, language=language)
+        original_value = ''
 
     if value == '':
         # don't allow user to set Annotation ID Gloss to empty

@@ -2334,8 +2334,8 @@ def add_handshape_image(request):
 
 def find_and_save_variants(request):
 
-    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('lemma')[:10]
-
+    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('lemma')
+    print(variant_pattern_glosses)
     gloss_table_prefix = '<!DOCTYPE html>\n' \
                          '<html>\n' \
                          '<body>\n' \
@@ -2359,7 +2359,7 @@ def find_and_save_variants(request):
     gloss_table_rows = ''
 
     for gloss in variant_pattern_glosses:
-
+        print(gloss)
         dict_key = int(gloss.id)
         gloss_pattern_table[dict_key] = '<td>' + str(gloss.idgloss) + '</td>'
         other_relations_of_sign = gloss.other_relations()
@@ -2391,23 +2391,25 @@ def find_and_save_variants(request):
             gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
 
 
-        other_relation_objects = [x.target for x in other_relations_of_sign]
-        variant_relation_objects = [x.target for x in variant_relations_of_sign]
+        other_relation_objects = [x.target.id for x in other_relations_of_sign]
+        variant_relation_objects = [x.target.id for x in variant_relations_of_sign]
 
         # Build query
         this_sign_stems = gloss.get_stems()
+        if not this_sign_stems:
+            continue
         queries = []
         for this_sign_stem in this_sign_stems:
             this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
             queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
-                             dataset=gloss.dataset, annotationidglosstranslation__language=this_sign_stem[0]))
+                             lemma__dataset=gloss.lemma.dataset, annotationidglosstranslation__language=this_sign_stem[0]))
         query = queries.pop()
         for q in queries:
             query |= q
-
-        candidate_variants = Gloss.objects.filter(query).distinct().exclude(idgloss=gloss).exclude(
-            idgloss__in=other_relation_objects).exclude(idgloss__in=variant_relation_objects)
-
+        print(query)
+        candidate_variants = Gloss.objects.filter(query).distinct().exclude(id=gloss.id).exclude(
+            id__in=other_relation_objects).exclude(id__in=variant_relation_objects)
+        print(gloss, candidate_variants)
         if candidate_variants:
             gloss_pattern_table[dict_key] += '<td>'
 
@@ -2420,10 +2422,10 @@ def find_and_save_variants(request):
             gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
 
 
-        for target in candidate_variants:
-
-            rel = Relation(source=gloss, target=target, role='variant')
-            rel.save()
+        # for target in candidate_variants:
+        #
+        #     rel = Relation(source=gloss, target=target, role='variant')
+        #     rel.save()
 
         updated_variants = gloss.variant_relations()
 
