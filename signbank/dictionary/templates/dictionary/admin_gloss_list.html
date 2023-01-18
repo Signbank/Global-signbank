@@ -730,6 +730,7 @@ function do_toggle_annotation(el) {
 
         {% if perms.dictionary.export_csv %}
         <input class='btn btn-default' type='submit' name='format' value='CSV'>
+        <input type='hidden' name='show_all' value="{{show_all}}">
         {% endif %}
 
         {% if not SHOW_DATASET_INTERFACE_OPTIONS %}
