@@ -1,7 +1,7 @@
 from signbank.settings.server_specific.default import *
 
 ROOT = '/var/www/signbank/'
-ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
+ADMINS = [('Wessel Stoop', 'w.stoop@let.ru.nl')]
 LANGUAGE_NAME = "ASL"
 COUNTRY_NAME = "United States of America"
 SIGNBANK_VERSION_CODE = 'ASL'

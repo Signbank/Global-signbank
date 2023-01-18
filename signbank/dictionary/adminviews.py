@@ -1273,7 +1273,7 @@ class GlossDetailView(DetailView):
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
-                return HttpResponseRedirect(reverse('registration:auth_login'))
+                return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
         datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
@@ -1837,7 +1837,7 @@ class GlossVideosView(DetailView):
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
-                return HttpResponseRedirect(reverse('registration:auth_login'))
+                return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
         datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
@@ -1976,7 +1976,7 @@ class GlossRelationsDetailView(DetailView):
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
-                return HttpResponseRedirect(reverse('registration:auth_login'))
+                return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
         datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
@@ -3746,7 +3746,7 @@ class GlossFrequencyView(DetailView):
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
-                return HttpResponseRedirect(reverse('registration:auth_login'))
+                return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
         datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
@@ -5395,7 +5395,7 @@ class DatasetFrequencyView(DetailView):
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if not request.user.is_authenticated:
-            return HttpResponseRedirect(reverse('registration:auth_login'))
+            return HttpResponseRedirect(reverse('registration:login'))
 
         dataset = self.object
         datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
@@ -5762,7 +5762,7 @@ class MorphemeDetailView(DetailView):
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
-                return HttpResponseRedirect(reverse('registration:auth_login'))
+                return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_morpheme = self.object.lemma.dataset
         datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
@@ -6605,7 +6605,7 @@ class LemmaListView(ListView):
         for get_key, get_value in get.items():
             if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value != '':
                 language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char)
+                language = Language.objects.get(language_code_2char=language_code_2char)
                 qs = qs.filter(lemmaidglosstranslation__text__iregex=get_value,
                                lemmaidglosstranslation__language=language)
         return qs
@@ -7106,7 +7106,7 @@ class LemmaUpdateView(UpdateView):
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if not request.user.is_authenticated:
-            return HttpResponseRedirect(reverse('registration:auth_login'))
+            return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_lemma = self.object.dataset
         datasets_user_can_view = get_objects_for_user(request.user, 'can_view_dataset', Dataset, accept_global_perms=False)

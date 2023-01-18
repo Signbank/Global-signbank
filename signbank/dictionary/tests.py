@@ -145,8 +145,7 @@ class BasicCRUDTests(TestCase):
         self.user.save()
 
         # Check whether the user is logged in
-        response = client.get('/')
-        self.assertContains(response, 'href="/logout.html">Logout')
+        self.assertTrue(logged_in)
 
         # Get the test dataset
         dataset_name = settings.DEFAULT_DATASET

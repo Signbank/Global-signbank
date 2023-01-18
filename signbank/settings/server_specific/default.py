@@ -41,7 +41,7 @@ METADATA_LOCATION = 'metadata.csv'
 FFMPEG_PROGRAM = "avconv"
 
 #List of tuples containing the name and the email address of the admins
-ADMINS = (('Spongebob Squarepants','s.squarepants@gmail.com'))
+ADMINS = [('Spongebob Squarepants','s.squarepants@gmail.com')]
 
 #What do we call this Signbank (for example NGT Signank, Global Signbank, ASL Signbank)?
 LANGUAGE_NAME = 'Global'
