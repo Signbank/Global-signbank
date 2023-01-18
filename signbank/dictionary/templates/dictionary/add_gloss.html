@@ -66,6 +66,19 @@
       language_code = dataset_language_id;
       set_lemma_language();
     }
+
+    function copyTranslationsToLemma(el) {
+        $("[id*='glosscreate_']").each(function(){
+            if ($(this).is("input")) {
+                $annotation_field = $(this).attr('id');
+                $language_code = $annotation_field.split("_").pop();
+                $annotation_value = $(this).val();
+                $elt = $("#lemmacreate_" + $language_code);
+                $elt.attr('value', $annotation_value);
+            }
+        });
+        return false;
+    }
     </script>
 
 {% endblock %}
@@ -94,6 +107,19 @@
                          {% endfor %}
                      </select></td>
              </tr>
+             {% for dataset_lang in dataset_languages %}
+             <tr>
+                 <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}">
+                     <label for="id_annotation_idgloss_{{dataset_lang.language_code_2char}}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
+                 </th>
+                 <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
+                     <input id="glosscreate_{{ dataset_lang.language_code_2char }}"
+                            name="glosscreate_{{ dataset_lang.language_code_2char }}"
+                            required="" maxlength="30" type="text"
+                            size="50" />
+                 </td>
+             </tr>
+             {% endfor %}
              <tr>
                  <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
                  <td>
@@ -128,7 +154,8 @@
                             {% for dataset_lang in dataset_languages %}
                              <tr>
                              <td style="width:100px;">
-                             <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}</span>
+                             <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}"
+                                   style="line-height:30px;">{{ dataset_lang.name }}</span>
                              </td>
                              <td style="align:right;">
                                 <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
@@ -139,23 +166,14 @@
                             </tr>
                             {% endfor %}
                             </table>
+                             <span style="line-height:40px;">
+                                 <button style="line-height:20px;" type="button"
+                                         onclick="copyTranslationsToLemma(this)">{% trans "Copy Annotation Fields to Lemma Translations" %}</button>
+                             </span>
                          </div>
                          <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
                      </td>
              </tr>
-             {% for dataset_lang in dataset_languages %}
-             <tr>
-                 <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}">
-                     <label for="id_annotation_idgloss_{{dataset_lang.language_code_2char}}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
-                 </th>
-                 <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
-                     <input id="glosscreate_{{ dataset_lang.language_code_2char }}"
-                            name="glosscreate_{{ dataset_lang.language_code_2char }}"
-                            required="" maxlength="30" type="text"
-                            size="50" />
-                 </td>
-             </tr>
-             {% endfor %}
          </table>
 
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'>
