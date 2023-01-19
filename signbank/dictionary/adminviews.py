@@ -4394,14 +4394,31 @@ class DatasetListView(ListView):
             messages.add_message(self.request, messages.ERROR, translated_message)
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
+        # check that the dataset has an owner
+        owners_of_dataset = dataset_object.owners.all()
+        if len(owners_of_dataset) <1:
+            messages.add_message(self.request, messages.ERROR, _('Dataset must have at least one owner.'))
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+
         # make sure the user can write to this dataset
         # from guardian.shortcuts import get_objects_for_user
+        from guardian.shortcuts import assign_perm
         user_view_datasets = get_objects_for_user(self.request.user, 'view_dataset', Dataset, accept_global_perms=False)
-        if user_view_datasets and not dataset_object in user_view_datasets:
+        may_request_dataset = True
+        if dataset_object.is_public and not dataset_object in user_view_datasets:
             # the user currently has no view permission for the requested dataset
-            pass
+            # Give permission to access dataset
+            may_request_dataset = True
+            assign_perm('view_dataset', self.request.user, dataset_object)
+            messages.add_message(self.request, messages.INFO,
+                                             _('View permission for user successfully granted.'))
+        elif not dataset_object.is_public and not dataset_object in user_view_datasets:
+            may_request_dataset = False
+            messages.add_message(self.request, messages.INFO,
+                                             _('View permission for user requested.'))
         else:
             # this should not happen from the html page. the check is made to catch a user adding a parameter to the url
+            may_request_dataset = False
             messages.add_message(self.request, messages.INFO, _('You can already view this dataset.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
@@ -4409,11 +4426,10 @@ class DatasetListView(ListView):
         if 'motivation_for_use' in get:
             motivation = get['motivation_for_use']  # motivation is a required field in the form
 
-        from django.contrib.auth.models import Group, User
+        # notify the dataset owner(s) about the access request
+        from django.contrib.auth.models import Group
         group_manager = Group.objects.get(name='Dataset_Manager')
 
-        owners_of_dataset = dataset_object.owners.all()
-        dataset_manager_found = False
         for owner in owners_of_dataset:
 
             groups_of_user = owner.groups.all()
@@ -4421,36 +4437,59 @@ class DatasetListView(ListView):
                 # this owner can't manage users
                 continue
 
-            dataset_manager_found = True
             # send email to the dataset manager
             from django.core.mail import send_mail
             current_site = Site.objects.get_current()
+            
+            # send email to notify dataset managers that user was GIVEN access
+            if may_request_dataset:
+                subject = render_to_string('registration/dataset_to_owner_existing_user_given_access_subject.txt',
+                                        context={'dataset': dataset_object.name,
+                                                    'site': current_site})
+                # Email subject *must not* contain newlines
+                subject = ''.join(subject.splitlines())
 
-            subject = render_to_string('registration/dataset_access_email_subject.txt',
-                                       context={'dataset': dataset_object.name,
-                                                'site': current_site})
-            # Email subject *must not* contain newlines
-            subject = ''.join(subject.splitlines())
+                message = render_to_string('registration/dataset_to_owner_existing_user_given_access.txt',
+                                        context={'user': self.request.user,
+                                                    'dataset': dataset_object.name,
+                                                    'motivation': motivation,
+                                                    'site': current_site})
 
-            message = render_to_string('registration/dataset_access_request_email.txt',
-                                       context={'user': self.request.user,
-                                                'dataset': dataset_object.name,
-                                                'motivation': motivation,
-                                                'site': current_site})
+                # for debug purposes on local machine
+                if settings.DEBUG_EMAILS_ON:
+                    print('grant access subject: ', subject)
+                    print('message: ', message)
+                    print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+                    print('user email: ', self.request.user.email)
+                    print('Settings: ', settings.DEFAULT_FROM_EMAIL)
 
-            # for debug purposes on local machine
-            # print('grant access subject: ', subject)
-            # print('message: ', message)
-            # print('owner of dataset: ', owner.username, ' with email: ', owner.email)
-            # print('user email: ', owner.email)
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+            
+            # send email to notify dataset managers that user REQUESTS access
+            elif not may_request_dataset:
+                subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
+                                        context={'dataset': dataset_object.name,
+                                                    'site': current_site})
+                # Email subject *must not* contain newlines
+                subject = ''.join(subject.splitlines())
 
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+                message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
+                                        context={'user': self.request.user,
+                                                    'dataset': dataset_object.name,
+                                                    'motivation': motivation,
+                                                    'site': current_site})
 
-        if not dataset_manager_found:
-            messages.add_message(self.request, messages.ERROR, _('No dataset manager was found. Your request could not be submitted.'))
-        else:
-            messages.add_message(self.request, messages.INFO, _('Your request for view access to the dataset has been submitted.'))
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+                # for debug purposes on local machine
+                if settings.DEBUG_EMAILS_ON:
+                    print('grant access subject: ', subject)
+                    print('message: ', message)
+                    print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+                    print('user email: ', self.request.user.email)
+                    print('Settings: ', settings.DEFAULT_FROM_EMAIL)
+
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
     def render_to_ecv_export_response(self, context):
 
@@ -4759,20 +4798,22 @@ class DatasetManagerView(ListView):
                 from django.core.mail import send_mail
                 current_site = Site.objects.get_current()
 
-                subject = render_to_string('registration/dataset_access_granted_email_subject.txt',
+                subject = render_to_string('registration/dataset_to_user_existing_user_given_access_subject.txt',
                                            context={'dataset': dataset_object.name,
                                                     'site': current_site})
                 # Email subject *must not* contain newlines
                 subject = ''.join(subject.splitlines())
 
-                message = render_to_string('registration/dataset_access_granted_email.txt',
+                message = render_to_string('registration/dataset_to_user_existing_user_given_access.txt',
                                            context={'dataset': dataset_object.name,
                                                     'site': current_site})
 
                 # for debug purposes on local machine
-                # print('grant access subject: ', subject)
-                # print('message: ', message)
-                # print('user email: ', user_object.email)
+                if settings.DEBUG_EMAILS_ON:
+                    print('grant access subject: ', subject)
+                    print('message: ', message)
+                    print('user email: ', user_object.email)
+                    print('Settings: ', settings.DEFAULT_FROM_EMAIL)
 
                 send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_object.email])
 

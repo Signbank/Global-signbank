@@ -1,0 +1,12 @@
+{{user.firstname}} {{user.lastname}} (user {{user.username}}, email address {{user.email}})
+would like to gain access to private dataset {{dataset}}.
+
+{% if motivation %}
+Motivation: {{motivation}}
+
+{% endif %}
+You are the dataset manager for {{dataset}}. Please go to the following page to allow access for the dataset
+
+https://{{site}}/datasets/manager/
+
+{{site.name}} Webmaster
