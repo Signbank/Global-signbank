@@ -20,6 +20,8 @@ from django.template.loader import render_to_string
 
 from datetime import date
 
+from guardian.shortcuts import assign_perm
+
 import json
 
 def activate(request, activation_key, template_name='registration/activate.html'):
@@ -121,40 +123,86 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                 motivation = request.POST.get('motivation_for_use', '')  # motivation is a required field in the form
 
                 # send email to each of the dataset owners
+                from django.core.mail import send_mail
+                current_site = Site.objects.get_current()
+
                 for dataset_name in list_of_datasets:
                     # the datasets are selected via a pulldown list, they should exist
                     dataset_obj = Dataset.objects.get(name=dataset_name)
+
+                    # Notify the dataset owners about (accepted) request for access
                     owners_of_dataset = dataset_obj.owners.all()
-                    for owner in owners_of_dataset:
 
-                        groups_of_user = owner.groups.all()
-                        if not group_manager in groups_of_user:
-                            # this owner can't manage users
-                            continue
+                    if dataset_obj.is_public:
 
-                        from django.core.mail import send_mail
-                        current_site = Site.objects.get_current()
+                        # Give user access to view the database
+                        assign_perm('view_dataset', new_user, dataset_obj)
 
-                        subject = render_to_string('registration/dataset_access_email_subject.txt',
-                                                   context={'dataset': dataset_name,
-                                                            'site': current_site})
-                        # Email subject *must not* contain newlines
-                        subject = ''.join(subject.splitlines())
+                        for owner in owners_of_dataset:
 
-                        message = render_to_string('registration/dataset_access_email.txt',
-                                                   context={'dataset': dataset_name,
-                                                            'new_user_username': new_user.username,
-                                                            'new_user_firstname': new_user.first_name,
-                                                            'new_user_lastname': new_user.last_name,
-                                                            'new_user_email': new_user.email,
-                                                            'motivation': motivation,
-                                                            'site': current_site})
+                            groups_of_user = owner.groups.all()
+                            if not group_manager in groups_of_user:
+                                # this owner can't manage users
+                                continue
 
-                        # for debug purposes on local machine
-                        # print('owner of dataset: ', owner.username, ' with email: ', owner.email)
-                        # print('message: ', message)
+                            subject = render_to_string('registration/dataset_to_owner_new_user_given_access_subject.txt',
+                                                    context={'dataset': dataset_name,
+                                                                'site': current_site})
+                            # Email subject *must not* contain newlines
+                            subject = ''.join(subject.splitlines())
 
-                        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+                            message = render_to_string('registration/dataset_to_owner_new_user_given_access.txt',
+                                                    context={'dataset': dataset_name,
+                                                                'new_user_username': new_user.username,
+                                                                'new_user_firstname': new_user.first_name,
+                                                                'new_user_lastname': new_user.last_name,
+                                                                'new_user_email': new_user.email,
+                                                                'motivation': motivation,
+                                                                'site': current_site})
+
+                            # for debug purposes on local machine
+                            if settings.DEBUG_EMAILS_ON:
+                                print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+                                print('message: ', message)
+                                print('setting: ', settings.DEFAULT_FROM_EMAIL)
+
+                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+
+                    else:
+
+                        for owner in owners_of_dataset:
+
+                            groups_of_user = owner.groups.all()
+                            if not group_manager in groups_of_user:
+                                # this owner can't manage users
+                                continue
+
+                            from django.core.mail import send_mail
+                            current_site = Site.objects.get_current()
+
+                            subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
+                                                    context={'dataset': dataset_name,
+                                                                'site': current_site})
+                            # Email subject *must not* contain newlines
+                            subject = ''.join(subject.splitlines())
+
+                            message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
+                                                    context={'dataset': dataset_name,
+                                                                'new_user_username': new_user.username,
+                                                                'new_user_firstname': new_user.first_name,
+                                                                'new_user_lastname': new_user.last_name,
+                                                                'new_user_email': new_user.email,
+                                                                'motivation': motivation,
+                                                                'site': current_site})
+
+                            # for debug purposes on local machine
+                            if settings.DEBUG_EMAILS_ON:
+                                print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+                                print('message: ', message)
+                                print('setting: ', settings.DEFAULT_FROM_EMAIL)
+
+                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+
 
                 request.session['requested_datasets'] = list_of_datasets
             return HttpResponseRedirect(success_url)
@@ -252,7 +300,6 @@ def users_without_dataset(request):
         return HttpResponse('Unauthorized', status=401)
 
     from signbank.tools import get_users_without_dataset
-    from guardian.shortcuts import assign_perm
 
     main_dataset = Dataset.objects.get(pk=settings.DEFAULT_DATASET_PK)
 
