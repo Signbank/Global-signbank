@@ -2332,117 +2332,102 @@ def add_handshape_image(request):
     return redirect(url)
 
 
+def gloss_annotations(this_gloss):
+    translations = []
+    count_dataset_languages = this_gloss.lemma.dataset.translation_languages.all().count() \
+        if this_gloss.lemma and this_gloss.lemma.dataset else 0
+    for translation in this_gloss.annotationidglosstranslation_set.all():
+        if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+            translations.append("{}: {}".format(translation.language, translation.text))
+        else:
+            translations.append("{}".format(translation.text))
+    return ", ".join(translations)
+
+
 def find_and_save_variants(request):
 
-    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('lemma')[:10]
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    gloss_table_prefix = '<!DOCTYPE html>\n' \
-                         '<html>\n' \
-                         '<body>\n' \
-                         '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
-                         '<thead>\n' \
-                         '<tr>\n' \
-                         '<th style="width:10em; text-align:left;">Focus Gloss</th>\n' \
-                         '<th style="width:15em; text-align:left;">Other Relations</th>\n' \
-                         '<th style="width:20em; text-align:left;">Variant Relations (PRE)</th>\n' \
-                         '<th style="width:20em; text-align:left;">Candidate Variants</th>\n' \
-                         '<th style="width:25em; text-align:left;">Variant Relations (POST)</th>\n' \
-                          '</tr>\n' \
-                         '</thead>\n' \
-                         '<tbody>\n'
-    gloss_table_suffix = '</tbody>\n' \
-                         '</table>\n' \
-                         '</body>\n' \
-                         '</html>'
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
 
     gloss_pattern_table = dict()
-    gloss_table_rows = ''
 
-    for gloss in variant_pattern_glosses:
+    if selected_datasets.count() > 1:
+        return render(request, 'dictionary/find_and_save_variants.html',
+                      {'gloss_pattern_table': gloss_pattern_table,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+                       'too_many_datasets': True
+                       })
 
-        dict_key = int(gloss.id)
-        gloss_pattern_table[dict_key] = '<td>' + str(gloss.idgloss) + '</td>'
-        other_relations_of_sign = gloss.other_relations()
+    variant_pattern_glosses = Gloss.objects.filter(lemma__dataset__in=selected_datasets,
+                                                   annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('lemma')
 
-        if other_relations_of_sign:
+    for focus_gloss in variant_pattern_glosses:
+        dict_key = focus_gloss.id
 
-            gloss_pattern_table[dict_key] += '<td>'
+        col1 = gloss_annotations(focus_gloss)
 
-            for x in other_relations_of_sign:
-                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
+        other_relations_of_sign = focus_gloss.other_relations()
 
-            gloss_pattern_table[dict_key] += '</td>'
-
-        else:
-            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
-
-        variant_relations_of_sign = gloss.variant_relations()
+        variant_relations_of_sign = [r.target for r in focus_gloss.variant_relations()]
 
         if variant_relations_of_sign:
-
-            gloss_pattern_table[dict_key] += '<td>'
-
-            for x in variant_relations_of_sign:
-                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
-
-            gloss_pattern_table[dict_key] += '</td>'
-
+            col3 = ' || '.join(gloss_annotations(g) for g in variant_relations_of_sign)
         else:
-            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+            col3 = ' '
 
-
-        other_relation_objects = [x.target for x in other_relations_of_sign]
-        variant_relation_objects = [x.target for x in variant_relations_of_sign]
+        other_relation_objects = [x.target.id for x in other_relations_of_sign]
+        variant_relation_objects = [x.id for x in variant_relations_of_sign]
 
         # Build query
-        this_sign_stems = gloss.get_stems()
+        this_sign_stems = focus_gloss.get_stems()
+        if not this_sign_stems:
+            continue
         queries = []
         for this_sign_stem in this_sign_stems:
             this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
             queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
-                             dataset=gloss.dataset, annotationidglosstranslation__language=this_sign_stem[0]))
+                             lemma__dataset=focus_gloss.lemma.dataset,
+                             annotationidglosstranslation__language=this_sign_stem[0]))
         query = queries.pop()
         for q in queries:
             query |= q
+        candidate_variants = Gloss.objects.filter(query).distinct().exclude(id=focus_gloss.id).exclude(
+            id__in=other_relation_objects).exclude(id__in=variant_relation_objects)
 
-        candidate_variants = Gloss.objects.filter(query).distinct().exclude(idgloss=gloss).exclude(
-            idgloss__in=other_relation_objects).exclude(idgloss__in=variant_relation_objects)
+        if not candidate_variants:
+            continue
 
-        if candidate_variants:
-            gloss_pattern_table[dict_key] += '<td>'
+        col4 = ' || '.join(gloss_annotations(x) for x in candidate_variants)
 
-            for x in candidate_variants:
-                gloss_pattern_table[dict_key] += str(x.idgloss) + ' '
+        # for target in candidate_variants:
+        #
+        #     rel = Relation(source=focus_gloss, target=target, role='variant')
+        #     rel.save()
 
-            gloss_pattern_table[dict_key] += '</td>'
+        # updated_variants = [r.target for r in focus_gloss.variant_relations()]
+        #
+        # if updated_variants:
+        #     col5 = '|'.join(gloss_annotations(g) for g in updated_variants)
+        #
+        # else:
+        #     col5 = ' '
 
-        else:
-            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+        gloss_pattern_table[dict_key] = (dict_key, col1, col3, col4)
 
-
-        for target in candidate_variants:
-
-            rel = Relation(source=gloss, target=target, role='variant')
-            rel.save()
-
-        updated_variants = gloss.variant_relations()
-
-        if updated_variants:
-
-            gloss_pattern_table[dict_key] += '<td>'
-
-            for x in updated_variants:
-                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
-
-            gloss_pattern_table[dict_key] += '</td>'
-
-        else:
-            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
-
-        gloss_table_rows = gloss_table_rows + '<tr>' + gloss_pattern_table[dict_key] + '</tr>\n'
-
-
-    return HttpResponse(gloss_table_prefix+gloss_table_rows+gloss_table_suffix)
+    return render(request, 'dictionary/find_and_save_variants.html',
+                  {'gloss_pattern_table': gloss_pattern_table,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+                   'too_many_datasets': False
+                   })
 
 
 def get_unused_videos(request):

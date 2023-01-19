@@ -2240,7 +2240,6 @@ def change_dataset_selection(request):
         if selected_dataset_acronyms:
             user_profile = UserProfile.objects.get(user=user)
             for dataset_name in selected_dataset_acronyms:
-                print(dataset_name, type(dataset_name))
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
                     user_profile.selected_datasets.add(dataset)
