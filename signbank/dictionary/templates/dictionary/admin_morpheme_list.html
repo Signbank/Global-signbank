@@ -19,7 +19,6 @@
     var language_code = '{{ LANGUAGE_CODE }}';
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
     var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
-    var last_used_dataset = '{{last_used_dataset}}';
 </script>
 
 <style>
@@ -549,13 +548,12 @@ function do_set_lemma_language(el) {
                          <td>
                          <select id="id_dataset" name="dataset" required="">
                          {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-                             <option value=""
-                                     dataset_languages="{% for dataset_lang in dataset_languages %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">---------</option>
+
                          {% for s_dataset in selected_datasets %}
 
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
                          {% if "change_dataset" in dataset_perms %}
-                         {% if last_used_dataset == s_dataset.acronym %}
+                         {% if last_used_dataset and last_used_dataset == s_dataset.acronym %}
                          <option value="{{ s_dataset.id }}" selected="selected"
                                  dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
                          {% else %}
@@ -739,9 +737,10 @@ function do_set_lemma_language(el) {
         {% endwith %}
       {% endfor %}
             <td>{{ morpheme.get_mrpType_display }}</td>
-
             {% for lang, translations in morpheme.abstract_meaning %}
+            {% if lang in dataset_languages %}
             <td>{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            {% endif %}
             {% endfor %}
 
             <td>{% if morpheme.handedness %}{{ morpheme.get_handedness_display }}{% else %}-{% endif %}</td>

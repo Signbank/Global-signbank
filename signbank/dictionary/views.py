@@ -302,15 +302,19 @@ def gloss(request, glossid):
     if not trans:
         # this prevents an empty title in the template
         # this essentially overrides the "gloss.idgloss" method to prevent it from putting translations between parentheses
-        trans = gloss.annotationidglosstranslation_set.get(language=default_language).text
+        try:
+            trans = gloss.annotationidglosstranslation_set.get(language=default_language).text
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            # this catches the case where the annotation field has not been set
+            trans = str(gloss.id)
 
     # Regroup notes
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
     notes = gloss.definition_set.all()
     notes_groupedby_role = {}
     for note in notes:
-        translated_note_role = machine_value_to_translated_human_value(note.role, note_role_choices,
-                                                                       request.LANGUAGE_CODE)
+        note_role_machine_value = note.role.machine_value if note.role else 0
+        translated_note_role = machine_value_to_translated_human_value(note_role_machine_value, note_role_choices)
         role_id = (note.role, translated_note_role)
         if role_id not in notes_groupedby_role:
             notes_groupedby_role[role_id] = []
@@ -710,7 +714,6 @@ def import_authors(request):
 
 # this method is called from the Signbank menu bar
 def add_new_sign(request):
-    print('inside views add_new_sign')
     context = {}
 
     selected_datasets = get_selected_datasets_for_user(request.user)
@@ -719,12 +722,13 @@ def add_new_sign(request):
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
     if len(selected_datasets) == 1:
-        last_used_dataset = selected_datasets[0]
+        last_used_dataset = selected_datasets[0].acronym
     elif 'last_used_dataset' in request.session.keys():
         last_used_dataset = request.session['last_used_dataset']
     else:
-        last_used_dataset = default_dataset
+        last_used_dataset = None
     context['last_used_dataset'] = last_used_dataset
+
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
     context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
@@ -766,11 +770,11 @@ def add_new_morpheme(request):
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
     if len(selected_datasets) == 1:
-        last_used_dataset = selected_datasets[0]
+        last_used_dataset = selected_datasets[0].acronym
     elif 'last_used_dataset' in request.session.keys():
         last_used_dataset = request.session['last_used_dataset']
     else:
-        last_used_dataset = default_dataset
+        last_used_dataset = None
     context['last_used_dataset'] = last_used_dataset
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -1576,10 +1580,10 @@ def import_csv_update(request):
                 language_name = fieldname[len(annotation_idgloss_key_prefix):-1]
                 languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
-                    language = languages[0]
+                    language = languages.first()
                     annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
                     if annotation_idglosses:
-                        annotation_idgloss = annotation_idglosses[0]
+                        annotation_idgloss = annotation_idglosses.first()
                         annotation_idgloss.text = new_value
                         annotation_idgloss.save()
                 continue
@@ -1591,7 +1595,7 @@ def import_csv_update(request):
                 language_name = fieldname[len(keywords_key_prefix):-1]
                 languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
-                    language = languages[0]
+                    language = languages.first()
                     language_code_2char = language.language_code_2char
                     update_keywords(gloss, "keyword_" + language_code_2char, new_value)
                     gloss.save()
@@ -2761,7 +2765,7 @@ def gloss_revision_history(request,gloss_pk):
 
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
-        if revision.field_name in Gloss._meta.fields:
+        if revision.field_name in [f.name for f in Gloss._meta.fields]:
             revision_verbose_fieldname = _(Gloss._meta.get_field(revision.field_name).verbose_name)
         else:
             revision_verbose_fieldname = _(revision.field_name)

@@ -1351,6 +1351,8 @@ class Gloss(models.Model):
 
     def get_stems(self):
 
+        if not self.lemma or not self.lemma.dataset:
+            return []
         this_sign_language = self.lemma.dataset.default_language
         stems = [(x.language, x.text[:-2])
                  for x in self.annotationidglosstranslation_set.all() if x.text[-2] == '-' and x.language == this_sign_language ]
@@ -2118,7 +2120,8 @@ class Morpheme(Gloss):
         return self.idgloss
 
     def get_mrpType_display(self):
-        return self.mrpType.name if self.mrpType else self.mrpType
+        # to avoid extra code in the template, return '-' if the type has not been set
+        return self.mrpType.name if self.mrpType else '-'
 
     def get_handedness_display(self):
         return self.handedness.name if self.handedness else self.handedness
@@ -2173,15 +2176,20 @@ class Morpheme(Gloss):
 
     def abstract_meaning(self):
         # this is used for displaying morpheme keywords per language in the morpheme list view
-        abstract_meaning = []
+        # all languages need to be represented for the template
+        # languages not in the dataset translation languages are empty
+        all_languages = Language.objects.all()
         if self.dataset:
-            for language in self.dataset.translation_languages.all():
+            translation_languages = self.dataset.translation_languages.all()
+        else:
+            translation_languages = Language.objects.filter(id=get_default_language_id())
+        abstract_meaning = []
+        for language in all_languages:
+            if language in translation_languages:
                 translations = self.translation_set.filter(language=language).order_by('translation__text')
                 abstract_meaning.append((language, translations))
-        else:
-            language = Language.objects.get(id=get_default_language_id())
-            translations = self.translation_set.filter(language=language).order_by('translation__text')
-            abstract_meaning.append((language, translations))
+            else:
+                abstract_meaning.append((language, ''))
         return abstract_meaning
 
 def generate_fieldname_to_kind_table():
@@ -2688,7 +2696,7 @@ class LemmaIdglossTranslation(models.Model):
         if dataset:
             # Before an item is saved the language is checked against the languages of the dataset the lemma is in.
             dataset_languages = dataset.translation_languages.all()
-            if not self.language in dataset_languages:
+            if self.language not in dataset_languages:
                 msg = "Language %s is not in the set of language of the dataset gloss %s belongs to" \
                       % (self.language.name, self.lemma.id)
                 raise ValidationError(msg)
@@ -2696,9 +2704,7 @@ class LemmaIdglossTranslation(models.Model):
             # The lemma idgloss translation text for a language must be unique within a dataset.
             lemmas_with_same_text = dataset.lemmaidgloss_set.filter(lemmaidglosstranslation__text__exact=self.text,
                                                                     lemmaidglosstranslation__language=self.language)
-            if not (
-                    (len(lemmas_with_same_text) == 1 and lemmas_with_same_text[0] == self.lemma)
-                    or lemmas_with_same_text is None or len(lemmas_with_same_text) == 0):
+            if lemmas_with_same_text.count() > 1:
                 msg = "The lemma idgloss translation text '%s' is not unique within dataset '%s' for lemma '%s'." \
                       % (self.text, dataset.acronym, self.lemma.id)
                 raise ValidationError(msg)
