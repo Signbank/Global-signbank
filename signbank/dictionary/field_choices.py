@@ -1,6 +1,6 @@
 from signbank.dictionary.models import *
-from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
-    choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors, \
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict, \
+    choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors, \
     choicelist_queryset_to_field_colors
 
 
