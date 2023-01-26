@@ -3476,6 +3476,7 @@ class GlossApiTest(TestCase):
 
     dataset = 0
     gloss_name = 'test'
+    gloss_id = 0
     video_url = 'test_video_url'
     file_path = path.join(settings.WRITABLE_FOLDER, video_url)
 
@@ -3500,6 +3501,7 @@ class GlossApiTest(TestCase):
         # Create a with a video that the api should return
         gloss = Gloss.objects.create(lemma=test_lemma, inWeb=True)
         GlossVideo.objects.create(gloss_id=gloss.id, videofile=cls.video_url)
+        cls.gloss_id = gloss.id
 
         # Create the file for the video which the gloss will return when get_video_url is called
         Path(cls.file_path).mkdir()
@@ -3507,6 +3509,7 @@ class GlossApiTest(TestCase):
         # Create extra data which the api should not return because they are filtert out of the data
         # Gloss without a video
         Gloss.objects.create(lemma=test_lemma, inWeb=True)
+
         # Gloss that is not in the public dictionary
         Gloss.objects.create(lemma=test_lemma, inWeb=False)
 
@@ -3517,13 +3520,10 @@ class GlossApiTest(TestCase):
 
     def test_other_request_methode_then_GET(self):
         """
-        Check if an error is returned with another request methode than GET
+        Check if an error is returned with another request methode than GET or POST
         """
-        assert_json = '[{"Error": "Tried anohter request methoded then GET, please only use GET for this endpoint."}]'
-        data = {"search": "test"}
         response = self.client.post(reverse('dictionary:gloss_api'), data, format='json')
         self.assertEqual(response.status_code, 405)
-        self.assertJSONEqual(response.content, assert_json)
 
     def test_no_data_set_selected(self):
         """
@@ -3559,5 +3559,22 @@ class GlossApiTest(TestCase):
 
         data = {"dataset": self.dataset, "search": self.gloss_name}
         response = self.client.get(reverse('dictionary: gloss_api'), data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, assert_json)
+
+    def test_POST_retrieve_gloss_data_from_list_of_ids(self):
+        """
+        Check if data
+        """
+        assert_json = []
+        sign_json = {
+                "sign_name": self.gloss_name,
+                "image_url": "",
+                "video_url": self.video_url
+                }
+        assert_json.append(sign_json)
+
+        data = [self.gloss_id]
+        response = self.client.post(reverse('dictionary: gloss_api'), data, format='json')
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(response.content, assert_json)
