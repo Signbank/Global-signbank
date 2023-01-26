@@ -60,10 +60,9 @@ $(window).ready(function(){
         <div class="videocontainer">
             <video id='genfbvid{{fb.id}}' class='video-js vjs-default-skin'
                poster='{{posterurl}}' controls  preload='false' data-setup='{"example_option":true}'>
-                <source src='{{protected_media_url}}{{ fb.video }}' type='video/mp4' codecs='avc1.42E01E, mp4a.40.2'></source>
+                <source src='{{protected_media_url}}{{ fb.video }}' type='video/mp4' codecs='avc1.42E01E, mp4a.40.2'>
             </video>
-            <p><a href='{{protected_media_url}}{{ fb.video }}'>Download video</a><br>
-                (if video does not play here you may be able to play by downloading)</p>
+            <p><a href='{{protected_media_url}}{{ fb.video }}'>{% trans "Download Video" %}</a></p>
         </div>
         {% endif %}
         <dl class='dl-horizontal'>
@@ -116,7 +115,28 @@ $(window).ready(function(){
         <div id="signcollapse{{fb.pk}}" class="panel-collapse collapse col-md-4">
 
         <dl class='dl-horizontal'>
-          <dt>{% trans "Sign" %}</dt><dd><a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></dd>
+            <dt>{% trans "Sign Language" %}</dt>
+          {% if fb.translation.gloss.signlanguage.all.count > 0 %}
+            <dd>{{fb.translation.gloss.signlanguage.all}}</dd>
+          {% elif fb.translation.gloss.lemma.dataset %}
+            <dd>{{fb.translation.gloss.lemma.dataset.signlanguage}}</dd>
+          {% else %}
+            <dd>{% trans "Not Specified" %}</dd>
+          {% endif %}
+            <dt>{% trans "Dataset" %}</dt>
+          {% if fb.gloss and fb.gloss.lemma and fb.gloss.lemma.dataset %}
+            <dd>{{fb.gloss.lemma.dataset.acronym}}</dd>
+          {% elif fb.translation.gloss.lemma and fb.translation.gloss.lemma.dataset %}
+            <dd>{{fb.translation.gloss.lemma.dataset.acronym}}</dd>
+          {% else %}
+            <dd>{% trans "Not Specified" %}</dd>
+          {% endif %}
+          <dt>{% trans "Sign" %}</dt>
+            {% if fb.gloss and fb.gloss.annotationidglosstranslation_set.all.count > 0 %}
+            <dd><a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.gloss.id}}">{{fb.gloss.annotationidglosstranslation_set.all.first.text}}</a></dd>
+            {% else %}
+            <dd><a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.translation.gloss.id}}">{{fb.translation.gloss.annotationidglosstranslation_set.all.first.text}}</a></dd>
+            {% endif %}
           <dt>{% trans "Comments" %}</dt><dd>{{fb.comment}}</dd>
         </dl>
 
@@ -169,14 +189,19 @@ $(window).ready(function(){
         <div class="videocontainer">
             <video id='msfb{{fb.id}}' class='video-js vjs-default-skin'
                poster='{{posterurl}}' controls preload='false' data-setup='{"example_option":true}'>
-                <source src='{{protected_media_url}}{{ fb.video }}' type='video/mp4' codecs='avc1.42E01E, mp4a.40.2'></source>
+                <source src='{{protected_media_url}}{{ fb.video }}' type='video/mp4' codecs='avc1.42E01E, mp4a.40.2'>
             </video>
-            <p><a href='{{ MEDIA_URL }}{{ fb.video }}'>Download video</a><br>
-                (if video does not play here you may be able to play by downloading)</p>
+            <p><a href='{{ MEDIA_URL }}{{ fb.video }}'>{% trans "Download Video" %}</a></p>
          </div>
         {% endif %}
     
          <dl class='dl-horizontal'>
+          <dt>{% trans "Sign Language" %}</dt>
+             {% if fb.signlanguage %}
+             <dd>{{fb.signlanguage}}</dd>
+             {% else %}
+             <dd>{% trans "Not Specified" %}</dd>
+             {% endif %}
           <dt>{% trans "Meaning" %}</dt><dd>{{fb.meaning}}</dd>
           <dt>{% trans "Comments" %}</dt><dd>{{fb.comments}}</dd>
          </dl>
@@ -229,7 +254,28 @@ $(window).ready(function(){
         <div id="morphemecollapse{{fb.pk}}" class="panel-collapse collapse col-md-4">
 
         <dl class='dl-horizontal'>
-          <dt>{% trans "Morpheme" %}</dt><dd><a href="{{PREFIX_URL}}/dictionary/morpheme/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></dd>
+            <dt>{% trans "Sign Language" %}</dt>
+          {% if fb.translation.gloss.signlanguage.all.count > 0 %}
+            <dd>{{fb.translation.gloss.signlanguage.all}}</dd>
+          {% elif fb.translation.gloss.lemma.dataset %}
+            <dd>{{fb.translation.gloss.lemma.dataset.signlanguage}}</dd>
+          {% else %}
+            <dd>{% trans "Not Specified" %}</dd>
+          {% endif %}
+            <dt>{% trans "Dataset" %}</dt>
+          {% if fb.morpheme and fb.morpheme.lemma and fb.morpheme.lemma.dataset %}
+            <dd>{{fb.morpheme.lemma.dataset.acronym}}</dd>
+          {% elif fb.translation.gloss.lemma and fb.translation.gloss.lemma.dataset %}
+            <dd>{{fb.translation.gloss.lemma.dataset.acronym}}</dd>
+          {% else %}
+            <dd>{% trans "Not Specified" %}</dd>
+          {% endif %}
+          <dt>{% trans "Morpheme" %}</dt>
+            {% if fb.morpheme and fb.morpheme.annotationidglosstranslation_set.all.count > 0 %}
+            <dd><a href="{{PREFIX_URL}}/dictionary/morpheme/{{fb.morpheme.id}}">{{fb.morpheme.annotationidglosstranslation_set.all.first.text}}</a></dd>
+            {% else %}
+            <dd><a href="{{PREFIX_URL}}/dictionary/morpheme/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></dd>
+            {% endif %}
           <dt>{% trans "Comments" %}</dt><dd>{{fb.comment}}</dd>
         </dl>
 

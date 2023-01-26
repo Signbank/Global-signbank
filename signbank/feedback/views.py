@@ -76,12 +76,14 @@ def generalfeedback(request):
 @login_required
 def missingsign(request):
 
-    posted = False # was the feedback posted?
+    posted = False  # was the feedback posted?
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     sign_languages = [dataset.signlanguage.id for dataset in selected_datasets]
     # get rid of duplicates
     sign_languages = list(set(sign_languages))
+
+    # this is used to show a table of sign languages paired with the datasets
     signlanguage_to_dataset = dict()
     for dataset in selected_datasets:
         if dataset.signlanguage not in signlanguage_to_dataset.keys():
@@ -100,6 +102,10 @@ def missingsign(request):
             
             # either we get video of the new sign or we get the 
             # description via the form
+
+            if 'signlanguage' in form.cleaned_data:
+                # the form yields a sign language object
+                fb.signlanguage = form.cleaned_data['signlanguage']
             
             if 'video' in form.cleaned_data and form.cleaned_data['video'] != None:
                 fb.video = form.cleaned_data['video']
@@ -114,7 +120,7 @@ def missingsign(request):
     else:
         form = MissingSignFeedbackForm(sign_languages=sign_languages)
 
-    return render(request,'feedback/missingsign.html',
+    return render(request, 'feedback/missingsign.html',
                                {'language': settings.LANGUAGE_NAME,
                                 'selected_datasets': get_selected_datasets_for_user(request.user),
                                 'signlanguage_to_dataset': signlanguage_to_dataset,

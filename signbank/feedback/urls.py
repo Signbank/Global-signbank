@@ -7,12 +7,8 @@ import signbank.feedback.views
 urlpatterns = [
     url(r'^$', signbank.feedback.views.index),
 
-    # url(r'^show.html', signbank.feedback.views.showfeedback),
-
     url(r'^missing/$', login_required(signbank.feedback.views.missingsign)),
     url(r'^site/$', signbank.feedback.views.generalfeedback),
-
-    # url(r'^sign/(?P<keyword>.+)-(?P<n>\d+).html$',  signbank.feedback.views.signfeedback),
 
     url(r'^gloss/(?P<glossid>\d+)/$',  signbank.feedback.views.glossfeedback),
     url(r'^morpheme/(?P<glossid>\d+)/$', signbank.feedback.views.morphemefeedback),

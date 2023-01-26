@@ -129,6 +129,8 @@ class MissingSignFeedbackForm(forms.Form):
         self.fields['signlanguage'] = forms.ModelChoiceField(label=_("Sign Language"),
                                                              queryset=SignLanguage.objects.filter(id__in=sign_languages),
                                                              widget=forms.Select(attrs={'class': 'form-control'}))
+        self.fields['signlanguage'].initial = sign_languages[0]
+
 
 class MissingSignFeedback(models.Model):    
     user = models.ForeignKey(authmodels.User)
