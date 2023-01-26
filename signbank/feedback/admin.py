@@ -7,8 +7,9 @@ class GeneralFeedbackAdmin(admin.ModelAdmin):
     list_filter = ['user']
 admin.site.register(GeneralFeedback, GeneralFeedbackAdmin)
 
+
 class SignFeedbackAdmin(admin.ModelAdmin):
-    readonly_fields = ['translation', 'isAuslan', 'whereused', 'like', 'use', 'suggested', 'correct', 'kwnotbelong', 'comment']
+    readonly_fields = ['translation', 'comment']
     list_display = ['user', 'date', 'translation']
     list_filter = ['user']
 
@@ -18,12 +19,9 @@ class SignFeedbackAdmin(admin.ModelAdmin):
 
 admin.site.register(SignFeedback, SignFeedbackAdmin)
 
+
 class MissingSignFeedbackAdmin(admin.ModelAdmin):
-    # readonly_fields = ['handform', 'handshape', 'althandshape',
-    #            'location', 'relativelocation', 'handbodycontact',
-    #            'handinteraction', 'direction',
-    #            'movementtype', 'smallmovement', 'repetition',
-    #            'meaning', 'video', 'comments']
+
     list_display = ['user', 'date']
     list_filter = ['user']
 
@@ -34,3 +32,13 @@ class MissingSignFeedbackAdmin(admin.ModelAdmin):
 admin.site.register(MissingSignFeedback, MissingSignFeedbackAdmin)
 
 
+class MorphemeFeedbackAdmin(admin.ModelAdmin):
+    readonly_fields = ['translation', 'comment']
+    list_display = ['user', 'date', 'translation']
+    list_filter = ['user']
+
+    def get_fields(self, request, obj=None):
+        fields = ['translation', 'comment', 'status']
+        return fields
+
+admin.site.register(MorphemeFeedback, MorphemeFeedbackAdmin)

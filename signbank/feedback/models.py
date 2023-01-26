@@ -6,9 +6,10 @@ import os
 from signbank.video.fields import VideoUploadToFLVField
 
 from django.utils.translation import ugettext_lazy as _
+from django.utils.encoding import escape_uri_path
 
 from signbank.dictionary.models import *
-#from signbank.dictionary.models import Gloss
+
 # models to represent the feedback from users in the site
 
 import string
@@ -23,33 +24,11 @@ def t(message):
 
 from django import forms
 
-STATUS_CHOICES = ( ('unread', 'unread'),
-                   ('read', 'read'),
-                   ('deleted', 'deleted'),
-                 )
+STATUS_CHOICES = (('unread', 'unread'),
+                  ('read', 'read'),
+                  ('deleted', 'deleted'),
+                  )
 
-
-
-class InterpreterFeedback(models.Model):
-    """Feedback on a sign from an interpreter"""                
-
-    class Meta:
-        ordering = ['-date']
-        permissions = (('view_interpreterfeedback', "Can View Interpreter Feedback"),)
-
-    #gloss = models.ForeignKey(Gloss)
-    comment = models.TextField('Note')
-    user = models.ForeignKey(authmodels.User)
-    date = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
-    
-class InterpreterFeedbackForm(forms.ModelForm):
-    
-    class Meta:
-        model = InterpreterFeedback
-        fields = ['comment']
-        widgets={'comment': forms.Textarea(attrs={'rows':6, 'cols':80})}
-    
 
 class GeneralFeedback(models.Model):
  
@@ -78,70 +57,8 @@ class GeneralFeedbackForm(forms.Form):
     
     comment = forms.CharField(widget=forms.Textarea(attrs={'rows':6, 'cols':80}), required=True)
     video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size':'60'}))
-    
 
-signLanguageChoices = [ ('0', 'N/A') ] + [ ( str(sl.id), sl.name ) for sl in SignLanguage.objects.all() ]
 
-if settings.LANGUAGE_NAME == "BSL":
-    whereusedChoices = (('N/A', 'N/A'),
-                        ('Belfast', 'Belfast'),
-                        ('Birmingham', 'Birmingham'),
-                        ('Bristol', 'Bristol'),
-                        ('Cardiff', 'Cardiff'),
-                        ('Glasgow', 'Glasgow'),
-                        ('London', 'London'),
-                        ('Manchester', 'Manchester'),
-                        ('Newcastle', 'Newcastle'),
-                        ('Other', 'Other (note in comments)'),
-                        ("Don't Know", "Don't Know"),
-                        )
-else:
-    whereusedChoices = (('N/A', 'N/A'),
-                        ('Groningen', 'Groningen'),
-                        ('Amsterdam', 'Amsterdam'),
-                        ('Voorburg', 'Voorburg'),
-                        ('Rotterdam', 'Rotterdam'),
-                        ('Gestel', 'Gestel'),
-                        ('Unknown', 'Unknown'),
-                        ('Beijing', 'Beijing'),
-                        ('Shanghai', 'Shanghai'),
-                        ('Nanjing', 'Nanjing'),
-                        ('Unknown', 'Unknown'),
-                        ('Ambon', 'Ambon'),
-                        ('Makassar', 'Makassar'),
-                        ('Padang', 'Padang'),
-                        ('Pontianak', 'Pontianak'),
-                        ('Singaradja', 'Singaradja'),
-                        ('Solo', 'Solo'),
-                        )
-
-likedChoices =    ( (1, "Morpheme"),
-                    (0, "Sign")
-                    )
-                                        
-useChoices =      ( (1, "Yes"),
-                    (2, "Sometimes"), 
-                    (3, "Not Often"),
-                    (4, "No"),
-                    (0, "N/A") 
-                    )
-                         
-suggestedChoices =( (1, "Yes"),
-                    (2, "Sometimes"), 
-                    (3, "Don't Know"),
-                    (4, "Perhaps"),
-                    (5, "No"),
-                    (0, "N/A")
-                    )
-                    
-correctChoices =  ( (1, "Yes"),
-                    (2, "Mostly Correct"), 
-                    (3, "Don't Know"),
-                    (4, "Mostly Wrong"),
-                    (5, "No"),
-                    (0, "N/A") 
-                    )
-                    
 class SignFeedback(models.Model):
     """Store feedback on a particular sign"""
     
@@ -149,16 +66,10 @@ class SignFeedback(models.Model):
     date = models.DateTimeField(auto_now_add=True)
     
     translation = models.ForeignKey(Translation, editable=False)
+    gloss = models.ForeignKey(Gloss, on_delete=models.SET_NULL, null=True, editable=False)
     
     comment = models.TextField("Comment or new keywords.", blank=True)
-    kwnotbelong = models.TextField("List of keywords that DO NOT belong", blank=True)
 
-    isAuslan = models.IntegerField(t("Is this sign an $language Sign?"), choices=signLanguageChoices)
-    whereused = models.CharField("Where is this sign used?", max_length=10, choices=whereusedChoices)
-    like = models.IntegerField("Do you like this sign?", choices=likedChoices)
-    use = models.IntegerField("Do you use this sign?", choices=useChoices)
-    suggested = models.IntegerField("If this sign is a suggested new sign, would you use it?", default=3, choices=suggestedChoices)
-    correct = models.IntegerField("Is the information about the sign correct?", choices=correctChoices)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
     
     def __str__(self):
@@ -168,132 +79,62 @@ class SignFeedback(models.Model):
         ordering = ['-date']
 
 
+class MorphemeFeedback(models.Model):
+    """Store feedback on a particular sign"""
+
+    user = models.ForeignKey(authmodels.User, editable=False)
+    date = models.DateTimeField(auto_now_add=True)
+
+    translation = models.ForeignKey(Translation, editable=False)
+    morpheme = models.ForeignKey(Morpheme, on_delete=models.SET_NULL, null=True, editable=False)
+
+    comment = models.TextField("Comment or new keywords.", blank=True)
+
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
+
+    def __str__(self):
+        return str(self.translation.translation) + " by " + str(self.user) + " on " + str(self.date)
+
+    class Meta:
+        ordering = ['-date']
+
 class SignFeedbackForm(forms.Form):
     """Form for input of sign feedback"""
 
-    # isAuslan now stores Sign Language
-    isAuslan = forms.ChoiceField(choices=signLanguageChoices)
-    # whereused now stores Dialect
-    whereused = forms.ChoiceField(choices=whereusedChoices)
-    #whereused = forms.CharField(initial='n/a', widget=forms.HiddenInput)
-    like = forms.ChoiceField(choices=likedChoices, widget=forms.RadioSelect)
-    #like = forms.IntegerField(initial=0, widget=forms.HiddenInput)
-    use = forms.ChoiceField(choices=useChoices, initial=0,  widget=forms.RadioSelect)
-    #use = forms.IntegerField(initial=0, widget=forms.HiddenInput)
-    suggested = forms.ChoiceField(choices=suggestedChoices, initial=3, required=False, widget=forms.RadioSelect)
-    #suggested = forms.IntegerField(initial=0, widget=forms.HiddenInput)
-    correct = forms.ChoiceField(choices=correctChoices, initial=0, widget=forms.RadioSelect)
-    #correct = forms.IntegerField(initial=0, widget=forms.HiddenInput)
-    kwnotbelong = forms.CharField(label="List keywords", required=False, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
     comment = forms.CharField(label="Comment or new keywords", required=True, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
 
     def __init__(self, *args, **kwargs):
-        is_sign_or_morpheme = kwargs.pop('is_sign_or_morpheme')
-        signlanguage = kwargs.pop('signlanguage')
         super(SignFeedbackForm, self).__init__(*args, **kwargs)
-        self.fields['like'].initial = is_sign_or_morpheme
-        if signlanguage:
-            # problems getting this to work correctly
-            index_of_signlanguage = [ signLanguageChoices.index(tupl)
-                                      for tupl in signLanguageChoices if tupl[0] == str(signlanguage.id) ]
-            self.fields['isAuslan'].initial = 0
+
+class MorphemeFeedbackForm(forms.Form):
+    """Form for input of sign feedback"""
+
+    comment = forms.CharField(label="Comment or new keywords", required=True, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
+
+    def __init__(self, *args, **kwargs):
+        super(MorphemeFeedbackForm, self).__init__(*args, **kwargs)
 
 
-repetitionChoices = ((0, 'None'),
-                      (493, 'Do the movement once'),
-                      (494, 'Do the movement twice'),
-                      (495, 'Repeat the movement several times')
-                      )
+class MissingSignFeedbackForm(forms.Form):
 
-
-class MissingSignFeedbackForm(forms.Form):   
-    handform = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.HANDEDNESS),
-                                      required=False, label='How many hands are used to make this sign?')
-    handshape = forms.ModelChoiceField(queryset=Handshape.objects.filter(),
-                                       required=False, label='What is the handshape?')
-    althandshape = forms.ModelChoiceField(queryset=Handshape.objects.filter(),
-                                          required=False, label='What is the handshape of the left hand?')
-    location = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.LOCATION),
-                                      required=False, label='Choose the location of the sign on, or near the body')
-    relativelocation = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.LOCATION),
-                                              label='Choose the location of the right hand on, or near the left hand',
-                                              required=False)
-    handbodycontact = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.CONTACTTYPE),
-                                             label='Contact between hands and body', required=False)
-    handinteraction = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.RELATARTIC),
-                                             label='Interaction between hands', required=False)
-    direction = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.MOVEMENTDIR),
-                                       label='Movement direction of the hand(s)', required=False)
-    movementtype = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.MOVEMENTSHAPE),
-                                          label='Type of movement', required=False)
-    smallmovement = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(field=FieldChoice.JOINTCONFIGURATION),
-                                           label='Small movements of the hand(s) and fingers', required=False)
-    repetition = forms.ChoiceField(choices=repetitionChoices, 
-        label='Number of movements', required=False)
-    
     meaning = forms.CharField(label='Sign Meaning', widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
     video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size':'60'}))
     comments = forms.CharField(label='Further Details', widget=forms.Textarea(attrs={'rows':6, 'cols':80}), required=True)
-    
+
+    def __init__(self, *args, **kwargs):
+        sign_languages = kwargs.pop('sign_languages')
+
+        super(MissingSignFeedbackForm, self).__init__(*args, **kwargs)
+
+        self.fields['signlanguage'] = forms.ModelChoiceField(label=_("Sign Language"),
+                                                             queryset=SignLanguage.objects.filter(id__in=sign_languages),
+                                                             widget=forms.Select(attrs={'class': 'form-control'}))
 
 class MissingSignFeedback(models.Model):    
     user = models.ForeignKey(authmodels.User)
     date = models.DateTimeField(auto_now_add=True)
-    handform = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                          limit_choices_to={'field': FieldChoice.HANDEDNESS},
-                                          field_choice_category=FieldChoice.HANDEDNESS,
-                                          verbose_name=_("Handedness"),
-                                           related_name="handednessMissingSignFeedback")
-
-    handshape = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
-                                              verbose_name=_("Handshape"), related_name="Handshape")
-
-    althandshape = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
-                                                 verbose_name=_("AltHandshape"), related_name="AltHandshape")
-
-    location = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                            limit_choices_to={'field': FieldChoice.LOCATION},
-                                            field_choice_category=FieldChoice.LOCATION,
-                                            verbose_name=_("Location"),
-                                            related_name="LocationMissingSignFeedback")
-
-    relativelocation = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                            limit_choices_to={'field': FieldChoice.LOCATION},
-                                            field_choice_category=FieldChoice.LOCATION,
-                                            verbose_name=_("Location"),
-                                            related_name="Location")
-
-    handbodycontact = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                            limit_choices_to={'field': FieldChoice.CONTACTTYPE},
-                                            field_choice_category=FieldChoice.CONTACTTYPE,
-                                            verbose_name=_("HandBodyContact"),
-                                            related_name="HandBodyContact")
-
-    handinteraction = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                            limit_choices_to={'field': FieldChoice.RELATARTIC},
-                                            field_choice_category=FieldChoice.RELATARTIC,
-                                            verbose_name=_("HandInteraction"),
-                                            related_name="HandInteraction")
-
-    direction = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                            limit_choices_to={'field': FieldChoice.MOVEMENTDIR},
-                                            field_choice_category=FieldChoice.MOVEMENTDIR,
-                                            verbose_name=_("Direction"),
-                                            related_name="Direction")
-
-    movementtype = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                            limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
-                                            field_choice_category=FieldChoice.MOVEMENTSHAPE,
-                                            verbose_name=_("MovementType"),
-                                            related_name="MovementType")
-
-    smallmovement = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
-                                            limit_choices_to={'field': FieldChoice.JOINTCONFIGURATION},
-                                            field_choice_category=FieldChoice.JOINTCONFIGURATION,
-                                            verbose_name=_("SmallMovement"),
-                                            related_name="SmallMovement")
-
-    repetition = models.IntegerField(choices=repetitionChoices, blank=True, default=0)
+    signlanguage = models.ForeignKey(SignLanguage, verbose_name=_("Sign Language"),
+                                help_text=_("Sign Language of the missing sign"), null=True)
     meaning = models.TextField()
     comments = models.TextField(blank=True)
     video = models.FileField(upload_to=settings.COMMENT_VIDEO_LOCATION, blank=True) 

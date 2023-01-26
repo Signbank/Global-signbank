@@ -51,16 +51,14 @@ $(window).ready(function(){
         <div class="panel-heading">
           <h4 class="panel-title">
               {{fb.date|date:"d M Y"}}: {{fb.user.first_name}} {{fb.user.last_name}} |
-            <a data-toggle="collapse" data-parent="#general{{fb.id}}" href="#gencollapse{{fb.id}}">
-               View
-            </a>
+            <a data-toggle="collapse" data-parent="#general{{fb.id}}" href="#gencollapse{{fb.id}}">{% trans "View" %}</a>
           </h4> 
         </div>
-        <div id="gencollapse{{fb.id}}" class="panel-collapse collapse">
+        <div id="gencollapse{{fb.id}}" class="panel-collapse collapse col-md-4">
   
         {% if fb.has_video %}
         <div class="videocontainer">
-            <video id='genfbvid{{fb.id}}' class='video-js vjs-default-skin' 
+            <video id='genfbvid{{fb.id}}' class='video-js vjs-default-skin'
                poster='{{posterurl}}' controls  preload='false' data-setup='{"example_option":true}'>
                 <source src='{{protected_media_url}}{{ fb.video }}' type='video/mp4' codecs='avc1.42E01E, mp4a.40.2'></source>
             </video>
@@ -68,10 +66,11 @@ $(window).ready(function(){
                 (if video does not play here you may be able to play by downloading)</p>
         </div>
         {% endif %}
-      
-	    <p>{{fb.comment}}</p>
+        <dl class='dl-horizontal'>
+          <dt>{% trans "Comments" %}</dt><dd>{{fb.comment}}</dd>
+         </dl>
 
-         <div class='btn-group'>
+         <div class='btn-group col-md-offset-3'>
             <button class='delete btn btn-default' type='submit' value='Delete Comment'
                     data-toggle='modal' data-target='#delete_comment_general_{{fb.id}}'>{% trans "Delete" %}</button>
          </div>
@@ -106,31 +105,22 @@ $(window).ready(function(){
   
   <h3>{% trans "Sign Feedback" %}</h3>
   {% for fb in signfb %}
-    <div class="panel-group" id="sign{{fb.pk}}">
+    <div class="panel-group" id="signfb{{fb.pk}}">
       <div class="panel panel-default">
         <div class="panel-heading">
           <h4 class="panel-title">
               {{fb.date|date:"d M Y"}}: {{fb.user.first_name}} {{fb.user.last_name}} |
-            <a data-toggle="collapse" data-parent="#signfb{{fb.pk}}" href="#signcollapse{{fb.pk}}">
-               View
-            </a>
+            <a data-toggle="collapse" data-parent="#signfb{{fb.pk}}" href="#signcollapse{{fb.pk}}">{% trans "View" %}</a>
           </h4> 
         </div>
-        <div id="signcollapse{{fb.pk}}" class="panel-collapse collapse">
-<!--
-    Field like is used as a boolean isMorpheme (reusing one of the existing database fields instead of a migration
-    (to do after deciding what is needed to support feedback).
--->
-        {% if fb.like == 0 %}
-        <p><strong>Sign:</strong><a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></p>
-        {% else %}
-        <p><strong>Morpheme:</strong> <a href="{{PREFIX_URL}}/dictionary/morpheme/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></p>
-        {% endif %}
-        <p><strong>Comment:</strong> {{fb.comment}}</p>
-        {% if fb.kwnotbelong %}
-        <p><strong>Incorrect keywords:</strong> {{fb.kwnotbelong}}</p>
-        {% endif %}
-         <div class='btn-group'>
+        <div id="signcollapse{{fb.pk}}" class="panel-collapse collapse col-md-4">
+
+        <dl class='dl-horizontal'>
+          <dt>{% trans "Sign" %}</dt><dd><a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></dd>
+          <dt>{% trans "Comments" %}</dt><dd>{{fb.comment}}</dd>
+        </dl>
+
+         <div class='btn-group col-md-offset-3'>
             <button class='delete btn btn-default' type='submit' value='Delete Comment'
                     data-toggle='modal' data-target='#delete_comment_sign_{{fb.id}}'>{% trans "Delete" %}</button>
          </div>
@@ -161,6 +151,7 @@ $(window).ready(function(){
        </div>
      </div>
   {% endfor %}
+
   <h3>{% trans "Missing Sign Feedback" %}</h3>
   {% for fb in missing %} 
     
@@ -169,16 +160,14 @@ $(window).ready(function(){
         <div class="panel-heading">
           <h4 class="panel-title">
               {{fb.date|date:"d M Y"}}: {{fb.user.first_name}} {{fb.user.last_name}} |
-            <a data-toggle="collapse" data-parent="#missing{{fb.id}}" href="#missingcollapse{{fb.id}}">
-               View
-            </a>
+            <a data-toggle="collapse" data-parent="#missing{{fb.id}}" href="#missingcollapse{{fb.id}}">{% trans "View" %}</a>
           </h4> 
         </div>
-        <div id="missingcollapse{{fb.id}}" class="panel-collapse collapse">
+        <div id="missingcollapse{{fb.id}}" class="panel-collapse collapse col-md-4">
 
         {% if fb.has_video %}
         <div class="videocontainer">
-            <video id='msfb{{fb.id}}' class='video-js vjs-default-skin' 
+            <video id='msfb{{fb.id}}' class='video-js vjs-default-skin'
                poster='{{posterurl}}' controls preload='false' data-setup='{"example_option":true}'>
                 <source src='{{protected_media_url}}{{ fb.video }}' type='video/mp4' codecs='avc1.42E01E, mp4a.40.2'></source>
             </video>
@@ -188,11 +177,11 @@ $(window).ready(function(){
         {% endif %}
     
          <dl class='dl-horizontal'>
-          <dt>Meaning</dt><dd>{{fb.meaning}}</dd>
-          <dt>Comments</dt><dd>{{fb.comments}}</dd>
+          <dt>{% trans "Meaning" %}</dt><dd>{{fb.meaning}}</dd>
+          <dt>{% trans "Comments" %}</dt><dd>{{fb.comments}}</dd>
          </dl>
      
-         <div class='btn-group'>
+         <div class='btn-group col-md-offset-3'>
             <button class='delete btn btn-default' type='submit' value='Delete Comment'
                     data-toggle='modal' data-target='#delete_comment_missingsign_{{fb.id}}'>{% trans "Delete" %}</button>
          </div>
@@ -227,4 +216,53 @@ $(window).ready(function(){
 
   {% endfor %} 
 
+  <h3>{% trans "Morpheme Feedback" %}</h3>
+  {% for fb in morphfb %}
+    <div class="panel-group" id="morphemefb{{fb.pk}}">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+              {{fb.date|date:"d M Y"}}: {{fb.user.first_name}} {{fb.user.last_name}} |
+            <a data-toggle="collapse" data-parent="#morphemefb{{fb.pk}}" href="#morphemecollapse{{fb.pk}}">{% trans "View" %}</a>
+          </h4>
+        </div>
+        <div id="morphemecollapse{{fb.pk}}" class="panel-collapse collapse col-md-4">
+
+        <dl class='dl-horizontal'>
+          <dt>{% trans "Morpheme" %}</dt><dd><a href="{{PREFIX_URL}}/dictionary/morpheme/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></dd>
+          <dt>{% trans "Comments" %}</dt><dd>{{fb.comment}}</dd>
+        </dl>
+
+         <div class='btn-group col-md-offset-3'>
+            <button class='delete btn btn-default' type='submit' value='Delete Comment'
+                    data-toggle='modal' data-target='#delete_comment_morpheme_{{fb.id}}'>{% trans "Delete" %}</button>
+         </div>
+
+        </div>
+          <div class="modal fade" id="delete_comment_morpheme_{{fb.id}}" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDeleteFeedbackMorpheme" aria-hidden="true">
+             <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalTitleDeleteFeedbackMorpheme'>{% trans "Delete This Comment" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "This action will delete this comment. It cannot be undone." %}</p>
+                     </div>
+                  <form action="{{PREFIX_URL}}/feedback/morpheme/delete/{{fb.pk}}" method='post'>
+                      {% csrf_token %}
+                      <input type='hidden' name='id' value='deletefeedbackmorpheme_{{fb.pk}}'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                      </div>
+                  </form>
+
+                </div>
+            </div>
+        </div>
+       </div>
+     </div>
+  {% endfor %}
+<br>
 {% endblock %}

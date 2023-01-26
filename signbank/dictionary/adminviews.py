@@ -1365,7 +1365,6 @@ class GlossDetailView(DetailView):
         context['blendform'] = GlossBlendForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
-        context['interpform'] = InterpreterFeedbackForm()
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
@@ -5871,7 +5870,6 @@ class MorphemeDetailView(DetailView):
         context['relationform'] = RelationForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['morpheme'].navigation(True)
-        context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION'] = settings.SIGN_NAVIGATION
 
         # Get the set of all the Gloss signs that point to me
