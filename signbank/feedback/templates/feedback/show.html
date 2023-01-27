@@ -32,6 +32,8 @@ $(window).ready(function(){
 	
 	$('.commentbody').hide();
 
+	$('#general_feedback_tab').tab('show');
+
 });
 </script>
 <script type='text/javascript'>
@@ -44,6 +46,25 @@ $(window).ready(function(){
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;">
+    <ul class='nav nav-tabs'>
+        <li class="nav-item">
+            <a class='nav-link' data-toggle="tab" href="#general_feedback" id="general_feedback_tab">{% trans "General Feedback" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' data-toggle="tab" href="#sign_feedback" id="sign_feedback_tab">{% trans "Sign Feedback" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' data-toggle="tab" href="#missing_sign_feedback">{% trans "Missing Sign Feedback" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' data-toggle="tab" href="#morpheme_feedback">{% trans "Morpheme Feedback" %}</a>
+        </li>
+    </ul>
+    </div>
+
+    <div class="tab-content">
+        <div class="tab-pane" id="general_feedback">
   <h3>{% trans "General Feedback" %}</h3>
   {% for fb in general %}
     <div class="panel-group" id="general{{fb.id}}">
@@ -100,8 +121,9 @@ $(window).ready(function(){
 
       </div>
      </div>
-  {% endfor %} 
-  
+  {% endfor %}
+  </div>
+  <div class="tab-pane" id="sign_feedback">
   <h3>{% trans "Sign Feedback" %}</h3>
   {% for fb in signfb %}
     <div class="panel-group" id="signfb{{fb.pk}}">
@@ -171,7 +193,8 @@ $(window).ready(function(){
        </div>
      </div>
   {% endfor %}
-
+  </div>
+  <div class="tab-pane" id="missing_sign_feedback">
   <h3>{% trans "Missing Sign Feedback" %}</h3>
   {% for fb in missing %} 
     
@@ -240,7 +263,8 @@ $(window).ready(function(){
     </div>
 
   {% endfor %} 
-
+  </div>
+  <div class="tab-pane" id="morpheme_feedback">
   <h3>{% trans "Morpheme Feedback" %}</h3>
   {% for fb in morphfb %}
     <div class="panel-group" id="morphemefb{{fb.pk}}">
@@ -310,5 +334,7 @@ $(window).ready(function(){
        </div>
      </div>
   {% endfor %}
+      </div>
+    </div>
 <br>
 {% endblock %}
