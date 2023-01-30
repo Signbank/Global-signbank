@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 
 from os.path import isfile
 from sqlite3 import connect
@@ -27,20 +28,19 @@ class Command(BaseCommand):
     help = 'Creates a smaller faster database for unit tests'
 
     def handle(self, *args, **options):
+        # find databases
+        source_db = settings.DATABASES['default']['NAME']
+        test_db_filename = settings.DATABASES['default']['TEST']['NAME']
 
-        # Static settings
-        WRITABLE_FOLDER = '/var/www/writable/database/'
-        SOURCE_DB = WRITABLE_FOLDER + 'signbank.db'
-        TEST_DB_FILENAME = WRITABLE_FOLDER + 'test-signbank.db'
         SMALL = True
 
-        if isfile(TEST_DB_FILENAME):
+        if isfile(test_db_filename):
             self.stdout.write('Making backup of old test database')
-            move(TEST_DB_FILENAME, TEST_DB_FILENAME + '_save')
+            move(test_db_filename, test_db_filename + '_save')
 
         self.stdout.write('Copying database file')
-        copyfile(SOURCE_DB, TEST_DB_FILENAME)
+        copyfile(source_db, test_db_filename)
 
         if SMALL:
             self.stdout.write('Emptying tables, for faster tests')
-            make_db_small(TEST_DB_FILENAME)
+            make_db_small(test_db_filename)
