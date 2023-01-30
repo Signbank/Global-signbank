@@ -62,8 +62,8 @@ urlpatterns = [
 
     #Hardcoding a number of special urls:
     re_path(r'^signs/dictionary/$', signbank.dictionary.views.search),
-    re_path(r'^signs/search/$', GlossListView.as_view(), name='signs_search'),
-    re_path(r'^signs/show_all/$', GlossListView.as_view(),{'show_all':True}),
+    re_path(r'^signs/search/$', GlossListView.as_view(), {'show_all': False}, name='signs_search'),
+    re_path(r'^signs/show_all/$', GlossListView.as_view(),{'show_all': True}),
     re_path(r'^signs/add/$', signbank.dictionary.views.add_new_sign),
     re_path(r'^signs/import_csv_create/$', signbank.dictionary.views.import_csv_create, name='import_csv_create'),
     re_path(r'^signs/import_csv_update/$', signbank.dictionary.views.import_csv_update, name='import_csv_update'),

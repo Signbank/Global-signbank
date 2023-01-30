@@ -91,7 +91,7 @@ class RegistrationManager(models.Manager):
         group_guest = Group.objects.get(name='Guest')
         new_user.groups.add(group_guest)
         new_user.save()
-        
+
 
         registration_profile = self.create_profile(new_user)
 
@@ -113,8 +113,9 @@ class RegistrationManager(models.Manager):
                                          'url': settings.URL})
 
             # for debug purposes on local machine
-            # print('register subject: ', subject)
-            # print('message: ', message)
+            if settings.DEBUG_EMAILS_ON:
+                print('register subject: ', subject)
+                print('message: ', message)
 
             send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [new_user.email])
         return new_user

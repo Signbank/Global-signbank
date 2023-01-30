@@ -217,6 +217,12 @@ class GlossListView(ListView):
         # Call the base implementation first to get a context
         context = super(GlossListView, self).get_context_data(**kwargs)
 
+        if 'show_all' in self.kwargs.keys():
+            context['show_all'] = self.kwargs['show_all']
+            self.show_all = self.kwargs['show_all']
+        else:
+            context['show_all'] = self.show_all
+
         # Retrieve the search_type,so that we know whether the search should be restricted to Gloss or not
         if 'search_type' in self.request.GET:
             self.search_type = self.request.GET['search_type']
@@ -277,7 +283,7 @@ class GlossListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
-        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
+        if not self.show_all and ('query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']):
             if 'query' in self.request.GET:
                 # if the query parameters are available, convert them to a dictionary
                 session_query_parameters = self.request.session['query_parameters']
@@ -448,12 +454,6 @@ class GlossListView(ListView):
         label = field.label
         context['input_names_fields_labels_subhndsh'].append(('subhndsh_number',field,label))
 
-        try:
-            if self.kwargs['show_all']:
-                context['show_all'] = True
-        except KeyError:
-            context['show_all'] = False
-
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         # it is necessary to sort the object list by lemma_id in order for all glosses with the same lemma to be grouped
@@ -527,7 +527,6 @@ class GlossListView(ListView):
             field_label = Gloss._meta.get_field(fieldname).verbose_name
             column_headers.append((fieldname, field_label))
         context['column_headers'] = column_headers
-
         return context
 
 
@@ -564,7 +563,8 @@ class GlossListView(ListView):
     def render_to_response(self, context):
         # Look for a 'format=json' GET argument
         if self.request.GET.get('format') == 'CSV':
-            return self.render_to_csv_response(context)
+            # show_all is passed by the calling template
+            return self.render_to_csv_response({'show_all': self.request.GET.get('show_all')})
         elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv:
             return self.render_to_ecv_export_response(context)
         else:
@@ -618,10 +618,10 @@ class GlossListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        if 'show_all' in self.kwargs.keys():
-            # this ended up not being set sometimes in the call to get_queryset below
-            # in the case that the url is /signs/show_all/
-            self.show_all = True
+        if 'show_all' in context.keys():
+            show_all = context['show_all']
+        else:
+            show_all = False
 
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
@@ -832,7 +832,9 @@ class GlossListView(ListView):
 
         #First check whether we want to show everything or a subset
         if 'show_all' in self.kwargs.keys():
-            self.show_all = True
+            show_all = self.kwargs['show_all']
+        else:
+            show_all = False
 
         #Then check what kind of stuff we want
         if 'search_type' in get:
@@ -859,7 +861,12 @@ class GlossListView(ListView):
 
         setattr(self.request, 'web_search', self.web_search)
 
-        if 'query_parameters' in self.request.session.keys() \
+        if self.show_all:
+            self.query_parameters = dict()
+            # erase the previous query
+            self.request.session['query_parameters'] = json.dumps(self.query_parameters)
+            self.request.session.modified = True
+        elif 'query_parameters' in self.request.session.keys() \
                 and self.request.session['query_parameters'] not in ['', '{}'] \
                 and 'query' in self.request.GET:
             session_query_parameters = self.request.session['query_parameters']
@@ -880,7 +887,7 @@ class GlossListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         #Get the initial selection
-        if self.show_all or (len(get) > 0 and 'query' not in self.request.GET):
+        if show_all or (len(get) > 0 and 'query' not in self.request.GET):
             # anonymous users can search signs, make sure no morphemes are in the results
             if self.search_type == 'sign' or not self.request.user.is_authenticated:
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
@@ -919,7 +926,7 @@ class GlossListView(ListView):
             qs = qs.filter(inWeb__exact=True)
 
         #If we wanted to get everything, we're done now
-        if self.show_all:
+        if show_all:
             # sort the results
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
@@ -1212,7 +1219,7 @@ class GlossListView(ListView):
                 created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
                 .filter(created_by__icontains=created_by_search_string)
 
-        # save the query parameters to a sessin variable
+        # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
         self.request.session.modified = True
         self.query_parameters = query_parameters
@@ -1542,22 +1549,22 @@ class GlossDetailView(DetailView):
         context['homonyms_different_phonology'] = homonyms_different_phonology
 
         homonyms_but_not_saved = []
-
-        for homonym in homonyms_not_saved:
-            homo_trans = {}
-            if homonym.dataset:
-                for language in homonym.dataset.translation_languages.all():
+        if homonyms_but_not_saved:
+            for homonym in homonyms_not_saved:
+                homo_trans = {}
+                if homonym.dataset:
+                    for language in homonym.dataset.translation_languages.all():
+                        homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
+                else:
+                    language = Language.objects.get(id=get_default_language_id())
                     homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
-            else:
-                language = Language.objects.get(id=get_default_language_id())
-                homo_trans[language.language_code_2char] = homonym.annotationidglosstranslation_set.filter(language=language)
-            if interface_language_code in homo_trans:
-                homo_display = homo_trans[interface_language_code][0].text
-            else:
-                # This should be set to the default language if the interface language hasn't been set for this gloss
-                homo_display = homo_trans[default_language_code][0].text
+                if interface_language_code in homo_trans.keys():
+                    homo_display = homo_trans[interface_language_code][0].text
+                else:
+                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    homo_display = homo_trans[default_language_code][0].text
 
-            homonyms_but_not_saved.append((homonym,homo_display))
+                homonyms_but_not_saved.append((homonym,homo_display))
 
         context['homonyms_but_not_saved'] = homonyms_but_not_saved
 
@@ -1901,7 +1908,8 @@ class GlossVideosView(DetailView):
 
         for other_media in gl.othermedia_set.all():
             media_okay, path, other_media_filename = other_media.get_othermedia_path(gl.id, check_existence=True)
-            human_value_media_type = machine_value_to_translated_human_value(other_media.type,other_media_type_choice_list)
+            other_media_type_machine_value = other_media.type.machine_value if other_media.type else 0
+            human_value_media_type = machine_value_to_translated_human_value(other_media_type_machine_value,other_media_type_choice_list)
 
             import mimetypes
             file_type = mimetypes.guess_type(path, strict=True)[0]
@@ -2196,10 +2204,12 @@ class GlossRelationsDetailView(DetailView):
         morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
         compounds = []
         reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl.id)
-        for rm in reverse_morphdefs:
-            translated_role = machine_value_to_translated_human_value(rm.role,morphdef_roles)
+        if reverse_morphdefs:
+            for rm in reverse_morphdefs:
+                morphdef_role_machine_value = rm.role.machine_value if rm.role else 0
+                translated_role = machine_value_to_translated_human_value(morphdef_role_machine_value,morphdef_roles)
 
-            compounds.append((rm.parent_gloss, translated_role))
+                compounds.append((rm.parent_gloss, translated_role))
         context['compounds'] = compounds
 
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
@@ -2277,10 +2287,9 @@ class MorphemeListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
-        try:
-            if self.kwargs['show_all']:
-                context['show_all'] = True
-        except KeyError:
+        if 'show_all' in self.kwargs.keys():
+            context['show_all'] = self.kwargs['show_all']
+        else:
             context['show_all'] = False
 
         search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
@@ -4106,10 +4115,9 @@ class HandshapeListView(ListView):
 
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
 
-        try:
-            if self.kwargs['show_all']:
-                context['show_all'] = True
-        except KeyError:
+        if 'show_all' in self.kwargs.keys():
+            context['show_all'] = self.kwargs['show_all']
+        else:
             context['show_all'] = False
 
         context['handshapescount'] = Handshape.objects.filter(machine_value__gt=1).count()
@@ -4195,10 +4203,9 @@ class HandshapeListView(ListView):
         get = self.request.GET
 
         #First check whether we want to show everything or a subset
-        try:
-            if self.kwargs['show_all']:
-                show_all = True
-        except (KeyError,TypeError):
+        if 'show_all' in self.kwargs.keys():
+            show_all = self.kwargs['show_all']
+        else:
             show_all = False
 
         #Then check what kind of stuff we want
@@ -4377,14 +4384,30 @@ class DatasetListView(ListView):
             messages.add_message(self.request, messages.ERROR, translated_message)
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
+        # check that the dataset has an owner
+        owners_of_dataset = dataset_object.owners.all()
+        if len(owners_of_dataset) <1:
+            messages.add_message(self.request, messages.ERROR, _('Dataset must have at least one owner.'))
+            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+
         # make sure the user can write to this dataset
-        # from guardian.shortcuts import get_objects_for_user
+        from guardian.shortcuts import get_objects_for_user
         user_view_datasets = get_objects_for_user(self.request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
-        if user_view_datasets and not dataset_object in user_view_datasets:
+        may_request_dataset = True
+        if dataset_object.is_public and not dataset_object in user_view_datasets:
             # the user currently has no view permission for the requested dataset
-            pass
+            # Give permission to access dataset
+            may_request_dataset = True
+            assign_perm('view_dataset', self.request.user, dataset_object)
+            messages.add_message(self.request, messages.INFO,
+                                             _('View permission for user successfully granted.'))
+        elif not dataset_object.is_public and not dataset_object in user_view_datasets:
+            may_request_dataset = False
+            messages.add_message(self.request, messages.INFO,
+                                             _('View permission for user requested.'))
         else:
             # this should not happen from the html page. the check is made to catch a user adding a parameter to the url
+            may_request_dataset = False
             messages.add_message(self.request, messages.INFO, _('You can already view this dataset.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
@@ -4392,11 +4415,10 @@ class DatasetListView(ListView):
         if 'motivation_for_use' in get:
             motivation = get['motivation_for_use']  # motivation is a required field in the form
 
-        from django.contrib.auth.models import Group, User
+        # notify the dataset owner(s) about the access request
+        from django.contrib.auth.models import Group
         group_manager = Group.objects.get(name='Dataset_Manager')
 
-        owners_of_dataset = dataset_object.owners.all()
-        dataset_manager_found = False
         for owner in owners_of_dataset:
 
             groups_of_user = owner.groups.all()
@@ -4404,36 +4426,59 @@ class DatasetListView(ListView):
                 # this owner can't manage users
                 continue
 
-            dataset_manager_found = True
             # send email to the dataset manager
             from django.core.mail import send_mail
             current_site = Site.objects.get_current()
+            
+            # send email to notify dataset managers that user was GIVEN access
+            if may_request_dataset:
+                subject = render_to_string('registration/dataset_to_owner_existing_user_given_access_subject.txt',
+                                        context={'dataset': dataset_object.name,
+                                                    'site': current_site})
+                # Email subject *must not* contain newlines
+                subject = ''.join(subject.splitlines())
 
-            subject = render_to_string('registration/dataset_access_email_subject.txt',
-                                       context={'dataset': dataset_object.name,
-                                                'site': current_site})
-            # Email subject *must not* contain newlines
-            subject = ''.join(subject.splitlines())
+                message = render_to_string('registration/dataset_to_owner_existing_user_given_access.txt',
+                                        context={'user': self.request.user,
+                                                    'dataset': dataset_object.name,
+                                                    'motivation': motivation,
+                                                    'site': current_site})
 
-            message = render_to_string('registration/dataset_access_request_email.txt',
-                                       context={'user': self.request.user,
-                                                'dataset': dataset_object.name,
-                                                'motivation': motivation,
-                                                'site': current_site})
+                # for debug purposes on local machine
+                if settings.DEBUG_EMAILS_ON:
+                    print('grant access subject: ', subject)
+                    print('message: ', message)
+                    print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+                    print('user email: ', self.request.user.email)
+                    print('Settings: ', settings.DEFAULT_FROM_EMAIL)
 
-            # for debug purposes on local machine
-            # print('grant access subject: ', subject)
-            # print('message: ', message)
-            # print('owner of dataset: ', owner.username, ' with email: ', owner.email)
-            # print('user email: ', owner.email)
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+            
+            # send email to notify dataset managers that user REQUESTS access
+            elif not may_request_dataset:
+                subject = render_to_string('registration/dataset_to_owner_user_requested_access_subject.txt',
+                                        context={'dataset': dataset_object.name,
+                                                    'site': current_site})
+                # Email subject *must not* contain newlines
+                subject = ''.join(subject.splitlines())
 
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+                message = render_to_string('registration/dataset_to_owner_user_requested_access.txt',
+                                        context={'user': self.request.user,
+                                                    'dataset': dataset_object.name,
+                                                    'motivation': motivation,
+                                                    'site': current_site})
 
-        if not dataset_manager_found:
-            messages.add_message(self.request, messages.ERROR, _('No dataset manager was found. Your request could not be submitted.'))
-        else:
-            messages.add_message(self.request, messages.INFO, _('Your request for view access to the dataset has been submitted.'))
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+                # for debug purposes on local machine
+                if settings.DEBUG_EMAILS_ON:
+                    print('grant access subject: ', subject)
+                    print('message: ', message)
+                    print('owner of dataset: ', owner.username, ' with email: ', owner.email)
+                    print('user email: ', self.request.user.email)
+                    print('Settings: ', settings.DEFAULT_FROM_EMAIL)
+
+                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
     def render_to_ecv_export_response(self, context):
 
@@ -4742,20 +4787,22 @@ class DatasetManagerView(ListView):
                 from django.core.mail import send_mail
                 current_site = Site.objects.get_current()
 
-                subject = render_to_string('registration/dataset_access_granted_email_subject.txt',
+                subject = render_to_string('registration/dataset_to_user_existing_user_given_access_subject.txt',
                                            context={'dataset': dataset_object.name,
                                                     'site': current_site})
                 # Email subject *must not* contain newlines
                 subject = ''.join(subject.splitlines())
 
-                message = render_to_string('registration/dataset_access_granted_email.txt',
+                message = render_to_string('registration/dataset_to_user_existing_user_given_access.txt',
                                            context={'dataset': dataset_object.name,
                                                     'site': current_site})
 
                 # for debug purposes on local machine
-                # print('grant access subject: ', subject)
-                # print('message: ', message)
-                # print('user email: ', user_object.email)
+                if settings.DEBUG_EMAILS_ON:
+                    print('grant access subject: ', subject)
+                    print('message: ', message)
+                    print('user email: ', user_object.email)
+                    print('Settings: ', settings.DEFAULT_FROM_EMAIL)
 
                 send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_object.email])
 
@@ -6415,8 +6462,9 @@ def glosslist_ajax_complete(request, gloss_id):
             target_morphemes = Morpheme.objects.filter(id=this_gloss.id)
             if target_morphemes:
                 morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
-                morpheme_type = target_morphemes[0].mrpType.machine_value
-                translated_morph_type = machine_value_to_translated_human_value(morpheme_type, morph_typ_choices)
+                target_morpheme = target_morphemes.first()
+                morpheme_type_machine_value = target_morpheme.mrpType.machine_value if target_morpheme.mrpType else 0
+                translated_morph_type = machine_value_to_translated_human_value(morpheme_type_machine_value, morph_typ_choices)
             else:
                 translated_morph_type = ''
             column_values.append((fieldname, translated_morph_type))

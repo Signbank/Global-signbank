@@ -299,14 +299,19 @@ def gloss(request, glossid):
     if not trans:
         # this prevents an empty title in the template
         # this essentially overrides the "gloss.idgloss" method to prevent it from putting translations between parentheses
-        trans = gloss.annotationidglosstranslation_set.get(language=default_language).text
+        try:
+            trans = gloss.annotationidglosstranslation_set.get(language=default_language).text
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            # this catches the case where the annotation field has not been set
+            trans = str(gloss.id)
 
     # Regroup notes
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
     notes = gloss.definition_set.all()
     notes_groupedby_role = {}
     for note in notes:
-        translated_note_role = machine_value_to_translated_human_value(note.role.machine_value, note_role_choices)
+        note_role_machine_value = note.role.machine_value if note.role else 0
+        translated_note_role = machine_value_to_translated_human_value(note_role_machine_value, note_role_choices)
         role_id = (note.role, translated_note_role)
         if role_id not in notes_groupedby_role:
             notes_groupedby_role[role_id] = []
@@ -1572,10 +1577,10 @@ def import_csv_update(request):
                 language_name = fieldname[len(annotation_idgloss_key_prefix):-1]
                 languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
-                    language = languages[0]
+                    language = languages.first()
                     annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
                     if annotation_idglosses:
-                        annotation_idgloss = annotation_idglosses[0]
+                        annotation_idgloss = annotation_idglosses.first()
                         annotation_idgloss.text = new_value
                         annotation_idgloss.save()
                 continue
@@ -1587,7 +1592,7 @@ def import_csv_update(request):
                 language_name = fieldname[len(keywords_key_prefix):-1]
                 languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
-                    language = languages[0]
+                    language = languages.first()
                     language_code_2char = language.language_code_2char
                     update_keywords(gloss, "keyword_" + language_code_2char, new_value)
                     gloss.save()
