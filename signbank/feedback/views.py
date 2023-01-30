@@ -148,17 +148,89 @@ def showfeedback(request):
                        'language': settings.LANGUAGE_NAME})
 
     general = GeneralFeedback.objects.filter(status='unread')
-    missing = MissingSignFeedback.objects.filter(status='unread')
-    signfb = SignFeedback.objects.filter(status__in=('unread', 'read'))
-    morphfb = MorphemeFeedback.objects.filter(status__in=('unread', 'read'))
     
-    return render(request, "feedback/show.html",
-                              {'general': general,    
-                              'missing': missing,
-                              'signfb': signfb,
-                               'morphfb': morphfb,
+    return render(request, "feedback/show_general_feedback.html",
+                              {'general': general,
                                'selected_datasets': get_selected_datasets_for_user(request.user),
                                 'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+
+@permission_required('feedback.delete_generalfeedback')
+def showfeedback_signs(request):
+    """View to list the feedback that's been submitted on the site"""
+
+    if not request.user.is_authenticated():
+        messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
+        return HttpResponseRedirect(reverse('registration:auth_login'))
+
+    from django.contrib.auth.models import Group
+    group_editor = Group.objects.get(name='Editor')
+    groups_of_user = request.user.groups.all()
+    if group_editor not in groups_of_user:
+        messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
+        return render(request, 'feedback/index.html',
+                      {'selected_datasets': get_selected_datasets_for_user(request.user),
+                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                       'language': settings.LANGUAGE_NAME})
+
+    signfb = SignFeedback.objects.filter(status__in=('unread', 'read'))
+
+    return render(request, "feedback/show_feedback_signs.html",
+                  {'signfb': signfb,
+                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+
+@permission_required('feedback.delete_generalfeedback')
+def showfeedback_morphemes(request):
+    """View to list the feedback that's been submitted on the site"""
+
+    if not request.user.is_authenticated():
+        messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
+        return HttpResponseRedirect(reverse('registration:auth_login'))
+
+    from django.contrib.auth.models import Group
+    group_editor = Group.objects.get(name='Editor')
+    groups_of_user = request.user.groups.all()
+    if group_editor not in groups_of_user:
+        messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
+        return render(request, 'feedback/index.html',
+                      {'selected_datasets': get_selected_datasets_for_user(request.user),
+                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                       'language': settings.LANGUAGE_NAME})
+
+    morphfb = MorphemeFeedback.objects.filter(status__in=('unread', 'read'))
+
+    return render(request, "feedback/show_feedback_morphemes.html",
+                  {'morphfb': morphfb,
+                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+
+@permission_required('feedback.delete_generalfeedback')
+def showfeedback_missing(request):
+    """View to list the feedback that's been submitted on the site"""
+
+    if not request.user.is_authenticated():
+        messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
+        return HttpResponseRedirect(reverse('registration:auth_login'))
+
+    from django.contrib.auth.models import Group
+    group_editor = Group.objects.get(name='Editor')
+    groups_of_user = request.user.groups.all()
+    if group_editor not in groups_of_user:
+        messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
+        return render(request, 'feedback/index.html',
+                      {'selected_datasets': get_selected_datasets_for_user(request.user),
+                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                       'language': settings.LANGUAGE_NAME})
+
+    missing = MissingSignFeedback.objects.filter(status='unread')
+
+    return render(request, "feedback/show_feedback_missing_signs.html",
+                  {'missing': missing,
+                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 @login_required

@@ -10,6 +10,15 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.11.0.min.js"></script>
     <link href="//vjs.zencdn.net/4.5/video-js.css" rel="stylesheet">
     <script src="//vjs.zencdn.net/4.5/video.js"></script>
+<style>
+.redline
+{
+    color: #495057;
+    background-color: #fff;
+    border-color-top: #BB2F2C;
+    border-top-width: 2px;
+}
+</style>
 {% endblock %}
 {% block extrajs %}
 <script type='text/javascript'>
@@ -48,16 +57,16 @@ $(window).ready(function(){
 
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;">
     <ul class='nav nav-tabs'>
-        <li class="nav-item">
-            <a class='nav-link' data-toggle="tab" href="#general_feedback" id="general_feedback_tab">{% trans "General Feedback" %}</a>
+        <li class="nav-item" id="general_feedback_tab" style="border-top-width: 2px;">
+            <a class='nav-link' data-toggle="tab" href="#general_feedback">{% trans "General Feedback" %}</a>
         </li>
-        <li class="nav-item">
-            <a class='nav-link' data-toggle="tab" href="#sign_feedback" id="sign_feedback_tab">{% trans "Sign Feedback" %}</a>
+        <li class="nav-item" id="sign_feedback_tab" style="border-top-width: 2px;">
+            <a class='nav-link' data-toggle="tab" href="#sign_feedback">{% trans "Sign Feedback" %}</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" id="missing_sign_feedback_tab" style="border-top-width: 2px;">
             <a class='nav-link' data-toggle="tab" href="#missing_sign_feedback">{% trans "Missing Sign Feedback" %}</a>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" id="morpheme_feedback_tab" style="border-top-width: 2px;">
             <a class='nav-link' data-toggle="tab" href="#morpheme_feedback">{% trans "Morpheme Feedback" %}</a>
         </li>
     </ul>

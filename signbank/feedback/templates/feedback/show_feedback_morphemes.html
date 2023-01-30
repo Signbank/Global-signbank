@@ -1,0 +1,147 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Morpheme Feedback Overview{% endblocktrans %}
+{% endblock %}
+
+{% block extrahead %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.11.0.min.js"></script>
+    <link href="//vjs.zencdn.net/4.5/video-js.css" rel="stylesheet">
+    <script src="//vjs.zencdn.net/4.5/video.js"></script>
+<style>
+.redline
+{
+    color: #495057;
+    background-color: #fff;
+    border-color-top: #BB2F2C;
+    border-top-width: 2px;
+}
+</style>
+{% endblock %}
+{% block extrajs %}
+<script type='text/javascript'>
+/* reveal a comment, possibly including a video */
+togglecomment = function() {
+  if ($(this).hasClass('showing')) {
+    $(this).next('.commentbody').hide();
+    $(this).removeClass('showing');
+    $(this).find('.indicator').removeClass('ui-icon-minus').addClass('ui-icon-plus');
+  } else {
+    $(this).next('.commentbody').show();
+    $(this).addClass('showing');
+    $(this).find('.indicator').removeClass('ui-icon-plus').addClass('ui-icon-minus');
+  }
+};
+
+$(window).ready(function(){
+ 
+    $('.commenthead').click(togglecomment);
+	
+	$('.commentbody').hide();
+
+});
+</script>
+<script type='text/javascript'>
+    navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    $('#wrap').css({'padding-top': navbarHeight});
+</script>
+{% endblock %}
+
+
+{% block content %}
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;">
+    <ul class='nav nav-tabs'>
+        <li class="nav-item" id="general_feedback_tab" style="border-top-width: 2px;">
+            <a class='nav-link' href="{{PREFIX_URL}}/feedback/overview/">{% trans "General Feedback" %}</a>
+        </li>
+        <li class="nav-item" id="sign_feedback_tab" style="border-top-width: 2px;">
+            <a class='nav-link' href="{{PREFIX_URL}}/feedback/showfeedback_signs/">{% trans "Sign Feedback" %}</a>
+        </li>
+        <li class="nav-item" id="missing_sign_feedback_tab" style="border-top-width: 2px;">
+            <a class='nav-link' href="{{PREFIX_URL}}/feedback/showfeedback_missing/">{% trans "Missing Sign Feedback" %}</a>
+        </li>
+        <li class="nav-item" id="morpheme_feedback_tab" style="border-top-width: 2px;">
+            <a class='nav-link active' href="{{PREFIX_URL}}/feedback/showfeedback_morphemes/">{% trans "Morpheme Feedback" %}</a>
+        </li>
+    </ul>
+    </div>
+
+<div>
+  <div id="morpheme_feedback">
+  <h3>{% trans "Morpheme Feedback" %}</h3>
+  {% for fb in morphfb %}
+    <div class="panel-group" id="morphemefb{{fb.pk}}">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">
+              {{fb.date|date:"d M Y"}}: {{fb.user.first_name}} {{fb.user.last_name}} |
+            <a data-toggle="collapse" data-parent="#morphemefb{{fb.pk}}" href="#morphemecollapse{{fb.pk}}">{% trans "View" %}</a>
+          </h4>
+        </div>
+        <div id="morphemecollapse{{fb.pk}}" class="panel-collapse collapse col-md-4">
+
+        <dl class='dl-horizontal'>
+            <dt>{% trans "Sign Language" %}</dt>
+          {% if fb.translation.gloss.signlanguage.all.count > 0 %}
+            <dd>{{fb.translation.gloss.signlanguage.all}}</dd>
+          {% elif fb.translation.gloss.lemma.dataset %}
+            <dd>{{fb.translation.gloss.lemma.dataset.signlanguage}}</dd>
+          {% else %}
+            <dd>{% trans "Not Specified" %}</dd>
+          {% endif %}
+            <dt>{% trans "Dataset" %}</dt>
+          {% if fb.morpheme and fb.morpheme.lemma and fb.morpheme.lemma.dataset %}
+            <dd>{{fb.morpheme.lemma.dataset.acronym}}</dd>
+          {% elif fb.translation.gloss.lemma and fb.translation.gloss.lemma.dataset %}
+            <dd>{{fb.translation.gloss.lemma.dataset.acronym}}</dd>
+          {% else %}
+            <dd>{% trans "Not Specified" %}</dd>
+          {% endif %}
+          <dt>{% trans "Morpheme" %}</dt>
+            {% if fb.morpheme and fb.morpheme.annotationidglosstranslation_set.all.count > 0 %}
+            <dd><a href="{{PREFIX_URL}}/dictionary/morpheme/{{fb.morpheme.id}}">{{fb.morpheme.annotationidglosstranslation_set.all.first.text}}</a></dd>
+            {% else %}
+            <dd><a href="{{PREFIX_URL}}/dictionary/morpheme/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></dd>
+            {% endif %}
+          <dt>{% trans "Comments" %}</dt><dd>{{fb.comment}}</dd>
+        </dl>
+
+         <div class='btn-group col-md-offset-3'>
+            <button class='delete btn btn-default' type='submit' value='Delete Comment'
+                    data-toggle='modal' data-target='#delete_comment_morpheme_{{fb.id}}'>{% trans "Delete" %}</button>
+         </div>
+
+        </div>
+          <div class="modal fade" id="delete_comment_morpheme_{{fb.id}}" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDeleteFeedbackMorpheme" aria-hidden="true">
+             <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalTitleDeleteFeedbackMorpheme'>{% trans "Delete This Comment" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "This action will delete this comment. It cannot be undone." %}</p>
+                     </div>
+                  <form action="{{PREFIX_URL}}/feedback/morpheme/delete/{{fb.pk}}" method='post'>
+                      {% csrf_token %}
+                      <input type='hidden' name='id' value='deletefeedbackmorpheme_{{fb.pk}}'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                      </div>
+                  </form>
+
+                </div>
+            </div>
+        </div>
+       </div>
+     </div>
+  {% endfor %}
+  </div>
+</div>
+<br>
+{% endblock %}
