@@ -1388,7 +1388,7 @@ msgid "Valence"
 msgstr "Valence"
 
 #: signbank/dictionary/models.py:705
-msgid "Conception Concept Set"
+msgid "Concepticon Concept Set"
 msgstr ""
 
 #: signbank/dictionary/models.py:709
@@ -2518,9 +2518,9 @@ msgstr "Lijst"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:406
 #, fuzzy
-#| msgid "Frequency View"
+#| msgid "Frequencies"
 msgid "Query View"
-msgstr "Frequentie-weergave"
+msgstr "Frequenties"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:414
 msgid "No active search or query parameters."
@@ -2930,7 +2930,7 @@ msgid "Signbank: Derivation History Details"
 msgstr "Signbank: Detailbeeld derivatieachtergrond"
 
 #: signbank/dictionary/templates/dictionary/derivationhistory_detail.html:22
-msgid "Derivation History Detail View"
+msgid "Derivation History Details"
 msgstr "Detailbeeld derivatieachtergrond"
 
 #: signbank/dictionary/templates/dictionary/derivationhistory_detail.html:29
@@ -3019,8 +3019,8 @@ msgstr "Publieke Versie"
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:288
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:82
 #: signbank/dictionary/templates/dictionary/word.html:78
-msgid "Detail View"
-msgstr "Detailbeeld"
+msgid "Details"
+msgstr "Details"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:468
 #: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:280
@@ -3029,7 +3029,7 @@ msgstr "Detailbeeld"
 #: signbank/dictionary/templates/dictionary/gloss_videos.html:103
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:85
 #: signbank/dictionary/templates/dictionary/word.html:82
-msgid "Relations View"
+msgid "Relations"
 msgstr "Relaties"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:472
@@ -3039,8 +3039,8 @@ msgstr "Relaties"
 #: signbank/dictionary/templates/dictionary/gloss_videos.html:107
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:89
 #: signbank/dictionary/templates/dictionary/word.html:86
-msgid "Frequency View"
-msgstr "Frequentie-weergave"
+msgid "Frequencies"
+msgstr "Frequenties"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:476
 #: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:288
@@ -3050,7 +3050,7 @@ msgstr "Frequentie-weergave"
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:93
 #: signbank/dictionary/templates/dictionary/word.html:90
 msgid "Revision History"
-msgstr "Revisie-achtergrond"
+msgstr "Revisie-geschiedenis"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:479
 #: signbank/dictionary/templates/dictionary/gloss_frequency.html:1316
@@ -3060,7 +3060,7 @@ msgstr "Revisie-achtergrond"
 #: signbank/dictionary/templates/dictionary/word.html:94
 #, fuzzy
 #| msgid "List View"
-msgid "Videos View"
+msgid "Videos"
 msgstr "Lijst"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:489
@@ -4084,11 +4084,11 @@ msgstr "Start"
 
 #: signbank/dictionary/templates/dictionary/semanticfield_detail.html:17
 msgid "Signbank: Semantic Field Details"
-msgstr "Signbank: Semantisch veld detailbeeld"
+msgstr "Signbank: Semantisch veld details"
 
 #: signbank/dictionary/templates/dictionary/semanticfield_detail.html:22
-msgid "Semantic Field Detail View"
-msgstr "Semantisch veld detailbeeld"
+msgid "Semantic Field Details"
+msgstr "Semantisch veld details"
 
 #: signbank/dictionary/templates/dictionary/semanticfield_detail.html:29
 msgid "Semantic Fields List"
@@ -4157,8 +4157,8 @@ msgid "Return to Lemma List"
 msgstr "Terug naar lemmata-lijst"
 
 #: signbank/dictionary/templates/dictionary/update_lemma.html:54
-msgid "Return to Gloss Detail View"
-msgstr "Terug naar glos-detailbeeld"
+msgid "Return to Gloss Details"
+msgstr "Terug naar glos-details"
 
 #: signbank/dictionary/templates/dictionary/update_result.html:9
 msgid "The update to the gloss {{ gloss }} was successful"

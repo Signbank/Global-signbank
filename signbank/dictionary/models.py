@@ -566,7 +566,7 @@ class Gloss(models.Model):
                        ('can_publish', 'Can publish signs and definitions'),
                        ('can_delete_unpublished', 'Can delete unpub signs or defs'),
                        ('can_delete_published', 'Can delete pub signs and defs'),
-                       ('view_advanced_properties', 'Include all properties in sign detail view'),
+                       ('view_advanced_properties', 'Include all properties in sign details'),
                        )
 
     def __str__(self):
@@ -878,7 +878,7 @@ class Gloss(models.Model):
                                           verbose_name=_("Valence"),
                                            related_name="valence")
 
-    concConcSet = models.CharField(_("Conception Concept Set"), null=True, blank=True, max_length=300)
+    concConcSet = models.CharField(_("Concepticon Concept Set"), null=True, blank=True, max_length=300)
 
     # Frequency fields
     tokNo = models.IntegerField(_("Number of Occurrences"), null=True, blank=True)
@@ -1277,7 +1277,7 @@ class Gloss(models.Model):
 
     def pattern_variants(self):
 
-        # this function is used in Frequency View
+        # this function is used in Frequencies
         # the self object is included in the results
 
         # Build query
