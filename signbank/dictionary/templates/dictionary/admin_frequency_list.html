@@ -18,6 +18,10 @@ var field_ids = {{all_field_labels|safe}};
 var field_ds = {{dataset_ids|safe}};
 var multiple_select_fields = [ 'Phonology', 'Semantics'];
 var show_empty_frequency = true;
+var html_button_hide = '{% blocktrans %}Hide Empty Frequencies{% endblocktrans %}';
+var html_button_show = '{% blocktrans %}Show Empty Frequencies{% endblocktrans %}';
+var html_button_sort_by_label = '{% blocktrans %}Sort by Label{% endblocktrans %}';
+var html_button_sort_by_frequency = '{% blocktrans %}Sort by Frequency{% endblocktrans %}';
 
 $(document).ready(function() {
 
@@ -68,13 +72,13 @@ function toggle_empty_frequencies(e) {
         case 'show_empty_frequencies':
             show_empty_frequency = true;
             $(e).val('hide_empty_frequencies');
-	        $(e).html("Hide empty frequencies");
+	        $(e).html(html_button_hide);
 	        $("tr[id$=empty_frequency]").css({'display':'visible'});
             break;
         case 'hide_empty_frequencies':
             show_empty_frequency = false;
             $(e).val('show_empty_frequencies');
-	        $(e).html("Show empty frequencies");
+	        $(e).html(html_button_show);
 	        $("tr[id$=empty_frequency]").css({'display':'none'});
             break;
     }
@@ -171,7 +175,7 @@ function sort_frequencies(e) {
     switch(sToggle) {
         case 'sort_by_frequency':
             $(e).val('sort_by_label');
-	        $(e).html("Sort by label");
+	        $(e).html(html_button_sort_by_label);
             for (i = 0; i < field_ds.length; i++) {
                 for (key in field_ids) {
                     var table_id = field_ds[i] + '_results_' + key;
@@ -181,7 +185,7 @@ function sort_frequencies(e) {
             break;
         case 'sort_by_label':
             $(e).val('sort_by_frequency');
-	        $(e).html("Sort by frequency");
+	        $(e).html(html_button_sort_by_frequency);
             for (i = 0; i < field_ds.length; i++) {
                 for (key in field_ids) {
                     var table_id = field_ds[i] + '_results_' + key;
