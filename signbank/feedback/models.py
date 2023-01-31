@@ -65,7 +65,6 @@ class SignFeedback(models.Model):
     user = models.ForeignKey(authmodels.User, editable=False)
     date = models.DateTimeField(auto_now_add=True)
     
-    translation = models.ForeignKey(Translation, editable=False)
     gloss = models.ForeignKey(Gloss, on_delete=models.SET_NULL, null=True, editable=False)
     
     comment = models.TextField("Comment or new keywords.", blank=True)
@@ -73,7 +72,7 @@ class SignFeedback(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
     
     def __str__(self):
-        return str(self.translation.translation) + " by " + str(self.user) + " on " + str(self.date)
+        return str(self.gloss) + " by " + str(self.user) + " on " + str(self.date)
 
     class Meta:
         ordering = ['-date']
@@ -85,7 +84,6 @@ class MorphemeFeedback(models.Model):
     user = models.ForeignKey(authmodels.User, editable=False)
     date = models.DateTimeField(auto_now_add=True)
 
-    translation = models.ForeignKey(Translation, editable=False)
     morpheme = models.ForeignKey(Morpheme, on_delete=models.SET_NULL, null=True, editable=False)
 
     comment = models.TextField("Comment or new keywords.", blank=True)
@@ -93,7 +91,7 @@ class MorphemeFeedback(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
 
     def __str__(self):
-        return str(self.translation.translation) + " by " + str(self.user) + " on " + str(self.date)
+        return str(self.morpheme) + " by " + str(self.user) + " on " + str(self.date)
 
     class Meta:
         ordering = ['-date']

@@ -86,26 +86,24 @@ $(window).ready(function(){
 
         <dl class='dl-horizontal'>
             <dt>{% trans "Sign Language" %}</dt>
-          {% if fb.translation.gloss.signlanguage.all.count > 0 %}
-            <dd>{{fb.translation.gloss.signlanguage.all}}</dd>
-          {% elif fb.translation.gloss.lemma.dataset %}
-            <dd>{{fb.translation.gloss.lemma.dataset.signlanguage}}</dd>
+          {% if fb.morpheme and fb.morpheme.signlanguage.all.count > 0 %}
+            <dd>{{fb.morpheme.signlanguage.all}}</dd>
+          {% elif fb.morpheme and fb.morpheme.lemma and fb.morpheme.lemma.dataset %}
+            <dd>{{fb.morpheme.lemma.dataset.signlanguage}}</dd>
           {% else %}
             <dd>{% trans "Not Specified" %}</dd>
           {% endif %}
             <dt>{% trans "Dataset" %}</dt>
           {% if fb.morpheme and fb.morpheme.lemma and fb.morpheme.lemma.dataset %}
             <dd>{{fb.morpheme.lemma.dataset.acronym}}</dd>
-          {% elif fb.translation.gloss.lemma and fb.translation.gloss.lemma.dataset %}
-            <dd>{{fb.translation.gloss.lemma.dataset.acronym}}</dd>
           {% else %}
             <dd>{% trans "Not Specified" %}</dd>
           {% endif %}
           <dt>{% trans "Morpheme" %}</dt>
             {% if fb.morpheme and fb.morpheme.annotationidglosstranslation_set.all.count > 0 %}
             <dd><a href="{{PREFIX_URL}}/dictionary/morpheme/{{fb.morpheme.id}}">{{fb.morpheme.annotationidglosstranslation_set.all.first.text}}</a></dd>
-            {% else %}
-            <dd><a href="{{PREFIX_URL}}/dictionary/morpheme/{{fb.translation.gloss.id}}">{{fb.translation.gloss.idgloss}}</a></dd>
+            {% elif fb.morpheme %}
+            <dd><a href="{{PREFIX_URL}}/dictionary/morpheme/{{fb.morpheme.id}}">{{fb.morpheme.idgloss}}</a></dd>
             {% endif %}
           <dt>{% trans "Comments" %}</dt><dd>{{fb.comment}}</dd>
         </dl>

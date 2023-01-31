@@ -173,7 +173,9 @@ def showfeedback_signs(request):
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                        'language': settings.LANGUAGE_NAME})
 
-    signfb = SignFeedback.objects.filter(status__in=('unread', 'read'))
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    signfb = SignFeedback.objects.filter(Q(**{'gloss__lemma__dataset__in': selected_datasets})).filter(
+        status__in=('unread', 'read'))
 
     return render(request, "feedback/show_feedback_signs.html",
                   {'signfb': signfb,
@@ -199,7 +201,10 @@ def showfeedback_morphemes(request):
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                        'language': settings.LANGUAGE_NAME})
 
-    morphfb = MorphemeFeedback.objects.filter(status__in=('unread', 'read'))
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    # morpheme feedback exists since after the morpheme field was added to the MorphemeFeedback model
+    morphfb = MorphemeFeedback.objects.filter(Q(**{'morpheme__lemma__dataset__in': selected_datasets})).filter(
+        status__in=('unread', 'read'))
 
     return render(request, "feedback/show_feedback_morphemes.html",
                   {'morphfb': morphfb,
@@ -238,16 +243,9 @@ def glossfeedback(request, glossid):
     request_path = request.path
     if 'morpheme' in request_path:
         morpheme = get_object_or_404(Morpheme, id=glossid)
-        allkwds = morpheme.translation_set.all()
     else:
         gloss = get_object_or_404(Gloss, id=glossid)
-        allkwds = gloss.translation_set.all()
-    if len(allkwds) == 0:
-        trans = None
-    else:
-        trans = allkwds.first()
-    
-    return recordsignfeedback(request, trans, glossid)
+    return recordsignfeedback(request, glossid)
 
 
 @login_required
@@ -255,20 +253,13 @@ def morphemefeedback(request, glossid):
     request_path = request.path
     if 'morpheme' in request_path:
         morpheme = get_object_or_404(Morpheme, id=glossid)
-        allkwds = morpheme.translation_set.all()
     else:
         gloss = get_object_or_404(Gloss, id=glossid)
-        allkwds = gloss.translation_set.all()
-    if len(allkwds) == 0:
-        trans = None
-    else:
-        trans = allkwds.first()
-
-    return recordsignfeedback(request, trans, glossid)
+    return recordsignfeedback(request, glossid)
 
 
 # @atomic  # This rolls back saving feedback on failure
-def recordsignfeedback(request, trans, glossid):
+def recordsignfeedback(request, glossid):
     """record feedback for a gloss or morpheme"""
 
     # get the page to return to from the get request
@@ -290,15 +281,6 @@ def recordsignfeedback(request, trans, glossid):
         feedback_template = "feedback/signfeedback.html"
         redirect_page = settings.PREFIX_URL + '/dictionary/gloss/' + str(glossid)
 
-    if not trans:
-        # this legacy construction creates a reference to the gloss getting the feedback
-        # a translation is created for the gloss using an empty keyword in the default language
-        # by saving this translation in the feedback, the view feedback template accesses the gloss via this translation
-        default_language = Language.objects.get(language_code_2char=DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
-        (kobj, created) = Keyword.objects.get_or_create(text='')
-        trans = Translation(gloss=sign_or_morpheme, translation=kobj, index=0, language=default_language)
-        trans.save()
-
     if feedback_form.is_valid():
         clean = feedback_form.cleaned_data
         # create a SignFeedback object to store the result in the db
@@ -308,7 +290,6 @@ def recordsignfeedback(request, trans, glossid):
                 sfb = MorphemeFeedback(
                     comment=clean['comment'],
                     user=request.user,
-                    translation=trans,
                     morpheme=sign_or_morpheme
                     )
                 sfb.save()
@@ -316,22 +297,21 @@ def recordsignfeedback(request, trans, glossid):
                 sfb = SignFeedback(
                     comment=clean['comment'],
                     user=request.user,
-                    translation=trans,
                     gloss=sign_or_morpheme
                     )
                 sfb.save()
             # return a message with a link to the original gloss or morpheme page
             messages.add_message(request, messages.INFO, mark_safe('Thank you. Your feedback has been saved. <a href="'+redirect_page+'">Return to Detail View</a>'))
-            return render(request, feedback_template, { 'feedback_form': feedback_form,
-                                                                   'sourcepage': sourcepage,
-                                                                   'selected_datasets': get_selected_datasets_for_user(request.user),
-                                                                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+            return render(request, feedback_template, {'feedback_form': feedback_form,
+                                                       'sourcepage': sourcepage,
+                                                       'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
         except (KeyError, PermissionError):
-            messages.add_message(request, messages.ERROR,'There was an error processing your feedback data.')
-            return render(request, feedback_template, { 'feedback_form': feedback_form,
-                                                                   'sourcepage': sourcepage,
-                                                                   'selected_datasets': get_selected_datasets_for_user(request.user),
-                                                                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+            messages.add_message(request, messages.ERROR, 'There was an error processing your feedback data.')
+            return render(request, feedback_template, {'feedback_form': feedback_form,
+                                                       'sourcepage': sourcepage,
+                                                       'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
     return render(request, feedback_template,
                               {'feedback_form': feedback_form,
                                'sourcepage': sourcepage,

@@ -9,12 +9,12 @@ admin.site.register(GeneralFeedback, GeneralFeedbackAdmin)
 
 
 class SignFeedbackAdmin(admin.ModelAdmin):
-    readonly_fields = ['translation', 'comment']
-    list_display = ['user', 'date', 'translation']
+    readonly_fields = ['gloss', 'comment']
+    list_display = ['user', 'date', 'gloss']
     list_filter = ['user']
 
     def get_fields(self, request, obj=None):
-        fields = ['translation', 'comment', 'status']
+        fields = ['gloss', 'comment', 'status']
         return fields
 
 admin.site.register(SignFeedback, SignFeedbackAdmin)
@@ -33,12 +33,12 @@ admin.site.register(MissingSignFeedback, MissingSignFeedbackAdmin)
 
 
 class MorphemeFeedbackAdmin(admin.ModelAdmin):
-    readonly_fields = ['translation', 'comment']
-    list_display = ['user', 'date', 'translation']
+    readonly_fields = ['morpheme', 'comment']
+    list_display = ['user', 'date', 'morpheme']
     list_filter = ['user']
 
     def get_fields(self, request, obj=None):
-        fields = ['translation', 'comment', 'status']
+        fields = ['morpheme', 'comment', 'status']
         return fields
 
 admin.site.register(MorphemeFeedback, MorphemeFeedbackAdmin)

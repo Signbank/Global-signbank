@@ -86,26 +86,24 @@ $(window).ready(function(){
 
         <dl class='dl-horizontal'>
             <dt>{% trans "Sign Language" %}</dt>
-          {% if fb.translation.gloss.signlanguage.all.count > 0 %}
-            <dd>{{fb.translation.gloss.signlanguage.all}}</dd>
-          {% elif fb.translation.gloss.lemma.dataset %}
-            <dd>{{fb.translation.gloss.lemma.dataset.signlanguage}}</dd>
+          {% if fb.gloss.signlanguage.all.count > 0 %}
+            <dd>{{fb.gloss.signlanguage.all}}</dd>
+          {% elif fb.gloss.lemma.dataset %}
+            <dd>{{fb.gloss.lemma.dataset.signlanguage}}</dd>
           {% else %}
             <dd>{% trans "Not Specified" %}</dd>
           {% endif %}
             <dt>{% trans "Dataset" %}</dt>
           {% if fb.gloss and fb.gloss.lemma and fb.gloss.lemma.dataset %}
             <dd>{{fb.gloss.lemma.dataset.acronym}}</dd>
-          {% elif fb.translation.gloss.lemma and fb.translation.gloss.lemma.dataset %}
-            <dd>{{fb.translation.gloss.lemma.dataset.acronym}}</dd>
           {% else %}
             <dd>{% trans "Not Specified" %}</dd>
           {% endif %}
           <dt>{% trans "Sign" %}</dt>
             {% if fb.gloss and fb.gloss.annotationidglosstranslation_set.all.count > 0 %}
             <dd><a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.gloss.id}}">{{fb.gloss.annotationidglosstranslation_set.all.first.text}}</a></dd>
-            {% else %}
-            <dd><a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.translation.gloss.id}}">{{fb.translation.gloss.annotationidglosstranslation_set.all.first.text}}</a></dd>
+            {% elif fb.gloss %}
+            <dd><a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.gloss.id}}">{{fb.gloss.annotationidglosstranslation_set.all.first.text}}</a></dd>
             {% endif %}
           <dt>{% trans "Comments" %}</dt><dd>{{fb.comment}}</dd>
         </dl>
