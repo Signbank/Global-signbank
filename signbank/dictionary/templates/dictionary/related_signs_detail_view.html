@@ -580,6 +580,30 @@
 		</tbody>
 		{% endif %}
 
+		{% if gloss.relationtoforeignsign_set.all %}
+		<thead>
+		   <tr>
+			   <th style="width:8em; color:darkred">{% trans "Relations to Foreign Signs" %}</th>
+			   <th style="width:12em;">{% trans "Loan" %}</th>
+			   <th style='width:12em'>{% trans "Related Language" %}</th>
+			   <th style='width:12em'>{% trans "Gloss in Related Language" %}</th>
+			   <th colspan="2" style='width:12em'>{% trans "Foreign Translation Equivalents" %}</th>
+			   <th colspan="2" style="width:12em;">{% trans "Link" %}</th>
+		   </tr>
+		</thead>
+		<tbody>
+			{% for rel in gloss.relationtoforeignsign_set.all %}
+			<tr id='foreign_{{rel.id}}'>
+				<td></td>
+				<td id='relationforeign-loan_{{rel.id}}'>{% if rel.loan %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+				<td id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
+				<td id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
+				<td></td>
+				<td></td>
+			</tr>
+		   {% endfor %}
+		</tbody>
+		{% endif %}
 	</table>
 
 	</div>
