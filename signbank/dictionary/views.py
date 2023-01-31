@@ -728,6 +728,7 @@ def add_new_sign(request):
 
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
+    context['selected_datasets'] = selected_datasets
     context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
