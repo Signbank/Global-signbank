@@ -15,6 +15,9 @@ from django.contrib import messages
 from django.utils.safestring import mark_safe
 from signbank.tools import get_selected_datasets_for_user
 from django.utils.translation import override, ugettext_lazy as _, activate
+from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
+import datetime as DT
+from django.utils.timezone import get_current_timezone
 
 from django.db.transaction import atomic
 
@@ -361,4 +364,34 @@ def delete(request, kind, id):
     return redirect(url)
     
 
+@permission_required('feedback.delete_generalfeedback')
+def recent_feedback(request):
+    """View to list the feedback that's been submitted on the site"""
+
+    if not request.user.is_authenticated():
+        messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
+        return HttpResponseRedirect(reverse('registration:auth_login'))
+
+    from django.contrib.auth.models import Group
+    group_editor = Group.objects.get(name='Editor')
+    groups_of_user = request.user.groups.all()
+    if group_editor not in groups_of_user:
+        messages.add_message(request, messages.ERROR, _('You must be in group Editor to view feedback.'))
+        return render(request, 'feedback/index.html',
+                      {'selected_datasets': get_selected_datasets_for_user(request.user),
+                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                       'language': settings.LANGUAGE_NAME})
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    signfb = SignFeedback.objects.filter(Q(**{'gloss__lemma__dataset__in': selected_datasets})).filter(
+        status__in=('unread', 'read'))
+    recently_added_feedback_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
+    signfb = signfb.filter(
+        date__range=[recently_added_feedback_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
+        'date').reverse()
+
+    return render(request, "feedback/recent_feedback.html",
+                  {'signfb': signfb,
+                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
