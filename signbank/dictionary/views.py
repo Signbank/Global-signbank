@@ -23,7 +23,8 @@ from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
+    get_interface_language_and_default_language_codes
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
@@ -37,6 +38,7 @@ from urllib.parse import urlencode, urlparse
 from wsgiref.util import FileWrapper, request_uri
 import datetime as DT
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.timezone import get_current_timezone
 
 
 
@@ -732,6 +734,7 @@ def add_new_sign(request):
 
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
+    context['selected_datasets'] = selected_datasets
     context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -2090,31 +2093,34 @@ def switch_to_language(request,language):
 def recently_added_glosses(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
-    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
-	
-    try:
-        recently_added_signs_since_date = DT.datetime.now() - RECENTLY_ADDED_SIGNS_PERIOD
-        recent_glosses = Gloss.objects.filter(morpheme=None,lemma__dataset__in=selected_datasets).filter(
-                          creationDate__range=[recently_added_signs_since_date, DT.datetime.now()]).order_by(
-                          'creationDate').reverse()
-        return render(request, 'dictionary/recently_added_glosses.html',
-                      {'glosses': recent_glosses,
-                       'dataset_languages': dataset_languages,
-                        'selected_datasets':selected_datasets,
-                       'language': interface_language,
-                        'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
-                        'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-    except:
-        return render(request,'dictionary/recently_added_glosses.html',
-                      {'glosses':Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(isNew=True).order_by('creationDate').reverse(),
-                       'dataset_languages': dataset_languages,
-                        'selected_datasets':selected_datasets,
-                       'language': interface_language,
-                        'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
-                        'SHOW_DATASET_INTERFACE_OPTIONS' : settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    (interface_language, interface_language_code,
+     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+
+    dataset_display_languages = []
+    for lang in dataset_languages:
+        dataset_display_languages.append(lang.language_code_2char)
+    if interface_language_code in dataset_display_languages:
+        lang_attr_name = interface_language_code
+    else:
+        lang_attr_name = default_language_code
+
+    recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
+    recent_glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets).filter(
+        creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
+        'creationDate').reverse()
+
+    items = construct_scrollbar(recent_glosses, 'sign', lang_attr_name)
+    request.session['search_results'] = items
+
+    return render(request, 'dictionary/recently_added_glosses.html',
+                  {'glosses': recent_glosses,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'language': interface_language,
+                   'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def proposed_new_signs(request):
