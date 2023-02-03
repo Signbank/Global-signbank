@@ -2777,6 +2777,128 @@ class GlossFrequency(models.Model):
 
         return str(self.gloss.id) + ' ' + self.document.identifier + ' ' + self.speaker.identifier + ' ' + str(self.frequency)
 
+# QUERY_FIELDS = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics']
+
+class QueryParameter(models.Model):
+
+    search_history = models.ForeignKey("SearchHistory", null=True)
+    # this parameter determines whether the key value has '[]' after the field name
+    multiselect = models.BooleanField(_('Multiple Select'), default=True,
+                                      help_text=_("Is this a multiselect parameter?"))
+
+    def __str__(self):
+        if self.is_fieldchoice():
+            field_choice = QueryParameterFieldChoice.objects.get(pk=self.pk)
+            glossFieldName = Gloss._meta.get_field(field_choice.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldValue = field_choice.fieldValue.name
+        elif self.is_handshape():
+            handshape = QueryParameterHandshape.objects.get(pk=self.pk)
+            glossFieldName = Gloss._meta.get_field(handshape.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldValue = handshape.fieldValue.name
+        elif self.is_semanticfield():
+            semanticfield = QueryParameterSemanticField.objects.get(pk=self.pk)
+            glossFieldName = Gloss._meta.get_field(semanticfield.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldValue = semanticfield.fieldValue.name
+        elif self.is_derivationhistory():
+            derivationhistory = QueryParameterDerivationHistory.objects.get(pk=self.pk)
+            glossFieldName = Gloss._meta.get_field(derivationhistory.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldValue = derivationhistory.fieldValue.name
+        else:
+            glossFieldName = ""
+            glossFieldValue = ""
+        return glossFieldName + " " + glossFieldValue
+
+    def is_fieldchoice(self):
+        """Test if this instance is a Query Parameter Field Choice"""
+        return hasattr(self, 'queryparameterfieldchoice')
+
+    def is_handshape(self):
+        """Test if this instance is a Query Parameter Handshape"""
+        return hasattr(self, 'queryparameterhandshape')
+
+    def is_semanticfield(self):
+        """Test if this instance is a Query Parameter Semantic Field"""
+        return hasattr(self, 'queryparametersemanticfield')
+
+    def is_derivationhistory(self):
+        """Test if this instance is a Query Parameter Derivation History"""
+        return hasattr(self, 'queryparameterderivationhistory')
+
+class QueryParameterFieldChoice(QueryParameter):
+    QUERY_FIELDS = [
+        ('wordClass', 'wordClass'),
+        ('handedness', 'handedness'),
+        ('handCh', 'handCh'),
+        ('relatArtic', 'relatArtic'),
+        ('locprim', 'locprim'),
+        ('relOriMov', 'relOriMov'),
+        ('relOriLoc', 'relOriLoc'),
+        ('oriCh', 'oriCh'),
+        ('contType', 'contType'),
+        ('movSh', 'movSh'),
+        ('movDir', 'movDir'),
+        ('namEnt', 'namEnt'),
+        ('valence', 'valence')
+    ]
+    fieldName = models.CharField(_("Field Name"), choices=QUERY_FIELDS, max_length=20)
+    fieldValue = models.ForeignKey(FieldChoice, null=True)
+
+    def __str__(self):
+        glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldName + " " + glossFieldValue
+
+class QueryParameterHandshape(QueryParameter):
+    QUERY_FIELDS = [
+        ('domhndsh', 'domhndsh'),
+        ('subhndsh', 'subhndsh')
+    ]
+    fieldName = models.CharField(_("Handshape"), choices=QUERY_FIELDS, max_length=20)
+    fieldValue = models.ForeignKey(Handshape, null=True)
+
+    def __str__(self):
+        glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldName + " " + glossFieldValue
+
+class QueryParameterSemanticField(QueryParameter):
+    QUERY_FIELDS = [
+        ('semField', 'semField')
+    ]
+    fieldName = models.CharField(_("Semantic Field"), choices=QUERY_FIELDS, max_length=20)
+    fieldValue = models.ForeignKey(SemanticField, null=True)
+
+    def __str__(self):
+        glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldName + " " + glossFieldValue
+
+class QueryParameterDerivationHistory(QueryParameter):
+    QUERY_FIELDS = [
+        ('derivHist', 'derivHist')
+    ]
+    fieldName = models.CharField(_("Derivation History"), choices=QUERY_FIELDS, max_length=20)
+    fieldValue = models.ForeignKey(DerivationHistory, null=True)
+
+    def __str__(self):
+        glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldName + " " + glossFieldValue
+
+class SearchHistory(models.Model):
+    queryDate = models.DateTimeField(_('Query Date'), auto_now=True)
+    user = models.ForeignKey(User)
+    parameters = models.ManyToManyField(QueryParameter, related_name='query_paramters')
+    queryName = models.CharField(blank=True, max_length=50, help_text=_("Abbreviation for the query"))
+
 
 CATEGORY_MODELS_MAPPING = {
     'SemField': SemanticField,

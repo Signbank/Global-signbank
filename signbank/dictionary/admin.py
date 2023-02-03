@@ -1100,6 +1100,52 @@ class LemmaIdglossTranslationAdmin(VersionAdmin):
     def has_add_permission(self, request):
         return False
 
+
+class QueryParameterFieldChoiceAdmin(VersionAdmin):
+
+    model = QueryParameterFieldChoice
+
+class QueryParameterHandshapeAdmin(VersionAdmin):
+
+    model = QueryParameterHandshape
+
+class QueryParameterSemanticFieldAdmin(VersionAdmin):
+
+    model = QueryParameterSemanticField
+
+class QueryParameterDerivationHistoryAdmin(VersionAdmin):
+
+    model = QueryParameterDerivationHistory
+
+
+class SearchHistoryAdmin(VersionAdmin):
+
+    model = SearchHistory
+
+    list_display = ['queryName', 'query_parameters', 'user', 'queryDate']
+
+    def query_parameters(self, obj=None):
+        if obj is None:
+            return ""
+        parameter_list = []
+        for translation in obj.parameters.all():
+            if translation.is_fieldchoice():
+                field_choice = QueryParameterFieldChoice.objects.get(id=translation.id)
+                parameter_list.append(str(field_choice))
+            elif translation.is_handshape():
+                handshape = QueryParameterHandshape.objects.get(id=translation.id)
+                parameter_list.append(str(handshape))
+            elif translation.is_semanticfield():
+                semanticfield = QueryParameterSemanticField.objects.get(id=translation.id)
+                parameter_list.append(str(semanticfield))
+            elif translation.is_derivationhistory():
+                derivationhistory = QueryParameterDerivationHistory.objects.get(id=translation.id)
+                parameter_list.append(str(derivationhistory))
+            else:
+                parameter_list.append(str(translation))
+        return ", ".join(parameter_list)
+
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin)
@@ -1123,3 +1169,10 @@ admin.site.register(Dataset, DatasetAdmin)
 
 admin.site.register(LemmaIdgloss, LemmaIdglossAdmin)
 admin.site.register(LemmaIdglossTranslation, LemmaIdglossTranslationAdmin)
+
+admin.site.register(QueryParameterFieldChoice, QueryParameterFieldChoiceAdmin)
+admin.site.register(QueryParameterHandshape, QueryParameterHandshapeAdmin)
+admin.site.register(QueryParameterSemanticField, QueryParameterSemanticFieldAdmin)
+admin.site.register(QueryParameterDerivationHistory, QueryParameterDerivationHistoryAdmin)
+admin.site.register(SearchHistory, SearchHistoryAdmin)
+
