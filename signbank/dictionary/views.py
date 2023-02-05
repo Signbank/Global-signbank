@@ -2886,13 +2886,6 @@ def gloss_api_get_sign_name_and_media_info(request):
                 json.dumps({"Error": "Tried anohter request methoded then GET or POST, please only use GET or POST for this endpoint."}),
                 content_type="application/json")
 
-    # Try to get the results data for the query. This variable dictates how many results are allowed to be return
-    # If the results variable is not set in the GET request return a error
-    try:
-        max_number_of_results = int(request.GET['results'])
-    except MultiValueDictKeyError:
-        return HttpResponseBadRequest(json.dumps({"Error": "No amount of search results given"}), content_type="application/json")
-
     # Get all glosses that are in the given list
     if request.method == 'POST':
         id_list = json.loads(request.body.decode('utf-8'))
@@ -2909,6 +2902,13 @@ def gloss_api_get_sign_name_and_media_info(request):
             dataset = request.GET['dataset']
         except MultiValueDictKeyError:
             return HttpResponseBadRequest(json.dumps({"Error": "No dataset selected"}), content_type="application/json")
+
+        # Try to get the results data for the query. This variable dictates how many results are allowed to be return
+        # If the results variable is not set in the GET request return a error
+        try:
+            max_number_of_results = int(request.GET['results'])
+        except MultiValueDictKeyError:
+            return HttpResponseBadRequest(json.dumps({"Error": "No amount of search results given"}), content_type="application/json")
 
         # Get the search item. This is the name of the sign that the user wants to find
         try:
