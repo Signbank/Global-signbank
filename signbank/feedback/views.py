@@ -158,7 +158,7 @@ def showfeedback(request):
                                 'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
-@permission_required('feedback.delete_generalfeedback')
+@permission_required('feedback.delete_signfeedback')
 def showfeedback_signs(request):
     """View to list the feedback that's been submitted on the site"""
 
@@ -186,7 +186,7 @@ def showfeedback_signs(request):
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
-@permission_required('feedback.delete_generalfeedback')
+@permission_required('feedback.delete_morphemefeedback')
 def showfeedback_morphemes(request):
     """View to list the feedback that's been submitted on the site"""
 
@@ -215,7 +215,7 @@ def showfeedback_morphemes(request):
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
-@permission_required('feedback.delete_generalfeedback')
+@permission_required('feedback.delete_missingsignfeedback')
 def showfeedback_missing(request):
     """View to list the feedback that's been submitted on the site"""
 
@@ -243,6 +243,7 @@ def showfeedback_missing(request):
 
 @login_required
 def glossfeedback(request, glossid):
+    # this function checks the existence of the gloss or morpheme in the url
     request_path = request.path
     if 'morpheme' in request_path:
         morpheme = get_object_or_404(Morpheme, id=glossid)
@@ -253,6 +254,7 @@ def glossfeedback(request, glossid):
 
 @login_required
 def morphemefeedback(request, glossid):
+    # this function checks the existence of the gloss or morpheme in the url
     request_path = request.path
     if 'morpheme' in request_path:
         morpheme = get_object_or_404(Morpheme, id=glossid)
@@ -326,11 +328,10 @@ def recordsignfeedback(request, glossid):
 #--------------------
 
 import django
-# @permission_required('feedback.delete_generalfeedback')
+@permission_required('feedback.delete_generalfeedback')
 def delete(request, kind, id):
     """Mark a feedback item as deleted, kind 'signfeedback', 'generalfeedback' or 'missingsign'"""
 
-    # print('delete feedback kind: ', kind)
     if kind == 'sign':
         KindModel = django.apps.apps.get_model('feedback', 'SignFeedback')
     elif kind == 'morpheme':
@@ -345,16 +346,12 @@ def delete(request, kind, id):
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
 
-    print('feedback delete id: ', field)
     (what, fbid) = field.split('_')
 
     if value == 'confirmed':
-        print('confirmed')
-    item = get_object_or_404(KindModel, pk=fbid)
-    print('feedback id: ', id, ', delete kind: ', kind, ', KindModel: ', KindModel, ', what: ', what)
-    # mark as deleted
-    item.status = 'deleted'
-    item.save()
+        item = get_object_or_404(KindModel, pk=fbid)
+        item.status = 'deleted'
+        item.save()
 
     # return to referer
     if 'HTTP_REFERER' in request.META:
@@ -364,7 +361,7 @@ def delete(request, kind, id):
     return redirect(url)
     
 
-@permission_required('feedback.delete_generalfeedback')
+@permission_required('feedback.delete_signfeedback')
 def recent_feedback(request):
     """View to list the feedback that's been submitted on the site"""
 

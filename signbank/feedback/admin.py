@@ -7,6 +7,8 @@ class GeneralFeedbackAdmin(admin.ModelAdmin):
     readonly_fields = ['user', 'date', 'comment', 'video']
     list_display = ['user', 'date', 'comment']
     list_filter = ['user']
+
+
 admin.site.register(GeneralFeedback, GeneralFeedbackAdmin)
 
 
@@ -25,6 +27,7 @@ class SignFeedbackDatasetFilter(SimpleListFilter):
         if self.value():
             return queryset.filter(gloss__lemma__dataset_id=self.value())
         return queryset.all()
+
 
 class SignFeedbackAdmin(admin.ModelAdmin):
     readonly_fields = ['gloss', 'comment']
@@ -48,6 +51,7 @@ class SignFeedbackAdmin(admin.ModelAdmin):
                 translations.append("{}".format(translation.text))
         return ", ".join(translations)
 
+
 admin.site.register(SignFeedback, SignFeedbackAdmin)
 
 
@@ -59,6 +63,7 @@ class MissingSignFeedbackAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj=None):
         fields = ['meaning', 'comments', 'video', 'status']
         return fields
+
 
 admin.site.register(MissingSignFeedback, MissingSignFeedbackAdmin)
 
@@ -78,6 +83,7 @@ class MorphemeFeedbackDatasetFilter(SimpleListFilter):
         if self.value():
             return queryset.filter(morpheme__lemma__dataset_id=self.value())
         return queryset.all()
+
 
 class MorphemeFeedbackAdmin(admin.ModelAdmin):
     readonly_fields = ['morpheme', 'comment']
@@ -100,5 +106,6 @@ class MorphemeFeedbackAdmin(admin.ModelAdmin):
             else:
                 translations.append("{}".format(translation.text))
         return ", ".join(translations)
+
 
 admin.site.register(MorphemeFeedback, MorphemeFeedbackAdmin)
