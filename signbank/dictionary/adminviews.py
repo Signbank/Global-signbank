@@ -57,7 +57,7 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, apply_language_filters_to_results
+    query_parameters_this_gloss, apply_language_filters_to_results, save_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -1340,6 +1340,9 @@ class GlossDetailView(DetailView):
         context['default_query_parameters_mapping'] = default_query_parameters_mapping
         context['default_query_parameters_values_mapping'] = default_query_parameters_values_mapping
         context['json_default_query_parameters'] = json.dumps(default_query_parameters)
+
+        gloss_default_parameters_query_name = "Gloss " + str(context['gloss'].id) + " Default Parameters"
+        save_query_parameters(self.request, gloss_default_parameters_query_name, default_query_parameters)
 
         if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             # if the query parameters are available, convert them to a dictionary

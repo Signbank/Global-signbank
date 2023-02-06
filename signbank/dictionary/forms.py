@@ -8,11 +8,13 @@ from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
                                         MorphologyDefinition, OtherMedia, Handshape, SemanticField, DerivationHistory, \
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
-                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage
+                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, \
+                                        QueryParameterFieldChoice, SearchHistory, QueryParameter
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
+from django.utils.timezone import get_current_timezone
 from signbank.settings.server_specific import DEFAULT_KEYWORDS_LANGUAGE, LANGUAGES, MODELTRANSLATION_LANGUAGES
 from signbank.settings.base import FIELDS
 
@@ -1255,3 +1257,47 @@ class HandshapeForm(forms.ModelForm):
             # adding a # has already been taken care for an instance object by the get_form of FieldChoiceAdmin
             self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color'})
 
+
+class QueryParameterFieldChoiceForm(forms.ModelForm):
+
+    class Meta:
+        model = QueryParameterFieldChoice
+
+        fields = ['search_history', 'multiselect', 'fieldName', 'fieldValue']
+
+    def __init__(self, *args, **kwargs):
+        super(QueryParameterFieldChoiceForm, self).__init__(*args, **kwargs)
+        if not self.instance or not self.instance.fieldName or self.instance.fieldName == '-':
+            categories = dict(QueryParameterFieldChoice.QUERY_FIELD_CATEGORY).values()
+            self.fields['fieldValue'] = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(
+                field__in=categories).order_by('field'))
+        else:
+            field_name = self.instance.fieldName
+            categories = dict(QueryParameterFieldChoice.QUERY_FIELD_CATEGORY)
+            field_choice = categories[field_name]
+            self.fields['fieldValue'] = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(
+                field=field_choice))
+            self.fields['search_history'].initial = self.instance.search_history.queryName
+
+    def clean_fieldName(self):
+        if self.fieldName and not self.fieldValue:
+            self.fields['fieldValue'] = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(
+                field=self.fieldName))
+            return
+
+
+class SearchHistoryForm(forms.ModelForm):
+
+    class Meta:
+        model = SearchHistory
+
+        fields = ['user', 'queryName', 'parameters']
+
+    def __init__(self, *args, **kwargs):
+        super(SearchHistoryForm, self).__init__(*args, **kwargs)
+
+        if not self.instance:
+            self.fields['user'].initial = self.request.user
+            self.fields['queryDate'].initial = DT.datetime.now(tz=get_current_timezone())
+            self.fields['parameters'] = forms.ModelMultipleChoiceField(label=_('Parameters'), widget=Select2,
+                        queryset=QueryParameter.objects.all())

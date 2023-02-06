@@ -2840,15 +2840,39 @@ class QueryParameterFieldChoice(QueryParameter):
         ('namEnt', 'namEnt'),
         ('valence', 'valence')
     ]
+    QUERY_FIELD_CATEGORY = [
+        ('wordClass', 'WordClass'),
+        ('handedness', 'Handedness'),
+        ('handCh', 'HandshapeChange'),
+        ('relatArtic', 'RelatArtic'),
+        ('locprim', 'Location'),
+        ('relOriMov', 'RelOriMov'),
+        ('relOriLoc', 'RelOriLoc'),
+        ('oriCh', 'OriChange'),
+        ('contType', 'ContactType'),
+        ('movSh', 'MovementShape'),
+        ('movDir', 'MovementDir'),
+        ('namEnt', 'NamedEntity'),
+        ('valence', 'Valence')
+    ]
     fieldName = models.CharField(_("Field Name"), choices=QUERY_FIELDS, max_length=20)
-    fieldValue = models.ForeignKey(FieldChoice, null=True)
+    fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"),
+                                   choices=QUERY_FIELD_CATEGORY)
 
     def __str__(self):
-        glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         glossFieldValue = '-'
         if self.fieldValue:
             glossFieldValue = self.fieldValue.name
         return glossFieldName + " " + glossFieldValue
+
+    def get_fieldValue_display(self):
+        if not self.fieldValue:
+            return ""
+        return self.fieldValue.field + ': ' + self.fieldValue.name
+
 
 class QueryParameterHandshape(QueryParameter):
     QUERY_FIELDS = [
@@ -2896,8 +2920,12 @@ class QueryParameterDerivationHistory(QueryParameter):
 class SearchHistory(models.Model):
     queryDate = models.DateTimeField(_('Query Date'), auto_now=True)
     user = models.ForeignKey(User)
-    parameters = models.ManyToManyField(QueryParameter, related_name='query_paramters')
+    parameters = models.ManyToManyField(QueryParameter, related_name='query_parameters')
     queryName = models.CharField(blank=True, max_length=50, help_text=_("Abbreviation for the query"))
+
+    def __str__(self):
+
+        return self.queryName + " (" + self.user.username + ")"
 
 
 CATEGORY_MODELS_MAPPING = {

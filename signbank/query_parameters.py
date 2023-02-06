@@ -29,6 +29,44 @@ from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
 
+def save_query_parameters(request, query_name, query_parameters):
+
+    search_history = SearchHistory(user=request.user, queryName=query_name)
+    search_history.save()
+    for key in query_parameters:
+        if key == 'search_type':
+            continue
+        elif key[-2:] == '[]':
+            # multiple choice fields have a list of values
+            if key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+                choices_for_category = Handshape.objects.filter(machine_value__in=query_parameters[key])
+                for query_value in choices_for_category:
+                    qp = QueryParameterHandshape(fieldName=key[:-2], fieldValue=query_value, search_history=search_history)
+                    qp.save()
+                    search_history.parameters.add(qp)
+            elif key[:-2] in ['semField']:
+                choices_for_category = SemanticField.objects.filter(machine_value__in=query_parameters[key])
+                for query_value in choices_for_category:
+                    qp = QueryParameterSemanticField(fieldName=key[:-2], fieldValue=query_value, search_history=search_history)
+                    qp.save()
+                    search_history.parameters.add(qp)
+            elif key[:-2] in ['derivHist']:
+                choices_for_category = DerivationHistory.objects.filter(machine_value__in=query_parameters[key])
+                for query_value in choices_for_category:
+                    qp = QueryParameterDerivationHistory(fieldName=key[:-2], fieldValue=query_value, search_history=search_history)
+                    qp.save()
+                    search_history.parameters.add(qp)
+            else:
+                field = key[:-2]
+                field_category = Gloss._meta.get_field(field).field_choice_category
+                choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
+                for query_value in choices_for_category:
+                    qp = QueryParameterFieldChoice(fieldName=key[:-2], fieldValue=query_value, search_history=search_history)
+                    qp.save()
+                    search_history.parameters.add(qp)
+        else:
+            continue
+    search_history.save()
 
 def list_to_query(query_list):
     # this ANDs together the individual Q elements in the query_list

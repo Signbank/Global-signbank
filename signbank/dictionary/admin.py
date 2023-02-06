@@ -4,7 +4,8 @@ from django.forms import TextInput, Textarea, CharField
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
-from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm, SemanticFieldForm, HandshapeForm
+from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm, SemanticFieldForm, HandshapeForm, \
+    QueryParameterFieldChoiceForm, SearchHistoryForm
 from reversion.admin import VersionAdmin
 from signbank.settings import server_specific
 from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGES, LANGUAGE_CODE
@@ -1105,6 +1106,8 @@ class QueryParameterFieldChoiceAdmin(VersionAdmin):
 
     model = QueryParameterFieldChoice
 
+    form = QueryParameterFieldChoiceForm
+
 class QueryParameterHandshapeAdmin(VersionAdmin):
 
     model = QueryParameterHandshape
@@ -1121,6 +1124,8 @@ class QueryParameterDerivationHistoryAdmin(VersionAdmin):
 class SearchHistoryAdmin(VersionAdmin):
 
     model = SearchHistory
+
+    form = SearchHistoryForm
 
     list_display = ['queryName', 'query_parameters', 'user', 'queryDate']
 
@@ -1144,6 +1149,14 @@ class SearchHistoryAdmin(VersionAdmin):
             else:
                 parameter_list.append(str(translation))
         return ", ".join(parameter_list)
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+
+        extra_context['title'] = _("Change Title of Saved Query")
+        view = super(SearchHistoryAdmin, self).change_view(request, object_id, form_url, extra_context)
+        return view
 
 
 admin.site.register(Dialect, DialectAdmin)
