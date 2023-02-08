@@ -1341,8 +1341,8 @@ class GlossDetailView(DetailView):
         context['default_query_parameters_values_mapping'] = default_query_parameters_values_mapping
         context['json_default_query_parameters'] = json.dumps(default_query_parameters)
 
-        gloss_default_parameters_query_name = "Gloss " + str(context['gloss'].id) + " Default Parameters"
-        save_query_parameters(self.request, gloss_default_parameters_query_name, default_query_parameters)
+        # gloss_default_parameters_query_name = "Gloss " + str(context['gloss'].id) + " Default Parameters"
+        # save_query_parameters(self.request, gloss_default_parameters_query_name, default_query_parameters)
 
         if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             # if the query parameters are available, convert them to a dictionary
@@ -1350,13 +1350,13 @@ class GlossDetailView(DetailView):
             self.query_parameters = json.loads(session_query_parameters)
 
         context['query_parameters'] = self.query_parameters
-
+        print('GlossDetailView context query_parameters: ', self.query_parameters)
         query_parameters_mapping = pretty_print_query_fields(dataset_languages, self.query_parameters.keys())
-
+        print('GlossDetailView context query_parameters_mapping: ', query_parameters_mapping)
         query_parameters_values_mapping = pretty_print_query_values(dataset_languages, self.query_parameters)
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
-
+        print('GlossDetailView context query_parameters_values_mapping: ', query_parameters_values_mapping)
         # Add in a QuerySet of all the books
         context['tagform'] = TagUpdateForm()
         context['videoform'] = VideoUploadForGlossForm()
@@ -3578,6 +3578,62 @@ class QueryListView(ListView):
 
         return object_list
 
+    def render_to_response(self, context):
+        print('clicked')
+        print(self.request.GET)
+        if self.request.GET.get('save_query') == 'Save':
+            return self.render_to_save_query(context)
+        else:
+            return super(QueryListView, self).render_to_response(context)
+
+    def render_to_save_query(self, context):
+        print('called save query')
+        query_parameters = context['query_parameters']
+        save_query_parameters(self.request,'temp query', query_parameters)
+        return super(QueryListView, self).render_to_response(context)
+
+
+class SearchHistoryView(ListView):
+    # not sure what model should be used here, it applies to all the glosses in a dataset
+    model = Dataset
+    template_name = 'dictionary/admin_search_history.html'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(SearchHistoryView, self).get_context_data(**kwargs)
+
+        language_code = self.request.LANGUAGE_CODE
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        return context
+    def get_queryset(self):
+
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+        else:
+            search_results = []
+        if search_results and len(search_results) > 0:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+                self.request.session['search_results'] = None
+        if 'search_type' in self.request.session.keys():
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+                # search_type is 'handshape'
+                self.request.session['search_results'] = None
+
+        qs = SearchHistory.objects.filter(user=self.request.user)
+
+        for sh in qs:
+            print(sh.query_parameters())
+
+        return qs
 
 class FrequencyListView(ListView):
     # not sure what model should be used here, it applies to all the glosses in a dataset

@@ -2873,6 +2873,12 @@ class QueryParameterFieldChoice(QueryParameter):
             return ""
         return self.fieldValue.field + ': ' + self.fieldValue.name
 
+    def display_verbose_fieldname(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        return glossFieldName
+
 
 class QueryParameterHandshape(QueryParameter):
     QUERY_FIELDS = [
@@ -2889,6 +2895,13 @@ class QueryParameterHandshape(QueryParameter):
             glossFieldValue = self.fieldValue.name
         return glossFieldName + " " + glossFieldValue
 
+    def display_verbose_fieldname(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        return glossFieldName
+
+
 class QueryParameterSemanticField(QueryParameter):
     QUERY_FIELDS = [
         ('semField', 'semField')
@@ -2902,6 +2915,13 @@ class QueryParameterSemanticField(QueryParameter):
         if self.fieldValue:
             glossFieldValue = self.fieldValue.name
         return glossFieldName + " " + glossFieldValue
+
+    def display_verbose_fieldname(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        return glossFieldName
+
 
 class QueryParameterDerivationHistory(QueryParameter):
     QUERY_FIELDS = [
@@ -2917,6 +2937,13 @@ class QueryParameterDerivationHistory(QueryParameter):
             glossFieldValue = self.fieldValue.name
         return glossFieldName + " " + glossFieldValue
 
+    def display_verbose_fieldname(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        return glossFieldName
+
+
 class SearchHistory(models.Model):
     queryDate = models.DateTimeField(_('Query Date'), auto_now=True)
     user = models.ForeignKey(User)
@@ -2926,6 +2953,114 @@ class SearchHistory(models.Model):
     def __str__(self):
 
         return self.queryName + " (" + self.user.username + ")"
+
+    def display_parameters(self):
+        # this method computes two formats, a list of all parameters converted to a string
+        # and a dict mapping field names to lists of values
+        parameter_dict = dict()
+        parameter_list = []
+        for translation in self.parameters.all():
+            if translation.is_fieldchoice():
+                field_choice = translation.queryparameterfieldchoice
+                field_name = field_choice.display_verbose_fieldname()
+                if field_name not in parameter_dict.keys():
+                    parameter_dict[field_name] = []
+                parameter_dict[field_name].append(field_choice.fieldValue.name)
+                parameter_list.append(str(field_choice))
+            elif translation.is_handshape():
+                handshape = translation.queryparameterhandshape
+                field_name = handshape.display_verbose_fieldname()
+                if field_name not in parameter_dict.keys():
+                    parameter_dict[field_name] = []
+                parameter_dict[field_name].append(handshape.fieldValue.name)
+                parameter_list.append(str(handshape))
+            elif translation.is_semanticfield():
+                semanticfield = translation.queryparametersemanticfield
+                field_name = semanticfield.display_verbose_fieldname()
+                if field_name not in parameter_dict.keys():
+                    parameter_dict[field_name] = []
+                parameter_dict[field_name].append(semanticfield.fieldValue.name)
+                parameter_list.append(str(semanticfield))
+            elif translation.is_derivationhistory():
+                derivationhistory = translation.queryparameterderivationhistory
+                field_name = derivationhistory.display_verbose_fieldname()
+                if field_name not in parameter_dict.keys():
+                    parameter_dict[field_name] = []
+                parameter_dict[field_name].append(derivationhistory.fieldValue.name)
+                parameter_list.append(str(derivationhistory))
+            else:
+                parameter_list.append(str(translation))
+        result = ", ".join(parameter_list)
+        return result
+
+    def display_parameters_string(self):
+        # this method displays the parameters as a string, using ** to separate each
+        # for the multi-select fields the choices are shown together
+        parameter_dict = dict()
+        for translation in self.parameters.all():
+            if translation.is_fieldchoice():
+                field_choice = translation.queryparameterfieldchoice
+                field_name = field_choice.display_verbose_fieldname()
+                if field_name not in parameter_dict.keys():
+                    parameter_dict[field_name] = []
+                parameter_dict[field_name].append(field_choice.fieldValue.name)
+            elif translation.is_handshape():
+                handshape = translation.queryparameterhandshape
+                field_name = handshape.display_verbose_fieldname()
+                if field_name not in parameter_dict.keys():
+                    parameter_dict[field_name] = []
+                parameter_dict[field_name].append(handshape.fieldValue.name)
+            elif translation.is_semanticfield():
+                semanticfield = translation.queryparametersemanticfield
+                field_name = semanticfield.display_verbose_fieldname()
+                if field_name not in parameter_dict.keys():
+                    parameter_dict[field_name] = []
+                parameter_dict[field_name].append(semanticfield.fieldValue.name)
+            elif translation.is_derivationhistory():
+                derivationhistory = translation.queryparameterderivationhistory
+                field_name = derivationhistory.display_verbose_fieldname()
+                if field_name not in parameter_dict.keys():
+                    parameter_dict[field_name] = []
+                parameter_dict[field_name].append(derivationhistory.fieldValue.name)
+            else:
+                pass
+        parameters_string = " ** ".join(key + ": " + ", ".join(values) for (key, values) in parameter_dict.items())
+        return parameters_string
+
+    def query_parameters(self):
+        # this method converts the search parameters to match the format of the query parameters in the session
+        search_history_parameters = dict()
+        sh_parameters = self.parameters.all()
+        for shp in sh_parameters:
+            if shp.is_fieldchoice():
+                field_choice = shp.queryparameterfieldchoice
+                field_name = field_choice.fieldName + '[]'
+                if field_name not in search_history_parameters.keys():
+                    search_history_parameters[field_name] = []
+                field_machine_value = field_choice.fieldValue.machine_value if field_choice.fieldValue else 0
+                search_history_parameters[field_name].append(str(field_machine_value))
+            elif shp.is_handshape():
+                handshape = shp.queryparameterhandshape
+                field_name = handshape.fieldName + '[]'
+                if field_name not in search_history_parameters.keys():
+                    search_history_parameters[field_name] = []
+                field_machine_value = handshape.fieldValue.machine_value if handshape.fieldValue else 0
+                search_history_parameters[field_name].append(str(field_machine_value))
+            elif shp.is_semanticfield():
+                semanticfield = shp.queryparametersemanticfield
+                field_name = semanticfield.fieldName + '[]'
+                if field_name not in search_history_parameters.keys():
+                    search_history_parameters[field_name] = []
+                field_machine_value = semanticfield.fieldValue.machine_value if semanticfield.fieldValue else 0
+                search_history_parameters[field_name].append(str(field_machine_value))
+            elif shp.is_derivationhistory():
+                derivationhistory = shp.queryparameterderivationhistory
+                field_name = derivationhistory.fieldName + '[]'
+                if field_name not in search_history_parameters.keys():
+                    search_history_parameters[field_name] = []
+                field_machine_value = derivationhistory.fieldValue.machine_value if derivationhistory.fieldValue else 0
+                search_history_parameters[field_name].append(str(field_machine_value))
+        return search_history_parameters
 
 
 CATEGORY_MODELS_MAPPING = {

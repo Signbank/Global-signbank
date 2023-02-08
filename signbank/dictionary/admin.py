@@ -1108,13 +1108,16 @@ class QueryParameterFieldChoiceAdmin(VersionAdmin):
 
     form = QueryParameterFieldChoiceForm
 
+
 class QueryParameterHandshapeAdmin(VersionAdmin):
 
     model = QueryParameterHandshape
 
+
 class QueryParameterSemanticFieldAdmin(VersionAdmin):
 
     model = QueryParameterSemanticField
+
 
 class QueryParameterDerivationHistoryAdmin(VersionAdmin):
 
@@ -1135,20 +1138,24 @@ class SearchHistoryAdmin(VersionAdmin):
         parameter_list = []
         for translation in obj.parameters.all():
             if translation.is_fieldchoice():
-                field_choice = QueryParameterFieldChoice.objects.get(id=translation.id)
+                field_choice = translation.queryparameterfieldchoice
                 parameter_list.append(str(field_choice))
             elif translation.is_handshape():
-                handshape = QueryParameterHandshape.objects.get(id=translation.id)
+                handshape = translation.queryparameterhandshape
                 parameter_list.append(str(handshape))
             elif translation.is_semanticfield():
-                semanticfield = QueryParameterSemanticField.objects.get(id=translation.id)
+                semanticfield = translation.queryparametersemanticfield
                 parameter_list.append(str(semanticfield))
             elif translation.is_derivationhistory():
-                derivationhistory = QueryParameterDerivationHistory.objects.get(id=translation.id)
+                derivationhistory = translation.queryparameterderivationhistory
                 parameter_list.append(str(derivationhistory))
             else:
                 parameter_list.append(str(translation))
         return ", ".join(parameter_list)
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         if extra_context is None:

@@ -1,0 +1,50 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load i18n %}
+{% load annotation_idgloss_translation %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Search History{% endblocktrans %}
+{% endblock %}
+
+{% block content %}
+
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+
+    <ul class='nav nav-tabs'>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/analysis/queries/">{% trans "Query View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link active' href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>
+        </li>
+    </ul>
+</div>
+
+<div id="definitionblock" style="padding-top: 30px;">
+    {% if not object_list %}
+    <br>
+    <p>{% trans "No search history found." %}</p>
+
+    {% else %}
+    <h3>{% trans "Search History" %}</h3>
+
+    <table class="table table-condensed">
+        <tr>
+            <th style="width:200px;">{% trans "Query Date" %}</th>
+            <th style="width:300px">{% trans "Query Description" %}</th>
+            <th>{% trans "Parameters" %}</th>
+        </tr>
+        {% for query in object_list %}
+        <tr>
+            <td>{{ query.queryDate }}</td>
+            <td>{{ query.queryName }}</td>
+            <td>{{query.display_parameters_string}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+{% endblock %}

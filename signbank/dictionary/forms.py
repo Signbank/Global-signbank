@@ -1295,9 +1295,13 @@ class SearchHistoryForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SearchHistoryForm, self).__init__(*args, **kwargs)
+        self.fields['user'].disabled = True
 
         if not self.instance:
-            self.fields['user'].initial = self.request.user
             self.fields['queryDate'].initial = DT.datetime.now(tz=get_current_timezone())
-            self.fields['parameters'] = forms.ModelMultipleChoiceField(label=_('Parameters'), widget=Select2,
-                        queryset=QueryParameter.objects.all())
+            self.fields['parameters'] = forms.MultipleChoiceField(label=_('Parameters'), widget=Select2,
+                                                                  choices=QueryParameter.objects.all())
+        else:
+            self.fields['parameters'].disabled = True
+
+
