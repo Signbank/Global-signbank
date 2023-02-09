@@ -1124,6 +1124,10 @@ class QueryParameterDerivationHistoryAdmin(VersionAdmin):
     model = QueryParameterDerivationHistory
 
 
+class QueryParameterDerivationBooleanAdmin(VersionAdmin):
+
+    model = QueryParameterBoolean
+
 class SearchHistoryAdmin(VersionAdmin):
 
     model = SearchHistory
@@ -1149,6 +1153,9 @@ class SearchHistoryAdmin(VersionAdmin):
             elif translation.is_derivationhistory():
                 derivationhistory = translation.queryparameterderivationhistory
                 parameter_list.append(str(derivationhistory))
+            elif translation.is_boolean():
+                nullbooleanfield = translation.queryparameterboolean
+                parameter_list.append(str(nullbooleanfield))
             else:
                 parameter_list.append(str(translation))
         return ", ".join(parameter_list)
@@ -1194,5 +1201,6 @@ admin.site.register(QueryParameterFieldChoice, QueryParameterFieldChoiceAdmin)
 admin.site.register(QueryParameterHandshape, QueryParameterHandshapeAdmin)
 admin.site.register(QueryParameterSemanticField, QueryParameterSemanticFieldAdmin)
 admin.site.register(QueryParameterDerivationHistory, QueryParameterDerivationHistoryAdmin)
+admin.site.register(QueryParameterBoolean, QueryParameterDerivationBooleanAdmin)
 admin.site.register(SearchHistory, SearchHistoryAdmin)
 

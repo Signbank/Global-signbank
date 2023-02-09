@@ -3579,15 +3579,12 @@ class QueryListView(ListView):
         return object_list
 
     def render_to_response(self, context):
-        print('clicked')
-        print(self.request.GET)
         if self.request.GET.get('save_query') == 'Save':
             return self.render_to_save_query(context)
         else:
             return super(QueryListView, self).render_to_response(context)
 
     def render_to_save_query(self, context):
-        print('called save query')
         query_parameters = context['query_parameters']
         save_query_parameters(self.request,'temp query', query_parameters)
         return super(QueryListView, self).render_to_response(context)
@@ -3628,10 +3625,10 @@ class SearchHistoryView(ListView):
                 # search_type is 'handshape'
                 self.request.session['search_results'] = None
 
-        qs = SearchHistory.objects.filter(user=self.request.user)
+        qs = SearchHistory.objects.filter(user=self.request.user).order_by('queryDate').reverse()
 
-        for sh in qs:
-            print(sh.query_parameters())
+        # for sh in qs:
+        #     print(sh.query_parameters())
 
         return qs
 

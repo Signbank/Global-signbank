@@ -64,6 +64,22 @@ def save_query_parameters(request, query_name, query_parameters):
                     qp = QueryParameterFieldChoice(fieldName=key[:-2], fieldValue=query_value, search_history=search_history)
                     qp.save()
                     search_history.parameters.add(qp)
+        elif key in ['weakdrop', 'weakprop', 'domhndsh_letter', 'domhndsh_number',
+                     'subhndsh_letter', 'subhndsh_number', 'repeat', 'altern', 'inWeb', 'isNew']:
+            NEUTRALBOOLEANCHOICES = {'0': None, '1': None, '2': True, '3': False}
+            UNKNOWNBOOLEANCHOICES = {'0': False, '2': True, '3': False}
+            if key in ['weakdrop', 'weakprop']:
+                query_value = NEUTRALBOOLEANCHOICES[query_parameters[key]]
+            elif key in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                query_value = UNKNOWNBOOLEANCHOICES[query_parameters[key]]
+            elif key in ['repeat', 'altern']:
+                query_value = UNKNOWNBOOLEANCHOICES[query_parameters[key]]
+            else:
+                # inWeb, isNew
+                query_value = query_parameters[key] == '2'
+            qp = QueryParameterBoolean(fieldName=key, fieldValue=query_value, search_history=search_history)
+            qp.save()
+            search_history.parameters.add(qp)
         else:
             continue
     search_history.save()

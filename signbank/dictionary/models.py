@@ -2787,22 +2787,26 @@ class QueryParameter(models.Model):
                                       help_text=_("Is this a multiselect parameter?"))
 
     def __str__(self):
-        if self.is_fieldchoice():
-            field_choice = QueryParameterFieldChoice.objects.get(pk=self.pk)
+        if hasattr(self, 'queryparameterfieldchoice'):
+            field_choice = self.queryparameterfieldchoice
             glossFieldName = Gloss._meta.get_field(field_choice.fieldName).verbose_name.encode('utf-8').decode()
             glossFieldValue = field_choice.fieldValue.name
-        elif self.is_handshape():
-            handshape = QueryParameterHandshape.objects.get(pk=self.pk)
+        elif hasattr(self, 'queryparameterhandshape'):
+            handshape = self.queryparameterhandshape
             glossFieldName = Gloss._meta.get_field(handshape.fieldName).verbose_name.encode('utf-8').decode()
             glossFieldValue = handshape.fieldValue.name
-        elif self.is_semanticfield():
-            semanticfield = QueryParameterSemanticField.objects.get(pk=self.pk)
+        elif hasattr(self, 'queryparametersemanticfield'):
+            semanticfield = self.queryparametersemanticfield
             glossFieldName = Gloss._meta.get_field(semanticfield.fieldName).verbose_name.encode('utf-8').decode()
             glossFieldValue = semanticfield.fieldValue.name
-        elif self.is_derivationhistory():
-            derivationhistory = QueryParameterDerivationHistory.objects.get(pk=self.pk)
+        elif hasattr(self, 'queryparameterderivationhistory'):
+            derivationhistory = self.queryparameterderivationhistory
             glossFieldName = Gloss._meta.get_field(derivationhistory.fieldName).verbose_name.encode('utf-8').decode()
             glossFieldValue = derivationhistory.fieldValue.name
+        elif hasattr(self, 'queryparameterboolean'):
+            nullbooleanfield = self.queryparameterboolean
+            glossFieldName = Gloss._meta.get_field(nullbooleanfield.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldValue = str(nullbooleanfield.fieldValue)
         else:
             glossFieldName = ""
             glossFieldValue = ""
@@ -2823,6 +2827,11 @@ class QueryParameter(models.Model):
     def is_derivationhistory(self):
         """Test if this instance is a Query Parameter Derivation History"""
         return hasattr(self, 'queryparameterderivationhistory')
+
+    def is_boolean(self):
+        """Test if this instance is a Query Parameter Derivation History"""
+        return hasattr(self, 'queryparameterboolean')
+
 
 class QueryParameterFieldChoice(QueryParameter):
     QUERY_FIELDS = [
@@ -2883,7 +2892,10 @@ class QueryParameterFieldChoice(QueryParameter):
 class QueryParameterHandshape(QueryParameter):
     QUERY_FIELDS = [
         ('domhndsh', 'domhndsh'),
-        ('subhndsh', 'subhndsh')
+        ('subhndsh', 'subhndsh'),
+        # ASL fields
+        ('final_domhndsh', 'final_domhndsh'),
+        ('final_subhndsh', 'final_subhndsh')
     ]
     fieldName = models.CharField(_("Handshape"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.ForeignKey(Handshape, null=True)
@@ -2944,6 +2956,49 @@ class QueryParameterDerivationHistory(QueryParameter):
         return glossFieldName
 
 
+class QueryParameterBoolean(QueryParameter):
+    # these are all fields of Gloss
+    QUERY_FIELDS = [
+        ('weakdrop', 'weakdrop'),
+        ('weakprop', 'weakprop'),
+        ('domhndsh_letter', 'domhndsh_letter'),
+        ('domhndsh_number', 'domhndsh_number'),
+        ('subhndsh_letter', 'subhndsh_letter'),
+        ('subhndsh_number', 'subhndsh_number'),
+        ('repeat', 'repeat'),
+        ('altern', 'altern'),
+        ('inWeb', 'inWeb'),
+        ('isNew', 'isNew'),
+        # ASL fields
+        ('oriChAbd', 'oriChAbd'),
+        ('oriChFlex', 'oriChFlex')
+    ]
+    # 'hasRelationToForeignSign' is a Query Parameter, but not a field of Gloss
+
+    fieldName = models.CharField(_("NullBooleanField"), choices=QUERY_FIELDS, max_length=20)
+    fieldValue = models.NullBooleanField(_("Field Value"), null=True, blank=True)
+
+    def __str__(self):
+        glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        if self.fieldName in ['weakdrop', 'weakprop']:
+            if self.fieldValue is None:
+                glossFieldValue = _('Neutral')
+            elif self.fieldValue:
+                glossFieldValue = _('Yes')
+            else:
+                glossFieldValue = _('No')
+        elif self.fieldValue:
+            glossFieldValue = _('True')
+        else:
+            glossFieldValue = _('False')
+        return glossFieldName + " " + str(glossFieldValue)
+
+    def display_verbose_fieldname(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        return glossFieldName
+
 class SearchHistory(models.Model):
     queryDate = models.DateTimeField(_('Query Date'), auto_now=True)
     user = models.ForeignKey(User)
@@ -2951,8 +3006,11 @@ class SearchHistory(models.Model):
     queryName = models.CharField(blank=True, max_length=50, help_text=_("Abbreviation for the query"))
 
     def __str__(self):
-
-        return self.queryName + " (" + self.user.username + ")"
+        query_name = self.queryName
+        if not self.queryName:
+            # if this has not been set, use the date
+            query_name = self.queryDate
+        return query_name + " (" + self.user.username + ")"
 
     def display_parameters(self):
         # this method computes two formats, a list of all parameters converted to a string
@@ -3022,6 +3080,12 @@ class SearchHistory(models.Model):
                 if field_name not in parameter_dict.keys():
                     parameter_dict[field_name] = []
                 parameter_dict[field_name].append(derivationhistory.fieldValue.name)
+            elif translation.is_boolean():
+                nullbooleanfield = translation.queryparameterboolean
+                field_name = nullbooleanfield.display_verbose_fieldname()
+                if field_name not in parameter_dict.keys():
+                    parameter_dict[field_name] = []
+                parameter_dict[field_name].append(str(nullbooleanfield.fieldValue))
             else:
                 pass
         parameters_string = " ** ".join(key + ": " + ", ".join(values) for (key, values) in parameter_dict.items())
@@ -3060,6 +3124,14 @@ class SearchHistory(models.Model):
                     search_history_parameters[field_name] = []
                 field_machine_value = derivationhistory.fieldValue.machine_value if derivationhistory.fieldValue else 0
                 search_history_parameters[field_name].append(str(field_machine_value))
+            elif shp.is_boolean():
+                nullbooleanfield = shp.queryparameterboolean
+                field_name = nullbooleanfield.fieldName
+                if field_name not in search_history_parameters.keys():
+                    search_history_parameters[field_name] = []
+                NEUTRALBOOLEANCHOICES = {'None': '1', 'True': '2', 'False': '3'}
+                field_value = NEUTRALBOOLEANCHOICES[str(nullbooleanfield.fieldValue)]
+                search_history_parameters[field_name] = field_value
         return search_history_parameters
 
 
