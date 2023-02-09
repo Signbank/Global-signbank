@@ -7,7 +7,7 @@ from signbank.dictionary.models import *
 from signbank.settings.base import *
 
 from django.contrib.auth.models import User, Permission, Group
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.test.client import RequestFactory, encode_multipart
 import json
 from django.test import Client
@@ -17,9 +17,13 @@ from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages.storage.cookie import CookieStorage
 from itertools import *
-
+from pathlib import Path
+from os import path
 
 from guardian.shortcuts import assign_perm
+
+from signbank.video.models import GlossVideo
+from signbank.dictionary.views import gloss_api_get_sign_name_and_media_info
 
 class BasicCRUDTests(TestCase):
 
@@ -3467,3 +3471,131 @@ def decode_messages(data):
         hash, value = bits
         return value
     return None
+
+
+class GlossApiGetSignNameAndMediaInfoTests(TestCase):
+
+
+    @classmethod
+    def setUpTestData(cls):
+
+        cls.dataset = 0
+        cls.results = 50
+        cls.search_term = "test"
+        cls.gloss_name = 'test'
+        cls.gloss_id = 0
+        cls.video_url = 'test_video_url'
+        cls.file_path = path.join(settings.WRITABLE_FOLDER, cls.video_url)
+
+        cls.factory = RequestFactory()
+
+        # Create a language for the dataset and sign language models
+        language = Language.objects.create()
+
+        # Create a sign language for the dataset
+        sign_language = SignLanguage.objects.create()
+
+        # Create a dataset and save the id for the filter
+        test_dataset = Dataset.objects.create(name=cls.gloss_name, signlanguage_id=sign_language.id,  default_language_id=language.id)
+        test_dataset.translation_languages.add(language)
+        cls.dataset = test_dataset.id
+
+        # Create a lemma and a translation so the api method can filter on the text
+        test_lemma = LemmaIdgloss.objects.create(dataset_id=test_dataset.id)
+        LemmaIdglossTranslation.objects.create(text=cls.gloss_name, lemma_id=test_lemma.id, language=language)
+
+        # Create a with a video that the api should return
+        gloss = Gloss.objects.create(lemma=test_lemma, inWeb=True)
+        GlossVideo.objects.create(gloss_id=gloss.id, videofile=cls.video_url)
+        cls.gloss_id = gloss.id
+
+        # Create the file for the video which the gloss will return when get_video_url is called
+        Path(cls.file_path).mkdir()
+
+        # Create extra data which the api should not return because they are filtert out of the data
+        # Gloss without a video
+        Gloss.objects.create(lemma=test_lemma, inWeb=True)
+
+        # Gloss that is not in the public dictionary
+        Gloss.objects.create(lemma=test_lemma, inWeb=False)
+
+    @classmethod
+    def tearDownClass(cls):
+        # Remove video path
+        Path(cls.file_path).rmdir()
+
+    def test_other_request_methode_then_GET_or_POST(self):
+        """
+        Check if an error is returned with another request methode than GET or POST
+        """
+        data = {"results": self.results}
+        response = self.client.put(reverse('dictionary:gloss_api_get_info'), data, format='json')
+        self.assertEqual(response.status_code, 405)
+
+    def test_no_data_set_selected(self):
+        """
+        Check if an error is returned if no dataset is selected.
+        """
+        assert_json = '{"Error": "No dataset selected"}'
+        data = {"search": self.search_term, "results": self.results}
+        response = self.client.get(reverse('dictionary:gloss_api_get_info'), data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, assert_json)
+
+    def test_no_search_term_provided(self):
+        """
+        Check if an error is returned if no search term is provided.
+        """
+        assert_json = '{"Error": "No search term found"}'
+        data = {"dataset": self.dataset, "results": self.results}
+        response = self.client.get(reverse('dictionary:gloss_api_get_info'), data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, assert_json)
+
+    def test_no_results_amount_given(self):
+        """
+        Check if an error is returned if the amount of results is not provided.
+        """
+        assert_json = '{"Error": "No amount of search results given"}'
+        data = {"dataset": self.dataset, "search": self.search_term}
+        response = self.client.get(reverse('dictionary:gloss_api_get_info'), data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, assert_json)
+
+    def test_json_data_structure(self):
+        """
+        Check that if the returned json is correct if the dataset and the search term are provided
+        """
+        assert_json = []
+        sign_json = {
+                "sign_name": self.gloss_name,
+                "image_url": "",
+                "video_url": self.video_url
+                }
+        assert_json.append(sign_json)
+
+        data = {"dataset": self.dataset, "search": self.gloss_name, "results": self.results}
+        response = self.client.get(reverse('dictionary:gloss_api_get_info'), data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, assert_json)
+
+    def test_POST_retrieve_gloss_data_from_list_of_ids(self):
+        """
+        Check if POST request with list of sign id's return json object with media info of those signs
+        """
+        assert_json = []
+        sign_json = {
+                "sign_name": self.gloss_name,
+                "image_url": "",
+                "video_url": self.video_url
+                }
+        assert_json.append(sign_json)
+
+        data = json.dumps([self.gloss_id])
+
+        request = self.factory.post(reverse('dictionary:gloss_api_get_info'), data=data, content_type='application/json')
+
+        response = gloss_api_get_sign_name_and_media_info(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, assert_json)

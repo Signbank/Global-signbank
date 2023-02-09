@@ -120,5 +120,7 @@ urlpatterns = [
 
     url(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples),
 
-    url(r'createcitationimage/(?P<pk>\d+)', permission_required('dictionary.change_gloss')(create_citation_image), name='create_citation_image')
+    url(r'createcitationimage/(?P<pk>\d+)', permission_required('dictionary.change_gloss')(create_citation_image), name='create_citation_image'),
+
+    url(r'gloss/api/', signbank.dictionary.views.gloss_api_get_sign_name_and_media_info, name='gloss_api_get_info')
 ]

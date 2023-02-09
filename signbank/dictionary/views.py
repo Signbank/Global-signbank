@@ -1,7 +1,9 @@
-from django.http import HttpResponse, HttpResponseRedirect
+from django.conf import empty
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
+from django.utils.datastructures import MultiValueDictKeyError
 from tagging.models import Tag, TaggedItem
 from django.utils.http import urlquote
 from django.contrib import messages
@@ -9,6 +11,7 @@ from pathlib import Path
 
 import csv
 import time
+from signbank.dictionary.adminviews import order_queryset_by_sort_order
 
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
@@ -32,8 +35,9 @@ from signbank.settings.base import *
 from django.utils.translation import override, ugettext_lazy as _
 
 from urllib.parse import urlencode, urlparse
-from wsgiref.util import FileWrapper
+from wsgiref.util import FileWrapper, request_uri
 import datetime as DT
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
 
 
@@ -2867,3 +2871,62 @@ def gif_prototype(request):
     return render(request,'dictionary/gif_prototype.html')
 
 
+@csrf_exempt
+def gloss_api_get_sign_name_and_media_info(request):
+    """
+    API endpoint for the sign app that returns a json object with all the signs names and urls
+    """
+
+    dataset = 0
+    max_number_of_results = 100
+
+    # Make sure that other request options then the intended one are blocked
+    if request.method not in ('GET', 'POST'):
+        return HttpResponseNotAllowed(
+                json.dumps({"Error": "Tried anohter request methoded then GET or POST, please only use GET or POST for this endpoint."}),
+                content_type="application/json")
+
+    # Get all glosses that are in the given list
+    if request.method == 'POST':
+        id_list = json.loads(request.body.decode('utf-8'))
+
+        glosses = Gloss.objects \
+            .filter(id__in=id_list) \
+            .filter(inWeb=True) \
+            .order_by('id').distinct()[0:max_number_of_results]
+
+    elif request.method == 'GET':
+
+        # Get the dataset that is used to return the sign of the right signlanguage like NGT
+        try:
+            dataset = request.GET['dataset']
+        except MultiValueDictKeyError:
+            return HttpResponseBadRequest(json.dumps({"Error": "No dataset selected"}), content_type="application/json")
+
+        # Try to get the results data for the query. This variable dictates how many results are allowed to be return
+        # If the results variable is not set in the GET request return a error
+        try:
+            max_number_of_results = int(request.GET['results'])
+        except MultiValueDictKeyError:
+            return HttpResponseBadRequest(json.dumps({"Error": "No amount of search results given"}), content_type="application/json")
+
+        # Get the search item. This is the name of the sign that the user wants to find
+        try:
+            search = request.GET['search']
+        except MultiValueDictKeyError:
+            return HttpResponseBadRequest(json.dumps({"Error": "No search term found"}), content_type="application/json")
+
+        # Run the query to get all the gloss data in a list
+        glosses = Gloss.objects \
+            .filter(inWeb=True) \
+            .filter(lemma__lemmaidglosstranslation__text__startswith=search) \
+            .filter(lemma__dataset=dataset) \
+            .order_by('lemma__lemmaidglosstranslation__text')[0:max_number_of_results]
+
+    response = [
+            {'sign_name': str(gloss),
+             'video_url': gloss.get_video_url(),
+             'image_url': gloss.get_image_url()}
+            for gloss in glosses if gloss.get_video_url()]
+
+    return HttpResponse(json.dumps(response), content_type="application/json")
