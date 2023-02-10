@@ -3586,7 +3586,8 @@ class QueryListView(ListView):
 
     def render_to_save_query(self, context):
         query_parameters = context['query_parameters']
-        save_query_parameters(self.request,'temp query', query_parameters)
+        query_name = _("Query View Save")
+        save_query_parameters(self.request, query_name, query_parameters)
         return super(QueryListView, self).render_to_response(context)
 
 
@@ -3631,6 +3632,21 @@ class SearchHistoryView(ListView):
         #     print(sh.query_parameters())
 
         return qs
+
+    def render_to_response(self, context):
+        if self.request.GET.get('run_query') == 'Run':
+            queryid = self.request.GET.get('queryid')
+            return self.render_to_run_query(context, queryid)
+        else:
+            return super(SearchHistoryView, self).render_to_response(context)
+
+    def render_to_run_query(self, context, queryid):
+        query = get_object_or_404(SearchHistory, id=queryid)
+        query_parameters = query.query_parameters()
+        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session.modified = True
+        return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/?query')
+
 
 class FrequencyListView(ListView):
     # not sure what model should be used here, it applies to all the glosses in a dataset

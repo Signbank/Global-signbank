@@ -1,13 +1,77 @@
-{% extends 'baselayout.html' %}
+{% extends "baselayout.html" %}
+{% load i18n %}
 {% load stylesheet %}
 {% load bootstrap3 %}
-{% load i18n %}
-{% load annotation_idgloss_translation %}
-{% load tagging_tags %}
-{% load wrong_sign %}
+{% load guardian_tags %}
 
 {% block bootstrap3_title %}
 {% blocktrans %}Search History{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+
+<script type='text/javascript'>
+var url = '{{ PREFIX_URL }}';
+var saving_str = '{{saving_str|escapejs}}';
+var csrf_token = '{{csrf_token}}';
+</script>
+
+<script type='text/javascript' src="{{ STATIC_URL }}js/search_history_edit.js"></script>
+
+{% endblock %}
+{% block extrahead %}
+<style>
+.runQuery {
+    border: 1px solid;
+    text-align: center;
+    padding: 5px 5px;
+    border-radius: 6px;
+}
+.runQuery:hover {
+    text-decoration: none;
+}
+.queryButton {
+    padding-left: 4px;
+    padding-right: 4px;
+}
+.queryButton:hover {
+    background-color: white;
+}
+.queryButtonDanger {
+    border: 1px solid red;
+    text-align: center;
+    padding: 5px 5px;
+    border-radius: 6px;
+}
+.queryButtonDanger:hover {
+    text-decoration: none;
+}
+.runQueryForm {
+    padding: 0px;
+    border: none;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+.runQueryForm:hover {
+    background-color: white;
+    text-decoration: none;
+}
+.runQueryInput {
+    border: 1px solid #428bca;;
+    color: #428bca;;
+    text-align: center;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-left: 3px;
+    padding-right: 3px;
+    border-radius: 6px;
+}
+.runQueryInput:hover {
+    text-decoration: none;
+    background-color: white;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -30,21 +94,101 @@
     <p>{% trans "No search history found." %}</p>
 
     {% else %}
+    <div class="searchHistory" id="searchHistory">
     <h3>{% trans "Search History" %}</h3>
 
     <table class="table table-condensed">
         <tr>
-            <th style="width:200px;">{% trans "Query Date" %}</th>
+            <th style="width:250px;">{% trans "Date (Most Recent First)" %}</th>
             <th style="width:300px">{% trans "Query Description" %}</th>
+            <th style="width:300px;">{% trans "Actions" %}</th>
             <th>{% trans "Parameters" %}</th>
         </tr>
         {% for query in object_list %}
         <tr>
             <td>{{ query.queryDate }}</td>
-            <td>{{ query.queryName }}</td>
+            <td class="queryname_{{query.id}}" id="queryname_{{query.id}}">{{ query.queryName }}</td>
+            <td>
+                <div class="btn-group">
+                <button id='edit_query_btn_{{query.id}}' class="btn queryButton" type="button" name='edit_{{query.id}}'
+                        value='edit_{{query.id}}'
+                        data-toggle='modal' data-target='#edit_query_modal_{{query.id}}'>
+                    <a class="runQuery">{% trans "Edit" %}</a></button>
+
+                <button class="runQueryForm">
+                <form name='run_query_parameters' id='run_query_parameters' method='get'>
+                <input id="run_query_button" name='run_query_button' value='{% trans "Run" %}'
+                       type="submit" class="runQueryInput" />
+                    <input type='hidden' name='run_query' value="Run">
+                    <input type="hidden" name="queryid" value="{{query.id}}">
+                </form>
+                </button>
+
+                <button id='delete_query_btn_{{query.id}}' class='btn queryButton'
+                        data-toggle='modal' data-target='#delete_query_modal_{{query.id}}'>
+                    <a class="runQuery">{% trans "Delete" %}</a></button>
+                </div>
+            </td>
             <td>{{query.display_parameters_string}}</td>
-        </tr>
+            </tr>
         {% endfor %}
     </table>
+
+        {% for query in object_list %}
+            <div class="modal fade" id="delete_query_modal_{{query.id}}" tabindex="-1" role="dialog"
+                 aria-labelledby="#modalTitleDelete_{{query.id}}" aria-hidden="true">
+             <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h3 id='modalTitleDelete_{{query.id}}'>{% trans "Delete This Query" %}</h3>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% blocktrans %}Note: You could choose to run this query again, alter its parameters
+                            in the search form, then save it as a new query before deleting this one.{% endblocktrans %}</p>
+                     </div>
+                  <form action="{% url 'dictionary:update_query' query.id %}" method='post'>
+                      {% csrf_token %}
+                      <input type='hidden' name='id' value='deletequery'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
+                      </div>
+                  </form>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="edit_query_modal_{{query.id}}" tabindex="-1" role="dialog"
+                 aria-labelledby="#modalTitleEdit_{{query.id}}" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h3 id='modalTitleEdit_{{query.id}}'>{% trans "Edit This Query" %}</h3>
+                    </div>
+                    <div class='modal-body'>
+                      <p>{% trans "Update the description of this query." %}</p>
+                      <form action="{% url 'dictionary:update_query' query.id %}" method='post'>
+                      {% csrf_token %}
+                      <table class='table table-condensed'>
+                        <tr>
+                            <th style='width:10em'>{% trans "Query Name" %}</th>
+                            <td class='edit edit_query' id='queryname' data-queryid="{{query.id}}"
+                                data-editposturl="{% url 'dictionary:update_query' query.id %}"
+                                value="{{query.queryName}}">{{query.queryName}}</td>
+                        </tr>
+                      </table>
+                      </form>
+                     </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                      </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
     {% endif %}
+</div>
 {% endblock %}

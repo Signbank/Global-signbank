@@ -2721,3 +2721,43 @@ def update_expiry(request):
     user_profile.expiry_date = expiry + relativedelta(months=+6)
     user_profile.save()
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
+def update_query(request, queryid):
+
+    if not request.user.is_authenticated():
+        return HttpResponseForbidden("Query Update Not Allowed")
+
+    if not request.user.has_perm('dictionary.change_searchhistory'):
+        return HttpResponseForbidden("Query Update Not Allowed")
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Query Update method must be POST")
+
+    query = get_object_or_404(SearchHistory, id=queryid)
+
+    if not query.user == request.user:
+        return HttpResponseForbidden("Query Update Not Allowed")
+
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+    original_value = query.queryName
+
+    if field == 'deletequery':
+        if value == 'confirmed':
+            # delete the query and redirect back to search history
+            query.delete()
+        # if for some reason the value is other than confirmed, do nothing and just go back to the search history
+        return HttpResponseRedirect(reverse('admin_search_history'))
+
+    if field == "queryname" and value:
+        query.queryName = value
+        query.save()
+
+    if not value:
+        # if the user has tried to remove the query name but erasing the field, leave it as it was
+        # handling of the response value is done on return from the ajax call and displayed in the template
+        # this has the effect of doing nothing
+        value = original_value
+
+    return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
