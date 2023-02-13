@@ -1124,9 +1124,15 @@ class QueryParameterDerivationHistoryAdmin(VersionAdmin):
     model = QueryParameterDerivationHistory
 
 
-class QueryParameterDerivationBooleanAdmin(VersionAdmin):
+class QueryParameterBooleanAdmin(VersionAdmin):
 
     model = QueryParameterBoolean
+
+
+class QueryParameterMultilingualAdmin(VersionAdmin):
+
+    model = QueryParameterMultilingual
+
 
 class SearchHistoryAdmin(VersionAdmin):
 
@@ -1156,6 +1162,9 @@ class SearchHistoryAdmin(VersionAdmin):
             elif translation.is_boolean():
                 nullbooleanfield = translation.queryparameterboolean
                 parameter_list.append(str(nullbooleanfield))
+            elif translation.is_multilingual():
+                multilingual = translation.queryparametermultilingual
+                parameter_list.append(str(multilingual))
             else:
                 parameter_list.append(str(translation))
         return ", ".join(parameter_list)
@@ -1201,6 +1210,7 @@ admin.site.register(QueryParameterFieldChoice, QueryParameterFieldChoiceAdmin)
 admin.site.register(QueryParameterHandshape, QueryParameterHandshapeAdmin)
 admin.site.register(QueryParameterSemanticField, QueryParameterSemanticFieldAdmin)
 admin.site.register(QueryParameterDerivationHistory, QueryParameterDerivationHistoryAdmin)
-admin.site.register(QueryParameterBoolean, QueryParameterDerivationBooleanAdmin)
+admin.site.register(QueryParameterBoolean, QueryParameterBooleanAdmin)
+admin.site.register(QueryParameterMultilingual, QueryParameterMultilingualAdmin)
 admin.site.register(SearchHistory, SearchHistoryAdmin)
 

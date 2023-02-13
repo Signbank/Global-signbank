@@ -31,6 +31,10 @@ from guardian.shortcuts import get_objects_for_user
 
 def save_query_parameters(request, query_name, query_parameters):
 
+    glosssearch = "glosssearch_"
+    lemmasearch = "lemma_"
+    keywordsearch = "keyword_"
+
     search_history = SearchHistory(user=request.user, queryName=query_name)
     search_history.save()
     for key in query_parameters:
@@ -78,6 +82,33 @@ def save_query_parameters(request, query_name, query_parameters):
                 # inWeb, isNew
                 query_value = query_parameters[key] == '2'
             qp = QueryParameterBoolean(fieldName=key, fieldValue=query_value, search_history=search_history)
+            qp.save()
+            search_history.parameters.add(qp)
+        elif key.startswith(glosssearch):
+            search_field = glosssearch[:-1]
+            search_value = query_parameters[key]
+            language_code_2char = key[len(glosssearch):]
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            qp = QueryParameterMultilingual(fieldName=search_field, fieldLanguage=language,
+                                            fieldValue=search_value, search_history=search_history)
+            qp.save()
+            search_history.parameters.add(qp)
+        elif key.startswith(lemmasearch):
+            search_field = lemmasearch[:-1]
+            search_value = query_parameters[key]
+            language_code_2char = key[len(lemmasearch):]
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            qp = QueryParameterMultilingual(fieldName=search_field, fieldLanguage=language,
+                                            fieldValue=search_value, search_history=search_history)
+            qp.save()
+            search_history.parameters.add(qp)
+        elif key.startswith(keywordsearch):
+            search_field = keywordsearch[:-1]
+            search_value = query_parameters[key]
+            language_code_2char = key[len(keywordsearch):]
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            qp = QueryParameterMultilingual(fieldName=search_field, fieldLanguage=language,
+                                            fieldValue=search_value, search_history=search_history)
             qp.save()
             search_history.parameters.add(qp)
         else:

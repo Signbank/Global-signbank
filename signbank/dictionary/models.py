@@ -2807,6 +2807,10 @@ class QueryParameter(models.Model):
             nullbooleanfield = self.queryparameterboolean
             glossFieldName = Gloss._meta.get_field(nullbooleanfield.fieldName).verbose_name.encode('utf-8').decode()
             glossFieldValue = str(nullbooleanfield.fieldValue)
+        elif hasattr(self, 'queryparametermultilingual'):
+            multilingual = self.queryparametermultilingual
+            glossFieldName = multilingual.fieldName + "_" + multilingual.fieldLanguage.language_code_2char
+            glossFieldValue = multilingual.fieldValue
         else:
             glossFieldName = ""
             glossFieldValue = ""
@@ -2829,8 +2833,12 @@ class QueryParameter(models.Model):
         return hasattr(self, 'queryparameterderivationhistory')
 
     def is_boolean(self):
-        """Test if this instance is a Query Parameter Derivation History"""
+        """Test if this instance is a Query Parameter Boolean"""
         return hasattr(self, 'queryparameterboolean')
+
+    def is_multilingual(self):
+        """Test if this instance is a Query Parameter Multilingual"""
+        return hasattr(self, 'queryparametermultilingual')
 
 
 class QueryParameterFieldChoice(QueryParameter):
@@ -2999,6 +3007,38 @@ class QueryParameterBoolean(QueryParameter):
             glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
+
+class QueryParameterMultilingual(QueryParameter):
+    # these are all fields of Gloss
+    QUERY_FIELDS = [
+        ('glosssearch', 'glosssearch'),
+        ('lemma', 'lemma'),
+        ('keyword', 'keyword')
+    ]
+
+    fieldName = models.CharField(_("Text Search Field"), choices=QUERY_FIELDS, max_length=20)
+    fieldLanguage = models.ForeignKey(Language)
+    fieldValue = models.CharField(_("Text Search Value"), max_length=30)
+
+    def __str__(self):
+        if self.fieldName == 'glosssearch':
+            searchFieldName = _('Annotation ID Gloss') + " (" + self.fieldLanguage.name + ")"
+        elif self.fieldName == 'lemma':
+            searchFieldName = _('Lemma ID Gloss') + " (" + self.fieldLanguage.name + ")"
+        else:
+            searchFieldName = _('Translations') + " (" + self.fieldLanguage.name + ")"
+        return searchFieldName + " " + self.fieldValue
+
+    def display_verbose_fieldname(self):
+        if self.fieldName == 'glosssearch':
+            searchFieldName = _('Annotation ID Gloss') + " (" + self.fieldLanguage.name + ")"
+        elif self.fieldName == 'lemma':
+            searchFieldName = _('Lemma ID Gloss') + " (" + self.fieldLanguage.name + ")"
+        else:
+            searchFieldName = _('Translations') + " (" + self.fieldLanguage.name + ")"
+        return searchFieldName
+
+
 class SearchHistory(models.Model):
     queryDate = models.DateTimeField(_('Query Date'), auto_now=True)
     user = models.ForeignKey(User)
@@ -3013,48 +3053,13 @@ class SearchHistory(models.Model):
         return query_name + " (" + self.user.username + ")"
 
     def display_parameters(self):
-        # this method computes two formats, a list of all parameters converted to a string
-        # and a dict mapping field names to lists of values
-        parameter_dict = dict()
-        parameter_list = []
-        for translation in self.parameters.all():
-            if translation.is_fieldchoice():
-                field_choice = translation.queryparameterfieldchoice
-                field_name = field_choice.display_verbose_fieldname()
-                if field_name not in parameter_dict.keys():
-                    parameter_dict[field_name] = []
-                parameter_dict[field_name].append(field_choice.fieldValue.name)
-                parameter_list.append(str(field_choice))
-            elif translation.is_handshape():
-                handshape = translation.queryparameterhandshape
-                field_name = handshape.display_verbose_fieldname()
-                if field_name not in parameter_dict.keys():
-                    parameter_dict[field_name] = []
-                parameter_dict[field_name].append(handshape.fieldValue.name)
-                parameter_list.append(str(handshape))
-            elif translation.is_semanticfield():
-                semanticfield = translation.queryparametersemanticfield
-                field_name = semanticfield.display_verbose_fieldname()
-                if field_name not in parameter_dict.keys():
-                    parameter_dict[field_name] = []
-                parameter_dict[field_name].append(semanticfield.fieldValue.name)
-                parameter_list.append(str(semanticfield))
-            elif translation.is_derivationhistory():
-                derivationhistory = translation.queryparameterderivationhistory
-                field_name = derivationhistory.display_verbose_fieldname()
-                if field_name not in parameter_dict.keys():
-                    parameter_dict[field_name] = []
-                parameter_dict[field_name].append(derivationhistory.fieldValue.name)
-                parameter_list.append(str(derivationhistory))
-            else:
-                parameter_list.append(str(translation))
-        result = ", ".join(parameter_list)
-        return result
-
-    def display_parameters_string(self):
         # this method displays the parameters as a string, using ** to separate each
         # for the multi-select fields the choices are shown together
         parameter_dict = dict()
+        # for the language search fields, this dictionary is used to group them together
+        # so searches on annotation or lemma or keyword fields appear next to each other
+        # this groups them by language
+        parameters_multilingual_dict = dict()
         for translation in self.parameters.all():
             if translation.is_fieldchoice():
                 field_choice = translation.queryparameterfieldchoice
@@ -3086,8 +3091,22 @@ class SearchHistory(models.Model):
                 if field_name not in parameter_dict.keys():
                     parameter_dict[field_name] = []
                 parameter_dict[field_name].append(str(nullbooleanfield.fieldValue))
+            elif translation.is_multilingual():
+                multilingual = translation.queryparametermultilingual
+                field_name = multilingual.fieldName
+                field_name_verbose = multilingual.display_verbose_fieldname()
+                if field_name not in parameters_multilingual_dict.keys():
+                    parameters_multilingual_dict[field_name] = dict()
+                if field_name_verbose not in parameters_multilingual_dict[field_name].keys():
+                    parameters_multilingual_dict[field_name][field_name_verbose] = []
+                parameters_multilingual_dict[field_name][field_name_verbose].append(multilingual.fieldValue)
             else:
                 pass
+        # now add the grouped language search fields
+        for search_field in parameters_multilingual_dict.keys():
+            for verbose_field in parameters_multilingual_dict[search_field].keys():
+                parameter_dict[verbose_field] = parameters_multilingual_dict[search_field][verbose_field]
+
         parameters_string = " ** ".join(key + ": " + ", ".join(values) for (key, values) in parameter_dict.items())
         return parameters_string
 
@@ -3132,6 +3151,12 @@ class SearchHistory(models.Model):
                 NEUTRALBOOLEANCHOICES = {'None': '1', 'True': '2', 'False': '3'}
                 field_value = NEUTRALBOOLEANCHOICES[str(nullbooleanfield.fieldValue)]
                 search_history_parameters[field_name] = field_value
+            elif shp.is_multilingual():
+                multilingual = shp.queryparametermultilingual
+                field_name = multilingual.fieldName + '_' + multilingual.fieldLanguage.language_code_2char
+                if field_name not in search_history_parameters.keys():
+                    search_history_parameters[field_name] = []
+                search_history_parameters[field_name] = multilingual.fieldValue
         return search_history_parameters
 
 
