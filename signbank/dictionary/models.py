@@ -2777,7 +2777,6 @@ class GlossFrequency(models.Model):
 
         return str(self.gloss.id) + ' ' + self.document.identifier + ' ' + self.speaker.identifier + ' ' + str(self.frequency)
 
-# QUERY_FIELDS = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics']
 
 class QueryParameter(models.Model):
 
@@ -2967,6 +2966,7 @@ class QueryParameterDerivationHistory(QueryParameter):
 class QueryParameterBoolean(QueryParameter):
     # these are all fields of Gloss
     QUERY_FIELDS = [
+        # Gloss model fields
         ('weakdrop', 'weakdrop'),
         ('weakprop', 'weakprop'),
         ('domhndsh_letter', 'domhndsh_letter'),
@@ -2977,17 +2977,31 @@ class QueryParameterBoolean(QueryParameter):
         ('altern', 'altern'),
         ('inWeb', 'inWeb'),
         ('isNew', 'isNew'),
+        ('excludeFromEcv', 'excludeFromEcv'),
         # ASL fields
         ('oriChAbd', 'oriChAbd'),
-        ('oriChFlex', 'oriChFlex')
+        ('oriChFlex', 'oriChFlex'),
+        # GlossSearchForm fields
+        ('hasRelationToForeignSign', 'hasRelationToForeignSign'),
+        ('defspublished', 'defspublished'),
+        ('hasvideo', 'hasvideo'),
+        ('hasothermedia', 'hasothermedia')
     ]
-    # 'hasRelationToForeignSign' is a Query Parameter, but not a field of Gloss
 
     fieldName = models.CharField(_("NullBooleanField"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.NullBooleanField(_("Field Value"), null=True, blank=True)
 
     def __str__(self):
-        glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        if self.fieldName in Gloss._meta.fields:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        elif self.fieldName == 'defspublished':
+            glossFieldName = _("All Definitions Published")
+        elif self.fieldName == 'hasRelationToForeignSign':
+            glossFieldName = _("Related to Foreign Sign")
+        elif self.fieldName == 'hasvideo':
+            glossFieldName = _('Has Video')
+        else:
+            glossFieldName = _('Has Other Media')
         if self.fieldName in ['weakdrop', 'weakprop']:
             if self.fieldValue is None:
                 glossFieldValue = _('Neutral')
@@ -3003,8 +3017,16 @@ class QueryParameterBoolean(QueryParameter):
 
     def display_verbose_fieldname(self):
         glossFieldName = '-'
-        if self.fieldName:
+        if self.fieldName in Gloss._meta.fields:
             glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        elif self.fieldName == 'defspublished':
+            glossFieldName = _("All Definitions Published")
+        elif self.fieldName == 'hasRelationToForeignSign':
+            glossFieldName = _("Related to Foreign Sign")
+        elif self.fieldName == 'hasvideo':
+            glossFieldName = _('Has Video')
+        else:
+            glossFieldName = _('Has Other Media')
         return glossFieldName
 
 
@@ -3051,6 +3073,12 @@ class SearchHistory(models.Model):
             # if this has not been set, use the date
             query_name = self.queryDate
         return query_name + " (" + self.user.username + ")"
+
+    def query_languages(self):
+        multilingual_parameters = QueryParameterMultilingual.objects.filter(search_history=self)
+        language_parameters = [p.fieldLanguage for p in multilingual_parameters]
+        query_languages = list(set(language_parameters))
+        return query_languages
 
     def display_parameters(self):
         # this method displays the parameters as a string, using ** to separate each
@@ -3149,7 +3177,14 @@ class SearchHistory(models.Model):
                 if field_name not in search_history_parameters.keys():
                     search_history_parameters[field_name] = []
                 NEUTRALBOOLEANCHOICES = {'None': '1', 'True': '2', 'False': '3'}
-                field_value = NEUTRALBOOLEANCHOICES[str(nullbooleanfield.fieldValue)]
+                YESNOCHOICES = {'None': 'unspecified', 'True': 'yes', 'False': 'no'}
+                RELATIONCHOICES = {'None': '0', 'True': '1', 'False': '2'}
+                if field_name == 'defspublished':
+                    field_value = YESNOCHOICES[str(nullbooleanfield.fieldValue)]
+                elif field_name == 'hasRelationToForeignSign':
+                    field_value = RELATIONCHOICES[str(nullbooleanfield.fieldValue)]
+                else:
+                    field_value = NEUTRALBOOLEANCHOICES[str(nullbooleanfield.fieldValue)]
                 search_history_parameters[field_name] = field_value
             elif shp.is_multilingual():
                 multilingual = shp.queryparametermultilingual

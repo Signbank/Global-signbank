@@ -57,7 +57,8 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, apply_language_filters_to_results, save_query_parameters
+    query_parameters_this_gloss, apply_language_filters_to_results, save_query_parameters, available_query_parameters_in_search_history, \
+    languages_in_query, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -3587,6 +3588,10 @@ class QueryListView(ListView):
     def render_to_save_query(self, context):
         query_parameters = context['query_parameters']
         query_name = _("Query View Save")
+        field_names = fieldnames_from_query_parameters(query_parameters)
+        available_field_names = available_query_parameters_in_search_history()
+        print('field names in query: ', field_names)
+        print('fields available in search history: ', available_field_names)
         save_query_parameters(self.request, query_name, query_parameters)
         return super(QueryListView, self).render_to_response(context)
 
@@ -3611,7 +3616,24 @@ class SearchHistoryView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        # this gets the query parameters fields currently being stored by the code
+        # see if we need to do anything with this qua feedback
+        classnames = available_query_parameters_in_search_history()
+
+        # create a lookup table mapping queries to languages
+        selected_datasets_contain_query_languages = {}
+        all_queries_user = SearchHistory.objects.filter(user=self.request.user)
+        for query in all_queries_user:
+            query_languages_this_query = query.query_languages()
+            query_languages_in_dataset = True
+            for lang in query_languages_this_query:
+                if lang not in dataset_languages:
+                    query_languages_in_dataset = False
+            selected_datasets_contain_query_languages[query] = query_languages_in_dataset
+        context['selected_datasets_contain_query_languages'] = selected_datasets_contain_query_languages
+
         return context
+
     def get_queryset(self):
 
         if 'search_results' in self.request.session.keys():
@@ -3629,13 +3651,24 @@ class SearchHistoryView(ListView):
         qs = SearchHistory.objects.filter(user=self.request.user).order_by('queryDate').reverse()
 
         # for sh in qs:
-        #     print(sh.query_parameters())
+        #     languages = languages_in_query(sh.id)
+        #     if len(languages):
+        #         print('result of languages in query: ', languages)
 
         return qs
 
     def render_to_response(self, context):
         if self.request.GET.get('run_query') == 'Run':
             queryid = self.request.GET.get('queryid')
+            languages = languages_in_query(queryid)
+            dataset_languages = context['dataset_languages']
+            # the template does not show the run_query button if the languages are not present
+            # this is a safety measure
+            for lang in languages:
+                if lang not in dataset_languages:
+                    messages.add_message(self.request, messages.ERROR, _('Language '+lang.name+' is missing from the selected datasets.'))
+                    return HttpResponseRedirect(settings.PREFIX_URL + '/analysis/search_history/')
+
             return self.render_to_run_query(context, queryid)
         else:
             return super(SearchHistoryView, self).render_to_response(context)

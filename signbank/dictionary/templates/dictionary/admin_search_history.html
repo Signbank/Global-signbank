@@ -1,6 +1,7 @@
 {% extends "baselayout.html" %}
 {% load i18n %}
 {% load stylesheet %}
+{% load annotation_idgloss_translation %}
 {% load bootstrap3 %}
 {% load guardian_tags %}
 
@@ -99,15 +100,17 @@ var csrf_token = '{{csrf_token}}';
 
     <table class="table table-condensed">
         <tr>
-            <th style="width:250px;">{% trans "Date (Most Recent First)" %}</th>
+            <th style="width:220px;">{% trans "Date (Most Recent First)" %}</th>
             <th style="width:300px">{% trans "Query Description" %}</th>
-            <th style="width:300px;">{% trans "Actions" %}</th>
+            <th style="width:160px">{% trans "Languages" %}</th>
+            <th style="width:260px;">{% trans "Actions" %}</th>
             <th>{% trans "Parameters" %}</th>
         </tr>
         {% for query in object_list %}
         <tr>
             <td>{{ query.queryDate }}</td>
             <td class="queryname_{{query.id}}" id="queryname_{{query.id}}">{{ query.queryName }}</td>
+            <td>{% for lang in query.query_languages %}{{lang}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             <td>
                 <div class="btn-group">
                 <button id='edit_query_btn_{{query.id}}' class="btn queryButton" type="button" name='edit_{{query.id}}'
@@ -115,6 +118,7 @@ var csrf_token = '{{csrf_token}}';
                         data-toggle='modal' data-target='#edit_query_modal_{{query.id}}'>
                     <a class="runQuery">{% trans "Edit" %}</a></button>
 
+                {% if selected_datasets_contain_query_languages|get_item:query %}
                 <button class="runQueryForm">
                 <form name='run_query_parameters' id='run_query_parameters' method='get'>
                 <input id="run_query_button" name='run_query_button' value='{% trans "Run" %}'
@@ -123,6 +127,7 @@ var csrf_token = '{{csrf_token}}';
                     <input type="hidden" name="queryid" value="{{query.id}}">
                 </form>
                 </button>
+                {% endif %}
 
                 <button id='delete_query_btn_{{query.id}}' class='btn queryButton'
                         data-toggle='modal' data-target='#delete_query_modal_{{query.id}}'>
