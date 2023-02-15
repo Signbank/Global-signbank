@@ -134,7 +134,7 @@ var csrf_token = '{{csrf_token}}';
                     <a class="runQuery">{% trans "Delete" %}</a></button>
                 </div>
             </td>
-            <td>{{query.display_parameters}}</td>
+            <td>{{query_to_display_parameters|get_item:query}}</td>
             </tr>
         {% endfor %}
     </table>

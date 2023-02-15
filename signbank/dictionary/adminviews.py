@@ -57,8 +57,9 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, apply_language_filters_to_results, save_query_parameters, available_query_parameters_in_search_history, \
-    languages_in_query, fieldnames_from_query_parameters
+    query_parameters_this_gloss, apply_language_filters_to_results
+from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
+    get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -3590,8 +3591,8 @@ class QueryListView(ListView):
         query_name = _("Query View Save")
         field_names = fieldnames_from_query_parameters(query_parameters)
         available_field_names = available_query_parameters_in_search_history()
-        print('field names in query: ', field_names)
-        print('fields available in search history: ', available_field_names)
+        # TO DO test that the field names queried upon are supported in the search history
+        # give feedback
         save_query_parameters(self.request, query_name, query_parameters)
         return super(QueryListView, self).render_to_response(context)
 
@@ -3631,6 +3632,11 @@ class SearchHistoryView(ListView):
                     query_languages_in_dataset = False
             selected_datasets_contain_query_languages[query] = query_languages_in_dataset
         context['selected_datasets_contain_query_languages'] = selected_datasets_contain_query_languages
+
+        query_to_display_parameters = {}
+        for query in all_queries_user:
+            query_to_display_parameters[query] = display_parameters(query)
+        context['query_to_display_parameters'] = query_to_display_parameters
 
         return context
 
@@ -3675,7 +3681,7 @@ class SearchHistoryView(ListView):
 
     def render_to_run_query(self, context, queryid):
         query = get_object_or_404(SearchHistory, id=queryid)
-        query_parameters = query.query_parameters()
+        query_parameters = get_query_parameters(query)
         self.request.session['query_parameters'] = json.dumps(query_parameters)
         self.request.session.modified = True
         return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/?query')
