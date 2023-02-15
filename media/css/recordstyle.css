@@ -1,0 +1,123 @@
+button {
+    margin: 0 3px 10ps 0;
+    padding-left: 2px;
+    padding-right: 2px;
+    width: 99px;
+}
+
+button:last-of-type {
+    margin: 0;
+}
+
+p.borderBelow {
+    margin: 0 0 20px 0;
+    padding: 0 0 2px 0;
+}
+
+#uploadrecorded {
+    float: right;
+}
+
+td {
+    vertical-align: top;
+}
+
+.wrap {
+    position:relative;
+    --width: 25vw;
+    width: var(--width);
+    height: calc(var(--width) * 0.5625);
+    margin: 0 20px 20px 0;
+}
+
+video {
+    vertical-align: top;
+    margin: 0 0 0 0;
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+video#gum {
+    z-index:15;
+}
+    
+.overlay {
+    display: flex;
+    justify-content: center;
+}
+
+.over {
+    width: auto;
+    height: 100%;
+    position:absolute !important;
+    top:0 !important;
+    z-index:25 !important;
+    opacity: 0.3;
+}
+
+.vis {
+    opacity: 1;
+}
+
+.invis {
+    opacity: 0;
+}
+
+#overlayText {
+    position:absolute;
+    top:30%;
+    left:20%;
+    /* z-index:15; */
+}
+
+#topText {
+    color: purple;
+    font-size: 20px;
+    align-self: center;
+}
+
+input#videofile {
+    display:none;
+    visibility:hidden;
+}
+
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  }
+
+/* Modal Content/Box */
+.modal-content {
+    background-color: #fefefe;
+    margin: 260px auto; 
+    padding: 50px;
+    border: 1px solid #888;
+    width: calc(50vw + 120px);
+    height: auto;
+}
+
+/* The Close Button */
+.close {
+color: #aaa;
+float: right;
+font-size: 28px;
+font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+color: black;
+text-decoration: none;
+cursor: pointer;
+}
