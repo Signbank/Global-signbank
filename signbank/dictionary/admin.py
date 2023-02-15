@@ -1108,30 +1108,138 @@ class QueryParameterFieldChoiceAdmin(VersionAdmin):
 
     form = QueryParameterFieldChoiceForm
 
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
 
 class QueryParameterHandshapeAdmin(VersionAdmin):
 
     model = QueryParameterHandshape
+
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
 
 class QueryParameterSemanticFieldAdmin(VersionAdmin):
 
     model = QueryParameterSemanticField
 
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
 
 class QueryParameterDerivationHistoryAdmin(VersionAdmin):
 
     model = QueryParameterDerivationHistory
+
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
 
 class QueryParameterBooleanAdmin(VersionAdmin):
 
     model = QueryParameterBoolean
 
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
 
 class QueryParameterMultilingualAdmin(VersionAdmin):
 
     model = QueryParameterMultilingual
+
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
 
 
 class SearchHistoryAdmin(VersionAdmin):
@@ -1141,6 +1249,7 @@ class SearchHistoryAdmin(VersionAdmin):
     form = SearchHistoryForm
 
     list_display = ['queryName', 'query_parameters', 'user', 'queryDate']
+    readonly_fields = ['user']
 
     def query_parameters(self, obj=None):
         if obj is None:

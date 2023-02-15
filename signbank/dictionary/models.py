@@ -2788,31 +2788,31 @@ class QueryParameter(models.Model):
     def __str__(self):
         if hasattr(self, 'queryparameterfieldchoice'):
             field_choice = self.queryparameterfieldchoice
-            glossFieldName = Gloss._meta.get_field(field_choice.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = field_choice.display_verbose_fieldname()
             glossFieldValue = field_choice.fieldValue.name
         elif hasattr(self, 'queryparameterhandshape'):
             handshape = self.queryparameterhandshape
-            glossFieldName = Gloss._meta.get_field(handshape.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = handshape.display_verbose_fieldname()
             glossFieldValue = handshape.fieldValue.name
         elif hasattr(self, 'queryparametersemanticfield'):
             semanticfield = self.queryparametersemanticfield
-            glossFieldName = Gloss._meta.get_field(semanticfield.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = semanticfield.display_verbose_fieldname()
             glossFieldValue = semanticfield.fieldValue.name
         elif hasattr(self, 'queryparameterderivationhistory'):
             derivationhistory = self.queryparameterderivationhistory
-            glossFieldName = Gloss._meta.get_field(derivationhistory.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = derivationhistory.display_verbose_fieldname()
             glossFieldValue = derivationhistory.fieldValue.name
         elif hasattr(self, 'queryparameterboolean'):
             nullbooleanfield = self.queryparameterboolean
-            glossFieldName = Gloss._meta.get_field(nullbooleanfield.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = nullbooleanfield.display_verbose_fieldname()
             glossFieldValue = str(nullbooleanfield.fieldValue)
         elif hasattr(self, 'queryparametermultilingual'):
             multilingual = self.queryparametermultilingual
-            glossFieldName = multilingual.fieldName + "_" + multilingual.fieldLanguage.language_code_2char
+            glossFieldName = multilingual.display_verbose_fieldname()
             glossFieldValue = multilingual.fieldValue
         else:
-            glossFieldName = ""
-            glossFieldValue = ""
+            glossFieldName = "Unknown query parameter"
+            glossFieldValue = "-"
         return glossFieldName + " " + glossFieldValue
 
     def is_fieldchoice(self):
@@ -2872,8 +2872,7 @@ class QueryParameterFieldChoice(QueryParameter):
         ('valence', 'Valence')
     ]
     fieldName = models.CharField(_("Field Name"), choices=QUERY_FIELDS, max_length=20)
-    fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"),
-                                   choices=QUERY_FIELD_CATEGORY)
+    fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"))
 
     def __str__(self):
         glossFieldName = '-'
@@ -2949,6 +2948,9 @@ class QueryParameterDerivationHistory(QueryParameter):
     fieldName = models.CharField(_("Derivation History"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.ForeignKey(DerivationHistory, null=True)
 
+    class Meta:
+        verbose_name_plural = "Query parameter derivation histories"
+
     def __str__(self):
         glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         glossFieldValue = '-'
@@ -2991,7 +2993,7 @@ class QueryParameterBoolean(QueryParameter):
     fieldName = models.CharField(_("NullBooleanField"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.NullBooleanField(_("Field Value"), null=True, blank=True)
 
-    def __str__(self):
+    def display_verbose_fieldname(self):
         if self.fieldName in Gloss._meta.fields:
             glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         elif self.fieldName == 'defspublished':
@@ -3002,6 +3004,10 @@ class QueryParameterBoolean(QueryParameter):
             glossFieldName = _('Has Video')
         else:
             glossFieldName = _('Has Other Media')
+        return glossFieldName
+
+    def __str__(self):
+        glossFieldName = self.display_verbose_fieldname()
         if self.fieldName in ['weakdrop', 'weakprop']:
             if self.fieldValue is None:
                 glossFieldValue = _('Neutral')
@@ -3014,20 +3020,6 @@ class QueryParameterBoolean(QueryParameter):
         else:
             glossFieldValue = _('False')
         return glossFieldName + " " + str(glossFieldValue)
-
-    def display_verbose_fieldname(self):
-        glossFieldName = '-'
-        if self.fieldName in Gloss._meta.fields:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
-        elif self.fieldName == 'defspublished':
-            glossFieldName = _("All Definitions Published")
-        elif self.fieldName == 'hasRelationToForeignSign':
-            glossFieldName = _("Related to Foreign Sign")
-        elif self.fieldName == 'hasvideo':
-            glossFieldName = _('Has Video')
-        else:
-            glossFieldName = _('Has Other Media')
-        return glossFieldName
 
 
 class QueryParameterMultilingual(QueryParameter):
@@ -3066,6 +3058,9 @@ class SearchHistory(models.Model):
     user = models.ForeignKey(User)
     parameters = models.ManyToManyField(QueryParameter, related_name='query_parameters')
     queryName = models.CharField(blank=True, max_length=50, help_text=_("Abbreviation for the query"))
+
+    class Meta:
+        verbose_name_plural = "Search histories"
 
     def __str__(self):
         query_name = self.queryName

@@ -1275,15 +1275,13 @@ class QueryParameterFieldChoiceForm(forms.ModelForm):
             field_name = self.instance.fieldName
             categories = dict(QueryParameterFieldChoice.QUERY_FIELD_CATEGORY)
             field_choice = categories[field_name]
-            self.fields['fieldValue'] = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(
-                field=field_choice))
-            self.fields['search_history'].initial = self.instance.search_history.queryName
-
-    def clean_fieldName(self):
-        if self.fieldName and not self.fieldValue:
-            self.fields['fieldValue'] = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(
-                field=self.fieldName))
-            return
+            restricted_field_names = []
+            restricted_field_names.append((field_name, field_name))
+            choices_field_value = FieldChoice.objects.filter(
+                field=field_choice, machine_value=self.instance.fieldValue.machine_value)
+            self.fields['fieldName'] = forms.ChoiceField(choices=restricted_field_names)
+            self.fields['fieldValue'] = forms.ModelChoiceField(queryset=choices_field_value, empty_label=None)
+            self.fields['search_history'].initial = str(self.instance.search_history)
 
 
 class SearchHistoryForm(forms.ModelForm):
@@ -1295,13 +1293,16 @@ class SearchHistoryForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SearchHistoryForm, self).__init__(*args, **kwargs)
-        self.fields['user'].disabled = True
 
         if not self.instance:
             self.fields['queryDate'].initial = DT.datetime.now(tz=get_current_timezone())
-            self.fields['parameters'] = forms.MultipleChoiceField(label=_('Parameters'), widget=Select2,
+            self.fields['parameters'] = forms.MultipleChoiceField(label=_('Parameters'),
+                                                                  widget=forms.CheckboxSelectMultiple,
                                                                   choices=QueryParameter.objects.all())
         else:
-            self.fields['parameters'].disabled = True
+            query_parameters_of_instance = QueryParameter.objects.filter(search_history=self.instance)
+            self.fields['parameters'] = forms.ModelMultipleChoiceField(label=_('Parameters'),
+                                                                       widget=forms.CheckboxSelectMultiple,
+                                                                       queryset=query_parameters_of_instance)
 
 
