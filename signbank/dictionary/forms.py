@@ -1275,8 +1275,8 @@ class QueryParameterFieldChoiceForm(forms.ModelForm):
             field_name = self.instance.fieldName
             categories = dict(QueryParameterFieldChoice.QUERY_FIELD_CATEGORY)
             field_choice = categories[field_name]
-            restricted_field_names = []
-            restricted_field_names.append((field_name, field_name))
+            # the following variables are used to restrict selection to only the saved field choice
+            restricted_field_names = [(field_name, field_name)]
             choices_field_value = FieldChoice.objects.filter(
                 field=field_choice, machine_value=self.instance.fieldValue.machine_value)
             self.fields['fieldName'] = forms.ChoiceField(choices=restricted_field_names)
@@ -1304,5 +1304,4 @@ class SearchHistoryForm(forms.ModelForm):
             self.fields['parameters'] = forms.ModelMultipleChoiceField(label=_('Parameters'),
                                                                        widget=forms.CheckboxSelectMultiple,
                                                                        queryset=query_parameters_of_instance)
-
 

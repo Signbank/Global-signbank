@@ -2874,25 +2874,26 @@ class QueryParameterFieldChoice(QueryParameter):
     fieldName = models.CharField(_("Field Name"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"))
 
-    def __str__(self):
+    def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
             glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        return glossFieldName
+
+    def __str__(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = self.display_verbose_fieldname()
         glossFieldValue = '-'
         if self.fieldValue:
             glossFieldValue = self.fieldValue.name
         return glossFieldName + " " + glossFieldValue
 
     def get_fieldValue_display(self):
+        # no idea if this is called by Django, it overrides the built-in
         if not self.fieldValue:
             return ""
         return self.fieldValue.field + ': ' + self.fieldValue.name
-
-    def display_verbose_fieldname(self):
-        glossFieldName = '-'
-        if self.fieldName:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
-        return glossFieldName
 
 
 class QueryParameterHandshape(QueryParameter):
@@ -2906,18 +2907,18 @@ class QueryParameterHandshape(QueryParameter):
     fieldName = models.CharField(_("Handshape"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.ForeignKey(Handshape, null=True)
 
-    def __str__(self):
-        glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
-        glossFieldValue = '-'
-        if self.fieldValue:
-            glossFieldValue = self.fieldValue.name
-        return glossFieldName + " " + glossFieldValue
-
     def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
             glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
+
+    def __str__(self):
+        glossFieldName = self.display_verbose_fieldname()
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldName + " " + glossFieldValue
 
 
 class QueryParameterSemanticField(QueryParameter):
@@ -2927,18 +2928,18 @@ class QueryParameterSemanticField(QueryParameter):
     fieldName = models.CharField(_("Semantic Field"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.ForeignKey(SemanticField, null=True)
 
-    def __str__(self):
-        glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
-        glossFieldValue = '-'
-        if self.fieldValue:
-            glossFieldValue = self.fieldValue.name
-        return glossFieldName + " " + glossFieldValue
-
     def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
             glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
+
+    def __str__(self):
+        glossFieldName = self.display_verbose_fieldname()
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldName + " " + glossFieldValue
 
 
 class QueryParameterDerivationHistory(QueryParameter):
@@ -2951,18 +2952,18 @@ class QueryParameterDerivationHistory(QueryParameter):
     class Meta:
         verbose_name_plural = "Query parameter derivation histories"
 
-    def __str__(self):
-        glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
-        glossFieldValue = '-'
-        if self.fieldValue:
-            glossFieldValue = self.fieldValue.name
-        return glossFieldName + " " + glossFieldValue
-
     def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
             glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
+
+    def __str__(self):
+        glossFieldName = self.display_verbose_fieldname()
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldName + " " + glossFieldValue
 
 
 class QueryParameterBoolean(QueryParameter):
@@ -3034,15 +3035,6 @@ class QueryParameterMultilingual(QueryParameter):
     fieldLanguage = models.ForeignKey(Language)
     fieldValue = models.CharField(_("Text Search Value"), max_length=30)
 
-    def __str__(self):
-        if self.fieldName == 'glosssearch':
-            searchFieldName = _('Annotation ID Gloss') + " (" + self.fieldLanguage.name + ")"
-        elif self.fieldName == 'lemma':
-            searchFieldName = _('Lemma ID Gloss') + " (" + self.fieldLanguage.name + ")"
-        else:
-            searchFieldName = _('Translations') + " (" + self.fieldLanguage.name + ")"
-        return searchFieldName + " " + self.fieldValue
-
     def display_verbose_fieldname(self):
         if self.fieldName == 'glosssearch':
             searchFieldName = _('Annotation ID Gloss') + " (" + self.fieldLanguage.name + ")"
@@ -3051,6 +3043,10 @@ class QueryParameterMultilingual(QueryParameter):
         else:
             searchFieldName = _('Translations') + " (" + self.fieldLanguage.name + ")"
         return searchFieldName
+
+    def __str__(self):
+        searchFieldName = self.display_verbose_fieldname()
+        return searchFieldName + " " + self.fieldValue
 
 
 class SearchHistory(models.Model):
