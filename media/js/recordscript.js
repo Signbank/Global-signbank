@@ -24,7 +24,6 @@ const uploadInput = document.querySelector('input#uploadrecorded');
 const img1 = document.getElementById("img1");
 const img2 = document.getElementById("img2");
 const img3 = document.getElementById("img3");
-const img4 = document.getElementById("img4");
 
 /**
  * When the user clicks the button, open the modal 
@@ -147,11 +146,12 @@ async function startRecording(){
     downloadButton.disabled = true;
     recordButton.disabled = true;
     uploadInput.disabled = true;
+    startButton.disabled = true;
 
     // Count down
     img1.classList.remove("invis")
     img1.classList.add("vis")
-    await sleep(2000);
+    await sleep(1000);
     img1.classList.remove("vis")
     img1.classList.add("invis")
     img2.classList.remove("invis")
@@ -164,11 +164,6 @@ async function startRecording(){
     await sleep(1000);
     img3.classList.remove("vis")
     img3.classList.add("invis")
-    img4.classList.remove("invis")
-    img4.classList.add("vis")
-    await sleep(1000);
-    img4.classList.remove("vis")
-    img4.classList.add("invis")
 
     // Recording settings
     recordedBlobs = [];
@@ -199,6 +194,7 @@ async function startRecording(){
         playButton.disabled=false;
         downloadButton.disabled=false;
         uploadInput.disabled=false;
+        startButton.disabled=false;
 
         // Add the recorded video to a hidden file input field
         const blob = new Blob(recordedBlobs, {type: 'video/mp4'});
