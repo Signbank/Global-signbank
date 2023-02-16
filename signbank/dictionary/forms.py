@@ -10,7 +10,7 @@ from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Rel
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, \
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter, \
-                                        QueryParameterMultilingual
+                                        QueryParameterMultilingual, QueryParameterHandshape
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
@@ -1277,6 +1277,28 @@ class QueryParameterBooleanForm(forms.ModelForm):
             field_value = self.instance.display_fieldvalue()
             restricted_choices = [(field_value, field_value)]
             self.fields['fieldValue'] = forms.ChoiceField(label=_('Field Value'), choices=restricted_choices)
+
+
+class QueryParameterHandshapeForm(forms.ModelForm):
+
+    class Meta:
+        model = QueryParameterHandshape
+
+        fields = ['search_history', 'multiselect', 'fieldName', 'fieldValue']
+
+    def __init__(self, *args, **kwargs):
+        super(QueryParameterHandshapeForm, self).__init__(*args, **kwargs)
+        if self.instance:
+            field_name = self.instance.fieldName
+            # the following variables are used to restrict selection to only the saved handshape
+            restricted_field_names = [(field_name, self.instance.display_verbose_fieldname())]
+            self.fields['fieldName'] = forms.ChoiceField(choices=restricted_field_names, label=_("Field Name"))
+            self.fields['search_history'].disabled = True
+            field_value = self.instance.fieldValue.machine_value
+            restricted_choices = Handshape.objects.filter(machine_value=field_value)
+            self.fields['fieldValue'] = forms.ModelChoiceField(label=_('Field Value'),
+                                                               queryset=restricted_choices, empty_label=None)
+
 
 class QueryParameterMultilingualForm(forms.ModelForm):
 

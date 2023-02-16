@@ -2913,11 +2913,15 @@ class QueryParameterHandshape(QueryParameter):
             glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
-    def __str__(self):
-        glossFieldName = self.display_verbose_fieldname()
+    def display_fieldvalue(self):
         glossFieldValue = '-'
         if self.fieldValue:
             glossFieldValue = self.fieldValue.name
+        return glossFieldValue
+
+    def __str__(self):
+        glossFieldName = self.display_verbose_fieldname()
+        glossFieldValue = self.display_fieldvalue()
         return glossFieldName + " " + glossFieldValue
 
 
