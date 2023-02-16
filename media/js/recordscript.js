@@ -6,7 +6,7 @@ let recordedBlobs
 const modal = document.getElementById("recordModal");
             
 // Get the button that opens the modal
-const modalButton = document.getElementById("myBtn");
+const modalButton = document.getElementById("recordBtn");
 
 // Get the <span> element that closes the modal
 const span = document.getElementsByClassName("close")[0];
@@ -43,7 +43,6 @@ span.onclick = function() {
 
 /**
  * When the user clicks anywhere outside of the modal, close it
- * @param {*} event 
  */
 window.onclick = function(event) {
     if (event.target == modal) {
@@ -90,7 +89,6 @@ async function stopCamera(){
 
 /**
  * Start the camera stream or give error
- * @param {*} constraints 
  */
 async function init(constraints){
     try{
@@ -105,7 +103,6 @@ async function init(constraints){
 
 /**
  * Show the video input stream
- * @param {*} stream 
  */
 function handleSuccess(stream){
     recordButton.disabled=false;
@@ -129,8 +126,6 @@ recordButton.addEventListener('click',() => {
 
 /**
  * Sleep for given number of ms
- * @param {*} time 
- * @returns 
  */
 function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time));
@@ -207,7 +202,6 @@ async function startRecording(){
 
 /**
  * Send the recorded stream to a data element
- * @param {*} event 
  */
 function handleDataAvailable(event){
     if(event.data && event.data.size > 0){
@@ -221,9 +215,7 @@ function handleDataAvailable(event){
 playButton.addEventListener('click', () =>{
     const superBuffer = new Blob(recordedBlobs,{type:'video/mp4'});
 
-    recordedVideo.src = null;
     recordedVideo.srcObject = null;
-
     recordedVideo.src = window.URL.createObjectURL(superBuffer);
     recordedVideo.controls=true;
     recordedVideo.play();
