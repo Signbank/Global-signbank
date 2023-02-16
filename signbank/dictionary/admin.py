@@ -5,7 +5,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm, SemanticFieldForm, HandshapeForm, \
-    QueryParameterFieldChoiceForm, SearchHistoryForm
+    QueryParameterFieldChoiceForm, SearchHistoryForm, QueryParameterBooleanForm, QueryParameterMultilingualForm
 from reversion.admin import VersionAdmin
 from signbank.settings import server_specific
 from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGES, LANGUAGE_CODE
@@ -1200,6 +1200,8 @@ class QueryParameterBooleanAdmin(VersionAdmin):
 
     model = QueryParameterBoolean
 
+    form = QueryParameterBooleanForm
+
     list_display = ['search_history', '__str__']
     list_filter = ['search_history']
 
@@ -1222,6 +1224,7 @@ class QueryParameterBooleanAdmin(VersionAdmin):
 class QueryParameterMultilingualAdmin(VersionAdmin):
 
     model = QueryParameterMultilingual
+    form = QueryParameterMultilingualForm
 
     list_display = ['search_history', '__str__']
     list_filter = ['search_history']

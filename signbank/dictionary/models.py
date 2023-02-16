@@ -2991,7 +2991,7 @@ class QueryParameterBoolean(QueryParameter):
         ('hasothermedia', 'hasothermedia')
     ]
 
-    fieldName = models.CharField(_("NullBooleanField"), choices=QUERY_FIELDS, max_length=20)
+    fieldName = models.CharField(_("NullBooleanField"), choices=QUERY_FIELDS, max_length=30)
     fieldValue = models.NullBooleanField(_("Field Value"), null=True, blank=True)
 
     def display_verbose_fieldname(self):
@@ -3005,10 +3005,10 @@ class QueryParameterBoolean(QueryParameter):
             glossFieldName = _('Has Video')
         else:
             glossFieldName = _('Has Other Media')
-        return glossFieldName
+        # the str coercion is needed for type checking, otherwise it's a proxy
+        return str(glossFieldName)
 
-    def __str__(self):
-        glossFieldName = self.display_verbose_fieldname()
+    def display_fieldvalue(self):
         if self.fieldName in ['weakdrop', 'weakprop']:
             if self.fieldValue is None:
                 glossFieldValue = _('Neutral')
@@ -3020,7 +3020,13 @@ class QueryParameterBoolean(QueryParameter):
             glossFieldValue = _('True')
         else:
             glossFieldValue = _('False')
-        return glossFieldName + " " + str(glossFieldValue)
+        # the str coercion is needed for type checking, otherwise it's a proxy
+        return str(glossFieldValue)
+
+    def __str__(self):
+        glossFieldName = self.display_verbose_fieldname()
+        glossFieldValue = self.display_fieldvalue()
+        return glossFieldName + " " + glossFieldValue
 
 
 class QueryParameterMultilingual(QueryParameter):
