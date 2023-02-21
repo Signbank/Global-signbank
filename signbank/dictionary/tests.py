@@ -1659,7 +1659,7 @@ class HandshapeTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/admin/dictionary/handshape/')
+        request = self.factory.get('/'+settings.ADMIN_URL+'/dictionary/handshape/')
         request.user = self.user
 
         # give the test user permission to delete handshapes
@@ -1886,7 +1886,7 @@ class FieldChoiceTests(TestCase):
                 else:
                     update_data[name_languagecode] = field_value
 
-            url_of_field_choice_change = '/admin/dictionary/fieldchoice/'+admin_url_change_suffix_1
+            url_of_field_choice_change = '/'+settings.ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
             print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
             print('With data: ', update_data)
 
@@ -1953,7 +1953,7 @@ class FieldChoiceTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # give the test user permission to delete field choices
@@ -2004,7 +2004,7 @@ class FieldChoiceTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # give the test user permission to delete field choices
@@ -2102,7 +2102,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new definition created: ', new_definition.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2196,7 +2196,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new morphology definition created: ', new_morphology_definition.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2272,7 +2272,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new othermedia created: ', new_othermedia.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2347,7 +2347,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new morpheme created: ', new_morpheme.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
