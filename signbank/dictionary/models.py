@@ -1826,6 +1826,7 @@ class Gloss(models.Model):
         else:
             video = GlossVideo(videofile=videofile, gloss=self)
         video.save()
+        video.ch_own_mod_video()
         video.make_small_video()
         video.make_poster_image()
 
