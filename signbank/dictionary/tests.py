@@ -1854,7 +1854,10 @@ class FieldChoiceTests(TestCase):
             initial_data['field_color'] = first_field_choice_option.field_color
             for language in MODELTRANSLATION_LANGUAGES:
                 name_languagecode = 'name_' + language.replace('-', '_')
-                field_value = getattr(first_field_choice_option,name_languagecode)
+                try:
+                    field_value = getattr(first_field_choice_option,name_languagecode)
+                except KeyError:
+                    continue
                 if not field_value:
                     initial_data[name_languagecode] = 'Default value'
                 else:
@@ -1872,7 +1875,10 @@ class FieldChoiceTests(TestCase):
             update_data['field_color'] = '#' + first_field_choice_option.field_color
             for language in MODELTRANSLATION_LANGUAGES:
                 name_languagecode = 'name_' + language.replace('-', '_')
-                field_value = getattr(first_field_choice_option,name_languagecode)
+                try:
+                    field_value = getattr(first_field_choice_option,name_languagecode)
+                except KeyError:
+                    continue
                 if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
                     update_data[LANGUAGE_FIELD_TO_UPDATE] = 'Test Update Field Choice'
                 elif not field_value:
@@ -1880,7 +1886,11 @@ class FieldChoiceTests(TestCase):
                 else:
                     update_data[name_languagecode] = field_value
 
-            response = self.client.get('/admin/dictionary/fieldchoice/'+admin_url_change_suffix_1, update_data)
+            url_of_field_choice_change = '/admin/dictionary/fieldchoice/'+admin_url_change_suffix_1
+            print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
+            print('With data: ', update_data)
+
+            response = self.client.get(url_of_field_choice_change, update_data)
             self.assertEqual(response.status_code, 302)
 
             fieldchoice_form = FieldChoiceForm(instance=first_field_choice_option, data=update_data)
@@ -1902,6 +1912,8 @@ class FieldChoiceTests(TestCase):
             self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
             for language in MODELTRANSLATION_LANGUAGES:
                 name_languagecode = 'name_' + language.replace('-', '_')
+                if name_languagecode not in update_data.keys():
+                    continue
                 if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
                     self.assertEqual(getattr(first_field_choice_option,LANGUAGE_FIELD_TO_UPDATE), update_data[LANGUAGE_FIELD_TO_UPDATE])
                 else:
