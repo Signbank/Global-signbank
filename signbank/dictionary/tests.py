@@ -1845,7 +1845,7 @@ class FieldChoiceTests(TestCase):
                 continue
             first_field_choice_option = field_options.first()
             admin_url_change_suffix_1 = str(first_field_choice_option.id)+\
-                                      '/change/?_changelist_filters=field_exact%3D'+first_field_choice_option.field
+                                      '/change/?_changelist_filters=field__exact%3D'+first_field_choice_option.field
 
             initial_data = dict()
             initial_data['field'] = first_field_choice_option.field
