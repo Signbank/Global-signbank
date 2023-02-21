@@ -15,8 +15,6 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_files.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/recordscript.js"></script>
 
     <script type='text/javascript'>
     var url = '{{ PREFIX_URL }}';
@@ -714,9 +712,7 @@ p {
         </div>
 
     </div>
-    {% endif %}
 
-    {% if "change_dataset" in dataset_perms %}
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Citation Form Image" %}</legend>
@@ -740,6 +736,9 @@ p {
             </label>
         </fieldset>
     </div>
+    
+    <script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_files.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/recordscript.js"></script>
     {% endif %}
 
     {% if gloss.has_video and "change_dataset" in dataset_perms %}
