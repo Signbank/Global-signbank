@@ -1350,10 +1350,6 @@ class Gloss(models.Model):
         return tagged_homonym_objects
 
     def get_stems(self):
-        # the original list comprehension does not work for Japanese
-        # stems = [(x.language, x.text[:-2])
-        #          for x in annotations if x.text[-2] == '-' and x.language == this_sign_language ]
-        # the code has been expanded
         if not self.lemma or not self.lemma.dataset:
             return []
         annotations = self.annotationidglosstranslation_set.all()

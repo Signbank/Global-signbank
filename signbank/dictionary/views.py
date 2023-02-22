@@ -2343,6 +2343,9 @@ def add_handshape_image(request):
 
 
 def gloss_annotations(this_gloss):
+    # this function is used for display of the annotations in the find_and_save_variants template
+    # if more than one translation language is available, the language prefixes the annotation translation text
+    # a comma-separated string of the translations is returned
     translations = []
     count_dataset_languages = this_gloss.lemma.dataset.translation_languages.all().count() \
         if this_gloss.lemma and this_gloss.lemma.dataset else 0
@@ -2367,6 +2370,10 @@ def find_and_save_variants(request):
     gloss_pattern_table = dict()
 
     if selected_datasets.count() > 1:
+        # because of the way the variant suffixes are computed, we only want to allow this over one dataset
+        # since the variants are obtained indirectly via a Gloss method for each gloss
+        # and these are syntactic patterns
+        # we don't want to accidentally have variants from different datasets
         return render(request, 'dictionary/find_and_save_variants.html',
                       {'gloss_pattern_table': gloss_pattern_table,
                        'dataset_languages': dataset_languages,
@@ -2375,16 +2382,25 @@ def find_and_save_variants(request):
                        'too_many_datasets': True
                        })
 
+    # first get all the glosses from the (single) selected dataset that match the syntactical variant pattern
     variant_pattern_glosses = Gloss.objects.filter(lemma__dataset__in=selected_datasets,
                                                    annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('lemma')
 
+    # each of these, called the focus gloss, will have a row in a table in the template
+    # if the focus gloss has syntactic variants
+    # construct here the columns for the focus gloss row
     for focus_gloss in variant_pattern_glosses:
         dict_key = focus_gloss.id
 
+        # the first row shows the annotations of the focus gloss (optionally prefaced by language)
+        # these will have the variant pattern (for at least one of the languages)
         col1 = gloss_annotations(focus_gloss)
 
+        # obtain any other relations the focus gloss is involved in
         other_relations_of_sign = focus_gloss.other_relations()
 
+        # variants may also exist as saved relations (rather than syntactic patterns)
+        # these are put in a column in the table
         variant_relations_of_sign = [r.target for r in focus_gloss.variant_relations()]
 
         if variant_relations_of_sign:
@@ -2392,15 +2408,21 @@ def find_and_save_variants(request):
         else:
             col3 = ' '
 
+        # both of these need to be excluded from any matches below
         other_relation_objects = [x.target.id for x in other_relations_of_sign]
         variant_relation_objects = [x.id for x in variant_relations_of_sign]
 
+        # now look for other glosses in the dataset that match the stem of the variant
+        # (i.e., remove the -A, -B, -C, ... and look for the first part (stem), but with a different suffix)
+        # exclude other relations and saved variant relations
         # Build query
         this_sign_stems = focus_gloss.get_stems()
         if not this_sign_stems:
             continue
         queries = []
         for this_sign_stem in this_sign_stems:
+            # the stems are multilingual, for each language of the dataset
+            # stored as (language, text) tuples
             this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
             queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
                              lemma__dataset=focus_gloss.lemma.dataset,
@@ -2412,22 +2434,11 @@ def find_and_save_variants(request):
             id__in=other_relation_objects).exclude(id__in=variant_relation_objects)
 
         if not candidate_variants:
+            # if no syntactical variants were found, do not put this gloss in the table
             continue
 
+        # for each of the variants, display its annotations (possibly with language)
         col4 = ' || '.join(gloss_annotations(x) for x in candidate_variants)
-
-        # for target in candidate_variants:
-        #
-        #     rel = Relation(source=focus_gloss, target=target, role='variant')
-        #     rel.save()
-
-        # updated_variants = [r.target for r in focus_gloss.variant_relations()]
-        #
-        # if updated_variants:
-        #     col5 = '|'.join(gloss_annotations(g) for g in updated_variants)
-        #
-        # else:
-        #     col5 = ' '
 
         gloss_pattern_table[dict_key] = (dict_key, col1, col3, col4)
 
