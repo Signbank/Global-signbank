@@ -131,12 +131,36 @@ function sleep (time) {
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+
+/**
+ * Check the recorded video and set to file input field or discard
+ */
+function processBlobs(recordedBlobs){
+    // Add the recorded video to a hidden file input field
+    if(recordedBlobs[0].size<5242880){ // Hardcoded: better take settings.FILE_UPLOAD_MAX_MEMORY_SIZE value
+        const blob = new Blob(recordedBlobs, {type: 'video/mp4'});
+        var file = new File([blob], "temp.mp4",{type:"video/mp4, lastModified:new Date().getTime()"})
+        let container = new DataTransfer();
+        container.items.add(file)
+        document.getElementById('videofile').files = container.files;
+    }
+    else{   // size is too big to upload
+        errorMsgElement.innerHTML = "Recorded file is too big. Make a shorter video or try another camera. "
+        recordedBlobs = []
+        document.getElementById('videofile').value = null
+        uploadInput.disabled = true;
+    }
+}
+
+
 /**
  * 1) countdown
  * 2) Start the webcam mediarecorded stream
  * 3) Enable the stop recording button
  */
 async function startRecording(){
+
+    errorMsgElement.innerHTML = ""
     playButton.disabled = true;
     downloadButton.disabled = true;
     recordButton.disabled = true;
@@ -182,8 +206,7 @@ async function startRecording(){
     
     // Save the video when recording is stopped
     mediaRecorder.onstop = (event) => {
-        console.log("Recording stopped: ", event);
-        console.log("Recorded blobs: ", recordedBlobs);
+        console.log("Recording stopped: ", event, "\nRecorded blobs: ", recordedBlobs);
 
         recordButton.textContent="Record";
         playButton.disabled=false;
@@ -191,14 +214,10 @@ async function startRecording(){
         uploadInput.disabled=false;
         startButton.disabled=false;
 
-        // Add the recorded video to a hidden file input field
-        const blob = new Blob(recordedBlobs, {type: 'video/mp4'});
-        var file = new File([blob], "temp.mp4",{type:"video/mp4, lastModified:new Date().getTime()"})
-        let container = new DataTransfer();
-        container.items.add(file)
-        document.getElementById('videofile').files = container.files;
+        processBlobs(recordedBlobs)
     }
 }
+
 
 /**
  * Send the recorded stream to a data element
