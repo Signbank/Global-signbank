@@ -295,8 +295,9 @@ class GlossVideo(models.Model):
         try:
             resizer = VideoResizer([video_file_full_path], FFMPEG_PROGRAM, 180, 0, 0)
             resizer.run()
-        except:
+        except Exception as e:
             print("Error resizing video: ", video_file_full_path)
+            print(e)
 
     def make_poster_image(self):
         from signbank.tools import generate_still_image
