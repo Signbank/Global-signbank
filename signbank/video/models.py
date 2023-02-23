@@ -4,7 +4,7 @@ keep track of uploaded videos and converted versions
 
 from django.db import models
 from django.conf import settings
-import sys, os, time, shutil
+import sys, os, time, shutil, stat
 
 from signbank.video.convertvideo import extract_frame, convert_video, ffmpeg, probe_format
 
@@ -275,6 +275,14 @@ class GlossVideo(models.Model):
             err = convert_video(oldloc, newloc, force=True)
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
             os.remove(oldloc)
+
+    def ch_own_mod_video(self):
+        """Change owner and permissions"""
+        location = self.videofile.path
+
+        # make sure they're readable by everyone
+        # os.chown(location, 1000, 1002)
+        os.chmod(location, stat.S_IRWXU | stat.S_IRWXG)
 
     def small_video(self, use_name=False):
         """Return the URL of the small version for this video
