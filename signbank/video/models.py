@@ -281,7 +281,7 @@ class GlossVideo(models.Model):
         location = self.videofile.path
 
         # make sure they're readable by everyone
-        os.chown(location, 1000, 1002)
+        # os.chown(location, 1000, 1002)
         os.chmod(location, stat.S_IRWXU | stat.S_IRWXG)
 
     def small_video(self, use_name=False):
