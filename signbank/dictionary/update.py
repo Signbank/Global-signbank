@@ -1560,6 +1560,15 @@ def add_othermedia(request):
     filename = request.FILES['file'].name
     filetype = request.FILES['file'].content_type
 
+    type_machine_value = request.POST['type']
+    try:
+        othermediatype = FieldChoice.objects.get(field=FieldChoice.OTHERMEDIATYPE,
+                                                 machine_value=type_machine_value)
+    except ObjectDoesNotExist:
+        # if something goes wrong just set it to empty
+        othermediatype = FieldChoice.objects.get(field=FieldChoice.OTHERMEDIATYPE,
+                                                 machine_value=0)
+
     if not filetype:
         # unrecognised file type has been uploaded
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
@@ -1657,7 +1666,7 @@ def add_othermedia(request):
     other_media_path = request.POST['gloss']+'/'+filename_plus_extension
     OtherMedia(path=other_media_path,
                alternative_gloss=request.POST['alternative_gloss'],
-               type=request.POST['type'],
+               type=othermediatype,
                parent_gloss=parent_gloss).save()
 
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
