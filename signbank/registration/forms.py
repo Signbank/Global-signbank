@@ -10,10 +10,9 @@ from django.conf import settings
 from signbank.settings.server_specific import *
 from django.utils.safestring import mark_safe
 from django.utils.functional import lazy
-from django.utils import six
+#from django.utils import six
 from django.db.utils import OperationalError, ProgrammingError
 
-mark_safe_lazy = lazy(mark_safe, six.text_type)
 
 from signbank.registration.models import RegistrationProfile, UserProfile
 
@@ -92,7 +91,7 @@ class RegistrationForm(forms.Form):
     tos_choices = [(True, 'Agree'), (False, 'Disagree')]
     href_hyperlink = settings.URL + settings.PREFIX_URL + '/about/conditions/'
     tos_hyperlink = __(u'I have read and agree to the <a href="' + href_hyperlink + '" target="_blank">Terms of Service</a>')
-    tos = forms.BooleanField(label=mark_safe_lazy(tos_hyperlink),
+    tos = forms.BooleanField(label=tos_hyperlink,
                              widget=forms.RadioSelect(choices=tos_choices),
                              error_messages={'required': 'Error: You must agree to the Terms of Service in order to register'})
 
