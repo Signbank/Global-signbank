@@ -1597,6 +1597,19 @@ def add_othermedia(request):
     destination_filename = filename_base + '.' + extension
     goal_path = os.path.join(goal_directory, destination_filename)
 
+    # to accommodate large files, the Other Media data is first stored in the database
+    # if something goes wrong this object is deleted again
+    #Save the database record
+    parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
+    other_media_path = request.POST['gloss']+'/'+destination_filename
+    newothermedia = OtherMedia(path=other_media_path,
+                               alternative_gloss=request.POST['alternative_gloss'],
+                               type=othermediatype,
+                               parent_gloss=parent_gloss)
+    newothermedia.save()
+
+    # the above creates the new OtherMedia object
+    # the video has not been saved yet
 
     # create the destination file
     try:
@@ -1609,12 +1622,17 @@ def add_othermedia(request):
         quoted_filename = urllib.parse.quote(filename_base, safe='')
         filename_plus_extension = quoted_filename + '.' + extension
         goal_location_str = os.path.join(goal_directory, filename_plus_extension)
-
+        # we need to use a quoted filename instead, update the other media object
+        other_media_path = request.POST['gloss'] + '/' + filename_plus_extension
+        newothermedia.path = other_media_path
+        newothermedia.save()
         try:
             if os.path.exists(goal_location_str):
                 raise OSError
             f = open(goal_location_str, 'wb+')
         except (UnicodeEncodeError, IOError, OSError):
+            # something went wrong with uploading, delete the object
+            newothermedia.delete()
             messages.add_message(request, messages.ERROR,
                         _("The other media file could not be uploaded. Please use a different filename."))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
@@ -1633,6 +1651,8 @@ def add_othermedia(request):
     if not magic_file_type:
         # unrecognised file type has been uploaded
         os.remove(destination_location)
+        # something went wrong with uploading, delete the object
+        newothermedia.delete()
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
     if magic_file_type == 'video/quicktime':
@@ -1651,6 +1671,8 @@ def add_othermedia(request):
             # problems converting a quicktime media to h264
             os.remove(temp_destination_location)
             os.remove(destination_location)
+            # something went wrong with uploading, delete the object
+            newothermedia.delete()
             messages.add_message(request, messages.ERROR,
                                  _("Upload other media failed: The Quicktime file could not be converted to H264."))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
@@ -1658,16 +1680,10 @@ def add_othermedia(request):
     if filetype.split('/')[0] != magic_file_type.split('/')[0]:
         # the uploaded file extension does not match its type
         os.remove(destination_location)
+        # something went wrong with uploading, delete the object
+        newothermedia.delete()
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The file extension does not match its type."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-
-    #Save the database record
-    parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
-    other_media_path = request.POST['gloss']+'/'+filename_plus_extension
-    OtherMedia(path=other_media_path,
-               alternative_gloss=request.POST['alternative_gloss'],
-               type=othermediatype,
-               parent_gloss=parent_gloss).save()
 
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 
