@@ -6578,7 +6578,7 @@ def glosslistheader_ajax(request):
 
     if 'HTTP_REFERER' in request.META.keys():
         sortOrderURL = request.META['HTTP_REFERER']
-        sortOrderParameters = sortOrderURL.split('/?sortOrder=')
+        sortOrderParameters = sortOrderURL.split('&sortOrder=')
         if len(sortOrderParameters) > 1:
             sortOrder = sortOrderParameters[1].split('&')[0]
 
