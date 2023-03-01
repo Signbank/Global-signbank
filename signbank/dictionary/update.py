@@ -729,7 +729,7 @@ def update_tags(gloss, field, values):
 
     new_tag_ids = [tag.id for tag in Tag.objects.filter(name__in=values)]
 
-    # the existance of the new tag has already been checked
+    # the existence of the new tag has already been checked
     for tag_id in current_tag_ids:
 
         if tag_id not in new_tag_ids:
@@ -754,7 +754,7 @@ def update_sequential_morphology(gloss, field, values):
 
     role = 2
 
-    # the existance of the morphemes in parameter values has already been checked
+    # the existence of the morphemes in parameter values has already been checked
     try:
         for morpheme_def_id in morphemes:
             old_morpheme = MorphologyDefinition.objects.get(id=morpheme_def_id)
@@ -793,7 +793,7 @@ def update_simultaneous_morphology(gloss, field, values):
         print("DELETE Simultaneous Morphology: ", sim)
         sim.delete()
 
-    # the existance of the morphemes has already been checked, but check again anyway
+    # the existence of the morphemes has already been checked, but check again anyway
     for (morpheme_id, role) in new_sim_tuples:
 
         try:
@@ -875,8 +875,15 @@ def subst_notes(gloss, field, values):
     # it allows the type of note to be in either English or Dutch in the CSV file
     note_reverse_translation = {}
     for nrc in note_role_choices:
-        for language in [l[0] for l in LANGUAGES]:
-            note_reverse_translation[getattr(nrc, 'name_'+language.replace('-', '_'))] = nrc
+        for language in MODELTRANSLATION_LANGUAGES:
+            name_languagecode = 'name_' + language.replace('-', '_')
+            # check to make sure the model translation has been installed properly
+            try:
+                notes_translation = getattr(nrc, name_languagecode)
+            except KeyError:
+                continue
+
+            note_reverse_translation[notes_translation] = nrc
 
     for original_note in gloss.definition_set.all():
         original_note.delete()
@@ -885,14 +892,18 @@ def subst_notes(gloss, field, values):
     # the syntax of the new note values has already been checked at a previous stage of csv import
     new_notes_values = []
 
-    split_values = re.findall(r'([^\:]+\:[^\)]*\)),?\s?', values)
-
+    # the space is required in order to identify multiple notes in the input
+    split_values = re.split(r', ', values)
     for note_value in split_values:
-        take_apart = re.match("([^\:]+)\:\s?\((False|True),(\d),([^\)]*)\)", note_value)
+        take_apart = re.match("([^:]+):\s?\((False|True),(\d),(.*)\)", note_value)
+
         if take_apart:
             (field, name, count, text) = take_apart.groups()
             new_tuple = (field, name, count, text)
             new_notes_values.append(new_tuple)
+
+    # make sure the delete code has run before saving the definitions again
+    gloss.refresh_from_db()
 
     for (role, published, count, text) in new_notes_values:
         is_published = (published == 'True')
@@ -901,7 +912,9 @@ def subst_notes(gloss, field, values):
         defn = Definition(gloss=gloss, count=index_count, role=note_role, text=text, published=is_published)
         defn.save()
 
-    new_notes_refresh = [(note.role.name, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
+    gloss_notes = gloss.definition_set.all()
+    new_notes_refresh = [(note.get_role_display(), str(note.published), str(note.count), note.note_text())
+                         for note in gloss_notes]
     notes_by_role = []
     for note in new_notes_refresh:
         notes_by_role.append(':'.join(note))
