@@ -173,12 +173,18 @@ function handleVideoByButton(files) {
  */
 function handleDrop(e, fileType, fileTypeT, fileTypeP, inputArea, typeGallery, dropContainerTitle){
     files = e.dataTransfer.files
-    if (checkinput(e, fileType, fileTypeT) == "Drop") {
+    if (files[0].size > 200000){
+        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the video under 5 MB</p>";
+        inputArea.value = '';
+        removeUploads(true, inputArea, dropContainerTitle, typeGallery)
+    }
+    else if (checkinput(e, fileType, fileTypeT) == "Drop") {
         inputArea.value = '';
         removeUploads(true, inputArea, dropContainerTitle, typeGallery)
         dropContainerTitle.classList.add('hide');
         previewFile(files[0], fileTypeP, typeGallery)
         inputArea.files = files
+        dropContainerTitle.innerHTML = "Drop video here";
     }
     else if (typeGallery.childNodes.length > 0){
         if (!dropContainerTitle.classList.contains('hide')){
