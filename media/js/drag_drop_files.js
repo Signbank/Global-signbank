@@ -132,7 +132,12 @@ function checkinput(e, file_type, file_placeholder) {
  * @param {div} typeGallery the gallery that shows file previews
  */
 function handleByButton(files, dropContainerTitle, fileType, fileTypeP, inputArea, typeGallery) {
-    if (files[0].type == fileType) {
+    if (files[0].size > 5242880){
+        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the video under 5 MB</p>";
+        inputArea.value = '';
+        removeUploads(true, inputArea, dropContainerTitle, typeGallery)
+    }
+    else if (files[0].type == fileType) {
         dropContainerTitle.classList.add('hide');
         previewFile(files[0], fileTypeP, typeGallery)
     }
@@ -249,3 +254,4 @@ function previewFile(file, fileTypeP, typeGallery) {
         typeGallery.appendChild(prev)
     }
 }
+
