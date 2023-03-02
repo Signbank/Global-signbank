@@ -189,7 +189,7 @@ function handleDrop(e, fileType, fileTypeT, fileTypeP, inputArea, typeGallery, d
         dropContainerTitle.classList.add('hide');
         previewFile(files[0], fileTypeP, typeGallery)
         inputArea.files = files
-        dropContainerTitle.innerHTML = "Drop video here";
+        dropContainerTitle.innerHTML = "Drop "+fileTypeT+" here";
     }
     else if (typeGallery.childNodes.length > 0){
         if (!dropContainerTitle.classList.contains('hide')){
