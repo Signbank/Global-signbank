@@ -133,7 +133,7 @@ function checkinput(e, file_type, file_placeholder) {
  */
 function handleByButton(files, dropContainerTitle, fileType, fileTypeP, inputArea, typeGallery) {
     if (files[0].size > 5242880){
-        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the video under 5 MB</p>";
+        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the file size under 5 MB</p>";
         inputArea.value = '';
         removeUploads(true, inputArea, dropContainerTitle, typeGallery)
     }
@@ -179,7 +179,7 @@ function handleVideoByButton(files) {
 function handleDrop(e, fileType, fileTypeT, fileTypeP, inputArea, typeGallery, dropContainerTitle){
     files = e.dataTransfer.files
     if (files[0].size > 5242880){
-        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the video under 5 MB</p>";
+        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the file size under 5 MB</p>";
         inputArea.value = '';
         removeUploads(true, inputArea, dropContainerTitle, typeGallery)
     }
