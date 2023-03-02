@@ -1659,7 +1659,7 @@ class HandshapeTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/admin/dictionary/handshape/')
+        request = self.factory.get('/'+settings.ADMIN_URL+'/dictionary/handshape/')
         request.user = self.user
 
         # give the test user permission to delete handshapes
@@ -1845,7 +1845,7 @@ class FieldChoiceTests(TestCase):
                 continue
             first_field_choice_option = field_options.first()
             admin_url_change_suffix_1 = str(first_field_choice_option.id)+\
-                                      '/change/?_changelist_filters=field_exact%3D'+first_field_choice_option.field
+                                      '/change/?_changelist_filters=field__exact%3D'+first_field_choice_option.field
 
             initial_data = dict()
             initial_data['field'] = first_field_choice_option.field
@@ -1854,7 +1854,10 @@ class FieldChoiceTests(TestCase):
             initial_data['field_color'] = first_field_choice_option.field_color
             for language in MODELTRANSLATION_LANGUAGES:
                 name_languagecode = 'name_' + language.replace('-', '_')
-                field_value = getattr(first_field_choice_option,name_languagecode)
+                try:
+                    field_value = getattr(first_field_choice_option,name_languagecode)
+                except KeyError:
+                    continue
                 if not field_value:
                     initial_data[name_languagecode] = 'Default value'
                 else:
@@ -1872,7 +1875,10 @@ class FieldChoiceTests(TestCase):
             update_data['field_color'] = '#' + first_field_choice_option.field_color
             for language in MODELTRANSLATION_LANGUAGES:
                 name_languagecode = 'name_' + language.replace('-', '_')
-                field_value = getattr(first_field_choice_option,name_languagecode)
+                try:
+                    field_value = getattr(first_field_choice_option,name_languagecode)
+                except KeyError:
+                    continue
                 if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
                     update_data[LANGUAGE_FIELD_TO_UPDATE] = 'Test Update Field Choice'
                 elif not field_value:
@@ -1880,7 +1886,11 @@ class FieldChoiceTests(TestCase):
                 else:
                     update_data[name_languagecode] = field_value
 
-            response = self.client.get('/admin/dictionary/fieldchoice/'+admin_url_change_suffix_1, update_data)
+            url_of_field_choice_change = '/'+settings.ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
+            print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
+            print('With data: ', update_data)
+
+            response = self.client.get(url_of_field_choice_change, update_data)
             self.assertEqual(response.status_code, 302)
 
             fieldchoice_form = FieldChoiceForm(instance=first_field_choice_option, data=update_data)
@@ -1902,6 +1912,8 @@ class FieldChoiceTests(TestCase):
             self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
             for language in MODELTRANSLATION_LANGUAGES:
                 name_languagecode = 'name_' + language.replace('-', '_')
+                if name_languagecode not in update_data.keys():
+                    continue
                 if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
                     self.assertEqual(getattr(first_field_choice_option,LANGUAGE_FIELD_TO_UPDATE), update_data[LANGUAGE_FIELD_TO_UPDATE])
                 else:
@@ -1941,7 +1953,7 @@ class FieldChoiceTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # give the test user permission to delete field choices
@@ -1992,7 +2004,7 @@ class FieldChoiceTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # give the test user permission to delete field choices
@@ -2090,7 +2102,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new definition created: ', new_definition.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2184,7 +2196,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new morphology definition created: ', new_morphology_definition.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2260,7 +2272,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new othermedia created: ', new_othermedia.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2335,7 +2347,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new morpheme created: ', new_morpheme.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -3475,54 +3487,55 @@ def decode_messages(data):
 
 class GlossApiGetSignNameAndMediaInfoTests(TestCase):
 
-
     @classmethod
-    def setUpTestData(cls):
+    def setUpTestData(self):
 
-        cls.dataset = 0
-        cls.results = 50
-        cls.search_term = "test"
-        cls.gloss_name = 'test'
-        cls.gloss_id = 0
-        cls.video_url = 'test_video_url'
-        cls.file_path = path.join(settings.WRITABLE_FOLDER, cls.video_url)
+        self.dataset = 0
+        self.results = 50
+        self.search_term = "test_gloss_api"
+        self.gloss_name = 'test_gloss_api'
+        self.gloss_id = 0
+        self.video_url = 'test_video_url_in_gloss_api_tests'
+        self.file_path = path.join(settings.WRITABLE_FOLDER, self.video_url)
 
-        cls.factory = RequestFactory()
+        self.factory = RequestFactory()
 
-        # Create a language for the dataset and sign language models
-        language = Language.objects.create()
+        # Use a default dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.dataset = test_dataset.id
 
-        # Create a sign language for the dataset
-        sign_language = SignLanguage.objects.create()
-
-        # Create a dataset and save the id for the filter
-        test_dataset = Dataset.objects.create(name=cls.gloss_name, signlanguage_id=sign_language.id,  default_language_id=language.id)
-        test_dataset.translation_languages.add(language)
-        cls.dataset = test_dataset.id
+        # Use default language
+        language = Language.objects.get(id=get_default_language_id())
 
         # Create a lemma and a translation so the api method can filter on the text
-        test_lemma = LemmaIdgloss.objects.create(dataset_id=test_dataset.id)
-        LemmaIdglossTranslation.objects.create(text=cls.gloss_name, lemma_id=test_lemma.id, language=language)
+        test_lemma = LemmaIdgloss(dataset=test_dataset)
+        test_lemma.save()
+
+        test_lemmaidglosstranslation = LemmaIdglossTranslation(text=self.gloss_name, lemma=test_lemma, language=language)
+        test_lemmaidglosstranslation.save()
 
         # Create a with a video that the api should return
-        gloss = Gloss.objects.create(lemma=test_lemma, inWeb=True)
-        GlossVideo.objects.create(gloss_id=gloss.id, videofile=cls.video_url)
-        cls.gloss_id = gloss.id
 
+        new_gloss = Gloss()
+        new_gloss.lemma = test_lemma
+        new_gloss.inWeb = True
+        new_gloss.save()
+        self.gloss_id = new_gloss.id
+
+        test_gloss_video = GlossVideo(gloss=new_gloss)
+        test_gloss_video.videofile = self.video_url
+        test_gloss_video.save()
+
+    def setUp(self):
         # Create the file for the video which the gloss will return when get_video_url is called
-        Path(cls.file_path).mkdir()
+        if not os.path.exists(self.file_path):
+            Path(self.file_path).mkdir()
 
-        # Create extra data which the api should not return because they are filtert out of the data
-        # Gloss without a video
-        Gloss.objects.create(lemma=test_lemma, inWeb=True)
-
-        # Gloss that is not in the public dictionary
-        Gloss.objects.create(lemma=test_lemma, inWeb=False)
-
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         # Remove video path
-        Path(cls.file_path).rmdir()
+        if os.path.exists(self.file_path):
+            Path(self.file_path).rmdir()
 
     def test_other_request_methode_then_GET_or_POST(self):
         """

@@ -376,7 +376,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     translations = [t.translation.text for t in gloss.translation_set.filter(language=language).order_by('translation__text')]
                     current_keyword_string = ", ".join(translations)
                 else:
-                    error_string = 'ERROR: Non-existant language specified for Keywords column: ' + human_key
+                    error_string = 'ERROR: Non-existent language specified for Keywords column: ' + human_key
                     errors_found += [error_string]
 
                 if current_keyword_string != new_human_value and new_human_value != 'None' and new_human_value != '':
@@ -398,7 +398,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
                 current_signlanguages_string = str(', '.join([str(lang.name) for lang in gloss.signlanguage.all()]))
 
-                (found, not_found, errors) = check_existance_signlanguage(gloss, new_human_value_list)
+                (found, not_found, errors) = check_existence_signlanguage(gloss, new_human_value_list)
 
                 if len(errors):
                     errors_found += errors
@@ -489,7 +489,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     relations_with_categories.append(':'.join(rel_cat))
                 current_relations_string = ",".join(relations_with_categories)
 
-                (checked_new_human_value, errors) = check_existance_relations(gloss, relations_with_categories, new_human_value_list)
+                (checked_new_human_value, errors) = check_existence_relations(gloss, relations_with_categories, new_human_value_list)
 
                 if len(errors):
                     errors_found += errors
@@ -518,7 +518,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     relations_with_categories.append(':'.join(rel_cat))
                 current_relations_foreign_string = ",".join(relations_with_categories)
 
-                (checked_new_human_value, errors) = check_existance_foreign_relations(gloss, relations_with_categories, new_human_value_list)
+                (checked_new_human_value, errors) = check_existence_foreign_relations(gloss, relations_with_categories, new_human_value_list)
 
                 if len(errors):
                     errors_found += errors
@@ -543,7 +543,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                              MorphologyDefinition.objects.filter(parent_gloss=gloss)]
                 morphemes_string = ", ".join(morphemes)
 
-                (found, not_found, errors) = check_existance_sequential_morphology(gloss, new_human_value_list)
+                (found, not_found, errors) = check_existence_sequential_morphology(gloss, new_human_value_list)
 
                 if len(errors):
                     errors_found += errors
@@ -570,7 +570,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     sim_morphs.append(':'.join(m))
                 simultaneous_morphemes = ','.join(sim_morphs)
 
-                (checked_new_human_value, errors) = check_existance_simultaneous_morphology(gloss, new_human_value_list)
+                (checked_new_human_value, errors) = check_existence_simultaneous_morphology(gloss, new_human_value_list)
 
                 if len(errors):
                     errors_found += errors
@@ -598,7 +598,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     ble_morphs.append(':'.join(m))
                 blend_morphemes = ','.join(ble_morphs)
 
-                (checked_new_human_value, errors) = check_existance_blend_morphology(gloss, new_human_value_list)
+                (checked_new_human_value, errors) = check_existence_blend_morphology(gloss, new_human_value_list)
 
                 if len(errors):
                     errors_found += errors
@@ -637,7 +637,7 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 new_human_value_list_no_dups = list(set(new_human_value_list))
                 sorted_new_tags = sorted(new_human_value_list_no_dups)
 
-                # check for non-existant tags
+                # check for non-existent tags
                 for t in sorted_new_tags:
                     if t in all_tags:
                         pass
@@ -671,17 +671,18 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             elif human_key == 'Notes':
 
-                if new_human_value == 'None' or new_human_value == '':
-                    continue
-
                 sorted_notes_display = get_notes_as_string(gloss)
 
-                (sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = \
-                            check_existence_notes(gloss, new_human_value, note_type_error, note_tuple_error, default_annotationidglosstranslation)
-
+                if new_human_value == 'None' or new_human_value == '':
+                    (sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = ("", [], [], [])
+                else:
+                    (sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = \
+                                check_existence_notes(gloss, new_human_value, note_type_error,
+                                                      note_tuple_error, default_annotationidglosstranslation)
                 if len(new_note_errors):
                     errors_found += new_note_errors
                 elif sorted_notes_display != sorted_new_notes_display:
+
                     differences.append({'pk': gloss_id,
                                         'dataset': current_dataset,
                                         'annotationidglosstranslation':default_annotationidglosstranslation,
@@ -692,8 +693,6 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                                         'new_machine_value': sorted_new_notes_display,
                                         'new_human_value': sorted_new_notes_display})
                 continue
-
-
 
             #If not, find the matching field in the gloss, and remember its 'real' name
             try:
@@ -980,7 +979,7 @@ def check_existence_dialect(gloss, values):
     return (found, not_found, errors)
 
 
-def check_existance_signlanguage(gloss, values):
+def check_existence_signlanguage(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []
@@ -1030,10 +1029,10 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
     new_human_values = []
     new_note_errors = []
 
-    split_human_values = re.findall(r'([^:]+:[^)]*\)),?\s?', values)
-
+    # the space is required in order to identify multiple notes in the input
+    split_human_values = re.split(r', ', values)
     for split_value in split_human_values:
-        take_apart = re.match("([^:]+):\s?\((False|True),(\d),([^)]*)\)", split_value)
+        take_apart = re.match("([^:]+):\s?\((False|True),(\d),(.*)\)", split_value)
         if take_apart:
             (field, name, count, text) = take_apart.groups()
 
@@ -1068,28 +1067,29 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
                          new_human_values]
     sorted_new_notes_list = sorted(new_notes_display)
     sorted_new_notes_display = ", ".join(sorted_new_notes_list)
-
     return (sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error)
 
 
 def get_notes_as_string(gloss):
     activate(LANGUAGES[0][0])
     notes_of_gloss = gloss.definition_set.all()
+
     notes_list = []
     for note in notes_of_gloss:
-        # use the notes field choice machine value rather than the translation
-        note_field = note.role.name
-        note_tuple = (note_field, str(note.published), str(note.count), note.text)
-        notes_list.append(note_tuple)
+        notes_list.append(note.note_tuple())
 
-    notes_display = [role + ':(' + published + ',' + count + ',' + text + ')' for (role, published, count, text) in
-                     notes_list]
+    notes_display = []
+    for (role, published, count, text) in notes_list:
+        # does not use a comprehension because of nested parentheses in role and text fields
+        tuple_reordered = role + ':(' + published + ',' + count + ',' + text + ')'
+        notes_display.append(tuple_reordered)
+
     sorted_notes_list = sorted(notes_display)
     sorted_notes_display = ', '.join(sorted_notes_list)
 
     return sorted_notes_display
 
-def check_existance_sequential_morphology(gloss, values):
+def check_existence_sequential_morphology(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []
@@ -1128,7 +1128,7 @@ def check_existance_sequential_morphology(gloss, values):
 
     return (found, not_found, errors)
 
-def check_existance_simultaneous_morphology(gloss, values):
+def check_existence_simultaneous_morphology(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []
@@ -1178,7 +1178,7 @@ def check_existance_simultaneous_morphology(gloss, values):
     return (checked, errors)
 
 
-def check_existance_blend_morphology(gloss, values):
+def check_existence_blend_morphology(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []
@@ -1238,7 +1238,7 @@ RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Varian
 
 RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, paradigm, antonym, hyponym, hypernym, seealso'
 
-def check_existance_relations(gloss, relations, values):
+def check_existence_relations(gloss, relations, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []
@@ -1303,7 +1303,7 @@ def check_existance_relations(gloss, relations, values):
     return (checked, errors)
 
 
-def check_existance_foreign_relations(gloss, relations, values):
+def check_existence_foreign_relations(gloss, relations, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
     errors = []

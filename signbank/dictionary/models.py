@@ -245,7 +245,14 @@ class Definition(models.Model):
         search_fields = ['gloss__idgloss']
 
     def get_role_display(self):
-        return self.role.name if self.role else self.role
+        return self.role.name if self.role else '-'
+
+    def note_text(self):
+        return self.text
+
+    def note_tuple(self):
+        return (self.get_role_display(), str(self.published), str(self.count), self.note_text())
+
 
 
 class SignLanguage(models.Model):
@@ -1826,6 +1833,7 @@ class Gloss(models.Model):
         else:
             video = GlossVideo(videofile=videofile, gloss=self)
         video.save()
+        video.ch_own_mod_video()
         video.make_small_video()
         video.make_poster_image()
 
