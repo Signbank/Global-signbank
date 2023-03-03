@@ -1017,7 +1017,7 @@ class AjaxTests(TestCase):
         client = Client()
         client.login(username='test-user', password='test-user')
 
-        #Add info of the dataset to the session (normally done in the detail view)
+        #Add info of the dataset to the session (normally done in the details)
         session = client.session
         session['datasetid'] = test_dataset.pk
         session.save()
@@ -1082,7 +1082,7 @@ class FrontEndTests(TestCase):
         self.assertEqual(response.status_code,200)
         self.assertFalse('Annotation ID Gloss' in str(response.content))
 
-        #And we get a 302 for both detail views
+        #And we get a 302 for both details
         response = self.client.get('/dictionary/gloss/'+str(self.public_gloss.pk))
         self.assertEqual(response.status_code,302)
 
@@ -1093,7 +1093,7 @@ class FrontEndTests(TestCase):
         self.client = Client()
         self.client.login(username='test-user', password='test-user')
 
-        #We can now request a detail view
+        #We can now request a details
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         self.assertEqual(response.status_code,200)
         self.assertContains(response,
@@ -1557,13 +1557,13 @@ class HandshapeTests(TestCase):
 
         self.client.login(username='test-user', password='test-user')
 
-        #Add info of the dataset to the session (normally done in the detail view)
+        #Add info of the dataset to the session (normally done in the details)
         self.client.session['datasetid'] = test_dataset.pk
         self.client.session['search_results'] = None
         self.client.session.save()
 
         new_handshape = self.create_handshape()
-        #We can now request a detail view
+        #We can now request a details
         print('Test HandshapeDetailView for new handshape.')
         response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
         self.assertEqual(response.status_code,200)
@@ -1617,7 +1617,7 @@ class HandshapeTests(TestCase):
 
         new_handshape = self.create_handshape()
 
-        #We can now request a detail view
+        #We can now request a details
         print('Test HandshapeDetailView for new handshape.')
         response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
         self.assertEqual(response.status_code,200)

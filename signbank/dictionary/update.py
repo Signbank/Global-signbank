@@ -579,7 +579,7 @@ def update_signlanguage(gloss, field, values):
     # expecting possibly multiple values
 
     # Sign Language and Dialect are interdependent
-    # When updated in Gloss Detail View, checks are made to insure consistency
+    # When updated in Gloss Details, checks are made to insure consistency
     # Because we use Ajax calls to update the data, two values need to be returned in order to also have a side effect
     # on the other field. I.e., Changing the Sign Language may cause Dialects to be removed, and changing the Dialect
     # may cause the Sign Language to be filled in if not already set, with that of the new Dialect
@@ -621,7 +621,7 @@ def update_dialect(gloss, field, values):
         # there is actually only one sign language
         gloss_signlanguage = gloss.lemma.dataset.signlanguage
         for value in numerical_values_converted_to_dialects:
-            # Gloss Detail View pairs the Dialect with the Language in the update menu
+            # Gloss Details pairs the Dialect with the Language in the update menu
             (sign_lang, dia) = value.split('/')
             lang = SignLanguage.objects.get(name=sign_lang)
             if lang != gloss_signlanguage:
@@ -1045,7 +1045,7 @@ def subst_relations(gloss, field, values):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-## This function is called from the Gloss Detail View template when updating Relations to Other Signs
+## This function is called from the Gloss Details template when updating Relations to Other Signs
 def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
     (what, relid) = field.split('_')
