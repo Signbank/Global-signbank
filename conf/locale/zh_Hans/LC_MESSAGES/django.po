@@ -2215,6 +2215,13 @@ msgid "Field Name"
 msgstr "场名称"
 
 #: signbank/dictionary/templates/dictionary/admin_frequency_list.html:261
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:472
+#: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:284
+#: signbank/dictionary/templates/dictionary/gloss_frequency.html:1309
+#: signbank/dictionary/templates/dictionary/gloss_revision_history.html:61
+#: signbank/dictionary/templates/dictionary/gloss_videos.html:107
+#: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:89
+#: signbank/dictionary/templates/dictionary/word.html:86
 msgid "Frequencies"
 msgstr "频率"
 
@@ -2734,16 +2741,12 @@ msgid "Abstract Meaning"
 msgstr "抽象意义"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:10
-#, fuzzy
-#| msgid "List View"
 msgid "Query List View"
-msgstr "列表查看"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:406
-#, fuzzy
-#| msgid "Frequencies"
 msgid "Query View"
-msgstr "频率"
+msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:414
 msgid "No active search or query parameters."
@@ -3273,6 +3276,7 @@ msgstr "公开的界面"
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:288
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:82
 #: signbank/dictionary/templates/dictionary/word.html:78
+#: signbank/feedback/templates/feedback/missingsign.html:98
 msgid "Details"
 msgstr "细节界面"
 
@@ -3285,18 +3289,6 @@ msgstr "细节界面"
 #: signbank/dictionary/templates/dictionary/word.html:82
 msgid "Relations"
 msgstr "相关手势界面"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:472
-#: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:284
-#: signbank/dictionary/templates/dictionary/gloss_frequency.html:1309
-#: signbank/dictionary/templates/dictionary/gloss_revision_history.html:61
-#: signbank/dictionary/templates/dictionary/gloss_videos.html:107
-#: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:89
-#: signbank/dictionary/templates/dictionary/word.html:86
-#, fuzzy
-#| msgid "Frequencies"
-msgid "Frequencies"
-msgstr "频率"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:476
 #: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:288
@@ -4877,12 +4869,6 @@ msgstr ""
 #: signbank/feedback/templates/feedback/missingsign.html:85
 msgid "Upload a video of the sign."
 msgstr ""
-
-#: signbank/feedback/templates/feedback/missingsign.html:98
-#, fuzzy
-#| msgid "Details"
-msgid "Details"
-msgstr "细节界面"
 
 #: signbank/feedback/templates/feedback/missingsign.html:100
 msgid ""

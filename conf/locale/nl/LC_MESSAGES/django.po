@@ -1920,6 +1920,12 @@ msgstr "Veldnaam"
 
 #: signbank/dictionary/templates/dictionary/admin_frequency_graph.html:299
 #: signbank/dictionary/templates/dictionary/admin_frequency_list.html:265
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:547
+#: signbank/dictionary/templates/dictionary/gloss_frequency.html:1309
+#: signbank/dictionary/templates/dictionary/gloss_revision_history.html:61
+#: signbank/dictionary/templates/dictionary/gloss_videos.html:107
+#: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:89
+#: signbank/dictionary/templates/dictionary/word.html:86
 msgid "Frequencies"
 msgstr "Frequenties"
 
@@ -2925,6 +2931,7 @@ msgstr "Publieke Versie"
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:288
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:82
 #: signbank/dictionary/templates/dictionary/word.html:78
+#: signbank/feedback/templates/feedback/missingsign.html:98
 msgid "Details"
 msgstr "Details"
 
@@ -2936,15 +2943,6 @@ msgstr "Details"
 #: signbank/dictionary/templates/dictionary/word.html:82
 msgid "Relations"
 msgstr "Relaties"
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:547
-#: signbank/dictionary/templates/dictionary/gloss_frequency.html:1309
-#: signbank/dictionary/templates/dictionary/gloss_revision_history.html:61
-#: signbank/dictionary/templates/dictionary/gloss_videos.html:107
-#: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:89
-#: signbank/dictionary/templates/dictionary/word.html:86
-msgid "Frequencies"
-msgstr "Frequenties"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:551
 #: signbank/dictionary/templates/dictionary/gloss_frequency.html:1313
@@ -4289,10 +4287,6 @@ msgstr ""
 #: signbank/feedback/templates/feedback/missingsign.html:85
 msgid "Upload a video of the sign."
 msgstr ""
-
-#: signbank/feedback/templates/feedback/missingsign.html:98
-msgid "Details"
-msgstr "Details"
 
 #: signbank/feedback/templates/feedback/missingsign.html:100
 msgid ""

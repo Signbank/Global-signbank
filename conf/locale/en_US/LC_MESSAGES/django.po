@@ -2090,6 +2090,13 @@ msgid "Field Name"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_frequency_list.html:261
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:472
+#: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:284
+#: signbank/dictionary/templates/dictionary/gloss_frequency.html:1309
+#: signbank/dictionary/templates/dictionary/gloss_revision_history.html:61
+#: signbank/dictionary/templates/dictionary/gloss_videos.html:107
+#: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:89
+#: signbank/dictionary/templates/dictionary/word.html:86
 msgid "Frequencies"
 msgstr ""
 
@@ -3063,6 +3070,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:288
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:82
 #: signbank/dictionary/templates/dictionary/word.html:78
+#: signbank/feedback/templates/feedback/missingsign.html:98
 msgid "Details"
 msgstr ""
 
@@ -3074,16 +3082,6 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:85
 #: signbank/dictionary/templates/dictionary/word.html:82
 msgid "Relations"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:472
-#: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:284
-#: signbank/dictionary/templates/dictionary/gloss_frequency.html:1309
-#: signbank/dictionary/templates/dictionary/gloss_revision_history.html:61
-#: signbank/dictionary/templates/dictionary/gloss_videos.html:107
-#: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:89
-#: signbank/dictionary/templates/dictionary/word.html:86
-msgid "Frequencies"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:476
@@ -4526,10 +4524,6 @@ msgstr ""
 
 #: signbank/feedback/templates/feedback/missingsign.html:85
 msgid "Upload a video of the sign."
-msgstr ""
-
-#: signbank/feedback/templates/feedback/missingsign.html:98
-msgid "Details"
 msgstr ""
 
 #: signbank/feedback/templates/feedback/missingsign.html:100
