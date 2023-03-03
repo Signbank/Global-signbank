@@ -85,7 +85,7 @@ urlpatterns = [
     url(r'update_corpora/$',
         permission_required('dictionary.change_gloss')(signbank.frequency.update_corpora)),
 
-    url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
+    url(r'find_and_save_variants/$',login_required(signbank.dictionary.views.find_and_save_variants), name='find_and_save_variants'),
 
     url(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     url(r'package/$', signbank.dictionary.views.package),

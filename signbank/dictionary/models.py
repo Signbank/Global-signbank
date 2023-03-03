@@ -1357,13 +1357,25 @@ class Gloss(models.Model):
         return tagged_homonym_objects
 
     def get_stems(self):
-
         if not self.lemma or not self.lemma.dataset:
             return []
+        annotations = self.annotationidglosstranslation_set.all()
+        if not annotations:
+            return []
         this_sign_language = self.lemma.dataset.default_language
-        stems = [(x.language, x.text[:-2])
-                 for x in self.annotationidglosstranslation_set.all() if x.text[-2] == '-' and x.language == this_sign_language ]
-
+        stems = []
+        for annotation in annotations:
+            if not annotation.language == this_sign_language:
+                continue
+            this_text = annotation.text
+            if len(this_text) < 2:
+                # not long enough to include suffix
+                continue
+            suffix_text = this_text[-2]
+            if suffix_text == '-':
+                # this matches the pattern
+                stem_text = this_text[:-2]
+                stems.append((this_sign_language, stem_text))
         return stems
 
     def gloss_relations(self):

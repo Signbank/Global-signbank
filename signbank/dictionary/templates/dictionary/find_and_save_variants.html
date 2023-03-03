@@ -1,0 +1,41 @@
+{% extends "baselayout.html" %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load i18n %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Find and Save Variants{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block content %}
+
+<h3>{% trans "Pattern Variants" %}</h3>
+
+{% if too_many_datasets %}
+<p>{% trans "Please choose a single dataset to use this functionality." %}</p>
+{% else %}
+<div id="variants_table" style="z-index:0;padding-top: 100px;">
+    <table class="table table-condensed">
+         <thead>
+             <tr>
+                 <th style="width:10em; text-align:left;">Focus Gloss ID</th>
+                 <th style="width:30em; text-align:left;">Focus Gloss Annotations</th>
+                 <th style="width:30em; text-align:left;">Variant Relations (Semantic)</th>
+                 <th style="width:30em; text-align:left;">Candidate Variants (Syntactic)</th>
+             </tr>
+         </thead>
+        <tbody>
+        {% for row, tuple in gloss_pattern_table.items %}
+            <tr>
+                {% for column in tuple %}
+                <td>{{column}}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
