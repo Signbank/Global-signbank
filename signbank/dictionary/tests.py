@@ -2623,6 +2623,9 @@ class testSettings(TestCase):
                 if first_file != second_file:
                     comparison_table_first_not_in_second[first_file][second_file] = []
                     for setting_first_file in all_settings_strings[first_file]:
+                        if setting_first_file in ['SECRET_KEY', 'SWITCH_TO_MYSQL', 'FILE_UPLOAD_MAX_MEMORY_SIZE']:
+                            # skip these, since server specific
+                            continue
                         if setting_first_file not in all_settings_strings[second_file]:
                             comparison_table_first_not_in_second[first_file][second_file].append(setting_first_file)
 
@@ -2631,7 +2634,6 @@ class testSettings(TestCase):
             # the default.py file is part of the installation (should this filename be a setting?)
             # check that other settings files do not contain settings that are not in the default settings file
             if first_file != second_file:
-                print('first file: ', first_file, comparison_table_first_not_in_second[first_file][second_file])
                 self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
 
     def test_settings_field_choice_category(self):
