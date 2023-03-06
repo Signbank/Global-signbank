@@ -1,0 +1,118 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Recent Feedback{% endblocktrans %}
+{% endblock %}
+
+{% block extrahead %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery-1.11.0.min.js"></script>
+    <link href="//vjs.zencdn.net/4.5/video-js.css" rel="stylesheet">
+    <script src="//vjs.zencdn.net/4.5/video.js"></script>
+<style>
+.redline
+{
+    color: #495057;
+    background-color: #fff;
+    border-color-top: #BB2F2C;
+    border-top-width: 2px;
+}
+</style>
+{% endblock %}
+{% block extrajs %}
+<script type='text/javascript'>
+/* reveal a comment, possibly including a video */
+togglecomment = function() {
+  if ($(this).hasClass('showing')) {
+    $(this).next('.commentbody').hide();
+    $(this).removeClass('showing');
+    $(this).find('.indicator').removeClass('ui-icon-minus').addClass('ui-icon-plus');
+  } else {
+    $(this).next('.commentbody').show();
+    $(this).addClass('showing');
+    $(this).find('.indicator').removeClass('ui-icon-plus').addClass('ui-icon-minus');
+  }
+};
+
+$(window).ready(function(){
+ 
+    $('.commenthead').click(togglecomment);
+	
+	$('.commentbody').hide();
+
+});
+</script>
+<script type='text/javascript'>
+    navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    $('#wrap').css({'padding-top': navbarHeight});
+</script>
+{% endblock %}
+
+
+{% block content %}
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+
+  <div id="recent_feedback">
+  <h3>{% trans "Recent Feedback for Selected Datasets" %}</h3>
+  {% if signfb %}
+    <table class="table table-condensed">
+        <tr>
+            <th style="width:180px">{% trans "Date" %}</th>
+            <th style="width:180px;">{% trans "User" %}</th>
+            {%if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
+            <th>{% trans "Annotation ID Gloss" %}</th>
+            <th>{% trans "Comments" %}</th>
+            <th></th>
+            </tr>
+  {% for fb in signfb %}
+        <tr>
+        <td>{{fb.date|date:"d M Y"}}</td>
+        <td>{{fb.user.first_name}} {{fb.user.last_name}}</td>
+        {%if SHOW_DATASET_INTERFACE_OPTIONS %}
+          {% if fb.gloss and fb.gloss.lemma and fb.gloss.lemma.dataset %}
+            <td>{{fb.gloss.lemma.dataset.acronym}}</td>
+          {% else %}
+            <td>{% trans "Not Specified" %}</td>
+          {% endif %}
+        {% endif %}
+          {% if fb.gloss and fb.gloss.annotationidglosstranslation_set.all.count > 0 %}
+            <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.gloss.id}}">{{fb.gloss.annotationidglosstranslation_set.all.first.text}}</a></td>
+            {% elif fb.gloss %}
+            <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{fb.gloss.id}}">{{fb.gloss.annotationidglosstranslation_set.all.first.text}}</a></td>
+          {% endif %}
+            <td>{{fb.comment}}</td>
+            <td>
+                    <button class='delete btn btn-primary' type='submit' value='Delete Comment'
+                            data-toggle='modal' data-target='#delete_comment_sign_{{fb.id}}'>{% trans "Delete" %}</button>
+
+          <div class="modal fade" id="delete_comment_sign_{{fb.id}}" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDeleteFeedbackSign" aria-hidden="true">
+             <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalTitleDeleteFeedbackSign'>{% trans "Delete This Comment" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        <p>{% trans "This action will delete this comment. It cannot be undone." %}</p>
+                     </div>
+                  <form action="{{PREFIX_URL}}/feedback/sign/delete/{{fb.pk}}" method='post'>
+                      {% csrf_token %}
+                      <input type='hidden' name='id' value='deletefeedbacksign_{{fb.pk}}'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                      </div>
+                  </form>
+
+                </div>
+            </div>
+        </div>
+         </td>
+        </tr>
+  {% endfor %}
+    </table>
+  {% endif %}
+  </div>
+<br>
+{% endblock %}
