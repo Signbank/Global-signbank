@@ -275,6 +275,28 @@ select option {
     -webkit-appearance: none;
     -moz-appearance: none;
 }
+
+.button-to-appear-in-edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.copy-button {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.lemma-button {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+    border-radius: 6px;
+}
 </style>
 <style>
 .form-group {
@@ -563,8 +585,64 @@ p {
          <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
          <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>{% trans "Edit Next Gloss" %}</button>
 
-         <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
+         <button id='enable_edit' class='btn btn-default navbar-btn edit-mode'>{% trans "Edit" %}</button>
 
+         {% if perms.dictionary.add_gloss %}
+         <button id='copy_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
+
+          <div class="modal fade" id="copy_gloss_modal" role="dialog" aria-labelledby="#modalGlossCopy" aria-hidden="true">
+             <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalGlossCopy'>{% trans "Copy Gloss" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+                        {% if gloss_is_duplicate %}
+                        <p>{% trans "This gloss is already a duplicate. Please modify the annotation fields before creating a new duplicate." %}</p>
+                        {% else %}
+                        <p>{% trans "This will create a new gloss with identical phonology." %}</p>
+                        {% endif %}
+                     </div>
+                  <form id="copy_gloss" method='get'>
+                      {% csrf_token %}
+                      <table class='table' style='width: 1200px;margin-left:20px;'>
+                         <tr>
+                             <th>{% trans "Source Dataset" %}</th>
+                             <th>{{gloss.lemma.dataset.acronym}}</th>
+                         </tr>
+                         <tr>
+                             <th><label for='dataset'>{% trans "Target Dataset" %}</label></th>
+                             <td><span>
+                                 {% for s_dataset in selected_datasets %}
+                                 {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
+                                 {% if "change_dataset" in dataset_perms %}
+                                 {% if gloss.lemma.dataset == s_dataset or last_used_dataset == s_dataset.acronym %}
+                                <input type="radio" name="dataset"
+                                       id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}" checked>
+                                 {% else %}
+                                 <input type="radio" name="dataset"
+                                        id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}">
+                                 {% endif %}
+                                <label for="dataset_{{s_dataset.id}}">{{ s_dataset.acronym }}</label>
+                                 {% endif %}
+                                 {% endfor %}
+                            </span></td>
+                         </tr>
+                      </table>
+                      <input type='hidden' name='format' value='Copy'>
+                      <input type='hidden' name='value' value='confirmed'>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        {% if not gloss_is_duplicate %}
+                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Copy Create" %}'>
+                        {% endif %}
+                      </div>
+                  </form>
+
+                </div>
+              </div>
+         </div>
+        {% endif %}
     </div>
     {% endif %}
 
@@ -800,13 +878,13 @@ p {
                 </td></tr>
             <tr class="empty_row lemma_buttons" id="lemma-buttons-group" name="lemma-buttons-group"><th></th>
                 <td>
-                    <div id="lemma_buttons" name="lemma_buttons" class="btn-group">
+                    <div id="lemma_buttons" name="lemma_buttons">
                         <button id='show_edit_lemma_form' name='show_edit_lemma_form'
-                                class='btn btn-primary btn-space'>{% trans "Edit Lemma" %}</button>
+                                class='btn btn-primary btn-space lemma-button'>{% trans "Edit Lemma" %}</button>
                         <button id='show_set_lemma_form' name='show_set_lemma_form'
-                                class='btn btn-primary btn-space'>{% trans "Choose Other" %}</button>
+                                class='btn btn-primary btn-space lemma-button'>{% trans "Choose Other" %}</button>
                         <button id='show_create_lemma_form' name='show_create_lemma_form'
-                                class='btn btn-primary btn-space'>{% trans "Create New" %}</button>
+                                class='btn btn-primary btn-space lemma-button'>{% trans "Create New" %}</button>
                     </div>
                 </td></tr>
                 <tr name="lemma_forms_row"><th></th>
@@ -1311,6 +1389,11 @@ p {
                         {% endfor %}
                     </tr>
                     {% endif %}
+                {% elif kind == 'text' %}
+                <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %} class="empty_row"{% endif %}>
+                    <th>{{label}}</th>
+                    <td class="edit edit_text" id='{{name}}' value='{{value}}' colspan="2">{% value value %}</td>
+                </tr>
                 {% else %}
                 <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %} class="empty_row"{% endif %}>
                     <th>{{label}}</th>
@@ -1423,8 +1506,15 @@ p {
                         {{label}}
                     {% endif %}
                     </th>
+                    {% if kind == 'text' %}
+                    <td class="edit edit_text" id='{{name}}' style="width:500px;" value='{{value}}'
+                             colspan="2">{% value value %}</td>
+                    <td/>
+                    {% else %}
                     <td class="edit edit_{{kind}}" id='{{name}}' style="width:500px;" value='{{value}}'>{% value value %}</td>
                     <td/>
+                    {% endif %}
+
                 </tr>
             {% endfor %}
             

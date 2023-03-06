@@ -1626,7 +1626,11 @@ class GlossDetailView(DetailView):
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
-        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
+        gloss_annotations = gl.annotationidglosstranslation_set.all()
+        if gloss_annotations:
+            gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
+        else:
+            gloss_default_annotationidglosstranslation = str(gl.id)
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
@@ -1794,6 +1798,13 @@ class GlossDetailView(DetailView):
         else:
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
 
+        gloss_is_duplicate = False
+        annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
+        for annotation in annotationidglosstranslations:
+            if "-duplicate" in annotation.text:
+                gloss_is_duplicate = True
+        context['gloss_is_duplicate'] = gloss_is_duplicate
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -1804,6 +1815,55 @@ class GlossDetailView(DetailView):
         request.session['query_parameters'] = default_parameters
         request.session.modified = True
         return redirect(settings.PREFIX_URL + '/signs/search/?query')
+
+    def render_to_response(self, context):
+        if self.request.GET.get('format') == 'Copy':
+            return self.copy_gloss(context)
+        else:
+            return super(GlossDetailView, self).render_to_response(context)
+
+    def copy_gloss(self, context):
+        gl = context['gloss']
+        context['active_id'] = gl.id
+
+        annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
+        for annotation in annotationidglosstranslations:
+            if "-duplicate" in annotation.text:
+                # go back to the same page, this is already a duplicate
+                return HttpResponseRedirect('/dictionary/gloss/' + str(gl.id))
+
+        new_gloss = Gloss()
+        dataset_pk = self.request.GET.get('dataset')
+        dataset = Dataset.objects.get(pk=dataset_pk)
+        if gl.lemma.dataset == dataset:
+            setattr(new_gloss, 'lemma', getattr(gl, 'lemma'))
+        else:
+            # need to create a lemma for this gloss in the other dataset
+            new_lemma = LemmaIdgloss(dataset=dataset)
+            new_lemma.save()
+            existing_lemma_translations = gl.lemma.lemmaidglosstranslation_set.all()
+            for lemma_translation in existing_lemma_translations:
+                new_lemma_text = lemma_translation.text + '-duplicate'
+                duplication_lemma_translation = LemmaIdglossTranslation(lemma=new_lemma, language=lemma_translation.language,
+                                                                      text=new_lemma_text)
+                duplication_lemma_translation.save()
+            setattr(new_gloss, 'lemma', new_lemma)
+
+        for field in settings.FIELDS['phonology']:
+            setattr(new_gloss, field, getattr(gl, field))
+        new_gloss.save()
+        new_gloss.creator.add(self.request.user)
+        new_gloss.creationDate = DT.datetime.now()
+        new_gloss.save()
+        annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
+        for annotation in annotationidglosstranslations:
+            new_annotation_text = annotation.text+'-duplicate'
+            duplication_annotation = AnnotationIdglossTranslation(gloss=new_gloss, language=annotation.language, text=new_annotation_text)
+            duplication_annotation.save()
+
+        self.request.session['last_used_dataset'] = dataset.acronym
+
+        return HttpResponseRedirect('/dictionary/gloss/'+str(new_gloss.id) + '?edit')
 
 
 class GlossVideosView(DetailView):
