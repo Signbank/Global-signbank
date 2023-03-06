@@ -475,7 +475,7 @@ class GlossListView(ListView):
         context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
 
         # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and then go to Detail View on the objects
+        # of an extremely long list and then go to Details on the objects
 
         this_page_number = context['page_obj'].number
         this_paginator = context['page_obj'].paginator
@@ -1625,7 +1625,11 @@ class GlossDetailView(DetailView):
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
-        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
+        gloss_annotations = gl.annotationidglosstranslation_set.all()
+        if gloss_annotations:
+            gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
+        else:
+            gloss_default_annotationidglosstranslation = str(gl.id)
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
@@ -1793,16 +1797,72 @@ class GlossDetailView(DetailView):
         else:
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
 
+        gloss_is_duplicate = False
+        annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
+        for annotation in annotationidglosstranslations:
+            if "-duplicate" in annotation.text:
+                gloss_is_duplicate = True
+        context['gloss_is_duplicate'] = gloss_is_duplicate
+
         return context
 
     def post(self, request, *args, **kwargs):
         if request.method != "POST" or not request.POST or request.POST.get('use_default_query_parameters') != 'default_parameters':
             return redirect(reverse('admin_gloss_view'))
-        # set up gloss detail view default parameters here
+        # set up gloss details default parameters here
         default_parameters = request.POST.get('default_parameters')
         request.session['query_parameters'] = default_parameters
         request.session.modified = True
         return redirect(settings.PREFIX_URL + '/signs/search/?query')
+
+    def render_to_response(self, context):
+        if self.request.GET.get('format') == 'Copy':
+            return self.copy_gloss(context)
+        else:
+            return super(GlossDetailView, self).render_to_response(context)
+
+    def copy_gloss(self, context):
+        gl = context['gloss']
+        context['active_id'] = gl.id
+
+        annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
+        for annotation in annotationidglosstranslations:
+            if "-duplicate" in annotation.text:
+                # go back to the same page, this is already a duplicate
+                return HttpResponseRedirect('/dictionary/gloss/' + str(gl.id))
+
+        new_gloss = Gloss()
+        dataset_pk = self.request.GET.get('dataset')
+        dataset = Dataset.objects.get(pk=dataset_pk)
+        if gl.lemma.dataset == dataset:
+            setattr(new_gloss, 'lemma', getattr(gl, 'lemma'))
+        else:
+            # need to create a lemma for this gloss in the other dataset
+            new_lemma = LemmaIdgloss(dataset=dataset)
+            new_lemma.save()
+            existing_lemma_translations = gl.lemma.lemmaidglosstranslation_set.all()
+            for lemma_translation in existing_lemma_translations:
+                new_lemma_text = lemma_translation.text + '-duplicate'
+                duplication_lemma_translation = LemmaIdglossTranslation(lemma=new_lemma, language=lemma_translation.language,
+                                                                      text=new_lemma_text)
+                duplication_lemma_translation.save()
+            setattr(new_gloss, 'lemma', new_lemma)
+
+        for field in settings.FIELDS['phonology']:
+            setattr(new_gloss, field, getattr(gl, field))
+        new_gloss.save()
+        new_gloss.creator.add(self.request.user)
+        new_gloss.creationDate = DT.datetime.now()
+        new_gloss.save()
+        annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
+        for annotation in annotationidglosstranslations:
+            new_annotation_text = annotation.text+'-duplicate'
+            duplication_annotation = AnnotationIdglossTranslation(gloss=new_gloss, language=annotation.language, text=new_annotation_text)
+            duplication_annotation.save()
+
+        self.request.session['last_used_dataset'] = dataset.acronym
+
+        return HttpResponseRedirect('/dictionary/gloss/'+str(new_gloss.id) + '?edit')
 
 
 class GlossVideosView(DetailView):
@@ -2327,7 +2387,7 @@ class MorphemeListView(ListView):
         context['page_number'] = context['page_obj'].number
 
         # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Detail View on the objects
+        # of an extremely long list and go to Details on the objects
 
         if len(self.object_list) > settings.MAX_SCROLL_BAR:
             list_of_objects = context['page_obj'].object_list
@@ -2989,7 +3049,7 @@ class SemanticFieldListView(ListView):
         context['selected_datasets'] = selected_datasets
 
         # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Detail View on the objects
+        # of an extremely long list and go to Details on the objects
 
         if len(self.object_list) > settings.MAX_SCROLL_BAR:
             list_of_objects = context['page_obj'].object_list
@@ -3088,7 +3148,7 @@ class DerivationHistoryListView(ListView):
         context['selected_datasets'] = selected_datasets
 
         # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Detail View on the objects
+        # of an extremely long list and go to Details on the objects
 
         if len(self.object_list) > settings.MAX_SCROLL_BAR:
             list_of_objects = context['page_obj'].object_list
@@ -4126,7 +4186,7 @@ class HandshapeListView(ListView):
         context['handshapescount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
         # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Detail View on the objects
+        # of an extremely long list and go to Details on the objects
 
         list_of_objects = self.object_list
 
@@ -6576,7 +6636,7 @@ def glosslistheader_ajax(request):
 
     if 'HTTP_REFERER' in request.META.keys():
         sortOrderURL = request.META['HTTP_REFERER']
-        sortOrderParameters = sortOrderURL.split('/?sortOrder=')
+        sortOrderParameters = sortOrderURL.split('&sortOrder=')
         if len(sortOrderParameters) > 1:
             sortOrder = sortOrderParameters[1].split('&')[0]
 
@@ -7017,7 +7077,7 @@ class LemmaUpdateView(UpdateView):
             if 'gloss' in path_parms[0]:
                 self.gloss_found = True
                 context['caller'] = 'gloss_detail_view'
-                # caller was Gloss Detail View
+                # caller was Gloss Details
                 import re
                 try:
                     m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
@@ -7030,7 +7090,7 @@ class LemmaUpdateView(UpdateView):
                     self.gloss_found = False
             else:
                 context['caller'] = 'lemma_list'
-        # These are needed for return to the Gloss Detail View
+        # These are needed for return to the Gloss Details
         # They are passed to the POST handling via hidden variables in the template
         context['gloss_id'] = self.gloss_id
         context['gloss_found'] = self.gloss_found
@@ -7134,7 +7194,7 @@ class LemmaUpdateView(UpdateView):
             if self.page_in_lemma_list:
                 return HttpResponseRedirect(self.success_url + '?page='+self.page_in_lemma_list)
             elif self.gloss_found and self.gloss_id:
-                # return to Gloss Detail View
+                # return to Gloss Details
                 gloss_detail_view_url = reverse_lazy('dictionary:admin_gloss_view', kwargs={'pk': self.gloss_id})
                 return HttpResponseRedirect(gloss_detail_view_url)
             else:

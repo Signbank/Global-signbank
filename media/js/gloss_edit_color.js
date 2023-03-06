@@ -231,9 +231,11 @@ function disable_edit() {
     check_phonology_modified();
 
     busy_editing = false;
+    $('.copy-button').show();
 };
 
 function enable_edit() {
+    $('.copy-button').hide();
     $('.edit').editable('enable');
     $('.edit').css('color', 'red');
     $('#edit_message').text('Click on red text to edit  ');

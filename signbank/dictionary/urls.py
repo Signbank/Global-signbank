@@ -85,7 +85,7 @@ urlpatterns = [
     url(r'update_corpora/$',
         permission_required('dictionary.change_gloss')(signbank.frequency.update_corpora)),
 
-    url(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
+    url(r'find_and_save_variants/$',login_required(signbank.dictionary.views.find_and_save_variants), name='find_and_save_variants'),
 
     url(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     url(r'package/$', signbank.dictionary.views.package),
@@ -120,5 +120,7 @@ urlpatterns = [
 
     url(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples),
 
-    url(r'createcitationimage/(?P<pk>\d+)', permission_required('dictionary.change_gloss')(create_citation_image), name='create_citation_image')
+    url(r'createcitationimage/(?P<pk>\d+)', permission_required('dictionary.change_gloss')(create_citation_image), name='create_citation_image'),
+
+    url(r'gloss/api/', signbank.dictionary.views.gloss_api_get_sign_name_and_media_info, name='gloss_api_get_info')
 ]

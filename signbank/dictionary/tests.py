@@ -7,7 +7,7 @@ from signbank.dictionary.models import *
 from signbank.settings.base import *
 
 from django.contrib.auth.models import User, Permission, Group
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from django.test.client import RequestFactory, encode_multipart
 import json
 from django.test import Client
@@ -17,9 +17,13 @@ from django.contrib import messages
 from django.contrib.messages.storage.fallback import FallbackStorage
 from django.contrib.messages.storage.cookie import CookieStorage
 from itertools import *
-
+from pathlib import Path
+from os import path
 
 from guardian.shortcuts import assign_perm
+
+from signbank.video.models import GlossVideo
+from signbank.dictionary.views import gloss_api_get_sign_name_and_media_info
 
 class BasicCRUDTests(TestCase):
 
@@ -1013,7 +1017,7 @@ class AjaxTests(TestCase):
         client = Client()
         client.login(username='test-user', password='test-user')
 
-        #Add info of the dataset to the session (normally done in the detail view)
+        #Add info of the dataset to the session (normally done in the details)
         session = client.session
         session['datasetid'] = test_dataset.pk
         session.save()
@@ -1078,7 +1082,7 @@ class FrontEndTests(TestCase):
         self.assertEqual(response.status_code,200)
         self.assertFalse('Annotation ID Gloss' in str(response.content))
 
-        #And we get a 302 for both detail views
+        #And we get a 302 for both details
         response = self.client.get('/dictionary/gloss/'+str(self.public_gloss.pk))
         self.assertEqual(response.status_code,302)
 
@@ -1089,7 +1093,7 @@ class FrontEndTests(TestCase):
         self.client = Client()
         self.client.login(username='test-user', password='test-user')
 
-        #We can now request a detail view
+        #We can now request a details
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         self.assertEqual(response.status_code,200)
         self.assertContains(response,
@@ -1553,13 +1557,13 @@ class HandshapeTests(TestCase):
 
         self.client.login(username='test-user', password='test-user')
 
-        #Add info of the dataset to the session (normally done in the detail view)
+        #Add info of the dataset to the session (normally done in the details)
         self.client.session['datasetid'] = test_dataset.pk
         self.client.session['search_results'] = None
         self.client.session.save()
 
         new_handshape = self.create_handshape()
-        #We can now request a detail view
+        #We can now request a details
         print('Test HandshapeDetailView for new handshape.')
         response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
         self.assertEqual(response.status_code,200)
@@ -1613,7 +1617,7 @@ class HandshapeTests(TestCase):
 
         new_handshape = self.create_handshape()
 
-        #We can now request a detail view
+        #We can now request a details
         print('Test HandshapeDetailView for new handshape.')
         response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
         self.assertEqual(response.status_code,200)
@@ -1655,7 +1659,7 @@ class HandshapeTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/admin/dictionary/handshape/')
+        request = self.factory.get('/'+settings.ADMIN_URL+'/dictionary/handshape/')
         request.user = self.user
 
         # give the test user permission to delete handshapes
@@ -1841,7 +1845,7 @@ class FieldChoiceTests(TestCase):
                 continue
             first_field_choice_option = field_options.first()
             admin_url_change_suffix_1 = str(first_field_choice_option.id)+\
-                                      '/change/?_changelist_filters=field_exact%3D'+first_field_choice_option.field
+                                      '/change/?_changelist_filters=field__exact%3D'+first_field_choice_option.field
 
             initial_data = dict()
             initial_data['field'] = first_field_choice_option.field
@@ -1850,7 +1854,10 @@ class FieldChoiceTests(TestCase):
             initial_data['field_color'] = first_field_choice_option.field_color
             for language in MODELTRANSLATION_LANGUAGES:
                 name_languagecode = 'name_' + language.replace('-', '_')
-                field_value = getattr(first_field_choice_option,name_languagecode)
+                try:
+                    field_value = getattr(first_field_choice_option,name_languagecode)
+                except KeyError:
+                    continue
                 if not field_value:
                     initial_data[name_languagecode] = 'Default value'
                 else:
@@ -1868,7 +1875,10 @@ class FieldChoiceTests(TestCase):
             update_data['field_color'] = '#' + first_field_choice_option.field_color
             for language in MODELTRANSLATION_LANGUAGES:
                 name_languagecode = 'name_' + language.replace('-', '_')
-                field_value = getattr(first_field_choice_option,name_languagecode)
+                try:
+                    field_value = getattr(first_field_choice_option,name_languagecode)
+                except KeyError:
+                    continue
                 if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
                     update_data[LANGUAGE_FIELD_TO_UPDATE] = 'Test Update Field Choice'
                 elif not field_value:
@@ -1876,7 +1886,11 @@ class FieldChoiceTests(TestCase):
                 else:
                     update_data[name_languagecode] = field_value
 
-            response = self.client.get('/admin/dictionary/fieldchoice/'+admin_url_change_suffix_1, update_data)
+            url_of_field_choice_change = '/'+settings.ADMIN_URL + '/dictionary/fieldchoice/'+admin_url_change_suffix_1
+            print('Attempt to change fieldchoice url: ', url_of_field_choice_change)
+            print('With data: ', update_data)
+
+            response = self.client.get(url_of_field_choice_change, update_data)
             self.assertEqual(response.status_code, 302)
 
             fieldchoice_form = FieldChoiceForm(instance=first_field_choice_option, data=update_data)
@@ -1898,6 +1912,8 @@ class FieldChoiceTests(TestCase):
             self.assertEqual(first_field_choice_option.field_color, initial_data['field_color'])
             for language in MODELTRANSLATION_LANGUAGES:
                 name_languagecode = 'name_' + language.replace('-', '_')
+                if name_languagecode not in update_data.keys():
+                    continue
                 if name_languagecode == LANGUAGE_FIELD_TO_UPDATE:
                     self.assertEqual(getattr(first_field_choice_option,LANGUAGE_FIELD_TO_UPDATE), update_data[LANGUAGE_FIELD_TO_UPDATE])
                 else:
@@ -1937,7 +1953,7 @@ class FieldChoiceTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # give the test user permission to delete field choices
@@ -1988,7 +2004,7 @@ class FieldChoiceTests(TestCase):
         # now set all the choice fields of the gloss to the first choice of FieldChoice
         # it doesn't matter exactly which one, as long as the same one is used to check existence later
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # give the test user permission to delete field choices
@@ -2086,7 +2102,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new definition created: ', new_definition.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2180,7 +2196,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new morphology definition created: ', new_morphology_definition.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2256,7 +2272,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new othermedia created: ', new_othermedia.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2331,7 +2347,7 @@ class FieldChoiceTests(TestCase):
 
         print('TEST new morpheme created: ', new_morpheme.__dict__)
 
-        request = self.factory.get('/admin/dictionary/fieldchoice/')
+        request = self.factory.get('/'+settings.ADMIN_URL + '/dictionary/fieldchoice/')
         request.user = self.user
 
         # # give the test user permission to delete field choices
@@ -2607,6 +2623,9 @@ class testSettings(TestCase):
                 if first_file != second_file:
                     comparison_table_first_not_in_second[first_file][second_file] = []
                     for setting_first_file in all_settings_strings[first_file]:
+                        if setting_first_file in ['SECRET_KEY', 'SWITCH_TO_MYSQL', 'FILE_UPLOAD_MAX_MEMORY_SIZE']:
+                            # skip these, since server specific
+                            continue
                         if setting_first_file not in all_settings_strings[second_file]:
                             comparison_table_first_not_in_second[first_file][second_file].append(setting_first_file)
 
@@ -2615,7 +2634,6 @@ class testSettings(TestCase):
             # the default.py file is part of the installation (should this filename be a setting?)
             # check that other settings files do not contain settings that are not in the default settings file
             if first_file != second_file:
-                print('first file: ', first_file, comparison_table_first_not_in_second[first_file][second_file])
                 self.assertEqual(comparison_table_first_not_in_second[first_file][second_file],[])
 
     def test_settings_field_choice_category(self):
@@ -3467,3 +3485,132 @@ def decode_messages(data):
         hash, value = bits
         return value
     return None
+
+
+class GlossApiGetSignNameAndMediaInfoTests(TestCase):
+
+    @classmethod
+    def setUpTestData(self):
+
+        self.dataset = 0
+        self.results = 50
+        self.search_term = "test_gloss_api"
+        self.gloss_name = 'test_gloss_api'
+        self.gloss_id = 0
+        self.video_url = 'test_video_url_in_gloss_api_tests'
+        self.file_path = path.join(settings.WRITABLE_FOLDER, self.video_url)
+
+        self.factory = RequestFactory()
+
+        # Use a default dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.dataset = test_dataset.id
+
+        # Use default language
+        language = Language.objects.get(id=get_default_language_id())
+
+        # Create a lemma and a translation so the api method can filter on the text
+        test_lemma = LemmaIdgloss(dataset=test_dataset)
+        test_lemma.save()
+
+        test_lemmaidglosstranslation = LemmaIdglossTranslation(text=self.gloss_name, lemma=test_lemma, language=language)
+        test_lemmaidglosstranslation.save()
+
+        # Create a with a video that the api should return
+
+        new_gloss = Gloss()
+        new_gloss.lemma = test_lemma
+        new_gloss.inWeb = True
+        new_gloss.save()
+        self.gloss_id = new_gloss.id
+
+        test_gloss_video = GlossVideo(gloss=new_gloss)
+        test_gloss_video.videofile = self.video_url
+        test_gloss_video.save()
+
+    def setUp(self):
+        # Create the file for the video which the gloss will return when get_video_url is called
+        if not os.path.exists(self.file_path):
+            Path(self.file_path).mkdir()
+
+    def tearDown(self):
+        # Remove video path
+        if os.path.exists(self.file_path):
+            Path(self.file_path).rmdir()
+
+    def test_other_request_methode_then_GET_or_POST(self):
+        """
+        Check if an error is returned with another request methode than GET or POST
+        """
+        data = {"results": self.results}
+        response = self.client.put(reverse('dictionary:gloss_api_get_info'), data, format='json')
+        self.assertEqual(response.status_code, 405)
+
+    def test_no_data_set_selected(self):
+        """
+        Check if an error is returned if no dataset is selected.
+        """
+        assert_json = '{"Error": "No dataset selected"}'
+        data = {"search": self.search_term, "results": self.results}
+        response = self.client.get(reverse('dictionary:gloss_api_get_info'), data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, assert_json)
+
+    def test_no_search_term_provided(self):
+        """
+        Check if an error is returned if no search term is provided.
+        """
+        assert_json = '{"Error": "No search term found"}'
+        data = {"dataset": self.dataset, "results": self.results}
+        response = self.client.get(reverse('dictionary:gloss_api_get_info'), data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, assert_json)
+
+    def test_no_results_amount_given(self):
+        """
+        Check if an error is returned if the amount of results is not provided.
+        """
+        assert_json = '{"Error": "No amount of search results given"}'
+        data = {"dataset": self.dataset, "search": self.search_term}
+        response = self.client.get(reverse('dictionary:gloss_api_get_info'), data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertJSONEqual(response.content, assert_json)
+
+    def test_json_data_structure(self):
+        """
+        Check that if the returned json is correct if the dataset and the search term are provided
+        """
+        assert_json = []
+        sign_json = {
+                "sign_name": self.gloss_name,
+                "image_url": "",
+                "video_url": self.video_url
+                }
+        assert_json.append(sign_json)
+
+        data = {"dataset": self.dataset, "search": self.gloss_name, "results": self.results}
+        response = self.client.get(reverse('dictionary:gloss_api_get_info'), data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, assert_json)
+
+    def test_POST_retrieve_gloss_data_from_list_of_ids(self):
+        """
+        Check if POST request with list of sign id's return json object with media info of those signs
+        """
+        assert_json = []
+        sign_json = {
+                "sign_name": self.gloss_name,
+                "image_url": "",
+                "video_url": self.video_url
+                }
+        assert_json.append(sign_json)
+
+        data = json.dumps([self.gloss_id])
+
+        request = self.factory.post(reverse('dictionary:gloss_api_get_info'), data=data, content_type='application/json')
+
+        response = gloss_api_get_sign_name_and_media_info(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, assert_json)

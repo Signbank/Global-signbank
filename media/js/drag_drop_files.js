@@ -132,7 +132,12 @@ function checkinput(e, file_type, file_placeholder) {
  * @param {div} typeGallery the gallery that shows file previews
  */
 function handleByButton(files, dropContainerTitle, fileType, fileTypeP, inputArea, typeGallery) {
-    if (files[0].type == fileType) {
+    if (files[0].size > 5242880){
+        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the file size under 5 MB</p>";
+        inputArea.value = '';
+        removeUploads(true, inputArea, dropContainerTitle, typeGallery)
+    }
+    else if (files[0].type == fileType) {
         dropContainerTitle.classList.add('hide');
         previewFile(files[0], fileTypeP, typeGallery)
     }
@@ -173,12 +178,18 @@ function handleVideoByButton(files) {
  */
 function handleDrop(e, fileType, fileTypeT, fileTypeP, inputArea, typeGallery, dropContainerTitle){
     files = e.dataTransfer.files
-    if (checkinput(e, fileType, fileTypeT) == "Drop") {
+    if (files[0].size > 5242880){
+        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the file size under 5 MB</p>";
+        inputArea.value = '';
+        removeUploads(true, inputArea, dropContainerTitle, typeGallery)
+    }
+    else if (checkinput(e, fileType, fileTypeT) == "Drop") {
         inputArea.value = '';
         removeUploads(true, inputArea, dropContainerTitle, typeGallery)
         dropContainerTitle.classList.add('hide');
         previewFile(files[0], fileTypeP, typeGallery)
         inputArea.files = files
+        dropContainerTitle.innerHTML = "Drop "+fileTypeT+" here";
     }
     else if (typeGallery.childNodes.length > 0){
         if (!dropContainerTitle.classList.contains('hide')){
@@ -243,3 +254,4 @@ function previewFile(file, fileTypeP, typeGallery) {
         typeGallery.appendChild(prev)
     }
 }
+
