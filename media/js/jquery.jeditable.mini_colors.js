@@ -271,7 +271,7 @@
 						if (settings.cancel.match(/>$/)) {
 							var cancel = $(settings.cancel);
 							cancel.css({
-                                'display': 'inline-block', 'position': 'absolute', 'left': settings.width-100
+                                'display': 'inline-block', 'position': 'absolute', 'left': settings.width-50
                             });
 						} else {
 							var cancel = $('<button type="cancel" />');
@@ -301,7 +301,7 @@
 					}
 					input.attr('autocomplete', 'off');
 					input.css({
-                                'display': 'inline-block', 'position': 'absolute', 'width': '320px'
+                                'display': 'inline-block', 'position': 'relative', 'width': '420px'
                     });
 					$(this).append(input);
 					return (input);
