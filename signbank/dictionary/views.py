@@ -1,7 +1,9 @@
-from django.http import HttpResponse, HttpResponseRedirect
+from django.conf import empty
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed
 from django.shortcuts import render, get_object_or_404, redirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import login_required
+from django.utils.datastructures import MultiValueDictKeyError
 from tagging.models import Tag, TaggedItem
 from django.utils.http import urlquote
 from django.contrib import messages
@@ -9,6 +11,7 @@ from pathlib import Path
 
 import csv
 import time
+from signbank.dictionary.adminviews import order_queryset_by_sort_order
 
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
@@ -32,8 +35,9 @@ from signbank.settings.base import *
 from django.utils.translation import override, ugettext_lazy as _
 
 from urllib.parse import urlencode, urlparse
-from wsgiref.util import FileWrapper
+from wsgiref.util import FileWrapper, request_uri
 import datetime as DT
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
 
 
@@ -2338,117 +2342,113 @@ def add_handshape_image(request):
     return redirect(url)
 
 
+def gloss_annotations(this_gloss):
+    # this function is used for display of the annotations in the find_and_save_variants template
+    # if more than one translation language is available, the language prefixes the annotation translation text
+    # a comma-separated string of the translations is returned
+    translations = []
+    count_dataset_languages = this_gloss.lemma.dataset.translation_languages.all().count() \
+        if this_gloss.lemma and this_gloss.lemma.dataset else 0
+    for translation in this_gloss.annotationidglosstranslation_set.all():
+        if settings.SHOW_DATASET_INTERFACE_OPTIONS and count_dataset_languages > 1:
+            translations.append("{}: {}".format(translation.language, translation.text))
+        else:
+            translations.append("{}".format(translation.text))
+    return ", ".join(translations)
+
+
 def find_and_save_variants(request):
 
-    variant_pattern_glosses = Gloss.objects.filter(annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('lemma')[:10]
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    gloss_table_prefix = '<!DOCTYPE html>\n' \
-                         '<html>\n' \
-                         '<body>\n' \
-                         '<table style="font-size: 11px; border-collapse:separate; border-spacing: 2px;" border="1">\n' \
-                         '<thead>\n' \
-                         '<tr>\n' \
-                         '<th style="width:10em; text-align:left;">Focus Gloss</th>\n' \
-                         '<th style="width:15em; text-align:left;">Other Relations</th>\n' \
-                         '<th style="width:20em; text-align:left;">Variant Relations (PRE)</th>\n' \
-                         '<th style="width:20em; text-align:left;">Candidate Variants</th>\n' \
-                         '<th style="width:25em; text-align:left;">Variant Relations (POST)</th>\n' \
-                          '</tr>\n' \
-                         '</thead>\n' \
-                         '<tbody>\n'
-    gloss_table_suffix = '</tbody>\n' \
-                         '</table>\n' \
-                         '</body>\n' \
-                         '</html>'
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
 
     gloss_pattern_table = dict()
-    gloss_table_rows = ''
 
-    for gloss in variant_pattern_glosses:
+    if selected_datasets.count() > 1:
+        # because of the way the variant suffixes are computed, we only want to allow this over one dataset
+        # since the variants are obtained indirectly via a Gloss method for each gloss
+        # and these are syntactic patterns
+        # we don't want to accidentally have variants from different datasets
+        return render(request, 'dictionary/find_and_save_variants.html',
+                      {'gloss_pattern_table': gloss_pattern_table,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+                       'too_many_datasets': True
+                       })
 
-        dict_key = int(gloss.id)
-        gloss_pattern_table[dict_key] = '<td>' + str(gloss.idgloss) + '</td>'
-        other_relations_of_sign = gloss.other_relations()
+    # first get all the glosses from the (single) selected dataset that match the syntactical variant pattern
+    variant_pattern_glosses = Gloss.objects.filter(lemma__dataset__in=selected_datasets,
+                                                   annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('lemma')
 
-        if other_relations_of_sign:
+    # each of these, called the focus gloss, will have a row in a table in the template
+    # if the focus gloss has syntactic variants
+    # construct here the columns for the focus gloss row
+    for focus_gloss in variant_pattern_glosses:
+        dict_key = focus_gloss.id
 
-            gloss_pattern_table[dict_key] += '<td>'
+        # the first row shows the annotations of the focus gloss (optionally prefaced by language)
+        # these will have the variant pattern (for at least one of the languages)
+        col1 = gloss_annotations(focus_gloss)
 
-            for x in other_relations_of_sign:
-                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
+        # obtain any other relations the focus gloss is involved in
+        other_relations_of_sign = focus_gloss.other_relations()
 
-            gloss_pattern_table[dict_key] += '</td>'
-
-        else:
-            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
-
-        variant_relations_of_sign = gloss.variant_relations()
+        # variants may also exist as saved relations (rather than syntactic patterns)
+        # these are put in a column in the table
+        variant_relations_of_sign = [r.target for r in focus_gloss.variant_relations()]
 
         if variant_relations_of_sign:
-
-            gloss_pattern_table[dict_key] += '<td>'
-
-            for x in variant_relations_of_sign:
-                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
-
-            gloss_pattern_table[dict_key] += '</td>'
-
+            col3 = ' || '.join(gloss_annotations(g) for g in variant_relations_of_sign)
         else:
-            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
+            col3 = ' '
 
+        # both of these need to be excluded from any matches below
+        other_relation_objects = [x.target.id for x in other_relations_of_sign]
+        variant_relation_objects = [x.id for x in variant_relations_of_sign]
 
-        other_relation_objects = [x.target for x in other_relations_of_sign]
-        variant_relation_objects = [x.target for x in variant_relations_of_sign]
-
+        # now look for other glosses in the dataset that match the stem of the variant
+        # (i.e., remove the -A, -B, -C, ... and look for the first part (stem), but with a different suffix)
+        # exclude other relations and saved variant relations
         # Build query
-        this_sign_stems = gloss.get_stems()
+        this_sign_stems = focus_gloss.get_stems()
+        if not this_sign_stems:
+            continue
         queries = []
         for this_sign_stem in this_sign_stems:
+            # the stems are multilingual, for each language of the dataset
+            # stored as (language, text) tuples
             this_matches = r'^' + re.escape(this_sign_stem[1]) + r'\-[A-Z]$'
             queries.append(Q(annotationidglosstranslation__text__regex=this_matches,
-                             dataset=gloss.dataset, annotationidglosstranslation__language=this_sign_stem[0]))
+                             lemma__dataset=focus_gloss.lemma.dataset,
+                             annotationidglosstranslation__language=this_sign_stem[0]))
         query = queries.pop()
         for q in queries:
             query |= q
+        candidate_variants = Gloss.objects.filter(query).distinct().exclude(id=focus_gloss.id).exclude(
+            id__in=other_relation_objects).exclude(id__in=variant_relation_objects)
 
-        candidate_variants = Gloss.objects.filter(query).distinct().exclude(idgloss=gloss).exclude(
-            idgloss__in=other_relation_objects).exclude(idgloss__in=variant_relation_objects)
+        if not candidate_variants:
+            # if no syntactical variants were found, do not put this gloss in the table
+            continue
 
-        if candidate_variants:
-            gloss_pattern_table[dict_key] += '<td>'
+        # for each of the variants, display its annotations (possibly with language)
+        col4 = ' || '.join(gloss_annotations(x) for x in candidate_variants)
 
-            for x in candidate_variants:
-                gloss_pattern_table[dict_key] += str(x.idgloss) + ' '
+        gloss_pattern_table[dict_key] = (dict_key, col1, col3, col4)
 
-            gloss_pattern_table[dict_key] += '</td>'
-
-        else:
-            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
-
-
-        for target in candidate_variants:
-
-            rel = Relation(source=gloss, target=target, role='variant')
-            rel.save()
-
-        updated_variants = gloss.variant_relations()
-
-        if updated_variants:
-
-            gloss_pattern_table[dict_key] += '<td>'
-
-            for x in updated_variants:
-                gloss_pattern_table[dict_key] += str(x.target) + '&nbsp;(' + str(x.role) + ') '
-
-            gloss_pattern_table[dict_key] += '</td>'
-
-        else:
-            gloss_pattern_table[dict_key] += '<td>&nbsp;</td>'
-
-        gloss_table_rows = gloss_table_rows + '<tr>' + gloss_pattern_table[dict_key] + '</tr>\n'
-
-
-    return HttpResponse(gloss_table_prefix+gloss_table_rows+gloss_table_suffix)
+    return render(request, 'dictionary/find_and_save_variants.html',
+                  {'gloss_pattern_table': gloss_pattern_table,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+                   'too_many_datasets': False
+                   })
 
 
 def get_unused_videos(request):
@@ -2867,3 +2867,62 @@ def gif_prototype(request):
     return render(request,'dictionary/gif_prototype.html')
 
 
+@csrf_exempt
+def gloss_api_get_sign_name_and_media_info(request):
+    """
+    API endpoint for the sign app that returns a json object with all the signs names and urls
+    """
+
+    dataset = 0
+    max_number_of_results = 100
+
+    # Make sure that other request options then the intended one are blocked
+    if request.method not in ('GET', 'POST'):
+        return HttpResponseNotAllowed(
+                json.dumps({"Error": "Tried anohter request methoded then GET or POST, please only use GET or POST for this endpoint."}),
+                content_type="application/json")
+
+    # Get all glosses that are in the given list
+    if request.method == 'POST':
+        id_list = json.loads(request.body.decode('utf-8'))
+
+        glosses = Gloss.objects \
+            .filter(id__in=id_list) \
+            .filter(inWeb=True) \
+            .order_by('id').distinct()[0:max_number_of_results]
+
+    elif request.method == 'GET':
+
+        # Get the dataset that is used to return the sign of the right signlanguage like NGT
+        try:
+            dataset = request.GET['dataset']
+        except MultiValueDictKeyError:
+            return HttpResponseBadRequest(json.dumps({"Error": "No dataset selected"}), content_type="application/json")
+
+        # Try to get the results data for the query. This variable dictates how many results are allowed to be return
+        # If the results variable is not set in the GET request return a error
+        try:
+            max_number_of_results = int(request.GET['results'])
+        except MultiValueDictKeyError:
+            return HttpResponseBadRequest(json.dumps({"Error": "No amount of search results given"}), content_type="application/json")
+
+        # Get the search item. This is the name of the sign that the user wants to find
+        try:
+            search = request.GET['search']
+        except MultiValueDictKeyError:
+            return HttpResponseBadRequest(json.dumps({"Error": "No search term found"}), content_type="application/json")
+
+        # Run the query to get all the gloss data in a list
+        glosses = Gloss.objects \
+            .filter(inWeb=True) \
+            .filter(lemma__lemmaidglosstranslation__text__startswith=search) \
+            .filter(lemma__dataset=dataset) \
+            .order_by('lemma__lemmaidglosstranslation__text')[0:max_number_of_results]
+
+    response = [
+            {'sign_name': str(gloss),
+             'video_url': gloss.get_video_url(),
+             'image_url': gloss.get_image_url()}
+            for gloss in glosses if gloss.get_video_url()]
+
+    return HttpResponse(json.dumps(response), content_type="application/json")

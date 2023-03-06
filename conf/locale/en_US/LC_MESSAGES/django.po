@@ -1402,7 +1402,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Semantics"
 msgid "Semantic Field"
-msgstr "Morphosyntax"
+msgstr "Semantics"
 
 #: signbank/dictionary/models.py:690
 #, fuzzy
@@ -1426,7 +1426,7 @@ msgid "Valence"
 msgstr ""
 
 #: signbank/dictionary/models.py:705
-msgid "Conception Concept Set"
+msgid "Concepticon Concept Set"
 msgstr ""
 
 #: signbank/dictionary/models.py:709
@@ -2072,7 +2072,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:1076
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:590
 msgid "Semantics"
-msgstr "Morphosyntax"
+msgstr "Semantics"
 
 #: signbank/dictionary/templates/dictionary/admin_frequency_list.html:253
 msgid "Hide Empty Frequencies"
@@ -2090,6 +2090,13 @@ msgid "Field Name"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_frequency_list.html:261
+#: signbank/dictionary/templates/dictionary/gloss_detail.html:472
+#: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:284
+#: signbank/dictionary/templates/dictionary/gloss_frequency.html:1309
+#: signbank/dictionary/templates/dictionary/gloss_revision_history.html:61
+#: signbank/dictionary/templates/dictionary/gloss_videos.html:107
+#: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:89
+#: signbank/dictionary/templates/dictionary/word.html:86
 msgid "Frequencies"
 msgstr ""
 
@@ -2971,7 +2978,7 @@ msgid "Signbank: Derivation History Details"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/derivationhistory_detail.html:22
-msgid "Derivation History Detail View"
+msgid "Derivation History Details"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/derivationhistory_detail.html:29
@@ -3063,7 +3070,8 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:288
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:82
 #: signbank/dictionary/templates/dictionary/word.html:78
-msgid "Detail View"
+#: signbank/feedback/templates/feedback/missingsign.html:98
+msgid "Details"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:468
@@ -3073,17 +3081,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/gloss_videos.html:103
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:85
 #: signbank/dictionary/templates/dictionary/word.html:82
-msgid "Relations View"
-msgstr ""
-
-#: signbank/dictionary/templates/dictionary/gloss_detail.html:472
-#: signbank/dictionary/templates/dictionary/gloss_detail_preview.html:284
-#: signbank/dictionary/templates/dictionary/gloss_frequency.html:1309
-#: signbank/dictionary/templates/dictionary/gloss_revision_history.html:61
-#: signbank/dictionary/templates/dictionary/gloss_videos.html:107
-#: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:89
-#: signbank/dictionary/templates/dictionary/word.html:86
-msgid "Frequency View"
+msgid "Relations"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:476
@@ -3102,7 +3100,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/gloss_videos.html:114
 #: signbank/dictionary/templates/dictionary/related_signs_detail_view.html:96
 #: signbank/dictionary/templates/dictionary/word.html:94
-msgid "Videos View"
+msgid "Videos"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:489
@@ -4119,20 +4117,20 @@ msgid "Signbank: Semantic Field Details"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/semanticfield_detail.html:22
-msgid "Semantic Field Detail View"
+msgid "Semantic Field Details"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/semanticfield_detail.html:29
 #, fuzzy
 #| msgid "Semantics"
 msgid "Semantic Fields List"
-msgstr "Morphosyntax"
+msgstr "Semantics"
 
 #: signbank/dictionary/templates/dictionary/semanticfield_detail.html:39
 #, fuzzy
 #| msgid "Semantics"
 msgid "Semantic Field "
-msgstr "Morphosyntax"
+msgstr "Semantics"
 
 #: signbank/dictionary/templates/dictionary/unassigned_glosses.html:7
 msgid "Signbank: Unassigned Glosses"
@@ -4193,7 +4191,7 @@ msgid "Return to Lemma List"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/update_lemma.html:54
-msgid "Return to Gloss Detail View"
+msgid "Return to Gloss Details"
 msgstr ""
 
 #: signbank/dictionary/templates/dictionary/update_result.html:9
@@ -4526,10 +4524,6 @@ msgstr ""
 
 #: signbank/feedback/templates/feedback/missingsign.html:85
 msgid "Upload a video of the sign."
-msgstr ""
-
-#: signbank/feedback/templates/feedback/missingsign.html:98
-msgid "Details"
 msgstr ""
 
 #: signbank/feedback/templates/feedback/missingsign.html:100

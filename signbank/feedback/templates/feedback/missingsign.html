@@ -1,5 +1,6 @@
 {% extends "baselayout.html" %}
 {% load i18n %}
+{% load annotation_idgloss_translation %}
 {% load stylesheet %}
 {% load bootstrap3 %}
 {% block bootstrap3_title %}
@@ -19,36 +20,19 @@ $(document).ready(function(){
        return false;
     });
     $("#videoupload").hide();
-    
-    
-    /* the choice of one, two together or two apart hands
-       determines whether some form fields are hidden */
-       
-    $("#id_handform").change(function() {
-       if ($(this).val() == "1") {
-           $("#relativelocationdiv").hide();
-           $("#althandshapediv").hide();
-           $("#handinteractiondiv").hide();
-       } else if ($(this).val() == "2") {
-           $("#relativelocationdiv").hide();
-           $("#althandshapediv").show();
-           $("#handinteractiondiv").show();
-       } else {
-           $("#relativelocationdiv").show();
-           $("#althandshapediv").show();
-           $("#handinteractiondiv").show();
-       }
+
+    $("#togglesignlanguagebutton").click(function() {
+       $("#signlanguage").toggle();
        return false;
-    }).change();
+    });
+    $("#signlanguage").hide();
+
 });
 </script>
 {% endblock %}
- 
- 
-
 
 {% block content %}
-  <div class="col-md-6 col-md-offset-3">
+  <div class="col-md-5 col-md-offset-1">
       
       <h2>{% trans "Missing Sign Feedback" %}</h2>
       
@@ -76,8 +60,30 @@ $(document).ready(function(){
     boxes at the bottom of the form.
     {% endblocktrans %}</p>
 
-    <button class='btn btn-default' id="togglevideobutton">{% trans "Video Comment" %}</button>
-    
+        <button class='btn btn-default' id="togglesignlanguagebutton">{% trans "Sign Language" %}</button>
+        <button class='btn btn-default' id="togglevideobutton">{% trans "Video Comment" %}</button>
+
+
+     <fieldset id="signlanguage">
+      <legend>{% trans "Sign Language" %}</legend>
+      <div id="{{form.signlanguage.name}}div">
+        <p>{% trans "What is the sign language of the missing sign?" %}</p>
+        {% if form.signlanguage.errors %}{{form.signlanguage.errors}}{% endif %}
+        {% bootstrap_field form.signlanguage show_label=False %}
+
+      </div>
+      <div id="datasets_for_signlanguage" class="col-md-10 col-md-offset-1">
+          <table class='table table-condensed'>
+              <tr><th style="width:300px;">{% trans "Sign Language" %}</th><th style="width:800px;">{% trans "Selected Datasets" %}</th></tr>
+          {% for signlang, datasets in signlanguage_to_dataset.items %}
+            <tr><td>{{signlang}}</td>
+                <td>{% for dsname,dsacronym in datasets %}{{dsname}} ({{dsacronym}}){% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+          {% endfor %}
+          </table>
+      </div>
+    </fieldset>
+
+
  <fieldset id="videoupload">
   <legend>{% trans "Video Upload" %}</legend>
   <div id="{{form.video.name}}div">
@@ -85,7 +91,7 @@ $(document).ready(function(){
     <p>{% trans "Upload a video of the sign." %}</p>
     {% if form.video.errors %}{{form.video.errors}}{% endif %}
     {% bootstrap_field form.video show_label=False %}
-       
+
     <p>{% blocktrans trimmed %}
         NOTE: Video files can be quite large, and may take a long time to send.
     Please be patient when submitting this feedback.
@@ -120,7 +126,7 @@ $(document).ready(function(){
   <input class='btn btn-primary' type="submit" value='{% trans "Submit Feedback" %}' class="submit" />
 </div>
 </form>
-
+<br>
 </div>
   {% endif %}
 {% endblock %}

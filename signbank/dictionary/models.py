@@ -245,7 +245,14 @@ class Definition(models.Model):
         search_fields = ['gloss__idgloss']
 
     def get_role_display(self):
-        return self.role.name if self.role else self.role
+        return self.role.name if self.role else '-'
+
+    def note_text(self):
+        return self.text
+
+    def note_tuple(self):
+        return (self.get_role_display(), str(self.published), str(self.count), self.note_text())
+
 
 
 class SignLanguage(models.Model):
@@ -566,7 +573,7 @@ class Gloss(models.Model):
                        ('can_publish', 'Can publish signs and definitions'),
                        ('can_delete_unpublished', 'Can delete unpub signs or defs'),
                        ('can_delete_published', 'Can delete pub signs and defs'),
-                       ('view_advanced_properties', 'Include all properties in sign detail view'),
+                       ('view_advanced_properties', 'Include all properties in sign details'),
                        )
 
     def __str__(self):
@@ -878,7 +885,7 @@ class Gloss(models.Model):
                                           verbose_name=_("Valence"),
                                            related_name="valence")
 
-    concConcSet = models.CharField(_("Conception Concept Set"), null=True, blank=True, max_length=300)
+    concConcSet = models.CharField(_("Concepticon Concept Set"), null=True, blank=True, max_length=300)
 
     # Frequency fields
     tokNo = models.IntegerField(_("Number of Occurrences"), null=True, blank=True)
@@ -1277,7 +1284,7 @@ class Gloss(models.Model):
 
     def pattern_variants(self):
 
-        # this function is used in Frequency View
+        # this function is used in Frequencies
         # the self object is included in the results
 
         # Build query
@@ -1350,13 +1357,25 @@ class Gloss(models.Model):
         return tagged_homonym_objects
 
     def get_stems(self):
-
         if not self.lemma or not self.lemma.dataset:
             return []
+        annotations = self.annotationidglosstranslation_set.all()
+        if not annotations:
+            return []
         this_sign_language = self.lemma.dataset.default_language
-        stems = [(x.language, x.text[:-2])
-                 for x in self.annotationidglosstranslation_set.all() if x.text[-2] == '-' and x.language == this_sign_language ]
-
+        stems = []
+        for annotation in annotations:
+            if not annotation.language == this_sign_language:
+                continue
+            this_text = annotation.text
+            if len(this_text) < 2:
+                # not long enough to include suffix
+                continue
+            suffix_text = this_text[-2]
+            if suffix_text == '-':
+                # this matches the pattern
+                stem_text = this_text[:-2]
+                stems.append((this_sign_language, stem_text))
         return stems
 
     def gloss_relations(self):
@@ -1826,6 +1845,7 @@ class Gloss(models.Model):
         else:
             video = GlossVideo(videofile=videofile, gloss=self)
         video.save()
+        video.ch_own_mod_video()
         video.make_small_video()
         video.make_poster_image()
 

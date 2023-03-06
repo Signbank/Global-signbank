@@ -143,16 +143,16 @@
            {% endfor %}
 
            {% for fieldname,column in column_headers %}
-           {% with minfield="-"|add:column %}
+           {% with minfield="-"|add:fieldname %}
            <th class="field_{{fieldname}}">
              <div class="col_sort_arrowheads">
              <a href="#" onclick="do_sort_column('{{fieldname}}','asc', 'adminsearch')">
-               {% if sortOrder and sortOrder == column %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+               {% if sortOrder and sortOrder == fieldname %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
              </a>
              <a href="#" onclick="do_sort_column('{{fieldname}}','desc', 'adminsearch')">
                {% if sortOrder and sortOrder == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
              </a>
-             {% if sortOrder and sortOrder == minfield or sortOrder and sortOrder == column  %}
+             {% if sortOrder and sortOrder == minfield or sortOrder and sortOrder == fieldname  %}
                <a href="#" onclick="do_sort_column('{{fieldname}}','del', 'adminsearch')">x</a>
              {% endif %}
              </div>

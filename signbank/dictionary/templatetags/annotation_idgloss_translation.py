@@ -27,8 +27,13 @@ def get_annotation_idgloss_translation_no_default(gloss, language):
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
     if annotationidglosstranslations is not None and len(annotationidglosstranslations) > 0:
         return annotationidglosstranslations[0].text
-    else:
-        return ''
+    if not (gloss.lemma or gloss.lemma.dataset):
+        return ""
+    gloss_translation_languages = gloss.lemma.dataset.translation_languages.all()
+    if language not in gloss_translation_languages:
+        return ""
+    # one of the dataset translation languages has no annotation for this gloss
+    return str(gloss.id)
 
 @register.filter
 def get_default_annotation_idgloss_translation(gloss):
@@ -58,6 +63,19 @@ def get_lemma_idgloss_translation(lemma, language):
     if lemmaidglosstranslations is not None and len(lemmaidglosstranslations) > 0:
         return lemmaidglosstranslations[0].text
     return ""
+
+@register.filter
+def get_lemma_idgloss_translation_no_default(lemma, language):
+    lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
+    if lemmaidglosstranslations is not None and len(lemmaidglosstranslations) > 0:
+        return lemmaidglosstranslations[0].text
+    if not lemma.dataset:
+        return ""
+    lemma_translation_languages = lemma.dataset.translation_languages.all()
+    if language not in lemma_translation_languages:
+        return ""
+    # one of the dataset translation languages has no annotation for this lemma
+    return str(lemma.id)
 
 
 @register.filter

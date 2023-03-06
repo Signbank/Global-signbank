@@ -554,8 +554,8 @@ def update_annotation_idgloss(gloss, field, value):
     language = Language.objects.get(id=get_default_language_id())
     try:
         language_code_2char = field[len('annotation_idgloss_'):]
-        language = Language.objects.filter(language_code_2char=language_code_2char)[0]
-    except:
+        language = Language.objects.filter(language_code_2char=language_code_2char).first()
+    except ObjectDoesNotExist:
         pass
 
     # value might be empty string
@@ -563,8 +563,13 @@ def update_annotation_idgloss(gloss, field, value):
     if value.startswith(whitespace) or value.endswith(whitespace):
         value = value.strip()
 
-    annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
-    original_value = annotation_idgloss_translation.text
+    try:
+        annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
+        original_value = annotation_idgloss_translation.text
+    except ObjectDoesNotExist:
+        # create an empty annotation for this gloss and language
+        annotation_idgloss_translation = AnnotationIdglossTranslation(gloss=gloss, language=language)
+        original_value = ''
 
     if value == '':
         # don't allow user to set Annotation ID Gloss to empty
@@ -579,7 +584,7 @@ def update_signlanguage(gloss, field, values):
     # expecting possibly multiple values
 
     # Sign Language and Dialect are interdependent
-    # When updated in Gloss Detail View, checks are made to insure consistency
+    # When updated in Gloss Details, checks are made to insure consistency
     # Because we use Ajax calls to update the data, two values need to be returned in order to also have a side effect
     # on the other field. I.e., Changing the Sign Language may cause Dialects to be removed, and changing the Dialect
     # may cause the Sign Language to be filled in if not already set, with that of the new Dialect
@@ -621,7 +626,7 @@ def update_dialect(gloss, field, values):
         # there is actually only one sign language
         gloss_signlanguage = gloss.lemma.dataset.signlanguage
         for value in numerical_values_converted_to_dialects:
-            # Gloss Detail View pairs the Dialect with the Language in the update menu
+            # Gloss Details pairs the Dialect with the Language in the update menu
             (sign_lang, dia) = value.split('/')
             lang = SignLanguage.objects.get(name=sign_lang)
             if lang != gloss_signlanguage:
@@ -729,7 +734,7 @@ def update_tags(gloss, field, values):
 
     new_tag_ids = [tag.id for tag in Tag.objects.filter(name__in=values)]
 
-    # the existance of the new tag has already been checked
+    # the existence of the new tag has already been checked
     for tag_id in current_tag_ids:
 
         if tag_id not in new_tag_ids:
@@ -754,7 +759,7 @@ def update_sequential_morphology(gloss, field, values):
 
     role = 2
 
-    # the existance of the morphemes in parameter values has already been checked
+    # the existence of the morphemes in parameter values has already been checked
     try:
         for morpheme_def_id in morphemes:
             old_morpheme = MorphologyDefinition.objects.get(id=morpheme_def_id)
@@ -793,7 +798,7 @@ def update_simultaneous_morphology(gloss, field, values):
         print("DELETE Simultaneous Morphology: ", sim)
         sim.delete()
 
-    # the existance of the morphemes has already been checked, but check again anyway
+    # the existence of the morphemes has already been checked, but check again anyway
     for (morpheme_id, role) in new_sim_tuples:
 
         try:
@@ -875,8 +880,15 @@ def subst_notes(gloss, field, values):
     # it allows the type of note to be in either English or Dutch in the CSV file
     note_reverse_translation = {}
     for nrc in note_role_choices:
-        for language in [l[0] for l in LANGUAGES]:
-            note_reverse_translation[getattr(nrc, 'name_'+language.replace('-', '_'))] = nrc
+        for language in MODELTRANSLATION_LANGUAGES:
+            name_languagecode = 'name_' + language.replace('-', '_')
+            # check to make sure the model translation has been installed properly
+            try:
+                notes_translation = getattr(nrc, name_languagecode)
+            except KeyError:
+                continue
+
+            note_reverse_translation[notes_translation] = nrc
 
     for original_note in gloss.definition_set.all():
         original_note.delete()
@@ -885,14 +897,18 @@ def subst_notes(gloss, field, values):
     # the syntax of the new note values has already been checked at a previous stage of csv import
     new_notes_values = []
 
-    split_values = re.findall(r'([^\:]+\:[^\)]*\)),?\s?', values)
-
+    # the space is required in order to identify multiple notes in the input
+    split_values = re.split(r', ', values)
     for note_value in split_values:
-        take_apart = re.match("([^\:]+)\:\s?\((False|True),(\d),([^\)]*)\)", note_value)
+        take_apart = re.match("([^:]+):\s?\((False|True),(\d),(.*)\)", note_value)
+
         if take_apart:
             (field, name, count, text) = take_apart.groups()
             new_tuple = (field, name, count, text)
             new_notes_values.append(new_tuple)
+
+    # make sure the delete code has run before saving the definitions again
+    gloss.refresh_from_db()
 
     for (role, published, count, text) in new_notes_values:
         is_published = (published == 'True')
@@ -901,7 +917,9 @@ def subst_notes(gloss, field, values):
         defn = Definition(gloss=gloss, count=index_count, role=note_role, text=text, published=is_published)
         defn.save()
 
-    new_notes_refresh = [(note.role.name, str(note.published), str(note.count), note.text) for note in gloss.definition_set.all()]
+    gloss_notes = gloss.definition_set.all()
+    new_notes_refresh = [(note.get_role_display(), str(note.published), str(note.count), note.note_text())
+                         for note in gloss_notes]
     notes_by_role = []
     for note in new_notes_refresh:
         notes_by_role.append(':'.join(note))
@@ -1032,7 +1050,7 @@ def subst_relations(gloss, field, values):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-## This function is called from the Gloss Detail View template when updating Relations to Other Signs
+## This function is called from the Gloss Details template when updating Relations to Other Signs
 def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
     (what, relid) = field.split('_')
@@ -1560,6 +1578,15 @@ def add_othermedia(request):
     filename = request.FILES['file'].name
     filetype = request.FILES['file'].content_type
 
+    type_machine_value = request.POST['type']
+    try:
+        othermediatype = FieldChoice.objects.get(field=FieldChoice.OTHERMEDIATYPE,
+                                                 machine_value=type_machine_value)
+    except ObjectDoesNotExist:
+        # if something goes wrong just set it to empty
+        othermediatype = FieldChoice.objects.get(field=FieldChoice.OTHERMEDIATYPE,
+                                                 machine_value=0)
+
     if not filetype:
         # unrecognised file type has been uploaded
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
@@ -1588,6 +1615,19 @@ def add_othermedia(request):
     destination_filename = filename_base + '.' + extension
     goal_path = os.path.join(goal_directory, destination_filename)
 
+    # to accommodate large files, the Other Media data is first stored in the database
+    # if something goes wrong this object is deleted again
+    #Save the database record
+    parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
+    other_media_path = request.POST['gloss']+'/'+destination_filename
+    newothermedia = OtherMedia(path=other_media_path,
+                               alternative_gloss=request.POST['alternative_gloss'],
+                               type=othermediatype,
+                               parent_gloss=parent_gloss)
+    newothermedia.save()
+
+    # the above creates the new OtherMedia object
+    # the video has not been saved yet
 
     # create the destination file
     try:
@@ -1600,12 +1640,17 @@ def add_othermedia(request):
         quoted_filename = urllib.parse.quote(filename_base, safe='')
         filename_plus_extension = quoted_filename + '.' + extension
         goal_location_str = os.path.join(goal_directory, filename_plus_extension)
-
+        # we need to use a quoted filename instead, update the other media object
+        other_media_path = request.POST['gloss'] + '/' + filename_plus_extension
+        newothermedia.path = other_media_path
+        newothermedia.save()
         try:
             if os.path.exists(goal_location_str):
                 raise OSError
             f = open(goal_location_str, 'wb+')
         except (UnicodeEncodeError, IOError, OSError):
+            # something went wrong with uploading, delete the object
+            newothermedia.delete()
             messages.add_message(request, messages.ERROR,
                         _("The other media file could not be uploaded. Please use a different filename."))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
@@ -1624,8 +1669,11 @@ def add_othermedia(request):
     if not magic_file_type:
         # unrecognised file type has been uploaded
         os.remove(destination_location)
+        # something went wrong with uploading, delete the object
+        newothermedia.delete()
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+    # the code below converts the file to an mp4 file if it is currently another type of video
     if magic_file_type == 'video/quicktime':
         # convert using ffmpeg
         temp_destination_location = destination_location + ".mov"
@@ -1642,23 +1690,40 @@ def add_othermedia(request):
             # problems converting a quicktime media to h264
             os.remove(temp_destination_location)
             os.remove(destination_location)
+            # something went wrong with uploading, delete the object
+            newothermedia.delete()
             messages.add_message(request, messages.ERROR,
                                  _("Upload other media failed: The Quicktime file could not be converted to H264."))
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+    elif magic_file_type != 'video/mp4':
+        # convert using ffmpeg
+        temp_destination_location = destination_location + ".mov"
+        os.rename(destination_location, temp_destination_location)
+
+        from signbank.video.convertvideo import convert_video
+        # convert the video to h264
+        success = convert_video(temp_destination_location, destination_location)
+
+        if success:
+            # the destination filename already has the extension mp4
+            os.remove(temp_destination_location)
+        else:
+            # problems converting a quicktime media to h264
+            os.remove(temp_destination_location)
+            os.remove(destination_location)
+            # something went wrong with uploading, delete the object
+            newothermedia.delete()
+            messages.add_message(request, messages.ERROR,
+                                 _("Upload other media failed: The file could not be converted to H264."))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     if filetype.split('/')[0] != magic_file_type.split('/')[0]:
         # the uploaded file extension does not match its type
         os.remove(destination_location)
+        # something went wrong with uploading, delete the object
+        newothermedia.delete()
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The file extension does not match its type."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
-
-    #Save the database record
-    parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
-    other_media_path = request.POST['gloss']+'/'+filename_plus_extension
-    OtherMedia(path=other_media_path,
-               alternative_gloss=request.POST['alternative_gloss'],
-               type=request.POST['type'],
-               parent_gloss=parent_gloss).save()
 
     return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']})+'?editothermedia')
 

@@ -9,7 +9,7 @@
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}<td style="width:12em;">{{focus_gloss.lemma.dataset.acronym}}</td>{% endif %}
 
     {% for dataset_lang in dataset_languages %}
-    {% with focus_gloss|get_annotation_idgloss_translation:dataset_lang as annotationidglosstranslation %}
+    {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
     <td>
       {% ifnotequal annotationidglosstranslation "" %}
 
