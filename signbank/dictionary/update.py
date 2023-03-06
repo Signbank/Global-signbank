@@ -1673,6 +1673,7 @@ def add_othermedia(request):
         newothermedia.delete()
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
         return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+    # the code below converts the file to an mp4 file if it is currently another type of video
     if magic_file_type == 'video/quicktime':
         # convert using ffmpeg
         temp_destination_location = destination_location + ".mov"
@@ -1693,6 +1694,27 @@ def add_othermedia(request):
             newothermedia.delete()
             messages.add_message(request, messages.ERROR,
                                  _("Upload other media failed: The Quicktime file could not be converted to H264."))
+            return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+    elif magic_file_type != 'video/mp4':
+        # convert using ffmpeg
+        temp_destination_location = destination_location + ".mov"
+        os.rename(destination_location, temp_destination_location)
+
+        from signbank.video.convertvideo import convert_video
+        # convert the video to h264
+        success = convert_video(temp_destination_location, destination_location)
+
+        if success:
+            # the destination filename already has the extension mp4
+            os.remove(temp_destination_location)
+        else:
+            # problems converting a quicktime media to h264
+            os.remove(temp_destination_location)
+            os.remove(destination_location)
+            # something went wrong with uploading, delete the object
+            newothermedia.delete()
+            messages.add_message(request, messages.ERROR,
+                                 _("Upload other media failed: The file could not be converted to H264."))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
 
     if filetype.split('/')[0] != magic_file_type.split('/')[0]:
