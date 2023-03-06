@@ -58,6 +58,8 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     get_interface_language_and_default_language_codes
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results
+from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
+    get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -1341,19 +1343,22 @@ class GlossDetailView(DetailView):
         context['default_query_parameters_values_mapping'] = default_query_parameters_values_mapping
         context['json_default_query_parameters'] = json.dumps(default_query_parameters)
 
+        # gloss_default_parameters_query_name = "Gloss " + str(context['gloss'].id) + " Default Parameters"
+        # save_query_parameters(self.request, gloss_default_parameters_query_name, default_query_parameters)
+
         if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             # if the query parameters are available, convert them to a dictionary
             session_query_parameters = self.request.session['query_parameters']
             self.query_parameters = json.loads(session_query_parameters)
 
         context['query_parameters'] = self.query_parameters
-
+        print('GlossDetailView context query_parameters: ', self.query_parameters)
         query_parameters_mapping = pretty_print_query_fields(dataset_languages, self.query_parameters.keys())
-
+        print('GlossDetailView context query_parameters_mapping: ', query_parameters_mapping)
         query_parameters_values_mapping = pretty_print_query_values(dataset_languages, self.query_parameters)
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
-
+        print('GlossDetailView context query_parameters_values_mapping: ', query_parameters_values_mapping)
         # Add in a QuerySet of all the books
         context['tagform'] = TagUpdateForm()
         context['videoform'] = VideoUploadForGlossForm()
@@ -3633,6 +3638,112 @@ class QueryListView(ListView):
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
 
         return object_list
+
+    def render_to_response(self, context):
+        if self.request.GET.get('save_query') == 'Save':
+            return self.render_to_save_query(context)
+        else:
+            return super(QueryListView, self).render_to_response(context)
+
+    def render_to_save_query(self, context):
+        query_parameters = context['query_parameters']
+        query_name = _("Query View Save")
+        field_names = fieldnames_from_query_parameters(query_parameters)
+        available_field_names = available_query_parameters_in_search_history()
+        # TO DO test that the field names queried upon are supported in the search history
+        # give feedback
+        save_query_parameters(self.request, query_name, query_parameters)
+        return super(QueryListView, self).render_to_response(context)
+
+
+class SearchHistoryView(ListView):
+    # not sure what model should be used here, it applies to all the glosses in a dataset
+    model = Dataset
+    template_name = 'dictionary/admin_search_history.html'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(SearchHistoryView, self).get_context_data(**kwargs)
+
+        language_code = self.request.LANGUAGE_CODE
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        # this gets the query parameters fields currently being stored by the code
+        # see if we need to do anything with this qua feedback
+        classnames = available_query_parameters_in_search_history()
+
+        # create a lookup table mapping queries to languages
+        selected_datasets_contain_query_languages = {}
+        all_queries_user = SearchHistory.objects.filter(user=self.request.user)
+        for query in all_queries_user:
+            query_languages_this_query = query.query_languages()
+            query_languages_in_dataset = True
+            for lang in query_languages_this_query:
+                if lang not in dataset_languages:
+                    query_languages_in_dataset = False
+            selected_datasets_contain_query_languages[query] = query_languages_in_dataset
+        context['selected_datasets_contain_query_languages'] = selected_datasets_contain_query_languages
+
+        query_to_display_parameters = {}
+        for query in all_queries_user:
+            query_to_display_parameters[query] = display_parameters(query)
+        context['query_to_display_parameters'] = query_to_display_parameters
+
+        return context
+
+    def get_queryset(self):
+
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+        else:
+            search_results = []
+        if search_results and len(search_results) > 0:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+                self.request.session['search_results'] = None
+        if 'search_type' in self.request.session.keys():
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+                # search_type is 'handshape'
+                self.request.session['search_results'] = None
+
+        qs = SearchHistory.objects.filter(user=self.request.user).order_by('queryDate').reverse()
+
+        # for sh in qs:
+        #     languages = languages_in_query(sh.id)
+        #     if len(languages):
+        #         print('result of languages in query: ', languages)
+
+        return qs
+
+    def render_to_response(self, context):
+        if self.request.GET.get('run_query') == 'Run':
+            queryid = self.request.GET.get('queryid')
+            languages = languages_in_query(queryid)
+            dataset_languages = context['dataset_languages']
+            # the template does not show the run_query button if the languages are not present
+            # this is a safety measure
+            for lang in languages:
+                if lang not in dataset_languages:
+                    messages.add_message(self.request, messages.ERROR, _('Language '+lang.name+' is missing from the selected datasets.'))
+                    return HttpResponseRedirect(settings.PREFIX_URL + '/analysis/search_history/')
+
+            return self.render_to_run_query(context, queryid)
+        else:
+            return super(SearchHistoryView, self).render_to_response(context)
+
+    def render_to_run_query(self, context, queryid):
+        query = get_object_or_404(SearchHistory, id=queryid)
+        query_parameters = get_query_parameters(query)
+        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session.modified = True
+        return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/?query')
 
 
 class FrequencyListView(ListView):

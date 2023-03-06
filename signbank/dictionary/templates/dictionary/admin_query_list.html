@@ -311,6 +311,18 @@ select option {
     -webkit-appearance: none;
     -moz-appearance: none;
 }
+.runQuery {
+    border: 1px solid;
+    text-align: center;
+    padding: 5px 12px;
+    border-radius: 6px;
+}
+.runQuery:hover {
+    text-decoration: none;
+}
+.queryButton:hover {
+    background-color: white;
+}
 </style>
 <!--The tagQP css overrides the colour of tag to match that of disabled buttons, used for the display of other query parameters-->
 <style>
@@ -401,7 +413,10 @@ thead tr th {
 
     <ul class='nav nav-tabs'>
         <li class="nav-item">
-            <a class='nav-link active' href="">{% trans "Query View" %}</a>
+            <a class='nav-link active' href="{{PREFIX_URL}}/analysis/queries/">{% trans "Query View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>
         </li>
     </ul>
 </div>
@@ -444,7 +459,16 @@ thead tr th {
         {% endfor %}
         </tbody>
     </table>
-    <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'>{% trans "Run Query" %}</a></button>
+    <div class="btn-group">
+    <button class="btn queryButton" type='submit' style="height:40px;"><a href="{{PREFIX_URL}}/signs/search/?query" class="runQuery"
+                                                                          type="button">{% trans "Run Query" %}</a></button>
+    <button class="btn queryButton">
+    <form name='save_query_parameters' id='save_query_parameters' method='get'>
+    <input id="save_query_button" name='save_query_button' value='{% trans "Save Query" %}' type="submit" class="btn btn-primary" />
+        <input type='hidden' name='save_query' value="Save">
+    </form>
+    </button>
+    </div>
     <br>
     <h3>{% trans "Glosses Matching Query" %}</h3>
     <div class="panel-heading" data-toggle="collapse"

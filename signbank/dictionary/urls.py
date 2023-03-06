@@ -52,6 +52,8 @@ urlpatterns = [
     url(r'^update/field_choice_color/(?P<category>.*)/(?P<fieldchoiceid>\d+)$', login_required(signbank.dictionary.update.update_field_choice_color),
         name='update_field_choice_color'),
 
+    url(r'^update/query/(?P<queryid>\d+)$', signbank.dictionary.update.update_query, name='update_query'),
+
     # The next one does not have a permission check because it should be accessible from a cronjob 
     url(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
     url(r'^update/variants_of_gloss/$', signbank.dictionary.update.variants_of_gloss, name='variants_of_gloss'),

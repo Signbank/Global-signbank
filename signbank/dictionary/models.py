@@ -2798,6 +2798,310 @@ class GlossFrequency(models.Model):
         return str(self.gloss.id) + ' ' + self.document.identifier + ' ' + self.speaker.identifier + ' ' + str(self.frequency)
 
 
+class QueryParameter(models.Model):
+
+    search_history = models.ForeignKey("SearchHistory", null=True)
+    # this parameter determines whether the key value has '[]' after the field name
+    multiselect = models.BooleanField(_('Multiple Select'), default=True,
+                                      help_text=_("Is this a multiselect parameter?"))
+
+    def __str__(self):
+        if hasattr(self, 'queryparameterfieldchoice'):
+            field_choice = self.queryparameterfieldchoice
+            glossFieldName = field_choice.display_verbose_fieldname()
+            glossFieldValue = field_choice.fieldValue.name
+        elif hasattr(self, 'queryparameterhandshape'):
+            handshape = self.queryparameterhandshape
+            glossFieldName = handshape.display_verbose_fieldname()
+            glossFieldValue = handshape.fieldValue.name
+        elif hasattr(self, 'queryparametersemanticfield'):
+            semanticfield = self.queryparametersemanticfield
+            glossFieldName = semanticfield.display_verbose_fieldname()
+            glossFieldValue = semanticfield.fieldValue.name
+        elif hasattr(self, 'queryparameterderivationhistory'):
+            derivationhistory = self.queryparameterderivationhistory
+            glossFieldName = derivationhistory.display_verbose_fieldname()
+            glossFieldValue = derivationhistory.fieldValue.name
+        elif hasattr(self, 'queryparameterboolean'):
+            nullbooleanfield = self.queryparameterboolean
+            glossFieldName = nullbooleanfield.display_verbose_fieldname()
+            glossFieldValue = str(nullbooleanfield.fieldValue)
+        elif hasattr(self, 'queryparametermultilingual'):
+            multilingual = self.queryparametermultilingual
+            glossFieldName = multilingual.display_verbose_fieldname()
+            glossFieldValue = multilingual.fieldValue
+        else:
+            glossFieldName = "Unknown query parameter"
+            glossFieldValue = "-"
+        return glossFieldName + " " + glossFieldValue
+
+    def is_fieldchoice(self):
+        """Test if this instance is a Query Parameter Field Choice"""
+        return hasattr(self, 'queryparameterfieldchoice')
+
+    def is_handshape(self):
+        """Test if this instance is a Query Parameter Handshape"""
+        return hasattr(self, 'queryparameterhandshape')
+
+    def is_semanticfield(self):
+        """Test if this instance is a Query Parameter Semantic Field"""
+        return hasattr(self, 'queryparametersemanticfield')
+
+    def is_derivationhistory(self):
+        """Test if this instance is a Query Parameter Derivation History"""
+        return hasattr(self, 'queryparameterderivationhistory')
+
+    def is_boolean(self):
+        """Test if this instance is a Query Parameter Boolean"""
+        return hasattr(self, 'queryparameterboolean')
+
+    def is_multilingual(self):
+        """Test if this instance is a Query Parameter Multilingual"""
+        return hasattr(self, 'queryparametermultilingual')
+
+
+class QueryParameterFieldChoice(QueryParameter):
+    QUERY_FIELDS = [
+        ('wordClass', 'wordClass'),
+        ('handedness', 'handedness'),
+        ('handCh', 'handCh'),
+        ('relatArtic', 'relatArtic'),
+        ('locprim', 'locprim'),
+        ('relOriMov', 'relOriMov'),
+        ('relOriLoc', 'relOriLoc'),
+        ('oriCh', 'oriCh'),
+        ('contType', 'contType'),
+        ('movSh', 'movSh'),
+        ('movDir', 'movDir'),
+        ('namEnt', 'namEnt'),
+        ('valence', 'valence')
+    ]
+    QUERY_FIELD_CATEGORY = [
+        ('wordClass', 'WordClass'),
+        ('handedness', 'Handedness'),
+        ('handCh', 'HandshapeChange'),
+        ('relatArtic', 'RelatArtic'),
+        ('locprim', 'Location'),
+        ('relOriMov', 'RelOriMov'),
+        ('relOriLoc', 'RelOriLoc'),
+        ('oriCh', 'OriChange'),
+        ('contType', 'ContactType'),
+        ('movSh', 'MovementShape'),
+        ('movDir', 'MovementDir'),
+        ('namEnt', 'NamedEntity'),
+        ('valence', 'Valence')
+    ]
+    fieldName = models.CharField(_("Field Name"), choices=QUERY_FIELDS, max_length=20)
+    fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"))
+
+    def display_verbose_fieldname(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        return glossFieldName
+
+    def __str__(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = self.display_verbose_fieldname()
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldName + " " + glossFieldValue
+
+    def get_fieldValue_display(self):
+        # no idea if this is called by Django, it overrides the built-in
+        if not self.fieldValue:
+            return ""
+        return self.fieldValue.field + ': ' + self.fieldValue.name
+
+
+class QueryParameterHandshape(QueryParameter):
+    QUERY_FIELDS = [
+        ('domhndsh', 'domhndsh'),
+        ('subhndsh', 'subhndsh'),
+        # ASL fields
+        ('final_domhndsh', 'final_domhndsh'),
+        ('final_subhndsh', 'final_subhndsh')
+    ]
+    fieldName = models.CharField(_("Handshape"), choices=QUERY_FIELDS, max_length=20)
+    fieldValue = models.ForeignKey(Handshape, null=True)
+
+    def display_verbose_fieldname(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        return glossFieldName
+
+    def display_fieldvalue(self):
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldValue
+
+    def __str__(self):
+        glossFieldName = self.display_verbose_fieldname()
+        glossFieldValue = self.display_fieldvalue()
+        return glossFieldName + " " + glossFieldValue
+
+
+class QueryParameterSemanticField(QueryParameter):
+    QUERY_FIELDS = [
+        ('semField', 'semField')
+    ]
+    fieldName = models.CharField(_("Semantic Field"), choices=QUERY_FIELDS, max_length=20)
+    fieldValue = models.ForeignKey(SemanticField, null=True)
+
+    def display_verbose_fieldname(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        return glossFieldName
+
+    def __str__(self):
+        glossFieldName = self.display_verbose_fieldname()
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldName + " " + glossFieldValue
+
+
+class QueryParameterDerivationHistory(QueryParameter):
+    QUERY_FIELDS = [
+        ('derivHist', 'derivHist')
+    ]
+    fieldName = models.CharField(_("Derivation History"), choices=QUERY_FIELDS, max_length=20)
+    fieldValue = models.ForeignKey(DerivationHistory, null=True)
+
+    class Meta:
+        verbose_name_plural = "Query parameter derivation histories"
+
+    def display_verbose_fieldname(self):
+        glossFieldName = '-'
+        if self.fieldName:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        return glossFieldName
+
+    def __str__(self):
+        glossFieldName = self.display_verbose_fieldname()
+        glossFieldValue = '-'
+        if self.fieldValue:
+            glossFieldValue = self.fieldValue.name
+        return glossFieldName + " " + glossFieldValue
+
+
+class QueryParameterBoolean(QueryParameter):
+    # these are all fields of Gloss
+    QUERY_FIELDS = [
+        # Gloss model fields
+        ('weakdrop', 'weakdrop'),
+        ('weakprop', 'weakprop'),
+        ('domhndsh_letter', 'domhndsh_letter'),
+        ('domhndsh_number', 'domhndsh_number'),
+        ('subhndsh_letter', 'subhndsh_letter'),
+        ('subhndsh_number', 'subhndsh_number'),
+        ('repeat', 'repeat'),
+        ('altern', 'altern'),
+        ('inWeb', 'inWeb'),
+        ('isNew', 'isNew'),
+        ('excludeFromEcv', 'excludeFromEcv'),
+        # ASL fields
+        ('oriChAbd', 'oriChAbd'),
+        ('oriChFlex', 'oriChFlex'),
+        # GlossSearchForm fields
+        ('hasRelationToForeignSign', 'hasRelationToForeignSign'),
+        ('defspublished', 'defspublished'),
+        ('hasvideo', 'hasvideo'),
+        ('hasothermedia', 'hasothermedia')
+    ]
+
+    fieldName = models.CharField(_("NullBooleanField"), choices=QUERY_FIELDS, max_length=30)
+    fieldValue = models.NullBooleanField(_("Field Value"), null=True, blank=True)
+
+    def display_verbose_fieldname(self):
+        if self.fieldName in Gloss._meta.fields:
+            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        elif self.fieldName == 'defspublished':
+            glossFieldName = _("All Definitions Published")
+        elif self.fieldName == 'hasRelationToForeignSign':
+            glossFieldName = _("Related to Foreign Sign")
+        elif self.fieldName == 'hasvideo':
+            glossFieldName = _('Has Video')
+        else:
+            glossFieldName = _('Has Other Media')
+        # the str coercion is needed for type checking, otherwise it's a proxy
+        return str(glossFieldName)
+
+    def display_fieldvalue(self):
+        if self.fieldName in ['weakdrop', 'weakprop']:
+            if self.fieldValue is None:
+                glossFieldValue = _('Neutral')
+            elif self.fieldValue:
+                glossFieldValue = _('Yes')
+            else:
+                glossFieldValue = _('No')
+        elif self.fieldValue:
+            glossFieldValue = _('True')
+        else:
+            glossFieldValue = _('False')
+        # the str coercion is needed for type checking, otherwise it's a proxy
+        return str(glossFieldValue)
+
+    def __str__(self):
+        glossFieldName = self.display_verbose_fieldname()
+        glossFieldValue = self.display_fieldvalue()
+        return glossFieldName + " " + glossFieldValue
+
+
+class QueryParameterMultilingual(QueryParameter):
+    # these are all fields of Gloss
+    QUERY_FIELDS = [
+        ('glosssearch', 'glosssearch'),
+        ('lemma', 'lemma'),
+        ('keyword', 'keyword')
+    ]
+
+    fieldName = models.CharField(_("Text Search Field"), choices=QUERY_FIELDS, max_length=20)
+    fieldLanguage = models.ForeignKey(Language)
+    fieldValue = models.CharField(_("Text Search Value"), max_length=30)
+
+    def display_verbose_fieldname(self):
+        if self.fieldName == 'glosssearch':
+            searchFieldName = _('Annotation ID Gloss') + " (" + self.fieldLanguage.name + ")"
+        elif self.fieldName == 'lemma':
+            searchFieldName = _('Lemma ID Gloss') + " (" + self.fieldLanguage.name + ")"
+        else:
+            searchFieldName = _('Translations') + " (" + self.fieldLanguage.name + ")"
+        return searchFieldName
+
+    def __str__(self):
+        searchFieldName = self.display_verbose_fieldname()
+        return searchFieldName + " " + self.fieldValue
+
+
+class SearchHistory(models.Model):
+    queryDate = models.DateTimeField(_('Query Date'), auto_now=True)
+    user = models.ForeignKey(User)
+    parameters = models.ManyToManyField(QueryParameter, related_name='query_parameters')
+    queryName = models.CharField(blank=True, max_length=50, help_text=_("Abbreviation for the query"))
+
+    class Meta:
+        verbose_name_plural = "Search histories"
+
+    def __str__(self):
+        query_name = self.queryName
+        if not self.queryName:
+            # if this has not been set, use the date
+            query_name = self.queryDate
+        return query_name + " (" + self.user.username + ")"
+
+    def query_languages(self):
+        multilingual_parameters = QueryParameterMultilingual.objects.filter(search_history=self)
+        language_parameters = [p.fieldLanguage for p in multilingual_parameters]
+        query_languages = list(set(language_parameters))
+        return query_languages
+
+
 CATEGORY_MODELS_MAPPING = {
     'SemField': SemanticField,
     'derivHist': DerivationHistory,

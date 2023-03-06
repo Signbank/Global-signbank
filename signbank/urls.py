@@ -22,7 +22,7 @@ from signbank.dictionary.adminviews import GlossListView, MorphemeListView, Data
                                             HomonymListView, MinimalPairsListView, DatasetManagerView, \
                                             DatasetDetailView, FrequencyListView, DatasetFieldChoiceView, \
                                             dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView, \
-                                            QueryListView, SemanticFieldListView, DerivationHistoryListView
+                                            QueryListView, SemanticFieldListView, DerivationHistoryListView, SearchHistoryView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -74,6 +74,8 @@ urlpatterns = [
     url(r'^analysis/minimalpairs/$', MinimalPairsListView.as_view(), name='admin_minimalpairs_list'),
     url(r'^analysis/frequencies/$', FrequencyListView.as_view(), name='admin_frequency_list'),
     url(r'^analysis/queries/$', QueryListView.as_view(), name='admin_query_list'),
+    url(r'^analysis/search_history/$', SearchHistoryView.as_view(), name='admin_search_history'),
+
     url(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
     url(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
     url(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
