@@ -250,3 +250,4 @@ DEBUG_EMAILS_ON = False
 
 # default url to admin page, specify a hidden one in server_specific to override this
 ADMIN_URL = 'admin'
+FILESYSTEM_SIGNBANK_GROUPS = ['signbank', 'www-data', 'signbank-writable']

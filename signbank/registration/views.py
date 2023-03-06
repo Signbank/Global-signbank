@@ -217,7 +217,7 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
             # create a new empty form, this deletes the erroneous fields
             # form = form_class()
     else:
-        # this insures that a preselected dataset is available if we got here from Dataset Detail view
+        # this insures that a preselected dataset is available if we got here from Dataset Details
         form = form_class(request=request)
     return render(request,template_name,{ 'form': form,
                                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })

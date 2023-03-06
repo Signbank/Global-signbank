@@ -46,9 +46,9 @@ var page_number = {{ page_number }};
 var objects_on_this_page = {{objects_on_page|safe}};
 var view_type = '{{view_type}}';
 var paginate_by = '{{paginate_by}}';
-var query_parameters = '{{query_parameters|safe}}';
 var query_parameters_keys = {{query_parameters_keys|safe}};
-var query_parameters_dict = JSON.parse(query_parameters);
+var query_parameters_dict = {{query_parameters|safe}};
+
 var other_parameters_keys = {{other_parameters_keys|safe}};
 var language_query_keys = {{language_query_keys|safe}};
 var morpheme_idgloss = '{{morpheme_idgloss|safe}}';
