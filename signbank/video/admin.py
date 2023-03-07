@@ -1,25 +1,11 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from signbank.video.models import GlossVideo, Dataset
+from signbank.video.models import GlossVideo
+from signbank.dictionary.models import Dataset
 from signbank.settings.base import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBANK_GROUPS
 from django.utils.translation import override, ugettext_lazy as _
-from django.core.files.storage import FileSystemStorage
-from django.core.files import File
-from django.db.models import Q, F, Case, Sum, Count, IntegerField, Value, When, ExpressionWrapper
-
-
-
-class GlossVideoAdminForm(forms.ModelForm):
-    # needs additional code to obtain FileField data
-
-    class Meta:
-        model = GlossVideo
-        fields = ('gloss', )
-
-    def __init__(self, *args, **kwargs):
-        super(GlossVideoAdminForm, self).__init__(*args, **kwargs)
 
 
 class GlossVideoDatasetFilter(admin.SimpleListFilter):
@@ -108,9 +94,6 @@ class GlossVideoAdmin(admin.ModelAdmin):
 
     search_fields = ['^gloss__annotationidglosstranslation__text']
 
-    # not used yet
-    form = GlossVideoAdminForm
-
     def video_file(self, obj=None):
         # this will display the full path in the list view
         if obj is None:
@@ -148,6 +131,9 @@ class GlossVideoAdmin(admin.ModelAdmin):
         # do not allow the user to view individual revisions in list
         self.list_display_links = (None, )
         return self.list_display_links
+
+    def has_add_permission(self, request):
+        return False
 
 
 admin.site.register(GlossVideo, GlossVideoAdmin)
