@@ -103,7 +103,7 @@ class GlossVideoExistenceFilter(admin.SimpleListFilter):
 
 class GlossVideoAdmin(admin.ModelAdmin):
 
-    list_display = ['id', 'gloss', 'video_file', 'file_exists', 'file_group', 'version']
+    list_display = ['id', 'gloss', 'video_file', 'file_timestamp', 'file_group', 'version']
     list_filter = (GlossVideoDatasetFilter, GlossVideoFileSystemGroupFilter, GlossVideoExistenceFilter)
 
     search_fields = ['^gloss__annotationidglosstranslation__text']
@@ -120,16 +120,17 @@ class GlossVideoAdmin(admin.ModelAdmin):
 
         return video_file_full_path
 
-    def file_exists(self, obj=None):
-        # this will display a Boolean in the list view
+    def file_timestamp(self, obj=None):
+        # if the file exists, this will display its timestamp in the list view
         if obj is None:
-            return False
+            return ""
         import os
+        import datetime
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
         if os.path.exists(video_file_full_path):
-            return True
+            return datetime.datetime.fromtimestamp(os.path.getctime(video_file_full_path))
         else:
-            return False
+            return ""
 
     def file_group(self, obj=None):
         # this will display a group in the list view
