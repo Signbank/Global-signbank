@@ -735,7 +735,8 @@ def add_new_sign(request):
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     context['dataset_languages'] = dataset_languages
-    context['default_dataset_lang'] = dataset_languages.first().language_code_2char
+    context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
+
     context['selected_datasets'] = selected_datasets
     context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -771,7 +772,7 @@ def add_new_morpheme(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
-    context['default_dataset_lang'] = dataset_languages.first().language_code_2char
+    context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
 
     default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)

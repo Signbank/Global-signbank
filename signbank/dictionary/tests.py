@@ -4,6 +4,7 @@ from collections import OrderedDict
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
+from signbank.tools import get_selected_datasets_for_user
 from signbank.settings.base import *
 
 from django.contrib.auth.models import User, Permission, Group
@@ -61,11 +62,11 @@ class BasicCRUDTests(TestCase):
         new_lemma = LemmaIdgloss(dataset=test_dataset)
         new_lemma.save()
 
-        # Create a lemma idgloss translation
-        language = Language.objects.get(id=get_default_language_id())
-        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
-                                                              lemma=new_lemma, language=language)
-        new_lemmaidglosstranslation.save()
+        # Create lemma idgloss translations for all languages
+        for language in test_dataset.translation_languages.all():
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
 
         #Create the gloss
         new_gloss = Gloss()
@@ -204,14 +205,11 @@ class BasicCRUDTests(TestCase):
         new_lemma = LemmaIdgloss(dataset=test_dataset)
         new_lemma.save()
 
-        # Create a lemma idgloss translation
-        default_language = Language.objects.get(id=get_default_language_id())
-        new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation",
-                                                              lemma=new_lemma, language=default_language)
-        new_lemmaidglosstranslation.save()
-
-
-
+        # Create lemma idgloss translations
+        for language in test_dataset.translation_languages.all():
+            new_lemmaidglosstranslation = LemmaIdglossTranslation(text="thisisatemporarytestlemmaidglosstranslation_"+language.language_code_2char,
+                                                                  lemma=new_lemma, language=language)
+            new_lemmaidglosstranslation.save()
 
         new_gloss = Gloss()
         new_gloss.handedness = self.handedness_fieldchoice_1
