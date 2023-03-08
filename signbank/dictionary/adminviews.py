@@ -369,6 +369,7 @@ class GlossListView(ListView):
         else:
             context['gloss_fields_to_populate'] = json.dumps([])
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -456,6 +457,7 @@ class GlossListView(ListView):
         label = field.label
         context['input_names_fields_labels_subhndsh'].append(('subhndsh_number',field,label))
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         # it is necessary to sort the object list by lemma_id in order for all glosses with the same lemma to be grouped
@@ -1352,13 +1354,11 @@ class GlossDetailView(DetailView):
             self.query_parameters = json.loads(session_query_parameters)
 
         context['query_parameters'] = self.query_parameters
-        print('GlossDetailView context query_parameters: ', self.query_parameters)
         query_parameters_mapping = pretty_print_query_fields(dataset_languages, self.query_parameters.keys())
-        print('GlossDetailView context query_parameters_mapping: ', query_parameters_mapping)
         query_parameters_values_mapping = pretty_print_query_values(dataset_languages, self.query_parameters)
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
-        print('GlossDetailView context query_parameters_values_mapping: ', query_parameters_values_mapping)
+
         # Add in a QuerySet of all the books
         context['tagform'] = TagUpdateForm()
         context['videoform'] = VideoUploadForGlossForm()
@@ -2365,6 +2365,7 @@ class MorphemeListView(ListView):
 
         self.request.session['search_type'] = self.search_type
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char
         context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
         context['input_names_fields_and_labels'] = {}
@@ -2432,6 +2433,7 @@ class MorphemeListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
@@ -6293,6 +6295,7 @@ class MorphemeDetailView(DetailView):
         else:
             context['USE_DERIVATIONHISTORY'] = False
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context
 
@@ -7040,6 +7043,7 @@ class LemmaCreateView(CreateView):
 
         context['last_used_dataset'] = self.last_used_dataset
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char
         context['add_lemma_form'] = LemmaCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
