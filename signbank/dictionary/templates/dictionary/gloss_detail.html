@@ -224,6 +224,7 @@ function checkKey(e)
 
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/recordstyle.css">
     <style>
         #panel-expand-collapse-btn-group.affix {
             position:fixed;
@@ -646,10 +647,72 @@ p {
             </label>
         </fieldset>
 
-    </div>
-    {% endif %}
+        <!-- Trigger/Open the Video Record Modal -->
+        <br> or <input id="recordBtn" class="btn btn-primary" value='Record a video'></input>
 
-    {% if "change_dataset" in dataset_perms %}
+        <!-- The Modal -->
+        <div id="recordModal" class="modal">
+
+            <!-- Modal content -->
+            <div class="modal-content">
+
+                <span class="close">&times;</span>
+
+                <div id="container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="wrap">
+                                        <video src="" id="gum" playsinline autoplay muted></video>
+                                        <div class="overlay">
+                                            <img id="img0" class="over" src='{{ STATIC_URL }}images/overlay0.png'>
+                                            <img id="img1" class="over invis" src='{{ STATIC_URL }}images/overlay1.png'>
+                                            <img id="img2" class="over invis" src='{{ STATIC_URL }}images/overlay2.png'>
+                                            <img id="img3" class="over invis" src='{{ STATIC_URL }}images/overlay3.png'>                       
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>
+                                    <div class="wrap">
+                                        <video id="recorded" playslinline></video>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                            <td>
+                                <button class="btn" id="start">Start Camera</button>
+                                <button class="btn" id="record" disabled>Record</button>
+                            </td>
+                            <td>
+                                <button class="btn" id="play" disabled>Play</button>
+                                <button class="btn" id="download" disabled>Download</button><br>
+                                <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
+                                    {% csrf_token %}
+                                    <input type='hidden' name='redirect' value='{{request.path}}?edit'>
+                                    <input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
+                                    <input type='file' name="videofile" id="videofile">
+                                    <input class="btn btn-primary" type="submit" id="uploadrecorded" value ='Upload' disabled></input>
+                                </form>
+                            </td>
+                            </tr>
+                        </tbody>
+                        </table>
+                    </label>
+                </div>
+        
+                <div>
+                    <span id="errorMsg"></span>
+                </div>
+
+            </div>
+            
+        </div>
+
+    </div>
+
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Citation Form Image" %}</legend>
@@ -673,7 +736,9 @@ p {
             </label>
         </fieldset>
     </div>
+    
     <script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_files.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/recordscript.js"></script>
     {% endif %}
 
     {% if gloss.has_video and "change_dataset" in dataset_perms %}

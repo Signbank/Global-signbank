@@ -4,9 +4,9 @@ keep track of uploaded videos and converted versions
 
 from django.db import models
 from django.conf import settings
-import sys, os, time, shutil, stat
+import sys, os, time, shutil
 
-from signbank.video.convertvideo import extract_frame, convert_video, ffmpeg, probe_format
+from signbank.video.convertvideo import extract_frame, convert_video, run_ffmpeg, probe_format
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
@@ -276,14 +276,6 @@ class GlossVideo(models.Model):
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
             os.remove(oldloc)
 
-    def ch_own_mod_video(self):
-        """Change owner and permissions"""
-        location = self.videofile.path
-
-        # make sure they're readable by everyone
-        # os.chown(location, 1000, 1002)
-        os.chmod(location, stat.S_IRWXU | stat.S_IRWXG)
-
     def small_video(self, use_name=False):
         """Return the URL of the small version for this video
         :param use_name: whether videofile.name should be used instead of videofile.path
@@ -313,6 +305,14 @@ class GlossVideo(models.Model):
         except:
             import sys
             print('Error generating still image', sys.exc_info())
+
+    def convert_to_mp4(self):
+        print(self.videofile.path)
+        name, _ = os.path.splitext(self.videofile.path)
+        out_name = name + ".mp4"
+        import ffmpeg
+        ffmpeg.input(self.videofile.path).output(out_name).run(overwrite_output=True)
+        print("Finished converting {}".format(self.videofile.path))
 
     def delete_files(self):
         """Delete the files associated with this object"""

@@ -44,7 +44,7 @@ def parse_ffmpeg_output(text):
     return result
             
     
-def ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
+def run_ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
     """Run FFMPEG with some command options, returning the output"""
 
     errormsg = ""
@@ -78,7 +78,7 @@ def extract_frame(sourcefile, targetfile):
     
     options = ["-r", "1", "-f", "mjpeg"]
     
-    err = ffmpeg(sourcefile, targetfile, options=options)
+    err = run_ffmpeg(sourcefile, targetfile, options=options)
 
 
 def probe_format(file):
@@ -88,7 +88,7 @@ def probe_format(file):
     # for info, convert just one second to a null output format
     info_options = ["-f", "null", "-t", "1"]
     
-    b = ffmpeg(file, "tmp", options=info_options)
+    b = run_ffmpeg(file, "tmp", options=info_options)
     r = parse_ffmpeg_output(b)
      
     return r['inputvideoformat']
@@ -110,7 +110,7 @@ def convert_video(sourcefile, targetfile, force=False):
         shutil.copy(sourcefile, targetfile) 
     else: 
         # convert the video
-        b = ffmpeg(sourcefile, targetfile, options=FFMPEG_OPTIONS)
+        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_OPTIONS)
 
     format = probe_format(targetfile)
     if format.startswith('h264'):
