@@ -1846,7 +1846,12 @@ class Gloss(models.Model):
             video = GlossVideo(videofile=videofile, gloss=self)
         video.save()
         video.ch_own_mod_video()
-        video.convert_to_mp4()
+        
+        try:
+            video.convert_to_mp4()
+        except:
+            print("Did not convert video")
+
         video.make_small_video()
         video.make_poster_image()
 
