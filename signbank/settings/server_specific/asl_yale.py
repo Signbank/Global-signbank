@@ -38,7 +38,7 @@ MORPHEME_DISPLAY_FIELDS = []
 HANDSHAPE_ETYMOLOGY_FIELDS = []
 HANDEDNESS_ARTICULATION_FIELDS = []
 
-ECV_FILE = 'ecv/asl.ecv'
+ECV_FILE = ECV_FOLDER+'asl.ecv'
 ECV_SETTINGS = {
     'CV_ID': 'ASL Signbank lexicon',
     'include_phonology_and_frequencies': False,

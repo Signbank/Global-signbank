@@ -16,10 +16,9 @@ from django.contrib import messages
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
-import signbank.settings
 from django.conf import settings
 
-from signbank.settings.base import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
+from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
