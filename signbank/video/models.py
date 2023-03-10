@@ -320,7 +320,7 @@ class GlossVideo(models.Model):
         name, _ = os.path.splitext(self.videofile.path)
         out_name = name + ".mp4"
         import ffmpeg
-        ffmpeg.input(self.videofile.path).output(out_name).run(overwrite_output=True)
+        ffmpeg.input(self.videofile.path).output(out_name).run(quiet=True, overwrite_output=True)
         print("Finished converting {}".format(self.videofile.path))
 
     def delete_files(self):
