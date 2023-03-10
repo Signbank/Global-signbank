@@ -32,7 +32,6 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-<script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
@@ -151,6 +150,12 @@ $(document).ready(function(){
      $('#id_dialects').val(null).trigger('change');
 
 });
+
+</script>
+
+<script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
+
+<script>
 
 // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
 function clearForm(myFormElement) {
