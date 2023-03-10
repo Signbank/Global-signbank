@@ -36,7 +36,8 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
 
  <script type="text/javascript">
-    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
+    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
+    var lookahead_initial_language = "{{default_dataset_lang}}";
 
     $(document).ready(function(){
         /**
@@ -47,6 +48,7 @@
          $('#id_dataset').change(function() {
             set_annotationidglosslanguages();
          });
+         set_initial_language_lemma_lookahead(lookahead_initial_language);
     });
     var csrf_token = '{{csrf_token}}';
 
@@ -97,7 +99,7 @@
                          <div id="lemma_select">
 
                              <label for="id_lemma_language_select">
-                             <span id="selected_lemma_language" value="">
+                             <span id="selected_lemma_language" value="{{default_dataset_lang}}">
                              {% for dataset_lang in dataset_languages %}
                                  <input id="lemma_language_{{ dataset_lang.language_code_2char }}"
                                         type="radio" name="lemma_language" onclick="do_set_lemma_language(this)"

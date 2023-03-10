@@ -79,6 +79,9 @@ $(document).ready(function() {
 
 function set_lemma_language() {
     var selected_language = $("input[type=radio]").filter(':checked').attr('value');
-//    console.log('set lemma language, lemma typeahead: '+selected_language);
+    lemma_bloodhound.remote.url = url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/'+selected_language+'/%QUERY'
+}
+
+function set_initial_language_lemma_lookahead(selected_language) {
     lemma_bloodhound.remote.url = url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/'+selected_language+'/%QUERY'
 }

@@ -497,7 +497,7 @@ body {
     border-radius: 0.5em;
 }
 
-/* Appearance of morphemes and compound parts in detail view */
+/* Appearance of morphemes and compound parts in details */
 .gloss_detail_morpheme {
     font-style: italic;
 }

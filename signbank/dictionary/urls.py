@@ -54,6 +54,8 @@ urlpatterns = [
     re_path(r'^update/field_choice_color/(?P<category>.*)/(?P<fieldchoiceid>\d+)$', login_required(signbank.dictionary.update.update_field_choice_color),
         name='update_field_choice_color'),
 
+    re_path(r'^update/query/(?P<queryid>\d+)$', signbank.dictionary.update.update_query, name='update_query'),
+
     # The next one does not have a permission check because it should be accessible from a cronjob 
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
     re_path(r'^update/variants_of_gloss/$', signbank.dictionary.update.variants_of_gloss, name='variants_of_gloss'),
@@ -87,7 +89,7 @@ urlpatterns = [
     re_path(r'update_corpora/$',
         permission_required('dictionary.change_gloss')(signbank.frequency.update_corpora)),
 
-    re_path(r'find_and_save_variants/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.find_and_save_variants)),
+    re_path(r'find_and_save_variants/$',login_required(signbank.dictionary.views.find_and_save_variants), name='find_and_save_variants'),
 
     re_path(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     re_path(r'package/$', signbank.dictionary.views.package),
@@ -125,5 +127,7 @@ urlpatterns = [
 
     re_path(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples),
 
-    re_path(r'createcitationimage/(?P<pk>\d+)', permission_required('dictionary.change_gloss')(create_citation_image), name='create_citation_image')
+    re_path(r'createcitationimage/(?P<pk>\d+)', permission_required('dictionary.change_gloss')(create_citation_image), name='create_citation_image'),
+
+    re_path(r'gloss/api/', signbank.dictionary.views.gloss_api_get_sign_name_and_media_info, name='gloss_api_get_info')
 ]

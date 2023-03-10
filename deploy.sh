@@ -24,5 +24,8 @@ setfacl -R -m user:wapsignbank:rx "$ROOT"repo/
 #Step 6: migrate the database
 python "$ROOT"repo/bin/develop.py migrate
 
-#Step 7: Run all unit tests
+#Step 7: create a new test database that includes migrations
+python "$ROOT"repo/bin/develop.py create_test_db
+
+#Step 8: Run all unit tests
 python "$ROOT"repo/bin/develop.py test -k

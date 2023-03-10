@@ -24,7 +24,7 @@ from signbank.dictionary.adminviews import GlossListView, MorphemeListView, Data
                                             HomonymListView, MinimalPairsListView, DatasetManagerView, \
                                             DatasetDetailView, FrequencyListView, DatasetFieldChoiceView, \
                                             dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView, \
-                                            QueryListView, SemanticFieldListView, DerivationHistoryListView
+                                            QueryListView, SemanticFieldListView, DerivationHistoryListView, SearchHistoryView
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -76,6 +76,8 @@ urlpatterns = [
     re_path(r'^analysis/minimalpairs/$', MinimalPairsListView.as_view(), name='admin_minimalpairs_list'),
     re_path(r'^analysis/frequencies/$', FrequencyListView.as_view(), name='admin_frequency_list'),
     re_path(r'^analysis/queries/$', QueryListView.as_view(), name='admin_query_list'),
+    re_path(r'^analysis/search_history/$', SearchHistoryView.as_view(), name='admin_search_history'),
+
     re_path(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
     re_path(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
     re_path(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
@@ -114,6 +116,7 @@ urlpatterns = [
     re_path(r'reload_signbank/$',signbank.tools.reload_signbank),
 
     re_path(r'^datasets/available', DatasetListView.as_view(), name='admin_dataset_view'),
+    re_path(r'^datasets/recent_feedback$', signbank.feedback.views.recent_feedback),
     re_path(r'^datasets/select', DatasetListView.as_view(), {'select': True}, name='admin_dataset_select'),
     re_path(r'^datasets/change_selection', signbank.dictionary.update.change_dataset_selection, name='change_dataset_selection'),
     re_path(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),

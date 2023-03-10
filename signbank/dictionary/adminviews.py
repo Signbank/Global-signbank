@@ -58,6 +58,8 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     get_interface_language_and_default_language_codes
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results
+from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
+    get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
     speaker_identifiers_contain_dataset_acronym, get_names_of_updated_eaf_files, update_corpus_document_counts, \
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
@@ -367,6 +369,7 @@ class GlossListView(ListView):
         else:
             context['gloss_fields_to_populate'] = json.dumps([])
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -454,6 +457,7 @@ class GlossListView(ListView):
         label = field.label
         context['input_names_fields_labels_subhndsh'].append(('subhndsh_number',field,label))
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         # it is necessary to sort the object list by lemma_id in order for all glosses with the same lemma to be grouped
@@ -475,7 +479,7 @@ class GlossListView(ListView):
         context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
 
         # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and then go to Detail View on the objects
+        # of an extremely long list and then go to Details on the objects
 
         this_page_number = context['page_obj'].number
         this_paginator = context['page_obj'].paginator
@@ -1341,15 +1345,16 @@ class GlossDetailView(DetailView):
         context['default_query_parameters_values_mapping'] = default_query_parameters_values_mapping
         context['json_default_query_parameters'] = json.dumps(default_query_parameters)
 
+        # gloss_default_parameters_query_name = "Gloss " + str(context['gloss'].id) + " Default Parameters"
+        # save_query_parameters(self.request, gloss_default_parameters_query_name, default_query_parameters)
+
         if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             # if the query parameters are available, convert them to a dictionary
             session_query_parameters = self.request.session['query_parameters']
             self.query_parameters = json.loads(session_query_parameters)
 
         context['query_parameters'] = self.query_parameters
-
         query_parameters_mapping = pretty_print_query_fields(dataset_languages, self.query_parameters.keys())
-
         query_parameters_values_mapping = pretty_print_query_values(dataset_languages, self.query_parameters)
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
@@ -1365,7 +1370,6 @@ class GlossDetailView(DetailView):
         context['blendform'] = GlossBlendForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['gloss'].navigation(True)
-        context['interpform'] = InterpreterFeedbackForm()
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
@@ -1626,7 +1630,11 @@ class GlossDetailView(DetailView):
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
-        gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
+        gloss_annotations = gl.annotationidglosstranslation_set.all()
+        if gloss_annotations:
+            gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
+        else:
+            gloss_default_annotationidglosstranslation = str(gl.id)
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
         for language in gl.dataset.translation_languages.all():
@@ -1794,16 +1802,72 @@ class GlossDetailView(DetailView):
         else:
             context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
 
+        gloss_is_duplicate = False
+        annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
+        for annotation in annotationidglosstranslations:
+            if "-duplicate" in annotation.text:
+                gloss_is_duplicate = True
+        context['gloss_is_duplicate'] = gloss_is_duplicate
+
         return context
 
     def post(self, request, *args, **kwargs):
         if request.method != "POST" or not request.POST or request.POST.get('use_default_query_parameters') != 'default_parameters':
             return redirect(reverse('admin_gloss_view'))
-        # set up gloss detail view default parameters here
+        # set up gloss details default parameters here
         default_parameters = request.POST.get('default_parameters')
         request.session['query_parameters'] = default_parameters
         request.session.modified = True
         return redirect(settings.PREFIX_URL + '/signs/search/?query')
+
+    def render_to_response(self, context):
+        if self.request.GET.get('format') == 'Copy':
+            return self.copy_gloss(context)
+        else:
+            return super(GlossDetailView, self).render_to_response(context)
+
+    def copy_gloss(self, context):
+        gl = context['gloss']
+        context['active_id'] = gl.id
+
+        annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
+        for annotation in annotationidglosstranslations:
+            if "-duplicate" in annotation.text:
+                # go back to the same page, this is already a duplicate
+                return HttpResponseRedirect('/dictionary/gloss/' + str(gl.id))
+
+        new_gloss = Gloss()
+        dataset_pk = self.request.GET.get('dataset')
+        dataset = Dataset.objects.get(pk=dataset_pk)
+        if gl.lemma.dataset == dataset:
+            setattr(new_gloss, 'lemma', getattr(gl, 'lemma'))
+        else:
+            # need to create a lemma for this gloss in the other dataset
+            new_lemma = LemmaIdgloss(dataset=dataset)
+            new_lemma.save()
+            existing_lemma_translations = gl.lemma.lemmaidglosstranslation_set.all()
+            for lemma_translation in existing_lemma_translations:
+                new_lemma_text = lemma_translation.text + '-duplicate'
+                duplication_lemma_translation = LemmaIdglossTranslation(lemma=new_lemma, language=lemma_translation.language,
+                                                                      text=new_lemma_text)
+                duplication_lemma_translation.save()
+            setattr(new_gloss, 'lemma', new_lemma)
+
+        for field in settings.FIELDS['phonology']:
+            setattr(new_gloss, field, getattr(gl, field))
+        new_gloss.save()
+        new_gloss.creator.add(self.request.user)
+        new_gloss.creationDate = DT.datetime.now()
+        new_gloss.save()
+        annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
+        for annotation in annotationidglosstranslations:
+            new_annotation_text = annotation.text+'-duplicate'
+            duplication_annotation = AnnotationIdglossTranslation(gloss=new_gloss, language=annotation.language, text=new_annotation_text)
+            duplication_annotation.save()
+
+        self.request.session['last_used_dataset'] = dataset.acronym
+
+        return HttpResponseRedirect('/dictionary/gloss/'+str(new_gloss.id) + '?edit')
 
 
 class GlossVideosView(DetailView):
@@ -2301,6 +2365,7 @@ class MorphemeListView(ListView):
 
         self.request.session['search_type'] = self.search_type
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['add_morpheme_form'] = MorphemeCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
 
         context['input_names_fields_and_labels'] = {}
@@ -2328,7 +2393,7 @@ class MorphemeListView(ListView):
         context['page_number'] = context['page_obj'].number
 
         # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Detail View on the objects
+        # of an extremely long list and go to Details on the objects
 
         if len(self.object_list) > settings.MAX_SCROLL_BAR:
             list_of_objects = context['page_obj'].object_list
@@ -2368,6 +2433,7 @@ class MorphemeListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
@@ -2990,7 +3056,7 @@ class SemanticFieldListView(ListView):
         context['selected_datasets'] = selected_datasets
 
         # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Detail View on the objects
+        # of an extremely long list and go to Details on the objects
 
         if len(self.object_list) > settings.MAX_SCROLL_BAR:
             list_of_objects = context['page_obj'].object_list
@@ -3089,7 +3155,7 @@ class DerivationHistoryListView(ListView):
         context['selected_datasets'] = selected_datasets
 
         # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Detail View on the objects
+        # of an extremely long list and go to Details on the objects
 
         if len(self.object_list) > settings.MAX_SCROLL_BAR:
             list_of_objects = context['page_obj'].object_list
@@ -3574,6 +3640,112 @@ class QueryListView(ListView):
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
 
         return object_list
+
+    def render_to_response(self, context):
+        if self.request.GET.get('save_query') == 'Save':
+            return self.render_to_save_query(context)
+        else:
+            return super(QueryListView, self).render_to_response(context)
+
+    def render_to_save_query(self, context):
+        query_parameters = context['query_parameters']
+        query_name = _("Query View Save")
+        field_names = fieldnames_from_query_parameters(query_parameters)
+        available_field_names = available_query_parameters_in_search_history()
+        # TO DO test that the field names queried upon are supported in the search history
+        # give feedback
+        save_query_parameters(self.request, query_name, query_parameters)
+        return super(QueryListView, self).render_to_response(context)
+
+
+class SearchHistoryView(ListView):
+    # not sure what model should be used here, it applies to all the glosses in a dataset
+    model = Dataset
+    template_name = 'dictionary/admin_search_history.html'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(SearchHistoryView, self).get_context_data(**kwargs)
+
+        language_code = self.request.LANGUAGE_CODE
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        # this gets the query parameters fields currently being stored by the code
+        # see if we need to do anything with this qua feedback
+        classnames = available_query_parameters_in_search_history()
+
+        # create a lookup table mapping queries to languages
+        selected_datasets_contain_query_languages = {}
+        all_queries_user = SearchHistory.objects.filter(user=self.request.user)
+        for query in all_queries_user:
+            query_languages_this_query = query.query_languages()
+            query_languages_in_dataset = True
+            for lang in query_languages_this_query:
+                if lang not in dataset_languages:
+                    query_languages_in_dataset = False
+            selected_datasets_contain_query_languages[query] = query_languages_in_dataset
+        context['selected_datasets_contain_query_languages'] = selected_datasets_contain_query_languages
+
+        query_to_display_parameters = {}
+        for query in all_queries_user:
+            query_to_display_parameters[query] = display_parameters(query)
+        context['query_to_display_parameters'] = query_to_display_parameters
+
+        return context
+
+    def get_queryset(self):
+
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+        else:
+            search_results = []
+        if search_results and len(search_results) > 0:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+                self.request.session['search_results'] = None
+        if 'search_type' in self.request.session.keys():
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+                # search_type is 'handshape'
+                self.request.session['search_results'] = None
+
+        qs = SearchHistory.objects.filter(user=self.request.user).order_by('queryDate').reverse()
+
+        # for sh in qs:
+        #     languages = languages_in_query(sh.id)
+        #     if len(languages):
+        #         print('result of languages in query: ', languages)
+
+        return qs
+
+    def render_to_response(self, context):
+        if self.request.GET.get('run_query') == 'Run':
+            queryid = self.request.GET.get('queryid')
+            languages = languages_in_query(queryid)
+            dataset_languages = context['dataset_languages']
+            # the template does not show the run_query button if the languages are not present
+            # this is a safety measure
+            for lang in languages:
+                if lang not in dataset_languages:
+                    messages.add_message(self.request, messages.ERROR, _('Language '+lang.name+' is missing from the selected datasets.'))
+                    return HttpResponseRedirect(settings.PREFIX_URL + '/analysis/search_history/')
+
+            return self.render_to_run_query(context, queryid)
+        else:
+            return super(SearchHistoryView, self).render_to_response(context)
+
+    def render_to_run_query(self, context, queryid):
+        query = get_object_or_404(SearchHistory, id=queryid)
+        query_parameters = get_query_parameters(query)
+        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session.modified = True
+        return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/?query')
 
 
 class FrequencyListView(ListView):
@@ -4123,7 +4295,7 @@ class HandshapeListView(ListView):
         context['handshapescount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
         # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and go to Detail View on the objects
+        # of an extremely long list and go to Details on the objects
 
         list_of_objects = self.object_list
 
@@ -5860,7 +6032,6 @@ class MorphemeDetailView(DetailView):
         context['relationform'] = RelationForm()
         context['othermediaform'] = OtherMediaForm()
         context['navigation'] = context['morpheme'].navigation(True)
-        context['interpform'] = InterpreterFeedbackForm()
         context['SIGN_NAVIGATION'] = settings.SIGN_NAVIGATION
 
         # Get the set of all the Gloss signs that point to me
@@ -6113,6 +6284,7 @@ class MorphemeDetailView(DetailView):
         else:
             context['USE_DERIVATIONHISTORY'] = False
 
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context
 
@@ -6567,7 +6739,7 @@ def glosslistheader_ajax(request):
 
     if 'HTTP_REFERER' in request.META.keys():
         sortOrderURL = request.META['HTTP_REFERER']
-        sortOrderParameters = sortOrderURL.split('/?sortOrder=')
+        sortOrderParameters = sortOrderURL.split('&sortOrder=')
         if len(sortOrderParameters) > 1:
             sortOrder = sortOrderParameters[1].split('&')[0]
 
@@ -6852,7 +7024,16 @@ class LemmaCreateView(CreateView):
         context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
-        context['add_lemma_form'] = LemmaCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user)
+
+        if len(selected_datasets) == 1:
+            self.last_used_dataset = selected_datasets[0].acronym
+        elif 'last_used_dataset' in self.request.session.keys():
+            self.last_used_dataset = self.request.session['last_used_dataset']
+
+        context['last_used_dataset'] = self.last_used_dataset
+
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
+        context['add_lemma_form'] = LemmaCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
         return context
@@ -7000,7 +7181,7 @@ class LemmaUpdateView(UpdateView):
             if 'gloss' in path_parms[0]:
                 self.gloss_found = True
                 context['caller'] = 'gloss_detail_view'
-                # caller was Gloss Detail View
+                # caller was Gloss Details
                 import re
                 try:
                     m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
@@ -7013,7 +7194,7 @@ class LemmaUpdateView(UpdateView):
                     self.gloss_found = False
             else:
                 context['caller'] = 'lemma_list'
-        # These are needed for return to the Gloss Detail View
+        # These are needed for return to the Gloss Details
         # They are passed to the POST handling via hidden variables in the template
         context['gloss_id'] = self.gloss_id
         context['gloss_found'] = self.gloss_found
@@ -7117,7 +7298,7 @@ class LemmaUpdateView(UpdateView):
             if self.page_in_lemma_list:
                 return HttpResponseRedirect(self.success_url + '?page='+self.page_in_lemma_list)
             elif self.gloss_found and self.gloss_id:
-                # return to Gloss Detail View
+                # return to Gloss Details
                 gloss_detail_view_url = reverse_lazy('dictionary:admin_gloss_view', kwargs={'pk': self.gloss_id})
                 return HttpResponseRedirect(gloss_detail_view_url)
             else:

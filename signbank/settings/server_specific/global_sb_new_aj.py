@@ -72,6 +72,7 @@ FREQUENCY_CATEGORIES = ['Occurences', 'Signers']
 FREQUENCY_REGIONS = ['Amsterdam', 'Voorburg', 'Rotterdam', 'Gestel', 'Groningen', 'Other']
 
 TMP_DIR = '/var/www/writable/tmp'
+FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880 # 5 MB
 
 #temp experiment
 SWITCH_TO_MYSQL = False 

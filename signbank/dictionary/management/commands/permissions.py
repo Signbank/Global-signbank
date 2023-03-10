@@ -14,9 +14,6 @@ create_signs = Permission.objects.get(codename='add_gloss', content_type__model_
 publish = Permission.objects.get(codename='can_publish', content_type__model__exact='gloss')
 delete_unpublished = Permission.objects.get(codename='can_delete_unpublished', content_type__model__exact='gloss')
 delete_published = Permission.objects.get(codename='can_delete_published', content_type__model__exact='gloss')
-view_interp_note = Permission.objects.get(codename='can_view_interpreterfeedback', content_type__model__exact='interpreterfeedback')
-create_interp_note = Permission.objects.get(codename='add_interpreterfeedback', content_type__model__exact='interpreterfeedback')
-delete_interp_note = Permission.objects.get(codename='delete_interpreterfeedback', content_type__model__exact='interpreterfeedback')
 delete_gen_feedback = Permission.objects.get(codename='delete_generalfeedback', content_type__model__exact='generalfeedback')
 change_page = Permission.objects.get(codename='change_page', content_type__model__exact='page')
 add_page = Permission.objects.get(codename='add_page', content_type__model__exact='page')
@@ -44,9 +41,6 @@ class Command(BaseCommand):
             publisher.permissions.add(publish)
             publisher.permissions.add(delete_unpublished)
             publisher.permissions.add(delete_published)
-            publisher.permissions.add(view_interp_note)
-            publisher.permissions.add(create_interp_note)
-            publisher.permissions.add(delete_interp_note)
             publisher.permissions.add(delete_gen_feedback)
             publisher.permissions.add(change_page)
             publisher.permissions.add(add_page)
@@ -64,9 +58,6 @@ class Command(BaseCommand):
             editor.permissions.add(add_video)
             editor.permissions.add(create_signs)
             editor.permissions.add(delete_unpublished)
-            editor.permissions.add(view_interp_note)
-            editor.permissions.add(create_interp_note)
-            editor.permissions.add(delete_interp_note)
             editor.permissions.add(delete_gen_feedback)
 
             
@@ -75,19 +66,14 @@ class Command(BaseCommand):
             interpreter.permissions.add(advanced_search)
             interpreter.permissions.add(view_adv_properties)
             interpreter.permissions.add(export_csv)
-            interpreter.permissions.add(view_interp_note)
-            interpreter.permissions.add(create_interp_note)
-            
+
             
             # Interpreter Supervisor
             supervisor, created = Group.objects.get_or_create(name='Interpreter Supervisor')
             supervisor.permissions.add(advanced_search)
             supervisor.permissions.add(view_adv_properties)
             supervisor.permissions.add(export_csv)
-            supervisor.permissions.add(view_interp_note)
-            supervisor.permissions.add(create_interp_note)
-            supervisor.permissions.add(delete_interp_note)
-            
+
             
             # Researcher
             researcher, created = Group.objects.get_or_create(name='Researcher')

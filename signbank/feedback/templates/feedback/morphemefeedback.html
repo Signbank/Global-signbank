@@ -1,0 +1,31 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+
+{% block content %}
+
+<div class="col-md-5 col-md-offset-1">
+    <h2>{% trans "Morpheme Feedback" %}</h2>
+  
+  <form id="signfeedback" method="post">
+  {% csrf_token %}
+
+  <input type='hidden' name='sourcepage' value='{{sourcepage}}'>
+
+  <p><span class="feedbackQuestion"> Please give us your comments about this morpheme. For example:
+  do you think other keywords are needed?
+  Please write your comments or new keywords below. </span> <br/>
+  </p>
+
+    {% bootstrap_field feedback_form.comment show_label=False %}
+
+  <p><input class='btn btn-primary' type="submit" value="Submit"/></p>
+
+  
+</form>
+
+</div>
+
+{% endblock %}

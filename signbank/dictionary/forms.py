@@ -8,11 +8,14 @@ from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
                                         MorphologyDefinition, OtherMedia, Handshape, SemanticField, DerivationHistory, \
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
-                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage
+                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, \
+                                        QueryParameterFieldChoice, SearchHistory, QueryParameter, \
+                                        QueryParameterMultilingual, QueryParameterHandshape
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
 import datetime as DT
+from django.utils.timezone import get_current_timezone
 from signbank.settings.server_specific import DEFAULT_KEYWORDS_LANGUAGE, LANGUAGES, MODELTRANSLATION_LANGUAGES
 from signbank.settings.base import FIELDS
 
@@ -1253,4 +1256,113 @@ class HandshapeForm(forms.ModelForm):
             # in the database,only the hex number is stored
             # adding a # has already been taken care for an instance object by the get_form of FieldChoiceAdmin
             self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color'})
+
+
+class QueryParameterBooleanForm(forms.ModelForm):
+
+    class Meta:
+        model = QueryParameterFieldChoice
+
+        fields = ['search_history', 'multiselect', 'fieldName', 'fieldValue']
+
+    def __init__(self, *args, **kwargs):
+        super(QueryParameterBooleanForm, self).__init__(*args, **kwargs)
+        if self.instance:
+            field_name = self.instance.fieldName
+            # the following variables are used to restrict selection to only the saved Boolean field
+            restricted_field_names = [(field_name, self.instance.display_verbose_fieldname())]
+            self.fields['fieldName'] = forms.ChoiceField(choices=restricted_field_names, label=_("Field Name"))
+            self.fields['search_history'].disabled = True
+            field_value = self.instance.display_fieldvalue()
+            restricted_choices = [(field_value, field_value)]
+            self.fields['fieldValue'] = forms.ChoiceField(label=_('Field Value'), choices=restricted_choices)
+
+
+class QueryParameterHandshapeForm(forms.ModelForm):
+
+    class Meta:
+        model = QueryParameterHandshape
+
+        fields = ['search_history', 'multiselect', 'fieldName', 'fieldValue']
+
+    def __init__(self, *args, **kwargs):
+        super(QueryParameterHandshapeForm, self).__init__(*args, **kwargs)
+        if self.instance:
+            field_name = self.instance.fieldName
+            # the following variables are used to restrict selection to only the saved handshape
+            restricted_field_names = [(field_name, self.instance.display_verbose_fieldname())]
+            self.fields['fieldName'] = forms.ChoiceField(choices=restricted_field_names, label=_("Field Name"))
+            self.fields['search_history'].disabled = True
+            field_value = self.instance.fieldValue.machine_value
+            restricted_choices = Handshape.objects.filter(machine_value=field_value)
+            self.fields['fieldValue'] = forms.ModelChoiceField(label=_('Field Value'),
+                                                               queryset=restricted_choices, empty_label=None)
+
+
+class QueryParameterMultilingualForm(forms.ModelForm):
+
+    class Meta:
+        model = QueryParameterMultilingual
+
+        fields = ['search_history', 'multiselect', 'fieldName', 'fieldLanguage', 'fieldValue']
+
+    def __init__(self, *args, **kwargs):
+        super(QueryParameterMultilingualForm, self).__init__(*args, **kwargs)
+        if self.instance:
+            field_name = self.instance.fieldName
+            # the following variables are used to restrict selection to only the saved multilingual field
+            restricted_field_names = [(field_name, self.instance.display_verbose_fieldname())]
+            self.fields['fieldName'] = forms.ChoiceField(choices=restricted_field_names, label=_("Field Name"))
+            self.fields['search_history'].disabled = True
+            language = self.instance.fieldLanguage
+            restricted_choices = [(language, language)]
+            self.fields['fieldLanguage'] = forms.ChoiceField(label=_('Language'), choices=restricted_choices)
+
+
+class QueryParameterFieldChoiceForm(forms.ModelForm):
+
+    class Meta:
+        model = QueryParameterFieldChoice
+
+        fields = ['search_history', 'multiselect', 'fieldName', 'fieldValue']
+
+    def __init__(self, *args, **kwargs):
+        super(QueryParameterFieldChoiceForm, self).__init__(*args, **kwargs)
+        if not self.instance or not self.instance.fieldName or self.instance.fieldName == '-':
+            categories = dict(QueryParameterFieldChoice.QUERY_FIELD_CATEGORY).values()
+            self.fields['fieldValue'] = forms.ModelChoiceField(queryset=FieldChoice.objects.filter(
+                field__in=categories).order_by('field'))
+        else:
+            field_name = self.instance.fieldName
+            categories = dict(QueryParameterFieldChoice.QUERY_FIELD_CATEGORY)
+            field_choice = categories[field_name]
+            # the following variables are used to restrict selection to only the saved field choice
+            restricted_field_names = [(field_name, field_name)]
+            choices_field_value = FieldChoice.objects.filter(
+                field=field_choice, machine_value=self.instance.fieldValue.machine_value)
+            self.fields['fieldName'] = forms.ChoiceField(choices=restricted_field_names)
+            self.fields['fieldValue'] = forms.ModelChoiceField(queryset=choices_field_value, empty_label=None)
+            self.fields['search_history'].disabled = True
+
+
+class SearchHistoryForm(forms.ModelForm):
+
+    class Meta:
+        model = SearchHistory
+
+        fields = ['user', 'queryName', 'parameters']
+
+    def __init__(self, *args, **kwargs):
+        super(SearchHistoryForm, self).__init__(*args, **kwargs)
+
+        if not self.instance:
+            self.fields['queryDate'].initial = DT.datetime.now(tz=get_current_timezone())
+            self.fields['parameters'] = forms.MultipleChoiceField(label=_('Parameters'),
+                                                                  widget=forms.CheckboxSelectMultiple,
+                                                                  choices=QueryParameter.objects.all())
+        else:
+            query_parameters_of_instance = QueryParameter.objects.filter(search_history=self.instance)
+            self.fields['parameters'] = forms.ModelMultipleChoiceField(label=_('Parameters'),
+                                                                       widget=forms.CheckboxSelectMultiple,
+                                                                       queryset=query_parameters_of_instance)
 

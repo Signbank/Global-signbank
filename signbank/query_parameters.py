@@ -26,7 +26,7 @@ from django.db.models.fields import BooleanField, BooleanField
 
 from django.urls import reverse
 from tagging.models import TaggedItem, Tag
-
+from django.shortcuts import render, get_object_or_404, redirect
 from guardian.shortcuts import get_objects_for_user
 
 
@@ -373,7 +373,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
     NEUTRALBOOLEANCHOICES = { '0': _('Neutral'), '1': _('Neutral'), '2': _('Yes'), '3': _('No') }
     UNKNOWNBOOLEANCHOICES = { '0': _('---------'), '2': _('True'), '3': _('False') }
     NULLBOOLEANCHOICES = { '0': _('---------'), '2': _('True'), '3': _('False') }
-    YESNOCHOICES = { 'unspecified': '---------', 'yes': _('Yes'), 'no': _('No') }
+    YESNOCHOICES = { 'unspecified': '---------', 'yes': _('Yes'), 'no': _('No'), '2': _('Yes'), '3': _('No') }
     RELATION_ROLE_CHOICES = {'all': _('All'),
                              'homonym': _('Homonym'),
                              'synonym': _('Synonym'),

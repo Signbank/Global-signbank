@@ -4,7 +4,9 @@ from django.forms import TextInput, Textarea, CharField
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from signbank.dictionary.models import *
-from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm, SemanticFieldForm, HandshapeForm
+from signbank.dictionary.forms import DefinitionForm, FieldChoiceForm, SemanticFieldForm, HandshapeForm, \
+    QueryParameterFieldChoiceForm, SearchHistoryForm, QueryParameterBooleanForm, QueryParameterMultilingualForm, \
+    QueryParameterHandshapeForm
 from reversion.admin import VersionAdmin
 from signbank.settings import server_specific
 from signbank.settings.server_specific import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGES, LANGUAGE_CODE
@@ -1100,6 +1102,200 @@ class LemmaIdglossTranslationAdmin(VersionAdmin):
     def has_add_permission(self, request):
         return False
 
+
+class QueryParameterFieldChoiceAdmin(VersionAdmin):
+
+    model = QueryParameterFieldChoice
+
+    form = QueryParameterFieldChoiceForm
+
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+
+class QueryParameterHandshapeAdmin(VersionAdmin):
+
+    model = QueryParameterHandshape
+    form = QueryParameterHandshapeForm
+
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+
+class QueryParameterSemanticFieldAdmin(VersionAdmin):
+
+    model = QueryParameterSemanticField
+
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+
+class QueryParameterDerivationHistoryAdmin(VersionAdmin):
+
+    model = QueryParameterDerivationHistory
+
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+
+class QueryParameterBooleanAdmin(VersionAdmin):
+
+    model = QueryParameterBoolean
+
+    form = QueryParameterBooleanForm
+
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+
+class QueryParameterMultilingualAdmin(VersionAdmin):
+
+    model = QueryParameterMultilingual
+    form = QueryParameterMultilingualForm
+
+    list_display = ['search_history', '__str__']
+    list_filter = ['search_history']
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and not obj.search_history:
+            return True
+        return False
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+
+class SearchHistoryAdmin(VersionAdmin):
+
+    model = SearchHistory
+
+    form = SearchHistoryForm
+
+    list_display = ['queryName', 'query_parameters', 'user', 'queryDate']
+    readonly_fields = ['user']
+
+    def query_parameters(self, obj=None):
+        if obj is None:
+            return ""
+        parameter_list = []
+        for translation in obj.parameters.all():
+            if translation.is_fieldchoice():
+                field_choice = translation.queryparameterfieldchoice
+                parameter_list.append(str(field_choice))
+            elif translation.is_handshape():
+                handshape = translation.queryparameterhandshape
+                parameter_list.append(str(handshape))
+            elif translation.is_semanticfield():
+                semanticfield = translation.queryparametersemanticfield
+                parameter_list.append(str(semanticfield))
+            elif translation.is_derivationhistory():
+                derivationhistory = translation.queryparameterderivationhistory
+                parameter_list.append(str(derivationhistory))
+            elif translation.is_boolean():
+                nullbooleanfield = translation.queryparameterboolean
+                parameter_list.append(str(nullbooleanfield))
+            elif translation.is_multilingual():
+                multilingual = translation.queryparametermultilingual
+                parameter_list.append(str(multilingual))
+            else:
+                parameter_list.append(str(translation))
+        return ", ".join(parameter_list)
+
+    def has_add_permission(self, request):
+        # don't allow adding new search histories in the admin, since the user field is problematic
+        return False
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        if extra_context is None:
+            extra_context = {}
+
+        extra_context['title'] = _("Change Title of Saved Query")
+        view = super(SearchHistoryAdmin, self).change_view(request, object_id, form_url, extra_context)
+        return view
+
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin)
@@ -1123,3 +1319,12 @@ admin.site.register(Dataset, DatasetAdmin)
 
 admin.site.register(LemmaIdgloss, LemmaIdglossAdmin)
 admin.site.register(LemmaIdglossTranslation, LemmaIdglossTranslationAdmin)
+
+admin.site.register(QueryParameterFieldChoice, QueryParameterFieldChoiceAdmin)
+admin.site.register(QueryParameterHandshape, QueryParameterHandshapeAdmin)
+admin.site.register(QueryParameterSemanticField, QueryParameterSemanticFieldAdmin)
+admin.site.register(QueryParameterDerivationHistory, QueryParameterDerivationHistoryAdmin)
+admin.site.register(QueryParameterBoolean, QueryParameterBooleanAdmin)
+admin.site.register(QueryParameterMultilingual, QueryParameterMultilingualAdmin)
+admin.site.register(SearchHistory, SearchHistoryAdmin)
+

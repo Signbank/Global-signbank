@@ -11,6 +11,13 @@
 
 {% load guardian_tags %}
 
+<style>
+.hasTooltip:hover .isTooltip {
+    position: fixed;
+    placement: top !important;
+    bottom: 100%;
+}
+</style>
 {% block extrajs %}
 
     <script type="text/javascript">
@@ -37,7 +44,8 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
 
     <script type="text/javascript">
-    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}"
+    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
+    var lookahead_initial_language = "{{default_dataset_lang}}";
 
     $(document).ready(function(){
         /**
@@ -48,6 +56,8 @@
          $('#id_dataset').change(function() {
             set_annotationidglosslanguages();
          });
+
+         set_initial_language_lemma_lookahead(lookahead_initial_language);
     });
 
     /**
@@ -59,6 +69,19 @@
       language_code = dataset_language_id;
       set_lemma_language();
     }
+
+    function copyTranslationsToLemma(el) {
+        $("[id*='glosscreate_']").each(function(){
+            if ($(this).is("input")) {
+                $annotation_field = $(this).attr('id');
+                $language_code = $annotation_field.split("_").pop();
+                $annotation_value = $(this).val();
+                $elt = $("#lemmacreate_" + $language_code);
+                $elt.attr('value', $annotation_value);
+            }
+        });
+        return false;
+    }
     </script>
 
 {% endblock %}
@@ -67,7 +90,7 @@
 
 <!--   {% if perms.dictionary.add_gloss %}-->
    <p>{% trans "Please provide some initial data" %}:</p>
-     <form action='{% url "dictionary:add_gloss" %}' method='post'>
+     <form action='{% url "dictionary:add_gloss" %}' method='POST'>
          {% csrf_token %}
          <table class='table' style='width: 1200px;'>
              <tr>
@@ -87,12 +110,28 @@
                          {% endfor %}
                      </select></td>
              </tr>
+             {% for dataset_lang in dataset_languages %}
+             <tr>
+                 <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}">
+                     <label for="id_annotation_idgloss_{{dataset_lang.language_code_2char}}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
+                 </th>
+                 <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
+                     <input id="glosscreate_{{ dataset_lang.language_code_2char }}"
+                            name="glosscreate_{{ dataset_lang.language_code_2char }}"
+                            required="" maxlength="30" type="text"
+                            size="50" />
+                 </td>
+             </tr>
+             {% endfor %}
              <tr>
                  <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
                  <td>
                          <div id="lemma_select">
+                             <div><label>{% trans "Select Existing Lemma" %}</label>&nbsp;
+                             <label><a href="#" onclick="return toggleAddLemma()">{% trans "Create New Lemma" %}</a></label>
+                             </div>
                              <label for="id_lemma_language_select">
-                             <span id="selected_lemma_language" value="">
+                             <span id="selected_lemma_language" value="{{default_dataset_lang}}">
                              {% for dataset_lang in dataset_languages %}
                                  <input id="lemma_language_{{ dataset_lang.language_code_2char }}"
                                         type="radio" name="lemma_language" onclick="do_set_lemma_language(this)"
@@ -103,35 +142,41 @@
                              </label>
                              <br/>
                              <!-- Input of the type ahead -->
-                             <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+                             <div class="text-container" data-toggle="tooltip" data-placement="top" style="z-index:100;"
+                                    title='{% trans "Type in the initial letters to see if the lemma already exists." %}' >
+                             <input class='form-control lemmatypeahead' placeholder='{% trans "Select Existing Lemma" %}' size="50" />
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
                              <input type='hidden' name='idgloss' value='confirmed' required="">
-                             <a href="#" onclick="return toggleAddLemma()">{% trans "Create New" %}</a>
+                             </div>
                          </div>
                          <div id="lemma_add">
+                             <div class="btn-group"><label>{% trans "Create New Lemma" %}</label>&nbsp;
+                                 <label><a href="#" onclick="return toggleAddLemma()">{% trans "Select Existing Lemma" %}</a></label>
+                             </div>
+                             <table>
                             {% for dataset_lang in dataset_languages %}
-                             <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}:</span>
-                            <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
-                                   name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
-                                   maxlength="30" type="text"/>
-
+                             <tr>
+                             <td style="width:100px;">
+                             <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}"
+                                   style="line-height:30px;">{{ dataset_lang.name }}</span>
+                             </td>
+                             <td style="align:right;">
+                                <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                       name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                                       maxlength="30" type="text"
+                                       size="50" />
+                            </td>
+                            </tr>
                             {% endfor %}
-
-                             <a href="#" onclick="return toggleAddLemma()">{% trans "Select" %}</a>
+                            </table>
+                             <span style="line-height:40px;">
+                                 <button style="line-height:20px;" type="button" class="btn btn-primary"
+                                         onclick="copyTranslationsToLemma(this)">{% trans "Copy Annotation Fields to Lemma Translations" %}</button>
+                             </span>
                          </div>
                          <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
                      </td>
              </tr>
-             {% for dataset_lang in dataset_languages %}
-             <tr>
-                 <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}">
-                     <label for="id_annotation_idgloss_{{dataset_lang.language_code_2char}}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
-                 </th>
-                 <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
-                     <input id="glosscreate_{{ dataset_lang.language_code_2char }}" name="glosscreate_{{ dataset_lang.language_code_2char }}" required="" maxlength="30" type="text"/>
-                 </td>
-             </tr>
-             {% endfor %}
          </table>
 
      <input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'>

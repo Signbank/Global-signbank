@@ -75,15 +75,15 @@
                 <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/{{gloss_or_morpheme}}/{{gloss.id}}.html">{% trans "Public View" %}</a>
             </li>
             <li class="nav-item">
-                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/{{gloss_or_morpheme}}/{{gloss.id}}">{% trans "Detail View" %}</a>
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/{{gloss_or_morpheme}}/{{gloss.id}}">{% trans "Details" %}</a>
             </li>
             {% if gloss_or_morpheme == 'gloss' %}
             <li class="nav-item">
-                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations View" %}</a>
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations" %}</a>
             </li>
             {% if gloss.has_frequency_data %}
             <li class="nav-item">
-                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_frequency/{{gloss.id}}/">{% trans "Frequency View" %}</a>
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_frequency/{{gloss.id}}/">{% trans "Frequencies" %}</a>
             </li>
             {% endif %}
             <li class="nav-item">
@@ -91,7 +91,7 @@
             </li>
             {% endif %}
             <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos View" %}</a>
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos" %}</a>
             </li>
         </ul>
         <br>

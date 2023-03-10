@@ -51,7 +51,7 @@
         <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}'>{% trans "Return to Lemma List" %}</a>
         {% endif %}
     {% elif caller == 'gloss_detail_view' and gloss_id %}
-        <a class="btn btn-default" href='{% url "dictionary:admin_gloss_view" pk=gloss_id %}'>{% trans "Return to Gloss Detail View" %}</a>
+        <a class="btn btn-default" href='{% url "dictionary:admin_gloss_view" pk=gloss_id %}'>{% trans "Return to Gloss Details" %}</a>
     {% endif %}
      <form action='{% url "dictionary:change_lemma" object.pk %}' method='post'>
          {% csrf_token %}
