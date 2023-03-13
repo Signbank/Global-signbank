@@ -235,7 +235,7 @@ class GlossVideo(models.Model):
         video, if create=True, create the image if needed
         Return None if create=False and the file doesn't exist"""
 
-        vidpath, ext = os.path.splitext(self.videofile.path)
+        vidpath, _ = os.path.splitext(self.videofile.path)
         poster_path = vidpath + ".png"
         # replace vidpath with imagepath!
         poster_path = str(poster_path.replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
