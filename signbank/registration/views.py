@@ -166,7 +166,7 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                                 print('message: ', message)
                                 print('setting: ', settings.DEFAULT_FROM_EMAIL)
 
-                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+                            # send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
 
                     else:
 
@@ -201,7 +201,7 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                                 print('message: ', message)
                                 print('setting: ', settings.DEFAULT_FROM_EMAIL)
 
-                            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
+                            # send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [owner.email])
 
 
                 request.session['requested_datasets'] = list_of_datasets
