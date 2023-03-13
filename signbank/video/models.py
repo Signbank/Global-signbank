@@ -76,7 +76,7 @@ class Video(models.Model):
 
         (basename, ext) = os.path.splitext(self.videofile.path)
         tmploc = basename + "-conv.mp4"
-        err = convert_video(self.videofile.path, tmploc, force=True)
+        err = convert_video(self.videofile.path, tmploc, force=False)
         # print tmploc
         shutil.move(tmploc, self.videofile.path)
 
@@ -272,7 +272,7 @@ class GlossVideo(models.Model):
         if ext == '.mov':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            err = convert_video(oldloc, newloc, force=True)
+            err = convert_video(oldloc, newloc, force=False)
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
             os.remove(oldloc)
 
