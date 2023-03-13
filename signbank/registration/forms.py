@@ -91,7 +91,7 @@ class RegistrationForm(forms.Form):
     tos_choices = [(True, 'Agree'), (False, 'Disagree')]
     href_hyperlink = settings.URL + settings.PREFIX_URL + '/about/conditions/'
     tos_hyperlink = __(u'I have read and agree to the <a href="' + href_hyperlink + '" target="_blank">Terms of Service</a>')
-    tos = forms.BooleanField(label=tos_hyperlink,
+    tos = forms.BooleanField(label=mark_safe(tos_hyperlink),
                              widget=forms.RadioSelect(choices=tos_choices),
                              error_messages={'required': 'Error: You must agree to the Terms of Service in order to register'})
 
