@@ -269,7 +269,7 @@ class GlossVideo(models.Model):
         # then move it into place
 
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext == '.mov':
+        if ext == '.mov' or ext == '.webm':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             err = convert_video(oldloc, newloc, force=True)
