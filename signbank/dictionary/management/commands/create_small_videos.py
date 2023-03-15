@@ -48,7 +48,7 @@ class Command(BaseCommand):
                                     print('File could not be copied for backup. Skipping: ', filepath)
                                     continue
                                 try:
-                                    gv.ensure_mp4()
+                                    gv.convert_to_mp4()
                                 except (PermissionError, ObjectDoesNotExist, ChildProcessError, Exception) as e:
                                     print('Conversion to mp4 failed: ', filepath)
                                     print(e)

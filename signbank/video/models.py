@@ -269,7 +269,7 @@ class GlossVideo(models.Model):
         # then move it into place
 
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext != '.mp4':
+        if ext == '.mov' or ext == '.webm':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             err = convert_video(oldloc, newloc, force=False)
@@ -314,6 +314,14 @@ class GlossVideo(models.Model):
         except:
             import sys
             print('Error generating still image', sys.exc_info())
+
+    def convert_to_mp4(self):
+        print(self.videofile.path)
+        name, _ = os.path.splitext(self.videofile.path)
+        out_name = name + ".mp4"
+        import ffmpeg
+        ffmpeg.input(self.videofile.path).output(out_name).run(quiet=True, overwrite_output=True)
+        print("Finished converting {}".format(self.videofile.path))
 
     def delete_files(self):
         """Delete the files associated with this object"""
