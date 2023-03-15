@@ -7,7 +7,6 @@ from django.core.exceptions import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, BACKUP_VIDEOS_FOLDER
 from signbank.dictionary.models import Dataset
 from signbank.video.models import GlossVideo
-from signbank.video.convertvideo import convert_video
 
 
 class Command(BaseCommand):
