@@ -7,6 +7,7 @@ from django.core.exceptions import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, BACKUP_VIDEOS_FOLDER
 from signbank.dictionary.models import Dataset
 from signbank.video.models import GlossVideo
+from signbank.video.convertvideo import convert_video
 
 
 class Command(BaseCommand):
@@ -48,7 +49,7 @@ class Command(BaseCommand):
                                     print('File could not be copied for backup. Skipping: ', filepath)
                                     continue
                                 try:
-                                    gv.convert_to_mp4()
+                                    gv.ensure_mp4()
                                 except (PermissionError, ObjectDoesNotExist, ChildProcessError, Exception) as e:
                                     print('Conversion to mp4 failed: ', filepath)
                                     print(e)
