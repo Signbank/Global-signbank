@@ -29,6 +29,12 @@ var csrf_token = '{{csrf_token}}';
     -webkit-appearance: none;
     -moz-appearance: none;
 }
+.actions {
+    color: white !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
 .runQuery {
     border: 1px solid;
     text-align: center;
@@ -117,7 +123,7 @@ var csrf_token = '{{csrf_token}}';
             <td>{{ query.queryDate }}</td>
             <td class="queryname_{{query.id}}" id="queryname_{{query.id}}">{{ query.queryName }}</td>
             <td>{% for lang in query.query_languages %}{{lang}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-            <td>
+            <td class="actions">
                 <div class="btn-group">
                 <button id='edit_query_btn_{{query.id}}' class="btn queryButton" type="button" name='edit_{{query.id}}'
                         value='edit_{{query.id}}'
