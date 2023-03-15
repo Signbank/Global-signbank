@@ -89,7 +89,7 @@ class GlossVideoExistenceFilter(admin.SimpleListFilter):
 
 class GlossVideoAdmin(admin.ModelAdmin):
 
-    list_display = ['id', 'gloss', 'video_file', 'file_timestamp', 'file_group', 'permissions', 'version']
+    list_display = ['id', 'gloss', 'video_file', 'file_timestamp', 'file_group', 'permissions', 'file_size', 'version']
     list_filter = (GlossVideoDatasetFilter, GlossVideoFileSystemGroupFilter, GlossVideoExistenceFilter)
 
     search_fields = ['^gloss__annotationidglosstranslation__text']
@@ -125,6 +125,19 @@ class GlossVideoAdmin(admin.ModelAdmin):
             if video_file_full_path.exists():
                 group = video_file_full_path.group()
                 return group
+            else:
+                return ""
+
+    def file_size(self, obj=None):
+        # this will display a group in the list view
+        if obj is None:
+            return ""
+        else:
+            from pathlib import Path
+            video_file_full_path = Path(WRITABLE_FOLDER, str(obj.videofile))
+            if video_file_full_path.exists():
+                size = str(video_file_full_path.stat().st_size)
+                return size
             else:
                 return ""
 
