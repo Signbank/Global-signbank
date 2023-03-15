@@ -10,7 +10,7 @@ from signbank.video.models import OtherMedia
 
 
 class Command(BaseCommand):
-    help = 'Create small videos for GlossVideos that have no small version.'
+    help = 'Convert other media videos that are not mp4.'
 
     def add_arguments(self, parser):
         parser.add_argument('dataset-acronym', nargs='+', type=str)
