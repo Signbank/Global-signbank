@@ -1,16 +1,16 @@
-"""Create small videos for GlossVideos that have no small version."""
+"""Convert gloss videos to mp4."""
 
 import os
 import shutil
 from django.core.management.base import BaseCommand
 from django.core.exceptions import *
-from signbank.settings.server_specific import WRITABLE_FOLDER
+from signbank.settings.server_specific import WRITABLE_FOLDER, BACKUP_VIDEOS_FOLDER
 from signbank.dictionary.models import Dataset
 from signbank.video.models import GlossVideo
 
 
 class Command(BaseCommand):
-    help = 'Create small videos for GlossVideos that have no small version.'
+    help = 'Convert gloss videos that are not mp4.'
 
     def add_arguments(self, parser):
         parser.add_argument('dataset-acronym', nargs='+', type=str)
@@ -36,10 +36,24 @@ class Command(BaseCommand):
                                 continue
                             if magic_file_type not in ['video/mp4', 'video/x-m4v']:
                                 # if the video has the wrong type
-                                continue
-                            if not gv.small_video():
-                                # the following prints an error message if unsuccessful
-                                gv.make_small_video()
+                                print('Non-MP4 video file found: ', filepath, magic_file_type)
+                                video_file_name = os.path.basename(filepath)
+                                (video_file_basename, video_file_ext) = os.path.splitext(video_file_name)
+                                temp_video_copy = video_file_basename + '-conv' + video_file_ext
+                                temp_filepath = os.path.join(WRITABLE_FOLDER, BACKUP_VIDEOS_FOLDER, temp_video_copy)
+                                try:
+                                    shutil.copy(filepath, temp_filepath)
+                                    print('Backup of file copied to: ', temp_filepath)
+                                except (PermissionError, shutil.SameFileError):
+                                    print('File could not be copied for backup. Skipping: ', filepath)
+                                    continue
+                                # the following may not work on quicktime nor on mpeg
+                                try:
+                                    gv.convert_to_mp4()
+                                except (PermissionError, ObjectDoesNotExist, ChildProcessError, Exception) as e:
+                                    print('Conversion to mp4 failed: ', filepath)
+                                    print(e)
+                                    continue
                         else:
                             print('GlossVideo file not found: ', filepath)
                 except ObjectDoesNotExist as e:
