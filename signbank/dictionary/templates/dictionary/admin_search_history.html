@@ -9,8 +9,7 @@
 {% blocktrans %}Search History{% endblocktrans %}
 {% endblock %}
 
-{% block extrajs %}
-<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+{% block extrahead %}
 
 <script type='text/javascript'>
 var url = '{{ PREFIX_URL }}';
@@ -18,10 +17,10 @@ var saving_str = '{{saving_str|escapejs}}';
 var csrf_token = '{{csrf_token}}';
 </script>
 
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+
 <script type='text/javascript' src="{{ STATIC_URL }}js/search_history_edit.js"></script>
 
-{% endblock %}
-{% block extrahead %}
 <style>
 .btn-group {
     color: white !important;
@@ -40,6 +39,7 @@ var csrf_token = '{{csrf_token}}';
     text-align: center;
     padding: 5px 5px;
     border-radius: 6px;
+    background-color: white;
 }
 .runQuery:hover {
     text-decoration: none;
@@ -47,6 +47,7 @@ var csrf_token = '{{csrf_token}}';
 .queryButton {
     padding-left: 4px;
     padding-right: 4px;
+    background-color: white;
 }
 .queryButton:hover {
     background-color: white;
