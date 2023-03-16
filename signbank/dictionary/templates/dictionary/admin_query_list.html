@@ -12,7 +12,7 @@
 
 {% load guardian_tags %}
 
-{% block extrahead %}
+{% block extrajs %}
 
     <script type='text/javascript'>
     var url = '{{ PREFIX_URL }}';
@@ -264,6 +264,8 @@ function do_sort_column(field_name, action, frmName) {
             'height': $('#panel-expand-collapse-btn-group').css('height'),
          });
     </script>
+{% endblock %}
+{% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
     <style>
         #panel-expand-collapse-btn-group.affix {
