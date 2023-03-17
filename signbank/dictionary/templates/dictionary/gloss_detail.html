@@ -922,6 +922,7 @@ p {
                     <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
                         {% csrf_token %}
                         <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
+                        <input type="hidden" name="last_used_dataset" value="{{ last_used_dataset }}"/>
                         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                         {{ dataset_lang.name }}:
                         <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"

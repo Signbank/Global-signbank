@@ -7115,9 +7115,12 @@ def create_lemma_for_gloss(request, glossid):
             messages.add_message(request, messages.ERROR, _("The specified gloss does not exist."))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    dataset = gloss.dataset
+    # get data from gloss before updating anything
+    dataset = gloss.lemma.dataset
     dataset_languages = dataset.translation_languages.all()
-    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=self.last_used_dataset)
+    # the last used dataset is a hidden field in the form, set by Django
+    last_used_dataset = request.POST['last_used_dataset']
+    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
     for item, value in request.POST.items():
         value = value.strip()
         if item.startswith(form.lemma_create_field_prefix):
