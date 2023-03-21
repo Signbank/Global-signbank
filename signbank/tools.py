@@ -1036,6 +1036,9 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
     split_human_values = re.split(r', ([0-9]+: ?)', mapped_values)
 
     # this doesn't split cleanly, because the "split" is also shown in the result
+    # e.g., ['NNN: (...,...,...)', "NNN: ', '(...,...,...)']
+    # an index variable is used in order to obtain the correct item from the list of splits
+    # consecutive elements must be concatenated after the first element, as shown above
     splits_combined = []
     list_index = 0
     # find the patterns of the different notes in the input
@@ -1044,7 +1047,6 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
             # there is a match to the pattern <machine_value>:(<published>,<index>,<text>) possibly with spaces
             splits_combined.append(split_value)
         elif re.match(r'[0-9]+: ?', split_value):
-            # index_of_value = split_human_values.index(split_value)
             next_value = split_human_values[list_index+1]
             splits_combined.append(split_value+next_value)
         # else skip over this one, it was combined with the previous
