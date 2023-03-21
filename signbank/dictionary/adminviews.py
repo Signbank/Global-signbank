@@ -807,15 +807,20 @@ class GlossListView(ListView):
             row.append(tag_names)
 
             # export notes
-            note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
             notes_of_gloss = gloss.definition_set.all()
+
             notes_list = []
             for note in notes_of_gloss:
-                translated_note_role = note.role.name
-                note_string = translated_note_role + ": (" + str(note.published) +","+ str(note.count) +","+ note.text + ")"
-                notes_list.append(note_string)
-            sorted_notes_list = sorted(notes_list)
-            notes_display = ", ".join(sorted_notes_list)
+                notes_list += [note.note_tuple()]
+            sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
+
+            notes_list = []
+            for (role, published, count, text) in sorted_notes_list:
+                # does not use a comprehension because of nested parentheses in role and text fields
+                tuple_reordered = role + ': (' + published + ',' + count + ',' + text + ')'
+                notes_list.append(tuple_reordered)
+
+            notes_display = ", ".join(notes_list)
             row.append(notes_display)
 
             #Make it safe for weird chars

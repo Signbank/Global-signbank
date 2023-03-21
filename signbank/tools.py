@@ -235,9 +235,13 @@ def create_gloss_from_valuedict(valuedict,dataset,row_nr,earlier_creation_same_c
         earlier_creation_same_csv[str(row_nr+1)] = new_gloss
         earlier_creation_lemmaidgloss[str(row_nr+1)] = lemmaidglosstranslations
 
-    return (new_gloss, already_exists, errors_found, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss)
+    return new_gloss, already_exists, errors_found, earlier_creation_same_csv, earlier_creation_annotationidgloss, \
+        earlier_creation_lemmaidgloss
 
-def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updates_same_csv, earlier_updates_lemmaidgloss):
+
+def compare_valuedict_to_gloss(valuedict, gloss_id,my_datasets, nl,
+                               earlier_updates_same_csv, earlier_updates_lemmaidgloss,
+                               notes_toggle, notes_assign_toggle, tags_toggle):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
 
     errors_found = []
@@ -245,38 +249,24 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
     try:
         gloss = Gloss.objects.select_related().get(pk=gloss_id)
-    except ObjectDoesNotExist as e:
-
-        e = 'Could not find gloss for ID ' + str(gloss_id)
-        errors_found.append(e)
-        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+    except ObjectDoesNotExist:
+        error_string = 'Could not find gloss for ID ' + str(gloss_id)
+        errors_found.append(error_string)
+        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
     if gloss_id in earlier_updates_same_csv:
         e = 'Signbank ID (' + str(gloss_id) + ') found in multiple rows (Row ' + str(nl + 1) + ').'
         errors_found.append(e)
-        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
     else:
         earlier_updates_same_csv.append(gloss_id)
     column_name_error = False
     tag_name_error = False
-    all_tags = [t.name for t in Tag.objects.all()]
-    all_tags_display = ', '.join([t.replace('_',' ') for t in all_tags])
+
     note_type_error = False
     note_tuple_error = False
-    activate(LANGUAGES[0][0])
-    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
-    all_notes = [ n.name for n in note_role_choices]
-    all_notes_display = ', '.join(all_notes)
-    # this is used to speedup matching updates to Notes
-    # it allows the type of note to be in either English or Dutch in the CSV file
-    note_reverse_translation = {}
-    for nrc in note_role_choices:
-        note_reverse_translation[nrc.name] = nrc.machine_value
-    note_translations = {}
-    for nrc in note_role_choices:
-        note_translations[str(nrc.machine_value)] = nrc.name
 
-    #Create an overview of all fields, sorted by their human name
+    # Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
 
         default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
@@ -302,11 +292,6 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             if human_key in columns_to_skip.keys():
                 continue
-
-            new_human_value_list = []
-
-            if new_human_value:
-                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
             new_human_value = new_human_value.strip()
 
@@ -398,6 +383,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
                 current_signlanguages_string = str(', '.join([str(lang.name) for lang in gloss.signlanguage.all()]))
 
+                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
+
                 (found, not_found, errors) = check_existence_signlanguage(gloss, new_human_value_list)
 
                 if len(errors):
@@ -420,6 +407,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     continue
 
                 current_dialects_string = str(', '.join([str(dia.name) for dia in gloss.dialect.all()]))
+
+                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
                 (found, not_found, errors) = check_existence_dialect(gloss, new_human_value_list)
 
@@ -489,6 +478,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     relations_with_categories.append(':'.join(rel_cat))
                 current_relations_string = ",".join(relations_with_categories)
 
+                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
+
                 (checked_new_human_value, errors) = check_existence_relations(gloss, relations_with_categories, new_human_value_list)
 
                 if len(errors):
@@ -518,6 +509,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     relations_with_categories.append(':'.join(rel_cat))
                 current_relations_foreign_string = ",".join(relations_with_categories)
 
+                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
+
                 (checked_new_human_value, errors) = check_existence_foreign_relations(gloss, relations_with_categories, new_human_value_list)
 
                 if len(errors):
@@ -542,6 +535,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 morphemes = [str(morpheme.morpheme.id) for morpheme in
                              MorphologyDefinition.objects.filter(parent_gloss=gloss)]
                 morphemes_string = ", ".join(morphemes)
+
+                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
                 (found, not_found, errors) = check_existence_sequential_morphology(gloss, new_human_value_list)
 
@@ -569,6 +564,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 for m in morphemes:
                     sim_morphs.append(':'.join(m))
                 simultaneous_morphemes = ','.join(sim_morphs)
+
+                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
                 (checked_new_human_value, errors) = check_existence_simultaneous_morphology(gloss, new_human_value_list)
 
@@ -598,6 +595,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                     ble_morphs.append(':'.join(m))
                 blend_morphemes = ','.join(ble_morphs)
 
+                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
+
                 (checked_new_human_value, errors) = check_existence_blend_morphology(gloss, new_human_value_list)
 
                 if len(errors):
@@ -616,73 +615,57 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                 continue
 
             elif human_key == 'Tags':
-                if new_human_value == 'None' or new_human_value == '':
+                if tags_toggle == 'keep' and (new_human_value == 'None' or new_human_value == ''):
                     continue
 
-                tags_of_gloss = TaggedItem.objects.filter(object_id=gloss_id)
-                tag_names_of_gloss = []
-                for t_obj in tags_of_gloss:
-                    tag_id = t_obj.tag_id
-                    tag_name = Tag.objects.get(id=tag_id)
-                    tag_names_of_gloss += [str(tag_name)]
-                tag_names_of_gloss = sorted(tag_names_of_gloss)
+                (tag_names_string, sorted_tags_display) = get_tags_as_string(gloss_id)
 
-                tag_names = ", ".join(tag_names_of_gloss)
+                if new_human_value == 'None' or new_human_value == '':
+                    (sorted_new_tags_display, sorted_new_tags, new_tag_errors, tag_name_error) = \
+                        ("", [], [], tag_name_error)
+                else:
+                    new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
-                tag_names_display = [ t.replace('_',' ') for t in tag_names_of_gloss ]
-                tag_names_display = ', '.join(tag_names_display)
+                    (sorted_new_tags_display, sorted_new_tags, new_tag_errors, tag_name_error) = \
+                        check_existence_tags(gloss_id, new_human_value_list, tag_name_error,
+                                             default_annotationidglosstranslation)
 
-                new_human_value_list = [v.replace(' ', '_') for v in new_human_value_list]
+                if len(new_tag_errors):
+                    errors_found += new_tag_errors
+                elif sorted_tags_display != sorted_new_tags_display:
 
-                new_human_value_list_no_dups = list(set(new_human_value_list))
-                sorted_new_tags = sorted(new_human_value_list_no_dups)
-
-                # check for non-existent tags
-                for t in sorted_new_tags:
-                    if t in all_tags:
-                        pass
-                    else:
-                        error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                            gloss_id) + '), a new Tag name was found: ' + t.replace('_',' ') + '.'
-
-                        errors_found += [error_string]
-                        if not tag_name_error:
-                            error_string = 'Current tag names are: ' + all_tags_display + '.'
-                            errors_found += [error_string]
-                            tag_name_error = True
-
-
-                new_tag_names_display = [ t.replace('_',' ') for t in sorted_new_tags ]
-                new_tag_names_display = ', '.join(new_tag_names_display)
-
-                sorted_new_tags = ", ".join(sorted_new_tags)
-
-                if tag_names != sorted_new_tags:
                     differences.append({'pk': gloss_id,
                                         'dataset': current_dataset,
-                                        'annotationidglosstranslation':default_annotationidglosstranslation,
+                                        'annotationidglosstranslation': default_annotationidglosstranslation,
                                         'machine_key': human_key,
                                         'human_key': human_key,
-                                        'original_machine_value': tag_names_display,
-                                        'original_human_value': tag_names_display,
-                                        'new_machine_value': new_tag_names_display,
-                                        'new_human_value': new_tag_names_display})
+                                        'original_machine_value': sorted_tags_display,
+                                        'original_human_value': sorted_tags_display,
+                                        'new_machine_value': sorted_new_tags_display,
+                                        'new_human_value': sorted_new_tags_display})
                 continue
 
             elif human_key == 'Notes':
 
-                sorted_notes_display = get_notes_as_string(gloss)
+                if notes_toggle == 'keep' and (new_human_value == 'None' or new_human_value == ''):
+                    continue
+
+                notes_list, sorted_notes_display = get_notes_as_string(gloss)
 
                 if new_human_value == 'None' or new_human_value == '':
-                    (sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = ("", [], [], [])
+                    (new_notes_display, sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = \
+                        ([], "", [], note_type_error, note_tuple_error)
                 else:
-                    (sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = \
+                    (new_notes_display, sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error) = \
                                 check_existence_notes(gloss, new_human_value, note_type_error,
                                                       note_tuple_error, default_annotationidglosstranslation)
+
                 if len(new_note_errors):
                     errors_found += new_note_errors
-                elif sorted_notes_display != sorted_new_notes_display:
-
+                elif new_notes_display != notes_list:
+                    if notes_assign_toggle == 'update':
+                        combined_notes = notes_list + new_notes_display
+                        sorted_new_notes_display = ', '.join(combined_notes)
                     differences.append({'pk': gloss_id,
                                         'dataset': current_dataset,
                                         'annotationidglosstranslation':default_annotationidglosstranslation,
@@ -694,6 +677,18 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
                                         'new_human_value': sorted_new_notes_display})
                 continue
 
+            elif human_key == 'Semantic Field':
+
+                continue
+
+            elif human_key in ['Derivation history', 'Derivation History']:
+
+                continue
+
+            elif human_key in ['Handshape', 'Strong Hand', 'Weak Hand']:
+
+                continue
+
             #If not, find the matching field in the gloss, and remember its 'real' name
             try:
                 field = fields[human_key]
@@ -701,7 +696,8 @@ def compare_valuedict_to_gloss(valuedict,gloss_id,my_datasets, nl, earlier_updat
 
             except KeyError:
                 # Signbank ID is skipped, for this purpose it was popped from the fields to compare
-                # Skip above fields with complex values: Keywords, Signlanguages, Dialects, Relations to other signs, Relations to foreign signs, Morphology.
+                # Skip above fields with complex values: Keywords, Signlanguages, Dialects,
+                # Relations to other signs, Relations to foreign signs, Morphology.
 
                 error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
                     gloss_id) + '), could not identify column name: ' + str(human_key)
@@ -1001,42 +997,65 @@ def check_existence_signlanguage(gloss, values):
             not_found += [new_value]
         continue
 
-    return (found, not_found, errors)
+    return found, not_found, errors
 
-#See if there are any note typefield choices there, but don't crash if there isn't even a table
-try:
-    note_role_choices = list(FieldChoice.objects.filter(field__iexact='NoteType'))
-except (OperationalError, ProgrammingError) as e:
-    note_role_choices = []
-
-all_notes = [ n.name for n in note_role_choices]
-
-all_notes_display = ', '.join(all_notes)
-# this is used to speedup matching updates to Notes
-# it allows the type of note to be in either English or Dutch in the CSV file
-note_reverse_translation = {}
-for nrc in note_role_choices:
-    note_reverse_translation[nrc.name] = nrc.machine_value
-
-note_translations = {}
-for nrc in note_role_choices:
-    note_translations[str(nrc.machine_value)] = nrc.name
 
 def check_existence_notes(gloss, values, note_type_error, note_tuple_error, default_annotationidglosstranslation):
     # convert new Notes csv value to proper format
     # values is not empty
 
+    activate(LANGUAGES[0][0])
+    # The following need to be ordered reversely because note name 'Project Note' contains 'Note'
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType',
+                                                   machine_value__gt=1).order_by('-name')
+    all_notes_names = [str(n.machine_value) for n in note_role_choices]
+    all_notes_display = ', '.join(all_notes_names)
+
     new_human_values = []
     new_note_errors = []
 
+    # first replace the note names with their machine value
+    # this is needed in order to parse the input, since some notes have parentheses and numbers, etc.
+    mapped_values, map_errors = map_values_to_notes_id(values)
+
+    if map_errors:
+        note_tuple_error = True
+        note_type_error = False
+        # error in processing new notes
+        error_string1 = 'For ' + default_annotationidglosstranslation + ' (' + str(
+            gloss.pk) + '), could not parse note: ' + values
+        error_string2 = "Note values must be a comma-separated list of tagged tuples: 'Type:(Boolean,Index,Text)'"
+        new_note_errors.append(error_string1)
+        new_note_errors.append(error_string2)
+        # it doesn't work to use the translation here because it's a proxy
+        # new_note_errors.append(_('A non-existent note type was found.'))
+
+        return values, values, new_note_errors, note_type_error, note_tuple_error
+
     # the space is required in order to identify multiple notes in the input
-    split_human_values = re.split(r', ', values)
+    split_human_values = re.split(r', ([0-9]+: ?)', mapped_values)
+
+    # this doesn't split cleanly, because the "split" is also shown in the result
+    splits_combined = []
+    list_index = 0
+    # find the patterns of the different notes in the input
     for split_value in split_human_values:
-        take_apart = re.match("([^:]+):\s?\((False|True),(\d),(.*)\)", split_value)
+        if re.match(r'[0-9]+: ?(.+,.+,.+)', split_value):
+            # there is a match to the pattern <machine_value>:(<published>,<index>,<text>) possibly with spaces
+            splits_combined.append(split_value)
+        elif re.match(r'[0-9]+: ?', split_value):
+            # index_of_value = split_human_values.index(split_value)
+            next_value = split_human_values[list_index+1]
+            splits_combined.append(split_value+next_value)
+        # else skip over this one, it was combined with the previous
+        list_index += 1
+
+    for split_value in splits_combined:
+        take_apart = re.match("([0-9]+): ?[(](False|True),([0-9]+),(.+)[)]", split_value)
         if take_apart:
             (field, name, count, text) = take_apart.groups()
 
-            if field not in all_notes:
+            if field not in all_notes_names:
                 error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
                     gloss.pk) + '), a non-existent note type was found: ' + field + '.'
 
@@ -1046,7 +1065,7 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
                     new_note_errors += [error_string]
                     note_type_error = True
             else:
-                new_tuple = (field, name, count, text)
+                new_tuple = (field, name, count, text.strip())
                 new_human_values.append(new_tuple)
         else:
             # error in processing new notes
@@ -1063,12 +1082,46 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
             else:
                 new_note_errors += [error_string]
 
-    new_notes_display = [role + ':(' + published + ',' + count + ',' + text + ')' for (role, published, count, text) in
-                         new_human_values]
-    sorted_new_notes_list = sorted(new_notes_display)
-    sorted_new_notes_display = ", ".join(sorted_new_notes_list)
-    return (sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error)
+    note_translations = {}
+    for nrc in note_role_choices:
+        note_translations[str(nrc.machine_value)] = nrc.name
 
+    new_notes_mapped = []
+    for (machine_value, published, count, text) in new_human_values:
+        role = note_translations[machine_value]
+        new_notes_mapped.append((role, published, count, text))
+
+    sorted_new_human_values = sorted(new_notes_mapped, key=lambda x: (x[0], x[1], x[2], x[3]))
+
+    new_notes_display = []
+    for (role, published, count, text) in sorted_new_human_values:
+        new_note = role + ':(' + published + ',' + count + ',' + text + ')'
+        new_notes_display.append(new_note)
+    sorted_new_notes_display = ', '.join(new_notes_display)
+    return new_notes_display, sorted_new_notes_display, new_note_errors, note_type_error, note_tuple_error
+
+
+def map_values_to_notes_id(values):
+
+    map_errors = False
+    activate(LANGUAGES[0][0])
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType', machine_value__gt=1).order_by('-name')
+
+    note_reverse_translation = {}
+    for nrc in note_role_choices:
+        note_reverse_translation[nrc.name] = str(nrc.machine_value)
+
+    # sort to match prefix
+    sorted_note_names = note_reverse_translation.keys()
+    mapped_values = values
+    for note_name in sorted_note_names:
+        if note_name in mapped_values:
+            mapped_values = mapped_values.replace(note_name, note_reverse_translation[note_name])
+    # see if any note names have not been reverse mapped
+    find_all = re.findall(r'\D+: ?[(]', mapped_values)
+    if find_all:
+        map_errors = True
+    return mapped_values, map_errors
 
 def get_notes_as_string(gloss):
     activate(LANGUAGES[0][0])
@@ -1076,18 +1129,72 @@ def get_notes_as_string(gloss):
 
     notes_list = []
     for note in notes_of_gloss:
-        notes_list.append(note.note_tuple())
+        notes_list += [note.note_tuple()]
+    sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
 
     notes_display = []
-    for (role, published, count, text) in notes_list:
+    for (role, published, count, text) in sorted_notes_list:
         # does not use a comprehension because of nested parentheses in role and text fields
         tuple_reordered = role + ':(' + published + ',' + count + ',' + text + ')'
         notes_display.append(tuple_reordered)
+    sorted_notes_display = ', '.join(notes_display)
+    return notes_display, sorted_notes_display
 
-    sorted_notes_list = sorted(notes_display)
-    sorted_notes_display = ', '.join(sorted_notes_list)
 
-    return sorted_notes_display
+def get_tags_as_string(gloss_id):
+    activate(LANGUAGES[0][0])
+
+    tags_of_gloss = TaggedItem.objects.filter(object_id=gloss_id)
+    tag_names_of_gloss = []
+    for t_obj in tags_of_gloss:
+        tag_id = t_obj.tag_id
+        tag_name = Tag.objects.get(id=tag_id)
+        tag_names_of_gloss += [str(tag_name)]
+    tag_names_of_gloss = sorted(tag_names_of_gloss)
+
+    tag_names_string = ", ".join(tag_names_of_gloss)
+
+    tag_names_display = [t.replace('_', ' ') for t in tag_names_of_gloss]
+    tag_names_display = ', '.join(tag_names_display)
+
+    return tag_names_string, tag_names_display
+
+
+def check_existence_tags(gloss_id, new_human_value_list, tag_name_error, default_annotationidglosstranslation):
+    # convert new Tags csv value to proper format
+    # values is not empty
+
+    all_tags = [t.name for t in Tag.objects.all()]
+    all_tags_display = ', '.join([t.replace('_',' ') for t in all_tags])
+
+    new_tag_errors = []
+
+    new_human_value_list = [v.replace(' ', '_') for v in new_human_value_list]
+
+    new_human_value_list_no_dups = list(set(new_human_value_list))
+    sorted_new_tags = sorted(new_human_value_list_no_dups)
+
+    # check for non-existent tags
+    for t in sorted_new_tags:
+        if t in all_tags:
+            pass
+        else:
+            error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                gloss_id) + '), a new Tag name was found: ' + t.replace('_', ' ') + '.'
+
+            new_tag_errors += [error_string]
+            if not tag_name_error:
+                error_string = 'Current tag names are: ' + all_tags_display + '.'
+                new_tag_errors += [error_string]
+                tag_name_error = True
+
+    new_tag_names_display = [t.replace('_', ' ') for t in sorted_new_tags]
+    new_tag_names_display = ', '.join(new_tag_names_display)
+
+    sorted_new_tags = ", ".join(sorted_new_tags)
+
+    return new_tag_names_display, sorted_new_tags, new_tag_errors, tag_name_error
+
 
 def check_existence_sequential_morphology(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
@@ -1126,7 +1233,8 @@ def check_existence_sequential_morphology(gloss, values):
         error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) + ', too many Sequential Morphology components.'
         errors.append(error_string)
 
-    return (found, not_found, errors)
+    return found, not_found, errors
+
 
 def check_existence_simultaneous_morphology(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
