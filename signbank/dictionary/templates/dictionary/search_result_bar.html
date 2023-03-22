@@ -11,7 +11,7 @@
                 a.setAttribute("class", "search_result");
                 a.style["float"] = "none";
                 var type_of_data = json_data[key].href_type;
-                a.href = "{{URL}}{{PREFIX_URL}}dictionary/" + type_of_data + "/" + json_data[key].id;
+                a.href = "{{PREFIX_URL}}/dictionary/" + type_of_data + "/" + json_data[key].id;
                 a.id = json_data[key].id;
                 var data_label = json_data[key].data_label;
                 if (data_label) {
