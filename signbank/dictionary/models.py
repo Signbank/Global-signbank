@@ -248,11 +248,15 @@ class Definition(models.Model):
         return self.role.name if self.role else '-'
 
     def note_text(self):
-        return self.text
+        stripped_text = self.text.strip()
+        if '\n' in stripped_text:
+            # this function is used for displaying notes in the CSV update
+            # this makes mysterious differences in old and new values visible
+            stripped_text = stripped_text.replace('\n', '<br>')
+        return stripped_text
 
     def note_tuple(self):
-        return (self.get_role_display(), str(self.published), str(self.count), self.note_text())
-
+        return self.get_role_display(), str(self.published), str(self.count), self.note_text()
 
 
 class SignLanguage(models.Model):

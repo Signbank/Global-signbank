@@ -36,23 +36,27 @@
 
 {% if stage == 0 %}
 
-    <div>{% blocktrans %}Upload your changed CSV here:{% endblocktrans %}</div>
+    <div>{% blocktrans %}Upload your changed CSV here{% endblocktrans %}
+            <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom"
+                  data-html="true"
+                  title="CSV files should have min. two columns,
+                  the first being the ID number of the sign (obtained through CSV export),
+                  the second column the value that needs to be put in the field. Make sure the header row is cf. the CSV export,
+                  indicating the fields you want to make changes to.
+                  In case of adding new values to comma-separated fields like Translation Equivalents,
+                  make sure that the old values that should stay are also in the second column."></span>
+        </div>
 
     <form action="" method="post" enctype="multipart/form-data" role="form">
         {% csrf_token %}
         <div class="form-group">
             <div class="row">
-                <div class="col-sm-1">
-                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom"
-                          data-html="true"
-                          title="CSV files should have min. two columns,
-                          the first being the ID number of the sign (obtained through CSV export),
-                          the second column the value that needs to be put in the field. Make sure the header row is cf. the CSV export,
-                          indicating the fields you want to make changes to.
-                          In case of adding new values to comma-separated fields like Translation Equivalents,
-                          make sure that the old values that should stay are also in the second column."></span>
+                <div class="col-xs-offset-2 col-xs-7">
+                    <h4>{% trans "Input File" %}</h4>
                 </div>
-                <div class="col-sm-10">
+            </div>
+            <div class="row">
+                <div class="col-xs-offset-2 col-sm-7">
                     <input type="file" required="" name="file" class="filestyle" data-icon="false"
                            accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv, application/vnd.ms-excel"
                            data-buttonText='{% trans "Browse&hellip;"%}' data-buttonBefore="true">
@@ -61,14 +65,76 @@
                     <input class="btn btn-primary" type="submit" value="{% blocktrans %}Submit{% endblocktrans %}" />
                 </div>
             </div>
-            <div class="col-xs-offset-1 col-xs-10">
-                <input type="radio" name="delimiter" id="delimiter_comma" value="comma" checked>
-                <label for="delimiter_comma">{% trans "Comma" %}</label>
-                <input type="radio" name="delimiter" id="delimiter_tab" value="tab">
-                <label for="delimiter_tab">{% trans "Tab" %}</label>
-                <input type="radio" name="delimiter" id="delimiter_semicolon" value="semicolon">
-                <label for="delimiter_semicolon">{% trans "Semicolon" %}</label>
+            <div class="row">
+                <div class="col-xs-offset-2 col-xs-7">
+                    <input type="radio" name="delimiter" id="delimiter_comma" value="comma" checked>
+                    <label for="delimiter_comma">{% trans "Comma" %}</label>
+                    <input type="radio" name="delimiter" id="delimiter_tab" value="tab">
+                    <label for="delimiter_tab">{% trans "Tab" %}</label>
+                    <input type="radio" name="delimiter" id="delimiter_semicolon" value="semicolon">
+                    <label for="delimiter_semicolon">{% trans "Semicolon" %}</label>
+                </div>
             </div>
+            <br>
+            <div class="row" id="notes_settings">
+                <div class="panel panel-default col-xs-offset-2 col-xs-7">
+                    <div class='panel-heading'>
+                        <div class='panel-title'>
+                            <a data-toggle='collapse' data-parent='#notes_settings'
+                               href="#notes_column_settings">{% trans "Notes Column" %}</a>
+                        </div>
+                    </div>
+                <div id='notes_column_settings' class='collapse'>
+            <div class="col-xs-offset-1 col-xs-7">
+                <h5>{% trans "Select the semantics of an empty cell" %}</h5>
+            </div>
+            <div class="col-xs-offset-1 col-xs-7">
+                <input type="radio" name="toggle_notes" id="toggle_notes_keep" value="keep" checked>
+                <label for="toggle_notes_keep">{% trans "Keep" %}</label>
+                <p>{% trans "An empty cell does nothing. This is used for import that adds new notes and keeps the existing notes." %}</p>
+                <input type="radio" name="toggle_notes" id="toggle_notes_erase" value="erase">
+                <label for="toggle_notes_erase">{% trans "Erase" %}</label>
+                <p>{% trans "An empty cell will erase the existing notes." %}</p>
+            </div>
+            <div class="col-xs-offset-1 col-xs-7">
+                <h5>{% trans "Select the semantics of a non-empty cell" %}</h5>
+            </div>
+            <div class="col-xs-offset-1 col-xs-7">
+                <input type="radio" name="toggle_notes_assign" id="notes_assign_replace" value="replace" checked>
+                <label for="notes_assign_replace">{% trans "Overwrite" %}</label>
+                <p>{% trans "Notes column values will replace the existing notes." %}</p>
+                <input type="radio" name="toggle_notes_assign" id="notes_assign_update" value="update">
+                <label for="notes_assign_update">{% trans "Plus Equal" %}</label>
+                <p>{% trans "A notes column value will be added to existing notes." %}</p>
+            </div>
+            </div>
+            </div>
+            </div>
+            <br>
+            <div class="row" id="tags_settings">
+                <div class="panel panel-default col-xs-offset-2 col-xs-7">
+                    <div class='panel-heading'>
+                        <div class='panel-title'>
+                            <a data-toggle='collapse' data-parent='#tags_settings'
+                               href="#tags_column_settings">{% trans "Tags Column" %}</a>
+                        </div>
+                    </div>
+                <div id='tags_column_settings' class='collapse'>
+            <div class="col-xs-offset-1 col-xs-7">
+                <h5>{% trans "Select the semantics of an empty cell" %}</h5>
+            </div>
+
+            <div class="col-xs-offset-1 col-xs-7">
+                <input type="radio" name="toggle_tags" id="toggle_tags_keep" value="keep" checked>
+                <label for="toggle_tags_keep">{% trans "Keep" %}</label>
+                <p>{% trans "An empty cell does nothing. This is used for import that adds new tags and keeps the existing tags." %}</p>
+                <input type="radio" name="toggle_tags" id="toggle_tags_erase" value="erase">
+                <label for="toggle_tags_erase">{% trans "Erase" %}</label>
+                <p>{% trans "An empty cell will erase the existing tags." %}</p>
+            </div>
+            </div>
+        </div>
+        </div>
         </div>
     </form>
 
