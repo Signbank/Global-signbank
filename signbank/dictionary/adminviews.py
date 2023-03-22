@@ -3621,6 +3621,16 @@ class QueryListView(ListView):
         context['query_parameters'] = query_parameters
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
+        available_parameters_to_save = available_query_parameters_in_search_history()
+        context['available_query_parameters_in_search_history'] = available_parameters_to_save
+        query_parameter_keys = query_parameters.keys()
+        context['query_parameter_keys'] = query_parameters.keys()
+
+        all_parameters_available_to_save = True
+        for param in query_parameter_keys:
+            if param not in available_parameters_to_save:
+                all_parameters_available_to_save = False
+        context['all_parameters_available_to_save'] = all_parameters_available_to_save
 
         return context
     def get_queryset(self):
