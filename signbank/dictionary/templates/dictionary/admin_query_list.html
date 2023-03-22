@@ -507,14 +507,14 @@ thead tr th {
     {% endif %}
     </div>
 
-        <div class="modal fade" id="save_not_available" role="dialog" aria-labelledby="#modalGlossCopy" aria-hidden="true">
+        <div class="modal fade" id="save_not_available" role="dialog" aria-labelledby="#modalSaveQuery" aria-hidden="true">
             <div class="modal-dialog" style="background-color:white;">
                 <div class="modal-content">
                 <div class='modal-header'>
-                    <h3 id='modalGlossCopy'>{% trans "Save Query" %}</h3>
+                    <h3 id='modalSaveQuery'>{% trans "Save Query" %}</h3>
                 </div>
                 <div class="modal-body">
-                    <p>{% trans "Some of the chosen parameters are not yet available for saving:" %}</p>
+                    <p>{% trans "Some parameters are not yet available for saving:" %}</p>
                     <ul>
                     {% for param in query_parameter_keys %}
                         {% if param not in available_query_parameters_in_search_history %}
