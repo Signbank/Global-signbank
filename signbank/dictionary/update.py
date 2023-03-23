@@ -1972,7 +1972,7 @@ def update_morpheme(request, morphemeid):
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
         import guardian
-        if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
+        if ds in guardian.shortcuts.get_objects_for_user(request.user, 'can_view_dataset', Dataset):
             newvalue = value
             setattr(morpheme, field, ds)
             morpheme.save()

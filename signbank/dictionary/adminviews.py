@@ -4578,14 +4578,14 @@ class DatasetListView(ListView):
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         # make sure the user can write to this dataset
-        from guardian.shortcuts import get_objects_for_user
+        from guardian.shortcuts import get_objects_for_user, assign_perm
         user_view_datasets = get_objects_for_user(self.request.user, 'can_view_dataset', Dataset, accept_global_perms=False)
         may_request_dataset = True
         if dataset_object.is_public and not dataset_object in user_view_datasets:
             # the user currently has no view permission for the requested dataset
             # Give permission to access dataset
             may_request_dataset = True
-            assign_perm('view_dataset', self.request.user, dataset_object)
+            assign_perm('can_view_dataset', self.request.user, dataset_object)
             messages.add_message(self.request, messages.INFO,
                                              _('View permission for user successfully granted.'))
         elif not dataset_object.is_public and not dataset_object in user_view_datasets:

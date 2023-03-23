@@ -136,7 +136,7 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                     if dataset_obj.is_public:
 
                         # Give user access to view the database
-                        assign_perm('view_dataset', new_user, dataset_obj)
+                        assign_perm('can_view_dataset', new_user, dataset_obj)
 
                         for owner in owners_of_dataset:
 

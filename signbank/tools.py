@@ -1921,24 +1921,6 @@ def write_csv_for_handshapes(handshapelistview, csvwriter):
     return csvwriter
 
 
-def get_users_who_can_view_dataset(dataset_name):
-
-    dataset = Dataset.objects.get(acronym=dataset_name)
-
-    all_users = User.objects.all()
-
-    users_who_can_view_dataset = []
-
-    for user in all_users:
-        import guardian
-        from guardian.shortcuts import get_objects_for_user
-        user_view_datasets = guardian.shortcuts.get_objects_for_user(user, 'can_view_dataset', Dataset)
-        if dataset in user_view_datasets:
-            users_who_can_view_dataset.append(user.username)
-
-    return users_who_can_view_dataset
-
-
 def construct_scrollbar(qs, search_type, language_code):
     items = []
     if search_type in ['sign', 'sign_or_morpheme', 'morpheme', 'sign_handshape']:
