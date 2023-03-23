@@ -742,6 +742,10 @@ def update_tags(gloss, field, values):
             print("DELETE TAGGED OBJECT: ", tagged_obj, ' for gloss: ', tagged_obj.object_id)
             tagged_obj.delete()
 
+    if not new_tag_ids:
+        # this was a delete
+        return HttpResponse('', {'content-type': 'text/plain'})
+
     for value in values:
         Tag.objects.add_tag(gloss, value)
 
@@ -877,6 +881,7 @@ def subst_notes(gloss, field, values):
     note_role_choices = FieldChoice.objects.filter(field='NoteType')
     # this is used to speedup matching updates to Notes
     # it allows the type of note to be in either English or Dutch in the CSV file
+    # this actually isn't used at the moment, the CSV export is to English
     note_reverse_translation = {}
     for nrc in note_role_choices:
         for language in MODELTRANSLATION_LANGUAGES:

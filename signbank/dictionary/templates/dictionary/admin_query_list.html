@@ -32,9 +32,6 @@
 
 $(document).ready(function() {
 
-    $('[data-toggle="tooltip"]').tooltip({
-        placement : 'bottom'
-    });
         var objects_on_page = {{objects_on_page|safe}};
 
         lookup = "#glosslist_table";
@@ -311,17 +308,51 @@ select option {
     -webkit-appearance: none;
     -moz-appearance: none;
 }
+
+.btn-group {
+    color: white !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.btn {
+    padding: 2 2 2 2;
+}
 .runQuery {
     border: 1px solid;
     text-align: center;
-    padding: 5px 12px;
+    padding: 6px 12px;
     border-radius: 6px;
+    background-color: white;
 }
 .runQuery:hover {
     text-decoration: none;
+    background-color: none;
+}
+.queryButton {
+    background-color: white;
+    padding: 6px 12px;
 }
 .queryButton:hover {
-    background-color: white;
+    background-color: none;
+}
+.querySaveInfo {
+    border: 1px solid;
+    padding: 6px 12px;
+    margin-bottom: 0px;
+    margin-top: 4px;
+    white-space: normal;
+    border-radius: 6px;
+    border-bottom-left-radius: 6px !important;
+    border-top-left-radius: 6px !important;
+    color: white;
+    background-color: rgb(66, 139, 202);
+    line-height: 18px;
+}
+.querySaveInfo:hover {
+    color: white;
+    background-color: rgb(66, 139, 202);
+    text-decoration: none;
 }
 </style>
 <!--The tagQP css overrides the colour of tag to match that of disabled buttons, used for the display of other query parameters-->
@@ -368,7 +399,7 @@ option:not(:checked) {
     height:0;
     border-color:transparent rgb(66, 139, 202) transparent transparent;
     border-style:solid;
-    border-width:12px 12px 12px 0;
+    border-width:12px 12px 12px 1px;
 }
 .tagQP:after{
     content:"";
@@ -462,13 +493,43 @@ thead tr th {
     <div class="btn-group">
     <button class="btn queryButton" type='submit' style="height:40px;"><a href="{{PREFIX_URL}}/signs/search/?query" class="runQuery"
                                                                           type="button">{% trans "Run Query" %}</a></button>
+    {% if all_parameters_available_to_save %}
     <button class="btn queryButton">
     <form name='save_query_parameters' id='save_query_parameters' method='get'>
     <input id="save_query_button" name='save_query_button' value='{% trans "Save Query" %}' type="submit" class="btn btn-primary" />
         <input type='hidden' name='save_query' value="Save">
     </form>
     </button>
+    {% else %}
+        <button class="btn querySaveInfo" data-toggle='modal' data-target='#save_not_available'
+            type="button">{% trans "Save Query" %}</button>
+
+    {% endif %}
     </div>
+
+        <div class="modal fade" id="save_not_available" role="dialog" aria-labelledby="#modalSaveQuery" aria-hidden="true">
+            <div class="modal-dialog" style="background-color:white;">
+                <div class="modal-content">
+                <div class='modal-header'>
+                    <h3 id='modalSaveQuery'>{% trans "Save Query" %}</h3>
+                </div>
+                <div class="modal-body">
+                    <p>{% trans "Some parameters are not yet available for saving:" %}</p>
+                    <ul>
+                    {% for param in query_parameter_keys %}
+                        {% if param not in available_query_parameters_in_search_history %}
+                        <li>{{query_parameters_mapping|get_item:param}}</li>
+                        {% endif %}
+                    {% endfor %}
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                </div>
+                </div>
+            </div>
+        </div>
+
     <br>
     <h3>{% trans "Glosses Matching Query" %}</h3>
     <div class="panel-heading" data-toggle="collapse"

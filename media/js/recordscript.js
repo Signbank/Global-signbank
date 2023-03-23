@@ -70,7 +70,9 @@ async function startCamera(){
         audio: false,
         video:{
             width:1280, height:720
-        }
+        },
+        frameRate: 25,
+        videoBitsPerSecond: 2500000,
     };
     console.log('Using media constraints:', constraints);
     await init(constraints);
@@ -91,13 +93,22 @@ async function stopCamera(){
  * Start the camera stream or give error
  */
 async function init(constraints){
-    try{
-        const stream = await navigator.mediaDevices.getUserMedia(constraints)
-        handleSuccess(stream)
-        startButton.textContent = "Stop Camera"
-    }catch (e){
-        console.error('navigator.getUserMedia error:', e)
-        errorMsgElement.innerHTML = "Could not start the camera. Please try another browser."
+
+    if(navigator.userAgent.indexOf("Firefox") != -1 ) 
+    {
+        recordButton.disabled=true;
+        startButton.disabled=true;
+        errorMsgElement.innerHTML = "<p style='color:#FF0000';>Webcam recording does not work in Firefox. Please try another browser.</p>"
+    }
+    else{
+        try{
+            const stream = await navigator.mediaDevices.getUserMedia(constraints)
+            handleSuccess(stream)
+            startButton.textContent = "Stop Camera"
+        }catch (e){
+            console.error('navigator.getUserMedia error:', e)
+            errorMsgElement.innerHTML = "<p style='color:#FF0000';>Could not start the camera. Please try another browser.</p>"
+        }
     }
 }
 
@@ -138,14 +149,16 @@ function sleep (time) {
 function processBlobs(recordedBlobs){
     // Add the recorded video to a hidden file input field
     if(recordedBlobs[0].size<5242880){ // Hardcoded: better take settings.FILE_UPLOAD_MAX_MEMORY_SIZE value
-        const blob = new Blob(recordedBlobs, {type: 'video/mp4'});
-        var file = new File([blob], "temp.mp4",{type:"video/mp4, lastModified:new Date().getTime()"})
+        console.log("Blobs: ", recordedBlobs)
+        const blob = new Blob(recordedBlobs)
+        var file = new File([blob], "temp.webm",{type:"video/webm, lastModified:new Date().getTime()"})
+        console.log(file)
         let container = new DataTransfer();
         container.items.add(file)
         document.getElementById('videofile').files = container.files;
     }
     else{   // size is too big to upload
-        errorMsgElement.innerHTML = "Recorded file is too big. Make a shorter video or try another camera. "
+        errorMsgElement.innerHTML = "<p style='color:#FF0000';>Recorded file is too big. Make a shorter video or try another camera. .</p>"
         recordedBlobs = []
         document.getElementById('videofile').value = null
         uploadInput.disabled = true;
@@ -186,14 +199,14 @@ async function startRecording(){
 
     // Recording settings
     recordedBlobs = [];
-    let options = {mimeType:'video/webm;codecs:vp9'};
+    let options = {mimeType:'video/webm'};
 
     // Start the recording
     try{
         mediaRecorder = new MediaRecorder(window.stream, options);
     }catch (e){
         console.log(e);
-        errorMsgElement.innerHTML = "Cannot start the recording. Please try another browser. "
+        errorMsgElement.innerHTML = "<p style='color:#FF0000';>Cannot start the recording. Please try another browser.</p>"
     };
     mediaRecorder.ondataavailable = handleDataAvailable;
     mediaRecorder.start();
@@ -232,7 +245,7 @@ function handleDataAvailable(event){
  * Make the recorded video play when the play button is clicked
  */
 playButton.addEventListener('click', () =>{
-    const superBuffer = new Blob(recordedBlobs,{type:'video/mp4'});
+    const superBuffer = new Blob(recordedBlobs,{type:'video/webm'});
 
     recordedVideo.srcObject = null;
     recordedVideo.src = window.URL.createObjectURL(superBuffer);

@@ -15,4 +15,5 @@ class VideoUploadForGlossForm(forms.Form):
                                 widget=forms.FileInput(attrs={'accept':'video/mp4, video/quicktime'}))
     gloss_id = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
+    recorded = forms.BooleanField(required=False, initial=False)
     

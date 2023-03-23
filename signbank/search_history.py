@@ -1,6 +1,12 @@
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from django.shortcuts import get_object_or_404
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
+
+
+def get_multiselect_fields():
+    fields_with_choices = fields_to_fieldcategory_dict()
+    return fields_with_choices.keys()
 
 
 def available_query_parameters_in_search_history():
@@ -10,7 +16,20 @@ def available_query_parameters_in_search_history():
         if hasattr(classmodel, 'QUERY_FIELDS'):
             available_parameters = available_parameters + classmodel.QUERY_FIELDS
     parameters = [t1 for (t1, t2) in available_parameters]
-    return parameters
+
+    # now make the fields match the format of query parameters by adding [] to multiselect fields
+    multiselect_fields = get_multiselect_fields()
+    fields_as_query_parameter = []
+    for p in parameters:
+        if p in multiselect_fields:
+            fields_as_query_parameter.append(p + '[]')
+        elif p in ['glosssearch', 'lemma', 'keyword']:
+            for language in Language.objects.all():
+                language_field = p + '_' + language.language_code_2char
+                fields_as_query_parameter.append(language_field)
+        else:
+            fields_as_query_parameter.append(p)
+    return fields_as_query_parameter
 
 
 def languages_in_query(queryid):
@@ -20,6 +39,7 @@ def languages_in_query(queryid):
     languageids = [lang['fieldLanguage'] for lang in languages]
     language_objects = Language.objects.filter(id__in=languageids).distinct()
     return language_objects
+
 
 def display_parameters(query):
     # this method displays the parameters as a string, using ** to separate each

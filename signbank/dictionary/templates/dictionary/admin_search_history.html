@@ -23,11 +23,24 @@ var csrf_token = '{{csrf_token}}';
 {% endblock %}
 {% block extrahead %}
 <style>
+.btn-group {
+    color: white !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.actions {
+    color: white !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
 .runQuery {
     border: 1px solid;
     text-align: center;
     padding: 5px 5px;
     border-radius: 6px;
+    background-color: white;
 }
 .runQuery:hover {
     text-decoration: none;
@@ -35,6 +48,7 @@ var csrf_token = '{{csrf_token}}';
 .queryButton {
     padding-left: 4px;
     padding-right: 4px;
+    background-color: white;
 }
 .queryButton:hover {
     background-color: white;
@@ -111,7 +125,7 @@ var csrf_token = '{{csrf_token}}';
             <td>{{ query.queryDate }}</td>
             <td class="queryname_{{query.id}}" id="queryname_{{query.id}}">{{ query.queryName }}</td>
             <td>{% for lang in query.query_languages %}{{lang}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-            <td>
+            <td class="actions">
                 <div class="btn-group">
                 <button id='edit_query_btn_{{query.id}}' class="btn queryButton" type="button" name='edit_{{query.id}}'
                         value='edit_{{query.id}}'
@@ -119,7 +133,7 @@ var csrf_token = '{{csrf_token}}';
                     <a class="runQuery">{% trans "Edit" %}</a></button>
 
                 {% if selected_datasets_contain_query_languages|get_item:query %}
-                <button class="runQueryForm">
+                <button class="btn runQueryForm">
                 <form name='run_query_parameters' id='run_query_parameters' method='get'>
                 <input id="run_query_button" name='run_query_button' value='{% trans "Run" %}'
                        type="submit" class="runQueryInput" />

@@ -1362,6 +1362,27 @@ def import_csv_update(request):
             delimiter = ','
             delimiter_radio = 'comma'
 
+        # the obtains the notes togggle
+        notes_toggle = 'keep'
+        if 'toggle_notes' in request.POST:
+            notes_radio = request.POST['toggle_notes']
+            if notes_radio == 'erase':
+                notes_toggle = 'erase'
+
+        # the obtains the notes assign togggle
+        notes_assign_toggle = 'replace'
+        if 'toggle_notes_assign' in request.POST:
+            notes_radio = request.POST['toggle_notes_assign']
+            if notes_radio == 'update':
+                notes_assign_toggle = 'update'
+
+        # the obtains the tags togggle
+        tags_toggle = 'keep'
+        if 'toggle_tags' in request.POST:
+            tags_radio = request.POST['toggle_tags']
+            if tags_radio == 'erase':
+                tags_toggle = 'erase'
+
         first_csv_line, rest_csv_lines = csv_lines[0], csv_lines[1:]
 
         keys = first_csv_line.strip().split(delimiter)
@@ -1519,7 +1540,9 @@ def import_csv_update(request):
 
             try:
                 (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
-                            compare_valuedict_to_gloss(value_dict,gloss.id,user_datasets_names, nl, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+                            compare_valuedict_to_gloss(value_dict,gloss.id,user_datasets_names, nl,
+                                                       earlier_updates_same_csv, earlier_updates_lemmaidgloss,
+                                                       notes_toggle, notes_assign_toggle, tags_toggle)
                 changes += changes_found
 
                 if len(errors_found):

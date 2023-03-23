@@ -76,7 +76,7 @@ class Video(models.Model):
 
         (basename, ext) = os.path.splitext(self.videofile.path)
         tmploc = basename + "-conv.mp4"
-        err = convert_video(self.videofile.path, tmploc, force=True)
+        err = convert_video(self.videofile.path, tmploc, force=False)
         # print tmploc
         shutil.move(tmploc, self.videofile.path)
 
@@ -235,7 +235,7 @@ class GlossVideo(models.Model):
         video, if create=True, create the image if needed
         Return None if create=False and the file doesn't exist"""
 
-        vidpath, ext = os.path.splitext(self.videofile.path)
+        vidpath, _ = os.path.splitext(self.videofile.path)
         poster_path = vidpath + ".png"
         # replace vidpath with imagepath!
         poster_path = str(poster_path.replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
@@ -269,10 +269,10 @@ class GlossVideo(models.Model):
         # then move it into place
 
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext == '.mov':
+        if ext == '.mov' or ext == '.webm':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
-            err = convert_video(oldloc, newloc, force=True)
+            err = convert_video(oldloc, newloc, force=False)
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
             os.remove(oldloc)
 
@@ -320,7 +320,7 @@ class GlossVideo(models.Model):
         name, _ = os.path.splitext(self.videofile.path)
         out_name = name + ".mp4"
         import ffmpeg
-        ffmpeg.input(self.videofile.path).output(out_name).run(overwrite_output=True)
+        ffmpeg.input(self.videofile.path).output(out_name).run(quiet=True, overwrite_output=True)
         print("Finished converting {}".format(self.videofile.path))
 
     def delete_files(self):

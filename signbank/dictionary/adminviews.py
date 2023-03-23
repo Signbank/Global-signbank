@@ -807,15 +807,20 @@ class GlossListView(ListView):
             row.append(tag_names)
 
             # export notes
-            note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
             notes_of_gloss = gloss.definition_set.all()
+
             notes_list = []
             for note in notes_of_gloss:
-                translated_note_role = note.role.name
-                note_string = translated_note_role + ": (" + str(note.published) +","+ str(note.count) +","+ note.text + ")"
-                notes_list.append(note_string)
-            sorted_notes_list = sorted(notes_list)
-            notes_display = ", ".join(sorted_notes_list)
+                notes_list += [note.note_tuple()]
+            sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
+
+            notes_list = []
+            for (role, published, count, text) in sorted_notes_list:
+                # does not use a comprehension because of nested parentheses in role and text fields
+                tuple_reordered = role + ': (' + published + ',' + count + ',' + text + ')'
+                notes_list.append(tuple_reordered)
+
+            notes_display = ", ".join(notes_list)
             row.append(notes_display)
 
             #Make it safe for weird chars
@@ -3621,6 +3626,16 @@ class QueryListView(ListView):
         context['query_parameters'] = query_parameters
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
+        available_parameters_to_save = available_query_parameters_in_search_history()
+        context['available_query_parameters_in_search_history'] = available_parameters_to_save
+        query_parameter_keys = query_parameters.keys()
+        context['query_parameter_keys'] = query_parameters.keys()
+
+        all_parameters_available_to_save = True
+        for param in query_parameter_keys:
+            if param not in available_parameters_to_save:
+                all_parameters_available_to_save = False
+        context['all_parameters_available_to_save'] = all_parameters_available_to_save
 
         return context
     def get_queryset(self):
@@ -7104,9 +7119,12 @@ def create_lemma_for_gloss(request, glossid):
             messages.add_message(request, messages.ERROR, _("The specified gloss does not exist."))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    dataset = gloss.dataset
+    # get data from gloss before updating anything
+    dataset = gloss.lemma.dataset
     dataset_languages = dataset.translation_languages.all()
-    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=self.last_used_dataset)
+    # the last used dataset is a hidden field in the form, set by Django
+    last_used_dataset = request.POST['last_used_dataset']
+    form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
     for item, value in request.POST.items():
         value = value.strip()
         if item.startswith(form.lemma_create_field_prefix):

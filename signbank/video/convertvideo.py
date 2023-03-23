@@ -10,6 +10,7 @@ except:
     FFMPEG_OPTIONS = ["-vcodec", "h264", "-an"]
 
 import sys, os, time, signal, shutil
+import ffmpeg
 from subprocess import Popen, PIPE
 import re
     
@@ -43,8 +44,29 @@ def parse_ffmpeg_output(text):
         
     return result
             
-    
-def ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
+            
+def frame_to_timecode(frame, fps):
+    """Get timecode of a specific frame with fps"""
+
+    hours = int(frame / (3600 * fps))
+    minutes = int(frame / (60 * fps) % 60)
+    seconds = int(frame / fps % 60)
+    frem = int(frame % fps)
+    return "{:02d}:{:02d}:{:02d}.{:02d}".format(hours, minutes, seconds, frem)
+
+
+def get_middle_timecode(videofile):
+    """Determine the timecode of the middle frame of a video"""
+
+    p = ffmpeg.probe(videofile)
+    video_stream = next((stream for stream in p['streams'] if stream['codec_type'] == 'video'), None)
+    middle_frame = int(video_stream["nb_frames"]) // 2
+    fps = eval(video_stream["r_frame_rate"])
+    ss = frame_to_timecode(middle_frame, fps)
+    return ss
+
+
+def run_ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
     """Run FFMPEG with some command options, returning the output"""
 
     errormsg = ""
@@ -78,7 +100,7 @@ def extract_frame(sourcefile, targetfile):
     
     options = ["-r", "1", "-f", "mjpeg"]
     
-    err = ffmpeg(sourcefile, targetfile, options=options)
+    err = run_ffmpeg(sourcefile, targetfile, options=options)
 
 
 def probe_format(file):
@@ -88,7 +110,7 @@ def probe_format(file):
     # for info, convert just one second to a null output format
     info_options = ["-f", "null", "-t", "1"]
     
-    b = ffmpeg(file, "tmp", options=info_options)
+    b = run_ffmpeg(file, "tmp", options=info_options)
     r = parse_ffmpeg_output(b)
      
     return r['inputvideoformat']
@@ -110,7 +132,7 @@ def convert_video(sourcefile, targetfile, force=False):
         shutil.copy(sourcefile, targetfile) 
     else: 
         # convert the video
-        b = ffmpeg(sourcefile, targetfile, options=FFMPEG_OPTIONS)
+        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_OPTIONS)
 
     format = probe_format(targetfile)
     if format.startswith('h264'):

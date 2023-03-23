@@ -26,11 +26,12 @@ def addvideo(request):
             gloss_id = form.cleaned_data['gloss_id']
             vfile = form.cleaned_data['videofile']
             redirect_url = form.cleaned_data['redirect']
+            recorded = form.cleaned_data['recorded']
 
             # Get the gloss
             gloss = get_object_or_404(Gloss, pk=gloss_id)
 
-            gloss.add_video(request.user, vfile)
+            gloss.add_video(request.user, vfile, recorded)
 
             return redirect(redirect_url)
 
