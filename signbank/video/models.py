@@ -129,10 +129,10 @@ class GlossVideoHistory(models.Model):
     # WAS: Many-to-many link: to the user that has uploaded or deleted this video
     # WAS: actor = models.ManyToManyField("", User)
     # The user that has uploaded or deleted this video
-    actor = models.ForeignKey(authmodels.User)
+    actor = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
 
     # One-to-many link: to the Gloss in dictionary.models.Gloss
-    gloss = models.ForeignKey(Gloss)
+    gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
 
     def __str__(self):
 

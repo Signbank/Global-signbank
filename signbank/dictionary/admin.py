@@ -16,7 +16,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib import messages
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, gettext_lazy as _
 
 class DatasetAdmin(GuardedModelAdmin):
     model = Dataset

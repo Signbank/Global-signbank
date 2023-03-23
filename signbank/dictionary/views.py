@@ -1,11 +1,11 @@
 from django.conf import empty
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed
 from django.shortcuts import render, get_object_or_404, redirect
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.utils.datastructures import MultiValueDictKeyError
 from tagging.models import Tag, TaggedItem
-from django.utils.http import urlquote
+from urllib.parse import quote
 from django.contrib import messages
 from pathlib import Path
 
@@ -32,7 +32,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 
 import signbank.settings
 from signbank.settings.base import *
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, gettext_lazy as _
 
 from urllib.parse import urlencode, urlparse
 from wsgiref.util import FileWrapper, request_uri
@@ -470,10 +470,10 @@ def search(request):
 
         glossQuery = form.cleaned_data['glossQuery']
         # Issue #153: make sure + and - signs are translated correctly into the search URL
-        glossQuery = urlquote(glossQuery)
+        glossQuery = quote(glossQuery)
         term = form.cleaned_data['query']
         # Issue #153: do the same with the Translation, encoded by 'query'
-        term = urlquote(term)
+        term = quote(term)
 
         return HttpResponseRedirect('../../signs/search/?search='+glossQuery+'&keyword='+term)
 
@@ -758,10 +758,10 @@ def search_morpheme(request):
 
         morphQuery = form.cleaned_data['morphQuery']
         # Issue #153: make sure + and - signs are translated correctly into the search URL
-        morphQuery = urlquote(morphQuery)
+        morphQuery = quote(morphQuery)
         term = form.cleaned_data['query']
         # Issue #153: do the same with the Translation, encoded by 'query'
-        term = urlquote(term)
+        term = quote(term)
 
         return HttpResponseRedirect('../../morphemes/search/?search='+morphQuery+'&keyword='+term)
 
@@ -1724,7 +1724,7 @@ def import_csv_update(request):
             with override(settings.LANGUAGE_CODE):
 
                 #Replace the value for bools
-                if fieldname in Gloss._meta.get_fields() and Gloss._meta.get_field(fieldname).__class__.__name__ == 'NullBooleanField':
+                if fieldname in Gloss._meta.get_fields() and Gloss._meta.get_field(fieldname).__class__.__name__ == 'BooleanField':
 
                     if new_value in ['true','True', 'TRUE']:
                         new_value = True
@@ -2210,7 +2210,7 @@ def add_image(request):
                 params = {'warning':'File extension not supported! Please convert to png or jpg'}
                 return redirect(add_params_to_url(url,params))
 
-            elif imagefile._size > settings.MAXIMUM_UPLOAD_SIZE:
+            elif imagefile.size > settings.MAXIMUM_UPLOAD_SIZE:
 
                 params = {'warning':'Uploaded file too large!'}
                 return redirect(add_params_to_url(url,params))
@@ -2253,8 +2253,7 @@ def add_image(request):
                 f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
                 destination = File(f)
             except:
-                import urllib.parse
-                quoted_filename = urllib.parse.quote(gloss.idgloss, safe='')
+                quoted_filename = quote(gloss.idgloss, safe='')
                 filename = quoted_filename + '-' + str(gloss.pk) + extension
                 goal_location_str = os.path.join(goal_path, filename)
                 try:
@@ -2331,7 +2330,7 @@ def add_handshape_image(request):
                 params = {'warning':'File extension not supported! Please convert to png or jpg'}
                 return redirect(add_params_to_url(url,params))
 
-            elif imagefile._size > settings.MAXIMUM_UPLOAD_SIZE:
+            elif imagefile.size > settings.MAXIMUM_UPLOAD_SIZE:
 
                 params = {'warning':'Uploaded file too large!'}
                 return redirect(add_params_to_url(url,params))
@@ -2591,7 +2590,7 @@ def info(request):
 
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
 
         # If we are not logged in, try to find if this maybe belongs to a gloss that is free to see for everbody?
         (name, ext) = os.path.splitext(os.path.basename(filename))
@@ -2620,8 +2619,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     if not exists:
         # quote the filename instead to resolve special characters in the url
         (head, tail) = os.path.split(filename)
-        import urllib.parse
-        quoted_filename = urllib.parse.quote(tail, safe='')
+        quoted_filename = quote(tail, safe='')
         quoted_path = os.path.join(dir_path, head, quoted_filename)
         exists = os.path.exists(quoted_path)
         if not exists:

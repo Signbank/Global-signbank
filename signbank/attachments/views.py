@@ -1,5 +1,4 @@
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
 from django.conf import settings
 from django import forms
 import os.path

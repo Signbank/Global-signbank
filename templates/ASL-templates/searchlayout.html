@@ -2,9 +2,9 @@
 
 {% block content %}
 
-{% ifnotequal query '' %}           
+{% if query != '' %}           
   <h2>English words matching "{{ query }}"</h2>
-{% endifnotequal %}       
+{% endif %}       
 
 {% block pagecontent %}
 

@@ -10,7 +10,7 @@ import datetime, random, re, hashlib
 from django.conf import settings
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User, Group
 from django.contrib.sites.models import Site
 from django.utils import timezone
@@ -203,7 +203,7 @@ class RegistrationProfile(models.Model):
     ``RegistrationManager``.
     
     """
-    user = models.ForeignKey(User, verbose_name=_('user'))
+    user = models.ForeignKey(User, verbose_name=_('user'), on_delete=models.CASCADE)
     activation_key = models.CharField(_('activation key'), max_length=40)
 
     objects = RegistrationManager()
@@ -284,7 +284,7 @@ teachercommChoices = ((0, 'mostly oral'),
 class UserProfile(models.Model):
     """Extended profile for users of the site"""
     
-    user = models.ForeignKey(authmodels.User)
+    user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
     yob = models.IntegerField("When were you born?")
     australian = models.BooleanField(t("Do you live in $country?"),default=False)
     postcode = models.CharField(t("If you live in $country, what is your postcode?"), max_length=20, blank=True)

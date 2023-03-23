@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from signbank.pages.models import Page, PageVideo
 from signbank.video.fields import VideoUploadToFLVField
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from django_summernote.admin import SummernoteModelAdmin
 

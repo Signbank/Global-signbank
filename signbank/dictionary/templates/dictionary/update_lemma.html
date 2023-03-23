@@ -86,11 +86,11 @@
                     {% for dataset_lang in dataset_languages %}
                     {% with lemma|get_annotation_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
                         <td>
-                            {% ifnotequal lemmaidglosstranslation "" %}
+                            {% if lemmaidglosstranslation != "" %}
                             <a href="{{PREFIX_URL}}/dictionary/gloss/{{lemma.id}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
                                 {{lemmaidglosstranslation}}
                             </a>
-                            {% endifnotequal %}
+                            {% endif %}
                         </td>
                     {% endwith %}
                     {% endfor %}

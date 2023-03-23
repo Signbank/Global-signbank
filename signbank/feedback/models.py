@@ -5,7 +5,7 @@ from signbank.settings.base import COMMENT_VIDEO_LOCATION, WRITABLE_FOLDER
 import os
 from signbank.video.fields import VideoUploadToFLVField
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.utils.encoding import escape_uri_path
 
 from signbank.dictionary.models import *
@@ -34,7 +34,7 @@ class GeneralFeedback(models.Model):
  
     comment = models.TextField(blank=True)
     video = models.FileField(upload_to=settings.COMMENT_VIDEO_LOCATION, blank=True) 
-    user = models.ForeignKey(authmodels.User)
+    user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
            
@@ -62,7 +62,7 @@ class GeneralFeedbackForm(forms.Form):
 class SignFeedback(models.Model):
     """Store feedback on a particular sign"""
     
-    user = models.ForeignKey(authmodels.User, editable=False)
+    user = models.ForeignKey(authmodels.User, editable=False, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     
     gloss = models.ForeignKey(Gloss, on_delete=models.SET_NULL, null=True, editable=False)
@@ -81,7 +81,7 @@ class SignFeedback(models.Model):
 class MorphemeFeedback(models.Model):
     """Store feedback on a particular sign"""
 
-    user = models.ForeignKey(authmodels.User, editable=False)
+    user = models.ForeignKey(authmodels.User, editable=False, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
 
     morpheme = models.ForeignKey(Morpheme, on_delete=models.SET_NULL, null=True, editable=False)
@@ -131,10 +131,10 @@ class MissingSignFeedbackForm(forms.Form):
 
 
 class MissingSignFeedback(models.Model):    
-    user = models.ForeignKey(authmodels.User)
+    user = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     signlanguage = models.ForeignKey(SignLanguage, verbose_name=_("Sign Language"),
-                                help_text=_("Sign Language of the missing sign"), null=True)
+                                help_text=_("Sign Language of the missing sign"), null=True, on_delete=models.CASCADE)
     meaning = models.TextField()
     comments = models.TextField(blank=True)
     video = models.FileField(upload_to=settings.COMMENT_VIDEO_LOCATION, blank=True) 

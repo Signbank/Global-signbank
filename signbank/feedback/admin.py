@@ -1,6 +1,6 @@
 from django.contrib import admin 
 from signbank.feedback.models import *
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, gettext_lazy as _
 from django.contrib.admin import SimpleListFilter
  
 class GeneralFeedbackAdmin(admin.ModelAdmin):

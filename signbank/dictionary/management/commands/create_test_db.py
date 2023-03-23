@@ -9,15 +9,24 @@ def make_db_small(filename):
     conn = connect(filename,isolation_level=None)
     c = conn.cursor()
 
-    for table in ['reversion_version', 'reversion_revision', 'django_session',
-                  'dictionary_gloss', 'dictionary_translation',
-                  'dictionary_annotationidglosstranslation', 'dictionary_keyword',
-                  'dictionary_relation', 'dictionary_definition', 'dictionary_othermedia',
-                  'dictionary_morphologydefinition', 'dictionary_morpheme',
-                  'dictionary_simultaneousmorphologydefinition', 'dictionary_lemmaidgloss', 'dictionary_lemmaidglosstranslation',
-                  'dictionary_speaker', 'dictionary_corpus', 'dictionary_document', 'dictionary_glossfrequency',
-                  'video_glossvideo']:
-        c.execute('DELETE FROM ' + table + ';')
+    # Select all tables in dataset
+    sql_query = """SELECT name FROM sqlite_master WHERE type='table';"""
+    c.execute(sql_query)
+
+    # Set which tables should not be emptied
+    keep_tables = ['auth_group', 'auth_permissions', 
+        'dictionary_corpus', 'dictionary_dataset', 'dictionary_dataset_translation_languages', 
+        'dictionary_derivationhistory', 'dictionary_derivationhistorytranslation', 'dictionary_dialect', 
+        'dictionary_fieldchoice', 'dictionary_handshape', 'dictionary_language', 
+        'dictionary_semanticfield', 'dictionary_semanticfieldtranslation', 
+        'dictionary_signlanguage', 'dictionary_content_type', 
+        'django_migrations', 
+        'pages_page', 'south_migrationhistory', 'tagging_tag']
+    
+    # Empty all other tables
+    for table in c.fetchall():
+        if table[0] not in keep_tables:
+            c.execute('DELETE FROM ' + table[0] + ';')
 
     c.execute('VACUUM')
     conn.commit()

@@ -3,10 +3,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
 from django.template import Context, RequestContext, loader
 from django.shortcuts import render, get_object_or_404
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from django.contrib.auth.decorators import permission_required
-from django.db.models.fields import NullBooleanField, IntegerField
+from django.db.models.fields import BooleanField, IntegerField
 
 from tagging.models import TaggedItem, Tag
 import os, shutil, re
@@ -23,7 +23,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
 
@@ -268,7 +268,7 @@ def update_gloss(request, glossid):
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
         import guardian
-        if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
+        if ds in guardian.shortcuts.get_objects_for_user(request.user, 'can_view_dataset', Dataset):
             newvalue = value
             setattr(gloss, field, ds)
             gloss.save()
@@ -384,7 +384,7 @@ def update_gloss(request, glossid):
         #Translate the value if a boolean
         # Language values are needed here!
         newvalue = value
-        if isinstance(gloss._meta.get_field(field),NullBooleanField):
+        if isinstance(gloss._meta.get_field(field),BooleanField):
             # value is the html 'value' received during editing
             # value gets converted to a Boolean by the following statement
             if field in ['weakdrop', 'weakprop']:
@@ -1972,7 +1972,7 @@ def update_morpheme(request, morphemeid):
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
         import guardian
-        if ds in guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset):
+        if ds in guardian.shortcuts.get_objects_for_user(request.user, 'can_view_dataset', Dataset):
             newvalue = value
             setattr(morpheme, field, ds)
             morpheme.save()
@@ -2059,7 +2059,7 @@ def update_morpheme(request, morphemeid):
         # - tags
 
         # Translate the value if a boolean
-        if isinstance(morpheme._meta.get_field(field), NullBooleanField):
+        if isinstance(morpheme._meta.get_field(field), BooleanField):
             newvalue = value
             value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
@@ -2261,7 +2261,7 @@ def change_dataset_selection(request):
     dataset_prefix = 'dataset_'
 
     user = request.user
-    if user.is_authenticated():
+    if user.is_authenticated:
         user_profile = UserProfile.objects.get(user=user)
 
         user_profile.selected_datasets.clear()

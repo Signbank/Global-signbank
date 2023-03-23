@@ -11,11 +11,11 @@
     {% for dataset_lang in dataset_languages %}
     {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
     <td>
-      {% ifnotequal annotationidglosstranslation "" %}
+      {% if annotationidglosstranslation != "" %}
 
         <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
 
-      {% endifnotequal %}
+      {% endif %}
     </td>
     {% endwith %}
     {% endfor %}

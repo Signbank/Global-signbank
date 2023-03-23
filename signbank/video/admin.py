@@ -5,7 +5,7 @@ from signbank.video.models import GlossVideo
 from signbank.dictionary.models import Dataset
 from signbank.settings.base import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBANK_GROUPS
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, gettext_lazy as _
 
 
 class GlossVideoDatasetFilter(admin.SimpleListFilter):

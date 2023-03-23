@@ -22,7 +22,7 @@
     {% endif %}
 
 
-        {% ifequal wordcount 0 %}
+        {% if wordcount == 0 %}
            {% if query %}
             <p>{% trans "There is no exact match to the word you typed." %}</p>
             
@@ -56,12 +56,12 @@
             
             
         {% else %}
-         {% ifequal wordcount 1 %}
+         {% if wordcount == 1 %}
             <p>{% trans "There is one word that fully or partially match your query. Please select the word below." %}</p>
          {% else %}
            <p>{% blocktrans %} There are {{ wordcount }} words that fully or partially match your query. {% endblocktrans %}</p>
-         {% endifequal %}
-        {% endifequal %}
+         {% endif %}
+        {% endif %}
  
         
         {% if perms.dictionary.search_gloss and not wordcount == 0 %}
@@ -93,11 +93,11 @@
           {% if page.has_next or page.has_previous %} 
           <p>{% trans "Jump to results page:" %}
           {% for p in paginator.page_range %}
-             {% ifequal p page.number %}
-             <strong>{% ifequal p 0 %}{% trans "Start" %}{% else %}{{p}}{% endifequal %}</strong>
+             {% if p == page.number %}
+             <strong>{% if p == 0 %}{% trans "Start" %}{% else %}{{p}}{% endif %}</strong>
              {% else %}
-             <a href='?query={{query}}&page={{p}}'>{% ifequal p 0 %}{% trans "Start" %}{% else %}{{p}}{% endifequal %}</a>
-             {% endifequal %}
+             <a href='?query={{query}}&page={{p}}'>{% if p == 0 %}{% trans "Start" %}{% else %}{{p}}{% endif %}</a>
+             {% endif %}
           {% endfor %}
           </p>
 

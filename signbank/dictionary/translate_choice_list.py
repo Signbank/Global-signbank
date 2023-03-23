@@ -1,8 +1,8 @@
 from collections import OrderedDict
 # from signbank.dictionary.models import Gloss, GlossRevision, Morpheme, Handshape
 import signbank.settings.base as settings
-from django.utils.translation import ugettext_lazy as _
-from django.db.models import When, Case, NullBooleanField, IntegerField
+from django.utils.translation import gettext_lazy as _
+from django.db.models import When, Case, BooleanField, IntegerField
 from django.db.utils import OperationalError
 from django.utils.translation import gettext
 
@@ -130,7 +130,7 @@ def check_value_to_translated_human_value(field_name, check_value):
     # the Gloss model needs to be imported here, at runtime
     from signbank.dictionary.models import Gloss
     gloss_fields = [ field.name for field in Gloss._meta.get_fields() ]
-    if field_name not in gloss_fields or Gloss._meta.get_field(field_name).__class__.__name__ != 'NullBooleanField':
+    if field_name not in gloss_fields or Gloss._meta.get_field(field_name).__class__.__name__ != 'BooleanField':
         # don't do anything to value
         return check_value
 

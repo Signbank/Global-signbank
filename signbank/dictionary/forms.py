@@ -1,7 +1,7 @@
 from colorfield.fields import ColorWidget
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _, get_language
+from django.utils.translation import gettext_lazy as _, get_language
 from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
@@ -562,7 +562,6 @@ class GlossMorphologyForm(forms.Form):
         super(GlossMorphologyForm, self).__init__(*args, **kwargs)
         self.fields['role'].choices = list(FieldChoice.objects.filter(field='MorphologyType').order_by('machine_value')
                                            .values_list('pk', 'name'))
-
 
 class GlossMorphemeForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""

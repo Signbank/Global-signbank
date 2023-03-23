@@ -7,7 +7,7 @@ from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete
-from django.utils.translation import ugettext_lazy as _, get_language
+from django.utils.translation import gettext_lazy as _, get_language
 from django.utils.timezone import now
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
@@ -135,9 +135,9 @@ class FieldChoice(models.Model):
 class Translation(models.Model):
     """A spoken language translation of signs"""
 
-    gloss = models.ForeignKey("Gloss")
-    language = models.ForeignKey("Language", default=get_default_language_id)
-    translation = models.ForeignKey("Keyword")
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", default=get_default_language_id, on_delete=models.CASCADE)
+    translation = models.ForeignKey("Keyword", on_delete=models.CASCADE)
     index = models.IntegerField("Index")
 
     def __str__(self):
@@ -203,7 +203,7 @@ class Keyword(models.Model):
         except:
             crudetag = None
 
-        safe = (not request.user.is_authenticated()) and settings.ANON_SAFE_SEARCH
+        safe = (not request.user.is_authenticated) and settings.ANON_SAFE_SEARCH
         if safe and crudetag:
             alltrans = [tr for tr in alltrans if not crudetag in tagging.models.Tag.objects.get_for_object(tr.gloss)]
 
@@ -227,7 +227,7 @@ class Definition(models.Model):
     def __str__(self):
         return str(self.gloss) + "/" + str(self.role)
 
-    gloss = models.ForeignKey("Gloss")
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
     text = models.TextField()
     role = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.NOTETYPE},
@@ -278,7 +278,7 @@ class Dialect(models.Model):
     class Meta:
         ordering = ['signlanguage', 'name']
 
-    signlanguage = models.ForeignKey(SignLanguage)
+    signlanguage = models.ForeignKey(SignLanguage, on_delete=models.CASCADE)
     name = models.CharField(max_length=20)
     description = models.TextField()
 
@@ -316,7 +316,7 @@ class RelationToForeignSign(models.Model):
     def __str__(self):
         return str(self.gloss) + "/" + str(self.other_lang) + ',' + str(self.other_lang_gloss)
 
-    gloss = models.ForeignKey("Gloss")
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
     loan = models.BooleanField("Loan Sign", default=False)
     other_lang = models.CharField("Related Language", max_length=20)
     other_lang_gloss = models.CharField("Gloss in related language", max_length=50)
@@ -388,21 +388,21 @@ class Handshape(models.Model):
                                           verbose_name=_("Unselected fingers"),
                                            related_name="unselected_fingers")
 
-    fsT = models.NullBooleanField(_("T"), null=True, default=False)
-    fsI = models.NullBooleanField(_("I"), null=True, default=False)
-    fsM = models.NullBooleanField(_("M"), null=True, default=False)
-    fsR = models.NullBooleanField(_("R"), null=True, default=False)
-    fsP = models.NullBooleanField(_("P"), null=True, default=False)
-    fs2T = models.NullBooleanField(_("T2"), null=True, default=False)
-    fs2I = models.NullBooleanField(_("I2"), null=True, default=False)
-    fs2M = models.NullBooleanField(_("M2"), null=True, default=False)
-    fs2R = models.NullBooleanField(_("R2"), null=True, default=False)
-    fs2P = models.NullBooleanField(_("P2"), null=True, default=False)
-    ufT = models.NullBooleanField(_("Tu"), null=True, default=False)
-    ufI = models.NullBooleanField(_("Iu"), null=True, default=False)
-    ufM = models.NullBooleanField(_("Mu"), null=True, default=False)
-    ufR = models.NullBooleanField(_("Ru"), null=True, default=False)
-    ufP = models.NullBooleanField(_("Pu"), null=True, default=False)
+    fsT = models.BooleanField(_("T"), null=True, default=False)
+    fsI = models.BooleanField(_("I"), null=True, default=False)
+    fsM = models.BooleanField(_("M"), null=True, default=False)
+    fsR = models.BooleanField(_("R"), null=True, default=False)
+    fsP = models.BooleanField(_("P"), null=True, default=False)
+    fs2T = models.BooleanField(_("T2"), null=True, default=False)
+    fs2I = models.BooleanField(_("I2"), null=True, default=False)
+    fs2M = models.BooleanField(_("M2"), null=True, default=False)
+    fs2R = models.BooleanField(_("R2"), null=True, default=False)
+    fs2P = models.BooleanField(_("P2"), null=True, default=False)
+    ufT = models.BooleanField(_("Tu"), null=True, default=False)
+    ufI = models.BooleanField(_("Iu"), null=True, default=False)
+    ufM = models.BooleanField(_("Mu"), null=True, default=False)
+    ufR = models.BooleanField(_("Ru"), null=True, default=False)
+    ufP = models.BooleanField(_("Pu"), null=True, default=False)
 
     def __str__(self):
         name = 'Handshape: ' + self.name + ' (' + str(self.machine_value) + ')'
@@ -617,16 +617,16 @@ class Gloss(models.Model):
     signlanguage = models.ManyToManyField(SignLanguage)
 
     # these language fields are subsumed by the language field above
-    bsltf = models.NullBooleanField(_("BSL sign"), null=True, blank=True)
-    asltf = models.NullBooleanField(_("ASL sign"), null=True, blank=True)
+    bsltf = models.BooleanField(_("BSL sign"), null=True, blank=True)
+    asltf = models.BooleanField(_("ASL sign"), null=True, blank=True)
 
     # these fields should be reviewed - do we put them in another class too?
     aslgloss = models.CharField(_("ASL gloss"), blank=True, max_length=50)  # American Sign Language gloss
-    asloantf = models.NullBooleanField(_("ASL loan sign"), null=True, blank=True)
+    asloantf = models.BooleanField(_("ASL loan sign"), null=True, blank=True)
 
     # loans from british sign language
     bslgloss = models.CharField(_("BSL gloss"), max_length=50, blank=True)
-    bslloantf = models.NullBooleanField(_("BSL loan sign"), null=True, blank=True)
+    bslloantf = models.BooleanField(_("BSL loan sign"), null=True, blank=True)
 
     useInstr = models.CharField(_("Annotation instructions"), max_length=50, blank=True)
     rmrks = models.CharField(_("Remarks"), max_length=50, blank=True)
@@ -637,10 +637,10 @@ class Gloss(models.Model):
     dialect = models.ManyToManyField(Dialect)
 
     blend = models.CharField(_("Blend of"), max_length=100, null=True, blank=True)  # This field type is a guess.
-    blendtf = models.NullBooleanField(_("Blend"), null=True, blank=True)
+    blendtf = models.BooleanField(_("Blend"), null=True, blank=True)
 
     compound = models.CharField(_("Compound of"), max_length=100, blank=True)  # This field type is a guess.
-    comptf = models.NullBooleanField(_("Compound"), null=True, blank=True)
+    comptf = models.BooleanField(_("Compound"), null=True, blank=True)
 
     # Phonology fields
     handedness = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
@@ -649,8 +649,8 @@ class Gloss(models.Model):
                                           verbose_name=_("Handedness"),
                                            related_name="handedness")
 
-    weakdrop = models.NullBooleanField(_("Weak Drop"), null=True, blank=True)
-    weakprop = models.NullBooleanField(_("Weak Prop"), null=True, blank=True)
+    weakdrop = models.BooleanField(_("Weak Drop"), null=True, blank=True)
+    weakprop = models.BooleanField(_("Weak Prop"), null=True, blank=True)
 
     domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
                                              verbose_name=_("Strong Hand"),
@@ -661,10 +661,10 @@ class Gloss(models.Model):
                                              related_name="weak_hand")
 
     # Support for handshape etymology
-    domhndsh_number = models.NullBooleanField(_("Strong hand number"), null=True, blank=True)
-    domhndsh_letter = models.NullBooleanField(_("Strong hand letter"), null=True, blank=True)
-    subhndsh_number = models.NullBooleanField(_("Weak hand number"), null=True, blank=True)
-    subhndsh_letter = models.NullBooleanField(_("Weak hand letter"), null=True, blank=True)
+    domhndsh_number = models.BooleanField(_("Strong hand number"), null=True, blank=True)
+    domhndsh_letter = models.BooleanField(_("Strong hand letter"), null=True, blank=True)
+    subhndsh_number = models.BooleanField(_("Weak hand number"), null=True, blank=True)
+    subhndsh_letter = models.BooleanField(_("Weak hand letter"), null=True, blank=True)
 
     final_domhndsh = models.ForeignKey(Handshape, on_delete=models.SET_NULL, null=True,
                                                    verbose_name=_("Final Dominant Handshape"),
@@ -727,12 +727,12 @@ class Gloss(models.Model):
                                           verbose_name="Dominant hand - Flexion",
                                            related_name="dominant_hand_flexion")
 
-    oriChAbd = models.NullBooleanField(_("Abduction change"), null=True, blank=True)
-    oriChFlex = models.NullBooleanField(_("Flexion change"), null=True, blank=True)
+    oriChAbd = models.BooleanField(_("Abduction change"), null=True, blank=True)
+    oriChFlex = models.BooleanField(_("Flexion change"), null=True, blank=True)
 
-    inWeb = models.NullBooleanField(_("In the Web dictionary"), default=False)
-    isNew = models.NullBooleanField(_("Is this a proposed new sign?"), null=True, default=False)
-    excludeFromEcv = models.NullBooleanField(_("Exclude from ECV"), default=False)
+    inWeb = models.BooleanField(_("In the Web dictionary"), default=False)
+    isNew = models.BooleanField(_("Is this a proposed new sign?"), null=True, default=False)
+    excludeFromEcv = models.BooleanField(_("Exclude from ECV"), default=False)
 
     inittext = models.CharField(max_length=50, blank=True)
 
@@ -801,8 +801,8 @@ class Gloss(models.Model):
                                            related_name="handshape_change")
 
 
-    repeat = models.NullBooleanField(_("Repeated Movement"), null=True, default=False)
-    altern = models.NullBooleanField(_("Alternating Movement"), null=True, default=False)
+    repeat = models.BooleanField(_("Repeated Movement"), null=True, default=False)
+    altern = models.BooleanField(_("Alternating Movement"), null=True, default=False)
 
     movSh = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                           limit_choices_to={'field': FieldChoice.MOVEMENTSHAPE},
@@ -1508,7 +1508,7 @@ class Gloss(models.Model):
 
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
-        from django.db.models import When, Case, NullBooleanField, IntegerField
+        from django.db.models import When, Case, BooleanField, IntegerField
 
         zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
 
@@ -2090,8 +2090,8 @@ def fieldname_to_kind(fieldname):
 class Relation(models.Model):
     """A relation between two glosses"""
 
-    source = models.ForeignKey(Gloss, related_name="relation_sources")
-    target = models.ForeignKey(Gloss, related_name="relation_targets")
+    source = models.ForeignKey(Gloss, related_name="relation_sources", on_delete=models.CASCADE)
+    target = models.ForeignKey(Gloss, related_name="relation_targets", on_delete=models.CASCADE)
     role = models.CharField(max_length=20, choices=RELATION_ROLE_CHOICES)
 
     class Admin:
@@ -2113,12 +2113,12 @@ class Relation(models.Model):
 class MorphologyDefinition(models.Model):
     """Tells something about morphology of a gloss"""
 
-    parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses")
+    parent_gloss = models.ForeignKey(Gloss, related_name="parent_glosses", on_delete=models.CASCADE)
     role = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.MORPHOLOGYTYPE},
                                     field_choice_category=FieldChoice.MORPHOLOGYTYPE,
                                     verbose_name=_("MorphologyType"))
-    morpheme = models.ForeignKey(Gloss, related_name="morphemes")
+    morpheme = models.ForeignKey(Gloss, related_name="morphemes", on_delete=models.CASCADE)
 
     def __str__(self):
         return self.morpheme.idgloss
@@ -2222,7 +2222,7 @@ def generate_fieldname_to_kind_table():
         temp_field_to_kind_table[fieldname] = 'list'
     for f in Gloss._meta.fields:
         f_internal_type = f.get_internal_type()
-        if f_internal_type in ['NullBooleanField', 'BooleanField']:
+        if f_internal_type in ['BooleanField', 'BooleanField']:
             temp_field_to_kind_table[f.name] = 'check'
         elif f_internal_type in ['CharField', 'TextField']:
             temp_field_to_kind_table[f.name] = 'text'
@@ -2236,7 +2236,7 @@ def generate_fieldname_to_kind_table():
             temp_field_to_kind_table[f.name] = f_internal_type
     for f in Morpheme._meta.fields:
         f_internal_type = f.get_internal_type()
-        if f_internal_type in ['NullBooleanField', 'BooleanField']:
+        if f_internal_type in ['BooleanField', 'BooleanField']:
             temp_field_to_kind_table[f.name] = 'check'
         elif f_internal_type in ['CharField', 'TextField']:
             temp_field_to_kind_table[f.name] = 'text'
@@ -2251,7 +2251,7 @@ def generate_fieldname_to_kind_table():
     for h in Handshape._meta.fields:
         h_internal_type = h.get_internal_type()
         if h.name not in temp_field_to_kind_table.keys():
-            if h_internal_type in ['NullBooleanField', 'BooleanField']:
+            if h_internal_type in ['BooleanField', 'BooleanField']:
                 temp_field_to_kind_table[h.name] = 'check'
             elif h_internal_type in ['CharField', 'TextField']:
                 temp_field_to_kind_table[h.name] = 'text'
@@ -2267,7 +2267,7 @@ def generate_fieldname_to_kind_table():
     for d in Definition._meta.fields:
         d_internal_type = d.get_internal_type()
         if d.name not in temp_field_to_kind_table.keys():
-            if d_internal_type in ['NullBooleanField', 'BooleanField']:
+            if d_internal_type in ['BooleanField', 'BooleanField']:
                 temp_field_to_kind_table[d.name] = 'check'
             elif d_internal_type in ['CharField', 'TextField']:
                 temp_field_to_kind_table[d.name] = 'text'
@@ -2286,18 +2286,18 @@ def generate_fieldname_to_kind_table():
 fieldname_to_kind_table = generate_fieldname_to_kind_table()
 
 class SimultaneousMorphologyDefinition(models.Model):
-    parent_gloss = models.ForeignKey(Gloss, related_name='simultaneous_morphology')
+    parent_gloss = models.ForeignKey(Gloss, related_name='simultaneous_morphology', on_delete=models.CASCADE)
     role = models.CharField(max_length=100)
-    morpheme = models.ForeignKey(Morpheme, related_name='glosses_containing')
+    morpheme = models.ForeignKey(Morpheme, related_name='glosses_containing', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.parent_gloss.idgloss
 
 
 class BlendMorphology(models.Model):
-    parent_gloss = models.ForeignKey(Gloss, related_name='blend_morphology')
+    parent_gloss = models.ForeignKey(Gloss, related_name='blend_morphology', on_delete=models.CASCADE)
     role = models.CharField(max_length=100)
-    glosses = models.ForeignKey(Gloss, related_name='glosses_comprising')
+    glosses = models.ForeignKey(Gloss, related_name='glosses_comprising', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.parent_gloss.idgloss
@@ -2306,7 +2306,7 @@ class BlendMorphology(models.Model):
 class OtherMedia(models.Model):
     """Videos of or related to a gloss, often created by another project"""
 
-    parent_gloss = models.ForeignKey(Gloss)
+    parent_gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
     type = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.OTHERMEDIATYPE},
                                     field_choice_category=FieldChoice.OTHERMEDIATYPE,
@@ -2358,7 +2358,7 @@ class Dataset(models.Model):
     """A dataset, can be public/private and can be of only one SignLanguage"""
     name = models.CharField(unique=True, blank=False, null=False, max_length=60)
     is_public = models.BooleanField(default=False, help_text="Is this dataset public or private?")
-    signlanguage = models.ForeignKey("SignLanguage")
+    signlanguage = models.ForeignKey("SignLanguage", on_delete=models.CASCADE)
     translation_languages = models.ManyToManyField("Language", help_text="These languages are shown as options"
                                                                          "for translation equivalents.")
     default_language = models.ForeignKey('Language', on_delete=models.DO_NOTHING,
@@ -2377,7 +2377,7 @@ class Dataset(models.Model):
 
     class Meta:
         permissions = (
-            ('view_dataset', _('View dataset')),
+            ('can_view_dataset', _('View dataset')),
         )
 
     def __init__(self, *args, **kwargs):
@@ -2455,7 +2455,7 @@ class Dataset(models.Model):
                                                        with_group_users=False)
         for user in all_users:
             if user in users_who_can_access_me.keys():
-                if 'view_dataset' in users_who_can_access_me[user]:
+                if 'can_view_dataset' in users_who_can_access_me[user] or 'view_dataset' in users_who_can_access_me[user]:
                     users_who_can_view_dataset.append(user)
 
         return users_who_can_view_dataset
@@ -2564,7 +2564,7 @@ class Dataset(models.Model):
 
 class UserProfile(models.Model):
     # This field is required.
-    user = models.OneToOneField(User, related_name="user_profile_user")
+    user = models.OneToOneField(User, related_name="user_profile_user", on_delete=models.CASCADE)
 
     # Other fields here
     last_used_language = models.CharField(max_length=20, default=settings.LANGUAGE_CODE)
@@ -2614,8 +2614,8 @@ class Language(models.Model):
 
 class SemanticFieldTranslation(models.Model):
 
-    semField = models.ForeignKey(SemanticField)
-    language = models.ForeignKey(Language)
+    semField = models.ForeignKey(SemanticField, on_delete=models.CASCADE)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
     name = models.CharField(max_length=20)
 
     class Meta:
@@ -2624,8 +2624,8 @@ class SemanticFieldTranslation(models.Model):
 
 class DerivationHistoryTranslation(models.Model):
 
-    derivHist = models.ForeignKey(DerivationHistory)
-    language = models.ForeignKey(Language)
+    derivHist = models.ForeignKey(DerivationHistory, on_delete=models.CASCADE)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
     name = models.CharField(max_length=20)
 
     class Meta:
@@ -2638,8 +2638,8 @@ class AnnotationIdglossTranslation(models.Model):
     text = models.CharField(_("Annotation ID Gloss"), max_length=30, help_text="""
         This is the name of a sign used by annotators when glossing the corpus in
         an ELAN annotation file.""")
-    gloss = models.ForeignKey("Gloss")
-    language = models.ForeignKey("Language")
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (("gloss", "language"),)
@@ -2682,7 +2682,7 @@ class AnnotationIdglossTranslation(models.Model):
 
 
 class LemmaIdgloss(models.Model):
-    dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"),
+    dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
                                 help_text=_("Dataset a lemma is part of"), null=True)
 
     class Meta:
@@ -2702,8 +2702,8 @@ class LemmaIdgloss(models.Model):
 class LemmaIdglossTranslation(models.Model):
     """A Lemma ID Gloss"""
     text = models.CharField(_("Lemma ID Gloss translation"), max_length=30, help_text="""The lemma translation text.""")
-    lemma = models.ForeignKey("LemmaIdgloss")
-    language = models.ForeignKey("Language")
+    lemma = models.ForeignKey("LemmaIdgloss", on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (("lemma", "language"),)  # For each combination of lemma and language there is just one text.
@@ -2737,8 +2737,8 @@ class LemmaIdglossTranslation(models.Model):
 
 class GlossRevision(models.Model):
 
-    gloss = models.ForeignKey("Gloss")
-    user = models.ForeignKey(User)
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     time = models.DateTimeField()
     field_name = models.CharField(max_length=100)
     old_value = models.CharField(blank=True, max_length=100)
@@ -2764,17 +2764,28 @@ class Corpus(models.Model):
 
 class Document(models.Model):
 
-    corpus = models.ForeignKey("Corpus")
+    corpus = models.ForeignKey("Corpus", on_delete=models.CASCADE)
     identifier = models.CharField(max_length=100)
     creation_time = models.DateTimeField(blank=True)
 
 class Speaker(models.Model):
 
+    GENDER_CHOICES = (
+        ('m', 'Male'),
+        ('f', 'Female'),
+        ('o', 'Other'),
+    )
+    HANDEDNESS_CHOICES = (
+        ('r', 'Right'),
+        ('l', 'Left'),
+        ('a', 'Ambidextrous'),
+    )
+
     identifier = models.CharField(max_length=100)
-    gender = models.CharField(blank=True,choices=[('Male','m'),('Female','f'),('Other','o')],max_length=1)
+    gender = models.CharField(blank=True,choices=GENDER_CHOICES,max_length=1)
     age = models.IntegerField(blank=True)
     location = models.CharField(max_length=100)
-    handedness = models.CharField(blank=True,choices=[('Right','r'),('Left','l'),('Ambidextrous','a')],max_length=1)
+    handedness = models.CharField(blank=True,choices=HANDEDNESS_CHOICES,max_length=1)
 
     def __str__(self):
         try:
@@ -2792,9 +2803,9 @@ class Speaker(models.Model):
 
 class GlossFrequency(models.Model):
 
-    speaker = models.ForeignKey("Speaker")
-    document = models.ForeignKey("Document")
-    gloss = models.ForeignKey("Gloss")
+    speaker = models.ForeignKey("Speaker", on_delete=models.CASCADE)
+    document = models.ForeignKey("Document", on_delete=models.CASCADE)
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
     frequency = models.IntegerField()
 
     def __str__(self):
@@ -2804,7 +2815,7 @@ class GlossFrequency(models.Model):
 
 class QueryParameter(models.Model):
 
-    search_history = models.ForeignKey("SearchHistory", null=True)
+    search_history = models.ForeignKey("SearchHistory", null=True, on_delete=models.CASCADE)
     # this parameter determines whether the key value has '[]' after the field name
     multiselect = models.BooleanField(_('Multiple Select'), default=True,
                                       help_text=_("Is this a multiselect parameter?"))
@@ -2896,7 +2907,7 @@ class QueryParameterFieldChoice(QueryParameter):
         ('valence', 'Valence')
     ]
     fieldName = models.CharField(_("Field Name"), choices=QUERY_FIELDS, max_length=20)
-    fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"))
+    fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"), on_delete=models.CASCADE)
 
     def display_verbose_fieldname(self):
         glossFieldName = '-'
@@ -2929,7 +2940,7 @@ class QueryParameterHandshape(QueryParameter):
         ('final_subhndsh', 'final_subhndsh')
     ]
     fieldName = models.CharField(_("Handshape"), choices=QUERY_FIELDS, max_length=20)
-    fieldValue = models.ForeignKey(Handshape, null=True)
+    fieldValue = models.ForeignKey(Handshape, null=True, on_delete=models.CASCADE)
 
     def display_verbose_fieldname(self):
         glossFieldName = '-'
@@ -2954,7 +2965,7 @@ class QueryParameterSemanticField(QueryParameter):
         ('semField', 'semField')
     ]
     fieldName = models.CharField(_("Semantic Field"), choices=QUERY_FIELDS, max_length=20)
-    fieldValue = models.ForeignKey(SemanticField, null=True)
+    fieldValue = models.ForeignKey(SemanticField, null=True, on_delete=models.CASCADE)
 
     def display_verbose_fieldname(self):
         glossFieldName = '-'
@@ -2975,7 +2986,7 @@ class QueryParameterDerivationHistory(QueryParameter):
         ('derivHist', 'derivHist')
     ]
     fieldName = models.CharField(_("Derivation History"), choices=QUERY_FIELDS, max_length=20)
-    fieldValue = models.ForeignKey(DerivationHistory, null=True)
+    fieldValue = models.ForeignKey(DerivationHistory, null=True, on_delete=models.CASCADE)
 
     class Meta:
         verbose_name_plural = "Query parameter derivation histories"
@@ -3020,7 +3031,7 @@ class QueryParameterBoolean(QueryParameter):
     ]
 
     fieldName = models.CharField(_("NullBooleanField"), choices=QUERY_FIELDS, max_length=30)
-    fieldValue = models.NullBooleanField(_("Field Value"), null=True, blank=True)
+    fieldValue = models.BooleanField(_("Field Value"), null=True, blank=True)
 
     def display_verbose_fieldname(self):
         if self.fieldName in Gloss._meta.fields:
@@ -3066,7 +3077,7 @@ class QueryParameterMultilingual(QueryParameter):
     ]
 
     fieldName = models.CharField(_("Text Search Field"), choices=QUERY_FIELDS, max_length=20)
-    fieldLanguage = models.ForeignKey(Language)
+    fieldLanguage = models.ForeignKey(Language, on_delete=models.CASCADE)
     fieldValue = models.CharField(_("Text Search Value"), max_length=30)
 
     def display_verbose_fieldname(self):
@@ -3085,7 +3096,7 @@ class QueryParameterMultilingual(QueryParameter):
 
 class SearchHistory(models.Model):
     queryDate = models.DateTimeField(_('Query Date'), auto_now=True)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     parameters = models.ManyToManyField(QueryParameter, related_name='query_parameters')
     queryName = models.CharField(blank=True, max_length=50, help_text=_("Abbreviation for the query"))
 

@@ -1,6 +1,6 @@
 from signbank.settings.server_specific.default import *
 
-ADMINS = (('Wessel Stoop', 'w.stoop@let.ru.nl'))
+ADMINS = [('Wessel Stoop', 'w.stoop@let.ru.nl')]
 LANGUAGE_NAME = 'Global'
 COUNTRY_NAME = 'Netherlands'
 SIGNBANK_VERSION_CODE = 'global'

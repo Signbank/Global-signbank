@@ -1,5 +1,7 @@
 # Django settings for signbank project.
 import os
+import django
+from django.utils.encoding import smart_str
 from signbank.settings.server_specific import *
 from datetime import datetime
 
@@ -49,7 +51,7 @@ STATICFILES_FINDERS = (
 #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
 #    'debug_toolbar.middleware.DebugToolbarMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -286,3 +288,10 @@ DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES = 200
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = None
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
+
+
+# smart-text() is deprecated and does not support django>4 so this has to be changed manually
+django.utils.encoding.smart_text = smart_str
+
+# set a default autofield for models
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

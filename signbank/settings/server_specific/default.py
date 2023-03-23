@@ -42,7 +42,7 @@ METADATA_LOCATION = 'metadata.csv'
 FFMPEG_PROGRAM = "avconv"
 
 #List of tuples containing the name and the email address of the admins
-ADMINS = (('Spongebob Squarepants','s.squarepants@gmail.com'))
+ADMINS = [('Spongebob Squarepants','s.squarepants@gmail.com')]
 
 #What do we call this Signbank (for example NGT Signank, Global Signbank, ASL Signbank)?
 LANGUAGE_NAME = 'Global'
@@ -251,4 +251,8 @@ DEBUG_EMAILS_ON = False
 
 # default url to admin page, specify a hidden one in server_specific to override this
 ADMIN_URL = 'admin'
+
+# Redirect to homepage after logout
+LOGOUT_REDIRECT_URL = '/'
+
 FILESYSTEM_SIGNBANK_GROUPS = ['signbank', 'www-data', 'signbank-writable']

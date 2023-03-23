@@ -3,7 +3,7 @@
 {% block content %}
  
     {# if we have no search term, prompt search #}
-    {% ifequal query '' %}
+    {% if query == '' %}
 
     <div>
     <form id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/dictionary/search/">
@@ -35,18 +35,18 @@
      
     
     {% else %}
-        {% ifequal wordcount 0 %}
+        {% if wordcount == 0 %}
             <h2>No Matches Found</h2>
             <p>No words matched your query (&ldquo;{{ query }}&rdquo;).</p>
         {% else %}
-        {% ifequal wordcount 1 %}
+        {% if wordcount == 1 %}
            <h2>One Search Result for &ldquo;{{ query }}&rdquo;</h2>
            <p>There is one word that fully or partially match your query (&ldquo;{{ query }}&rdquo;).</p>
         {% else %}
            <h2>Search Results for &ldquo;{{ query }}&rdquo;</h2>
            <p>There are {{ wordcount }} words that fully or partially match your query.</p>
-        {% endifequal %}
-        {% endifequal %}
+        {% endif %}
+        {% endif %}
         
         {% if user.is_staff %}
         <p>Items marked * below are not in the web version of the dictionary and would not appear in a regular (non staff) search.</p>
@@ -65,17 +65,17 @@
           {% if page.has_next or page.has_previous %} 
           <p>Jump to results page: 
           {% for p in paginator.page_range %}
-             {% ifequal p page.number %}
-             <strong>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</strong>
+             {% if p == page.number %}
+             <strong>{% if p == 0 %}Start{% else %}{{p}}{% endif %}</strong>
              {% else %}
-             <a href='?query={{query}}&page={{p}}'>{% ifequal p 0 %}Start{% else %}{{p}}{% endifequal %}</a>
-             {% endifequal %}
+             <a href='?query={{query}}&page={{p}}'>{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+             {% endif %}
           {% endfor %}
           </p>
 
           {% endif %}
 
-    {% endifequal %}
+    {% endif %}
 {% endblock %}
 
 

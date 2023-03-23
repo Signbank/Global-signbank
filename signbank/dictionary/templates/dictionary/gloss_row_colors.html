@@ -46,7 +46,7 @@
     {% for dataset_lang in dataset_languages %}
     {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
     <td>
-      {% ifnotequal annotationidglosstranslation "" %}
+      {% if annotationidglosstranslation != "" %}
         <div class="annotation_{{dataset_lang.language_code_2char}}">
         {% if focus_gloss.is_morpheme %}
         <div><a href="{{PREFIX_URL}}/dictionary/morpheme/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
@@ -54,7 +54,7 @@
         <div><a href="{{PREFIX_URL}}/dictionary/gloss_preview/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
         {% endif %}
         </div>
-      {% endifnotequal %}
+      {% endif %}
     </td>
     {% endwith %}
     {% endfor %}

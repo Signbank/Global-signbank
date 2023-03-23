@@ -41,13 +41,13 @@
          </td>
             {% with gloss|get_annotation_idgloss_translation:language as annotationidglosstranslation %}
           <td>
-              {% ifnotequal annotationidglosstranslation "" %}
+              {% if annotationidglosstranslation != "" %}
                 {% if gloss.is_morpheme %}
                 <div class="morpheme_gloss"><a href="{{PREFIX_URL}}/dictionary/morpheme/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
                 {% else %}
                 <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></div>
                 {% endif %}
-              {% endifnotequal %}
+              {% endif %}
           </td>
             {% endwith %}
             <td>

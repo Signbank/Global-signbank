@@ -1,0 +1,25 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Feedback Overview{% endblocktrans %}
+{% endblock %}
+
+{% block content %}
+    <table class='table table-condensed'>
+    <caption style="text-align: left;font-weight: bold;">{% trans "General Feedback Summary" %}</caption>
+      <tr><th>Date</th><th>User</th><th>Comment</th></tr>
+
+      {% for feedback in feedbacklist %}
+      <tr>
+        <td>{{feedback.date}}</td>
+        <td>{{feedback.user}}</td>
+        <td>{{feedback.comment}}{% if feedback.video != "" %}<br /><br /><a href="upload/{{feedback.video}}">{{feedback.video}}</a>{% endif %}</td>
+      </tr>
+
+      {% end for %}      
+    </table>
+
+{% endblock %}

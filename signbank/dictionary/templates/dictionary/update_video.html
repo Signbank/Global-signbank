@@ -42,20 +42,20 @@ td .player {
 <div id="container">
 <h2>{% trans "Update Video for Gloss <em>{{gloss.idgloss}}</em>" %}</h2>
 
-{% ifequal status "cancelled" %}
+{% if status == "cancelled" %}
 <p>{% trans "Replacement of video cancelled." %}</p>
 
 <p><a href="javascript:window.close()">{% trans "Close Window" %}</a></p>
 
 {% else %}
-    {% ifequal status "completed" %}
+    {% if status == "completed" %}
     <p>{% trans "Replacement of video completed." %}</p>
     
     <p><a href="javascript:window.close()">{% trans "Close Window" %}</a></p>
-    {% endifequal %}
-{% endifequal %}
+    {% endif %}
+{% endif %}
 
-{% ifequal status "form" %}
+{% if status == "form" %}
 {% if videofile %}
 
 <table id="videos">
@@ -102,7 +102,7 @@ is made to the site." %}</p>
 a Web format (technically, h264 encoded mp4 files)." %}</p>
 
 {% endif %}
-{% endifequal %}
+{% endif %}
 
 </div>
 {% endblock %}

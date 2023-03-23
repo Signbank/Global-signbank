@@ -8,7 +8,7 @@ import json
 import re
 from urllib.parse import quote
 import csv
-from django.utils.translation import override, ugettext_lazy as _
+from django.utils.translation import override, gettext_lazy as _
 from django.contrib.auth.decorators import permission_required
 
 from django.utils.translation import override
@@ -21,7 +21,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import *
 from django.contrib import messages
 from django.db import OperationalError, ProgrammingError
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from tagging.models import TaggedItem, Tag
 
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
@@ -1083,7 +1083,7 @@ def update_document_counts(request, dataset_id, document_id):
     except ObjectDoesNotExist:
         return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available/')
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
         return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
     if not request.user.has_perm('dictionary.change_gloss'):

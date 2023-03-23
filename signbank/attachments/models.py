@@ -12,7 +12,7 @@ class Attachment(models.Model):
     file = models.FileField(upload_to=settings.ATTACHMENT_LOCATION)
     description = models.TextField(blank=True)
     date = models.DateField(auto_now=True)
-    uploader = models.ForeignKey(authmodels.User)
+    uploader = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
 
     def get_absolute_url(self):
 
