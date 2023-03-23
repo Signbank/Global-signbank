@@ -4298,6 +4298,10 @@ class HandshapeListView(ListView):
         else:
             selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         context['selected_datasets'] = selected_datasets
+
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+        
         context['signscount'] = Gloss.objects.filter(lemma__dataset__in=selected_datasets).count()
 
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS

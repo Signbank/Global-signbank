@@ -6,7 +6,7 @@ from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 
 from django.contrib.auth.decorators import permission_required
-from django.db.models.fields import NullBooleanField, IntegerField
+from django.db.models.fields import BooleanField, IntegerField
 
 from tagging.models import TaggedItem, Tag
 import os, shutil, re
@@ -2059,7 +2059,7 @@ def update_morpheme(request, morphemeid):
         # - tags
 
         # Translate the value if a boolean
-        if isinstance(morpheme._meta.get_field(field), NullBooleanField):
+        if isinstance(morpheme._meta.get_field(field), BooleanField):
             newvalue = value
             value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
 
