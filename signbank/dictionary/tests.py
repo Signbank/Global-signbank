@@ -805,7 +805,8 @@ class VideoTests(TestCase):
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
-        print(str(logged_in))
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
 
         NAME = 'thisisatemporarytestlemmaidglosstranslation'
 
@@ -845,32 +846,43 @@ class VideoTests(TestCase):
             print('The test video does not exist in the archive: ', video_url)
             self.assertEqual(response.status_code,302)
 
-            #Upload the video
+            # Upload the video
             print('Uploading the test video.')
-            videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
-            response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
-                                                     'videofile': videofile,
-                                                     'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
-            self.assertEqual(response.status_code,200)
+            try:
+                videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4', 'rb')
+                test_video_file_exists = True
+            except (FileNotFoundError, PermissionError):
+                test_video_file_exists = False
+                print('The test video is missing: ', settings.WRITABLE_FOLDER+'test_data/video.mp4')
 
-        #We expect a video now
+            if test_video_file_exists:
+                response = client.post('/video/upload/', {'gloss_id': new_gloss.pk,
+                                                          'videofile': videofile,
+                                                          'redirect': '/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'},
+                                       follow=True)
+                self.assertEqual(response.status_code, 200)
+
+        if not test_video_file_exists:
+            return
+
+        # We expect a video now
         response = client.get(video_url, follow=True)
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code, 200)
 
-        #You can't see it if you log out
+        # You can't see it if you log out
         client.logout()
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,401)
 
-        #Remove the video
+        # Remove the video
         client.login(username='test-user',password='test-user')
         print('User has logged back in.')
         print('Delete the uploaded video.')
         response = client.post('/video/delete/'+str(new_gloss.pk))
 
-        #We expect no video anymore
+        # We expect no video anymore
         print('Attempt to see video. It is not found.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
@@ -880,6 +892,8 @@ class VideoTests(TestCase):
         client = Client()
 
         logged_in = client.login(username='test-user', password='test-user')
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
 
         NAME = 'XXtéstlemmä%20~山脉%20'  # %20 is an url encoded space
 
@@ -900,7 +914,7 @@ class VideoTests(TestCase):
                                                               lemma=new_lemma, language=default_language)
         new_lemmaidglosstranslation.save()
 
-        #Create the gloss
+        # Create the gloss
         new_gloss = Gloss()
         new_gloss.handedness = self.handedness_fieldchoice_1
         new_gloss.lemma = new_lemma
@@ -919,46 +933,58 @@ class VideoTests(TestCase):
             video_url = escape_uri_path(video_url)
         video_url = video_url.replace('%', '%25')
 
-        #We expect no video before
+        # We expect no video before
         response = client.get(video_url)
         if response.status_code == 200:
-            print('The test video already exists in the archive: ', video_url, ' (', type(video_url), ')')
-            self.assertEqual(response.status_code,200)
+            print('The test video already exists in the archive: ', video_url)
+            self.assertEqual(response.status_code, 200)
         else:
-            print('The test video does not exist in the archive: ', video_url, ' (', type(video_url), ')')
-            self.assertEqual(response.status_code,302)
+            print('The test video does not exist in the archive: ', video_url)
+            self.assertEqual(response.status_code, 302)
 
-            #Upload the video
-            videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4','rb')
+            # Upload the video
+            try:
+                videofile = open(settings.WRITABLE_FOLDER+'test_data/video.mp4', 'rb')
+                test_video_file_exists = True
+            except (FileNotFoundError, PermissionError):
+                test_video_file_exists = False
+                print('The test video is missing: ', settings.WRITABLE_FOLDER+'test_data/video.mp4')
 
-            response = client.post('/video/upload/',{'gloss_id':new_gloss.pk,
-                                                     'videofile': videofile,
-                                                     'redirect':'/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'}, follow=True)
-            self.assertEqual(response.status_code,200)
+            if test_video_file_exists:
 
-        #We expect a video now
+                response = client.post('/video/upload/', {'gloss_id': new_gloss.pk,
+                                                          'videofile': videofile,
+                                                          'redirect': '/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'},
+                                       follow=True)
+                self.assertEqual(response.status_code, 200)
+
+        if not test_video_file_exists:
+            return
+
+        # We expect a video now
         response = client.get(video_url, follow=True)
         print("Video url second test: {}".format(video_url))
         print("Video upload response second test: {}".format(response))
         self.assertEqual(response.status_code,200)
 
-        #You can't see it if you log out
+        # You can't see it if you log out
         client.logout()
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,401)
 
-        #Remove the video
+        # Remove the video
         client.login(username='test-user',password='test-user')
         print('User has logged back in.')
         print('Delete the uploaded video.')
         response = client.post('/video/delete/'+str(new_gloss.pk))
 
-        #We expect no video anymore
+        # We expect no video anymore
         print('Attempt to see video. It is not found.')
         response = client.get(video_url)
         self.assertEqual(response.status_code,302)
+
 
 class AjaxTests(TestCase):
 
@@ -1604,7 +1630,7 @@ class HandshapeTests(TestCase):
         new_handshape_value_string = '_' + str(new_handshape.machine_value)
         # Find out if the new handshape appears in the Handshape Choice menus
         print("Update a gloss to use the new handshape, using the choice list")
-        self.client.post('/dictionary/update/gloss/'+str(glosses[1].pk),{'id':'domhndsh','value':new_handshape_value_string})
+        self.client.post('/dictionary/update/gloss/'+str(glosses[1].pk), {'id': 'domhndsh', 'value': new_handshape_value_string})
 
         changed_gloss = Gloss.objects.get(pk = glosses[1].pk)
         print('Confirm the gloss was updated to the new handshape.')
