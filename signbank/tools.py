@@ -1748,8 +1748,11 @@ def write_ecv_files_for_all_datasets():
     all_dataset_objects = Dataset.objects.all()
 
     for ds in all_dataset_objects:
-        ecv_filename = write_ecv_file_for_dataset(ds.acronym)
-        print('Saved ECV for Dataset ', ds.name, ' to file: ', ecv_filename)
+        success, ecv_filename = write_ecv_file_for_dataset(ds.acronym)
+        if success:
+            print('Saved ECV for Dataset ', ds.name, ' to file: ', ecv_filename)
+        else:
+            print('Error saving ECV for Dataset ', ds.name, ' to filename: ', ecv_filename)
 
     return True
 
@@ -1788,10 +1791,13 @@ def write_ecv_file_for_dataset(dataset_name):
     xmlstr = ecv_template.render(context)
     ecv_file = os.path.join(ECV_FOLDER, dataset_name.lower().replace(" ","_") + ".ecv")
     import codecs
-    with codecs.open(ecv_file, "w", "utf-8") as f:
+    try:
+        f = codecs.open(ecv_file, "w", "utf-8")
         f.write(xmlstr)
+        return True, ecv_file
+    except PermissionError:
+        return False, ecv_file
 
-    return ecv_file
 
 def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies=False):
     activate(lang)

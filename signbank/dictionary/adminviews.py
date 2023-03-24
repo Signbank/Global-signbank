@@ -608,9 +608,9 @@ class GlossListView(ListView):
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
 
         # if we get to here, the user is authenticated and has permission to export the dataset
-        ecv_file = write_ecv_file_for_dataset(self.dataset_name)
+        success, ecv_file = write_ecv_file_for_dataset(self.dataset_name)
 
-        if ecv_file:
+        if success:
             messages.add_message(self.request, messages.INFO, _('ECV successfully updated.'))
         else:
             messages.add_message(self.request, messages.INFO, _('No ECV created for dataset.'))
@@ -4536,6 +4536,7 @@ class DatasetListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        context['messages'] = messages.get_messages(self.request)
         return context
 
     def get_template_names(self):
@@ -4805,6 +4806,8 @@ class DatasetManagerView(ListView):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        context['messages'] = messages.get_messages(self.request)
 
         return context
 
@@ -5296,6 +5299,8 @@ class DatasetDetailView(DetailView):
         context['nr_of_glosses'] = nr_of_glosses
         context['nr_of_public_glosses'] = nr_of_public_glosses
 
+        context['messages'] = messages.get_messages(self.request)
+
         return context
 
     def render_to_response(self, context):
@@ -5479,6 +5484,8 @@ class DatasetFieldChoiceView(ListView):
                     # field_display_with_frequency = field_choice_object.field + ': ' + display_with_frequency
                     field_choices[field_choice_category].append((field_choice_object, display_with_frequency))
         context['field_choices'] = field_choices
+
+        context['messages'] = messages.get_messages(self.request)
 
         return context
 

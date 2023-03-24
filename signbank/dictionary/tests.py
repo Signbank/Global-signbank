@@ -11,6 +11,7 @@ from django.contrib.auth.models import User, Permission, Group
 from django.test import TestCase, RequestFactory
 from django.test.client import RequestFactory, encode_multipart
 import json
+from django.core.serializers.json import DjangoJSONEncoder
 from django.test import Client
 from django.contrib.messages.storage.cookie import MessageDecoder
 from django.utils.safestring import mark_safe
@@ -462,7 +463,7 @@ class ImportExportTests(TestCase):
         # this also ignores any datasets created during tests
         used_dataset_ids = [ds.id for ds in Dataset.objects.all()]
         max_used_dataset_id = max(used_dataset_ids)
-        #Create a temporary dataset that resembles the default dataset
+        # Create a temporary dataset that resembles the default dataset
         new_dataset = Dataset(id=max_used_dataset_id+1,
                               acronym = settings.TEST_DATASET_ACRONYM,
                               name=settings.TEST_DATASET_ACRONYM,
@@ -485,23 +486,14 @@ class ImportExportTests(TestCase):
         assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
-        client = Client()
+        client = Client(enforce_csrf_checks=False, json_encoder=DjangoJSONEncoder)
 
-        logged_in = client.login(username='test-user', password='test-user')
+        client.login(username='test-user', password='test-user')
 
-        url = '/datasets/available?dataset_name='+ self.test_dataset.name + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_name=' + self.test_dataset.acronym + '&export_ecv=ECV'
 
-        response = client.get(url)
-
-        loaded_cookies = response.cookies.get('messages').value
-        decoded_cookies = decode_messages(loaded_cookies)
-        json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
-        json_message = json_decoded_cookies[0]
-        print('Message ONE: ', json_message)
-
-        # the Dataset is Empty at this point, so export is not offered.
-
-        self.assertEqual(str(json_message), 'The dataset is empty, export ECV is not available.')
+        response = client.get(url, follow=True)
+        self.assertTrue("The dataset is empty, export ECV is not available." in str(response.content))
 
 
     def test_DatasetListView_ECV_export_permission_change_dataset(self):
@@ -513,9 +505,9 @@ class ImportExportTests(TestCase):
         assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
-        client = Client()
+        client = Client(enforce_csrf_checks=False, json_encoder=DjangoJSONEncoder)
 
-        logged_in = client.login(username='test-user', password='test-user')
+        client.login(username='test-user', password='test-user')
 
         # create a gloss and put it in the dataset so we can export it.
         # this has many steps
@@ -545,20 +537,13 @@ class ImportExportTests(TestCase):
 
         url = '/datasets/available?dataset_name=' + self.test_dataset.acronym + '&export_ecv=ECV'
 
-        response = client.get(url)
-
-        loaded_cookies = response.cookies.get('messages').value
-        decoded_cookies = decode_messages(loaded_cookies)
-        json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
-        json_message = json_decoded_cookies[0]
-        print('Message TWO: ', json_message)
-
-        self.assertEqual(str(json_message), 'ECV successfully updated.')
+        response = client.get(url, follow=True)
+        self.assertTrue("ECV successfully updated." in str(response.content))
 
         location_ecv_files = ECV_FOLDER
         for filename in os.listdir(location_ecv_files):
             if filename == self.test_dataset.acronym.lower() + '.ecv':
-                filename_path = os.path.join(location_ecv_files,filename)
+                filename_path = os.path.join(location_ecv_files, filename)
                 os.remove(filename_path)
                 print('Temp ecv file removed.')
 
@@ -568,21 +553,15 @@ class ImportExportTests(TestCase):
 
         print('Test Dataset is: ', self.test_dataset.acronym)
 
-        client = Client()
+        client = Client(enforce_csrf_checks=False, json_encoder=DjangoJSONEncoder)
 
-        logged_in = client.login(username='test-user', password='test-user')
+        client.login(username='test-user', password='test-user')
 
-        url = '/datasets/available?dataset_name='+ self.test_dataset.acronym + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_name=' + self.test_dataset.acronym + '&export_ecv=ECV'
 
-        response = client.get(url)
+        response = client.get(url, follow=True)
+        self.assertTrue("No permission to export dataset." in str(response.content))
 
-        loaded_cookies = response.cookies.get('messages').value
-        decoded_cookies = decode_messages(loaded_cookies)
-        json_decoded_cookies = json.loads(decoded_cookies, cls=MessageDecoder)
-        json_message = json_decoded_cookies[0]
-        print('Message: ', json_message)
-
-        self.assertEqual(str(json_message), 'No permission to export dataset.')
 
     def test_DatasetListView_not_logged_in_ECV_export(self):
 
@@ -600,7 +579,8 @@ class ImportExportTests(TestCase):
     def test_Export_csv(self):
         client = Client()
         logged_in = client.login(username=self.user.username, password='test-user')
-        print(str(logged_in))
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
 
         print('Test Dataset is: ', self.test_dataset.acronym)
 
@@ -630,7 +610,8 @@ class ImportExportTests(TestCase):
         """
         client = Client()
         logged_in = client.login(username=self.user.username, password='test-user')
-        print(str(logged_in))
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
 
         print('Test Dataset is: ', self.test_dataset.acronym)
 
@@ -737,7 +718,8 @@ class ImportExportTests(TestCase):
         """
         client = Client()
         logged_in = client.login(username=self.user.username, password='test-user')
-        print(str(logged_in))
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
 
         print('Test Dataset is: ', self.test_dataset.acronym)
 
@@ -3471,17 +3453,6 @@ class MinimalPairsTests(TestCase):
 
                 # this test makes sure that when minimal pair rows are displayed that the values differ in the display
                 self.assertNotEqual(focus_gloss_value, other_gloss_value)
-
-
-# Helper function to retrieve contents of json-encoded message
-def decode_messages(data):
-    if not data:
-        return None
-    bits = data.split('$', 1)
-    if len(bits) == 2:
-        hash, value = bits
-        return value
-    return None
 
 
 class GlossApiGetSignNameAndMediaInfoTests(TestCase):
