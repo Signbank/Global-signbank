@@ -6,6 +6,7 @@ from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 def get_multiselect_fields():
     fields_with_choices = fields_to_fieldcategory_dict()
+    fields_with_choices['definitionRole'] = 'NoteType'
     return fields_with_choices.keys()
 
 
@@ -16,7 +17,6 @@ def available_query_parameters_in_search_history():
         if hasattr(classmodel, 'QUERY_FIELDS'):
             available_parameters = available_parameters + classmodel.QUERY_FIELDS
     parameters = [t1 for (t1, t2) in available_parameters]
-
     # now make the fields match the format of query parameters by adding [] to multiselect fields
     multiselect_fields = get_multiselect_fields()
     fields_as_query_parameter = []
@@ -216,7 +216,10 @@ def save_query_parameters(request, query_name, query_parameters):
                     search_history.parameters.add(qp)
             else:
                 field = key[:-2]
-                field_category = Gloss._meta.get_field(field).field_choice_category
+                if field == 'definitionRole':
+                    field_category = Definition._meta.get_field('role').field_choice_category
+                else:
+                    field_category = Gloss._meta.get_field(field).field_choice_category
                 choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
                 for query_value in choices_for_category:
                     qp = QueryParameterFieldChoice(fieldName=key[:-2], fieldValue=query_value, search_history=search_history)
