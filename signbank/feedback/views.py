@@ -136,7 +136,7 @@ def missingsign(request):
 def showfeedback(request):
     """View to list the feedback that's been submitted on the site"""
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
         return HttpResponseRedirect(reverse('registration:auth_login'))
 
@@ -162,7 +162,7 @@ def showfeedback(request):
 def showfeedback_signs(request):
     """View to list the feedback that's been submitted on the site"""
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
         return HttpResponseRedirect(reverse('registration:auth_login'))
 
@@ -190,7 +190,7 @@ def showfeedback_signs(request):
 def showfeedback_morphemes(request):
     """View to list the feedback that's been submitted on the site"""
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
         return HttpResponseRedirect(reverse('registration:auth_login'))
 
@@ -219,7 +219,7 @@ def showfeedback_morphemes(request):
 def showfeedback_missing(request):
     """View to list the feedback that's been submitted on the site"""
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
         return HttpResponseRedirect(reverse('registration:auth_login'))
 
@@ -365,7 +365,7 @@ def delete(request, kind, id):
 def recent_feedback(request):
     """View to list the feedback that's been submitted on the site"""
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to view feedback.'))
         return HttpResponseRedirect(reverse('registration:auth_login'))
 
