@@ -2800,7 +2800,7 @@ def update_expiry(request):
 
 def update_query(request, queryid):
 
-    if not request.user.is_authenticated():
+    if not request.user.is_authenticated:
         return HttpResponseForbidden("Query Update Not Allowed")
 
     if not request.user.has_perm('dictionary.change_searchhistory'):

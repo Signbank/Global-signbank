@@ -2889,7 +2889,9 @@ class QueryParameterFieldChoice(QueryParameter):
         ('movSh', 'movSh'),
         ('movDir', 'movDir'),
         ('namEnt', 'namEnt'),
-        ('valence', 'valence')
+        ('valence', 'valence'),
+        # Definition Class
+        ('definitionRole', 'definitionRole')
     ]
     QUERY_FIELD_CATEGORY = [
         ('wordClass', 'WordClass'),
@@ -2904,7 +2906,9 @@ class QueryParameterFieldChoice(QueryParameter):
         ('movSh', 'MovementShape'),
         ('movDir', 'MovementDir'),
         ('namEnt', 'NamedEntity'),
-        ('valence', 'Valence')
+        ('valence', 'Valence'),
+        # Definition Class
+        ('definitionRole', 'NoteType')
     ]
     fieldName = models.CharField(_("Field Name"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"), on_delete=models.CASCADE)
@@ -2912,7 +2916,10 @@ class QueryParameterFieldChoice(QueryParameter):
     def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+            if self.fieldName in ['definitionRole']:
+                glossFieldName = Definition._meta.get_field('role').verbose_name.encode('utf-8').decode()
+            else:
+                glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
     def __str__(self):
