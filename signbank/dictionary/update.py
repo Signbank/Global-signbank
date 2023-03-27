@@ -1575,8 +1575,14 @@ def add_othermedia(request):
     else:
         reverse_url = 'dictionary:admin_gloss_view'
 
-    #Create the folder if needed
     import os
+
+    othermedia_exists = os.path.exists(OTHER_MEDIA_DIRECTORY)
+    if not othermedia_exists:
+        messages.add_message(request, messages.ERROR, _("Upload other media failed: The othermedia folder is missing."))
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+
+    # Create the folder if needed
     goal_directory = os.path.join(OTHER_MEDIA_DIRECTORY,request.POST['gloss'])
 
     filename = request.FILES['file'].name
