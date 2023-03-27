@@ -26,6 +26,7 @@ var csrf_token = '{{csrf_token}}';
 .btn-group {
     color: white !important;
     background-color: white !important;
+    box-sizing: content-box !important;
     -webkit-appearance: none;
     -moz-appearance: none;
 }
@@ -38,20 +39,21 @@ var csrf_token = '{{csrf_token}}';
 .runQuery {
     border: 1px solid;
     text-align: center;
-    padding: 5px 5px;
+    padding: 6px 12px;
     border-radius: 6px;
     background-color: white;
+    margin: 0 0 0 0;
 }
 .runQuery:hover {
     text-decoration: none;
+    background-color: none;
 }
 .queryButton {
-    padding-left: 4px;
-    padding-right: 4px;
+    padding: 6px 12px;
     background-color: white;
 }
 .queryButton:hover {
-    background-color: white;
+    background-color: none;
 }
 .queryButtonDanger {
     border: 1px solid red;
@@ -67,6 +69,9 @@ var csrf_token = '{{csrf_token}}';
     border: none;
     padding-left: 5px;
     padding-right: 5px;
+    background-color: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 .runQueryForm:hover {
     background-color: white;
@@ -74,17 +79,17 @@ var csrf_token = '{{csrf_token}}';
 }
 .runQueryInput {
     border: 1px solid #428bca;;
-    color: #428bca;;
+    color: #428bca;
+    background-color: white;
     text-align: center;
-    padding-top: 3px;
-    padding-bottom: 3px;
-    padding-left: 3px;
-    padding-right: 3px;
+    padding: 4px 8px;
     border-radius: 6px;
+    margin: 0 0 0 0;
 }
 .runQueryInput:hover {
     text-decoration: none;
-    background-color: white;
+    color: #428bca;
+    background-color: none;
 }
 </style>
 {% endblock %}
@@ -127,25 +132,26 @@ var csrf_token = '{{csrf_token}}';
             <td>{% for lang in query.query_languages %}{{lang}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             <td class="actions">
                 <div class="btn-group">
+                {% spaceless %}
                 <button id='edit_query_btn_{{query.id}}' class="btn queryButton" type="button" name='edit_{{query.id}}'
                         value='edit_{{query.id}}'
                         data-toggle='modal' data-target='#edit_query_modal_{{query.id}}'>
                     <a class="runQuery">{% trans "Edit" %}</a></button>
-
                 {% if selected_datasets_contain_query_languages|get_item:query %}
-                <button class="btn runQueryForm">
-                <form name='run_query_parameters' id='run_query_parameters' method='get'>
+                <button class="btn runQueryForm" style="border-box:content-box;">
+                <form name='run_query_parameters' id='run_query_parameters' class="runQueryForm"
+                      method='get' style="border-box:content-box;">
                 <input id="run_query_button" name='run_query_button' value='{% trans "Run" %}'
-                       type="submit" class="runQueryInput" />
+                       type="submit" class="btn runQueryInput" />
                     <input type='hidden' name='run_query' value="Run">
                     <input type="hidden" name="queryid" value="{{query.id}}">
                 </form>
                 </button>
                 {% endif %}
-
                 <button id='delete_query_btn_{{query.id}}' class='btn queryButton'
                         data-toggle='modal' data-target='#delete_query_modal_{{query.id}}'>
                     <a class="runQuery">{% trans "Delete" %}</a></button>
+                {% endspaceless %}
                 </div>
             </td>
             <td>{{query_to_display_parameters|get_item:query}}</td>
