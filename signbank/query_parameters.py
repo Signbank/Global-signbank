@@ -202,6 +202,10 @@ def convert_query_parameters_to_filter(query_parameters):
             # Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_these_definitions))
+        elif get_key == 'hasComponentOfType[]':
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=get_value)
+            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
+            query_list.append(Q(pk__in=pks_for_glosses_with_morphdefs_with_correct_role))
         elif get_key[:-2] == 'semField':
             q_filter = 'semField__in'
             query_list.append(Q(**{q_filter: get_value}))
@@ -391,7 +395,6 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         'handshape': _("Search Handshape"),
         'lemma': _("Search Lemma")
     }
-
     query_dict = dict()
     for key in query_parameters:
         if key == 'search_type':
@@ -405,6 +408,9 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         elif key == 'definitionRole[]':
             # this is a Note
             choices_for_category = FieldChoice.objects.filter(field__iexact='NoteType', machine_value__in=query_parameters[key])
+            query_dict[key] = [choice.name for choice in choices_for_category]
+        elif key == 'hasComponentOfType[]':
+            choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', machine_value__in=query_parameters[key])
             query_dict[key] = [choice.name for choice in choices_for_category]
         elif key[-2:] == '[]':
             # in the Gloss Search Form, multiple choice fields have a list of values

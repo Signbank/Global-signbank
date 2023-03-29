@@ -232,7 +232,7 @@ class Definition(models.Model):
     role = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.NOTETYPE},
                                     field_choice_category=FieldChoice.NOTETYPE,
-                                    verbose_name=_("Type"), related_name="definition")
+                                    verbose_name=_("Note Type"), related_name="definition")
     count = models.IntegerField(default=3)
     published = models.BooleanField(default=True)
 
@@ -2117,7 +2117,7 @@ class MorphologyDefinition(models.Model):
     role = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.MORPHOLOGYTYPE},
                                     field_choice_category=FieldChoice.MORPHOLOGYTYPE,
-                                    verbose_name=_("MorphologyType"))
+                                    verbose_name=_("Morphology Type"))
     morpheme = models.ForeignKey(Gloss, related_name="morphemes", on_delete=models.CASCADE)
 
     def __str__(self):
@@ -2891,7 +2891,9 @@ class QueryParameterFieldChoice(QueryParameter):
         ('namEnt', 'namEnt'),
         ('valence', 'valence'),
         # Definition Class
-        ('definitionRole', 'definitionRole')
+        ('definitionRole', 'definitionRole'),
+        # MorphologyDefinition Class
+        ('hasComponentOfType', 'hasComponentOfType')
     ]
     QUERY_FIELD_CATEGORY = [
         ('wordClass', 'WordClass'),
@@ -2908,7 +2910,9 @@ class QueryParameterFieldChoice(QueryParameter):
         ('namEnt', 'NamedEntity'),
         ('valence', 'Valence'),
         # Definition Class
-        ('definitionRole', 'NoteType')
+        ('definitionRole', 'NoteType'),
+        # MorphologyDefinition Class
+        ('hasComponentOfType', 'MorphologyType')
     ]
     fieldName = models.CharField(_("Field Name"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"), on_delete=models.CASCADE)
@@ -2918,6 +2922,8 @@ class QueryParameterFieldChoice(QueryParameter):
         if self.fieldName:
             if self.fieldName in ['definitionRole']:
                 glossFieldName = Definition._meta.get_field('role').verbose_name.encode('utf-8').decode()
+            elif self.fieldName in ['hasComponentOfType']:
+                glossFieldName = MorphologyDefinition._meta.get_field('role').verbose_name.encode('utf-8').decode()
             else:
                 glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName

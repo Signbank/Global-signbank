@@ -7,6 +7,7 @@ from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 def get_multiselect_fields():
     fields_with_choices = fields_to_fieldcategory_dict()
     fields_with_choices['definitionRole'] = 'NoteType'
+    fields_with_choices['hasComponentOfType'] = 'MorphologyType'
     return fields_with_choices.keys()
 
 
@@ -218,6 +219,8 @@ def save_query_parameters(request, query_name, query_parameters):
                 field = key[:-2]
                 if field == 'definitionRole':
                     field_category = Definition._meta.get_field('role').field_choice_category
+                elif field == 'hasComponentOfType':
+                    field_category = MorphologyDefinition._meta.get_field('role').field_choice_category
                 else:
                     field_category = Gloss._meta.get_field(field).field_choice_category
                 choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
