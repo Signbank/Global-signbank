@@ -2996,6 +2996,11 @@ class Corpus_Tests(TestCase):
 
         metadata_location = settings.WRITABLE_FOLDER + settings.DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
 
+        dataset_csv_folder_exists = os.path.exists(metadata_location)
+        if not dataset_csv_folder_exists:
+            print('The test corpus metadata csv file is missing: ', metadata_location)
+            return
+
         count_known_speakers0 = Speaker.objects.filter(identifier__endswith='_'+dataset_acronym).count()
         #There are initially no speakers
         self.assertEqual(count_known_speakers0, 0)
@@ -3036,15 +3041,29 @@ class Corpus_Tests(TestCase):
             get_corpus_speakers, get_gloss_tokNo, get_gloss_tokNoSgnr
 
         dataset_acronym = self.test_dataset.acronym
+
+        metadata_location = settings.WRITABLE_FOLDER + settings.DATASET_METADATA_DIRECTORY + os.sep + dataset_acronym + '_metadata.csv'
+
+        dataset_csv_folder_exists = os.path.exists(metadata_location)
+        if not dataset_csv_folder_exists:
+            print('The test corpus metadata csv file is missing: ', metadata_location)
+            return
+
         ### CORPUS FUNCTION
         errors = import_corpus_speakers(dataset_acronym)
         self.assertEqual(errors, [])
 
         count_known_documents0 = Document.objects.all().count()
-        #There are initially no documents
+        # There are initially no documents
         self.assertEqual(count_known_documents0, 0)
 
         dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER, settings.TEST_DATA_DIRECTORY, settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+
+        dataset_eaf_folder_exists = os.path.exists(dataset_eaf_folder)
+        if not dataset_eaf_folder_exists:
+            print('The test corpus creation test data folder is missing: ', dataset_eaf_folder)
+            return
+
         eaf_file_paths = []
         for filename in os.listdir(dataset_eaf_folder):
             eaf_file_paths.append(dataset_eaf_folder + os.sep + str(filename))
