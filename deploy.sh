@@ -28,4 +28,4 @@ python "$ROOT"repo/bin/develop.py migrate
 python "$ROOT"repo/bin/develop.py create_test_db
 
 #Step 8: Run all unit tests
-python "$ROOT"repo/bin/develop.py test -k
+python "$ROOT"repo/bin/develop.py -k test --keepdb
