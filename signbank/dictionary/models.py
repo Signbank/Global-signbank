@@ -3090,7 +3090,9 @@ class QueryParameterMultilingual(QueryParameter):
         # Tag, TaggedItem
         ('tags', 'tags'),
         # Note Contains
-        ('definitionContains', 'definitionContains')
+        ('definitionContains', 'definitionContains'),
+        # Created By
+        ('createdBy', 'createdBy')
     ]
 
     fieldName = models.CharField(_("Text Search Field"), choices=QUERY_FIELDS, max_length=20)
@@ -3102,6 +3104,8 @@ class QueryParameterMultilingual(QueryParameter):
             searchFieldName = _('Tags')
         elif self.fieldName == 'definitionContains':
             searchFieldName = _('Note Contains')
+        elif self.fieldName == 'createdBy':
+            searchFieldName = _('Created By')
         elif self.fieldName == 'glosssearch':
             searchFieldName = _('Annotation ID Gloss') + " (" + self.fieldLanguage.name + ")"
         elif self.fieldName == 'lemma':
@@ -3134,7 +3138,7 @@ class SearchHistory(models.Model):
     def query_languages(self):
         multilingual_parameters = QueryParameterMultilingual.objects.filter(search_history=self)
         language_parameters = [p.fieldLanguage for p in multilingual_parameters
-                               if p.fieldName not in ['tags', 'definitionContains']]
+                               if p.fieldName not in ['tags', 'definitionContains', 'createdBy']]
         query_languages = list(set(language_parameters))
         return query_languages
 

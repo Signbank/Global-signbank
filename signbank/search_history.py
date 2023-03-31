@@ -95,7 +95,7 @@ def display_parameters(query):
                     parameter_dict[field_name_verbose] = [display_tag]
                 else:
                     parameter_dict[field_name_verbose].append(display_tag)
-            elif field_name == 'definitionContains':
+            elif field_name in ['definitionContains', 'createdBy']:
                 parameter_dict[field_name_verbose] = [multilingual.fieldValue]
             else:
                 if field_name not in parameters_multilingual_dict.keys():
@@ -168,7 +168,7 @@ def get_query_parameters(query):
             search_history_parameters[field_name] = field_value
         elif shp.is_multilingual():
             multilingual = shp.queryparametermultilingual
-            if multilingual.fieldName in ['tags', 'definitionContains']:
+            if multilingual.fieldName in ['tags', 'definitionContains', 'createdBy']:
                 field_name = multilingual.fieldName
             else:
                 field_name = multilingual.fieldName + '_' + multilingual.fieldLanguage.language_code_2char
@@ -303,7 +303,7 @@ def save_query_parameters(request, query_name, query_parameters):
                                                 fieldValue=tag_value, search_history=search_history)
                 qp.save()
                 search_history.parameters.add(qp)
-        elif key == 'definitionContains':
+        elif key in ['definitionContains', 'createdBy']:
             search_field = key
             search_value = query_parameters[key]
             language_code_2char = LANGUAGE_CODE
