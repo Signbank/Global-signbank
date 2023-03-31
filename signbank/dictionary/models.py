@@ -3082,11 +3082,13 @@ class QueryParameterBoolean(QueryParameter):
 
 
 class QueryParameterMultilingual(QueryParameter):
-    # these are all fields of Gloss
+    # these are all fields stored as text in queries
     QUERY_FIELDS = [
         ('glosssearch', 'glosssearch'),
         ('lemma', 'lemma'),
-        ('keyword', 'keyword')
+        ('keyword', 'keyword'),
+        # Tag, TaggedItem
+        ('tags', 'tags')
     ]
 
     fieldName = models.CharField(_("Text Search Field"), choices=QUERY_FIELDS, max_length=20)
@@ -3094,7 +3096,9 @@ class QueryParameterMultilingual(QueryParameter):
     fieldValue = models.CharField(_("Text Search Value"), max_length=30)
 
     def display_verbose_fieldname(self):
-        if self.fieldName == 'glosssearch':
+        if self.fieldName == 'tags':
+            searchFieldName = _('Tags')
+        elif self.fieldName == 'glosssearch':
             searchFieldName = _('Annotation ID Gloss') + " (" + self.fieldLanguage.name + ")"
         elif self.fieldName == 'lemma':
             searchFieldName = _('Lemma ID Gloss') + " (" + self.fieldLanguage.name + ")"
@@ -3125,7 +3129,7 @@ class SearchHistory(models.Model):
 
     def query_languages(self):
         multilingual_parameters = QueryParameterMultilingual.objects.filter(search_history=self)
-        language_parameters = [p.fieldLanguage for p in multilingual_parameters]
+        language_parameters = [p.fieldLanguage for p in multilingual_parameters if p.fieldName != 'tags']
         query_languages = list(set(language_parameters))
         return query_languages
 

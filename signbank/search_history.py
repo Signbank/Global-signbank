@@ -89,11 +89,18 @@ def display_parameters(query):
             multilingual = translation.queryparametermultilingual
             field_name = multilingual.fieldName
             field_name_verbose = multilingual.display_verbose_fieldname()
-            if field_name not in parameters_multilingual_dict.keys():
-                parameters_multilingual_dict[field_name] = dict()
-            if field_name_verbose not in parameters_multilingual_dict[field_name].keys():
-                parameters_multilingual_dict[field_name][field_name_verbose] = []
-            parameters_multilingual_dict[field_name][field_name_verbose].append(multilingual.fieldValue)
+            if field_name == 'tags':
+                display_tag = multilingual.fieldValue.replace("_", " ")
+                if field_name_verbose not in parameter_dict.keys():
+                    parameter_dict[field_name_verbose] = [display_tag]
+                else:
+                    parameter_dict[field_name_verbose].append(display_tag)
+            else:
+                if field_name not in parameters_multilingual_dict.keys():
+                    parameters_multilingual_dict[field_name] = dict()
+                if field_name_verbose not in parameters_multilingual_dict[field_name].keys():
+                    parameters_multilingual_dict[field_name][field_name_verbose] = []
+                parameters_multilingual_dict[field_name][field_name_verbose].append(multilingual.fieldValue)
         else:
             pass
     # now add the grouped language search fields
@@ -159,10 +166,17 @@ def get_query_parameters(query):
             search_history_parameters[field_name] = field_value
         elif shp.is_multilingual():
             multilingual = shp.queryparametermultilingual
-            field_name = multilingual.fieldName + '_' + multilingual.fieldLanguage.language_code_2char
+            if multilingual.fieldName == 'tags':
+                field_name = multilingual.fieldName
+            else:
+                field_name = multilingual.fieldName + '_' + multilingual.fieldLanguage.language_code_2char
             if field_name not in search_history_parameters.keys():
                 search_history_parameters[field_name] = []
-            search_history_parameters[field_name] = multilingual.fieldValue
+            if field_name == 'tags':
+                # tags are multi-select
+                search_history_parameters[field_name].append(multilingual.fieldValue)
+            else:
+                search_history_parameters[field_name] = multilingual.fieldValue
     return search_history_parameters
 
 
@@ -277,6 +291,16 @@ def save_query_parameters(request, query_name, query_parameters):
                                             fieldValue=search_value, search_history=search_history, multiselect=False)
             qp.save()
             search_history.parameters.add(qp)
+        elif key == 'tags':
+            search_field = key
+            tag_values = query_parameters[key]
+            language_code_2char = LANGUAGE_CODE
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            for tag_value in tag_values:
+                qp = QueryParameterMultilingual(fieldName=search_field, fieldLanguage=language,
+                                                fieldValue=tag_value, search_history=search_history)
+                qp.save()
+                search_history.parameters.add(qp)
         else:
             continue
     search_history.save()

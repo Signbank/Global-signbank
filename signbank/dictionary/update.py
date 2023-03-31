@@ -2820,7 +2820,10 @@ def update_query(request, queryid):
 
     if field == 'deletequery':
         if value == 'confirmed':
-            # delete the query and redirect back to search history
+            # delete the query, its parameters and redirect back to search history
+            query_parameters_of_query = QueryParameter.objects.filter(search_history=query)
+            for param in query_parameters_of_query:
+                param.delete()
             query.delete()
         # if for some reason the value is other than confirmed, do nothing and just go back to the search history
         return HttpResponseRedirect(reverse('admin_search_history'))
