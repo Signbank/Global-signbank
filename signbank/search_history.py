@@ -7,6 +7,7 @@ from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 def get_multiselect_fields():
     fields_with_choices = fields_to_fieldcategory_dict()
     fields_with_choices['definitionRole'] = 'NoteType'
+    fields_with_choices['hasComponentOfType'] = 'MorphologyType'
     return fields_with_choices.keys()
 
 
@@ -88,11 +89,20 @@ def display_parameters(query):
             multilingual = translation.queryparametermultilingual
             field_name = multilingual.fieldName
             field_name_verbose = multilingual.display_verbose_fieldname()
-            if field_name not in parameters_multilingual_dict.keys():
-                parameters_multilingual_dict[field_name] = dict()
-            if field_name_verbose not in parameters_multilingual_dict[field_name].keys():
-                parameters_multilingual_dict[field_name][field_name_verbose] = []
-            parameters_multilingual_dict[field_name][field_name_verbose].append(multilingual.fieldValue)
+            if field_name == 'tags':
+                display_tag = multilingual.fieldValue.replace("_", " ")
+                if field_name_verbose not in parameter_dict.keys():
+                    parameter_dict[field_name_verbose] = [display_tag]
+                else:
+                    parameter_dict[field_name_verbose].append(display_tag)
+            elif field_name in ['definitionContains', 'createdBy']:
+                parameter_dict[field_name_verbose] = [multilingual.fieldValue]
+            else:
+                if field_name not in parameters_multilingual_dict.keys():
+                    parameters_multilingual_dict[field_name] = dict()
+                if field_name_verbose not in parameters_multilingual_dict[field_name].keys():
+                    parameters_multilingual_dict[field_name][field_name_verbose] = []
+                parameters_multilingual_dict[field_name][field_name_verbose].append(multilingual.fieldValue)
         else:
             pass
     # now add the grouped language search fields
@@ -158,10 +168,17 @@ def get_query_parameters(query):
             search_history_parameters[field_name] = field_value
         elif shp.is_multilingual():
             multilingual = shp.queryparametermultilingual
-            field_name = multilingual.fieldName + '_' + multilingual.fieldLanguage.language_code_2char
+            if multilingual.fieldName in ['tags', 'definitionContains', 'createdBy']:
+                field_name = multilingual.fieldName
+            else:
+                field_name = multilingual.fieldName + '_' + multilingual.fieldLanguage.language_code_2char
             if field_name not in search_history_parameters.keys():
                 search_history_parameters[field_name] = []
-            search_history_parameters[field_name] = multilingual.fieldValue
+            if field_name == 'tags':
+                # tags are multi-select
+                search_history_parameters[field_name].append(multilingual.fieldValue)
+            else:
+                search_history_parameters[field_name] = multilingual.fieldValue
     return search_history_parameters
 
 
@@ -218,6 +235,8 @@ def save_query_parameters(request, query_name, query_parameters):
                 field = key[:-2]
                 if field == 'definitionRole':
                     field_category = Definition._meta.get_field('role').field_choice_category
+                elif field == 'hasComponentOfType':
+                    field_category = MorphologyDefinition._meta.get_field('role').field_choice_category
                 else:
                     field_category = Gloss._meta.get_field(field).field_choice_category
                 choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
@@ -269,6 +288,25 @@ def save_query_parameters(request, query_name, query_parameters):
             search_field = keywordsearch[:-1]
             search_value = query_parameters[key]
             language_code_2char = key[len(keywordsearch):]
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            qp = QueryParameterMultilingual(fieldName=search_field, fieldLanguage=language,
+                                            fieldValue=search_value, search_history=search_history, multiselect=False)
+            qp.save()
+            search_history.parameters.add(qp)
+        elif key == 'tags':
+            search_field = key
+            tag_values = query_parameters[key]
+            language_code_2char = LANGUAGE_CODE
+            language = Language.objects.get(language_code_2char=language_code_2char)
+            for tag_value in tag_values:
+                qp = QueryParameterMultilingual(fieldName=search_field, fieldLanguage=language,
+                                                fieldValue=tag_value, search_history=search_history)
+                qp.save()
+                search_history.parameters.add(qp)
+        elif key in ['definitionContains', 'createdBy']:
+            search_field = key
+            search_value = query_parameters[key]
+            language_code_2char = LANGUAGE_CODE
             language = Language.objects.get(language_code_2char=language_code_2char)
             qp = QueryParameterMultilingual(fieldName=search_field, fieldLanguage=language,
                                             fieldValue=search_value, search_history=search_history, multiselect=False)

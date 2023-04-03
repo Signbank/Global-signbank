@@ -408,9 +408,11 @@ class GlossListView(ListView):
             context['search_by_relation_fields'] = []
 
         multiple_select_gloss_fields.append('definitionRole')
+        multiple_select_gloss_fields.append('hasComponentOfType')
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
         fields_with_choices['definitionRole'] = 'NoteType'
+        fields_with_choices['hasComponentOfType'] = 'MorphologyType'
         choices_colors = {}
         for (fieldname, field_category) in fields_with_choices.items():
             if field_category in CATEGORY_MODELS_MAPPING.keys():
@@ -1179,13 +1181,16 @@ class GlossListView(ListView):
                 # If the user attempts to input a string, it is ignored by the gloss list search form
                 print("Morpheme not found: ", str(input_morpheme))
 
-        if 'hasComponentOfType' in get and get['hasComponentOfType'] not in ['', '0']:
-            query_parameters['hasComponentOfType'] = get['hasComponentOfType']
+        if 'hasComponentOfType[]' in get:
+            vals = get.getlist('hasComponentOfType[]')
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                query_parameters['hasComponentOfType[]'] = get.getlist('hasComponentOfType[]')
 
-            # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value=get['hasComponentOfType'])
-            pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
-            qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
+                morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=vals)
+                pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
+                qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
 
         if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] not in ['', '0']:
             query_parameters['hasMorphemeOfType'] = get['hasMorphemeOfType']
@@ -2457,6 +2462,7 @@ class MorphemeListView(ListView):
 
         multiple_select_morpheme_categories = fields_to_fieldcategory_dict(fieldnames)
         multiple_select_morpheme_categories['definitionRole'] = 'NoteType'
+        multiple_select_morpheme_categories['hasComponentOfType'] = 'MorphologyType'
 
         multiple_select_morpheme_fields = [ fieldname for (fieldname, category) in multiple_select_morpheme_categories.items() ]
 
@@ -2544,7 +2550,6 @@ class MorphemeListView(ListView):
 
         if 'hasvideo' in get and get['hasvideo'] not in ['unspecified', '0']:
             val = get['hasvideo'] != '2'
-            query_parameters['hasvideo'] = get['hasvideo']
             qs = qs.filter(glossvideo__isnull=val)
 
         if 'definitionRole[]' in get:
