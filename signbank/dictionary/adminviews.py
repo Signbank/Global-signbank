@@ -256,6 +256,17 @@ class GlossListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
+        # the following is needed by javascript in the case only one dataset is available
+        # in order not to compute dynamically in the template
+        dataset_languages_abbreviations = []
+        for ds in selected_datasets:
+            for sdl in ds.translation_languages.all():
+                if sdl.language_code_2char not in dataset_languages_abbreviations:
+                    dataset_languages_abbreviations.append(sdl.language_code_2char)
+        js_dataset_languages = ','.join(dataset_languages_abbreviations)
+        context['js_dataset_languages'] = js_dataset_languages
+
+
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
 
@@ -264,9 +275,8 @@ class GlossListView(ListView):
                 self.queryset_language_codes.append(lang.language_code_2char)
         if self.queryset_language_codes is None:
             self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
-
         if len(selected_datasets) == 1:
-            self.last_used_dataset = selected_datasets[0].acronym
+            self.last_used_dataset = selected_datasets.first().acronym
         elif 'last_used_dataset' in self.request.session.keys():
             self.last_used_dataset = self.request.session['last_used_dataset']
 
@@ -4750,7 +4760,7 @@ class DatasetListView(ListView):
             checker.prefetch_perms(qs)
 
             for dataset in qs:
-                checker.has_perm('can_view_dataset', dataset)
+                checker.has_perm('can_view_dataset', dataset) or checker.has_perm('view_dataset', dataset)
 
             qs = qs.annotate(Count('lemmaidgloss__gloss')).order_by('acronym')
 

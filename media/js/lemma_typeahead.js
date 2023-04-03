@@ -51,8 +51,11 @@ $(document).ready(function() {
         return;
     }
     gloss_dataset_id = $('#id_dataset').find(":selected").attr('value');
-
-    gloss_dataset_languages = $('#id_dataset').find(":selected").attr('dataset_languages');
+    if (!gloss_dataset_id) {
+        gloss_dataset_languages = js_dataset_languages;
+    } else {
+        gloss_dataset_languages = $('#id_dataset').find(":selected").attr('dataset_languages');
+    };
     languages = gloss_dataset_languages.split(",");
 
     lemma_bloodhound.remote.url = url+'/dictionary/ajax/lemma/'+gloss_dataset_id+'/'+language_code+'/%QUERY'
