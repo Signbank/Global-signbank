@@ -20,6 +20,8 @@
     var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
     var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
     var lookahead_initial_language = "{{default_dataset_lang}}";
+    // this is a default setting for the case only one dataset is available
+    var js_dataset_languages = '{{js_dataset_languages|safe}}';
 </script>
 
 <style>
@@ -795,7 +797,7 @@ function do_toggle_annotation(el) {
                  <tr>
                       <td>
                       <select id="id_dataset" name="dataset" required="">
-                     {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+                     {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
                          {% for s_dataset in selected_datasets %}
 
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}

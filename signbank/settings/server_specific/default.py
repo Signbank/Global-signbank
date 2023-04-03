@@ -255,4 +255,4 @@ ADMIN_URL = 'admin'
 # Redirect to homepage after logout
 LOGOUT_REDIRECT_URL = '/'
 
-FILESYSTEM_SIGNBANK_GROUPS = ['signbank', 'www-data', 'signbank-writable']
+FILESYSTEM_SIGNBANK_GROUPS = ['signbank', 'www-data', 'signbank-writable', 'wwwsignbank']

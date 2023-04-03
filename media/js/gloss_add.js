@@ -2,8 +2,12 @@ var languages = [];
 var lemma_create_field_prefix = "";  // To be set in the template
 
 function set_annotationidglosslanguages() {
-//    console.log('set_annotationidglosslanguages gloss_add.js');
-    var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
+    gloss_dataset_id = $('#id_dataset').find(":selected").attr('value');
+    if (!gloss_dataset_id) {
+        var languages_str = '{{js_dataset_languages}}';
+    } else {
+        var languages_str = $('#id_dataset').find(":selected").attr('dataset_languages');
+    };
     languages = languages_str.split(",");
     // Toggle annotationidglosstranslation fields
     $("[id*='add_gloss_dataset_']").each(function(){
