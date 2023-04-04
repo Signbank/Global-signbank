@@ -12,8 +12,6 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 <script type='text/javascript'>
-console.log({{viewable_datasets|safe}});
-
 function select_all_datasets() {
     $("input[type='checkbox']").each(function() {
         $(this).prop('checked', true);
