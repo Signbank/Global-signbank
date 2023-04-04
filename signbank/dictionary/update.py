@@ -7,6 +7,8 @@ from django.urls import reverse
 
 from django.contrib.auth.decorators import permission_required
 from django.db.models.fields import BooleanField, IntegerField
+from django.db import DatabaseError, IntegrityError
+from django.db.transaction import TransactionManagementError
 
 from tagging.models import TaggedItem, Tag
 import os, shutil, re
@@ -2266,11 +2268,7 @@ def change_dataset_selection(request):
 
     dataset_prefix = 'dataset_'
 
-    user = request.user
-    if user.is_authenticated:
-        user_profile = UserProfile.objects.get(user=user)
-
-        user_profile.selected_datasets.clear()
+    if request.user.is_authenticated:
         selected_dataset_acronyms = []
         for attribute in request.POST:
             if attribute[:len(dataset_prefix)] == dataset_prefix:
@@ -2278,12 +2276,21 @@ def change_dataset_selection(request):
                 selected_dataset_acronyms.append(dataset_name)
 
         if selected_dataset_acronyms:
-            user_profile = UserProfile.objects.get(user=user)
+            # check that the selected datasets exist
+            for dataset_name in selected_dataset_acronyms:
+                try:
+                    dataset = Dataset.objects.get(acronym=dataset_name)
+                except ObjectDoesNotExist:
+                    print('Exception updating selected datasets, dataset acronym does not exist: ', dataset_name)
+                    return HttpResponseRedirect(reverse('admin_dataset_select'))
+
+            user_profile = UserProfile.objects.get(user=request.user)
+            user_profile.selected_datasets.clear()
             for dataset_name in selected_dataset_acronyms:
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
                     user_profile.selected_datasets.add(dataset)
-                except ObjectDoesNotExist:
+                except (ObjectDoesNotExist, KeyError, TransactionManagementError, DatabaseError, IntegrityError):
                     print('exception to updating selected datasets')
                     pass
             user_profile.save()
@@ -2295,19 +2302,22 @@ def change_dataset_selection(request):
                 dataset_name = attribute[len(dataset_prefix):]
                 selected_dataset_acronyms.append(dataset_name)
         new_selection = []
+        successful = True
         for dataset_name in selected_dataset_acronyms:
             try:
                 dataset = Dataset.objects.get(acronym=dataset_name)
                 new_selection.append(dataset.acronym)
             except ObjectDoesNotExist:
                 print('exception to updating selected datasets anonymous user')
+                successful = False
                 pass
-        request.session['selected_datasets'] = new_selection
+        if successful:
+            request.session['selected_datasets'] = new_selection
 
     # check whether the last used dataset is still in the selected datasets
     if 'last_used_dataset' in request.session.keys():
-        if not (request.session['last_used_dataset'] in selected_dataset_acronyms):
-            request.session['last_used_dataset'] = None
+        if selected_dataset_acronyms and request.session['last_used_dataset'] not in selected_dataset_acronyms:
+            request.session['last_used_dataset'] = selected_dataset_acronyms[0]
     else:
         # set the last_used_dataset?
         pass
