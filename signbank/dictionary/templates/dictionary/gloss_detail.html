@@ -1896,7 +1896,7 @@ p {
                     <td><a {% if not media_okay %}
 				            disabled onclick="return false;" style="color:rgb(150,150,150);"
 			                {% endif %}
-				            download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">Download</a>
+				            download="{{ file_name }}" href="{{ PREFIX_URL }}/{{ path }}">Download</a>
                     </td>
                     <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
                     <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
