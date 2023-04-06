@@ -93,17 +93,17 @@ def apply_language_filters_to_results(qs, query_parameters):
     for get_key, get_value in query_parameters.items():
         if get_key.startswith(gloss_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_gloss_search_field_prefix:]
-            language = Language.objects.filter(language_code_2char=language_code_2char)
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
             qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
                            annotationidglosstranslation__language=language)
         elif get_key.startswith(lemma_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_lemma_search_field_prefix:]
-            language = Language.objects.filter(language_code_2char=language_code_2char)
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
             qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
                            lemma__lemmaidglosstranslation__language=language)
         elif get_key.startswith(keyword_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_keyword_search_field_prefix:]
-            language = Language.objects.filter(language_code_2char=language_code_2char)
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
             qs = qs.filter(translation__translation__text__iregex=get_value,
                            translation__language=language)
     return qs
