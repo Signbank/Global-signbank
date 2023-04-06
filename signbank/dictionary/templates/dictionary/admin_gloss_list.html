@@ -230,9 +230,9 @@ $(document).ready(function() {
          };
     };
 
-     if (query_parameters_keys.includes('keyword')) {
-        var $translation = $("input[name='keyword']");
-        var query_initial = query_parameters_dict['keyword'];
+     if (query_parameters_keys.includes('translation')) {
+        var $translation = $("input[name='translation']");
+        var query_initial = query_parameters_dict['translation'];
         $translation.val(query_initial);
     };
 
@@ -365,6 +365,8 @@ function clearForm() {
           }
       };
      $('.js-example-basic-multiple').val(null).trigger('change');
+     $("input[name='translation']").val('');
+     $("input[name='search']").val('');
 }
 
  /**
@@ -981,7 +983,7 @@ function do_toggle_annotation(el) {
 
              {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
              <li {% if p == page_obj.number %}class='active'{% endif %}>
-             <a href='?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}'>{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
              </li>
              {% endif %}
 
@@ -990,7 +992,7 @@ function do_toggle_annotation(el) {
           {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
             <li><a>...</a></li>
             <li>
-            <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
 

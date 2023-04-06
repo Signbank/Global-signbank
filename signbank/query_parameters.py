@@ -127,10 +127,13 @@ def convert_query_parameters_to_filter(query_parameters):
 
     query_list = []
     for get_key, get_value in query_parameters.items():
+        print(get_key, get_value)
         if get_key == 'search_type':
             continue
-        elif get_key.startswith(glosssearch) or get_key.startswith(lemmasearch) or get_key.startswith(keywordsearch):
-            # because of joining tables, these are done in a separate function and directly applied to the query results (see previous function)
+        elif get_key.startswith(glosssearch) or get_key.startswith(lemmasearch) \
+                or get_key.startswith(keywordsearch):
+            # because of joining tables, these are done in a separate function
+            # and directly applied to the query results (see previous function)
             continue
         elif get_key == 'search' and get_value != '':
             from signbank.tools import strip_control_characters
@@ -140,7 +143,7 @@ def convert_query_parameters_to_filter(query_parameters):
                 query = query | Q(sn__exact=val)
             query_list.append(query)
 
-        elif get_key == 'keyword' and get_value != '':
+        elif get_key == 'translation' and get_value != '':
             query_list.append(Q(translation__translation__text__iregex=get_value))
 
         elif get_key == 'inWeb' and get_value != '':
@@ -397,6 +400,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
     }
     query_dict = dict()
     for key in query_parameters:
+        print('query parameter key: ', key)
         if key == 'search_type':
             query_dict[key] = SEARCH_TYPE_CHOICES[query_parameters[key]]
         elif key == 'dialect[]':
