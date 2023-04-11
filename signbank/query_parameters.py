@@ -127,7 +127,6 @@ def convert_query_parameters_to_filter(query_parameters):
 
     query_list = []
     for get_key, get_value in query_parameters.items():
-        print(get_key, get_value)
         if get_key == 'search_type':
             continue
         elif get_key.startswith(glosssearch) or get_key.startswith(lemmasearch) \
@@ -400,7 +399,6 @@ def pretty_print_query_values(dataset_languages,query_parameters):
     }
     query_dict = dict()
     for key in query_parameters:
-        print('query parameter key: ', key)
         if key == 'search_type':
             query_dict[key] = SEARCH_TYPE_CHOICES[query_parameters[key]]
         elif key == 'dialect[]':
