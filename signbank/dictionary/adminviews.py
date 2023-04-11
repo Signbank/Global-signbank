@@ -995,9 +995,9 @@ class GlossListView(ListView):
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
                                
-        if 'keyword' in get and get['keyword'] != '':
-            val = get['keyword']
-            query_parameters['keyword'] = get['keyword']
+        if 'translation' in get and get['translation'] != '':
+            val = get['translation']
+            query_parameters['translation'] = get['translation']
             qs = qs.filter(translation__translation__text__iregex=val)
 
         if 'inWeb' in get and get['inWeb'] != '0':
@@ -2542,8 +2542,8 @@ class MorphemeListView(ListView):
             val = get['lemmaGloss']
             qs = qs.filter(idgloss__iregex=val)
 
-        if 'keyword' in get and get['keyword'] != '':
-            val = get['keyword']
+        if 'translation' in get and get['translation'] != '':
+            val = get['translation']
             qs = qs.filter(translation__translation__text__iregex=val)
 
         if 'inWeb' in get and get['inWeb'] != '0':
@@ -3465,8 +3465,8 @@ class MinimalPairsListView(ListView):
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
 
-        if 'keyword' in get and get['keyword'] != '':
-            val = get['keyword']
+        if 'translation' in get and get['translation'] != '':
+            val = get['translation']
             qs = qs.filter(translation__translation__text__iregex=val)
 
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS

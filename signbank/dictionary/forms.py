@@ -263,7 +263,7 @@ class GlossSearchForm(forms.ModelForm):
     # englishGloss = forms.CharField(label=_("English Gloss"))
     tags = forms.MultipleChoiceField(label=_('Tags'), choices=tag_choices)
     nottags = forms.MultipleChoiceField(label=_('Not Tags'), choices=not_tag_choices)  # this field is not used in the template
-    keyword = forms.CharField(label=_('Search Translations'))
+    translation = forms.CharField(label=_('Search Translations'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
@@ -410,7 +410,7 @@ class MorphemeSearchForm(forms.ModelForm):
     lemmaGloss = forms.CharField(label=_("Lemma Gloss")) # used in Morpheme Search
     tags = forms.MultipleChoiceField(choices=tag_choices)
     nottags = forms.MultipleChoiceField(choices=not_tag_choices)
-    keyword = forms.CharField(label=_(u'Translations'))
+    translation = forms.CharField(label=_(u'Translations'))
     hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_(u'Has Other Media'), choices=NULLBOOLEANCHOICES)
     useInstr = forms.CharField(label=_("Annotation instructions"))
@@ -971,7 +971,7 @@ class FocusGlossSearchForm(forms.ModelForm):
     search = forms.CharField(label=_("Dutch Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
     englishGloss = forms.CharField(label=_("English Gloss"))
-    keyword = forms.CharField(label=_(u'Translations'))
+    translation = forms.CharField(label=_(u'Translations'))
 
     oriChAbd = forms.ChoiceField(label=_(u'Abduction Change'),choices=NULLBOOLEANCHOICES)
     oriChFlex = forms.ChoiceField(label=_(u'Flexion Change'),choices=NULLBOOLEANCHOICES)
