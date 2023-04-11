@@ -1,5 +1,3 @@
-from itertools import zip_longest
-from collections import OrderedDict
 
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
@@ -13,12 +11,7 @@ from django.test.client import RequestFactory, encode_multipart
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import Client
-from django.contrib.messages.storage.cookie import MessageDecoder
-from django.utils.safestring import mark_safe
-from django.contrib import messages
-from django.contrib.messages.storage.fallback import FallbackStorage
-from django.contrib.messages.storage.cookie import CookieStorage
-from itertools import *
+
 from pathlib import Path
 from os import path
 
@@ -418,6 +411,12 @@ class ECVsNonEmptyTests(TestCase):
         # ecv files for non-existing datasets are reported if empty
 
         location_ecv_files = ECV_FOLDER
+        print('Checking for empty ECV files in location: ', location_ecv_files)
+        ecv_folder_exists = os.path.exists(location_ecv_files)
+        if not ecv_folder_exists:
+            print('The ECV folder is not in the correct location: ', location_ecv_files)
+            return
+
         found_errors = False
 
         from xml.etree import ElementTree
@@ -2628,7 +2627,8 @@ class testSettings(TestCase):
                 if first_file != second_file:
                     comparison_table_first_not_in_second[first_file][second_file] = []
                     for setting_first_file in all_settings_strings[first_file]:
-                        if setting_first_file in ['SECRET_KEY', 'SWITCH_TO_MYSQL', 'FILE_UPLOAD_MAX_MEMORY_SIZE']:
+                        if setting_first_file in ['SECRET_KEY', 'SWITCH_TO_MYSQL',
+                                                  'FILE_UPLOAD_MAX_MEMORY_SIZE', 'CSRF_TRUSTED_ORIGINS']:
                             # skip these, since server specific
                             continue
                         if setting_first_file not in all_settings_strings[second_file]:
