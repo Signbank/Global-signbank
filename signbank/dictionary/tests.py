@@ -2627,7 +2627,8 @@ class testSettings(TestCase):
                 if first_file != second_file:
                     comparison_table_first_not_in_second[first_file][second_file] = []
                     for setting_first_file in all_settings_strings[first_file]:
-                        if setting_first_file in ['SECRET_KEY', 'SWITCH_TO_MYSQL', 'FILE_UPLOAD_MAX_MEMORY_SIZE']:
+                        if setting_first_file in ['SECRET_KEY', 'SWITCH_TO_MYSQL',
+                                                  'FILE_UPLOAD_MAX_MEMORY_SIZE', 'CSRF_TRUSTED_ORIGINS']:
                             # skip these, since server specific
                             continue
                         if setting_first_file not in all_settings_strings[second_file]:
