@@ -2403,14 +2403,6 @@ class testFrequencyAnalysis(TestCase):
         self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2')
         self.test_handshape2.save()
 
-        self.test_handshape_fieldchoice_1 = FieldChoice(field='Handshape', machine_value=max_used_machine_value + 1,
-                                         name='thisisatemporarytesthandshape1')
-        self.test_handshape_fieldchoice_1.save()
-
-        self.test_handshape_fieldchoice_2 = FieldChoice(field='Handshape', machine_value=max_used_machine_value + 2,
-                                         name='thisisatemporarytesthandshape2')
-        self.test_handshape_fieldchoice_2.save()
-
         self.locprim_fieldchoice_1 = FieldChoice.objects.filter(field='Location', machine_value__gt=1).first()
         self.locprim_fieldchoice_2 = FieldChoice.objects.filter(field='Location', machine_value__gt=1).last()
 
