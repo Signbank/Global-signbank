@@ -1,6 +1,8 @@
 from itertools import zip_longest
 from collections import OrderedDict
 
+import pytz_deprecation_shim
+
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
@@ -418,6 +420,12 @@ class ECVsNonEmptyTests(TestCase):
         # ecv files for non-existing datasets are reported if empty
 
         location_ecv_files = ECV_FOLDER
+        print('Checking for empty ECV files in location: ', location_ecv_files)
+        ecv_folder_exists = os.path.exists(location_ecv_files)
+        if not ecv_folder_exists:
+            print('The ECV folder is not in the correct location: ', location_ecv_files)
+            return
+
         found_errors = False
 
         from xml.etree import ElementTree
