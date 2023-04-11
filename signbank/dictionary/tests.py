@@ -1,7 +1,3 @@
-from itertools import zip_longest
-from collections import OrderedDict
-
-import pytz_deprecation_shim
 
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
@@ -15,12 +11,7 @@ from django.test.client import RequestFactory, encode_multipart
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import Client
-from django.contrib.messages.storage.cookie import MessageDecoder
-from django.utils.safestring import mark_safe
-from django.contrib import messages
-from django.contrib.messages.storage.fallback import FallbackStorage
-from django.contrib.messages.storage.cookie import CookieStorage
-from itertools import *
+
 from pathlib import Path
 from os import path
 
