@@ -980,6 +980,27 @@ p {
             </tr>
             {% endfor %}
 
+            <tr>
+                <th>
+                    Senses Dutch
+                </th>
+                <td id='sense_keywords'>  
+                    <table class='table table-condensed'>
+                    {% for sense in senses %}
+                        <tr><th style="width:20px">{{ forloop.counter }}. </th><td class='edit edit_text'>{{ sense.get_keywords }}</td>
+                            <td>
+                                <table class='table table-condensed'>
+                                {% for examplesentence in sense.sentences.all %}
+                                    <tr><td class='edit edit_text'>{{ examplesentence }}</td></tr> 
+                                {% endfor %}   
+                                </table>
+                            </td>
+                        </tr> 
+                    {% endfor %}   
+                    </table>
+                </td><td/>
+            </tr>
+
             {% for value,name,label,kind in main_fields %}
                 <tr><th>{{label}}</th>
                     <td class="edit edit_{{kind}}" id='{{name}}'

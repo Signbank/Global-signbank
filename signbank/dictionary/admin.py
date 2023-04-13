@@ -112,6 +112,14 @@ class AnnotationIdglossTranslationInline(admin.TabularInline):
 
     extra = 0
 
+class SenseInline(admin.TabularInline):
+    model = Gloss.senses.through
+
+    # list_display = ["get_keywords", "orderindex"]
+    # fields = [Gloss.get_keywds]
+
+    extra = 0
+
 class LemmaIdglossTranslationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
@@ -301,7 +309,7 @@ class GlossAdmin(VersionAdmin):
     list_display = ['id', 'lemma', 'inWeb']
 
     search_fields = ['^lemma__lemmaidglosstranslation__text', 'id']
-    inlines = [ AnnotationIdglossTranslationInline, RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
+    inlines = [ AnnotationIdglossTranslationInline, RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline, SenseInline]
 
     history_latest_first = True
 
@@ -1327,4 +1335,14 @@ admin.site.register(QueryParameterDerivationHistory, QueryParameterDerivationHis
 admin.site.register(QueryParameterBoolean, QueryParameterBooleanAdmin)
 admin.site.register(QueryParameterMultilingual, QueryParameterMultilingualAdmin)
 admin.site.register(SearchHistory, SearchHistoryAdmin)
+
+class SenseAdmin(admin.ModelAdmin):
+    list_display = ("get_keywords", "get_sentences", "orderindex")
+
+admin.site.register(Sense, SenseAdmin)
+
+class ExampleSentenceAdmin(admin.ModelAdmin):
+    list_display = ("text", "id")
+
+admin.site.register(ExampleSentence, ExampleSentenceAdmin)
 

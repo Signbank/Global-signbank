@@ -1673,6 +1673,8 @@ class GlossDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
 
+        context['senses'] = gl.senses.all()
+
         bad_dialect = False
         gloss_dialects = []
 
@@ -6260,7 +6262,6 @@ class MorphemeDetailView(DetailView):
         else:
             language = Language.objects.get(id=get_default_language_id())
             context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
-
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 

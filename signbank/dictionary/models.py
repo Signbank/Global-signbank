@@ -173,7 +173,7 @@ class Keyword(models.Model):
         return self.text
 
     text = models.CharField(max_length=100, unique=True)
-
+    
     def inWeb(self):
         """Return True if some gloss associated with this
         keyword is in the web version of the dictionary"""
@@ -564,6 +564,59 @@ class Handshape(models.Model):
             count_selected_fingers += 1
         return count_selected_fingers
 
+class Language(models.Model):
+    """A written language, used for translations in written languages."""
+    name = models.CharField(max_length=50)
+    language_code_2char = models.CharField(max_length=7, unique=False, null=False, blank=False, help_text=_(
+        """Language code (2 characters long) of a written language. This also includes codes of the form zh-Hans, cf. IETF BCP 47"""))
+    language_code_3char = models.CharField(max_length=3, unique=False, null=False, blank=False, help_text=_(
+        """ISO 639-3 language code (3 characters long) of a written language."""))
+    description = models.TextField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+class ExampleSentence(models.Model):
+    """An example sentence belongs to one or more sense(s)"""
+    
+    text = models.TextField()
+
+    def __str__(self):
+        return self.text
+
+class SentenceTranslation(models.Model):
+    """A sentence translation belongs to one example sentence"""
+    
+    text = models.TextField()
+    examplesentence = models.ForeignKey(ExampleSentence, on_delete=models.CASCADE)
+    
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
+
+class Sense(models.Model):
+    """A sense belongs to a gloss and consists of a set of keyword(s)"""
+    
+    orderindex = models.IntegerField()
+    keywords = models.ManyToManyField(Keyword)
+    sentences = models.ManyToManyField(ExampleSentence)
+
+    def get_keywords(self):
+        return ", ".join([k.text for k in self.keywords.all()])
+
+    def get_sentences(self):
+        return ", ".join([k.text for k in self.sentences.all()])
+    
+    class Admin:
+        list_display = ['orderindex', 'keywords']
+        search_fields = ['orderindex', 'keywords']
+
+    class Meta:
+        ordering = ['orderindex']
 
 class Gloss(models.Model):
     class Meta:
@@ -745,9 +798,11 @@ class Gloss(models.Model):
                                   blank=True)  # TODO: should be boolean
     segloss = models.CharField(_("Signed English gloss"), max_length=50, blank=True, null=True)
 
-    sense = models.IntegerField(_("Sense Number"), null=True, blank=True,
-                                help_text="If there is more than one sense of a sign enter a number here, all signs with sense>1 will use the same video as sense=1")
-    sense.list_filter_sense = True
+    # sense = models.IntegerField(_("Sense Number"), null=True, blank=True,
+    #                             help_text="If there is more than one sense of a sign enter a number here, all signs with sense>1 will use the same video as sense=1")
+    # sense.list_filter_sense = True
+
+    senses = models.ManyToManyField(Sense)
 
     sn = models.IntegerField(_("Sign Number"),
                              help_text="Sign Number must be a unique integer and defines the ordering of signs in the dictionary",
@@ -993,6 +1048,13 @@ class Gloss(models.Model):
         fields["Link"] = settings.URL + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
 
         return fields
+
+    
+    def get_keywds(self):
+        senses = models.ManyToManyField(Sense)
+        allkeywords = ""
+        for sensei, sense in enumerate(senses):
+            allkeywors = allkeywords + sensei + ". " + sense.get_keywords + "\n"
 
     def navigation(self, is_staff):
         """Return a gloss navigation structure that can be used to
@@ -2594,23 +2656,6 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 
 post_save.connect(create_user_profile, sender=User)
-
-
-class Language(models.Model):
-    """A written language, used for translations in written languages."""
-    name = models.CharField(max_length=50)
-    language_code_2char = models.CharField(max_length=7, unique=False, null=False, blank=False, help_text=_(
-        """Language code (2 characters long) of a written language. This also includes codes of the form zh-Hans, cf. IETF BCP 47"""))
-    language_code_3char = models.CharField(max_length=3, unique=False, null=False, blank=False, help_text=_(
-        """ISO 639-3 language code (3 characters long) of a written language."""))
-    description = models.TextField(null=True, blank=True)
-
-    class Meta:
-        ordering = ['name']
-
-    def __str__(self):
-        return self.name
-
 
 class SemanticFieldTranslation(models.Model):
 
