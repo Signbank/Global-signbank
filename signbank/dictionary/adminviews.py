@@ -1226,13 +1226,13 @@ class GlossListView(ListView):
         if 'createdBefore' in get and get['createdBefore'] != '':
             query_parameters['createdBefore'] = get['createdBefore']
 
-            created_before_date = DT.datetime.strptime(get['createdBefore'], "%m/%d/%Y").date()
+            created_before_date = DT.datetime.strptime(get['createdBefore'], "%d/%m/%Y").date()
             qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE,created_before_date))
 
         if 'createdAfter' in get and get['createdAfter'] != '':
             query_parameters['createdAfter'] = get['createdAfter']
 
-            created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
+            created_after_date = DT.datetime.strptime(get['createdAfter'], "%d/%m/%Y").date()
             qs = qs.filter(creationDate__range=(created_after_date,DT.datetime.now()))
 
         if 'createdBy' in get and get['createdBy'] != '':
@@ -2712,11 +2712,11 @@ class MorphemeListView(ListView):
             qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
         if 'createdBefore' in get and get['createdBefore'] != '':
-            created_before_date = DT.datetime.strptime(get['createdBefore'], "%m/%d/%Y").date()
+            created_before_date = DT.datetime.strptime(get['createdBefore'], "%d/%m/%Y").date()
             qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
 
         if 'createdAfter' in get and get['createdAfter'] != '':
-            created_after_date = DT.datetime.strptime(get['createdAfter'], "%m/%d/%Y").date()
+            created_after_date = DT.datetime.strptime(get['createdAfter'], "%d/%m/%Y").date()
             qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
 
         if 'createdBy' in get and get['createdBy'] != '':
