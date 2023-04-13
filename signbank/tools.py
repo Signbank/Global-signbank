@@ -2150,9 +2150,10 @@ def get_interface_language_and_default_language_codes(request):
 
     return (interface_language, interface_language_code, default_language, default_language_code)
 
+
 def split_csv_lines_header_body(request, selected_datasets, dataset_languages, csv_lines, delimiter):
 
-    required_columns = [ 'Lemma ID', 'Dataset' ]
+    required_columns = ['Lemma ID', 'Dataset']
 
     for lang in dataset_languages:
         language_name = getattr(lang, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
@@ -2162,7 +2163,6 @@ def split_csv_lines_header_body(request, selected_datasets, dataset_languages, c
     csv_lines_buffer = csv_lines
 
     keys_found = False
-    encoding_error = False
     csv_header = []
     csv_body = []
     while not keys_found and csv_lines_buffer:
@@ -2181,32 +2181,4 @@ def split_csv_lines_header_body(request, selected_datasets, dataset_languages, c
         else:
             csv_lines_buffer = rest_csv_lines
 
-        # if len(keys) < len(required_columns):
-        #     print('key missing')
-        #
-        # print(keys)
-        # if len(keys) < 2:
-        #     feedback_message = _('Incorrect Delimiter: ') + delimiter_radio + '.'
-        #     messages.add_message(request, messages.ERROR, feedback_message)
-        #     encoding_error = True
-        # elif '' in keys:
-        #     feedback_message = _('Empty Column Header Found.')
-        #     messages.add_message(request, messages.ERROR, feedback_message)
-        #     encoding_error = True
-        # elif len(keys) > len(list(set(keys))):
-        #     feedback_message = _('Duplicate Column Header Found.')
-        #     messages.add_message(request, messages.ERROR, feedback_message)
-        #     encoding_error = True
-        # elif 'Lemma ID' not in keys:
-        #     feedback_message = _('The Lemma ID column is required.')
-        #     messages.add_message(request, messages.ERROR, feedback_message)
-        #     encoding_error = True
-        # elif 'Dataset' not in keys:
-        #     feedback_message = _('The Dataset column is required.')
-        #     messages.add_message(request, messages.ERROR, feedback_message)
-        #     encoding_error = True
-
-    if not keys_found:
-        encoding_error = True
-
-    return encoding_error, csv_header, csv_body
+    return keys_found, csv_header, csv_body

@@ -1776,8 +1776,8 @@ def import_csv_update(request):
 def import_csv_lemmas(request):
     user = request.user
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
-    user_datasets_names = [ dataset.acronym for dataset in user_datasets ]
+    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
+    user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -1791,9 +1791,6 @@ def import_csv_lemmas(request):
             language_tuple = (language_name, language.language_code_2char)
             translation_languages_dict[dataset_object].append(language_tuple)
 
-    seen_datasets = []
-    seen_dataset_names = []
-
     # fatal errors are duplicate column headers, data in columns without headers
     # column headers that do not correspond to database fields
     # non-numerical lemma ids
@@ -1803,15 +1800,31 @@ def import_csv_lemmas(request):
     # missing Lemma required for the dataset
 
     uploadform = signbank.dictionary.forms.CSVUploadForm
+    seen_datasets = []
+    # set the allowed dataset names to selected dataset, which must have change permission (checked below)
+    dataset = selected_datasets.first()
+    seen_dataset_names = [dataset.acronym]
     changes = []
     error = []
     earlier_updates_same_csv = []
     earlier_updates_lemmaidgloss = {}
 
-    encoding_error = False
+    if selected_datasets.count() > 1 or dataset not in user_datasets:
+        feedback_message = _('Please select a single dataset for which you have change permission.')
+        messages.add_message(request, messages.ERROR, feedback_message)
 
-    #Process Input File
+        return render(request, 'dictionary/import_csv_update_lemmas.html',
+                      {'form': uploadform, 'stage': 0, 'changes': changes,
+                       'error': error,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'translation_languages_dict': translation_languages_dict,
+                       'seen_datasets': seen_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+    # Process Input File
     if len(request.FILES) > 0:
+        # the multipurpose template is at stage 0
 
         new_file = request.FILES['file']
 
@@ -1867,33 +1880,10 @@ def import_csv_lemmas(request):
             delimiter = ','
             delimiter_radio = 'comma'
 
-        encoding_error, csv_header, csv_body = split_csv_lines_header_body(request, selected_datasets,
-                                                                           dataset_languages, csv_lines, delimiter)
+        keys_found, csv_header, csv_body = split_csv_lines_header_body(request, selected_datasets,
+                                                                       dataset_languages, csv_lines, delimiter)
 
-        # first_csv_line, rest_csv_lines = csv_lines[0], csv_lines[1:]
-        #
-        # keys = first_csv_line.strip().split(delimiter)
-        # if len(keys) < 2:
-        #     feedback_message = _('Incorrect Delimiter: ') + delimiter_radio + '.'
-        #     messages.add_message(request, messages.ERROR, feedback_message)
-        #     encoding_error = True
-        # elif '' in keys:
-        #     feedback_message = _('Empty Column Header Found.')
-        #     messages.add_message(request, messages.ERROR, feedback_message)
-        #     encoding_error = True
-        # elif len(keys) > len(list(set(keys))) :
-        #     feedback_message = _('Duplicate Column Header Found.')
-        #     messages.add_message(request, messages.ERROR, feedback_message)
-        #     encoding_error = True
-        # elif 'Lemma ID' not in keys:
-        #     feedback_message = _('The Lemma ID column is required.')
-        #     messages.add_message(request, messages.ERROR, feedback_message)
-        #     encoding_error = True
-        # elif 'Dataset' not in keys:
-        #     feedback_message = _('The Dataset column is required.')
-        #     messages.add_message(request, messages.ERROR, feedback_message)
-        #     encoding_error = True
-        if encoding_error:
+        if not keys_found:
             feedback_message = _('The required column headers are missing.')
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_update_lemmas.html',
@@ -1934,70 +1924,36 @@ def import_csv_lemmas(request):
             if fatal_error:
                 break
 
-            # construct list of allowed columns
-            required_columns = ['Lemma ID', 'Dataset']
-
             dataset_name = value_dict['Dataset'].strip()
 
             # catch possible empty values for dataset, primarily for pretty printing error message
             if dataset_name == '' or dataset_name is None or dataset_name == 0 or dataset_name == 'NULL':
                 e_dataset_empty = 'Row ' + str(nl + 1) + ': The Dataset is missing.'
                 error.append(e_dataset_empty)
+                fatal_error = True
                 break
             if dataset_name not in seen_dataset_names:
-
-                try:
-                    dataset = Dataset.objects.get(acronym=dataset_name)
-                except ObjectDoesNotExist:
-                    print('exception trying to get dataset object')
-                    # An error message should be returned here, the dataset does not exist
-                    e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
-                    error.append(e_dataset_not_found)
-                    fatal_error = True
-                    break
-                if dataset_name not in user_datasets_names:
-                    e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
-                    error.append(e3)
-                    fatal_error = True
-                    break
-                if dataset not in selected_datasets:
-                    e3 = 'Row '+str(nl + 1) + ': Please select the dataset %s.' % value_dict['Dataset'].strip()
-                    error.append(e3)
-                    fatal_error = True
-                    break
-                if seen_datasets:
-                    # already seen a dataset
-                    if dataset in seen_datasets:
-                        pass
-                    else:
-                        # seen more than one dataset
-                        e3 = 'Row ' + str(nl + 1) + ': Seen more than one dataset: %s.' % value_dict['Dataset'].strip()
-                        error.append(e3)
-                        fatal_error = True
-                        break
-                else:
-                    seen_datasets.append(dataset)
-                    seen_dataset_names.append(dataset_name)
-                    # saw the first dataset
-
-            if fatal_error:
+                # seen more than one dataset
+                e3 = 'Row ' + str(nl + 1) + ': Seen more than one dataset: %s.' % value_dict['Dataset'].strip()
+                error.append(e3)
+                fatal_error = True
                 break
-            # The Lemma ID Gloss may already exist.
+
+            # # The Lemma ID Gloss may already exist.
             lemmaidglosstranslations = {}
             contextual_error_messages_lemmaidglosstranslations = []
             for language in dataset.translation_languages.all():
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 column_name = "Lemma ID Gloss (%s)" % language_name
-                required_columns.append(column_name)
                 if column_name in value_dict:
-                    lemma_idgloss_value = value_dict[column_name].strip()
+                    lemma_idgloss_value = value_dict[column_name]
                     # also stores empty values
                     lemmaidglosstranslations[language] = lemma_idgloss_value
 
             # if we get to here, the Lemma ID, Dataset, and Lemma ID Gloss columns have been checked
             # determine if any extra columns were found
             for key in value_dict.keys():
-                if key not in required_columns:
+                if key not in csv_header:
                     # too many columns found
                     e = 'Extra column found: ' + key
                     error.append(e)
@@ -2011,12 +1967,12 @@ def import_csv_lemmas(request):
                 lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
             except ObjectDoesNotExist as e:
 
-                e = 'Row '+ str(nl + 1) + ': Could not find lemma for Lemma ID '+str(pk)
+                e = 'Row ' + str(nl + 1) + ': Could not find lemma for Lemma ID '+str(pk)
                 error.append(e)
                 continue
-            #
+
             if lemma.dataset.acronym != dataset_name:
-                e1 = 'Row '+ str(nl + 1) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Lemma ID (' \
+                e1 = 'Row ' + str(nl + 1) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Lemma ID (' \
                                                     + str(pk) + ').'
                 error.append(e1)
                 # ignore the rest of the row
