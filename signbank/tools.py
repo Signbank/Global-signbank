@@ -2149,3 +2149,44 @@ def get_interface_language_and_default_language_codes(request):
     interface_language_code = interface_language.language_code_2char
 
     return (interface_language, interface_language_code, default_language, default_language_code)
+
+
+def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter):
+
+    required_columns = ['Lemma ID', 'Dataset']
+
+    for lang in dataset_languages:
+        language_name = getattr(lang, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+        column_name = "Lemma ID Gloss (%s)" % language_name
+        required_columns.append(column_name)
+
+    csv_lines_buffer = csv_lines
+
+    keys_found = False
+    extra_keys = False
+    csv_header = []
+    csv_body = []
+    while not keys_found and csv_lines_buffer:
+        # keep searching for the header row
+        # Apple Keynote stores an extra row above the header row when exported to CSV
+        first_csv_line, rest_csv_lines = csv_lines_buffer[0], csv_lines_buffer[1:]
+
+        row = first_csv_line.strip().split(delimiter)
+
+        all_keys_present = True
+        for key in required_columns:
+            if key not in row:
+                all_keys_present = False
+        for col in row:
+            if col not in required_columns:
+                extra_keys = True
+        if all_keys_present:
+            keys_found = True
+            csv_header = row
+            csv_body = rest_csv_lines
+        else:
+            # set up for next row
+            # only record extra keys if this is a header row
+            extra_keys = False
+            csv_lines_buffer = rest_csv_lines
+    return keys_found, extra_keys, csv_header, csv_body
