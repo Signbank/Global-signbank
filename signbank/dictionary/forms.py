@@ -318,10 +318,9 @@ class GlossSearchForm(forms.ModelForm):
     definitionContains = forms.CharField(label=_(u'Note Contains'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    createdAfter = forms.DateField(label=_(u'Created After'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
+    createdAfter = forms.DateField(label=_(u'Created After'), widget=forms.DateInput(attrs={'placeholder': _('dd/mm/yyyy')}))
 
-    createdBefore = forms.DateField(label=_(u'Created Before'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
-
+    createdBefore = forms.DateField(label=_(u'Created Before'), widget=forms.DateInput(attrs={'placeholder': _('dd/mm/yyyy')}))
 
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
@@ -964,6 +963,7 @@ class LemmaUpdateForm(forms.ModelForm):
                 raise Exception("Lemma with id %s has more than one lemma idgloss translation for language %s"% (self.instance.pk, language.name))
         return
 
+
 class FocusGlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False #otherwise the html required attribute will show up on every form
@@ -979,8 +979,8 @@ class FocusGlossSearchForm(forms.ModelForm):
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
     altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)
 
-    createdBefore = forms.DateField(label=_(u'Created Before'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
-    createdAfter = forms.DateField(label=_(u'Created After'), widget=forms.DateInput(attrs={'placeholder': _('mm/dd/yyyy')}))
+    createdBefore = forms.DateField(label=_(u'Created Before'), widget=forms.DateInput(attrs={'placeholder': _('dd/mm/yyyy')}))
+    createdAfter = forms.DateField(label=_(u'Created After'), widget=forms.DateInput(attrs={'placeholder': _('dd/mm/yyyy')}))
 
     createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
@@ -1044,6 +1044,7 @@ class FocusGlossSearchForm(forms.ModelForm):
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                         choices=translated_choices,
                                                         required=False, widget=Select2)
+
 
 class FieldChoiceColorForm(forms.Form):
     field_color = forms.CharField(widget=ColorWidget)
