@@ -24,7 +24,7 @@ from signbank.video.forms import VideoUploadForGlossForm
 from signbank.tools import save_media, MachineValueNotFoundError
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
-    get_interface_language_and_default_language_codes
+    get_interface_language_and_default_language_codes, split_csv_lines_header_body
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
@@ -1867,30 +1867,35 @@ def import_csv_lemmas(request):
             delimiter = ','
             delimiter_radio = 'comma'
 
-        first_csv_line, rest_csv_lines = csv_lines[0], csv_lines[1:]
+        encoding_error, csv_header, csv_body = split_csv_lines_header_body(request, selected_datasets,
+                                                                           dataset_languages, csv_lines, delimiter)
 
-        keys = first_csv_line.strip().split(delimiter)
-        if len(keys) < 2:
-            feedback_message = _('Incorrect Delimiter: ') + delimiter_radio + '.'
-            messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        elif '' in keys:
-            feedback_message = _('Empty Column Header Found.')
-            messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        elif len(keys) > len(list(set(keys))) :
-            feedback_message = _('Duplicate Column Header Found.')
-            messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        elif 'Lemma ID' not in keys:
-            feedback_message = _('The Lemma ID column is required.')
-            messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        elif 'Dataset' not in keys:
-            feedback_message = _('The Dataset column is required.')
-            messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
+        # first_csv_line, rest_csv_lines = csv_lines[0], csv_lines[1:]
+        #
+        # keys = first_csv_line.strip().split(delimiter)
+        # if len(keys) < 2:
+        #     feedback_message = _('Incorrect Delimiter: ') + delimiter_radio + '.'
+        #     messages.add_message(request, messages.ERROR, feedback_message)
+        #     encoding_error = True
+        # elif '' in keys:
+        #     feedback_message = _('Empty Column Header Found.')
+        #     messages.add_message(request, messages.ERROR, feedback_message)
+        #     encoding_error = True
+        # elif len(keys) > len(list(set(keys))) :
+        #     feedback_message = _('Duplicate Column Header Found.')
+        #     messages.add_message(request, messages.ERROR, feedback_message)
+        #     encoding_error = True
+        # elif 'Lemma ID' not in keys:
+        #     feedback_message = _('The Lemma ID column is required.')
+        #     messages.add_message(request, messages.ERROR, feedback_message)
+        #     encoding_error = True
+        # elif 'Dataset' not in keys:
+        #     feedback_message = _('The Dataset column is required.')
+        #     messages.add_message(request, messages.ERROR, feedback_message)
+        #     encoding_error = True
         if encoding_error:
+            feedback_message = _('The required column headers are missing.')
+            messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_update_lemmas.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
                            'error': error,
@@ -1901,8 +1906,8 @@ def import_csv_lemmas(request):
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         # create a template for an empty row with the desired number of columns
-        empty_row = [''] * len(keys)
-        for nl, line in enumerate(rest_csv_lines):
+        empty_row = [''] * len(csv_header)
+        for nl, line in enumerate(csv_body):
             if len(line) == 0:
                 # this happens at the end of the file
                 continue
@@ -1913,11 +1918,11 @@ def import_csv_lemmas(request):
             # construct value_dict for row
             value_dict = {}
             for nv,value in enumerate(values):
-                if nv >= len(keys):
+                if nv >= len(csv_header):
                     # this has already been checked above
                     # it's here to avoid needing an exception on the subscript [nv]
                     continue
-                value_dict[keys[nv]] = value
+                value_dict[csv_header[nv]] = value
 
             try:
                 pk = int(value_dict['Lemma ID'])
@@ -1935,7 +1940,7 @@ def import_csv_lemmas(request):
             dataset_name = value_dict['Dataset'].strip()
 
             # catch possible empty values for dataset, primarily for pretty printing error message
-            if dataset_name == '' or dataset_name == None or dataset_name == 0 or dataset_name == 'NULL':
+            if dataset_name == '' or dataset_name is None or dataset_name == 0 or dataset_name == 'NULL':
                 e_dataset_empty = 'Row ' + str(nl + 1) + ': The Dataset is missing.'
                 error.append(e_dataset_empty)
                 break
