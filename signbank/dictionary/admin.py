@@ -809,11 +809,14 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
         field_value = obj.__dict__.get('field', '')
         field_machine_value = obj.__dict__.get('machine_value', 0)
-        if not field_machine_value:
-            print('ADMIN has_delete_permission: field ', field_value, ' has an empty machine value')
 
         # do not allow deletion of choices in to be removed field choice categories
         if field_value in ['Handshape', 'SemField', 'derivHist']:
+            # these are no longer field choices, allow to delete obsolete field choices
+            return True
+
+        if not field_machine_value or field_machine_value < 2:
+            # do not allow to delete '-' (0) and 'N/A' (1)
             return False
 
         # check if this is a duplicate, if so allow deletion
