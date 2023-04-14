@@ -810,7 +810,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
         field_value = obj.__dict__.get('field', '')
         field_machine_value = obj.__dict__.get('machine_value', 0)
 
-        # do not allow deletion of choices in to be removed field choice categories
         if field_value in ['Handshape', 'SemField', 'derivHist']:
             # these are no longer field choices, allow to delete obsolete field choices
             return True
