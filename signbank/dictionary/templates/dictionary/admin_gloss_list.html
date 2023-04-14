@@ -688,15 +688,11 @@ function do_toggle_annotation(el) {
                            data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
 
                       <div id='pub_search' class='collapse'>
-                      <table class='table pub-row'>
+                      <table class='table table-condensed' style="width:65%;">
                       {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
                       <tr>
                           <td style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
-                          {% if publication_id == 'definitionRole' %}
                           <td style="width:600px;">{{publication_field}}</td>
-                          {% else %}
-                          <td>{{publication_field}}</td>
-                          {% endif %}
                       </tr>
                       {% endfor %}
                       </table>

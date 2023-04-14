@@ -318,9 +318,12 @@ class GlossSearchForm(forms.ModelForm):
     definitionContains = forms.CharField(label=_(u'Note Contains'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    createdAfter = forms.DateField(label=_(u'Created After'), widget=forms.DateInput(attrs={'placeholder': _('dd/mm/yyyy')}))
-
-    createdBefore = forms.DateField(label=_(u'Created Before'), widget=forms.DateInput(attrs={'placeholder': _('dd/mm/yyyy')}))
+    createdAfter = forms.DateField(label=_(u'Created After'),
+                                   input_formats=[settings.DATE_FORMAT],
+                                   widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
+    createdBefore = forms.DateField(label=_(u'Created Before'),
+                                    input_formats=[settings.DATE_FORMAT],
+                                    widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
 
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
@@ -435,8 +438,12 @@ class MorphemeSearchForm(forms.ModelForm):
     definitionContains = forms.CharField(label=_(u'Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
 
-    createdBefore = forms.DateField(label=_(u'Created Before'))
-    createdAfter = forms.DateField(label=_(u'Created After'))
+    createdBefore = forms.DateField(label=_(u'Created Before'),
+                                    input_formats=[settings.DATE_FORMAT],
+                                    widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
+    createdAfter = forms.DateField(label=_(u'Created After'),
+                                   input_formats=[settings.DATE_FORMAT],
+                                   widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
 
     createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
@@ -979,8 +986,12 @@ class FocusGlossSearchForm(forms.ModelForm):
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
     altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)
 
-    createdBefore = forms.DateField(label=_(u'Created Before'), widget=forms.DateInput(attrs={'placeholder': _('dd/mm/yyyy')}))
-    createdAfter = forms.DateField(label=_(u'Created After'), widget=forms.DateInput(attrs={'placeholder': _('dd/mm/yyyy')}))
+    createdBefore = forms.DateField(label=_(u'Created Before'),
+                                    input_formats=[settings.DATE_FORMAT],
+                                    widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
+    createdAfter = forms.DateField(label=_(u'Created After'),
+                                   input_formats=[settings.DATE_FORMAT],
+                                   widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
 
     createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 

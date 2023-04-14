@@ -217,10 +217,10 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key == 'useInstr':
             query_list.append(Q(useInstr__iregex=get_value))
         elif get_key == 'createdBefore':
-            created_before_date = DT.datetime.strptime(get_value, "%d/%m/%Y").date()
+            created_before_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
             query_list.append(Q(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date)))
         elif get_key == 'createdAfter':
-            created_after_date = DT.datetime.strptime(get_value, "%d/%m/%Y").date()
+            created_after_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
             query_list.append(Q(creationDate__range=(created_after_date, DT.datetime.now())))
         elif get_key == 'createdBy':
             created_by_first_name = [gloss.pk for gloss in Gloss.objects.filter(creator__first_name__icontains=get_value)]
@@ -460,8 +460,8 @@ def pretty_print_query_values(dataset_languages,query_parameters):
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 query_dict[key] = query_parameters[key]
         elif key in ['createdBefore', 'createdAfter']:
-            created_date = DT.datetime.strptime(query_parameters[key], "%d/%m/%Y").date()
-            query_dict[key] = created_date
+            created_date = DT.datetime.strptime(query_parameters[key], settings.DATE_FORMAT).date()
+            query_dict[key] = created_date.strftime(settings.DATE_FORMAT)
         elif key in ['tags']:
             query_dict[key] = query_parameters[key]
         else:
