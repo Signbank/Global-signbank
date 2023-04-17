@@ -907,6 +907,18 @@ class GlossListView(ListView):
             selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         dataset_languages = get_dataset_languages(selected_datasets)
 
+        from signbank.dictionary.forms import check_language_fields
+        valid_regex, search_fields = check_language_fields(get, dataset_languages)
+
+        if not valid_regex:
+            error_message_1 = _('Error in search field ')
+            error_message_2 = ', '.join(search_fields)
+            error_message_3 = _(': Please use a backslash before special characters.')
+            error_message = error_message_1 + error_message_2 + error_message_3
+            messages.add_message(self.request, messages.ERROR, error_message)
+            qs = Gloss.objects.none()
+            return qs
+
         #Get the initial selection
         if show_all or (len(get) > 0 and 'query' not in self.request.GET):
             # anonymous users can search signs, make sure no morphemes are in the results
@@ -977,6 +989,7 @@ class GlossListView(ListView):
             if get_key == 'csrfmiddlewaretoken':
                 continue
             if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
+
                 query_parameters[get_key] = get_value
                 language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()

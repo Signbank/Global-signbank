@@ -404,6 +404,40 @@ class GlossSearchForm(forms.ModelForm):
                                                           ),
                                            widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
+
+def check_language_fields(queryDict, languages):
+    # this function inspects the search parameters from GlossSearchForm looking for occurrences of + at the start
+    language_fields_okay = True
+    search_fields = []
+    if not queryDict:
+        return language_fields_okay, search_fields
+
+    language_field_labels = dict()
+    language_field_values = dict()
+    for language in languages:
+        glosssearch_field_name = GlossSearchForm.gloss_search_field_prefix + language.language_code_2char
+        language_field_values[glosssearch_field_name] = queryDict[glosssearch_field_name]
+        language_field_labels[glosssearch_field_name] = _("Gloss")+(" (%s)" % language.name)
+
+        # do the same for Translations
+        keyword_field_name = GlossSearchForm.keyword_search_field_prefix + language.language_code_2char
+        language_field_values[keyword_field_name] = queryDict[keyword_field_name]
+        language_field_labels[keyword_field_name] = _("Translations")+(" (%s)" % language.name)
+
+        # and for LemmaIdgloss
+        lemma_field_name = GlossSearchForm.lemma_search_field_prefix + language.language_code_2char
+        language_field_values[lemma_field_name] = queryDict[lemma_field_name]
+        language_field_labels[lemma_field_name] = _("Lemma")+(" (%s)" % language.name)
+
+    import re
+    regexp = re.compile('^[+]')
+    for language_field in language_field_values.keys():
+        if regexp.search(language_field_values[language_field]):
+            language_fields_okay = False
+            search_fields.append(language_field_labels[language_field])
+    return language_fields_okay, search_fields
+
+
 class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
