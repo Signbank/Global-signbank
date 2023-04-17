@@ -416,18 +416,21 @@ def check_language_fields(queryDict, languages):
     language_field_values = dict()
     for language in languages:
         glosssearch_field_name = GlossSearchForm.gloss_search_field_prefix + language.language_code_2char
-        language_field_values[glosssearch_field_name] = queryDict[glosssearch_field_name]
-        language_field_labels[glosssearch_field_name] = _("Gloss")+(" (%s)" % language.name)
+        if glosssearch_field_name in queryDict.keys():
+            language_field_values[glosssearch_field_name] = queryDict[glosssearch_field_name]
+            language_field_labels[glosssearch_field_name] = _("Gloss")+(" (%s)" % language.name)
 
         # do the same for Translations
         keyword_field_name = GlossSearchForm.keyword_search_field_prefix + language.language_code_2char
-        language_field_values[keyword_field_name] = queryDict[keyword_field_name]
-        language_field_labels[keyword_field_name] = _("Translations")+(" (%s)" % language.name)
+        if keyword_field_name in queryDict.keys():
+            language_field_values[keyword_field_name] = queryDict[keyword_field_name]
+            language_field_labels[keyword_field_name] = _("Translations")+(" (%s)" % language.name)
 
         # and for LemmaIdgloss
         lemma_field_name = GlossSearchForm.lemma_search_field_prefix + language.language_code_2char
-        language_field_values[lemma_field_name] = queryDict[lemma_field_name]
-        language_field_labels[lemma_field_name] = _("Lemma")+(" (%s)" % language.name)
+        if lemma_field_name in queryDict.keys():
+            language_field_values[lemma_field_name] = queryDict[lemma_field_name]
+            language_field_labels[lemma_field_name] = _("Lemma")+(" (%s)" % language.name)
 
     import re
     regexp = re.compile('^[+]')
