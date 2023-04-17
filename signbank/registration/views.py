@@ -14,7 +14,7 @@ from django.middleware.csrf import get_token
 from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
 from signbank.registration.models import RegistrationProfile
 from django.contrib.auth.models import User
-from signbank.dictionary.models import Dataset, UserProfile
+from signbank.dictionary.models import Dataset, UserProfile, SearchHistory
 from django.contrib import messages
 from django.template.loader import render_to_string
 
@@ -340,10 +340,12 @@ def user_profile(request):
     selected_datasets = get_selected_datasets_for_user(user)
     view_permit_datasets = get_objects_for_user(user, 'can_view_dataset', Dataset)
     change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
+    user_has_queries = SearchHistory.objects.filter(user=user).count()
 
     return render (request, 'user_profile.html', {'selected_datasets': selected_datasets,
                                                   'view_permit_datasets': view_permit_datasets,
                                                   'change_permit_datasets': change_permit_datasets,
+                                                  'user_has_queries': user_has_queries,
                                                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                                                   'expiry': expiry,
                                                   'delta': delta})
