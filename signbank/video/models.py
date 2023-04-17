@@ -337,13 +337,6 @@ class GlossVideo(models.Model):
         except:
             pass
 
-    def get_mobile_url(self):
-        """Return a URL to serve the mobile version of this
-        video, this uses MEDIA_MOBILE_URL as a prefix
-        rather than MEDIA_URL but is otherwise the same"""
-
-        url = self.get_absolute_url()
-        return url.replace(settings.MEDIA_URL, settings.MEDIA_MOBILE_URL)
 
     def reversion(self, revert=False):
         """We have a new version of this video so increase
