@@ -21,7 +21,7 @@ import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
 from signbank.video.forms import VideoUploadForGlossForm
-from signbank.tools import save_media, MachineValueNotFoundError
+from signbank.tools import save_media
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
     get_interface_language_and_default_language_codes, split_csv_lines_header_body
@@ -1491,7 +1491,7 @@ def import_csv_update(request):
                     errors_found_string = '\n'.join(errors_found)
                     error.append(errors_found_string)
 
-            except MachineValueNotFoundError as e:
+            except KeyError as e:
 
                 e_string = str(e)
                 error.append(e_string)
@@ -1615,8 +1615,12 @@ def import_csv_update(request):
             if fieldname == 'Sequential Morphology':
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
+                # get the gloss ids out of the input
+                # the input is a sequence of role:id values
+                # these have already been parsed at the previous stage
+                glosses = [int(component.split(':')[1]) for component in new_human_value_list]
 
-                update_sequential_morphology(gloss,None,new_human_value_list)
+                update_sequential_morphology(gloss, None, glosses)
 
                 continue
 
@@ -1723,7 +1727,8 @@ def import_csv_lemmas(request):
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     translation_languages_dict = {}
-    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
+    # this dictionary is used in the template
+    # it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
     for dataset_object in user_datasets:
         translation_languages_dict[dataset_object] = []
 
@@ -1867,8 +1872,6 @@ def import_csv_lemmas(request):
                 e = 'Row '+str(nl + 1) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
                 error.append(e)
                 fatal_error = True
-
-            if fatal_error:
                 break
 
             dataset_name = value_dict['Dataset'].strip()
@@ -1905,8 +1908,7 @@ def import_csv_lemmas(request):
                     error.append(e)
                     # use a Boolean to catch all extra columns
                     fatal_error = True
-            if fatal_error:
-                break
+                    break
 
             # # updating lemmas, propose changes (make dict)
             try:
@@ -1918,8 +1920,8 @@ def import_csv_lemmas(request):
                 continue
 
             if lemma.dataset.acronym != dataset_name:
-                e1 = 'Row ' + str(nl + 1) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Lemma ID (' \
-                                                    + str(pk) + ').'
+                e1 = 'Row ' + str(nl + 1) + ': The Dataset column (' + dataset.acronym \
+                     + ') does not correspond to that of the Lemma ID (' + str(pk) + ').'
                 error.append(e1)
                 # ignore the rest of the row
                 continue
@@ -1936,7 +1938,7 @@ def import_csv_lemmas(request):
 
             try:
                 (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
-                            compare_valuedict_to_lemma(value_dict,lemma.id,user_datasets_names, nl,
+                            compare_valuedict_to_lemma(value_dict, lemma.id, user_datasets_names, nl,
                                                        lemmaidglosstranslations, current_lemmaidglosstranslations,
                                                        earlier_updates_same_csv, earlier_updates_lemmaidgloss)
                 changes += changes_found
@@ -1946,7 +1948,7 @@ def import_csv_lemmas(request):
                     errors_found_string = '\n'.join(errors_found)
                     error.append(errors_found_string)
 
-            except MachineValueNotFoundError as e:
+            except KeyError as e:
 
                 e_string = str(e)
                 error.append(e_string)

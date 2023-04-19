@@ -663,7 +663,6 @@ class GlossListView(ListView):
         activate(LANGUAGES[0][0])
         header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
                                                     + keyword_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
-
         for extra_column in ['SignLanguages','Dialects', 'Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
                              'Relations to other signs','Relations to foreign signs', 'Tags', 'Notes']:
             header.append(extra_column)
@@ -682,31 +681,35 @@ class GlossListView(ListView):
             query_set = list(query_set)
         for gloss in query_set:
             row = [str(gloss.pk), gloss.lemma.dataset.acronym]
-
             for language in dataset_languages:
                 lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
                 if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
-                    row.append(lemmaidglosstranslations[0].text)
+                    # get rid of any invisible characters at the end such as \t
+                    lemmatranslation = lemmaidglosstranslations.first().text.strip()
+                    row.append(lemmatranslation)
                 else:
                     row.append("")
-
             for language in dataset_languages:
                 annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
                 if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
-                    row.append(annotationidglosstranslations[0].text)
+                    # get rid of any invisible characters at the end such as \t
+                    annotation = annotationidglosstranslations.first().text.strip()
+                    row.append(annotation)
                 else:
                     row.append("")
 
             # Keywords per language
             for language in dataset_languages:
-                # translations = gloss.annotationidglosstranslation_set.filter(language=language)
-                translations = [t.translation.text for t in gloss.translation_set.filter(language=language).order_by('translation__text')]
-
-                if translations:
-                    row.append(", ".join(translations))
-                else:
+                keywords_in_language = gloss.translation_set.filter(language=language).order_by('translation__text')
+                # get rid of any invisible characters at the end such as \t
+                keyword_translations = [t.translation.text.strip() for t in keywords_in_language]
+                if len(keyword_translations) == 1:
+                    row.append(keyword_translations[0])
+                elif not keyword_translations:
                     row.append("")
-
+                else:
+                    keywords_joined = ', '.join(keyword_translations)
+                    row.append(keywords_joined)
             for f in fields:
                 #Try the value of the choicelist
                 if hasattr(f, 'field_choice_category'):
@@ -755,8 +758,8 @@ class GlossListView(ListView):
                     value = str(value)
 
                 # A handshape name can begin with =. To avoid Office thinking this is a formula, preface with '
-                if value[:1] == '=':
-                    value = '\'' + value
+                # if value[:1] == '=':
+                #     value = '\'' + value
 
                 row.append(value)
 
@@ -770,7 +773,7 @@ class GlossListView(ListView):
 
             # get morphology
             # Sequential Morphology
-            morphemes = [str(morpheme.morpheme.id) for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+            morphemes = [morpheme.get_role()+':'+str(morpheme.morpheme.id) for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
             row.append(", ".join(morphemes))
 
             # Simultaneous Morphology

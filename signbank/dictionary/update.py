@@ -758,11 +758,16 @@ def update_tags(gloss, field, values):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
+
 def update_sequential_morphology(gloss, field, values):
     # expecting possibly multiple values
+    # this function updates according to the input csv
+    # it processes the gloss ids in order and creates new components
+    # with the appropriate role
 
     morphemes = [morpheme.id for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
 
+    # machine value of the first component
     role = 2
 
     # the existence of the morphemes in parameter values has already been checked
@@ -775,11 +780,12 @@ def update_sequential_morphology(gloss, field, values):
             morpheme = Gloss.objects.get(pk=value)
             morph_def = MorphologyDefinition()
             morph_def.parent_gloss = gloss
-            morph_def.role = role
+            role_choice = FieldChoice.objects.get(field=FieldChoice.MORPHOLOGYTYPE, machine_value=role)
+            morph_def.role = role_choice
             morph_def.morpheme = morpheme
             morph_def.save()
             role = role + 1
-    except:
+    except (ObjectDoesNotExist, MultipleObjectsReturned, KeyError):
         return HttpResponseBadRequest("Unknown Morpheme %s" % values, {'content-type': 'text/plain'})
 
     seq_morphemes = [morpheme.morpheme for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
@@ -787,6 +793,7 @@ def update_sequential_morphology(gloss, field, values):
     newvalue = ", ".join([str(g.idgloss) for g in seq_morphemes])
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
 
 def update_simultaneous_morphology(gloss, field, values):
     # expecting possibly multiple values

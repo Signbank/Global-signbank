@@ -2123,6 +2123,9 @@ class MorphologyDefinition(models.Model):
     def __str__(self):
         return self.morpheme.idgloss
 
+    def get_role(self):
+        return self.role.name if self.role else self.role
+
 
 class Morpheme(Gloss):
     """A morpheme definition uses all the fields of a gloss, but adds its own characteristics (#174)"""
