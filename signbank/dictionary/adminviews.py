@@ -2481,7 +2481,7 @@ class MorphemeListView(ListView):
 
         multiple_select_morpheme_categories = fields_to_fieldcategory_dict(fieldnames)
         multiple_select_morpheme_categories['definitionRole'] = 'NoteType'
-        multiple_select_morpheme_categories['hasComponentOfType'] = 'MorphologyType'
+        # multiple_select_morpheme_categories['hasComponentOfType'] = 'MorphologyType'
 
         multiple_select_morpheme_fields = [ fieldname for (fieldname, category) in multiple_select_morpheme_categories.items() ]
 
@@ -2548,15 +2548,21 @@ class MorphemeListView(ListView):
                 language = Language.objects.filter(language_code_2char=language_code_2char)
                 qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
                                annotationidglosstranslation__language=language)
+            elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
+                query_parameters[get_key] = get_value
+                language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
+                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
+                               lemma__lemmaidglosstranslation__language=language)
             elif get_key.startswith(MorphemeSearchForm.keyword_search_field_prefix) and get_value != '':
                 language_code_2char = get_key[len(MorphemeSearchForm.keyword_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char)
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
 
-        if 'lemmaGloss' in get and get['lemmaGloss'] != '':
-            val = get['lemmaGloss']
-            qs = qs.filter(idgloss__iregex=val)
+        # if 'lemmaGloss' in get and get['lemmaGloss'] != '':
+        #     val = get['lemmaGloss']
+        #     qs = qs.filter(idgloss__iregex=val)
 
         if 'translation' in get and get['translation'] != '':
             val = get['translation']

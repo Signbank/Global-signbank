@@ -443,14 +443,13 @@ def check_language_fields(queryDict, languages):
 class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
-    search = forms.CharField(label=_("Dutch Gloss"))
+    search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
-    lemmaGloss = forms.CharField(label=_("Lemma Gloss")) # used in Morpheme Search
-    tags = forms.MultipleChoiceField(choices=tag_choices)
-    nottags = forms.MultipleChoiceField(choices=not_tag_choices)
-    translation = forms.CharField(label=_(u'Translations'))
-    hasvideo = forms.ChoiceField(label=_(u'Has Video'), choices=NULLBOOLEANCHOICES)
-    hasothermedia = forms.ChoiceField(label=_(u'Has Other Media'), choices=NULLBOOLEANCHOICES)
+    tags = forms.MultipleChoiceField(label=_('Tags'), choices=tag_choices)
+    nottags = forms.MultipleChoiceField(label=_('Not Tags'), choices=not_tag_choices)
+    translation = forms.CharField(label=_('Search Translations'))
+    hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
+    hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     useInstr = forms.CharField(label=_("Annotation instructions"))
 
 
@@ -485,6 +484,7 @@ class MorphemeSearchForm(forms.ModelForm):
 
     morpheme_search_field_prefix = "morphemesearch_"
     keyword_search_field_prefix = "keyword_"
+    lemma_search_field_prefix = "lemma_"
 
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'}
@@ -510,6 +510,12 @@ class MorphemeSearchForm(forms.ModelForm):
             setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
             if keyword_field_name in queryDict:
                 getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
+
+            # and for LemmaIdgloss
+            lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
+            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
+            if lemma_field_name in queryDict:
+                getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
 
         field_label_signlanguage = gettext("Sign Language")
         field_label_dialects = gettext("Dialect")
