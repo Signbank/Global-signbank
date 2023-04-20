@@ -260,7 +260,6 @@ class GlossSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
-    # englishGloss = forms.CharField(label=_("English Gloss"))
     tags = forms.MultipleChoiceField(label=_('Tags'), choices=tag_choices)
     nottags = forms.MultipleChoiceField(label=_('Not Tags'), choices=not_tag_choices)  # this field is not used in the template
     translation = forms.CharField(label=_('Search Translations'))
@@ -1012,25 +1011,15 @@ class FocusGlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False #otherwise the html required attribute will show up on every form
 
-    search = forms.CharField(label=_("Dutch Gloss"))
+    search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
-    englishGloss = forms.CharField(label=_("English Gloss"))
-    translation = forms.CharField(label=_(u'Translations'))
+    translation = forms.CharField(label=_('Search Translations'))
 
     oriChAbd = forms.ChoiceField(label=_(u'Abduction Change'),choices=NULLBOOLEANCHOICES)
     oriChFlex = forms.ChoiceField(label=_(u'Flexion Change'),choices=NULLBOOLEANCHOICES)
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
     altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)
-
-    createdBefore = forms.DateField(label=_(u'Created Before'),
-                                    input_formats=[settings.DATE_FORMAT],
-                                    widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
-    createdAfter = forms.DateField(label=_(u'Created After'),
-                                   input_formats=[settings.DATE_FORMAT],
-                                   widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
-
-    createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
@@ -1045,8 +1034,6 @@ class FocusGlossSearchForm(forms.ModelForm):
 
     def __init__(self, queryDict, *args, **kwargs):
         languages = kwargs.pop('languages')
-        sign_languages = kwargs.pop('sign_languages')
-        dialects = kwargs.pop('dialects')
         super(FocusGlossSearchForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in languages:
@@ -1067,14 +1054,6 @@ class FocusGlossSearchForm(forms.ModelForm):
             if lemma_field_name in queryDict:
                 getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
 
-        field_label_signlanguage = gettext("Sign Language")
-        field_label_dialects = gettext("Dialect")
-        self.fields['signLanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage, widget=Select2,
-                    queryset=SignLanguage.objects.filter(id__in=[signlanguage[0] for signlanguage in sign_languages]))
-
-        self.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects, widget=Select2,
-                    queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
-
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
         fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
 
@@ -1088,10 +1067,10 @@ class FocusGlossSearchForm(forms.ModelForm):
                 field_choices = Handshape.objects.all()
             else:
                 field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='',shortlist=True)
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices, ordered=False, id_prefix='', shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
-                                                        choices=translated_choices,
-                                                        required=False, widget=Select2)
+                                                                    choices=translated_choices,
+                                                                    required=False, widget=Select2)
 
 
 class FieldChoiceColorForm(forms.Form):

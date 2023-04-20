@@ -3290,6 +3290,14 @@ class MinimalPairsListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
+        if selected_datasets.count() > 1:
+            feedback_message = _('Please select a single dataset to view minimal pairs.')
+            messages.add_message(request, messages.ERROR, feedback_message)
+
+        dataset = selected_datasets.first()
+        context['dataset'] = dataset
+        context['dataset_name'] = dataset.acronym
+
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
         fields_with_choices = fields_to_fieldcategory_dict()
         multiple_select_gloss_fields = [fieldname for fieldname in fieldnames
@@ -3311,25 +3319,9 @@ class MinimalPairsListView(ListView):
 
         context['field_labels'] = field_labels
 
-
-        selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
-        sign_languages = []
-        for sl in selected_datasets_signlanguage:
-            if not ((str(sl.id),sl.name) in sign_languages):
-                sign_languages.append((str(sl.id), sl.name))
-
-        selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage)\
-            .prefetch_related('signlanguage').distinct()
-        dialects = []
-        for dl in selected_datasets_dialects:
-            dialect_name = dl.signlanguage.name + "/" + dl.name
-            dialects.append((str(dl.id),dialect_name))
-
-        search_form = FocusGlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
-                                      dialects=dialects)
+        search_form = FocusGlossSearchForm(self.request.GET, languages=dataset_languages)
 
         context['searchform'] = search_form
-
 
         context['input_names_fields_and_labels'] = {}
 
@@ -3348,40 +3340,11 @@ class MinimalPairsListView(ListView):
                         label = field.label
                         context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
-
         context['page_number'] = context['page_obj'].number
 
         context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
-
-        # the minimal pairs are computed during ajax calls in the view template
-        # all queried objects are shown on pages in the list view
-        # but those focus glosses without minimal pairs have empty columns
-        # it doesn't work to try to put additional glosses in the search_results scroll bar because
-        # ajax hasn't been called for glosses on other pages
-        if len(self.object_list) > settings.MAX_SCROLL_BAR:
-            list_of_objects = context['page_obj'].object_list
-        else:
-            list_of_objects = self.object_list
-
-        # construct scroll bar
-        # the following retrieves language code for English (or DEFAULT LANGUAGE)
-        # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
-
-        (interface_language, interface_language_code,
-         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
-
-        dataset_display_languages = []
-        for lang in dataset_languages:
-            dataset_display_languages.append(lang.language_code_2char)
-        if interface_language_code in dataset_display_languages:
-            lang_attr_name = interface_language_code
-        else:
-            lang_attr_name = default_language_code
-
-        items = construct_scrollbar(list_of_objects, 'sign', lang_attr_name)
-        self.request.session['search_results'] = items
 
         return context
 
@@ -3392,8 +3355,7 @@ class MinimalPairsListView(ListView):
         return self.request.GET.get('paginate_by', self.paginate_by)
 
     def render_to_response(self, context):
-        # Look for a 'format=json' GET argument
-        if self.request.GET.get('format') == 'CSV':
+        if 'csv' in self.request.GET:
             return self.render_to_csv_response(context)
         else:
             return super(MinimalPairsListView, self).render_to_response(context)
@@ -3405,8 +3367,10 @@ class MinimalPairsListView(ListView):
 
         # this ends up being English for Global Signbank
         language_code = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+        dataset = context['dataset']
 
-        rows = write_csv_for_minimalpairs(self, language_code=language_code)
+        # this can take a long time if the entire dataset is queried
+        rows = write_csv_for_minimalpairs(self, dataset, language_code=language_code)
 
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
@@ -3434,6 +3398,11 @@ class MinimalPairsListView(ListView):
 
         get = self.request.GET
 
+        if not get:
+            # to speed things up, don't show anything on initial visit
+            qs = Gloss.objects.none()
+            return qs
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         # grab gloss ids for finger spelling glosses, identified by text #.
@@ -3455,11 +3424,7 @@ class MinimalPairsListView(ListView):
                         (Q(**{handedness_filter: empty_value}))).exclude(
                         (Q(**{strong_hand_filter: empty_value})))
 
-        if 'filter' in get or len(get) > 0:
-            self.filter = True
-            pass
-        else:
-            self.filter = False
+        if 'showall' in get:
             return glosses_with_phonology
 
         qs = glosses_with_phonology
@@ -3481,10 +3446,6 @@ class MinimalPairsListView(ListView):
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
 
-        if 'translation' in get and get['translation'] != '':
-            val = get['translation']
-            qs = qs.filter(translation__translation__text__iregex=val)
-
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
         fields_with_choices = fields_to_fieldcategory_dict()
         multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields
@@ -3504,7 +3465,7 @@ class MinimalPairsListView(ListView):
             if vals != []:
                 qs = qs.filter(**{ fieldnameQuery: vals })
 
-        ## phonology and semantics field filters
+        # phonology and semantics field filters
         fieldnames = [ f for f in fieldnames if f not in multiple_select_gloss_fields ]
 
         for fieldname in fieldnames:

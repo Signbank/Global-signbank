@@ -1965,22 +1965,14 @@ def construct_scrollbar(qs, search_type, language_code):
 
     return items
 
-def write_csv_for_minimalpairs(minimalpairslistview, language_code):
-#  called from the MinimalPairsListView
 
+def write_csv_for_minimalpairs(minimalpairslistview, dataset, language_code):
+    # called from the MinimalPairsListView
     rows = []
 
-    minimalpairs_list = minimalpairslistview.get_queryset()
     # for debug purposes use a count, otherwise this is extremely slow if all glosses are shown
-    for glo in minimalpairs_list:
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            try:
-                mp_dataset = glo.lemma.dataset.acronym
-            except:
-                mp_dataset = 'None'
-            focus_gloss_columns = [ mp_dataset]
-        else:
-            focus_gloss_columns = []
+    for glo in minimalpairslistview.object_list:
+        focus_gloss_columns = [dataset.acronym]
 
         translation_focus_gloss = ""
         translations_gloss = glo.annotationidglosstranslation_set.filter(
@@ -2008,7 +2000,7 @@ def write_csv_for_minimalpairs(minimalpairslistview, language_code):
                     try:
                         safe_row.append(column.encode('utf-8').decode())
                     except AttributeError:
-                        safe_row.append(None)
+                        safe_row.append("")
 
                 rows.append(safe_row)
         else:
@@ -2018,11 +2010,12 @@ def write_csv_for_minimalpairs(minimalpairslistview, language_code):
                 try:
                     safe_row.append(column.encode('utf-8').decode())
                 except AttributeError:
-                    safe_row.append(None)
+                    safe_row.append("")
 
             rows.append(safe_row)
 
     return rows
+
 
 def minimalpairs_focusgloss(gloss_id, language_code):
 
@@ -2031,10 +2024,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
-    try:
-        minimalpairs_objects = this_gloss.minimal_pairs_dict()
-    except:
-        minimalpairs_objects = {}
+    minimalpairs_objects = this_gloss.minimal_pairs_dict()
 
     result = []
     for minimalpairs_object, minimal_pairs_dict in minimalpairs_objects.items():
@@ -2065,7 +2055,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
                 focus_gloss_value = focus_gloss_choice
             elif field_kind == 'check':
                 # the value is a Boolean or it might not be set
-                if focus_gloss_choice == 'True' or focus_gloss_choice == True:
+                if focus_gloss_choice == 'True' or focus_gloss_choice is True:
                     focus_gloss_value = 'Yes'
                 elif focus_gloss_choice == 'Neutral' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
                     focus_gloss_value = 'Neutral'
@@ -2079,7 +2069,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
                 other_gloss_value = other_gloss_choice
             elif field_kind == 'check':
                 # the value is a Boolean or it might not be set
-                if other_gloss_choice == 'True' or other_gloss_choice == True:
+                if other_gloss_choice == 'True' or other_gloss_choice is True:
                     other_gloss_value = 'Yes'
                 elif other_gloss_choice == 'Neutral' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
                     other_gloss_value = 'Neutral'
