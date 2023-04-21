@@ -3293,7 +3293,7 @@ class MinimalPairsListView(ListView):
 
         if selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view minimal pairs.')
-            messages.add_message(request, messages.ERROR, feedback_message)
+            messages.add_message(self.request, messages.ERROR, feedback_message)
 
         dataset = selected_datasets.first()
         context['dataset'] = dataset
