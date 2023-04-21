@@ -365,19 +365,20 @@ class GlossListView(ListView):
         context['web_search'] = self.web_search
 
         # If the menu bar search form was used, populate the search form with the query string
-        # for all languages for which results were found.
+        gloss_fields_to_populate = dict()
         if 'search' in self.request.GET and self.request.GET['search'] != '':
             val = self.request.GET['search']
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
-            context['gloss_fields_to_populate'] = json.dumps([
-                language[0] for language in
-                AnnotationIdglossTranslation.objects.filter(text__iregex=val,
-                                                            gloss__lemma__dataset__in=selected_datasets)
-                    .values_list('language__language_code_2char').distinct()
-            ])
-        else:
-            context['gloss_fields_to_populate'] = json.dumps([])
+            gloss_fields_to_populate['search'] = val
+        if 'translation' in self.request.GET and self.request.GET['translation'] != '':
+            val = self.request.GET['translation']
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(val)
+            gloss_fields_to_populate['translation'] = val
+        gloss_fields_to_populate_keys = list(gloss_fields_to_populate.keys())
+        context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
+        context['gloss_fields_to_populate_keys'] = gloss_fields_to_populate_keys
 
         context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
@@ -911,7 +912,7 @@ class GlossListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         from signbank.dictionary.forms import check_language_fields
-        valid_regex, search_fields = check_language_fields(get, dataset_languages)
+        valid_regex, search_fields = check_language_fields(GlossSearchForm, get, dataset_languages)
 
         if not valid_regex:
             error_message_1 = _('Error in search field ')
@@ -3298,7 +3299,7 @@ class MinimalPairsListView(ListView):
 
         if selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view minimal pairs.')
-            messages.add_message(request, messages.ERROR, feedback_message)
+            messages.add_message(self.request, messages.ERROR, feedback_message)
 
         dataset = selected_datasets.first()
         context['dataset'] = dataset

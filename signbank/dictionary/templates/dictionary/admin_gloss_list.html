@@ -54,6 +54,8 @@ var query_parameters_dict = {{query_parameters|safe}};
 var other_parameters_keys = {{other_parameters_keys|safe}};
 var language_query_keys = {{language_query_keys|safe}};
 var morpheme_idgloss = '{{morpheme_idgloss|safe}}';
+var gloss_fields_to_populate = {{gloss_fields_to_populate|safe}};
+var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
 
 $(document).ready(function() {
 
@@ -236,9 +238,21 @@ $(document).ready(function() {
         $translation.val(query_initial);
     };
 
+     if (gloss_fields_to_populate_keys.includes('translation')) {
+        var $translation = $("input[name='translation']");
+        var query_initial = gloss_fields_to_populate['translation'];
+        $translation.val(query_initial);
+    };
+
      if (query_parameters_keys.includes('search')) {
         var $menu_bar_search = $("input[name='search']");
         var query_initial = query_parameters_dict['search'];
+        $menu_bar_search.val(query_initial);
+    };
+
+     if (gloss_fields_to_populate_keys.includes('search')) {
+        var $menu_bar_search = $("input[name='search']");
+        var query_initial = gloss_fields_to_populate['search'];
         $menu_bar_search.val(query_initial);
     };
 
