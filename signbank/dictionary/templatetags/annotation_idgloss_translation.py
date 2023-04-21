@@ -85,7 +85,7 @@ def get_search_field_for_language(form, language):
 
 @register.filter
 def get_morpheme_search_field_for_language(form, language):
-    return getattr(form, MorphemeSearchForm.morpheme_search_field_prefix + language.language_code_2char)
+    return getattr(form, MorphemeSearchForm.gloss_search_field_prefix + language.language_code_2char)
 
 
 @register.filter

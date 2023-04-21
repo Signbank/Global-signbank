@@ -2482,7 +2482,7 @@ class MorphemeListView(ListView):
 
         multiple_select_morpheme_categories = fields_to_fieldcategory_dict(fieldnames)
         multiple_select_morpheme_categories['definitionRole'] = 'NoteType'
-        multiple_select_morpheme_categories['hasComponentOfType'] = 'MorphologyType'
+        # multiple_select_morpheme_categories['hasComponentOfType'] = 'MorphologyType'
 
         multiple_select_morpheme_fields = [ fieldname for (fieldname, category) in multiple_select_morpheme_categories.items() ]
 
@@ -2524,6 +2524,19 @@ class MorphemeListView(ListView):
             show_all = False
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        from signbank.dictionary.forms import check_language_fields
+        valid_regex, search_fields = check_language_fields(MorphemeSearchForm, get, dataset_languages)
+        print(valid_regex, search_fields)
+        if not valid_regex:
+            error_message_1 = _('Error in search field ')
+            error_message_2 = ', '.join(search_fields)
+            error_message_3 = _(': Please use a backslash before special characters.')
+            error_message = error_message_1 + error_message_2 + error_message_3
+            messages.add_message(self.request, messages.ERROR, error_message)
+            qs = Morpheme.objects.none()
+            return qs
 
         if len(get) > 0 or show_all:
             qs = Morpheme.objects.filter(lemma__dataset__in=selected_datasets)
@@ -2544,20 +2557,22 @@ class MorphemeListView(ListView):
 
         # Evaluate all morpheme/language search fields
         for get_key, get_value in get.items():
-            if get_key.startswith(MorphemeSearchForm.morpheme_search_field_prefix) and get_value != '':
-                language_code_2char = get_key[len(MorphemeSearchForm.morpheme_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char)
+            if get_key.startswith(MorphemeSearchForm.gloss_search_field_prefix) and get_value != '':
+                language_code_2char = get_key[len(MorphemeSearchForm.gloss_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
                                annotationidglosstranslation__language=language)
+            elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
+                query_parameters[get_key] = get_value
+                language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
+                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
+                               lemma__lemmaidglosstranslation__language=language)
             elif get_key.startswith(MorphemeSearchForm.keyword_search_field_prefix) and get_value != '':
                 language_code_2char = get_key[len(MorphemeSearchForm.keyword_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char)
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
-
-        if 'lemmaGloss' in get and get['lemmaGloss'] != '':
-            val = get['lemmaGloss']
-            qs = qs.filter(idgloss__iregex=val)
 
         if 'translation' in get and get['translation'] != '':
             val = get['translation']
@@ -2589,10 +2604,6 @@ class MorphemeListView(ListView):
             val = get['defspublished'] == 'yes'
 
             qs = qs.filter(definition__published=val)
-
-        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew']
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
-            fieldnames.remove('derivHist')
 
         # SignLanguage and basic property filters
         # allows for multiselect

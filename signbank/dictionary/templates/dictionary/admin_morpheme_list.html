@@ -358,31 +358,37 @@ function do_set_lemma_language(el) {
         </div>
         <div>
             <table class='table' id='searchfields'>
-                    {% for dataset_lang in dataset_languages %}
-                    {% with searchform|get_morpheme_search_field_for_language:dataset_lang as search_field %}
-                    {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
+            {% for dataset_lang in dataset_languages %}
                 <tr>
-                    <td><div class='input-group'>
+                    {% with searchform|get_morpheme_search_field_for_language:dataset_lang as search_field %}
+                    <td>
+                        <div class='input-group'>
                         <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
-                                    {{search_field.label}}
+                            {{search_field.label}}
                         </label>
-                        <input name='morphemesearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                        <input id='morphemesearch_{{ dataset_lang.language_code_2char }}' name='morphemesearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                         </div>
                     </td>
+                    {% endwith %}
+
+                    {% with searchform|get_lemma_field_for_language:dataset_lang as lemma_field %}
                     <td><div class='input-group'>
 
-                        <label class='input-group-addon' for='id_idgloss'>{{searchform.lemmaGloss.label}}</label>
-                        <input name='lemmaGloss' class='form-control' {% if searchform.lemmaGloss.value %}value='{{searchform.lemmaGloss.value}}'{% endif %}></div>
+                        <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
+                            {{lemma_field.label}}
+                        </label>
+                        <input name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
                     </td>
+                    {% endwith %}
 
+                    {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
                     <td><div class='input-group'>
                         <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
                         <input name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
                     </td>
+                    {% endwith %}
                 </tr>
-                    {% endwith %}
-                    {% endwith %}
-                    {% endfor %}
+            {% endfor %}
             </table>
         </div>
 
