@@ -976,10 +976,8 @@ class GlossListView(ListView):
         if 'search' in get and get['search'] != '':
             val = get['search']
             query_parameters['search'] = val
-            print('second time control')
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
-            print('second time control val: ', val)
             query = Q(annotationidglosstranslation__text__iregex=val)
 
             if re.match('^\d+$', val):
