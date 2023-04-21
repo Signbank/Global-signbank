@@ -258,8 +258,8 @@ class GlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False #otherwise the html required attribute will show up on every form
 
-    search = forms.CharField(label=_("Search Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
+    search = forms.CharField(label=_('Search Gloss'))
+    sortOrder = forms.CharField(label=_('Sort Order'))       # Used in glosslistview to store user-selection
     tags = forms.MultipleChoiceField(label=_('Tags'), choices=tag_choices)
     nottags = forms.MultipleChoiceField(label=_('Not Tags'), choices=not_tag_choices)  # this field is not used in the template
     translation = forms.CharField(label=_('Search Translations'))
@@ -327,6 +327,8 @@ class GlossSearchForm(forms.ModelForm):
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
+    menu_bar_search = "Menu Bar Search Gloss"
+    menu_bar_translation = "Menu Bar Search Translation"
 
     class Meta:
 
@@ -404,12 +406,13 @@ class GlossSearchForm(forms.ModelForm):
                                            widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
-def check_language_fields(queryDict, languages):
+def check_language_fields(SearchForm, queryDict, languages):
     # this function inspects the search parameters from GlossSearchForm looking for occurrences of + at the start
     language_fields_okay = True
     search_fields = []
     if not queryDict:
         return language_fields_okay, search_fields
+    menu_bar_fields = ['search', 'translation']
 
     language_field_labels = dict()
     language_field_values = dict()
@@ -430,6 +433,14 @@ def check_language_fields(queryDict, languages):
         if lemma_field_name in queryDict.keys():
             language_field_values[lemma_field_name] = queryDict[lemma_field_name]
             language_field_labels[lemma_field_name] = _("Lemma")+(" (%s)" % language.name)
+
+    for menu_bar_field in menu_bar_fields:
+        if menu_bar_field in queryDict.keys():
+            language_field_values[menu_bar_field] = queryDict[menu_bar_field]
+            if menu_bar_field == 'search':
+                language_field_labels[menu_bar_field] = gettext(SearchForm.menu_bar_search)
+            else:
+                language_field_labels[menu_bar_field] = gettext(SearchForm.menu_bar_translation)
 
     import re
     regexp = re.compile('^[+]')
