@@ -417,19 +417,19 @@ def check_language_fields(SearchForm, queryDict, languages):
     language_field_labels = dict()
     language_field_values = dict()
     for language in languages:
-        glosssearch_field_name = GlossSearchForm.gloss_search_field_prefix + language.language_code_2char
+        glosssearch_field_name = SearchForm.gloss_search_field_prefix + language.language_code_2char
         if glosssearch_field_name in queryDict.keys():
             language_field_values[glosssearch_field_name] = queryDict[glosssearch_field_name]
             language_field_labels[glosssearch_field_name] = _("Gloss")+(" (%s)" % language.name)
 
         # do the same for Translations
-        keyword_field_name = GlossSearchForm.keyword_search_field_prefix + language.language_code_2char
+        keyword_field_name = SearchForm.keyword_search_field_prefix + language.language_code_2char
         if keyword_field_name in queryDict.keys():
             language_field_values[keyword_field_name] = queryDict[keyword_field_name]
             language_field_labels[keyword_field_name] = _("Translations")+(" (%s)" % language.name)
 
         # and for LemmaIdgloss
-        lemma_field_name = GlossSearchForm.lemma_search_field_prefix + language.language_code_2char
+        lemma_field_name = SearchForm.lemma_search_field_prefix + language.language_code_2char
         if lemma_field_name in queryDict.keys():
             language_field_values[lemma_field_name] = queryDict[lemma_field_name]
             language_field_labels[lemma_field_name] = _("Lemma")+(" (%s)" % language.name)
@@ -493,9 +493,11 @@ class MorphemeSearchForm(forms.ModelForm):
 
     createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
-    morpheme_search_field_prefix = "morphemesearch_"
+    gloss_search_field_prefix = "morphemesearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
+    menu_bar_search = "Menu Bar Search Gloss"
+    menu_bar_translation = "Menu Bar Search Translation"
 
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'}
@@ -511,7 +513,7 @@ class MorphemeSearchForm(forms.ModelForm):
         super(MorphemeSearchForm, self).__init__(queryDict, *args, **kwargs)
 
         for language in languages:
-            morphemesearch_field_name = self.morpheme_search_field_prefix + language.language_code_2char
+            morphemesearch_field_name = self.gloss_search_field_prefix + language.language_code_2char
             setattr(self, morphemesearch_field_name, forms.CharField(label=_("Gloss") + (" (%s)" % language.name)))
             if morphemesearch_field_name in queryDict:
                 getattr(self, morphemesearch_field_name).value = queryDict[morphemesearch_field_name]
@@ -877,6 +879,8 @@ class LemmaSearchForm(forms.ModelForm):
     lemma_search_field_prefix = "lemma_"
     no_glosses = forms.ChoiceField(label=_(u'Only show results without glosses'),choices=NO_GLOSS_SELECTION)
     has_glosses = forms.ChoiceField(label=_(u'Only show results with glosses'),choices=NO_GLOSS_SELECTION)
+    menu_bar_search = "Menu Bar Search Gloss"
+    menu_bar_translation = "Menu Bar Search Translation"
 
     class Meta:
 
@@ -1041,6 +1045,8 @@ class FocusGlossSearchForm(forms.ModelForm):
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
+    menu_bar_search = "Menu Bar Search Gloss"
+    menu_bar_translation = "Menu Bar Search Translation"
 
     class Meta:
 
