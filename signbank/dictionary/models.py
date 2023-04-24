@@ -7,7 +7,7 @@ from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete
-from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.translation import gettext_noop, gettext_lazy as _, get_language
 from django.utils.timezone import now
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
@@ -1594,7 +1594,7 @@ class Gloss(models.Model):
                     continue
                 if field_value != other_field_value:
                     gloss_field = Gloss._meta.get_field(field_name)
-                    field_label = gloss_field.verbose_name
+                    field_label = gettext_noop(gloss_field.verbose_name)
                     if field_name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                         if field_value is not None:
                             field_value = Handshape.objects.get(machine_value=int(field_value)).name
