@@ -25,6 +25,8 @@ var csrf_token = '{{csrf_token}}';
 var url = '{{PREFIX_URL}}';
 var page_number = {{ page_number }};
 var objects_on_this_page = {{objects_on_page|safe}};
+var gloss_fields_to_populate = {{gloss_fields_to_populate|safe}};
+var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
 
 // This script gets minimal pairs data and displays it as table rows
 // Each ajax call can generate multiple rows, they are appended to the table dynamically
@@ -59,6 +61,18 @@ $(document).ready(function() {
         $("#menu_bar_search_mirror").val("");
      });
 
+     // initialize search parameters in multiple select fields
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = '#id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        if (gloss_fields_to_populate_keys.includes(this_var)) {
+            var query_initial = gloss_fields_to_populate[this_var];
+            $(this_id).val(query_initial);
+            $(this_id).trigger('change');
+        };
+     }
+
+
     lookup = "#minimalpairs_table";
     for (var i = 0; i < objects_on_this_page.length; i++) {
         $.ajax({
@@ -92,6 +106,7 @@ $(document).ready(function() {
 function clearForm() {
 
       var inputElements = document.getElementById('searchfields').querySelectorAll("input");
+      var selectElements = document.getElementById('searchfields').querySelectorAll("select");
 
       for(i=0; i<inputElements.length; i++) {
           field_name = inputElements[i].name;
@@ -122,6 +137,18 @@ function clearForm() {
               break;
           }
       };
+     for(i=0; i<selectElements.length; i++) {
+          field_name = selectElements[i].name;
+          field_type = selectElements[i].type.toLowerCase();
+          switch(field_type) {
+            case "select":
+              selectElements[i].selectedIndex = -1;
+              break;
+
+            default:
+              break;
+          }
+      };
      $('.js-example-basic-multiple').val(null).trigger('change');
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
@@ -135,10 +162,9 @@ function clearForm() {
 <body>
 
 <div id="definitionblock">
-    {% url 'dictionary:protected_media' '' as protected_media_url %}
 
 <h3>{% trans "Minimal Pairs" %}</h3>
-
+<div id='searchform_outer' class='well '>
 <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/minimalpairs/'>
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
@@ -169,7 +195,8 @@ function clearForm() {
                     <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
                         {{search_field.label}}
                     </label>
-                    <input id='glosssearch_{{ dataset_lang.language_code_2char }}' name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                    <input id='glosssearch_{{ dataset_lang.language_code_2char }}' type='text'
+                           name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' value="{{search_field.value}}">
                     </div>
                 </td>
                 {% endwith %}
@@ -179,14 +206,16 @@ function clearForm() {
                     <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
                         {{lemma_field.label}}
                     </label>
-                    <input name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
+                    <input id='lemma_{{ dataset_lang.language_code_2char }}' type='text'
+                           name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' value='{{lemma_field.value}}'></div>
                 </td>
                 {% endwith %}
 
                 {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
                 <td><div class='input-group'>
                     <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
-                    <input name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
+                    <input id='keyword_{{ dataset_lang.language_code_2char }}' type='text'
+                           name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' value='{{keyword_field.value}}'></div>
                 </td>
                 {% endwith %}
             </tr>
@@ -252,6 +281,7 @@ function clearForm() {
 </div>
 </div>
 </form>
+</div>
 
 {% if object_list %}
 

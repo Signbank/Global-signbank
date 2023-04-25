@@ -3352,6 +3352,26 @@ class MinimalPairsListView(ListView):
                         label = field.label
                         context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
+        # pass these to the template to populate the search form with the search parameters
+        gloss_fields_to_populate = dict()
+        for veld in self.request.GET.keys():
+            if veld in ['search_type', 'filter']:
+                continue
+            veld_value = self.request.GET[veld]
+            if veld_value == '' or veld_value == '0':
+                continue
+            if veld[-2:] == '[]' :
+                veld_list = self.request.GET.getlist(veld)
+                if '' in veld_list:
+                    veld_list.remove('')
+                if veld_list is []:
+                    continue
+                veld_value = veld_list
+            gloss_fields_to_populate[veld] = veld_value
+        gloss_fields_to_populate_keys = list(gloss_fields_to_populate.keys())
+        context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
+        context['gloss_fields_to_populate_keys'] = gloss_fields_to_populate_keys
+
         context['page_number'] = context['page_obj'].number
 
         context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
@@ -3457,17 +3477,17 @@ class MinimalPairsListView(ListView):
         for get_key, get_value in get.items():
             if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
                 language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char)
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
                                annotationidglosstranslation__language=language)
             elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
                 language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char)
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
                                lemma__lemmaidglosstranslation__language=language)
             elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
                 language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char)
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
 
