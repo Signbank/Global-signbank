@@ -568,13 +568,13 @@ class DefinitionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['note'] = forms.ChoiceField(label=_(u'Type'),
-                             choices=choicelist_queryset_to_translated_dict(
-                                 list(FieldChoice.objects.filter(field='NoteType').order_by(
-                                     'machine_value') ),
-                                 ordered=False, id_prefix='', shortlist=False
-                             ),
-                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        
+                                                choices=choicelist_queryset_to_translated_dict(
+                                                     list(FieldChoice.objects.filter(field='NoteType').order_by(
+                                                         'machine_value')),
+                                                     ordered=False, id_prefix='', shortlist=False
+                                                ),
+                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
 class RelationForm(forms.ModelForm):
     
     sourceid = forms.CharField(label=_(u'Source Gloss'))
@@ -746,24 +746,23 @@ FINGER_SELECTION = ((True, 'True'), (False, 'False'), (None, 'Either'))
 class HandshapeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
-    search = forms.CharField(label=_("Handshape"))
     sortOrder = forms.CharField(label=_("Sort Order"),
                                 initial="machine_value")  # Used in Handshapelistview to store user-selection
 
     # this is used to pass the label to the handshapes list view, the choices aren't displayed, there are radio buttons
     unselectedFingers = forms.ChoiceField(label=_(u'Unselected Fingers Extended'), choices=get_finger_selection_choices,
-                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     hsFingConf = forms.ChoiceField(label=_(u'Finger configuration'), choices=get_joint_configuration_choices,
-                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hsFingConf2 = forms.ChoiceField(label=_(u'Finger configuration 2'), choices=get_joint_configuration_choices,
-                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hsNumSel = forms.ChoiceField(label=_(u'Quantity'), choices=get_quantity_choices,
-                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hsSpread = forms.ChoiceField(label=_(u'Spreading'), choices=get_spreading_choices,
-                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hsAperture = forms.ChoiceField(label=_(u'Aperture'), choices=get_aperture_choices,
-                                  widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     fsT = forms.NullBooleanSelect()
     fsI = forms.NullBooleanSelect()
@@ -786,13 +785,13 @@ class HandshapeSearchForm(forms.ModelForm):
 
         model = Handshape
         fields = ('machine_value', 'name',
-				  'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2',
-				  'hsAperture', 'hsThumb', 'hsSpread', 'hsFingUnsel',
+                  'hsNumSel', 'hsFingSel', 'hsFingSel2', 'hsFingConf', 'hsFingConf2',
+                  'hsAperture', 'hsThumb', 'hsSpread', 'hsFingUnsel',
                   'fsT', 'fsI', 'fsM', 'fsR', 'fsP',
                   'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                   'ufT', 'ufI', 'ufM', 'ufR', 'ufP')
         widgets = {
-                'fsT' : forms.RadioSelect(choices = FINGER_SELECTION),
+                'fsT': forms.RadioSelect(choices=FINGER_SELECTION),
                 'fsI': forms.RadioSelect(choices=FINGER_SELECTION),
                 'fsM': forms.RadioSelect(choices=FINGER_SELECTION),
                 'fsR': forms.RadioSelect(choices=FINGER_SELECTION),
@@ -861,6 +860,39 @@ class HandshapeSearchForm(forms.ModelForm):
                                                           ),
                                            widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
+
+def check_multilingual_fields(ClassModel, queryDict, languages):
+    # this function inspects the search parameters from HandshapeSearchForm looking for occurrences of + at the start
+    language_fields_okay = True
+    search_fields = []
+    if not queryDict:
+        return language_fields_okay, search_fields
+
+    language_field_labels = dict()
+    language_field_values = dict()
+    if 'name' in queryDict.keys():
+        language_field_values['name'] = queryDict['name']
+        class_name_plus_name = ClassModel.__name__ + ' Name'
+        language_field_labels['name'] = gettext(class_name_plus_name)
+    else:
+        # this is only needed if the user can search on multiple model translation languages in the same form
+        for language in languages:
+            search_field_name = 'name_' + language.language_code_2char
+            if search_field_name in queryDict.keys():
+                language_field_values[search_field_name] = queryDict[search_field_name]
+                language_field_labels[search_field_name] = ClassModel.__meta.get_field(search_field_name).verbose_name+(
+                        " (%s)" % language.name)
+
+    import re
+    regexp = re.compile('^[+]')
+    for language_field in language_field_values.keys():
+        if regexp.search(language_field_values[language_field]):
+            language_fields_okay = False
+            search_fields.append(language_field_labels[language_field])
+
+    return language_fields_okay, search_fields
+
+
 class ImageUploadForHandshapeForm(forms.Form):
     """Form for image upload for a particular gloss"""
 
@@ -884,7 +916,7 @@ class LemmaSearchForm(forms.ModelForm):
 
     class Meta:
 
-        ATTRS_FOR_FORMS = {'class':'form-control'}
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = LemmaIdgloss
         fields = ['dataset']
@@ -1050,7 +1082,7 @@ class FocusGlossSearchForm(forms.ModelForm):
 
     class Meta:
 
-        ATTRS_FOR_FORMS = {'class':'form-control'}
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Gloss
         fields = settings.MINIMAL_PAIRS_SEARCH_FIELDS

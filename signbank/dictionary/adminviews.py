@@ -2528,7 +2528,7 @@ class MorphemeListView(ListView):
 
         from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(MorphemeSearchForm, get, dataset_languages)
-        print(valid_regex, search_fields)
+
         if not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
@@ -3416,6 +3416,19 @@ class MinimalPairsListView(ListView):
             return qs
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        from signbank.dictionary.forms import check_language_fields
+        valid_regex, search_fields = check_language_fields(FocusGlossSearchForm, get, dataset_languages)
+
+        if not valid_regex:
+            error_message_1 = _('Error in search field ')
+            error_message_2 = ', '.join(search_fields)
+            error_message_3 = _(': Please use a backslash before special characters.')
+            error_message = error_message_1 + error_message_2 + error_message_3
+            messages.add_message(self.request, messages.ERROR, error_message)
+            qs = Gloss.objects.none()
+            return qs
 
         # grab gloss ids for finger spelling glosses, identified by text #.
 
@@ -4416,6 +4429,21 @@ class HandshapeListView(ListView):
             self.search_type = 'handshape'
 
         setattr(self.request.session, 'search_type', self.search_type)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        from signbank.dictionary.forms import check_multilingual_fields
+        valid_regex, search_fields = check_multilingual_fields(Handshape, get, dataset_languages)
+
+        if not valid_regex:
+            error_message_1 = _('Error in search field ')
+            error_message_2 = ', '.join(search_fields)
+            error_message_3 = _(': Please use a backslash before special characters.')
+            error_message = error_message_1 + error_message_2 + error_message_3
+            messages.add_message(self.request, messages.ERROR, error_message)
+            qs = Handshape.objects.none()
+            return qs
 
         qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
