@@ -446,7 +446,9 @@ def check_language_fields(SearchForm, queryDict, languages):
             language_field_labels[menu_bar_field] = gettext(menu_bar_field_label)
 
     import re
-    regexp = re.compile('^[+]')
+    # check for matches starting with: + * [ ( ) ?
+    # or ending with a +
+    regexp = re.compile('^[+*\[()?]|([^+]+\+$)')
     for language_field in language_field_values.keys():
         if regexp.search(language_field_values[language_field]):
             language_fields_okay = False
@@ -865,7 +867,7 @@ class HandshapeSearchForm(forms.ModelForm):
 
 
 def check_multilingual_fields(ClassModel, queryDict, languages):
-    # this function inspects the search parameters from HandshapeSearchForm looking for occurrences of + at the start
+    # this function inspects the name field of HandshapeSearchForm looking for occurrences of special characters
     language_fields_okay = True
     search_fields = []
     if not queryDict:
@@ -878,7 +880,7 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
         class_name_plus_name = ClassModel.__name__ + ' Name'
         language_field_labels['name'] = gettext(class_name_plus_name)
     else:
-        # this is only needed if the user can search on multiple model translation languages in the same form
+        # this is only needed if the user can search on multiple (model translation) languages in the same form
         for language in languages:
             search_field_name = 'name_' + language.language_code_2char
             if search_field_name in queryDict.keys():
@@ -887,7 +889,9 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
                         " (%s)" % language.name)
 
     import re
-    regexp = re.compile('^[+]')
+    # check for matches starting with: + * [ ( ) ?
+    # or ending with a +
+    regexp = re.compile('^[+*\[()?]|([^+]+\+$)')
     for language_field in language_field_values.keys():
         if regexp.search(language_field_values[language_field]):
             language_fields_okay = False
