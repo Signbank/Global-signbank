@@ -188,7 +188,7 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(definition__published=val))
 
         elif get_key in ['definitionContains']:
-            definitions_with_this_text = Definition.objects.filter(text__iregex=get_value)
+            definitions_with_this_text = Definition.objects.filter(text__icontains=get_value)
 
             #Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
@@ -215,7 +215,7 @@ def convert_query_parameters_to_filter(query_parameters):
             q_filter = 'derivHist__in'
             query_list.append(Q(**{q_filter: get_value}))
         elif get_key == 'useInstr':
-            query_list.append(Q(useInstr__iregex=get_value))
+            query_list.append(Q(useInstr__icontains=get_value))
         elif get_key == 'createdBefore':
             created_before_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
             query_list.append(Q(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date)))
@@ -283,7 +283,7 @@ def convert_query_parameters_to_filter(query_parameters):
             field_obj = Gloss._meta.get_field(get_key)
 
             if type(field_obj) in [CharField,TextField]:
-                q_filter = get_key + '__iregex'
+                q_filter = get_key + '__icontains'
             elif hasattr(field_obj, 'field_choice_category'):
                 # just in case, field choice field that is not multi-select
                 q_filter = get_key + '__machine_value'

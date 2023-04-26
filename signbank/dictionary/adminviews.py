@@ -1073,7 +1073,7 @@ class GlossListView(ListView):
 
         if 'useInstr' in get and get['useInstr'] != '':
             query_parameters['useInstr'] = get['useInstr']
-            qs = qs.filter(useInstr__iregex=get['useInstr'])
+            qs = qs.filter(useInstr__icontains=get['useInstr'])
 
         fields_with_choices = fields_to_fieldcategory_dict()
         for fieldnamemulti in fields_with_choices.keys():
@@ -1100,7 +1100,7 @@ class GlossListView(ListView):
                 field_obj = Gloss._meta.get_field(fieldname)
 
                 if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
-                    key = fieldname + '__iregex'
+                    key = fieldname + '__icontains'
                 else:
                     key = fieldname + '__exact'
 
@@ -1148,7 +1148,7 @@ class GlossListView(ListView):
         if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
             query_parameters['relationToForeignSign'] = get['relationToForeignSign']
 
-            relations = RelationToForeignSign.objects.filter(other_lang_gloss__iregex=get['relationToForeignSign'])
+            relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
             potential_pks = [relation.gloss.pk for relation in relations]
             qs = qs.filter(pk__in=potential_pks)
 
@@ -1234,7 +1234,7 @@ class GlossListView(ListView):
         if 'definitionContains' in get and get['definitionContains'] != '' and get['definitionContains'] not in ['', '0']:
             query_parameters['definitionContains'] = get['definitionContains']
 
-            definitions_with_this_text = Definition.objects.filter(text__iregex=get['definitionContains'])
+            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains'])
 
             #Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
@@ -2751,7 +2751,7 @@ class MorphemeListView(ListView):
             created_by_search_string = ' '.join(get['createdBy'].strip().split())  # remove redundant spaces
             qs = qs.annotate(
                 created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
-                .filter(created_by__iregex=created_by_search_string)
+                .filter(created_by__icontains=created_by_search_string)
 
 
 
@@ -3519,7 +3519,7 @@ class MinimalPairsListView(ListView):
                 field_obj = Gloss._meta.get_field(fieldname)
 
                 if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
-                    key = fieldname + '__iregex'
+                    key = fieldname + '__icontains'
                 else:
                     key = fieldname + '__exact'
 
