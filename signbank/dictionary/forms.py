@@ -417,30 +417,33 @@ def check_language_fields(SearchForm, queryDict, languages):
     language_field_labels = dict()
     language_field_values = dict()
     for language in languages:
-        glosssearch_field_name = SearchForm.gloss_search_field_prefix + language.language_code_2char
-        if glosssearch_field_name in queryDict.keys():
-            language_field_values[glosssearch_field_name] = queryDict[glosssearch_field_name]
-            language_field_labels[glosssearch_field_name] = _("Gloss")+(" (%s)" % language.name)
+        if hasattr(SearchForm, 'gloss_search_field_prefix'):
+            glosssearch_field_name = SearchForm.gloss_search_field_prefix + language.language_code_2char
+            if glosssearch_field_name in queryDict.keys():
+                language_field_values[glosssearch_field_name] = queryDict[glosssearch_field_name]
+                language_field_labels[glosssearch_field_name] = _("Gloss")+(" (%s)" % language.name)
 
         # do the same for Translations
-        keyword_field_name = SearchForm.keyword_search_field_prefix + language.language_code_2char
-        if keyword_field_name in queryDict.keys():
-            language_field_values[keyword_field_name] = queryDict[keyword_field_name]
-            language_field_labels[keyword_field_name] = _("Translations")+(" (%s)" % language.name)
+        if hasattr(SearchForm, 'keyword_search_field_prefix'):
+            keyword_field_name = SearchForm.keyword_search_field_prefix + language.language_code_2char
+            if keyword_field_name in queryDict.keys():
+                language_field_values[keyword_field_name] = queryDict[keyword_field_name]
+                language_field_labels[keyword_field_name] = _("Translations")+(" (%s)" % language.name)
 
         # and for LemmaIdgloss
-        lemma_field_name = SearchForm.lemma_search_field_prefix + language.language_code_2char
-        if lemma_field_name in queryDict.keys():
-            language_field_values[lemma_field_name] = queryDict[lemma_field_name]
-            language_field_labels[lemma_field_name] = _("Lemma")+(" (%s)" % language.name)
+        if hasattr(SearchForm, 'lemma_search_field_prefix'):
+            lemma_field_name = SearchForm.lemma_search_field_prefix + language.language_code_2char
+            if lemma_field_name in queryDict.keys():
+                language_field_values[lemma_field_name] = queryDict[lemma_field_name]
+                language_field_labels[lemma_field_name] = _("Lemma")+(" (%s)" % language.name)
 
     for menu_bar_field in menu_bar_fields:
         if menu_bar_field in queryDict.keys():
+            if not hasattr(SearchForm, menu_bar_field):
+                continue
             language_field_values[menu_bar_field] = queryDict[menu_bar_field]
-            if menu_bar_field == 'search':
-                language_field_labels[menu_bar_field] = gettext(SearchForm.menu_bar_search)
-            else:
-                language_field_labels[menu_bar_field] = gettext(SearchForm.menu_bar_translation)
+            menu_bar_field_label = getattr(SearchForm, menu_bar_field)
+            language_field_labels[menu_bar_field] = gettext(menu_bar_field_label)
 
     import re
     regexp = re.compile('^[+]')

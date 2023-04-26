@@ -6904,6 +6904,20 @@ class LemmaListView(ListView):
         queryset = super(LemmaListView, self).get_queryset()
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        from signbank.dictionary.forms import check_language_fields
+        valid_regex, search_fields = check_language_fields(LemmaSearchForm, get, dataset_languages)
+
+        if not valid_regex:
+            error_message_1 = _('Error in search field ')
+            error_message_2 = ', '.join(search_fields)
+            error_message_3 = _(': Please use a backslash before special characters.')
+            error_message = error_message_1 + error_message_2 + error_message_3
+            messages.add_message(self.request, messages.ERROR, error_message)
+            qs = LemmaIdgloss.objects.none()
+            return qs
+
         qs = queryset.filter(dataset__in=selected_datasets)
 
         if len(get) == 0:
@@ -6922,6 +6936,12 @@ class LemmaListView(ListView):
     def get_annotated_queryset(self, **kwargs):
         # this method adds a gloss count column to the results for display
         get = self.request.GET
+
+        if not self.object_list:
+            # either there was something wrong with the regex check and it returned empty results
+            # or no matches to the query
+            # in any case, there is nothing to annotate
+            return (self.object_list, 0)
 
         qs = self.get_queryset()
 
