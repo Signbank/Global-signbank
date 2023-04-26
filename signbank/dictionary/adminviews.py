@@ -6937,7 +6937,9 @@ class LemmaListView(ListView):
         # this method adds a gloss count column to the results for display
         get = self.request.GET
 
-        if not self.object_list:
+        if hasattr(self, 'object_list') and not self.object_list:
+            # check to make sure get_queryset has already been called
+            # the post method does not seem to have this attribute when called from LemmaTests
             # either there was something wrong with the regex check and it returned empty results
             # or no matches to the query
             # in any case, there is nothing to annotate
