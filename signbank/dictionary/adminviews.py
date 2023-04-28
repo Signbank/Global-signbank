@@ -2855,7 +2855,7 @@ class MorphemeListView(ListView):
             row.append(", ".join(dialects))
 
             # get translations
-            trans = [t.translation.text for t in gloss.translation_set.all()]
+            trans = [t.translation.text for t in gloss.translation_set.all().order_by('translation__text')]
             row.append(", ".join(trans))
 
             # get compound's component type
