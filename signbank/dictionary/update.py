@@ -2322,11 +2322,15 @@ def change_dataset_selection(request):
                 pass
         if successful:
             request.session['selected_datasets'] = new_selection
+            # erase previous search results session variable since the dataset selection has changed
+            request.session['search_results'] = None
+            request.session.modified = True
 
     # check whether the last used dataset is still in the selected datasets
     if 'last_used_dataset' in request.session.keys():
         if selected_dataset_acronyms and request.session['last_used_dataset'] not in selected_dataset_acronyms:
             request.session['last_used_dataset'] = selected_dataset_acronyms[0]
+            request.session.modified = True
     else:
         # set the last_used_dataset?
         pass

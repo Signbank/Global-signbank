@@ -3309,6 +3309,8 @@ class MinimalPairsListView(ListView):
         dataset = selected_datasets.first()
         context['dataset'] = dataset
         context['dataset_name'] = dataset.acronym
+        self.request.session['last_used_dataset'] = dataset.acronym
+        self.request.session.modified = True
 
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
         fields_with_choices = fields_to_fieldcategory_dict()
@@ -3433,6 +3435,8 @@ class MinimalPairsListView(ListView):
         if not get:
             # to speed things up, don't show anything on initial visit
             qs = Gloss.objects.none()
+            self.request.session['search_results'] = None
+            self.request.session.modified = True
             return qs
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -3448,6 +3452,8 @@ class MinimalPairsListView(ListView):
             error_message = error_message_1 + error_message_2 + error_message_3
             messages.add_message(self.request, messages.ERROR, error_message)
             qs = Gloss.objects.none()
+            self.request.session['search_results'] = None
+            self.request.session.modified = True
             return qs
 
         # grab gloss ids for finger spelling glosses, identified by text #.
