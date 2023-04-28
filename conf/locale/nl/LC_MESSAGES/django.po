@@ -1602,7 +1602,7 @@ msgstr "Query-datum"
 
 #: signbank/dictionary/models.py:3145
 msgid "Abbreviation for the query"
-msgstr ""
+msgstr "Afkorting voor de query"
 
 #: signbank/dictionary/templates/dictionary/add_gloss.html:9
 msgid "Signbank: Add New Sign"
@@ -2554,13 +2554,13 @@ msgstr "Waarde"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:516
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:523
 msgid "Run Query"
-msgstr ""
+msgstr "Voer query uit"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:499
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:505
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:514
 msgid "Save Query"
-msgstr ""
+msgstr "Bewaar query"
 
 #: signbank/dictionary/templates/dictionary/admin_query_list.html:517
 msgid "Some parameters are not yet available for saving:"
@@ -2632,7 +2632,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_search_history.html:193
 msgid "Edit This Query"
-msgstr ""
+msgstr "Bewerk deze query"
 
 #: signbank/dictionary/templates/dictionary/admin_search_history.html:196
 msgid "Update the description of this query."
@@ -2694,7 +2694,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:96
 msgid "Corpus Overview"
-msgstr ""
+msgstr "Corpus overzicht"
 
 #: signbank/dictionary/templates/dictionary/dataset_detail.html:104
 msgid "Sign language"
@@ -2732,20 +2732,20 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choice_colors.html:217
 msgid "Signbank: Manage Field Choice Colors"
-msgstr ""
+msgstr "Signbank: Beheer veldkeuze kleuren"
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choice_colors.html:222
 msgid "Manage Field Choice Colors"
-msgstr ""
+msgstr "Beheer veldkeuze kleuren"
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choice_colors.html:226
 msgid "Here you can alter the display color of field choices."
-msgstr ""
+msgstr "Selecteer hier de gewenste kleuren van de veldenkeuzen."
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choice_colors.html:234
 #: signbank/dictionary/templates/dictionary/dataset_field_choices.html:71
 msgid "Field Choice Category"
-msgstr ""
+msgstr "Veldkeuze categorie"
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choice_colors.html:235
 msgid "Preview"
@@ -2753,7 +2753,7 @@ msgstr "Voorvertoning"
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choice_colors.html:236
 msgid "Field Choice"
-msgstr ""
+msgstr "Veld keuze"
 
 #: signbank/dictionary/templates/dictionary/dataset_field_choice_colors.html:237
 msgid "Color"
