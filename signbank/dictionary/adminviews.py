@@ -1673,7 +1673,7 @@ class GlossDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
 
-        context['senses'] = gl.senses.all()
+        context['senses'] = gl.senses.filter(dataset=gl.lemma.dataset)
 
         bad_dialect = False
         gloss_dialects = []

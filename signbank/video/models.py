@@ -204,6 +204,13 @@ def validate_file_extension(value):
     if value.file.content_type not in ['video/mp4', 'video/quicktime']:
         raise ValidationError(u'Error message')
 
+class ExampleVideo(models.Model):
+    """A video that shows an example of the use of a particular sense"""
+
+    videofile = models.FileField("video file", upload_to=get_video_file_path, storage=storage,
+                                 validators=[validate_file_extension])
+
+    exampleSentence = models.ForeignKey(ExampleSentence, on_delete=models.CASCADE)
 
 class GlossVideo(models.Model):
     """A video that represents a particular idgloss"""

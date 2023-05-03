@@ -225,6 +225,7 @@ function checkKey(e)
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/recordstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/modalstyle.css">
     <style>
         #panel-expand-collapse-btn-group.affix {
             position:fixed;
@@ -717,8 +718,11 @@ p {
                     <td>{{videoform.videofile}}</td>
                   </tr>
                   <tr>
-                    <td id="video-buttons"><input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
-                    <input class = 'btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>   <input class='btn btn-primary' type='submit' value='Upload' /></td>
+                    <td id="video-buttons">
+                        <input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
+                        <input class = 'btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>   
+                        <input class='btn btn-primary' type='submit' value='Upload' />
+                    </td>
                   </tr>
                 </table>
               </form>
@@ -807,8 +811,11 @@ p {
                     <td>{{imageform.imagefile}}</td>
                   </tr>
                   <tr>
-                    <td id="image-buttons"><input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
-                    <input class = 'btn btn-primary' onclick='removeImageUploads(true)' value='Remove'>   <input class='btn btn-primary' type='submit' value='Upload'/></td>
+                    <td id="image-buttons">
+                        <input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
+                        <input class = 'btn btn-primary' onclick='removeImageUploads(true)' value='Remove'>   
+                        <input class='btn btn-primary' type='submit' value='Upload'/>
+                    </td>
                   </tr>
                 </table>
               </form>
@@ -855,11 +862,7 @@ p {
     </div>
     {% endif %}
 
-
-
 </div>
-
-
     <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background: white;">
 
         {% include "dictionary/glosstags.html" %}
@@ -982,24 +985,158 @@ p {
 
             <tr>
                 <th>
-                    Senses Dutch
+                    Senses 
                 </th>
-                <td id='sense_keywords'>  
+                <td id='sense_keywords'>
                     <table class='table table-condensed'>
                     {% for sense in senses %}
-                        <tr><th style="width:20px">{{ forloop.counter }}. </th><td class='edit edit_text'>{{ sense.get_keywords }}</td>
-                            <td>
-                                <table class='table table-condensed'>
-                                {% for examplesentence in sense.sentences.all %}
-                                    <tr><td class='edit edit_text'>{{ examplesentence }}</td></tr> 
-                                {% endfor %}   
-                                </table>
-                            </td>
-                        </tr> 
+                    <tr><th style="width:10px">{{ forloop.counter }}. </th>
+                        <td>
+                        {% if sense.get_sense_translations %}
+                            {% for sense_translation in sense.get_sense_translations %}
+                                <!-- <div class='edit edit_text' id='keyword_{{sense}}_{{ lang.language_code_2char }}'> -->
+                                    <div>{{ sense_translation }}{% if not forloop.last %}{% endif %}</div>
+                            {% endfor %}
+                        {% endif %}
+                        <br>
+
+                        {% if "change_dataset" in dataset_perms %}
+                        <span class='glyphicon glyphicon-trash sense_delete' data-toggle='modal' data-target='#delete_sense_modal_{{sense.id}}'></span>                        
+                        <div class="modal fade" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSense" aria-hidden="true">
+                            <div class="modal-dialog modal-sm">
+                               <div class="modal-content">
+                                   <div class='modal-header'>
+                                       <h2 id='modalTitleSense'>{% trans "Delete This Sense" %}</h2>
+                                   </div>
+                                   <div class='modal-body'>
+                                       <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                    </div>
+                                 <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                     {% csrf_token %}
+                                     <input type='hidden' name='id' value='sense-delete_{{sense.id}}'>
+                                     <input type='hidden' name='value' value='confirmed'>
+                                     <div class="modal-footer">
+                                       <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                       <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                     </div>
+                                 </form>
+
+                               </div>
+                             </div>
+                        </div>
+
+                        <span class='glyphicon glyphicon-edit sense_edit' data-toggle='modal' data-target='#edit_sense_modal_{{sense.id}}'></span>
+                        <div class="modal fade" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSense" aria-hidden="true">
+                            <div class="modal-dialog modal-sm">
+                               <div class="modal-content">
+                                   <div class='modal-header'>
+                                       <h2 id='modalTitleSense'>{% trans "Edit this sense" %}</h2>
+                                   </div><br>
+                                 <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>
+                                     {% csrf_token %}
+                                     <input type='hidden' name='id' value='sense-edit_{{sense.id}}'>
+                                     <input type='hidden' name='value' value='confirmed'>
+                                     {% for lang, translations in translations_per_language.items %}
+                                        {{ lang }}: <input> {% if not forloop.last %}<br><br>{% endif %}
+                                     {% endfor %}
+                                     <div class="modal-footer">
+                                       <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                       <input type="submit" class="btn btn-primary" value='{% trans "Confirm Edit" %}'>
+                                     </div>
+                                 </form>
+
+                               </div>
+                             </div>
+                        </div>
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+                        <table class='table table-condensed'>
+                        {% for examplesentence in sense.exampleSentences.all %}
+                            <tr>
+                                <td class='edit edit_text'>
+                                    {{ examplesentence.sentencetype }}
+                                    {% if examplesentence.negative %}
+                                    (neg)
+                                    {% endif %}
+                                </td>
+
+                                <td class='edit edit_text'>
+                                    {{ examplesentence }}
+                                    <div class="pull-right">
+                                        <span id="camera-icon"><img id='camera' data-target="#exampleVidModal{{ examplesentence.id }}" data-toggle="modal" id="exVidBtn{{examplesentence.get_video_path}}" src='{{ STATIC_URL }}images/camera.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="border: none" colspan="100%" class='edit edit_text'>
+                                    {% if examplesentence.get_example_sentence_translations %}
+                                        {% for examplesentence_translation in examplesentence.get_example_sentence_translations %}
+                                            {{ examplesentence_translation }} {% if not forloop.last %}<br>{% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            <div class="modal" id="exampleVidModal{{ examplesentence.id }}">
+                                <div class="modal-content">
+                                    <div id="videocontainer{{ examplesentence.id }}">
+                                        {% if not "None" in examplesentence.get_video_path %}                                            
+                                            <div id="player">
+                                                <video id='videoplayer' src="{{ protected_media_url }}/sensevideo/{{ gloss.lemma.dataset }}/{{ examplesentence.id }}.mp4" controls type="video/mp4" autoplay muted></video>
+                                            </div>
+                                            <div id="replay"></div>
+                                        {% else %}
+                                            <div id='player'>
+                                                <img id='novideo' src='{{ STATIC_URL }}images/no-video-ngt.png'>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- {% if "change_dataset" in dataset_perms %}
+                                        <div class='editform'>
+                                            <fieldset>
+                                                <legend>{% trans "Upload New Video" %}</legend>
+                                                <label for="id_videofile_{{ examplesentence.id }}" class="drop-container" id="drop-container-video_{{ examplesentence.id }}">
+                                                <div id="videogallery_{{ examplesentence.id }}" class="gallery"></div>
+                                                <span id="drop-container-title-video_{{ examplesentence.id }}" class="drop-title">Drop video here<br>or...</span>
+                                                <label id="drop-container-video-status_{{ examplesentence.id }}", class="hide">Status here</label>
+                                                <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
+                                                    {% csrf_token %}
+                                                    <input type='hidden' name='redirect' value='{{request.path}}?edit'>
+                                                    <table id="staffops">
+                                                    <tr>
+                                                        <td>{{videoform.videofile}}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td id="video-buttons_{{ examplesentence.id }}">
+                                                            <input type='hidden' name='sense_id' value='{{sense.pk}}'>
+                                                            <input class = 'btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>   
+                                                            <input class='btn btn-primary' type='submit' value='Upload' />
+                                                        </td>
+                                                    </tr>
+                                                    </table>
+                                                </form>
+                                                </label>
+                                            </fieldset>
+                                        </div>
+                                    {% endif %} -->
+
+                                    {{ examplesentence.get_video_path }}
+                                </div> 
+                            </div>
+                        {% endfor %}   
+                            
+                        </table>
+                    </td>
+                    </tr> 
                     {% endfor %}   
                     </table>
                 </td><td/>
             </tr>
+            
 
             {% for value,name,label,kind in main_fields %}
                 <tr><th>{{label}}</th>
@@ -1009,6 +1146,8 @@ p {
 
         </table>
 
+        <script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_files.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}js/recordscript.js"></script>
 
    {% if perms.dictionary.view_advanced_properties %}
 

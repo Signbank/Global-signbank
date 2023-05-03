@@ -115,8 +115,8 @@ class AnnotationIdglossTranslationInline(admin.TabularInline):
 class SenseInline(admin.TabularInline):
     model = Gloss.senses.through
 
-    # list_display = ["get_keywords", "orderindex"]
-    # fields = [Gloss.get_keywds]
+    list_display = ["gloss_id.sense_id__get_sense_translations", "sense__orderindex"]
+    # fields = ["get_sense_translations", "orderindex"]
 
     extra = 0
 
@@ -312,7 +312,6 @@ class GlossAdmin(VersionAdmin):
     inlines = [ AnnotationIdglossTranslationInline, RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline, SenseInline]
 
     history_latest_first = True
-
 
     model = Gloss
     form = GlossAdminForm
@@ -1336,13 +1335,22 @@ admin.site.register(QueryParameterBoolean, QueryParameterBooleanAdmin)
 admin.site.register(QueryParameterMultilingual, QueryParameterMultilingualAdmin)
 admin.site.register(SearchHistory, SearchHistoryAdmin)
 
+class SenseTranslationAdmin(admin.ModelAdmin):
+    list_display = ("get_keywords", "language")
+
+admin.site.register(SenseTranslation, SenseTranslationAdmin)
+
 class SenseAdmin(admin.ModelAdmin):
-    list_display = ("get_keywords", "get_sentences", "orderindex")
+    list_display = ("get_sense_translations", "get_example_sentences", "dataset", "orderindex")
 
 admin.site.register(Sense, SenseAdmin)
 
 class ExampleSentenceAdmin(admin.ModelAdmin):
-    list_display = ("text", "id")
+    list_display = ("sentencetype", "negative", "get_video_path")
 
 admin.site.register(ExampleSentence, ExampleSentenceAdmin)
 
+class ExampleSentenceTranslationAdmin(admin.ModelAdmin):
+    list_display = ("text", "examplesentence", "language")
+
+admin.site.register(ExampleSentenceTranslation, ExampleSentenceTranslationAdmin)

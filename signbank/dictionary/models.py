@@ -582,35 +582,144 @@ class Language(models.Model):
 class ExampleSentence(models.Model):
     """An example sentence belongs to one or more sense(s)"""
     
-    text = models.TextField()
+    SENTENCETYPES = (
+       ('declarative', _('Declarative (statement)')),
+       ('interrogative', _('Interrogative (question)')),
+       ('imperative', _('Imperative (command)')),
+       ('exclamative', _('Exclamative (exclamation)'))
+    )
+    
+    sentencetype = models.CharField(max_length=32, choices=SENTENCETYPES, default="declarative")
+    negative = models.BooleanField(default=False)
+    video = models.TextField(max_length=32, default="zin_over_iets.mp4")
 
+    def get_example_sentence_translations(self):
+        translations = []
+        for est in ExampleSentenceTranslation.objects.filter(examplesentence = self):
+            translation_text = str(est.language) + ": " + str(est)
+            translations.append(translation_text)
+        return translations
+
+    def get_video_path(self):
+        return self.video
+    #     try:
+    #         glossvideo = self.glossvideo_set.get(version=0)
+    #         return str(glossvideo.videofile)
+    #     except ObjectDoesNotExist:
+    #         return ''
+    #     except MultipleObjectsReturned:
+    #         # Just return the first
+    #         glossvideos = self.glossvideo_set.filter(version=0)
+    #         return str(glossvideos[0].videofile)
+
+    # def get_video_path_prefix(self):
+    #     try:
+    #         glossvideo = self.glossvideo_set.get(version=0)
+    #         prefix, extension = os.path.splitext(str(glossvideo))
+    #         return prefix
+    #     except ObjectDoesNotExist:
+    #         return ''
+        
+    # def get_video(self):
+    #     """Return the video object for this gloss or None if no video available"""
+
+    #     video_path = self.get_video_path()
+    #     filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
+    #     if os.path.exists(filepath.encode('utf-8')):
+    #         return video_path
+    #     else:
+    #         return ''
+    
+    # def has_video(self):
+    #     """Test to see if the video for this sign is present"""
+
+    #     return self.get_video() not in ['', None]
+
+    # def add_video(self, user, videofile, recorded):
+    #     # Preventing circular import
+    #     from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
+
+    #     # Backup the existing video objects stored in the database
+    #     existing_videos = GlossVideo.objects.filter(gloss=self)
+    #     for video_object in existing_videos:
+    #         video_object.reversion(revert=False)
+
+    #     # Create a new GlossVideo object
+    #     if isinstance(videofile, File):
+    #         video = GlossVideo(gloss=self)
+    #         video.videofile.save(get_video_file_path(video, str(videofile)), videofile)
+    #     else:
+    #         video = GlossVideo(videofile=videofile, gloss=self)
+    #     video.save()
+    #     video.ch_own_mod_video()
+    #     video.make_small_video()
+    #     video.make_poster_image()
+
+    #     # Create a GlossVideoHistory object
+    #     video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
+    #     glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+    #                                           uploadfile=videofile, goal_location=video_file_full_path)
+    #     glossvideohistory.save()
+
+    #     return video
+
+    
     def __str__(self):
-        return self.text
+        return self.get_video_path()
+        # return ", ".join([k.text for k in self.examplesentencetranslation_set.all()])
 
-class SentenceTranslation(models.Model):
+
+class ExampleSentenceTranslation(models.Model):
     """A sentence translation belongs to one example sentence"""
     
     text = models.TextField()
     examplesentence = models.ForeignKey(ExampleSentence, on_delete=models.CASCADE)
-    
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
     def __str__(self):
         return self.text
 
+class SenseTranslation(models.Model):
+    """A sense translation belongs to a sense"""
+    
+    keywords = models.ManyToManyField(Keyword)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
+
+    def get_keywords(self):
+        return ", ".join([k.text for k in self.keywords.all()])
+    
+    def __str__(self):
+        return ", ".join([k.text for k in self.keywords.all()])
+    
 class Sense(models.Model):
     """A sense belongs to a gloss and consists of a set of keyword(s)"""
     
     orderindex = models.IntegerField()
-    keywords = models.ManyToManyField(Keyword)
-    sentences = models.ManyToManyField(ExampleSentence)
+    senseTranslations = models.ManyToManyField(SenseTranslation)
+    exampleSentences = models.ManyToManyField(ExampleSentence)
+    dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
+        default = settings.DEFAULT_DATASET_PK, help_text=_("Dataset a sense is part of"), null=True)
 
-    def get_keywords(self):
-        return ", ".join([k.text for k in self.keywords.all()])
-
-    def get_sentences(self):
-        return ", ".join([k.text for k in self.sentences.all()])
+    def get_example_sentences(self):
+        translations = []
+        for dataset_translation_language in self.dataset.translation_languages.all():
+            translation_text = ""
+            sentences = []
+            for exampleSentence in self.exampleSentences.all():
+                exampleSentenceTranslations = ExampleSentenceTranslation.objects.filter(examplesentence = exampleSentence, language = dataset_translation_language)
+                sentences.append(exampleSentenceTranslations.get(examplesentence=exampleSentence).text)
+            translation_text = translation_text + str(dataset_translation_language) + ": " + (", ").join(sentences)
+            translations.append(translation_text)
+        return ", ".join(translations)
     
+    def get_sense_translations(self):
+        sense_keywords = []
+        for dataset_translation_language in self.dataset.translation_languages.all():
+            keyword_list = ", ".join([k.get_keywords() for k in self.senseTranslations.filter(language = dataset_translation_language)])
+            if len(keyword_list) > 0:
+                sense_keywords.append(str(dataset_translation_language) + ": " + keyword_list )
+        return sense_keywords
+
     class Admin:
         list_display = ['orderindex', 'keywords']
         search_fields = ['orderindex', 'keywords']
