@@ -55,8 +55,9 @@ urlpatterns = [
         name='update_field_choice_color'),
 
     re_path(r'^update/query/(?P<queryid>\d+)$', signbank.dictionary.update.update_query, name='update_query'),
+    re_path(r'^update/semanticfield/(?P<semfieldid>\d+)$', signbank.dictionary.update.update_semfield, name='update_semfield'),
 
-    # The next one does not have a permission check because it should be accessible from a cronjob 
+    # The next one does not have a permission check because it should be accessible from a cronjob
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
     re_path(r'^update/variants_of_gloss/$', signbank.dictionary.update.variants_of_gloss, name='variants_of_gloss'),
     re_path(r'^switch_to_language/(?P<language>[\-a-z]{2,20})$', signbank.dictionary.views.switch_to_language,name='switch_to_language'),
