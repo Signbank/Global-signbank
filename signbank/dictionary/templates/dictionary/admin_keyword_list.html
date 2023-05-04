@@ -1,0 +1,114 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Available Keywords{% endblocktrans %}
+{% endblock %}
+
+
+{% block content %}
+
+<h3>{% trans "Mapping Gloss Translations to Senses" %}</h3>
+
+{% if object_list %}
+
+<table class='table table-condensed'>
+    <thead>
+      <tr>
+          <th style="width:200px;">{% trans "Gloss" %}</th>
+          <th style="width:50px;">{% trans "Actions" %}</th>
+          <th style="width:300px;">{% trans "Translations" %} ({{dataset_language.name}})</th>
+          <th style="width:300px;">{% trans "Senses" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for gloss, senses in object_list %}
+        <tr>
+            <td>{{gloss.idgloss}}</td>
+            <td class="actions">
+                <button id='edit_senses_btn_{{gloss.id}}' class="btn" type="button" name='edit_{{gloss.id}}'
+                        value='edit_{{gloss.id}}'
+                        data-toggle='modal' data-target='#edit_query_modal_{{gloss.id}}'>
+                    <a>{% trans "Edit" %}</a></button>
+            </td>
+            <td>{% for trn in senses %}
+                {{ trn.translation.text|safe }}{% if not forloop.last %} | {% endif %}
+                {% endfor %}
+            </td>
+            <td>{% for trn in senses %}
+                {{ trn.translation.text|safe }}{% if not forloop.last %} | {% endif %}
+                {% endfor %}
+            </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+</table>
+{% for gloss, senses in object_list %}
+         <div class="modal fade" id="edit_query_modal_{{gloss.id}}" tabindex="-1" role="dialog"
+                 aria-labelledby="#modalTitleEdit_{{gloss.id}}" aria-hidden="true">
+             <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h3 id='modalTitleEdit_{{gloss.id}}'>{% trans "Gloss Translation Mapping to Senses" %}</h3>
+                    </div>
+                    <div class='modal-body'>
+                      <p>{% trans "Group the translations of this gloss into senses." %}</p>
+                        <table class="table table-condensed">
+                            {% regroup senses by index as sense_groups %}
+
+                            <tbody>
+                            {% for sense_group in sense_groups %}
+                            <tr>
+                            <td>{% trans "Sense" %} {{sense_group.grouper}}</td>
+                            <td>
+                              {% for sense in sense_group.list %}
+                                <span id="sensegroup_{{sense.index}}">
+                                    {{sense.translation.text}}
+                                </span>
+                              {% endfor %}
+                            </td>
+                            {% endfor %}
+                            </tr>
+                            </tbody>
+                        </table>
+                      <form action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
+                      {% csrf_token %}
+                      <table class='table table-condensed'>
+                          {% for sense in senses %}
+                        <tr>
+                            <th style='width:10em'>{{sense.index}}</th>
+                            <td>{{sense.translation.text}}</td>
+                            <input type="hidden" id="sense_id_{{sense.id}}"
+                                   name="group_index" value={{sense.id}}>
+                            <td>
+                            <input type="number" id="regroup_{{sense.index}}"
+                                   name="regroup" value={{sense.index}}
+                                   max={{senses.count}}>
+                            <input type="submit" id="regroup_submit_{{sense.index}}" value="Regroup">
+                            </td>
+                        </tr>
+                          {% endfor %}
+                      </table>
+                          <input type="hidden" name="language" value="{{dataset_language.id}}">
+                          <button type="submit" value="one_sense_{{gloss.id}}"
+                                  id="one_sense_{{gloss.id}}"
+                                  name="one_sense">{% trans "Regroup" %}</button>
+                      </form>
+                     </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                      </div>
+                </div>
+            </div>
+        </div>
+{% endfor %}
+{% else %}
+{% trans "No translations found." %}
+{% endif %}
+
+{% endblock content %}
+

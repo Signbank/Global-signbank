@@ -549,6 +549,35 @@ def update_keywords(gloss, field, value):
     
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
+
+def group_keywords(request, glossid):
+    """Update the keyword field"""
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    group_index = request.POST.getlist('group_index')
+    language = request.POST.get('language', '')
+    regroup = request.POST.getlist('regroup')
+
+    if not language:
+        language = Language.objects.get(id=get_default_language_id())
+    else:
+        language = Language.objects.get(id=int(language))
+
+    current_trans = [ t.id for t in gloss.translation_set.all() ]
+    for transid in current_trans:
+        trans = Translation.objects.get(id=transid)
+        trans_id = str(trans.id)
+        if trans.language == language and trans_id in group_index:
+            target_sense_index = group_index.index(trans_id)
+            target_sense = int(regroup[target_sense_index])
+            trans.index = target_sense
+            trans.save()
+
+    newvalue = ", ".join([str(t.index) + ':' + t.translation.text for t in gloss.translation_set.filter(language=language).order_by('index')])
+    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+
 def update_annotation_idgloss(gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""
 

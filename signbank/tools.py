@@ -346,7 +346,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
                     language = languages[0]
-                    translations = [t.translation.text for t in gloss.translation_set.filter(language=language).order_by('translation__text')]
+                    translations = [t.translation.text for t in gloss.translation_set.filter(language=language).order_by('translation__index')]
                     current_keyword_string = ", ".join(translations)
                 else:
                     error_string = 'ERROR: Non-existent language specified for Keywords column: ' + human_key
