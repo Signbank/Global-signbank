@@ -1497,8 +1497,9 @@ def import_csv_update(request):
                 error.append(e_string)
         stage = 1
 
-    #Do changes
+    # Do changes
     elif len(request.POST) > 0:
+        gloss_fields = [f.name for f in Gloss._meta.fields]
 
         lemmaidglosstranslations_per_gloss = {}
         for key, new_value in request.POST.items():
@@ -1667,9 +1668,11 @@ def import_csv_update(request):
                 continue
 
             with override(settings.LANGUAGE_CODE):
-
-                #Replace the value for bools
-                if fieldname in Gloss._meta.get_fields() and Gloss._meta.get_field(fieldname).__class__.__name__ == 'BooleanField':
+                if fieldname not in gloss_fields:
+                    continue
+                field = Gloss._meta.get_field(fieldname)
+                # Replace the value for bools
+                if field.__class__.__name__ == 'BooleanField':
 
                     if new_value in ['true','True', 'TRUE']:
                         new_value = True
@@ -1677,13 +1680,18 @@ def import_csv_update(request):
                         new_value = None
                     else:
                         new_value = False
-
-                #Remember this for renaming the video later
+                elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+                    new_value = Handshape.objects.get(machine_value=int(new_value))
+                elif hasattr(field, 'field_choice_category'):
+                    new_value = FieldChoice.objects.get(machine_value=int(new_value),
+                                                        field=Gloss._meta.get_field(fieldname).field_choice_category)
+                # Remember this for renaming the video later
                 if fieldname == 'idgloss':
                     video_path_before = settings.WRITABLE_FOLDER+gloss.get_video_path()
 
-                #The normal change and save procedure
-                setattr(gloss,fieldname,new_value)
+                # The normal change and save procedure
+                # the new value machine value of Handshape or FieldChoice has been replaced with an object reference above
+                setattr(gloss, fieldname, new_value)
                 gloss.save()
 
                 #Also update the video if needed

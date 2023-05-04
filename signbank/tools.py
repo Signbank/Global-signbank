@@ -673,10 +673,6 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
                 continue
 
-            elif human_key in ['Handshape', 'Strong Hand', 'Weak Hand']:
-
-                continue
-
             # If not, find the matching field in the gloss, and remember its 'real' name
             try:
                 field = fields[human_key]
@@ -707,6 +703,21 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 try:
                     field_choice = FieldChoice.objects.get(name=new_human_value, field=field.field_choice_category)
                     new_machine_value = field_choice.machine_value
+                except ObjectDoesNotExist:
+                    new_machine_value = None
+                    error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                        gloss_id) + '), could not find option ' + str(new_human_value) + ' for ' + human_key
+
+                    errors_found += [error_string]
+                    continue
+
+            elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+                if new_human_value in ['', '0', ' ', None, 'None']:
+                    new_human_value = '-'
+
+                try:
+                    handshape = Handshape.objects.get(name=new_human_value)
+                    new_machine_value = handshape.machine_value
                 except ObjectDoesNotExist:
                     new_machine_value = None
                     error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
@@ -778,7 +789,22 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 try:
                     # this is a bit confusing as to why a try is used instead of combining with the previous
                     original_human_value = getattr(gloss, field.name).name
-                except KeyError:
+                except (KeyError, None):
+                    original_human_value = '-'
+                    print('CSV Update: Original machine value for gloss ', gloss_id,
+                          ' has an undefined choice for field ', field.name, ': ', original_machine_value)
+                    original_machine_value = None
+
+            elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+                # machine_key should be the same as field.name
+                original_machine_value = getattr(gloss, machine_key)
+                if original_machine_value:
+                    # get machine value of Field Choice object
+                    original_machine_value = original_machine_value.machine_value
+                try:
+                    # this is a bit confusing as to why a try is used instead of combining with the previous
+                    original_human_value = getattr(gloss, field.name).name
+                except (KeyError, None):
                     original_human_value = '-'
                     print('CSV Update: Original machine value for gloss ', gloss_id,
                           ' has an undefined choice for field ', field.name, ': ', original_machine_value)
