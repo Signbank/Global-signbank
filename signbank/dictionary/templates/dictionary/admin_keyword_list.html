@@ -9,20 +9,37 @@
 {% blocktrans %}Signbank: Available Keywords{% endblocktrans %}
 {% endblock %}
 
+{% block extrajs %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+
+<script type='text/javascript'>
+var url = '{{ PREFIX_URL }}';
+var saving_str = '{{saving_str|escapejs}}';
+var csrf_token = '{{csrf_token}}';
+</script>
+
+<script type='text/javascript' src="{{ STATIC_URL }}js/senses_keywords_edit.js"></script>
+
+{% endblock %}
 
 {% block content %}
 
-<h3>{% trans "Mapping Gloss Translations to Senses" %}</h3>
+<div id="definitionblock" style="padding-top: 30px;">
+    {% if not object_list %}
+    <br>
+    {% trans "No senses found." %}
 
-{% if object_list %}
+    {% else %}
+    <div class="keywordsSenses" id="keywordsSenses">
+    <h3>{% trans "Mapping Keywords to Senses" %}</h3>
 
 <table class='table table-condensed'>
     <thead>
       <tr>
           <th style="width:200px;">{% trans "Gloss" %}</th>
           <th style="width:50px;">{% trans "Actions" %}</th>
-          <th style="width:300px;">{% trans "Translations" %} ({{dataset_language.name}})</th>
-          <th style="width:300px;">{% trans "Senses" %}</th>
+          <th style="width:300px;">{% trans "Keywords" %} ({{dataset_language.name}})</th>
+          <th style="width:300px;">{% trans "Senses" %}  ({{dataset_language.name}})</th>
       </tr>
     </thead>
     <tbody>
@@ -32,15 +49,15 @@
             <td class="actions">
                 <button id='edit_senses_btn_{{gloss.id}}' class="btn" type="button" name='edit_{{gloss.id}}'
                         value='edit_{{gloss.id}}'
-                        data-toggle='modal' data-target='#edit_query_modal_{{gloss.id}}'>
+                        data-toggle='modal' data-target='#edit_senses_modal_{{gloss.id}}'>
                     <a>{% trans "Edit" %}</a></button>
             </td>
-            <td>{% for trn in senses %}
-                {{ trn.translation.text|safe }}{% if not forloop.last %} | {% endif %}
+            <td class="keywords_{{gloss.id}}">{% for trn in senses %}
+                {{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}
                 {% endfor %}
             </td>
-            <td>{% for trn in senses %}
-                {{ trn.translation.text|safe }}{% if not forloop.last %} | {% endif %}
+            <td class="senses_{{gloss.id}}">{% for trn in senses %}
+                {{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}
                 {% endfor %}
             </td>
         </tr>
@@ -48,26 +65,27 @@
     </tbody>
 </table>
 {% for gloss, senses in object_list %}
-         <div class="modal fade" id="edit_query_modal_{{gloss.id}}" tabindex="-1" role="dialog"
+         <div class="modal fade" id="edit_senses_modal_{{gloss.id}}" tabindex="-1" role="dialog"
                  aria-labelledby="#modalTitleEdit_{{gloss.id}}" aria-hidden="true">
              <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class='modal-header'>
-                        <h3 id='modalTitleEdit_{{gloss.id}}'>{% trans "Gloss Translation Mapping to Senses" %}</h3>
+                        <h3 id='modalTitleEdit_{{gloss.id}}'>{% trans "Gloss Keywords Mapping to Senses" %}</h3>
                     </div>
                     <div class='modal-body'>
-                      <p>{% trans "Group the translations of this gloss into senses." %}</p>
                         <table class="table table-condensed">
                             {% regroup senses by index as sense_groups %}
-
+                            <thead>
+                            <tr><th>{% trans "Senses" %}</th></tr>
+                            </thead>
                             <tbody>
                             {% for sense_group in sense_groups %}
                             <tr>
-                            <td>{% trans "Sense" %} {{sense_group.grouper}}</td>
+                            <td>{{sense_group.grouper}}.</td>
                             <td>
                               {% for sense in sense_group.list %}
                                 <span id="sensegroup_{{sense.index}}">
-                                    {{sense.translation.text}}
+                                    {{sense.translation.text|safe}}{% if not forloop.last %}, {% endif %}
                                 </span>
                               {% endfor %}
                             </td>
@@ -78,9 +96,9 @@
                       <form action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
                       <table class='table table-condensed'>
+                          <tr><th>{% trans "Keyword" %}</th><th>{% trans "Sense Number" %}</th></tr>
                           {% for sense in senses %}
                         <tr>
-                            <th style='width:10em'>{{sense.index}}</th>
                             <td>{{sense.translation.text}}</td>
                             <input type="hidden" id="sense_id_{{sense.id}}"
                                    name="group_index" value={{sense.id}}>
@@ -88,15 +106,13 @@
                             <input type="number" id="regroup_{{sense.index}}"
                                    name="regroup" value={{sense.index}}
                                    max={{senses.count}}>
-                            <input type="submit" id="regroup_submit_{{sense.index}}" value="Regroup">
                             </td>
                         </tr>
                           {% endfor %}
                       </table>
                           <input type="hidden" name="language" value="{{dataset_language.id}}">
-                          <button type="submit" value="one_sense_{{gloss.id}}"
-                                  id="one_sense_{{gloss.id}}"
-                                  name="one_sense">{% trans "Regroup" %}</button>
+                          <input type="submit" name="regroup_submit_{{gloss.id}}"
+                                  value='{% trans "Regroup Kewords" %}'>
                       </form>
                      </div>
                       <div class="modal-footer">
@@ -106,8 +122,6 @@
             </div>
         </div>
 {% endfor %}
-{% else %}
-{% trans "No translations found." %}
 {% endif %}
 
 {% endblock content %}

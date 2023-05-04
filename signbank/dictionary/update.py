@@ -564,19 +564,19 @@ def group_keywords(request, glossid):
     else:
         language = Language.objects.get(id=int(language))
 
-    current_trans = [ t.id for t in gloss.translation_set.all() ]
-    for transid in current_trans:
+    translation_ids = [t.id for t in gloss.translation_set.filter(language=language)]
+    for transid in translation_ids:
         trans = Translation.objects.get(id=transid)
-        trans_id = str(trans.id)
-        if trans.language == language and trans_id in group_index:
+        trans_id = str(transid)
+        if trans_id in group_index:
             target_sense_index = group_index.index(trans_id)
             target_sense = int(regroup[target_sense_index])
             trans.index = target_sense
             trans.save()
 
-    newvalue = ", ".join([str(t.index) + ':' + t.translation.text for t in gloss.translation_set.filter(language=language).order_by('index')])
-    return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-
+    newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language).order_by('index')])
+    # return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+    return HttpResponseRedirect(reverse('dictionary:admin_keyword_list'))
 
 def update_annotation_idgloss(gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""
