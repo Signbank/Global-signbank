@@ -2967,10 +2967,11 @@ class HandshapeDetailView(DetailView):
             # Get and save the choice list for this field
             if hasattr(handshape_field, 'field_choice_category'):
                 fieldchoice_category = handshape_field.field_choice_category
+                choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
+
             else:
                 fieldchoice_category = field
-
-            choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category).order_by('machine_value')
+                choice_list = []
 
             if len(choice_list) > 0:
                 context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list)

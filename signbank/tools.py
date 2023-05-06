@@ -673,14 +673,10 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
                 continue
 
-            elif human_key in ['Handshape', 'Strong Hand', 'Weak Hand']:
-
-                continue
-
             # If not, find the matching field in the gloss, and remember its 'real' name
             try:
                 field = fields[human_key]
-                machine_key = field.name
+                gloss_field_name = field.name
 
             except KeyError:
                 # Signbank ID is skipped, for this purpose it was popped from the fields to compare
@@ -708,9 +704,22 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     field_choice = FieldChoice.objects.get(name=new_human_value, field=field.field_choice_category)
                     new_machine_value = field_choice.machine_value
                 except ObjectDoesNotExist:
-                    new_machine_value = None
                     error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                        gloss_id) + '), could not find option ' + str(new_human_value) + ' for ' + human_key
+                        gloss_id) + '), could not find option ' + new_human_value + ' for ' + human_key
+
+                    errors_found += [error_string]
+                    continue
+
+            elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+                if new_human_value in ['', '0', ' ', None, 'None']:
+                    new_human_value = '-'
+
+                try:
+                    handshape = Handshape.objects.get(name=new_human_value)
+                    new_machine_value = handshape.machine_value
+                except ObjectDoesNotExist:
+                    error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                        gloss_id) + '), could not find option ' + new_human_value + ' for ' + human_key
 
                     errors_found += [error_string]
                     continue
@@ -759,10 +768,10 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             # Try to translate the key to machine keys if possible
             try:
-                original_machine_value = getattr(gloss, machine_key)
+                original_machine_value = getattr(gloss, gloss_field_name)
             except KeyError:
                 error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss_id) + '), could not get original value for field: ' + str(machine_key)
+                    gloss_id) + '), could not get original value for field: ' + gloss_field_name
 
                 errors_found += [error_string]
                 continue
@@ -770,19 +779,14 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
             # Translate back the machine value from the gloss
 
             if hasattr(field, 'field_choice_category'):
-                # machine_key should be the same as field.name
-                original_machine_value = getattr(gloss, machine_key)
-                if original_machine_value:
-                    # get machine value of Field Choice object
-                    original_machine_value = original_machine_value.machine_value
-                try:
-                    # this is a bit confusing as to why a try is used instead of combining with the previous
-                    original_human_value = getattr(gloss, field.name).name
-                except KeyError:
-                    original_human_value = '-'
-                    print('CSV Update: Original machine value for gloss ', gloss_id,
-                          ' has an undefined choice for field ', field.name, ': ', original_machine_value)
-                    original_machine_value = None
+                original_field_value = getattr(gloss, gloss_field_name)
+                original_machine_value = original_field_value.machine_value if original_field_value else 0
+                original_human_value = original_field_value.name if original_field_value else '-'
+
+            elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+                original_field_value = getattr(gloss, gloss_field_name)
+                original_machine_value = original_field_value.machine_value if original_field_value else 0
+                original_human_value = original_field_value.name if original_field_value else '-'
 
             elif field.__class__.__name__ == 'BooleanField':
                 if original_machine_value is None and (field.name in settings.HANDEDNESS_ARTICULATION_FIELDS):
@@ -829,7 +833,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 differences.append({'pk': gloss_id,
                                     'dataset': current_dataset,
                                     'annotationidglosstranslation': default_annotationidglosstranslation,
-                                    'machine_key': machine_key,
+                                    'machine_key': gloss_field_name,
                                     'human_key': human_key,
                                     'original_machine_value': original_machine_value,
                                     'original_human_value': original_human_value,

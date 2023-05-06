@@ -1504,8 +1504,12 @@ def add_blend_definition(request, glossid):
 
 def update_handshape(request, handshapeid):
 
+    handshape_fields = [f.name for f in Handshape._meta.fields]
+
     if not request.method == "POST":
-        return HttpResponseForbidden("Update handshape method must be POST")
+        print(request.method.GET)
+        # return HttpResponseForbidden("Update handshape method must be POST")
+        return HttpResponse(" \t \t \t ", {'content-type': 'text/plain'})
 
     hs = get_object_or_404(Handshape, machine_value=handshapeid)
     hs.save() # This updates the lastUpdated field
@@ -1514,9 +1518,11 @@ def update_handshape(request, handshapeid):
     value = request.POST.get('value', '')
     original_value = ''
     value = str(value)
-    newPattern = ''
+    newPattern = ' '
 
     field = get_field
+    if field not in handshape_fields:
+        print(field, ' not in handshape fields')
 
     if len(value) == 0:
         value = ' '
@@ -1533,11 +1539,12 @@ def update_handshape(request, handshapeid):
     elif isinstance(Handshape._meta.get_field(field), FieldChoiceForeignKey):
         # this is needed because the new value is a machine value, not an id
         field_choice_category = Handshape._meta.get_field(field).field_choice_category
-        original_value = getattr(hs, field)
+        original_value_object = getattr(hs, field)
         field_choice = FieldChoice.objects.get(field=field_choice_category, machine_value=int(value))
         setattr(hs, field, field_choice)
         hs.save()
-        newvalue = field_choice.name
+        newvalue = field_choice.name if field_choice else '-'
+        original_value = original_value_object.name if original_value_object else '-'
     else:
         original_value = getattr(hs, field)
         hs.__setattr__(field, value)
@@ -1561,7 +1568,7 @@ def update_handshape(request, handshapeid):
             newPattern = hs_mod.get_fingerSelection_display()
             object_fingSelection = FieldChoice.objects.filter(field='FingerSelection', name__iexact=newPattern)
             if object_fingSelection:
-                mv = object_fingSelection[0].machine_value
+                mv = object_fingSelection.first()
                 hs_mod.__setattr__('hsFingSel', mv)
                 hs_mod.save()
             else:
@@ -1575,7 +1582,7 @@ def update_handshape(request, handshapeid):
             object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
                                                               name__iexact=newPattern)
             if object_fingSelection:
-                mv = object_fingSelection[0].machine_value
+                mv = object_fingSelection.first()
                 hs_mod.__setattr__('hsFingSel2', mv)
                 hs_mod.save()
             else:
@@ -1589,13 +1596,16 @@ def update_handshape(request, handshapeid):
             object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
                                                               name__iexact=newPattern)
             if object_fingSelection:
-                mv = object_fingSelection[0].machine_value
+                mv = object_fingSelection.first()
                 hs_mod.__setattr__('hsFingUnsel', mv)
                 hs_mod.save()
+            else:
+                print("finger selection not found: ", newPattern)
     else:
         category_value = 'fieldChoice'
 
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern),
+                        {'content-type': 'text/plain'})
 
 def add_othermedia(request):
 

@@ -187,7 +187,7 @@ function update_view_and_remember_original_value(change_summary)
 	split_values_count = change_summary.split('\t').length - 1;
 	if (split_values_count > 0)
 	{
-	    if (split_values_count < 2) {
+	    if (split_values_count < 3) {
 	        console.log("update_view_and_remember_original_value: not enough returned values")
 	        return
 	    }
@@ -196,7 +196,6 @@ function update_view_and_remember_original_value(change_summary)
         new_value = split_values[1];
         category_value = split_values[2];
         new_pattern = split_values[3];
-        console.log('new pattern: ', new_pattern);
 
         id = $(this).attr('id');
         $(this).html(new_value);
@@ -231,10 +230,6 @@ function update_view_and_remember_original_value(change_summary)
         }
     }
 }
-
-/*
- * http://stackoverflow.com/questions/1597756/is-there-a-jquery-jeditable-multi-select-plugin
- */
 
 $.editable.addInputType("multiselect", {
     element: function (settings, original) {
@@ -288,56 +283,9 @@ $.editable.addInputType("multiselect", {
 });
 
 
-function getCookie(name) {
-    var cookieValue = null;
-    if (document.cookie && document.cookie != '') {
-        var cookies = document.cookie.split(';');
-        for (var i = 0; i < cookies.length; i++) { // >
-            var cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
 
 
-function post_key_and_value_after_n_seconds(key_to_post,value_to_post,n_seconds)
-{
-	setTimeout(function()
-	{
-		$.ajax({
-		  type: "POST",
-		  url: edit_post_url,
-		  data: {'id':key_to_post,'value':'_'+value_to_post},
-		});
 
-	},n_seconds)
-}
 
-function delayed_reload(n_seconds)
-{
-	setTimeout(function()
-	{
-		location.reload();
-	},n_seconds);
-}
 
-function rewind()
-{
-	var c = 1;
-
-	for (key in original_values_for_changes_made)
-	{
-		value = original_values_for_changes_made[key];
-		post_key_and_value_after_n_seconds(key,value,c*100);
-		c++;
-	}
-
-	delayed_reload(c*100);
-
-}
 

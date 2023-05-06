@@ -14,7 +14,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ URL }}'
+    var url = '{{ PREFIX_URL }}'
 
     var edit_mode_str = '{% trans "Edit" %}'
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
@@ -23,7 +23,6 @@
     var edit_post_url = '{% url 'dictionary:update_handshape' handshape.machine_value %}';
 
     var choice_lists = {{choice_lists|safe}};
-    <!--console.log(JSON.stringify(choice_lists));-->
     var csrf_token = '{{csrf_token}}';
 
     // This script gets and inserts the users last searched items on the handshape page
@@ -114,10 +113,12 @@
 
     <!-- Fields -->
     <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;margin-top:15px;">
+        <form method="POST">
+            {% csrf_token %}
         <fieldset>
             <table class='table table-condensed'>
                 <tr><th style="width:18em;">{% trans "Handshape " %}</th><td id='idhandshape'>{% value handshape.name %}</td></tr>
-                <tr><th style="width:18em;">Finger selection</th>
+                <tr><th style="width:18em;">Finger selection pattern</th>
                     <td id="#fingerSelection1">{{ handshape.get_fingerSelection_display }}</td></tr>
                 <tr class="empty_row">
                     <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
@@ -196,6 +197,7 @@
 
             </table>
         </fieldset>
+        </form>
     </div>
 </div>
 
