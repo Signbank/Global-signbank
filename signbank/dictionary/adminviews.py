@@ -7521,10 +7521,10 @@ class KeywordListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         if selected_datasets.count() > 1:
-            feedback_message = _('Please select a single dataset to view minimal pairs.')
+            feedback_message = _('Please select a single dataset to view keywords.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
-            qs = Keyword.objects.none()
-            return qs
+            # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
+            return []
 
         dataset_language = selected_datasets.first().default_language
 
@@ -7533,6 +7533,11 @@ class KeywordListView(ListView):
         for gloss in glosses_of_datasets:
             keyword_translations = gloss.translation_set.filter(language=dataset_language)
             if keyword_translations.count() > 1:
-                glossesXsenses.append((gloss, keyword_translations))
+                senses_groups = dict()
+                for trans in keyword_translations:
+                    if trans.orderIndex not in senses_groups.keys():
+                        senses_groups[trans.orderIndex] = []
+                    senses_groups[trans.orderIndex].append(trans)
+                glossesXsenses.append((gloss, keyword_translations, senses_groups))
         return glossesXsenses
 

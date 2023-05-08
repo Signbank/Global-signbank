@@ -136,9 +136,10 @@ class Translation(models.Model):
     """A spoken language translation of signs"""
 
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
-    language = models.ForeignKey("Language", default=get_default_language_id, on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
     translation = models.ForeignKey("Keyword", on_delete=models.CASCADE)
     index = models.IntegerField("Index")
+    orderIndex = models.IntegerField(_("Sense Index"), default=1)
 
     def __str__(self):
         if self.translation and self.translation.text:

@@ -542,7 +542,7 @@ def update_keywords(gloss, field, value):
     # add new keywords
     for i in range(len(keywords_list)):
         (kobj, created) = Keyword.objects.get_or_create(text=keywords_list[i])
-        trans = Translation(gloss=gloss, translation=kobj, index=i, language=language)
+        trans = Translation(gloss=gloss, translation=kobj, index=i, language=language, orderIndex=1)
         trans.save()
     
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language)])
@@ -571,7 +571,7 @@ def group_keywords(request, glossid):
         if trans_id in group_index:
             target_sense_index = group_index.index(trans_id)
             target_sense = int(regroup[target_sense_index])
-            trans.index = target_sense
+            trans.orderIndex = target_sense
             trans.save()
 
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language).order_by('index')])

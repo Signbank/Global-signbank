@@ -43,8 +43,8 @@ class KeywordAdmin(VersionAdmin):
 class TranslationInline(admin.TabularInline):
     model = Translation
     readonly_fields = ['id', 'language', 'translation']
-    list_display = ['id', 'language', 'translation', 'index']
-    fields = ['id', 'language', 'translation', 'index']
+    list_display = ['id', 'language', 'translation', 'index', 'orderIndex']
+    fields = ['id', 'language', 'translation', 'index', 'orderIndex']
     extra = 0
 
 class RelationToForeignSignInline(admin.TabularInline):

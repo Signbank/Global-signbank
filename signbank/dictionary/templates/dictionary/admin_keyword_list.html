@@ -43,7 +43,7 @@ var csrf_token = '{{csrf_token}}';
       </tr>
     </thead>
     <tbody>
-      {% for gloss, senses in object_list %}
+      {% for gloss, keywords, senses in object_list %}
         <tr>
             <td>{{gloss.idgloss}}</td>
             <td class="actions">
@@ -52,19 +52,28 @@ var csrf_token = '{{csrf_token}}';
                         data-toggle='modal' data-target='#edit_senses_modal_{{gloss.id}}'>
                     <a>{% trans "Edit" %}</a></button>
             </td>
-            <td class="keywords_{{gloss.id}}">{% for trn in senses %}
+            <td class="keywords_{{gloss.id}}">{% for trn in keywords %}
                 {{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}
                 {% endfor %}
             </td>
-            <td class="senses_{{gloss.id}}">{% for trn in senses %}
-                {{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}
+            <td class="senses_{{gloss.id}}">
+                <table>
+                {% for grp, kwds in senses.items %}
+                    <tr>
+                    <td>{{grp}}.</td><td>&nbsp;&nbsp;</td>
+                    <td>{% for kw in kwds %}
+                        {{ kw.translation.text|safe }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                    </tr>
                 {% endfor %}
+                </table>
             </td>
         </tr>
       {% endfor %}
     </tbody>
 </table>
-{% for gloss, senses in object_list %}
+{% for gloss, keywords, senses in object_list %}
          <div class="modal fade" id="edit_senses_modal_{{gloss.id}}" tabindex="-1" role="dialog"
                  aria-labelledby="#modalTitleEdit_{{gloss.id}}" aria-hidden="true">
              <div class="modal-dialog modal-lg">
@@ -74,7 +83,7 @@ var csrf_token = '{{csrf_token}}';
                     </div>
                     <div class='modal-body'>
                         <table class="table table-condensed">
-                            {% regroup senses by index as sense_groups %}
+                            {% regroup keywords by orderIndex as sense_groups %}
                             <thead>
                             <tr><th>{% trans "Senses" %}</th></tr>
                             </thead>
@@ -84,7 +93,7 @@ var csrf_token = '{{csrf_token}}';
                             <td>{{sense_group.grouper}}.</td>
                             <td>
                               {% for sense in sense_group.list %}
-                                <span id="sensegroup_{{sense.index}}">
+                                <span id="sensegroup_{{sense.orderIndex}}">
                                     {{sense.translation.text|safe}}{% if not forloop.last %}, {% endif %}
                                 </span>
                               {% endfor %}
@@ -97,14 +106,14 @@ var csrf_token = '{{csrf_token}}';
                       {% csrf_token %}
                       <table class='table table-condensed'>
                           <tr><th>{% trans "Keyword" %}</th><th>{% trans "Sense Number" %}</th></tr>
-                          {% for sense in senses %}
+                          {% for sense in keywords %}
                         <tr>
                             <td>{{sense.translation.text}}</td>
                             <input type="hidden" id="sense_id_{{sense.id}}"
                                    name="group_index" value={{sense.id}}>
                             <td>
-                            <input type="number" id="regroup_{{sense.index}}"
-                                   name="regroup" value={{sense.index}}
+                            <input type="number" id="regroup_{{sense.orderIndex}}"
+                                   name="regroup" value={{sense.orderIndex}}
                                    max={{senses.count}}>
                             </td>
                         </tr>
