@@ -7531,7 +7531,7 @@ class KeywordListView(ListView):
         glosses_of_datasets = Gloss.objects.filter(lemma__dataset__in=selected_datasets)
         glossesXsenses = []
         for gloss in glosses_of_datasets:
-            keyword_translations = gloss.translation_set.filter(language=dataset_language)
+            keyword_translations = gloss.translation_set.filter(language=dataset_language).order_by('orderIndex')
             if keyword_translations.count() > 1:
                 senses_groups = dict()
                 for trans in keyword_translations:
@@ -7539,5 +7539,6 @@ class KeywordListView(ListView):
                         senses_groups[trans.orderIndex] = []
                     senses_groups[trans.orderIndex].append(trans)
                 glossesXsenses.append((gloss, keyword_translations, senses_groups))
+
         return glossesXsenses
 

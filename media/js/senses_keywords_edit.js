@@ -1,4 +1,4 @@
-// javascript for template admin_search_history.html
+// javascript for template admin_keyword_list.html
 
 var original_values_for_changes_made = new Array();
 
@@ -59,6 +59,16 @@ function configure_edit() {
 
 }
 
+function update_gloss_senses(data) {
+    console.log(data);
+    var glossid = data.glossid;
+    var keywords = data.keywords;
+    var senses_groups = data.senses_groups;
+    var senses_glossid = 'senses_' + glossid;
+    var sensesCell = $(senses_glossid);
+    console.log(senses_groups);
+}
+
 $(document).ready(function() {
 
     // setup required for Ajax POST
@@ -76,5 +86,31 @@ $(document).ready(function() {
         }
     });
 
-    configure_edit();
+     $('.regroup_keywords').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+         var this_data = $(this).attr('value');
+         var language = $(this).attr("data-language");
+         var form_id = '#form_regroup_keywords_' + glossid;
+         var regroup = [];
+         $(form_id).find('input[name="regroup"]').each(function() {
+            regroup.push(this.value);
+         });
+         var group_index = [];
+         $(form_id).find('input[name="group_index"]').each(function() {
+            group_index.push(this.value);
+         });
+         $.ajax({
+            url : url + "/dictionary/update/group_keywords/" + glossid,
+            type: 'POST',
+            data: { 'language': language,
+                    'regroup': JSON.stringify(regroup),
+                    'group_index': JSON.stringify(group_index),
+                    'csrfmiddlewaretoken': csrf_token},
+            datatype: "json",
+            success : update_gloss_senses
+         });
+     });
+//    configure_edit();
 });

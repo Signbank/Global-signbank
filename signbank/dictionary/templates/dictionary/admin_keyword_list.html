@@ -56,7 +56,7 @@ var csrf_token = '{{csrf_token}}';
                 {{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}
                 {% endfor %}
             </td>
-            <td class="senses_{{gloss.id}}">
+            <td class="senses_{{gloss.id}}" id="senses_{{gloss.id}}">
                 <table>
                 {% for grp, kwds in senses.items %}
                     <tr>
@@ -73,7 +73,7 @@ var csrf_token = '{{csrf_token}}';
       {% endfor %}
     </tbody>
 </table>
-{% for gloss, keywords, senses in object_list %}
+{% for gloss, keywords, senses_groups in object_list %}
          <div class="modal fade" id="edit_senses_modal_{{gloss.id}}" tabindex="-1" role="dialog"
                  aria-labelledby="#modalTitleEdit_{{gloss.id}}" aria-hidden="true">
              <div class="modal-dialog modal-lg">
@@ -83,16 +83,15 @@ var csrf_token = '{{csrf_token}}';
                     </div>
                     <div class='modal-body'>
                         <table class="table table-condensed">
-                            {% regroup keywords by orderIndex as sense_groups %}
                             <thead>
                             <tr><th>{% trans "Senses" %}</th></tr>
                             </thead>
                             <tbody>
-                            {% for sense_group in sense_groups %}
-                            <tr>
-                            <td>{{sense_group.grouper}}.</td>
+                            {% for order_index, keywords_list in senses_groups.items %}
+                            <tr id="gloss_{{gloss.id}}_orderIndex_{{order_index}}">
+                            <td>{{order_index}}.</td>
                             <td>
-                              {% for sense in sense_group.list %}
+                              {% for sense in keywords_list %}
                                 <span id="sensegroup_{{sense.orderIndex}}">
                                     {{sense.translation.text|safe}}{% if not forloop.last %}, {% endif %}
                                 </span>
@@ -102,7 +101,8 @@ var csrf_token = '{{csrf_token}}';
                             </tr>
                             </tbody>
                         </table>
-                      <form action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
+                      <form id="form_regroup_keywords_{{gloss.id}}"
+                            action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
                       <table class='table table-condensed'>
                           <tr><th>{% trans "Keyword" %}</th><th>{% trans "Sense Number" %}</th></tr>
@@ -110,18 +110,19 @@ var csrf_token = '{{csrf_token}}';
                         <tr>
                             <td>{{sense.translation.text}}</td>
                             <input type="hidden" id="sense_id_{{sense.id}}"
-                                   name="group_index" value={{sense.id}}>
+                                   name="group_index" value='{{sense.id}}' data-group_index='{{sense.id}}'>
                             <td>
                             <input type="number" id="regroup_{{sense.orderIndex}}"
-                                   name="regroup" value={{sense.orderIndex}}
+                                   name="regroup" value='{{sense.orderIndex}}' data-regroup='{{sense.orderIndex}}'
                                    max={{senses.count}}>
                             </td>
                         </tr>
                           {% endfor %}
                       </table>
                           <input type="hidden" name="language" value="{{dataset_language.id}}">
-                          <input type="submit" name="regroup_submit_{{gloss.id}}"
-                                  value='{% trans "Regroup Kewords" %}'>
+                          <button class="regroup_keywords" id="regroup_keywords_{{gloss.id}}" value='{{gloss.id}}'
+                                    data-language="{{dataset_language.id}}" type="submit">
+                              {% trans "Regroup Kewords" %}'</button>
                       </form>
                      </div>
                       <div class="modal-footer">

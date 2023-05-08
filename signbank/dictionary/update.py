@@ -555,28 +555,47 @@ def group_keywords(request, glossid):
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
-    group_index = request.POST.getlist('group_index')
+    group_index_get = request.POST.get('group_index')
+    group_index_list_str = json.loads(group_index_get)
+    group_index = [ int(s) for s in group_index_list_str ]
+
     language = request.POST.get('language', '')
-    regroup = request.POST.getlist('regroup')
+
+    regroup_get = request.POST.get('regroup')
+    regroup_list_str = json.loads(regroup_get)
+    regroup = [ int(s) for s in regroup_list_str ]
 
     if not language:
         language = Language.objects.get(id=get_default_language_id())
     else:
         language = Language.objects.get(id=int(language))
 
-    translation_ids = [t.id for t in gloss.translation_set.filter(language=language)]
+    translation_ids = [t.id for t in gloss.translation_set.filter(language=language).order_by('orderIndex')]
     for transid in translation_ids:
         trans = Translation.objects.get(id=transid)
-        trans_id = str(transid)
+        trans_id = trans.id
         if trans_id in group_index:
             target_sense_index = group_index.index(trans_id)
-            target_sense = int(regroup[target_sense_index])
+            target_sense = regroup[target_sense_index]
             trans.orderIndex = target_sense
             trans.save()
 
-    newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language).order_by('index')])
-    # return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
-    return HttpResponseRedirect(reverse('dictionary:admin_keyword_list'))
+    glossesXsenses = dict()
+    keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex')
+    if keyword_translations.count() > 1:
+        senses_groups = dict()
+        keywords_list = []
+        for trans in keyword_translations:
+            orderIndexKey = str(trans.orderIndex)
+            if orderIndexKey not in senses_groups.keys():
+                senses_groups[orderIndexKey] = []
+            senses_groups[orderIndexKey].append(trans.translation.text)
+            keywords_list.append(trans.translation.text)
+        glossesXsenses['glossid'] = glossid
+        glossesXsenses['keywords'] = keywords_list
+        glossesXsenses['senses_groups'] = senses_groups
+
+    return HttpResponse(json.dumps(glossesXsenses), {'content-type': 'application/json'})
 
 def update_annotation_idgloss(gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""
