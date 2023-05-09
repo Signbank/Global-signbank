@@ -6,7 +6,7 @@
 {% load annotation_idgloss_translation %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Signbank: Available Keywords{% endblocktrans %}
+{% blocktrans %}Signbank: Map Keywords to Senses{% endblocktrans %}
 {% endblock %}
 
 {% block extrajs %}
@@ -31,7 +31,7 @@ var csrf_token = '{{csrf_token}}';
 
     {% else %}
     <div class="keywordsSenses" id="keywordsSenses">
-    <h3>{% trans "Mapping Keywords to Senses" %}</h3>
+    <h3>{% trans "Map Keywords to Senses" %}</h3>
 
 <table class='table table-condensed'>
     <thead>
@@ -58,8 +58,9 @@ var csrf_token = '{{csrf_token}}';
             </td>
             <td class="senses_{{gloss.id}}" id="senses_{{gloss.id}}">
                 <table>
+                    <tbody id="tbody_senses_{{gloss.id}}">
                 {% for grp, kwds in senses.items %}
-                    <tr>
+                    <tr id="senses_{{gloss.id}}_row_{{grp}}">
                     <td>{{grp}}.</td><td>&nbsp;&nbsp;</td>
                     <td>{% for kw in kwds %}
                         {{ kw.translation.text|safe }}{% if not forloop.last %}, {% endif %}
@@ -67,6 +68,7 @@ var csrf_token = '{{csrf_token}}';
                     </td>
                     </tr>
                 {% endfor %}
+                    </tbody>
                 </table>
             </td>
         </tr>
@@ -84,17 +86,17 @@ var csrf_token = '{{csrf_token}}';
                     <div class='modal-body'>
                         <table class="table table-condensed">
                             <thead>
-                            <tr><th>{% trans "Senses" %}</th></tr>
+                            <tr><th colspan=3>{% trans "Senses" %}</th></tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tbody_modal_senses_{{gloss.id}}">
                             {% for order_index, keywords_list in senses_groups.items %}
-                            <tr id="gloss_{{gloss.id}}_orderIndex_{{order_index}}">
+                            <tr id="modal_senses_{{gloss.id}}_row_{{order_index}}">
                             <td>{{order_index}}.</td>
                             <td>
                               {% for sense in keywords_list %}
                                 <span id="sensegroup_{{sense.orderIndex}}">
-                                    {{sense.translation.text|safe}}{% if not forloop.last %}, {% endif %}
-                                </span>
+                                    {{sense.translation.text|safe}}
+                                </span>{% if not forloop.last %}, {% endif %}
                               {% endfor %}
                             </td>
                             {% endfor %}

@@ -60,13 +60,47 @@ function configure_edit() {
 }
 
 function update_gloss_senses(data) {
-    console.log(data);
     var glossid = data.glossid;
     var keywords = data.keywords;
     var senses_groups = data.senses_groups;
-    var senses_glossid = 'senses_' + glossid;
+    var senses_glossid = '#tbody_senses_' + glossid;
+    var modal_senses_glossid = '#tbody_modal_senses_' + glossid;
     var sensesCell = $(senses_glossid);
-    console.log(senses_groups);
+    var modalSensesCell = $(modal_senses_glossid);
+    $(sensesCell).empty();
+    $(modalSensesCell).empty();
+    for (var key in senses_groups) {
+        var row = $("<tr/>");
+        row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
+        var group_keywords = senses_groups[key];
+        num_commas = group_keywords.length - 1;
+        for (var inx in group_keywords) {
+            if (inx < num_commas) {
+                row.append("<span>"+group_keywords[inx]+"</span>, ");
+            } else {
+                row.append("<span>"+group_keywords[inx]+"</span>");
+            }
+        };
+        row.append("</td>");
+        modalSensesCell.append(row);
+    }
+    modalSensesCell.append("</tr>");
+    for (var key in senses_groups) {
+        var row = $("<tr/>");
+                row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
+        var group_keywords = senses_groups[key];
+        num_commas = group_keywords.length - 1;
+        for (var inx in group_keywords) {
+            if (inx < num_commas) {
+                row.append("<span>"+group_keywords[inx]+"</span>, ");
+            } else {
+                row.append("<span>"+group_keywords[inx]+"</span>");
+            }
+        };
+        row.append("</td>");
+        sensesCell.append(row);
+    }
+    sensesCell.append("</tr>");
 }
 
 $(document).ready(function() {
@@ -90,7 +124,6 @@ $(document).ready(function() {
 	 {
          e.preventDefault();
 	     var glossid = $(this).attr('value');
-         var this_data = $(this).attr('value');
          var language = $(this).attr("data-language");
          var form_id = '#form_regroup_keywords_' + glossid;
          var regroup = [];
