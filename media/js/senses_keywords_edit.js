@@ -61,10 +61,14 @@ function configure_edit() {
 
 function update_gloss_senses(data) {
     var glossid = data.glossid;
+    var language = data.language;
     var keywords = data.keywords;
     var senses_groups = data.senses_groups;
-    var senses_glossid = '#tbody_senses_' + glossid;
-    var modal_senses_glossid = '#tbody_modal_senses_' + glossid;
+    if ($.isEmptyObject(senses_groups)) {
+        return;
+    };
+    var senses_glossid = '#tbody_senses_' + glossid + '_' + language;
+    var modal_senses_glossid = '#tbody_modal_senses_' + glossid + '_' + language;
     var sensesCell = $(senses_glossid);
     var modalSensesCell = $(modal_senses_glossid);
     $(sensesCell).empty();
@@ -125,7 +129,7 @@ $(document).ready(function() {
          e.preventDefault();
 	     var glossid = $(this).attr('value');
          var language = $(this).attr("data-language");
-         var form_id = '#form_regroup_keywords_' + glossid;
+         var form_id = '#form_regroup_keywords_' + glossid + '_' + language;
          var regroup = [];
          $(form_id).find('input[name="regroup"]').each(function() {
             regroup.push(this.value);

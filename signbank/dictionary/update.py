@@ -570,7 +570,7 @@ def group_keywords(request, glossid):
     else:
         language = Language.objects.get(id=int(language))
 
-    translation_ids = [t.id for t in gloss.translation_set.filter(language=language).order_by('orderIndex')]
+    translation_ids = [t.id for t in gloss.translation_set.filter(language=language).exclude(translation__text__exact='').order_by('orderIndex')]
     for transid in translation_ids:
         trans = Translation.objects.get(id=transid)
         trans_id = trans.id
@@ -581,8 +581,8 @@ def group_keywords(request, glossid):
             trans.save()
 
     glossesXsenses = dict()
-    keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex')
-    if keyword_translations.count() > 1:
+    keyword_translations = gloss.translation_set.filter(language=language).exclude(translation__text__exact='').order_by('orderIndex')
+    if keyword_translations.count() > 0:
         senses_groups = dict()
         keywords_list = []
         for trans in keyword_translations:
@@ -592,6 +592,7 @@ def group_keywords(request, glossid):
             senses_groups[orderIndexKey].append(trans.translation.text)
             keywords_list.append(trans.translation.text)
         glossesXsenses['glossid'] = glossid
+        glossesXsenses['language'] = str(language.id)
         glossesXsenses['keywords'] = keywords_list
         glossesXsenses['senses_groups'] = senses_groups
 

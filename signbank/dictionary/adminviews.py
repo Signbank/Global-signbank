@@ -7528,17 +7528,25 @@ class KeywordListView(ListView):
 
         dataset_language = selected_datasets.first().default_language
 
+        # multilingual
+        dataset_languages = get_dataset_languages(selected_datasets)
+
         glosses_of_datasets = Gloss.objects.filter(lemma__dataset__in=selected_datasets)
         glossesXsenses = []
         for gloss in glosses_of_datasets:
-            keyword_translations = gloss.translation_set.filter(language=dataset_language).order_by('orderIndex')
-            if keyword_translations.count() > 1:
+            keyword_translations_per_language = dict()
+            sense_groups_per_language = dict()
+            for language in dataset_languages:
+                keyword_translations = gloss.translation_set.filter(language=language).exclude(translation__text__exact='').order_by('orderIndex', 'index')
                 senses_groups = dict()
-                for trans in keyword_translations:
-                    if trans.orderIndex not in senses_groups.keys():
-                        senses_groups[trans.orderIndex] = []
-                    senses_groups[trans.orderIndex].append(trans)
-                glossesXsenses.append((gloss, keyword_translations, senses_groups))
+                if keyword_translations.count() > 0:
+                    for trans in keyword_translations:
+                        if trans.orderIndex not in senses_groups.keys():
+                            senses_groups[trans.orderIndex] = []
+                        senses_groups[trans.orderIndex].append(trans)
+                keyword_translations_per_language[language] = keyword_translations
+                sense_groups_per_language[language] = senses_groups
+            glossesXsenses.append((gloss, keyword_translations_per_language, sense_groups_per_language))
 
         return glossesXsenses
 
