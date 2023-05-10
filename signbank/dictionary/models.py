@@ -930,9 +930,9 @@ class Gloss(models.Model):
                                   blank=True)  # TODO: should be boolean
     segloss = models.CharField(_("Signed English gloss"), max_length=50, blank=True, null=True)
 
-    # sense = models.IntegerField(_("Sense Number"), null=True, blank=True,
-    #                             help_text="If there is more than one sense of a sign enter a number here, all signs with sense>1 will use the same video as sense=1")
-    # sense.list_filter_sense = True
+    sense = models.IntegerField(_("Sense Number"), null=True, blank=True,
+                                help_text="If there is more than one sense of a sign enter a number here, all signs with sense>1 will use the same video as sense=1")
+    sense.list_filter_sense = True
 
     senses = models.ManyToManyField(Sense)
 
