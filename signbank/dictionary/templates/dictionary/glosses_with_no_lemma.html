@@ -1,0 +1,48 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Glosses Without Lemma{% endblocktrans %}
+{% endblock %}
+
+
+{% block content %}
+
+{% if glosses_without_lemma %}
+<table class="table table-condensed">
+    <thead><tr><th width="100px;">{% trans "Gloss ID" %}</th><th width="200px;">{% trans "Dummy Lemma" %}</th>
+        <th width="100px;">{% trans "Language" %}</th><th width="300px;">{% trans "Annotation" %}</th></tr>
+    </thead>
+    <tbody>
+    {% for gloss, annotations, language_names in glosses_without_lemma %}
+        <tr>
+            <td width="100px;">{{gloss.id}}</td>
+            <td width="200px;">
+                <select id="select_dummy_lemma">
+                {% for dummy, dummy_label in dummy_lemmas %}
+                    {% if language_names in dummy_label %}
+                     <option value="{{dummy.id}}">{{ dummy_label }}</option>
+                    {% endif %}
+                {% endfor %}
+                </select>
+            </td>
+            <td width="400px;" colspan="2">
+                <table class="table table-condensed">
+                {% for ann in annotations %}
+                    <tr>
+                        <td width="100px;">{{ann.language}}</td><td width="300px;">{{ann.text}}</td>
+                    </tr>
+                {% endfor %}
+                </table>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+{% trans "No glosses without lemmas found." %}
+{% endif %}
+
+{% endblock content %}
