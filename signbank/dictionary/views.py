@@ -14,6 +14,7 @@ import time
 from signbank.dictionary.adminviews import order_queryset_by_sort_order
 
 from signbank.dictionary.forms import *
+from signbank.dictionary.models import *
 from signbank.feedback.models import *
 from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, \
     update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology, subst_notes
@@ -2564,6 +2565,60 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     else:
         from django.views.static import serve
         return serve(request, filename, document_root, show_indexes)
+
+def show_glosses_with_no_lemma(request):
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
+    glosses_without_lemma = Gloss.objects.filter(lemma=None)
+    gloss_tuples = []
+    for g in glosses_without_lemma:
+        gloss_annotations = AnnotationIdglossTranslation.objects.filter(gloss=g)
+        gloss_annotation_languages = [ann.language.name for ann in gloss_annotations]
+        language_names = ', '.join(gloss_annotation_languages)
+        gloss_tuples.append((g, gloss_annotations, language_names))
+
+    all_datasets = Dataset.objects.all()
+    dummies_to_create = []
+    for this_dataset in all_datasets:
+        dataset_languages_this_dataset = this_dataset.translation_languages.all()
+        for lang in dataset_languages_this_dataset:
+            dummy_lemma_name = 'DUMMY_LEMMA_' + this_dataset.acronym.replace(' ', '') + '_' + lang.language_code_2char.upper()
+            dummy_lemma = LemmaIdgloss.objects.filter(dataset=this_dataset,
+                                                      lemmaidglosstranslation__text=dummy_lemma_name)
+            if not dummy_lemma.count():
+                if this_dataset not in dummies_to_create:
+                    dummies_to_create.append(this_dataset)
+
+    for dataset_to_dummy in dummies_to_create:
+        dataset_languages_this_dataset = dataset_to_dummy.translation_languages.all()
+        new_lemma = LemmaIdgloss(dataset=dataset_to_dummy)
+        new_lemma.save()
+        for lang in dataset_languages_this_dataset:
+            dummy_lemma_name = 'DUMMY_LEMMA_' + dataset_to_dummy.acronym.replace(' ', '') + '_' + lang.language_code_2char.upper()
+            dummy_translation = LemmaIdglossTranslation(text=dummy_lemma_name, lemma=new_lemma, language=lang)
+            dummy_translation.save()
+
+    dummy_lemma_name = 'DUMMY_LEMMA_'
+    dummy_lemmas = LemmaIdgloss.objects.filter(lemmaidglosstranslation__text__icontains=dummy_lemma_name).distinct()
+    lemma_choices = []
+    for dummy in dummy_lemmas:
+        dummy_translations = [t.language.name for t in dummy.lemmaidglosstranslation_set.all()]
+        select_string = ', '.join(dummy_translations)
+        lemma_choices.append((dummy, dummy.dataset.acronym + ': ' + select_string))
+
+    return render(request, "dictionary/glosses_with_no_lemma.html", {
+        'dataset_languages': dataset_languages,
+        'selected_datasets': selected_datasets,
+        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+        'glosses_without_lemma': gloss_tuples,
+        'dummy_lemmas': lemma_choices
+    })
 
 @login_required_config
 def show_unassigned_glosses(request):
