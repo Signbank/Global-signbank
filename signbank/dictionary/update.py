@@ -37,7 +37,6 @@ def show_error(request, translated_message, form, dataset_languages):
                    'selected_datasets': get_selected_datasets_for_user(request.user),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-
 # this method is called from the GlossListView (Add Gloss button on the page)
 def add_gloss(request):
     """Create a new gloss and redirect to the edit view"""
@@ -143,6 +142,236 @@ def add_gloss(request):
     # new gloss created successfully, go to GlossDetailView
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
+def update_examplesentence(request, examplesentenceid):
+    """View to update an examplesentence model from the editable modal"""
+
+    if not request.user.has_perm('dictionary.change_examplesentence'):
+        return HttpResponseForbidden("Example sentence Update Not Allowed")
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Example sentence Update method must be POST")
+    
+    examplesentence = ExampleSentence.objects.all().get(id = examplesentenceid)
+    change_made = False
+
+    # Use "on" given by checkbox value instead of True
+    if request.POST['negative'] == 'on':
+        negative = True
+    else:
+        negative = False
+    
+    # If change is made in negative or type then change and save that
+    if examplesentence.negative != negative or examplesentence.sentencetype != request.POST['sentencetype']:
+        examplesentence.negative=negative
+        examplesentence.sentencetype=request.POST['sentencetype']
+        examplesentence.save()
+        change_made = True
+
+    # Check if both sentences already existed together
+    dataset = Dataset.objects.get(id = request.POST['dataset'])
+    dataset_languages = dataset.translation_languages.all()
+    unique_examplesentence = 0
+    vals = {}
+    for dataset_language in dataset_languages:
+        stc = request.POST[str(dataset_language)]
+        vals[str(dataset_language)] = stc
+        if ExampleSentenceTranslation.objects.filter(language = dataset_language, text=stc).exists():
+            unique_examplesentence = unique_examplesentence + 1
+    if unique_examplesentence == len(dataset_languages) and not change_made:
+        messages.add_message(request, messages.ERROR, _('This sentence already exists in this dataset.'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+    # Edit and save the sentence translations
+    with atomic():
+        examplesentencetranslations = ExampleSentenceTranslation.objects.filter(examplesentence=examplesentence)
+        for examplesentencetranslation in examplesentencetranslations:
+            examplesentencetranslation.text = vals[str(examplesentencetranslation.language)]
+            examplesentencetranslation.save()
+    
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def create_examplesentence(request, senseid):
+    """View to create a sense model from the editable modal"""
+
+    if not request.user.has_perm('dictionary.create_examplesentence'):
+        return HttpResponseForbidden("Sense Creation Not Allowed")
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Example sentence Creation method must be POST")
+    
+    # Check if this sense already exists (has the same sets of keywords)
+    dataset = Dataset.objects.get(id = request.POST['dataset'])
+    dataset_languages = dataset.translation_languages.all()
+
+    # Use "on" given by checkbox value instead of True
+    if request.POST['negative'] == 'on':
+        negative = True
+    else:
+        negative = False
+
+    # Check if both sentences already existed together
+    dataset = Dataset.objects.get(id = request.POST['dataset'])
+    dataset_languages = dataset.translation_languages.all()
+    unique_sentencetranslation = 0
+    vals = {}
+    for dataset_language in dataset_languages:
+        stc = request.POST[str(dataset_language)]
+        vals[str(dataset_language)] = stc
+        if ExampleSentenceTranslation.objects.filter(language = dataset_language, text=stc).exists():
+            unique_sentencetranslation = unique_sentencetranslation + 1
+    
+    if unique_sentencetranslation == len(dataset_languages):
+        messages.add_message(request, messages.ERROR, _('This sentence already exists in this dataset.'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+    with atomic():
+        examplesentence = ExampleSentence.objects.create(negative=negative, sentencetype=request.POST['sentencetype'])
+        examplesentence.save()
+        sense = Sense.objects.all().get(id = senseid)
+        sense.exampleSentences.add(examplesentence)
+        for dataset_language in dataset_languages:
+            if(vals[str(dataset_language)]):
+                sentencetranslation=ExampleSentenceTranslation.objects.create(language=dataset_language, examplesentence=examplesentence, text=vals[str(dataset_language)])
+                sentencetranslation.save()
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def delete_examplesentence(request, senseid):
+    """View to delete an examplesentence model from the editable modal"""
+
+    if not request.user.has_perm('dictionary.delete_examplesentence'):
+        return HttpResponseForbidden("Example sentence Deletion Not Allowed")
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Example sentence Deletion method must be POST")
+    
+    examplesentence = ExampleSentence.objects.all().get(id = request.POST['examplesentenceid'])
+    sense = Sense.objects.all().get(id = senseid)
+    sense.exampleSentences.remove(examplesentence)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def update_sense(request, senseid):
+    """View to update a sense model from the editable modal"""
+
+    if not request.user.has_perm('dictionary.change_sense'):
+        return HttpResponseForbidden("Sense Update Not Allowed")
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Sense Update method must be POST")
+    
+    # Check if this sense already exists (has the same sets of keywords)
+    dataset = Dataset.objects.get(id = request.POST['dataset'])
+    dataset_languages = dataset.translation_languages.all()
+    unique_sense = 0
+    vals = {}
+    for dataset_language in dataset_languages:
+        value = request.POST[str(dataset_language)]
+        values = value.split(",")
+        if not values[0] == '':
+            for k, v in enumerate(values): 
+                values[k] = v.strip()
+            values = sorted(values)
+            vals[str(dataset_language)] = values
+            sensetranslations = SenseTranslation.objects.filter(language = dataset_language)
+            for st in sensetranslations:
+                if st.get_keyword_list()== values:
+                    unique_sense = unique_sense + 1
+        else:
+            unique_sense = unique_sense + 1
+    if unique_sense == len(dataset_languages):
+        messages.add_message(request, messages.ERROR, _('Sense already exists in this dataset.'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+    # Add or remove keywords to the sense translations
+    with atomic():
+        sense = Sense.objects.all().get(id = senseid)
+        sensetranslations = sense.senseTranslations.through.objects.filter(sense_id=senseid)
+        for sensetranslation in sensetranslations:
+            kws = []
+            st = SenseTranslation.objects.all().get(id = sensetranslation.sensetranslation_id)
+            kw_relations = st.keywords.through.objects.filter(sensetranslation_id = sensetranslation.sensetranslation_id)
+            for kw_r in kw_relations:
+                kws.append(str(Keyword.objects.all().get(id = kw_r.keyword_id)))
+            for kw in kws:
+                if kw not in vals[str(st.language)]:
+                    st.keywords.remove(Keyword.objects.all().get(text = kw).id)
+            for kw in vals[str(st.language)]:
+                if kw not in kws:
+                    if Keyword.objects.filter(text = kw).exists():
+                        st.keywords.add(Keyword.objects.all().get(text = kw).id)
+                    else:
+                        keyword = Keyword.objects.create(text=kw)
+                        keyword.save()
+                        st.keywords.add(keyword)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def create_sense(request, glossid):
+    """View to create a sense model from the editable modal"""
+
+    if not request.user.has_perm('dictionary.create_sense'):
+        return HttpResponseForbidden("Sense Creation Not Allowed")
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Sense Creation method must be POST")
+    
+    # Check if this sense already exists (has the same sets of keywords)
+    dataset = Dataset.objects.get(id = request.POST['dataset'])
+    dataset_languages = dataset.translation_languages.all()
+    unique_sense = 0
+    vals = {}
+    for dataset_language in dataset_languages:
+        value = request.POST[str(dataset_language)]
+        values = value.split(",")
+        if not values[0] == '':
+            for k, v in enumerate(values): 
+                values[k] = v.strip()
+            values = sorted(values)
+            vals[str(dataset_language)] = values
+            sensetranslations = SenseTranslation.objects.filter(language = dataset_language)
+            for st in sensetranslations:
+                if st.get_keyword_list()== values:
+                    unique_sense = unique_sense + 1
+        else:
+            unique_sense = unique_sense + 1
+    if unique_sense == len(dataset_languages):
+        messages.add_message(request, messages.ERROR, _('Sense already exists in this dataset.'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    else:
+        sense = Sense.objects.create(dataset = dataset)
+        sense.save()
+        gloss = Gloss.objects.all().get(id = glossid)
+        gloss.senses.add(sense)
+
+    # Add or remove keywords to the sense translations
+    with atomic():
+        for dataset_language in dataset_languages:
+            if len(vals[str(dataset_language)])>0:
+                sensetranslation = SenseTranslation.objects.create(language = dataset_language)
+                sensetranslation.save()
+                sense.senseTranslations.add(sensetranslation)
+                for kw in vals[str(sensetranslation.language)]:
+                    if Keyword.objects.filter(text = kw).exists():
+                        sensetranslation.keywords.add(Keyword.objects.all().get(text = kw).id)
+                    else:
+                        keyword = Keyword.objects.create(text=kw)
+                        keyword.save()
+                        sensetranslation.keywords.add(keyword)
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def delete_sense(request, glossid):
+    """View to delete a sense model from the editable modal"""
+
+    if not request.user.has_perm('dictionary.delete_sense'):
+        return HttpResponseForbidden("Sense Deletion Not Allowed")
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Sense Deletion method must be POST")
+    
+    sense = Sense.objects.all().get(id = request.POST['senseid'])
+    gloss = Gloss.objects.all().get(id = glossid)
+    gloss.senses.remove(sense)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 def update_gloss(request, glossid):
     """View to update a gloss model from the jeditable jquery form

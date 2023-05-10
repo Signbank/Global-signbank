@@ -48,6 +48,12 @@ urlpatterns = [
     re_path(r'^update/morphemedefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_morpheme_definition, name='add_morphemedefinition'),
     re_path(r'^update/othermedia/', signbank.dictionary.update.add_othermedia, name='add_othermedia'),
     re_path(r'^update/gloss/', signbank.dictionary.update.add_gloss, name='add_gloss'),
+    re_path(r'^update/sense/(?P<senseid>\d+)$', signbank.dictionary.update.update_sense, name='update_sense'),
+    re_path(r'^update/addsense/(?P<glossid>\d+)$', signbank.dictionary.update.create_sense, name='create_sense'),
+    re_path(r'^update/deletesense/(?P<glossid>\d+)$', signbank.dictionary.update.delete_sense, name='delete_sense'),
+    re_path(r'^update/examplesentence/(?P<examplesentenceid>\d+)$', signbank.dictionary.update.update_examplesentence, name='update_examplesentence'),
+    re_path(r'^update/addexamplesentence/(?P<senseid>\d+)$', signbank.dictionary.update.create_examplesentence, name='create_examplesentence'),
+    re_path(r'^update/deleteexamplesentence/(?P<senseid>\d+)$', signbank.dictionary.update.delete_examplesentence, name='delete_examplesentence'),
     re_path(r'^update/morpheme/', signbank.dictionary.update.add_morpheme, name='add_morpheme'),
     re_path(r'^update/blenddefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_blend_definition, name='add_blenddefinition'),
 

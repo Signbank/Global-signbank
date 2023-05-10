@@ -1673,6 +1673,13 @@ class GlossDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
 
+        # TODO: must be a better way to do this (field choices?)
+        context['SENTENCETYPES'] = (
+            ('declarative', _('Declarative (statement)')),
+            ('interrogative', _('Interrogative (question)')),
+            ('imperative', _('Imperative (command)')),
+            ('exclamative', _('Exclamative (exclamation)'))
+            )
         context['senses'] = gl.senses.filter(dataset=gl.lemma.dataset)
 
         bad_dialect = False

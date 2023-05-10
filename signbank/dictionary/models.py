@@ -599,6 +599,19 @@ class ExampleSentence(models.Model):
             translation_text = str(est.language) + ": " + str(est)
             translations.append(translation_text)
         return translations
+    
+    def get_examplestc_translations_dict(self):
+        translations = {}
+        for est in ExampleSentenceTranslation.objects.filter(examplesentence = self):
+            translations[str(est.language)] = str(est)
+
+        # TO DO: change this to filter by e.g. gloss or dataset!!!
+        senses = Sense.objects.all()
+        for se in senses:
+            for s in se.dataset.translation_languages.all():
+                if str(s) not in translations:
+                    translations[str(s)] = ""
+        return translations
 
     def get_video_path(self):
         return self.video
@@ -688,13 +701,16 @@ class SenseTranslation(models.Model):
     def get_keywords(self):
         return ", ".join([k.text for k in self.keywords.all()])
     
+    def get_keyword_list(self):
+        return sorted([k.text for k in self.keywords.all()])
+
     def __str__(self):
         return ", ".join([k.text for k in self.keywords.all()])
     
 class Sense(models.Model):
     """A sense belongs to a gloss and consists of a set of keyword(s)"""
     
-    orderindex = models.IntegerField()
+    orderindex = models.IntegerField(default = 0)
     senseTranslations = models.ManyToManyField(SenseTranslation)
     exampleSentences = models.ManyToManyField(ExampleSentence)
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
@@ -720,6 +736,13 @@ class Sense(models.Model):
                 sense_keywords.append(str(dataset_translation_language) + ": " + keyword_list )
         return sense_keywords
 
+    def get_trans_dict(self):
+        sense_keywords = {}
+        for dataset_translation_language in self.dataset.translation_languages.all():
+            keyword_list = ", ".join([k.get_keywords() for k in self.senseTranslations.filter(language = dataset_translation_language)])
+            sense_keywords[str(dataset_translation_language)]= keyword_list
+        return sense_keywords
+    
     class Admin:
         list_display = ['orderindex', 'keywords']
         search_fields = ['orderindex', 'keywords']
