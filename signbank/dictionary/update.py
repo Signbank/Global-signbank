@@ -530,19 +530,28 @@ def update_keywords(gloss, field, value):
     kwds = [k.strip() for k in value.split(',')]
 
     keywords_list = []
-
-    # omit duplicates
+    # omit duplicates to make sure constraint holds
     for kwd in kwds:
         if kwd not in keywords_list:
             keywords_list.append(kwd)
 
-    # remove current keywords
-    current_trans = gloss.translation_set.filter(language=language)
-    current_trans.delete()
+    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    current_keywords = [t.translation.text for t in current_trans]
+
+    missing_keywords = []
+    for trans in current_trans:
+        if trans.translation.text not in keywords_list:
+            missing_keywords.append(trans)
+    # remove deleted keywords
+    for t in missing_keywords:
+        t.delete()
     # add new keywords
     for i in range(len(keywords_list)):
-        (kobj, created) = Keyword.objects.get_or_create(text=keywords_list[i])
-        trans = Translation(gloss=gloss, translation=kobj, index=i, language=language, orderIndex=1)
+        new_text = keywords_list[i]
+        if new_text in current_keywords:
+            continue
+        (keyword_object, created) = Keyword.objects.get_or_create(text=keywords_list[i])
+        trans = Translation(gloss=gloss, translation=keyword_object, index=i, language=language, orderIndex=1)
         trans.save()
     
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language)])
