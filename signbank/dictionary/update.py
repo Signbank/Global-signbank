@@ -550,6 +550,75 @@ def update_keywords(gloss, field, value):
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 
+def edit_keywords(request, glossid):
+    """Edit the keywords"""
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    keyword_index_get = request.POST.get('keyword_index')
+    keyword_index_list_str = json.loads(keyword_index_get)
+    keyword_index = [ int(s) for s in keyword_index_list_str ]
+
+    language = request.POST.get('language', '')
+
+    translation_get = request.POST.get('translation')
+    translation_list_str = json.loads(translation_get)
+    translation = [ s for s in translation_list_str ]
+
+    if not language:
+        language = Language.objects.get(id=get_default_language_id())
+    else:
+        language = Language.objects.get(id=int(language))
+
+    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    current_keywords = [t.translation.text for t in current_trans]
+
+    # the input lists keyword_index and translation are exactly the same length
+    # pair them together in a dictionary, removing any space characters
+    paired_index_text = {}
+    for inx in keyword_index:
+        paired_index_text[inx] = translation[keyword_index.index(inx)].strip()
+
+    # omit duplicates by skipping the keyword_index and its corresponding translation
+    new_keywords_list = []
+    new_index_list = []
+    for inx, kwd in paired_index_text.items():
+        if kwd not in new_keywords_list:
+            new_keywords_list.append(kwd)
+            new_index_list.append(inx)
+
+    # update the new keywords
+    for i in range(len(new_keywords_list)):
+        new_text = new_keywords_list[i]
+        if new_text in current_keywords:
+            continue
+        index_to_update = new_index_list[i]
+        # fetch the keyword's translation object and change its keyword
+        keyword_to_update = Translation.objects.get(pk=index_to_update)
+        # new text is not in current keywords
+        # fetch or create the text and update the translation object
+        (keyword_object, created) = Keyword.objects.get_or_create(text=new_text)
+        keyword_to_update.translation = keyword_object
+        keyword_to_update.save()
+
+    glossesXsenses = dict()
+    keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    if keyword_translations.count() > 0:
+        senses_groups = dict()
+        keywords_list = []
+        for trans in keyword_translations:
+            orderIndexKey = str(trans.orderIndex)
+            if orderIndexKey not in senses_groups.keys():
+                senses_groups[orderIndexKey] = []
+            senses_groups[orderIndexKey].append(trans.translation.text)
+            keywords_list.append(trans.translation.text)
+        glossesXsenses['glossid'] = glossid
+        glossesXsenses['language'] = str(language.id)
+        glossesXsenses['keywords'] = keywords_list
+        glossesXsenses['senses_groups'] = senses_groups
+
+    return HttpResponse(json.dumps(glossesXsenses), {'content-type': 'application/json'})
+
+
 def group_keywords(request, glossid):
     """Update the keyword field"""
 
