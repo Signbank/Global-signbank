@@ -47,14 +47,16 @@ var csrf_token = '{{csrf_token}}';
         <tr>
             <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}">{{gloss.idgloss}}</a></td>
             <td class="actions">
-                <div>
+                <table>
                 {% for language in dataset_languages %}
+                <tr><td>
                 <button id='edit_senses_btn_{{gloss.id}}_{{language.id}}' class="btn" type="button" name='edit_{{gloss.id}}'
                         value='edit_{{gloss.id}}'
                         data-toggle='modal' data-target='#edit_senses_modal_{{gloss.id}}_{{language.id}}'>
                     <a>{% trans "Edit" %} {{language.name}}</a></button>
                 {% endfor %}
-                </div>
+                </td></tr>
+                </table>
             </td>
             <td class="keywords_{{gloss.id}}">
                 <table>
