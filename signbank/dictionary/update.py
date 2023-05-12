@@ -2999,3 +2999,55 @@ def update_query(request, queryid):
         value = original_value
 
     return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+
+def assign_lemma_dataset_to_gloss(request, glossid):
+
+    # if anything fails nothing is done, but messages are output
+
+    if not request.user.is_authenticated:
+        messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        messages.add_message(self.request, messages.ERROR, _('You do not have permission to change glosses.'))
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    lemma_get = request.POST.get('lemmaid', '')
+    if not lemma_get:
+        print('assign_lemma_dataset_to_gloss: no lemmaid in POST.get')
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+    lemmaid = int(lemma_get)
+
+    try:
+        dummy_lemma = LemmaIdgloss.objects.get(pk=lemmaid)
+    except ObjectDoesNotExist:
+        print('assign_lemma_dataset_to_gloss: dummy lemma does not exist: ', lemmaid)
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    dataset_of_dummy = dummy_lemma.dataset
+    dummy_dataset_name = str(dataset_of_dummy.name)
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+
+    if not request.user.is_superuser:
+        # check that user can write to the dataset
+        datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset)
+        if dataset_of_dummy not in datasets_user_can_change:
+            failure_message = _('You do not have change permission for') + ' ' + dummy_lemma.dataset.name
+            return HttpResponse(json.dumps({'glossid': str(glossid),
+                                            'datasetname': str(failure_message) }), {'content-type': 'application/json'})
+
+    try:
+        gloss.lemma = dummy_lemma
+        gloss.save()
+    except (DatabaseError, IntegrityError):
+        failure_message = _('Error assigning lemma to gloss.')
+        return HttpResponse(json.dumps({'glossid': str(glossid),
+                                        'datasetname': str(failure_message)}), {'content-type': 'application/json'})
+
+    success_message = _('Gloss saved to dataset') + ' ' + dummy_lemma.dataset.name
+
+    return HttpResponse(json.dumps({'glossid': str(gloss.id),
+                                    'datasetname': str(success_message) }), {'content-type': 'application/json'})
