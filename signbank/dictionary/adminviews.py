@@ -3459,7 +3459,11 @@ class MinimalPairsListView(ListView):
 
         # grab gloss ids for finger spelling glosses, identified by text #.
 
-        finger_spelling_glosses = [ a_idgloss_trans.gloss_id for a_idgloss_trans in AnnotationIdglossTranslation.objects.filter(text__startswith="#") ]
+        finger_spelling_glosses = [ a_idgloss_trans.gloss_id
+                                    for a_idgloss_trans in AnnotationIdglossTranslation.objects.filter(text__startswith="#") ]
+
+        q_number_or_letter = Q(**{'domhndsh_number': True}) | Q(**{'subhndsh_number': True}) | \
+                             Q(**{'domhndsh_letter': True}) | Q(**{'subhndsh_letter': True})
 
         handedness_filter = 'handedness__name__in'
         handedness_null = 'handedness__isnull'
@@ -3470,11 +3474,12 @@ class MinimalPairsListView(ListView):
         glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(
                                         lemma__dataset__in=selected_datasets).exclude(
                                         id__in=finger_spelling_glosses)
+
         glosses_with_phonology = glosses_with_phonology.exclude(
                         (Q(**{handedness_null: True}))).exclude(
                         (Q(**{strong_hand_null: True}))).exclude(
                         (Q(**{handedness_filter: empty_value}))).exclude(
-                        (Q(**{strong_hand_filter: empty_value})))
+                        (Q(**{strong_hand_filter: empty_value}))).exclude(q_number_or_letter)
 
         if 'showall' in get:
             return glosses_with_phonology
