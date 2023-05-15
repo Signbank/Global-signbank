@@ -634,6 +634,19 @@ def edit_keywords(request, glossid):
     return HttpResponse(json.dumps(glossesXsenses), {'content-type': 'application/json'})
 
 
+def add_keyword(request, glossid):
+    """Add keywords"""
+    if not request.user.is_authenticated:
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+
 def group_keywords(request, glossid):
     """Update the keyword field"""
 

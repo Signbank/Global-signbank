@@ -1615,8 +1615,12 @@ def gloss_from_identifier(value):
         return None
 
 def get_default_annotationidglosstranslation(gloss):
+    try:
+        language = gloss.lemma.dataset.default_language
+    except (ObjectDoesNotExist, KeyError, ValueError):
+        language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
+
     default_annotationidglosstranslation = ""
-    language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
     if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
         default_annotationidglosstranslation = annotationidglosstranslations[0].text
