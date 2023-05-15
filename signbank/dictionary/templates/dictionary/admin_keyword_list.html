@@ -45,7 +45,7 @@ var csrf_token = '{{csrf_token}}';
     <tbody>
       {% for gloss, keywords_per_language, senses_per_language in object_list %}
         <tr>
-            <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}">{{gloss.idgloss}}</a></td>
+            <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}">{{gloss.annotationidglosstranslation_set.all.first.text}}</a></td>
             <td class="actions" style="width:200px;">
                 <table>
                 {% for language in dataset_languages %}
@@ -54,13 +54,22 @@ var csrf_token = '{{csrf_token}}';
                 <button id='edit_keywords_btn_{{gloss.id}}_{{language.id}}' class="btn" type="button" name='edit_keywords_{{gloss.id}}'
                         value='edit_keywords_{{gloss.id}}'
                         data-toggle='modal' data-target='#edit_keywords_modal_{{gloss.id}}_{{language.id}}'>
-                    <a>{% trans "Edit Keywords" %} {{language.name}}</a></button>
+                    <a>{% if perms.dictionary.change_gloss %}
+                        {% trans "Edit Keywords" %}
+                        {% else %}
+                        {% trans "View Keywords" %}
+                        {% endif %}
+                        {{language.name}}</a></button>
                 </td>
                 <td>
                 <button id='edit_senses_btn_{{gloss.id}}_{{language.id}}' class="btn" type="button" name='edit_{{gloss.id}}'
                         value='edit_{{gloss.id}}'
                         data-toggle='modal' data-target='#edit_senses_modal_{{gloss.id}}_{{language.id}}'>
-                    <a>{% trans "Edit Senses" %} {{language.name}}</a></button>
+                    <a>{% if perms.dictionary.change_gloss %}
+                        {% trans "Edit Senses" %}
+                        {% else %}
+                        {% trans "View Senses" %}
+                        {% endif %} {{language.name}}</a></button>
                 {% endfor %}
                 </td>
                 </tr>
@@ -128,7 +137,7 @@ var csrf_token = '{{csrf_token}}';
                     <div class='modal-body'>
                         <table class="table table-condensed">
                             <thead>
-                            <tr><th colspan=3>{% trans "Senses" %}</th></tr>
+                            <tr><th colspan=3>{{gloss.annotationidglosstranslation_set.all.first.text}}</th></tr>
                             </thead>
                             <tbody id="tbody_modal_senses_{{gloss.id}}_{{language.id}}">
                             {% for order_index, keywords_list in senses_groups.items %}
@@ -164,9 +173,11 @@ var csrf_token = '{{csrf_token}}';
                           {% endfor %}
                       </table>
                           <input type="hidden" name="language" value="{{language.id}}">
+                          {% if perms.dictionary.change_gloss %}
                           <button class="regroup_keywords" id="regroup_keywords_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
                                     data-language="{{language.id}}" type="submit">
                               {% trans "Regroup Kewords" %}</button>
+                          {% endif %}
                       </form>
                      </div>
                       <div class="modal-footer">
@@ -188,12 +199,13 @@ var csrf_token = '{{csrf_token}}';
              <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class='modal-header'>
-                        <h3 id='modalKeywordsTitleEdit_{{gloss.id}}_{{language.id}}'>{% trans "Edit Keywords" %} ({{language.name}})</h3>
+                        <h3 id='modalKeywordsTitleEdit_{{gloss.id}}_{{language.id}}'>
+                            {% trans "Keywords" %} ({{language.name}})</h3>
                     </div>
                     <div class='modal-body'>
                         <table class="table table-condensed">
                             <thead>
-                            <tr><th colspan=3>{% trans "Keywords" %}</th></tr>
+                            <tr><th colspan=3>{{gloss.annotationidglosstranslation_set.all.first.text}}</th></tr>
                             </thead>
                             <tbody id="tbody_modal_keywords_{{gloss.id}}_{{language.id}}">
                             {% for order_index, keywords_list in senses_groups.items %}
@@ -229,9 +241,11 @@ var csrf_token = '{{csrf_token}}';
                           {% endfor %}
                       </table>
                           <input type="hidden" name="language" value="{{language.id}}">
+                          {% if perms.dictionary.change_gloss %}
                           <button class="edit_keywords" id="edit_keywords_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
                                     data-language="{{language.id}}" type="submit">
                               {% trans "Save Changes" %}</button>
+                          {% endif %}
                       </form>
                      </div>
                       <div class="modal-footer">

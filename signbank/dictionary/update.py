@@ -561,6 +561,12 @@ def update_keywords(gloss, field, value):
 
 def edit_keywords(request, glossid):
     """Edit the keywords"""
+    if not request.user.is_authenticated:
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
     gloss = get_object_or_404(Gloss, id=glossid)
 
     keyword_index_get = request.POST.get('keyword_index')
@@ -630,6 +636,12 @@ def edit_keywords(request, glossid):
 
 def group_keywords(request, glossid):
     """Update the keyword field"""
+
+    if not request.user.is_authenticated:
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
 
     gloss = get_object_or_404(Gloss, id=glossid)
 

@@ -2,6 +2,9 @@
 // this code uses json ajax calls
 
 function update_gloss_senses(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
     var glossid = data.glossid;
     var language = data.language;
     var keywords = data.keywords;
@@ -50,6 +53,9 @@ function update_gloss_senses(data) {
 }
 
 function update_gloss_keywords(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
     var glossid = data.glossid;
     var language = data.language;
     var keywords = data.keywords;
