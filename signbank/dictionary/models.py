@@ -1491,6 +1491,9 @@ class Gloss(models.Model):
                                    AnnotationIdglossTranslation.objects.filter(text__startswith="#")]
         q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
+        q_number_or_letter = Q(**{'domhndsh_number': True}) | Q(**{'subhndsh_number': True}) | \
+                             Q(**{'domhndsh_letter': True}) | Q(**{'subhndsh_letter': True})
+
         # exclude glosses with empty handedness or empty strong hand
         handedness_filter = 'handedness__name__in'
         handedness_null = 'handedness__isnull'
@@ -1504,7 +1507,7 @@ class Gloss(models.Model):
                   Q(**{strong_hand_filter: empty_value})
 
         minimal_pairs_fields_qs = Gloss.objects.select_related('lemma').exclude(
-                id__in=finger_spelling_glosses).exclude(id=self.id).filter(q).exclude(q_empty)
+                id__in=finger_spelling_glosses).exclude(id=self.id).filter(q).exclude(q_empty).exclude(q_number_or_letter)
 
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
