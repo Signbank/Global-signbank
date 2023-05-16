@@ -152,7 +152,9 @@ def update_examplesentence(request, examplesentenceid):
         return HttpResponseForbidden("Example sentence Update method must be POST")
     
     examplesentence = ExampleSentence.objects.all().get(id = examplesentenceid)
-    change_made = False
+    sense = Sense.objects.all().get(id = request.POST['senseid'])
+    dataset = Dataset.objects.get(id = request.POST['dataset'])
+    dataset_languages = dataset.translation_languages.all()
 
     # Use "on" given by checkbox value instead of True
     if request.POST['negative'] == 'on':
@@ -165,28 +167,42 @@ def update_examplesentence(request, examplesentenceid):
         examplesentence.negative=negative
         examplesentence.sentencetype=request.POST['sentencetype']
         examplesentence.save()
-        change_made = True
 
     # Check if both sentences already existed together
-    dataset = Dataset.objects.get(id = request.POST['dataset'])
-    dataset_languages = dataset.translation_languages.all()
-    unique_examplesentence = 0
     vals = {}
     for dataset_language in dataset_languages:
         stc = request.POST[str(dataset_language)]
-        vals[str(dataset_language)] = stc
-        if ExampleSentenceTranslation.objects.filter(language = dataset_language, text=stc).exists():
-            unique_examplesentence = unique_examplesentence + 1
-    if unique_examplesentence == len(dataset_languages) and not change_made:
-        messages.add_message(request, messages.ERROR, _('This sentence already exists in this dataset.'))
+        if stc != "":
+            vals[str(dataset_language)] = stc
+
+    if len(vals) == 0 or vals == examplesentence.get_examplestc_translations_dict_without():
+        messages.add_message(request, messages.INFO, _('This example sentence was not changed.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    
+
+    for examplestc in ExampleSentence.objects.all():
+        if vals == examplestc.get_examplestc_translations_dict_without():
+            examplesentence.delete()
+            if examplestc not in sense.exampleSentences.all():
+                sense.exampleSentences.add(examplestc)
+                messages.add_message(request, messages.INFO, _('This example sentence already existed.'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            else:
+                messages.add_message(request, messages.INFO, _('This example sentence was already in sense.'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
     # Edit and save the sentence translations
     with atomic():
-        examplesentencetranslations = ExampleSentenceTranslation.objects.filter(examplesentence=examplesentence)
-        for examplesentencetranslation in examplesentencetranslations:
-            examplesentencetranslation.text = vals[str(examplesentencetranslation.language)]
-            examplesentencetranslation.save()
+        for dataset_language in dataset_languages:
+            if ExampleSentenceTranslation.objects.filter(examplesentence=examplesentence, language=dataset_language).count() == 1:
+                examplesentencetranslation = ExampleSentenceTranslation.objects.all().get(examplesentence=examplesentence, language=dataset_language)
+                if str(dataset_language) in vals:
+                    examplesentencetranslation.text = vals[str(dataset_language)]
+                    examplesentencetranslation.save()
+                else:
+                    examplesentencetranslation.delete()
+            elif str(dataset_language) in vals:
+                examplesentencetranslation = ExampleSentenceTranslation.objects.create(examplesentence=examplesentence, language=dataset_language, text=vals[str(dataset_language)])
+                examplesentencetranslation.save()
     
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -199,9 +215,9 @@ def create_examplesentence(request, senseid):
     if not request.method == "POST":
         return HttpResponseForbidden("Example sentence Creation method must be POST")
     
-    # Check if this sense already exists (has the same sets of keywords)
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
+    sense = Sense.objects.all().get(id = senseid)
 
     # Use "on" given by checkbox value instead of True
     if request.POST['negative'] == 'on':
@@ -210,27 +226,28 @@ def create_examplesentence(request, senseid):
         negative = False
 
     # Check if both sentences already existed together
-    dataset = Dataset.objects.get(id = request.POST['dataset'])
-    dataset_languages = dataset.translation_languages.all()
-    unique_sentencetranslation = 0
     vals = {}
     for dataset_language in dataset_languages:
         stc = request.POST[str(dataset_language)]
-        vals[str(dataset_language)] = stc
-        if ExampleSentenceTranslation.objects.filter(language = dataset_language, text=stc).exists():
-            unique_sentencetranslation = unique_sentencetranslation + 1
+        if stc != "":
+            vals[str(dataset_language)] = stc
     
-    if unique_sentencetranslation == len(dataset_languages):
-        messages.add_message(request, messages.ERROR, _('This sentence already exists in this dataset.'))
+    if len(vals) == 0:
+        messages.add_message(request, messages.ERROR, _('No input sentence given.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    for examplesentence in ExampleSentence.objects.all():
+        if vals == examplesentence.get_examplestc_translations_dict_without():
+            sense.exampleSentences.add(examplesentence)
+            messages.add_message(request, messages.INFO, _('This examplesentences already existed in this dataset.'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     
     with atomic():
         examplesentence = ExampleSentence.objects.create(negative=negative, sentencetype=request.POST['sentencetype'])
         examplesentence.save()
-        sense = Sense.objects.all().get(id = senseid)
         sense.exampleSentences.add(examplesentence)
         for dataset_language in dataset_languages:
-            if(vals[str(dataset_language)]):
+            if str(dataset_language) in vals:
                 sentencetranslation=ExampleSentenceTranslation.objects.create(language=dataset_language, examplesentence=examplesentence, text=vals[str(dataset_language)])
                 sentencetranslation.save()
 
@@ -248,6 +265,11 @@ def delete_examplesentence(request, senseid):
     examplesentence = ExampleSentence.objects.all().get(id = request.POST['examplesentenceid'])
     sense = Sense.objects.all().get(id = senseid)
     sense.exampleSentences.remove(examplesentence)
+
+    print("nr senses with maat"+str(Sense.objects.filter(exampleSentences = examplesentence).count()))
+    if Sense.objects.filter(exampleSentences = examplesentence).count() == 0:
+        examplesentence.delete()
+
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 def update_sense(request, senseid):
@@ -259,50 +281,126 @@ def update_sense(request, senseid):
     if not request.method == "POST":
         return HttpResponseForbidden("Sense Update method must be POST")
     
-    # Check if this sense already exists (has the same sets of keywords)
+    # Make a dict of new values
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
-    unique_sense = 0
     vals = {}
     for dataset_language in dataset_languages:
-        value = request.POST[str(dataset_language)]
-        values = value.split(",")
-        if not values[0] == '':
-            for k, v in enumerate(values): 
-                values[k] = v.strip()
-            values = sorted(values)
-            vals[str(dataset_language)] = values
-            sensetranslations = SenseTranslation.objects.filter(language = dataset_language)
-            for st in sensetranslations:
-                if st.get_keyword_list()== values:
-                    unique_sense = unique_sense + 1
-        else:
-            unique_sense = unique_sense + 1
-    if unique_sense == len(dataset_languages):
-        messages.add_message(request, messages.ERROR, _('Sense already exists in this dataset.'))
+        if str(dataset_language) in request.POST:
+            values = request.POST[str(dataset_language)].split(",")
+            if not values[0] == '':
+                for k, v in enumerate(values): 
+                    values[k] = v.strip()
+                values = (', ').join(sorted(values))
+                vals[str(dataset_language)]=values
+    
+    # Check if input given is empty
+    if vals == {}:
+        messages.add_message(request, messages.ERROR, _('No keywords given for edited sense.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     
-    # Add or remove keywords to the sense translations
-    with atomic():
-        sense = Sense.objects.all().get(id = senseid)
-        sensetranslations = sense.senseTranslations.through.objects.filter(sense_id=senseid)
-        for sensetranslation in sensetranslations:
-            kws = []
-            st = SenseTranslation.objects.all().get(id = sensetranslation.sensetranslation_id)
-            kw_relations = st.keywords.through.objects.filter(sensetranslation_id = sensetranslation.sensetranslation_id)
-            for kw_r in kw_relations:
-                kws.append(str(Keyword.objects.all().get(id = kw_r.keyword_id)))
-            for kw in kws:
-                if kw not in vals[str(st.language)]:
-                    st.keywords.remove(Keyword.objects.all().get(text = kw).id)
-            for kw in vals[str(st.language)]:
-                if kw not in kws:
-                    if Keyword.objects.filter(text = kw).exists():
-                        st.keywords.add(Keyword.objects.all().get(text = kw).id)
+    # Check if this sense changed at all
+    sense = Sense.objects.all().get(id = senseid)
+    sensetranslation_dict = sense.get_sense_translations_dict_without()
+    if sensetranslation_dict == vals:
+        messages.add_message(request, messages.ERROR, _('Sense did not change.'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+    gloss = Gloss.objects.all().get(pk=request.POST['glossid'])
+    # Check if sense already existed in this gloss
+    for s in gloss.senses.all():
+        if s.get_sense_translations_dict_without() == vals:
+            for sensetranslation in sense.senseTranslations.all():
+                sense.senseTranslations.remove(sensetranslation)
+                if Sense.objects.filter(dataset=dataset, senseTranslations = sensetranslation).count() == 0:
+                    sensetranslation.delete()
+            gloss.senses.remove(sense)
+
+            if Gloss.objects.filter(lemma__dataset_id=dataset.id, senses = sense).count() == 0:
+                sense.delete()
+
+            messages.add_message(request, messages.INFO, _('Sense is already in gloss.'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    # Check if sense already existed in another gloss
+    senses = Sense.objects.all()
+    for s in senses:
+        if s.get_sense_translations_dict_without() == vals:
+            for sensetranslation in sense.senseTranslations.all():
+                sense.senseTranslations.remove(sensetranslation)
+                if Sense.objects.filter(dataset=dataset, senseTranslations = sensetranslation).count() == 0:
+                    sensetranslation.delete()
+            gloss.senses.remove(sense)
+
+            if Gloss.objects.filter(lemma__dataset_id=dataset.id, senses = sense).count() == 0:
+                sense.delete()
+
+            gloss.senses.add(s)
+            messages.add_message(request, messages.INFO, _('Added an already existing gloss.'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    # Update sensetranslations
+    for dataset_language in dataset_languages:
+        # sense translation is added, so create it if it doesn't already exist
+        if str(dataset_language) not in sensetranslation_dict and str(dataset_language) not in vals:
+            continue
+        if str(dataset_language) not in sensetranslation_dict and str(dataset_language) in vals:
+            existed = False
+            for st in SenseTranslation.objects.filter(language = dataset_language):
+                if st.get_keywords() == vals[str(dataset_language)]:
+                    sense.senseTranslations.add(st)
+                    existed = True
+            if not existed:
+                sensetranslation = SenseTranslation.objects.create(language=dataset_language)
+                sensetranslation.save()
+                for kw_v in vals[str(dataset_language)].split(","):
+                    if Keyword.objects.filter(text = kw_v).exists():
+                        sensetranslation.keywords.add(Keyword.objects.all().get(text = kw_v).id)
                     else:
-                        keyword = Keyword.objects.create(text=kw)
+                        keyword = Keyword.objects.create(text=kw_v)
                         keyword.save()
-                        st.keywords.add(keyword)
+                        sensetranslation.keywords.add(keyword)
+                sense.senseTranslations.add(sensetranslation)
+
+        else:
+            sensetranslation = sense.senseTranslations.all().get(language=dataset_language)
+
+            # remove the sensetranslation from the sense
+            if str(dataset_language) in sensetranslation_dict and str(dataset_language) not in vals:
+                sense.senseTranslations.remove(sensetranslation)
+                # Delete the sensetranslation if it's not in any other sense
+                if Sense.objects.filter(senseTranslations=sensetranslation).count() == 0:
+                    sensetranslation.delete()
+
+            # Check if input field exists and is different from database
+            elif sensetranslation_dict[str(dataset_language)] != vals[str(dataset_language)]:
+                existed = False
+                for st in SenseTranslation.objects.filter(language = dataset_language):
+                    if st.get_keywords() == vals[str(dataset_language)]:
+                        sense.senseTranslations.add(st)
+                        sense.senseTranslations.remove(sensetranslation)
+                        if Sense.objects.filter(senseTranslations=sensetranslation).count() == 0:
+                            sensetranslation.delete()
+                        existed = True
+                if not existed:
+                    keyword_st = sensetranslation.keywords.all()
+                    kws, kwv = [], []
+                    for kw_st in keyword_st:
+                        kws.append(kw_st)
+                        kwv.append(kw_st.text)
+                    for kw_s in kws:
+                        if kw_s.text not in vals[str(dataset_language)].split(","):
+                            sensetranslation.keywords.remove(kw_s)
+                    for kw_v in vals[str(dataset_language)].split(","):
+                        if kw_v not in kwv:
+                            if Keyword.objects.filter(text = kw_v).exists():
+                                sensetranslation.keywords.add(Keyword.objects.all().get(text = kw_v).id)
+                            else:
+                                keyword = Keyword.objects.create(text=kw_v)
+                                keyword.save()
+                                sensetranslation.keywords.add(keyword)
+
+    messages.add_message(request, messages.INFO, _('Given sense was added.'))
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 def create_sense(request, glossid):
@@ -314,48 +412,62 @@ def create_sense(request, glossid):
     if not request.method == "POST":
         return HttpResponseForbidden("Sense Creation method must be POST")
     
-    # Check if this sense already exists (has the same sets of keywords)
+    # Make a dict of new values
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
-    unique_sense = 0
     vals = {}
     for dataset_language in dataset_languages:
-        value = request.POST[str(dataset_language)]
-        values = value.split(",")
-        if not values[0] == '':
-            for k, v in enumerate(values): 
-                values[k] = v.strip()
-            values = sorted(values)
-            vals[str(dataset_language)] = values
-            sensetranslations = SenseTranslation.objects.filter(language = dataset_language)
-            for st in sensetranslations:
-                if st.get_keyword_list()== values:
-                    unique_sense = unique_sense + 1
-        else:
-            unique_sense = unique_sense + 1
-    if unique_sense == len(dataset_languages):
-        messages.add_message(request, messages.ERROR, _('Sense already exists in this dataset.'))
+        if str(dataset_language) in request.POST:
+            values = request.POST[str(dataset_language)].split(",")
+            if not values[0] == '':
+                for k, v in enumerate(values): 
+                    values[k] = v.strip()
+                values = (', ').join(sorted(values))
+                vals[str(dataset_language)]=values
+    
+    # Check if input given is empty
+    if vals == {}:
+        messages.add_message(request, messages.ERROR, _('No keywords given for new sense.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    else:
-        sense = Sense.objects.create(dataset = dataset)
-        sense.save()
-        gloss = Gloss.objects.all().get(id = glossid)
-        gloss.senses.add(sense)
+    
+    # Check if this sense already exists
+    senses = Sense.objects.filter(dataset=dataset)
+    gloss = Gloss.objects.all().get(id = glossid)
+    for sense in senses:
+        if sense.get_sense_translations_dict_without() == vals:
+            if sense in gloss.senses.all():
+                messages.add_message(request, messages.ERROR, _('Sense is already in this gloss.'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            gloss.senses.add(sense)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+    # Make a new sense object
+    sense = Sense.objects.create(dataset = dataset)
+    sense.save()
+    gloss.senses.add(sense)
 
     # Add or remove keywords to the sense translations
     with atomic():
         for dataset_language in dataset_languages:
-            if len(vals[str(dataset_language)])>0:
-                sensetranslation = SenseTranslation.objects.create(language = dataset_language)
-                sensetranslation.save()
-                sense.senseTranslations.add(sensetranslation)
-                for kw in vals[str(sensetranslation.language)]:
-                    if Keyword.objects.filter(text = kw).exists():
-                        sensetranslation.keywords.add(Keyword.objects.all().get(text = kw).id)
-                    else:
-                        keyword = Keyword.objects.create(text=kw)
-                        keyword.save()
-                        sensetranslation.keywords.add(keyword)
+            if str(dataset_language) in vals:
+                
+                existed = False
+                for st in SenseTranslation.objects.filter(language = dataset_language):
+                    if st.get_keywords() == vals[str(dataset_language)]:
+                        sense.senseTranslations.add(st)
+                        existed = True
+
+                if not existed:
+                    sensetranslation = SenseTranslation.objects.create(language = dataset_language)
+                    sensetranslation.save()
+                    sense.senseTranslations.add(sensetranslation)
+                    for kw in sorted(list(dict.fromkeys(vals[str(sensetranslation.language)].split(", ")))):
+                        if Keyword.objects.filter(text = kw).exists():
+                            sensetranslation.keywords.add(Keyword.objects.all().get(text = kw).id)
+                        else:
+                            keyword = Keyword.objects.create(text=kw)
+                            keyword.save()
+                            sensetranslation.keywords.add(keyword)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -370,7 +482,27 @@ def delete_sense(request, glossid):
     
     sense = Sense.objects.all().get(id = request.POST['senseid'])
     gloss = Gloss.objects.all().get(id = glossid)
+    dataset = Dataset.objects.get(id = request.POST['dataset'])
+    dataset_languages = dataset.translation_languages.all()
+
     gloss.senses.remove(sense)
+
+    # If this is this only gloss this sense was in, delete the sense
+    if Gloss.objects.filter(senses = sense).count() == 0:
+        for dataset_language in dataset_languages:
+            if sense.senseTranslations.filter(language=dataset_language).count()==1:
+                sensetranslation = sense.senseTranslations.all().get(language=dataset_language)
+                # If this is the only sense the sensetranslation was in, delete the sensetranslation
+                if Sense.objects.filter(dataset = dataset, senseTranslations = sensetranslation).count() == 1:
+                    sense.senseTranslations.remove(sensetranslation)
+                    sensetranslation.delete()
+        # also remove its examplesentences if they are not in another sense
+        for examplesentence in sense.exampleSentences.all():
+            sense.exampleSentences.remove(examplesentence)
+            if Sense.objects.filter(exampleSentences = examplesentence).count() == 0:
+                examplesentence.delete()
+        sense.delete()
+
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 def update_gloss(request, glossid):

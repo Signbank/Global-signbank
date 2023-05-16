@@ -592,26 +592,15 @@ class ExampleSentence(models.Model):
     sentencetype = models.CharField(max_length=32, choices=SENTENCETYPES, default="declarative")
     negative = models.BooleanField(default=False)
     video = models.TextField(max_length=32, default="zin_over_iets.mp4")
-
-    def get_example_sentence_translations(self):
-        translations = []
-        for est in ExampleSentenceTranslation.objects.filter(examplesentence = self):
-            translation_text = str(est.language) + ": " + str(est)
-            translations.append(translation_text)
-        return translations
     
-    def get_examplestc_translations_dict(self):
+    def get_examplestc_translations_dict_without(self):
         translations = {}
-        for est in ExampleSentenceTranslation.objects.filter(examplesentence = self):
+        for est in self.examplesentencetranslation_set.all():
             translations[str(est.language)] = str(est)
-
-        # TO DO: change this to filter by e.g. gloss or dataset!!!
-        senses = Sense.objects.all()
-        for se in senses:
-            for s in se.dataset.translation_languages.all():
-                if str(s) not in translations:
-                    translations[str(s)] = ""
         return translations
+
+    def get_examplestc_translations(self):
+        return [k+": "+v for k,v in self.get_examplestc_translations_dict_without().items()]
 
     def get_video_path(self):
         return self.video
@@ -699,13 +688,10 @@ class SenseTranslation(models.Model):
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
     def get_keywords(self):
-        return ", ".join([k.text for k in self.keywords.all()])
-    
-    def get_keyword_list(self):
-        return sorted([k.text for k in self.keywords.all()])
+        return ", ".join(sorted([k.text.strip() for k in self.keywords.all()]))
 
     def __str__(self):
-        return ", ".join([k.text for k in self.keywords.all()])
+        return self.get_keywords()
     
 class Sense(models.Model):
     """A sense belongs to a gloss and consists of a set of keyword(s)"""
@@ -719,29 +705,24 @@ class Sense(models.Model):
     def get_example_sentences(self):
         translations = []
         for dataset_translation_language in self.dataset.translation_languages.all():
-            translation_text = ""
             sentences = []
             for exampleSentence in self.exampleSentences.all():
-                exampleSentenceTranslations = ExampleSentenceTranslation.objects.filter(examplesentence = exampleSentence, language = dataset_translation_language)
-                sentences.append(exampleSentenceTranslations.get(examplesentence=exampleSentence).text)
-            translation_text = translation_text + str(dataset_translation_language) + ": " + (", ").join(sentences)
-            translations.append(translation_text)
-        return ", ".join(translations)
+                if exampleSentence.examplesentencetranslation_set.filter(language = dataset_translation_language).exists():
+                    sentences.append(exampleSentence.examplesentencetranslation_set.all().get(language = dataset_translation_language).text)
+            if len(sentences) > 0:
+                translations.append(str(dataset_translation_language) + ": " + (", ").join(sentences))
+        return (", ").join(translations)
     
-    def get_sense_translations(self):
-        sense_keywords = []
-        for dataset_translation_language in self.dataset.translation_languages.all():
-            keyword_list = ", ".join([k.get_keywords() for k in self.senseTranslations.filter(language = dataset_translation_language)])
-            if len(keyword_list) > 0:
-                sense_keywords.append(str(dataset_translation_language) + ": " + keyword_list )
-        return sense_keywords
-
-    def get_trans_dict(self):
+    def get_sense_translations_dict_without(self):
         sense_keywords = {}
         for dataset_translation_language in self.dataset.translation_languages.all():
-            keyword_list = ", ".join([k.get_keywords() for k in self.senseTranslations.filter(language = dataset_translation_language)])
-            sense_keywords[str(dataset_translation_language)]= keyword_list
+            if self.senseTranslations.filter(language = dataset_translation_language).exists():
+                keyword_list = ", ".join(sorted([k.get_keywords() for k in self.senseTranslations.filter(language = dataset_translation_language)]))
+                sense_keywords[str(dataset_translation_language)]= keyword_list
         return sense_keywords
+
+    def get_sense_translations(self):
+        return [k+": "+v for k,v in self.get_sense_translations_dict_without().items()]
     
     class Admin:
         list_display = ['orderindex', 'keywords']

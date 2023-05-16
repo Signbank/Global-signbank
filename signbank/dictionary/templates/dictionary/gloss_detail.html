@@ -1000,18 +1000,17 @@ p {
                     {% for sense in senses %}
                     <tr><th style="width:10px">{{ forloop.counter }}. </th>
                         <td>
-                        {% if sense.get_trans_dict %}
-                            {% for key, value in sense.get_trans_dict.items %}
-                                {% if value %}
+                        {% if sense.get_sense_translations_dict_without %}
+                            {% for key, value in sense.get_sense_translations_dict_without.items %}
                                 {{key}}: {{ value }}
                                 {% if not forloop.last %}<br>{% endif %}
-                                {% endif %}
                             {% endfor %}
                         {% endif %}
 
-                        {% if "change_dataset" in dataset_perms %}
                         <br><br>
-                        <span class='glyphicon glyphicon-trash sense_delete' data-toggle='modal' data-target='#delete_sense_modal_{{sense.id}}'></span>                      
+                        {% if "change_dataset" in dataset_perms %}
+                        <span class='sense-icon glyphicon glyphicon-trash sense_delete' data-toggle='modal' data-target='#delete_sense_modal_{{sense.id}}'></span>     
+                        {% endif %}                 
                         <div class="modal fade" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSense" aria-hidden="true">
                             <div class="modal-dialog modal-sm">
                                <div class="modal-content">
@@ -1023,6 +1022,7 @@ p {
                                     </div>
                                     <form name="delete_sense_form" id="delete_sense_form" method="post" action="{% url 'dictionary:delete_sense' gloss.id %}" >
                                         {% csrf_token %}
+                                     <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
                                      <input type='hidden' name='senseid' value='{{sense.id}}'>
                                      <div class="modal-footer">
                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
@@ -1034,7 +1034,9 @@ p {
                              </div>
                         </div>
 
-                        <span class='glyphicon glyphicon-edit sense_edit' data-toggle='modal' data-target='#edit_sense_modal_{{sense.id}}'></span>
+                        {% if "change_dataset" in dataset_perms %}
+                        <span class='sense-icon glyphicon glyphicon-edit sense_edit' data-toggle='modal' data-target='#edit_sense_modal_{{sense.id}}'></span>
+                        {% endif %}
                         <div class="modal fade" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSense" aria-hidden="true">
                             <div class="modal-dialog modal-sm">
                                <div class="modal-content">
@@ -1044,8 +1046,9 @@ p {
                                     <form name="update_sense_form" id="update_sense_form" method="post" action="{% url 'dictionary:update_sense' sense.id %}" >
                                         {% csrf_token %}
                                         <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
+                                        <input type="hidden" name="glossid" value="{{ gloss.id }}"/>
                                         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                            {% for key, value in sense.get_trans_dict.items %}
+                                            {% for key, value in sense.get_sense_translations_dict_without.items %}
                                                 {% if key|slugify == dataset_lang|slugify %}
                                                     {{ dataset_lang.name }}:
                                                     <input id="{{ dataset_lang.name }}" name="{{ key }}" value="{{ value }}" maxlength="100" type="text"/>
@@ -1061,8 +1064,6 @@ p {
                                 </div>
                             </div>
                         </div>
-
-                        {% endif %}
 
                         </td>
 
@@ -1082,16 +1083,13 @@ p {
                             </tr>
                             <tr>
                                 <td style="border: none" colspan="100%">
-                                    {% for key, value in examplesentence.get_examplestc_translations_dict.items %}
-                                        {% if value %}
+                                    {% for key, value in examplesentence.get_examplestc_translations_dict_without.items %}
                                         {{ key }}: {{ value }} {% if not forloop.last %}<br>{% endif %}
-                                        {% endif %}
                                     {% endfor %}
-
-                                    {% if "change_dataset" in dataset_perms %}
                                     <br><br>
-
-                                    <span class='glyphicon glyphicon-trash examplestc_delete' data-toggle='modal' data-target='#delete_examplestc_modal_{{examplesentence.id}}'></span>
+                                    {% if "change_dataset" in dataset_perms %}
+                                    <span class='glyphicon glyphicon-trash examplestc_delete sense-icon' data-toggle='modal' data-target='#delete_examplestc_modal_{{examplesentence.id}}'></span>
+                                    {% endif %}
                                     <div class="modal fade" id="delete_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleExamplestc" aria-hidden="true">
                                         <div class="modal-dialog modal-sm">
                                             <div class="modal-content">
@@ -1113,7 +1111,9 @@ p {
                                         </div>
                                     </div>
 
-                                    <span class='glyphicon glyphicon-edit examplestc_edit' data-toggle='modal' data-target='#edit_examplestc_modal_{{examplesentence.id}}'></span>
+                                    {% if "change_dataset" in dataset_perms %}
+                                    <span class='glyphicon glyphicon-edit examplestc_edit sense-icon' data-toggle='modal' data-target='#edit_examplestc_modal_{{examplesentence.id}}'></span>
+                                    {% endif %}
                                     <div class="modal fade" id="edit_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleExamplestc" aria-hidden="true">
                                         <div class="modal-dialog modal-sm">
                                             <div class="modal-content">
@@ -1122,7 +1122,8 @@ p {
                                                 </div><br>
                                                 <form name="update_examplesentence_form" id="update_examplesentence_form" action='{% url "dictionary:update_examplesentence" examplesentence.id %}' method='post'>
                                                     {% csrf_token %}
-                                                    <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
+                                                    <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}">
+                                                    <input type="hidden" name="senseid" value="{{ sense.id }}">
                                                     <input type='hidden' name='value' value='confirmed'>
                                                     Type: <select name="sentencetype">
                                                         {% for val, name in SENTENCETYPES %}
@@ -1132,7 +1133,7 @@ p {
                                                     <input type="hidden" name="negative" value=False>
                                                     Negative: <input type="checkbox" name="negative" {% if examplesentence.negative %}checked{% endif %}><br><br>
                                                     {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                                        {% for key, value in examplesentence.get_examplestc_translations_dict.items %}
+                                                        {% for key, value in examplesentence.get_examplestc_translations_dict_without.items %}
                                                             {% if key|slugify == dataset_lang|slugify %}
                                                                 {{ dataset_lang.name }}:
                                                                 <input style="width:500px" name="{{ key }}" value="{{ value }}" maxlength="100" type="text"/>
@@ -1149,7 +1150,6 @@ p {
                                             </div>
                                         </div>
                                     </div>
-                                    {% endif %}
 
                                 </td>
                             </tr>
@@ -1203,7 +1203,9 @@ p {
                             </div>
                         {% endfor %}   
                         <tr>
-                            <button data-toggle='modal' data-target='#add_examplestc_modal_{{sense.id}}', class='btn btn-primary btn-space sense-button examplestc_add'>{% trans "Add an example sentence" %}</button>
+                            {% if "change_dataset" in dataset_perms %}
+                            <button data-toggle='modal' data-target='#add_examplestc_modal_{{sense.id}}', class='sense-button btn btn-primary btn-space sense-button examplestc_add'>{% trans "Add an example sentence" %}</button>
+                            {% endif %}
                             <div class="modal fade" id="add_examplestc_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleExamplestc" aria-hidden="true">
                                 <div class="modal-dialog modal-sm">
                                     <div class="modal-content">
@@ -1241,7 +1243,9 @@ p {
                     </tr> 
                     {% endfor %} 
                     <tr>
-                    <button data-toggle='modal' data-target='#add_sense_modal_{{gloss.id}}', class='btn btn-primary btn-space sense-button sense_add'>{% trans "Add a sense" %}</button>
+                    {% if "change_dataset" in dataset_perms %}
+                    <button data-toggle='modal' data-target='#add_sense_modal_{{gloss.id}}', class='sense-button btn btn-primary btn-space sense-button sense_add'>{% trans "Add a sense" %}</button>
+                    {% endif %}
                     <div class="modal fade" id="add_sense_modal_{{gloss.id}}" role="dialog" aria-labelledby="#modalTitleGloss" aria-hidden="true">
                         <div class="modal-dialog modal-sm">
                             <div class="modal-content">
