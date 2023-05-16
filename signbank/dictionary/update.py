@@ -1501,21 +1501,20 @@ def update_handshape(request, handshapeid):
     elif value[0] == '_':
         value = value[1:]
 
-    values = request.POST.getlist('value[]')  # in case we need multiple values
-
-    if value == '':
-        hs.__setattr__(field, None)
-        hs.save()
-        newvalue = ''
-    elif isinstance(Handshape._meta.get_field(field), FieldChoiceForeignKey):
+    handshape_field = Handshape._meta.get_field(field)
+    if hasattr(handshape_field, 'field_choice_category'):
         # this is needed because the new value is a machine value, not an id
-        field_choice_category = Handshape._meta.get_field(field).field_choice_category
+        field_choice_category = handshape_field.field_choice_category
         original_value_object = getattr(hs, field)
         field_choice = FieldChoice.objects.get(field=field_choice_category, machine_value=int(value))
         setattr(hs, field, field_choice)
         hs.save()
         newvalue = field_choice.name if field_choice else '-'
         original_value = original_value_object.name if original_value_object else '-'
+    elif value == '':
+        hs.__setattr__(field, None)
+        hs.save()
+        newvalue = ''
     else:
         original_value = getattr(hs, field)
         hs.__setattr__(field, value)

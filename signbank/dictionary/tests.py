@@ -500,6 +500,12 @@ class ImportExportTests(TestCase):
         print('Test DatasetListView export_ecv with permission change_dataset')
         print('Test Dataset is: ', self.test_dataset.acronym)
 
+        location_ecv_files = ECV_FOLDER
+        dataset_ecv_folder_exists = os.path.exists(location_ecv_files)
+        if not dataset_ecv_folder_exists:
+            print('The ecv folder is missing: ', location_ecv_files)
+            return
+
         # Give the test user permission to change a dataset
         assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
