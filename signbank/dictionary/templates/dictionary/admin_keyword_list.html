@@ -253,18 +253,21 @@ var csrf_token = '{{csrf_token}}';
                        <form id='add_keyword_form_{{gloss.id}}_{{language.id}}'
                              method='post' action='{% url "dictionary:add_keyword" gloss.id %}'>
                            {% csrf_token %}
-                           <input type="hidden" name="language" value="{{language.id}}">
                            <table class='table table-condensed'>
                                <tr>
                                    <td>{% trans "Keyword" %}</td>
                                    <td>
-                                       <input name='add_keyword_{{gloss.id}}_{{language.id}}'
-                                              placeholder='{% trans "Keyword" %}'/>
-                                       <input type="hidden" name="keyword" value=""/>
+                                       <input name='keyword' type="text"
+                                              placeholder='{% trans "Keyword" %}' value=""/>
                                    </td>
-                                   <td><input class='btn btn-primary' value='Add Keyword' type='submit'></td>
                                </tr>
                            </table>
+                          <input type="hidden" name="language" value="{{language.id}}">
+                          {% if perms.dictionary.change_gloss %}
+                          <button class="add_keyword" id="add_keyword_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
+                                    data-language="{{language.id}}" type="submit">
+                              {% trans "Add Keyword" %}</button>
+                          {% endif %}
                         </form>
                      </div>
                       <div class="modal-footer">

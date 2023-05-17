@@ -643,8 +643,55 @@ def add_keyword(request, glossid):
         return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
 
     gloss = get_object_or_404(Gloss, id=glossid)
+    language = request.POST.get('language', '')
+    keyword_json_str = request.POST.get('keyword')
+    keyword = json.loads(keyword_json_str)
 
-    return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+    if not language:
+        language = Language.objects.get(id=get_default_language_id())
+    else:
+        language = Language.objects.get(id=int(language))
+
+    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    current_keywords = [t.translation.text for t in current_trans]
+    current_senses = [t.orderIndex for t in current_trans]
+    if len(current_senses) < 1:
+        new_sense = 1
+    else:
+        new_sense = max(current_senses) + 1
+    current_indices = [t.index for t in current_trans]
+    if len(current_indices) < 1:
+        new_index = 1
+    else:
+        new_index = max(current_indices) + 1
+        if len(current_indices) <= new_index:
+            new_index += 1
+
+    if keyword == "" or keyword in current_keywords:
+        # not nothing
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
+    trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language, orderIndex=new_sense)
+    trans.save()
+
+    glossesXsenses = dict()
+    keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    if keyword_translations.count() > 0:
+        senses_groups = dict()
+        keywords_list = []
+        for trans in keyword_translations:
+            orderIndexKey = str(trans.orderIndex)
+            if orderIndexKey not in senses_groups.keys():
+                senses_groups[orderIndexKey] = []
+            senses_groups[orderIndexKey].append(trans.translation.text)
+            keywords_list.append(trans.translation.text)
+        glossesXsenses['glossid'] = glossid
+        glossesXsenses['language'] = str(language.id)
+        glossesXsenses['keywords'] = keywords_list
+        glossesXsenses['senses_groups'] = senses_groups
+
+    return HttpResponse(json.dumps(glossesXsenses), {'content-type': 'application/json'})
 
 
 def group_keywords(request, glossid):

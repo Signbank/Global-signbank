@@ -187,4 +187,26 @@ $(document).ready(function() {
             success : update_gloss_keywords
          });
      });
+
+      $('.add_keyword').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+         var language = $(this).attr("data-language");
+         var form_id = '#add_keyword_form_' + glossid + '_' + language;
+         var keywords = [];
+         $(form_id).find('input[name="keyword"]').each(function() {
+            keywords.push(this.value);
+         });
+         var keyword = keywords.pop();
+         $.ajax({
+            url : url + "/dictionary/update/add_keyword/" + glossid,
+            type: 'POST',
+            data: { 'language': language,
+                    'keyword': JSON.stringify(keyword),
+                    'csrfmiddlewaretoken': csrf_token},
+            datatype: "json",
+            success : update_gloss_keywords
+         });
+     });
 });
