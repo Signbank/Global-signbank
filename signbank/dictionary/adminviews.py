@@ -122,13 +122,13 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
 
     def order_queryset_by_translation(qs, sOrder):
         language_code_2char = sOrder[-2:]
-        query_sort_parameter = 'translation__text'
+        query_sort_parameter = 'translation__index'
         sOrderAsc = sOrder
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrderAsc = sOrder[1:]
         translations = Translation.objects.filter(gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char).order_by(query_sort_parameter)
-        qs = qs.annotate(**{sOrderAsc: Subquery(translations.values('translation__text')[:1])}).order_by(sOrder)
+        qs = qs.annotate(**{sOrderAsc: Subquery(translations.values('translation__index')[:1])}).order_by(sOrder)
         return qs
 
     # Set the default sort order
@@ -701,7 +701,7 @@ class GlossListView(ListView):
 
             # Keywords per language
             for language in dataset_languages:
-                keywords_in_language = gloss.translation_set.filter(language=language).order_by('translation__text')
+                keywords_in_language = gloss.translation_set.filter(language=language).order_by('translation__index')
                 # get rid of any invisible characters at the end such as \t
                 keyword_translations = [t.translation.text.strip() for t in keywords_in_language]
                 if len(keyword_translations) == 1:
@@ -1686,10 +1686,10 @@ class GlossDetailView(DetailView):
         context['translations_per_language'] = {}
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
-                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
+                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
         else:
             language = Language.objects.get(id=get_default_language_id())
-            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
+            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
 
         bad_dialect = False
         gloss_dialects = []
@@ -2855,7 +2855,7 @@ class MorphemeListView(ListView):
             row.append(", ".join(dialects))
 
             # get translations
-            trans = [t.translation.text for t in gloss.translation_set.all().order_by('translation__text')]
+            trans = [t.translation.text for t in gloss.translation_set.all().order_by('translation__index')]
             row.append(", ".join(trans))
 
             # get compound's component type
@@ -6316,10 +6316,10 @@ class MorphemeDetailView(DetailView):
         context['translations_per_language'] = {}
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
-                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
+                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
         else:
             language = Language.objects.get(id=get_default_language_id())
-            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__text')
+            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
 
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
@@ -6698,7 +6698,7 @@ def glosslist_ajax_complete(request, gloss_id):
     # Put translations (keywords) per language in the context
     translations_per_language = []
     for language in dataset_languages:
-        translations_per_language.append((language,this_gloss.translation_set.filter(language=language).order_by('translation__text')))
+        translations_per_language.append((language,this_gloss.translation_set.filter(language=language).order_by('translation__index')))
 
     column_values = []
     for fieldname in display_fields:
@@ -6871,7 +6871,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
     # Put translations (keywords) per language in the context
     translations_per_language = {}
     for language in dataset_languages:
-        translations_per_language[language] = this_gloss.translation_set.filter(language=language).order_by('translation__text')
+        translations_per_language[language] = this_gloss.translation_set.filter(language=language).order_by('translation__index')
 
     column_values = []
     gloss_list_display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
@@ -7497,4 +7497,62 @@ class LemmaDeleteView(DeleteView):
         else:
             self.object.delete()
         return HttpResponseRedirect(self.get_success_url())
+
+
+class KeywordListView(ListView):
+
+    model = Gloss
+    template_name = 'dictionary/admin_keyword_list.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(KeywordListView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        dataset_language = selected_datasets.first().default_language
+        context['dataset_language'] = dataset_language
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        return context
+
+    def get_queryset(self):
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        if selected_datasets.count() > 1:
+            feedback_message = _('Please select a single dataset to view keywords.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
+            return []
+
+        dataset_language = selected_datasets.first().default_language
+
+        # multilingual
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        glosses_of_datasets = Gloss.objects.filter(lemma__dataset__in=selected_datasets)
+        glossesXsenses = []
+        for gloss in glosses_of_datasets:
+            keyword_translations_per_language = dict()
+            sense_groups_per_language = dict()
+            for language in dataset_languages:
+                keyword_translations = gloss.translation_set.filter(language=language).exclude(translation__text__exact='').order_by('orderIndex', 'index')
+                senses_groups = dict()
+                if keyword_translations.count() > 0:
+                    for trans in keyword_translations:
+                        if trans.orderIndex not in senses_groups.keys():
+                            senses_groups[trans.orderIndex] = []
+                        senses_groups[trans.orderIndex].append(trans)
+                keyword_translations_per_language[language] = keyword_translations
+                sense_groups_per_language[language] = senses_groups
+            glossesXsenses.append((gloss, keyword_translations_per_language, sense_groups_per_language))
+
+        return glossesXsenses
 

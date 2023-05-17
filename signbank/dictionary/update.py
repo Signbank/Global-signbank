@@ -530,24 +530,224 @@ def update_keywords(gloss, field, value):
     kwds = [k.strip() for k in value.split(',')]
 
     keywords_list = []
-
-    # omit duplicates
+    # omit duplicates to make sure constraint holds
     for kwd in kwds:
         if kwd not in keywords_list:
             keywords_list.append(kwd)
 
-    # remove current keywords
-    current_trans = gloss.translation_set.filter(language=language)
-    current_trans.delete()
+    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    current_keywords = [t.translation.text for t in current_trans]
+
+    missing_keywords = []
+    for trans in current_trans:
+        if trans.translation.text not in keywords_list:
+            missing_keywords.append(trans)
+    # remove deleted keywords
+    for t in missing_keywords:
+        t.delete()
     # add new keywords
     for i in range(len(keywords_list)):
-        (kobj, created) = Keyword.objects.get_or_create(text=keywords_list[i])
-        trans = Translation(gloss=gloss, translation=kobj, index=i, language=language)
+        new_text = keywords_list[i]
+        if new_text in current_keywords:
+            continue
+        (keyword_object, created) = Keyword.objects.get_or_create(text=keywords_list[i])
+        trans = Translation(gloss=gloss, translation=keyword_object, index=i, language=language, orderIndex=1)
         trans.save()
     
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language)])
     
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+
+def gloss_to_keywords_senses_groups(gloss, language):
+    glossXsenses = dict()
+    keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    if keyword_translations.count() > 0:
+        senses_groups = dict()
+        keywords_list = []
+        for trans in keyword_translations:
+            orderIndexKey = str(trans.orderIndex)
+            if orderIndexKey not in senses_groups.keys():
+                senses_groups[orderIndexKey] = []
+            senses_groups[orderIndexKey].append(trans.translation.text)
+            keywords_list.append(trans.translation.text)
+        glossXsenses['glossid'] = str(gloss.id)
+        glossXsenses['language'] = str(language.id)
+        glossXsenses['keywords'] = keywords_list
+        glossXsenses['senses_groups'] = senses_groups
+    return glossXsenses
+
+
+def edit_keywords(request, glossid):
+    """Edit the keywords"""
+    if not request.user.is_authenticated:
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    keyword_index_get = request.POST.get('keyword_index')
+    keyword_index_list_str = json.loads(keyword_index_get)
+    keyword_index = [ int(s) for s in keyword_index_list_str ]
+
+    language = request.POST.get('language', '')
+
+    translation_get = request.POST.get('translation')
+    translation_list_str = json.loads(translation_get)
+    translation = [ s for s in translation_list_str ]
+
+    if not language:
+        language = Language.objects.get(id=get_default_language_id())
+    else:
+        language = Language.objects.get(id=int(language))
+
+    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    current_keywords = [t.translation.text for t in current_trans]
+
+    # the input lists keyword_index and translation are exactly the same length
+    # pair them together in a dictionary, removing any space characters
+    paired_index_text = {}
+    for inx in keyword_index:
+        paired_index_text[inx] = translation[keyword_index.index(inx)].strip()
+
+    # omit duplicates by skipping the keyword_index and its corresponding translation
+    new_keywords_list = []
+    new_index_list = []
+    for inx, kwd in paired_index_text.items():
+        if kwd not in new_keywords_list:
+            new_keywords_list.append(kwd)
+            new_index_list.append(inx)
+
+    # update the new keywords
+    for i in range(len(new_keywords_list)):
+        new_text = new_keywords_list[i]
+        if new_text in current_keywords:
+            continue
+        index_to_update = new_index_list[i]
+        # fetch the keyword's translation object and change its keyword
+        keyword_to_update = Translation.objects.get(pk=index_to_update)
+        # new text is not in current keywords
+        # fetch or create the text and update the translation object
+        (keyword_object, created) = Keyword.objects.get_or_create(text=new_text)
+        keyword_to_update.translation = keyword_object
+        keyword_to_update.save()
+
+    glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
+
+    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
+
+
+def add_keyword(request, glossid):
+    """Add keywords"""
+    if not request.user.is_authenticated:
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+    language = request.POST.get('language', '')
+    keywords = request.POST.get('keywords')
+    # because of the way this is constructed in the javascript, a singleton list string is returned
+    translation_list_str = json.loads(keywords)
+    translation = [ s for s in translation_list_str ]
+    keyword = translation[0]
+
+    if not language:
+        language = Language.objects.get(id=get_default_language_id())
+    else:
+        language = Language.objects.get(id=int(language))
+
+    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    current_keywords = [t.translation.text for t in current_trans]
+    current_senses = [t.orderIndex for t in current_trans]
+    if len(current_senses) < 1:
+        new_sense = 1
+    else:
+        new_sense = max(current_senses) + 1
+    current_indices = [t.index for t in current_trans]
+    if len(current_indices) < 1:
+        new_index = 1
+    else:
+        new_index = max(current_indices) + 1
+        if len(current_indices) <= new_index:
+            new_index += 1
+
+    if keyword == '' or keyword in current_keywords:
+        # do nothing
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
+
+    new_translation_id = ''
+    if '' in current_keywords:
+        # fetch the empty keyword's translation object and change its keyword if possible
+        # legacy code added empty translations
+        translation_to_update = current_trans.filter(translation__text="").first()
+        try:
+            translation_to_update.translation = keyword_object
+            translation_to_update.save()
+            new_translation_id = str(translation_to_update.id)
+        except (ObjectDoesNotExist, KeyError, IntegrityError):
+            # make a new translation if it didn't work to update
+            trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language,
+                                orderIndex=new_sense)
+            trans.save()
+            new_translation_id = str(trans.id)
+    else:
+        # make a new translation
+        trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language, orderIndex=new_sense)
+        trans.save()
+        new_translation_id = str(trans.id)
+
+    glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
+    # creating a new keyword sends back its id
+    glossXsenses['new_translation'] = new_translation_id
+
+    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
+
+
+def group_keywords(request, glossid):
+    """Update the keyword field"""
+
+    if not request.user.is_authenticated:
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    group_index_get = request.POST.get('group_index')
+    group_index_list_str = json.loads(group_index_get)
+    group_index = [ int(s) for s in group_index_list_str ]
+
+    language = request.POST.get('language', '')
+
+    regroup_get = request.POST.get('regroup')
+    regroup_list_str = json.loads(regroup_get)
+    regroup = [ int(s) for s in regroup_list_str ]
+
+    if not language:
+        language = Language.objects.get(id=get_default_language_id())
+    else:
+        language = Language.objects.get(id=int(language))
+
+    translation_ids = [t.id for t in gloss.translation_set.filter(language=language).exclude(translation__text__exact='').order_by('orderIndex')]
+    for transid in translation_ids:
+        trans = Translation.objects.get(id=transid)
+        trans_id = trans.id
+        if trans_id in group_index:
+            target_sense_index = group_index.index(trans_id)
+            target_sense = regroup[target_sense_index]
+            trans.orderIndex = target_sense
+            trans.save()
+
+    glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
+
+    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
 
 def update_annotation_idgloss(gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""

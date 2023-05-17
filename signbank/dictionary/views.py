@@ -82,7 +82,7 @@ def word(request, keyword, n):
     (trans, total) =  word.match_request(request, n, )
 
     # and all the keywords associated with this sign
-    allkwds = trans.gloss.translation_set.all().order_by('translation__text')
+    allkwds = trans.gloss.translation_set.all().order_by('translation__index')
 
     videourl = trans.gloss.get_video_url()
     if not os.path.exists(os.path.join(settings.MEDIA_ROOT, videourl)):
@@ -200,7 +200,7 @@ def gloss(request, glossid):
                                                        'selected_datasets': selected_datasets,
                                                        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
-    allkwds = gloss.translation_set.all().order_by('translation__text')
+    allkwds = gloss.translation_set.all().order_by('translation__index')
     if len(allkwds) == 0:
         trans = None  # this seems to cause problems in the template, the title of the page ends up empty
     else:
@@ -323,7 +323,7 @@ def morpheme(request, glossid):
     if not(request.user.has_perm('dictionary.search_gloss') or morpheme.inWeb):
         return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
 
-    allkwds = morpheme.translation_set.all().order_by('translation__text')
+    allkwds = morpheme.translation_set.all().order_by('translation__index')
     if len(allkwds) == 0:
         trans = None
     else:

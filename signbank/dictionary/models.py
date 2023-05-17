@@ -136,9 +136,10 @@ class Translation(models.Model):
     """A spoken language translation of signs"""
 
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
-    language = models.ForeignKey("Language", default=get_default_language_id, on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
     translation = models.ForeignKey("Keyword", on_delete=models.CASCADE)
     index = models.IntegerField("Index")
+    orderIndex = models.IntegerField(_("Sense Index"), default=1)
 
     def __str__(self):
         if self.translation and self.translation.text:
@@ -150,10 +151,10 @@ class Translation(models.Model):
         """Return a URL for a view of this translation."""
 
         alltrans = self.translation.translation_set.all()
-        idx = 0
+        idx = 1
         for tr in alltrans:
             if tr == self:
-                return "/dictionary/words/" + str(self.translation) + "-" + str(idx + 1) + ".html"
+                return "/dictionary/words/" + str(self.translation) + "-" + str(idx) + ".html"
             idx += 1
         return "/dictionary/"
 
@@ -2216,7 +2217,7 @@ class Morpheme(Gloss):
         abstract_meaning = []
         for language in all_languages:
             if language in translation_languages:
-                translations = self.translation_set.filter(language=language).order_by('translation__text')
+                translations = self.translation_set.filter(language=language).order_by('translation__index')
                 abstract_meaning.append((language, translations))
             else:
                 abstract_meaning.append((language, ''))
