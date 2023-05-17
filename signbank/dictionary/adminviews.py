@@ -2953,17 +2953,18 @@ class HandshapeDetailView(DetailView):
         context['handshape_fields_FC2'] = []
         context['handshape_fields_UF'] = []
 
-        FINGER_SELECTION_FIELDS = ['hsFingSel', 'fsT','fsI','fsM','fsR','fsP']
-        FINGER_SELECTION_2_FIELDS = ['hsFingSel2', 'fs2T','fs2I','fs2M','fs2R','fs2P']
-        UNSELECTED_FINGERS_FIELDS = ['hsFingUnsel', 'ufT','ufI','ufM','ufR','ufP']
+        FINGER_SELECTION_FIELDS = ['hsFingSel', 'fsT', 'fsI', 'fsM', 'fsR', 'fsP']
+        FINGER_SELECTION_2_FIELDS = ['hsFingSel2', 'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P']
+        UNSELECTED_FINGERS_FIELDS = ['hsFingUnsel', 'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
 
-        handshape_fields = {}
+        handshape_fields_lookup = {}
         for f in Handshape._meta.fields:
             if f.name in settings.FIELDS['handshape']:
-                handshape_fields[f.name] = f
+                handshape_fields_lookup[f.name] = f
 
-        for field in handshape_fields.keys():
-            handshape_field = handshape_fields[field]
+        choice_lists = dict()
+        for field in handshape_fields_lookup.keys():
+            handshape_field = handshape_fields_lookup[field]
             # Get and save the choice list for this field
             if hasattr(handshape_field, 'field_choice_category'):
                 fieldchoice_category = handshape_field.field_choice_category
@@ -2974,7 +2975,7 @@ class HandshapeDetailView(DetailView):
                 choice_list = []
 
             if len(choice_list) > 0:
-                context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list)
+                choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list)
 
             #Take the human value in the language we are using
             machine_value = getattr(hs, field)
@@ -2998,7 +2999,7 @@ class HandshapeDetailView(DetailView):
             else:
                 context['handshape_fields'].append([human_value, field, field_label, kind])
 
-        context['choice_lists'] = json.dumps(context['choice_lists'])
+        context['choice_lists'] = json.dumps(choice_lists)
 
         if 'search_type' not in self.request.session.keys() or self.request.session['search_type'] != 'handshape':
             self.request.session['search_type'] = self.search_type

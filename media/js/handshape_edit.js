@@ -5,6 +5,55 @@
 //Keep track of the original values of the changes made, so we can rewind it later if needed
 var original_values_for_changes_made = new Array();
 
+function update_view_and_remember_original_value(change_summary)
+{
+	split_values_count = change_summary.split('\t').length - 1;
+	if (split_values_count > 0)
+	{
+	    if (split_values_count < 3) {
+	        console.log("update_view_and_remember_original_value: not enough returned values")
+	        return
+	    }
+        split_values = change_summary.split('\t');
+        original_value = split_values[0];
+        new_value = split_values[1];
+        category_value = split_values[2];
+        new_pattern = split_values[3];
+
+        id = $(this).attr('id');
+        $(this).html(new_value);
+
+        if (original_values_for_changes_made[id] == undefined)
+        {
+            original_values_for_changes_made[id] = original_value;
+            if (id != 'fsT' && id != 'fsI' && id != 'fsM' && id != 'fsR' && id != 'fsP'
+                && id != 'fs2T' && id != 'fs2I' && id != 'fs2M' && id != 'fs2R' && id != 'fs2P'
+                && id != 'ufT' && id != 'ufI' && id != 'ufM' && id != 'ufR' && id != 'ufP') {
+                $(this).parent().removeClass('empty_row');
+                $(this).parent().attr("value", new_value);
+            }
+        }
+        if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None')
+        {
+            $(this).parent().addClass('empty_row');
+            $(this).parent().attr("value", new_value);
+            $(this).html("------");
+        }
+        if (category_value == 'fingerSelection1') {
+            var fs = document.getElementById('#fingerSelection1');
+            fs.innerHTML = new_pattern;
+        }
+        else if (category_value == 'fingerSelection2') {
+            var fs2 = document.getElementById('#otherFingerSection');
+            fs2.innerHTML = new_pattern;
+        }
+        else if (category_value == 'unselectedFingers') {
+            var uf = document.getElementById('#unselectedFingers');
+            uf.innerHTML = new_pattern;
+        }
+    }
+}
+
  $(document).ready(function() {
      configure_edit();
 
@@ -182,105 +231,6 @@ function configure_edit() {
      });
 }
 
-function update_view_and_remember_original_value(change_summary)
-{
-	split_values_count = change_summary.split('\t').length - 1;
-	if (split_values_count > 0)
-	{
-	    if (split_values_count < 3) {
-	        console.log("update_view_and_remember_original_value: not enough returned values")
-	        return
-	    }
-        split_values = change_summary.split('\t');
-        original_value = split_values[0];
-        new_value = split_values[1];
-        category_value = split_values[2];
-        new_pattern = split_values[3];
-
-        id = $(this).attr('id');
-        $(this).html(new_value);
-
-        if (original_values_for_changes_made[id] == undefined)
-        {
-            original_values_for_changes_made[id] = original_value;
-            if (id != 'fsT' && id != 'fsI' && id != 'fsM' && id != 'fsR' && id != 'fsP'
-                && id != 'fs2T' && id != 'fs2I' && id != 'fs2M' && id != 'fs2R' && id != 'fs2P'
-                && id != 'ufT' && id != 'ufI' && id != 'ufM' && id != 'ufR' && id != 'ufP') {
-                $(this).parent().removeClass('empty_row');
-                $(this).parent().attr("value", new_value);
-            }
-        }
-        if (new_value == '-' || new_value == ' ' || new_value == '' || new_value == 'None')
-        {
-            $(this).parent().addClass('empty_row');
-            $(this).parent().attr("value", new_value);
-            $(this).html("------");
-        }
-        if (category_value == 'fingerSelection1') {
-            var fs = document.getElementById('#fingerSelection1');
-            fs.innerHTML = new_pattern;
-        }
-        else if (category_value == 'fingerSelection2') {
-            var fs2 = document.getElementById('#otherFingerSection');
-            fs2.innerHTML = new_pattern;
-        }
-        else if (category_value == 'unselectedFingers') {
-            var uf = document.getElementById('#unselectedFingers');
-            uf.innerHTML = new_pattern;
-        }
-    }
-}
-
-$.editable.addInputType("multiselect", {
-    element: function (settings, original) {
-        var select = $('<select multiple="multiple" />');
-
-        if (settings.width != 'none') { select.width(settings.width); }
-        if (settings.size) { select.attr('size', settings.size); }
-
-        $(this).append(select);
-        return (select);
-    },
-    content: function (data, settings, original) {
-        /* If it is string assume it is json. */
-        if (String == data.constructor) {
-            eval('var json = ' + data);
-        } else {
-            /* Otherwise assume it is a hash already. */
-            var json = data;
-        }
-        for (var key in json) {
-            if (!json.hasOwnProperty(key)) {
-                continue;
-            }
-            if ('selected' == key) {
-                continue;
-            }
-            var option = $('<option />').val(key).append(json[key]);
-            $('select', this).append(option);
-        }
-
-        if ($(this).val() == json['selected'] ||
-                            $(this).html() == $.trim(original.revert)) {
-            $(this).attr('selected', 'selected');
-        }
-
-        /* Loop option again to set selected. IE needed this... */
-        $('select', this).children().each(function () {
-            if (json.selected) {
-                var option = $(this);
-                $.each(json.selected, function (index, value) {
-                    if (option.val() == value) {
-                        option.attr('selected', 'selected');
-                    }
-                });
-            } else {
-                if (original.revert.indexOf($(this).html()) != -1)
-                    $(this).attr('selected', 'selected');
-            }
-        });
-    }
-});
 
 
 

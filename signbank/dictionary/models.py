@@ -1518,7 +1518,7 @@ class Gloss(models.Model):
 
         for (field, value_of_this_field) in zipped_tuples:
             gloss_field = Gloss._meta.get_field(field)
-            if isinstance(gloss_field, Handshape):
+            if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                 # field is a handshape
                 different_field = 'different_' + field
                 field_compare = field + '__exact'
@@ -1535,7 +1535,7 @@ class Gloss(models.Model):
                 # field is a Boolean
                 different_field = 'different_' + field
                 field_compare = field + '__exact'
-                if value_of_this_field == True:
+                if value_of_this_field:
                     different_case = Case(When(**{ field_compare : True , 'then' : 0 }), default=1, output_field=IntegerField())
 
                     minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
