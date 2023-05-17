@@ -117,6 +117,134 @@ function update_gloss_keywords(data) {
         sensesCell.append(row);
     }
     sensesCell.append("</tr>");
+
+    var modal_senses_glossid = '#tbody_modal_senses_' + glossid + '_' + language;
+    var modalSensesCell = $(modal_senses_glossid);
+    $(modalSensesCell).empty();
+    for (var key in senses_groups) {
+        var row = $("<tr/>");
+        row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
+        var group_keywords = senses_groups[key];
+        var num_commas = group_keywords.length - 1;
+        for (var inx in group_keywords) {
+            if (inx < num_commas) {
+                row.append("<span>"+group_keywords[inx]+"</span>, ");
+            } else {
+                row.append("<span>"+group_keywords[inx]+"</span>");
+            }
+        };
+        row.append("</td>");
+        modalSensesCell.append(row);
+    }
+    modalSensesCell.append("</tr>");
+}
+
+function add_gloss_keywords(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var language = data.language;
+    var keywords = data.keywords;
+    var senses_groups = data.senses_groups;
+    if ($.isEmptyObject(senses_groups)) {
+        return;
+    };
+    var new_translation = data.new_translation;
+    if ($.isEmptyObject(new_translation)) {
+        return;
+    };
+    var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;
+    var modal_keywords_glossid = '#tbody_modal_keywords_' + glossid + '_' + language;
+    var keywordsCell = $(keywords_glossid);
+    var modalKeywordsCell = $(modal_keywords_glossid);
+    $(keywordsCell).empty();
+    $(modalKeywordsCell).empty();
+    var row = $("<tr/>");
+    var num_commas = keywords.length - 1;
+    for (var key in keywords) {
+        if (key < num_commas) {
+            row.append("<span>"+keywords[key]+"</span>, ");
+        } else {
+            row.append("<span>"+keywords[key]+"</span>");
+        }
+    }
+    row.append("</td>");
+    keywordsCell.append(row);
+
+    for (var key in senses_groups) {
+        var row = $("<tr/>");
+        row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
+        var group_keywords = senses_groups[key];
+        var num_commas = group_keywords.length - 1;
+        for (var inx in group_keywords) {
+            if (inx < num_commas) {
+                row.append("<span>"+group_keywords[inx]+"</span>, ");
+            } else {
+                row.append("<span>"+group_keywords[inx]+"</span>");
+            }
+        };
+        row.append("</td>");
+        modalKeywordsCell.append(row);
+    }
+    modalKeywordsCell.append("</tr>");
+
+    var senses_glossid = '#tbody_senses_' + glossid + '_' + language;
+    var sensesCell = $(senses_glossid);
+    $(sensesCell).empty();
+    for (var key in senses_groups) {
+        var row = $("<tr/>");
+                row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
+        var group_keywords = senses_groups[key];
+        num_commas = group_keywords.length - 1;
+        for (var inx in group_keywords) {
+            if (inx < num_commas) {
+                row.append("<span>"+group_keywords[inx]+"</span>, ");
+            } else {
+                row.append("<span>"+group_keywords[inx]+"</span>");
+            }
+        };
+        row.append("</td>");
+        sensesCell.append(row);
+    }
+    sensesCell.append("</tr>");
+
+    var modal_senses_glossid = '#tbody_modal_senses_' + glossid + '_' + language;
+    var modalSensesCell = $(modal_senses_glossid);
+    $(modalSensesCell).empty();
+    for (var key in senses_groups) {
+        var row = $("<tr/>");
+        row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
+        var group_keywords = senses_groups[key];
+        var num_commas = group_keywords.length - 1;
+        for (var inx in group_keywords) {
+            if (inx < num_commas) {
+                row.append("<span>"+group_keywords[inx]+"</span>, ");
+            } else {
+                row.append("<span>"+group_keywords[inx]+"</span>");
+            }
+        };
+        row.append("</td>");
+        modalSensesCell.append(row);
+    }
+    modalSensesCell.append("</tr>");
+
+    var modal_edit_keywords_glossid = '#edit_keywords_table_' + glossid + '_' + language;
+    var modalEditKeywordsCell = $(modal_edit_keywords_glossid);
+    var last_index = keywords.length - 1;
+
+    var row = $("<tr/>");
+    row.append('<td>'+keywords[last_index]+'</td>');
+    row.append('<input type="hidden" id="keyword_index_'+new_translation+
+                    '" name="keyword_index" value="'+new_translation+'" data-index="'+new_translation+'">');
+    row.append("<td>");
+    row.append('<input type="text" id="edit_keyword_text_'+new_translation+
+                            '" name="translation" value="'+keywords[last_index]+
+                            '" data-translation="'+new_translation+'">');
+    row.append("</td>");
+    row.append("</tr>");
+    modalEditKeywordsCell.append(row);
+    modalEditKeywordsCell.append("</tr>");
 }
 
 $(document).ready(function() {
@@ -198,15 +326,14 @@ $(document).ready(function() {
          $(form_id).find('input[name="keyword"]').each(function() {
             keywords.push(this.value);
          });
-         var keyword = keywords.pop();
          $.ajax({
             url : url + "/dictionary/update/add_keyword/" + glossid,
             type: 'POST',
             data: { 'language': language,
-                    'keyword': JSON.stringify(keyword),
+                    'keywords': JSON.stringify(keywords),
                     'csrfmiddlewaretoken': csrf_token},
             datatype: "json",
-            success : update_gloss_keywords
+            success : add_gloss_keywords
          });
      });
 });

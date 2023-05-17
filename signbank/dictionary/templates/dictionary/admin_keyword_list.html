@@ -225,10 +225,10 @@ var csrf_token = '{{csrf_token}}';
                       <form id="form_edit_keywords_{{gloss.id}}_{{language.id}}"
                             action="{% url 'dictionary:edit_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
-                      <table class='table table-condensed'>
+                      <table class='table table-condensed' id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
                           <tr><th>{% trans "Keyword" %}</th><th>{% trans "Text" %}</th></tr>
                           {% for keyword in keywords %}
-                        <tr>
+                        <tr id="edit_keywords_row_{{gloss.id}}_{{language.id}}_{{keyword.id}}">
                             <td>{{keyword.translation.text}}</td>
                             <input type="hidden" id="keyword_index_{{keyword.id}}"
                                    name="keyword_index" value='{{keyword.id}}' data-index='{{keyword.id}}'>
@@ -258,7 +258,7 @@ var csrf_token = '{{csrf_token}}';
                                    <td>{% trans "Keyword" %}</td>
                                    <td>
                                        <input name='keyword' type="text"
-                                              placeholder='{% trans "Keyword" %}' value=""/>
+                                              placeholder='{% trans "Keyword" %}' value="">
                                    </td>
                                </tr>
                            </table>
