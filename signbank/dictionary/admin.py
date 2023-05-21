@@ -1346,7 +1346,7 @@ class SenseAdmin(admin.ModelAdmin):
 admin.site.register(Sense, SenseAdmin)
 
 class ExampleSentenceAdmin(admin.ModelAdmin):
-    list_display = ("get_examplestc_translations", "sentencetype", "negative", "get_video_path")
+    list_display = ("get_examplestc_translations", "sentencetype", "negative", "dataset", "get_video_path")
 
 admin.site.register(ExampleSentence, ExampleSentenceAdmin)
 

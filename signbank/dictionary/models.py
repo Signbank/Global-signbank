@@ -589,15 +589,23 @@ class ExampleSentence(models.Model):
        ('exclamative', _('Exclamative (exclamation)'))
     )
     
+    dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
+        default = settings.DEFAULT_DATASET_PK, help_text=_("Dataset an examplesentence is part of"), null=True)
     sentencetype = models.CharField(max_length=32, choices=SENTENCETYPES, default="declarative")
     negative = models.BooleanField(default=False)
     video = models.TextField(max_length=32, default="zin_over_iets.mp4")
     
-    def get_examplestc_translations_dict_without(self):
+    def get_examplestc_translations_dict_with(self):
         translations = {}
-        for est in self.examplesentencetranslation_set.all():
-            translations[str(est.language)] = str(est)
+        for dataset_translation_language in self.dataset.translation_languages.all():
+            if self.examplesentencetranslation_set.filter(language = dataset_translation_language).count() == 1:
+                translations[str(dataset_translation_language)] = str(self.examplesentencetranslation_set.all().get(language = dataset_translation_language))
+            else:
+                translations[str(dataset_translation_language)] = ""
         return translations
+
+    def get_examplestc_translations_dict_without(self):
+        return {k: v for k, v in self.get_examplestc_translations_dict_with().items() if v}
 
     def get_examplestc_translations(self):
         return [k+": "+v for k,v in self.get_examplestc_translations_dict_without().items()]
@@ -712,14 +720,19 @@ class Sense(models.Model):
             if len(sentences) > 0:
                 translations.append(str(dataset_translation_language) + ": " + (", ").join(sentences))
         return (", ").join(translations)
-    
-    def get_sense_translations_dict_without(self):
+
+    def get_sense_translations_dict_with(self):
         sense_keywords = {}
         for dataset_translation_language in self.dataset.translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
                 keyword_list = ", ".join(sorted([k.get_keywords() for k in self.senseTranslations.filter(language = dataset_translation_language)]))
                 sense_keywords[str(dataset_translation_language)]= keyword_list
+            else:
+                sense_keywords[str(dataset_translation_language)]= ""
         return sense_keywords
+    
+    def get_sense_translations_dict_without(self):
+        return {k: v for k, v in self.get_sense_translations_dict_with().items() if v}
 
     def get_sense_translations(self):
         return [k+": "+v for k,v in self.get_sense_translations_dict_without().items()]

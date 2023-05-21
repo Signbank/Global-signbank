@@ -1048,7 +1048,7 @@ p {
                                         <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
                                         <input type="hidden" name="glossid" value="{{ gloss.id }}"/>
                                         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                            {% for key, value in sense.get_sense_translations_dict_without.items %}
+                                            {% for key, value in sense.get_sense_translations_dict_with.items %}
                                                 {% if key|slugify == dataset_lang|slugify %}
                                                     {{ dataset_lang.name }}:
                                                     <input id="{{ dataset_lang.name }}" name="{{ key }}" value="{{ value }}" maxlength="100" type="text"/>
@@ -1133,7 +1133,7 @@ p {
                                                     <input type="hidden" name="negative" value=False>
                                                     Negative: <input type="checkbox" name="negative" {% if examplesentence.negative %}checked{% endif %}><br><br>
                                                     {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                                        {% for key, value in examplesentence.get_examplestc_translations_dict_without.items %}
+                                                        {% for key, value in examplesentence.get_examplestc_translations_dict_with.items %}
                                                             {% if key|slugify == dataset_lang|slugify %}
                                                                 {{ dataset_lang.name }}:
                                                                 <input style="width:500px" name="{{ key }}" value="{{ value }}" maxlength="100" type="text"/>
