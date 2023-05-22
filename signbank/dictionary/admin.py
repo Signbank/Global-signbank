@@ -1302,6 +1302,31 @@ class SearchHistoryAdmin(VersionAdmin):
         view = super(SearchHistoryAdmin, self).change_view(request, object_id, form_url, extra_context)
         return view
 
+class SenseTranslationAdmin(admin.ModelAdmin):
+    list_display = ("get_translations", "language")
+    list_filter = ['language']
+    search_fields = ['translations__translation__text']
+
+class SenseAdmin(admin.ModelAdmin):
+    list_display = ("get_sense_translations", "get_example_sentences", "dataset", "orderindex")
+    search_fields = ['senseTranslations__translations__translation__text']
+    list_filter = ['dataset']
+
+class ExampleSentenceAdmin(admin.ModelAdmin):
+    list_display = ("get_examplestc_translations", "sentencetype", "negative", "dataset", "get_video_path")
+    search_fields = ['examplesentencetranslation__text']
+    list_filter = ['dataset']
+
+class ExampleSentenceTranslationAdmin(admin.ModelAdmin):
+    list_display = ("text", "examplesentence", "language")
+    search_fields = ['text']
+    list_filter = ['language']
+
+class KeywordTranslationAdmin(admin.ModelAdmin):
+    list_display = ("translation", "language", "gloss")
+    search_fields = ['translation__text']
+    list_filter = ['language']
+
 
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
@@ -1335,22 +1360,8 @@ admin.site.register(QueryParameterBoolean, QueryParameterBooleanAdmin)
 admin.site.register(QueryParameterMultilingual, QueryParameterMultilingualAdmin)
 admin.site.register(SearchHistory, SearchHistoryAdmin)
 
-class SenseTranslationAdmin(admin.ModelAdmin):
-    list_display = ("get_keywords", "language")
-
 admin.site.register(SenseTranslation, SenseTranslationAdmin)
-
-class SenseAdmin(admin.ModelAdmin):
-    list_display = ("get_sense_translations", "get_example_sentences", "dataset", "orderindex")
-
 admin.site.register(Sense, SenseAdmin)
-
-class ExampleSentenceAdmin(admin.ModelAdmin):
-    list_display = ("get_examplestc_translations", "sentencetype", "negative", "dataset", "get_video_path")
-
 admin.site.register(ExampleSentence, ExampleSentenceAdmin)
-
-class ExampleSentenceTranslationAdmin(admin.ModelAdmin):
-    list_display = ("text", "examplesentence", "language")
-
 admin.site.register(ExampleSentenceTranslation, ExampleSentenceTranslationAdmin)
+admin.site.register(Translation, KeywordTranslationAdmin)

@@ -138,7 +138,7 @@ class Translation(models.Model):
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
     language = models.ForeignKey("Language", default=get_default_language_id, on_delete=models.CASCADE)
     translation = models.ForeignKey("Keyword", on_delete=models.CASCADE)
-    index = models.IntegerField("Index")
+    index = models.IntegerField("Index", default=0)
 
     def __str__(self):
         if self.translation and self.translation.text:
@@ -158,7 +158,7 @@ class Translation(models.Model):
         return "/dictionary/"
 
     class Meta:
-        unique_together = (("gloss", "language", "translation"),)
+        # unique_together = (("language", "translation"),)
         ordering = ['gloss', 'index']
 
     class Admin:
@@ -692,17 +692,17 @@ class ExampleSentenceTranslation(models.Model):
 class SenseTranslation(models.Model):
     """A sense translation belongs to a sense"""
     
-    keywords = models.ManyToManyField(Keyword)
+    translations = models.ManyToManyField(Translation)
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
-    def get_keywords(self):
-        return ", ".join(sorted([k.text.strip() for k in self.keywords.all()]))
+    def get_translations(self):
+        return ", ".join(sorted([t.translation.text.strip() for t in self.translations.all()]))
 
     def __str__(self):
-        return self.get_keywords()
+        return self.get_translations()
     
 class Sense(models.Model):
-    """A sense belongs to a gloss and consists of a set of keyword(s)"""
+    """A sense belongs to a gloss and consists of a set of translation(s)"""
     
     orderindex = models.IntegerField(default = 0)
     senseTranslations = models.ManyToManyField(SenseTranslation)
@@ -722,14 +722,14 @@ class Sense(models.Model):
         return (", ").join(translations)
 
     def get_sense_translations_dict_with(self):
-        sense_keywords = {}
+        sense_translations = {}
         for dataset_translation_language in self.dataset.translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
-                keyword_list = ", ".join(sorted([k.get_keywords() for k in self.senseTranslations.filter(language = dataset_translation_language)]))
-                sense_keywords[str(dataset_translation_language)]= keyword_list
+                translation_list = ", ".join(sorted([k.get_translations() for k in self.senseTranslations.filter(language = dataset_translation_language)]))
+                sense_translations[str(dataset_translation_language)]= translation_list
             else:
-                sense_keywords[str(dataset_translation_language)]= ""
-        return sense_keywords
+                sense_translations[str(dataset_translation_language)]= ""
+        return sense_translations
     
     def get_sense_translations_dict_without(self):
         return {k: v for k, v in self.get_sense_translations_dict_with().items() if v}
@@ -737,10 +737,6 @@ class Sense(models.Model):
     def get_sense_translations(self):
         return [k+": "+v for k,v in self.get_sense_translations_dict_without().items()]
     
-    class Admin:
-        list_display = ['orderindex', 'keywords']
-        search_fields = ['orderindex', 'keywords']
-
     class Meta:
         ordering = ['orderindex']
 
@@ -1176,11 +1172,11 @@ class Gloss(models.Model):
         return fields
 
     
-    def get_keywds(self):
+    def get_transltns(self):
         senses = models.ManyToManyField(Sense)
-        allkeywords = ""
+        alltranslations = ""
         for sensei, sense in enumerate(senses):
-            allkeywors = allkeywords + sensei + ". " + sense.get_keywords + "\n"
+            allkeywors = alltranslations + sensei + ". " + sense.get_translations + "\n"
 
     def navigation(self, is_staff):
         """Return a gloss navigation structure that can be used to

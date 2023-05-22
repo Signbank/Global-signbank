@@ -334,6 +334,7 @@ def update_sense(request, senseid):
             messages.add_message(request, messages.INFO, _('Sense is already in (existing) gloss.'))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+    gloss = Gloss.objects.all().get(id = request.POST['glossid'])
     # Update sensetranslations
     for dataset_language in dataset_languages:
         # sense translation is added, so create it if it doesn't already exist
@@ -342,19 +343,16 @@ def update_sense(request, senseid):
         if str(dataset_language) not in sensetranslation_dict and str(dataset_language) in vals:
             existed = False
             for st in SenseTranslation.objects.filter(language = dataset_language):
-                if st.get_keywords() == vals[str(dataset_language)]:
+                if st.get_translations() == vals[str(dataset_language)]:
                     sense.senseTranslations.add(st)
                     existed = True
             if not existed:
                 sensetranslation = SenseTranslation.objects.create(language=dataset_language)
                 sensetranslation.save()
-                for kw_v in vals[str(dataset_language)].split(","):
-                    if Keyword.objects.filter(text = kw_v).exists():
-                        sensetranslation.keywords.add(Keyword.objects.all().get(text = kw_v).id)
-                    else:
-                        keyword = Keyword.objects.create(text=kw_v)
-                        keyword.save()
-                        sensetranslation.keywords.add(keyword)
+                for tr_v in vals[str(dataset_language)].split(","):
+                    keyword = Keyword.objects.get_or_create(text =tr_v)[0]
+                    translation = Translation.objects.get_or_create(translation = keyword, language=dataset_language, gloss = gloss)[0]
+                    sensetranslation.translations.add(translation)
                 sense.senseTranslations.add(sensetranslation)
 
         else:
@@ -365,35 +363,39 @@ def update_sense(request, senseid):
                 sense.senseTranslations.remove(sensetranslation)
                 # Delete the sensetranslation if it's not in any other sense
                 if Sense.objects.filter(senseTranslations=sensetranslation).count() == 0:
+                    # also delete the translation (keyword) if it's the only sensetranslation it is in
+                    for translation in sensetranslation.translations.all():
+                        sensetranslation.translations.remove(translation)
+                        if SenseTranslation.objects.filter(translations = translation).count() == 0:
+                            translation.delete()
                     sensetranslation.delete()
 
             # Check if input field exists and is different from database
             elif sensetranslation_dict[str(dataset_language)] != vals[str(dataset_language)]:
                 existed = False
                 for st in SenseTranslation.objects.filter(language = dataset_language):
-                    if st.get_keywords() == vals[str(dataset_language)]:
+                    if st.get_translations() == vals[str(dataset_language)]:
                         sense.senseTranslations.add(st)
                         sense.senseTranslations.remove(sensetranslation)
                         if Sense.objects.filter(senseTranslations=sensetranslation).count() == 0:
                             sensetranslation.delete()
                         existed = True
                 if not existed:
-                    keyword_st = sensetranslation.keywords.all()
-                    kws, kwv = [], []
-                    for kw_st in keyword_st:
-                        kws.append(kw_st)
-                        kwv.append(kw_st.text)
-                    for kw_s in kws:
-                        if kw_s.text not in vals[str(dataset_language)].split(","):
-                            sensetranslation.keywords.remove(kw_s)
-                    for kw_v in vals[str(dataset_language)].split(","):
-                        if kw_v not in kwv:
-                            if Keyword.objects.filter(text = kw_v).exists():
-                                sensetranslation.keywords.add(Keyword.objects.all().get(text = kw_v).id)
-                            else:
-                                keyword = Keyword.objects.create(text=kw_v)
-                                keyword.save()
-                                sensetranslation.keywords.add(keyword)
+                    translation_st = sensetranslation.translations.all()
+                    trs, trv = [], []
+                    for tr_st in translation_st:
+                        trs.append(tr_st)
+                        trv.append(tr_st.translation.text)
+                    for tr_s in trs:
+                        if tr_s.translation.text not in vals[str(dataset_language)].split(","):
+                            sensetranslation.translations.remove(tr_s)
+                            if SenseTranslation.objects.filter(translations = tr_s).count() == 0:
+                                tr_s.delete()
+                    for tr_v in vals[str(dataset_language)].split(","):
+                        if tr_v not in trv:
+                            keyword = Keyword.objects.get_or_create(text = tr_v)[0]
+                            translation = Translation.objects.get_or_create(translation=keyword, language = dataset_language, gloss = gloss)[0]
+                            sensetranslation.translations.add(translation)
 
     messages.add_message(request, messages.INFO, _('Given sense was added.'))
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -448,7 +450,7 @@ def create_sense(request, glossid):
                 
                 existed = False
                 for st in SenseTranslation.objects.filter(language = dataset_language):
-                    if st.get_keywords() == vals[str(dataset_language)]:
+                    if st.get_translations() == vals[str(dataset_language)]:
                         sense.senseTranslations.add(st)
                         existed = True
 
@@ -457,12 +459,9 @@ def create_sense(request, glossid):
                     sensetranslation.save()
                     sense.senseTranslations.add(sensetranslation)
                     for kw in sorted(list(dict.fromkeys(vals[str(sensetranslation.language)].split(", ")))):
-                        if Keyword.objects.filter(text = kw).exists():
-                            sensetranslation.keywords.add(Keyword.objects.all().get(text = kw).id)
-                        else:
-                            keyword = Keyword.objects.create(text=kw)
-                            keyword.save()
-                            sensetranslation.keywords.add(keyword)
+                        keyword = Keyword.objects.get_or_create(text = kw)[0]
+                        translation = Translation.objects.get_or_create(translation = keyword, language = dataset_language, gloss = gloss)[0]
+                        sensetranslation.translations.add(translation)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -489,6 +488,11 @@ def delete_sense(request, glossid):
                 sensetranslation = sense.senseTranslations.all().get(language=dataset_language)
                 # If this is the only sense the sensetranslation was in, delete the sensetranslation
                 if Sense.objects.filter(dataset = dataset, senseTranslations = sensetranslation).count() == 1:
+                    # also delete the translation (keyword) if it's the only sensetranslation it is in
+                    for translation in sensetranslation.translations.all():
+                        sensetranslation.translations.remove(translation)
+                        if SenseTranslation.objects.filter(translations = translation).count() == 0:
+                            translation.delete()
                     sense.senseTranslations.remove(sensetranslation)
                     sensetranslation.delete()
         # also remove its examplesentences if they are not in another sense
