@@ -553,7 +553,7 @@ function update_view_and_remember_original_value(change_summary)
             new_value = 'False';
         }
 
-        if (original_values_for_changes_made[id] == undefined)
+        if ($.isEmptyObject(original_values_for_changes_made[id]))
         {
             original_values_for_changes_made[id] = original_value;
             $(this).parent().removeClass('empty_row');
