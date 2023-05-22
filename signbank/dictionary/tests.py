@@ -28,6 +28,12 @@ class BasicCRUDTests(TestCase):
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
@@ -343,6 +349,12 @@ class BasicQueryTests(TestCase):
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
@@ -1387,6 +1399,12 @@ class LemmaTests(TestCase):
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         #Create the glosses
         dataset_name = settings.DEFAULT_DATASET
@@ -1516,6 +1534,12 @@ class HandshapeTests(TestCase):
         assign_perm('dictionary.add_gloss', self.user)
         assign_perm('dictionary.change_gloss', self.user)
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.field_choice_handedness_1 = FieldChoice.objects.filter(field='Handeness', machine_value__gt=1).first()
         self.field_choice_handedness_2 = FieldChoice.objects.filter(field='Handeness', machine_value__gt=1).last()
@@ -1712,6 +1736,12 @@ class MultipleSelectTests(TestCase):
         assign_perm('dictionary.add_gloss', self.user)
         assign_perm('dictionary.change_gloss', self.user)
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
@@ -2395,6 +2425,12 @@ class testFrequencyAnalysis(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.client = Client()
 
@@ -2585,6 +2621,12 @@ class testSettings(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
     def test_Settings(self):
 
@@ -2765,6 +2807,12 @@ class RevisionHistoryTests(TestCase):
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
         assign_perm('dictionary.can_publish', self.user)
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
     def test_field_types(self):
 
@@ -2901,6 +2949,12 @@ class Corpus_Tests(TestCase):
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
         assign_perm('dictionary.change_gloss', self.user)
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         dataset_name = settings.DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=dataset_name)
@@ -3228,6 +3282,12 @@ class MinimalPairsTests(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.client = Client()
 

@@ -3304,7 +3304,7 @@ class MinimalPairsListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
-        if selected_datasets.count() > 1:
+        if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view minimal pairs.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
 
@@ -7513,7 +7513,10 @@ class KeywordListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        dataset_language = selected_datasets.first().default_language
+        if not selected_datasets:
+            dataset_language = Language.objects.get(id=get_default_language_id())
+        else:
+            dataset_language = selected_datasets.first().default_language
         context['dataset_language'] = dataset_language
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
@@ -7526,7 +7529,7 @@ class KeywordListView(ListView):
     def get_queryset(self):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        if selected_datasets.count() > 1:
+        if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view keywords.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)

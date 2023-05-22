@@ -1756,15 +1756,12 @@ def import_csv_lemmas(request):
 
     uploadform = signbank.dictionary.forms.CSVUploadForm
     seen_datasets = []
-    # set the allowed dataset names to selected dataset, which must have change permission (checked below)
-    dataset = selected_datasets.first()
-    seen_dataset_names = [dataset.acronym]
     changes = []
     error = []
     earlier_updates_same_csv = []
     earlier_updates_lemmaidgloss = {}
 
-    if selected_datasets.count() > 1 or dataset not in user_datasets:
+    if not selected_datasets or selected_datasets.count() > 1 or dataset not in user_datasets:
         feedback_message = _('Please select a single dataset for which you have change permission.')
         messages.add_message(request, messages.ERROR, feedback_message)
 
@@ -1776,6 +1773,10 @@ def import_csv_lemmas(request):
                        'translation_languages_dict': translation_languages_dict,
                        'seen_datasets': seen_datasets,
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+    # set the allowed dataset names to selected dataset, which must have change permission (checked below)
+    dataset = selected_datasets.first()
+    seen_dataset_names = [dataset.acronym]
 
     # Process Input File
     if len(request.FILES) > 0:
