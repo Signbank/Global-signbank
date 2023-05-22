@@ -28,6 +28,7 @@ from signbank.frequency import document_identifiers_from_paths, documents_paths_
 from django.utils.translation import gettext_lazy as _
 
 from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
+from django.shortcuts import redirect
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -2492,7 +2493,6 @@ def change_dataset_selection(request):
             if attribute[:len(dataset_prefix)] == dataset_prefix:
                 dataset_name = attribute[len(dataset_prefix):]
                 selected_dataset_acronyms.append(dataset_name)
-
         if selected_dataset_acronyms:
             # check that the selected datasets exist
             for dataset_name in selected_dataset_acronyms:
@@ -2508,9 +2508,14 @@ def change_dataset_selection(request):
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
                     user_profile.selected_datasets.add(dataset)
-                except (ObjectDoesNotExist, KeyError, TransactionManagementError, DatabaseError, IntegrityError):
+                except (ObjectDoesNotExist, TransactionManagementError, DatabaseError, IntegrityError):
                     print('exception to updating selected datasets')
                     pass
+            user_profile.save()
+        else:
+            # no datasets selected
+            user_profile = UserProfile.objects.get(user=request.user)
+            user_profile.selected_datasets.clear()
             user_profile.save()
     else:
         # clear old selection
@@ -2543,7 +2548,7 @@ def change_dataset_selection(request):
     else:
         # set the last_used_dataset?
         pass
-    return HttpResponseRedirect(reverse('admin_dataset_select'))
+    return redirect(settings.PREFIX_URL + '/datasets/select')
 
 
 def update_dataset(request, datasetid):
