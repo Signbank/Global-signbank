@@ -9,7 +9,7 @@ from django.contrib.auth.models import Group
 class Page(models.Model):
     url = models.CharField(_('URL'), max_length=100, db_index=True)
 
-    title = models.CharField(_('English title'), max_length=200)
+    title = models.CharField(_('Title'), max_length=200)
     title_dutch = models.CharField(_('Dutch title'), max_length=200)
     title_chinese = models.CharField(_('Chinese title'), max_length=200, blank=True)
     title_hebrew = models.CharField(_('Hebrew title'), max_length=200, blank=True)
