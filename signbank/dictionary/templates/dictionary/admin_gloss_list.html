@@ -54,6 +54,8 @@ var query_parameters_dict = {{query_parameters|safe}};
 var other_parameters_keys = {{other_parameters_keys|safe}};
 var language_query_keys = {{language_query_keys|safe}};
 var morpheme_idgloss = '{{morpheme_idgloss|safe}}';
+var gloss_fields_to_populate = {{gloss_fields_to_populate|safe}};
+var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
 
 $(document).ready(function() {
 
@@ -230,15 +232,27 @@ $(document).ready(function() {
          };
     };
 
-     if (query_parameters_keys.includes('keyword')) {
-        var $translation = $("input[name='keyword']");
-        var query_initial = query_parameters_dict['keyword'];
+     if (query_parameters_keys.includes('translation')) {
+        var $translation = $("input[name='translation']");
+        var query_initial = query_parameters_dict['translation'];
+        $translation.val(query_initial);
+    };
+
+     if (gloss_fields_to_populate_keys.includes('translation')) {
+        var $translation = $("input[name='translation']");
+        var query_initial = gloss_fields_to_populate['translation'];
         $translation.val(query_initial);
     };
 
      if (query_parameters_keys.includes('search')) {
         var $menu_bar_search = $("input[name='search']");
         var query_initial = query_parameters_dict['search'];
+        $menu_bar_search.val(query_initial);
+    };
+
+     if (gloss_fields_to_populate_keys.includes('search')) {
+        var $menu_bar_search = $("input[name='search']");
+        var query_initial = gloss_fields_to_populate['search'];
         $menu_bar_search.val(query_initial);
     };
 
@@ -365,6 +379,8 @@ function clearForm() {
           }
       };
      $('.js-example-basic-multiple').val(null).trigger('change');
+     $("input[name='translation']").val('');
+     $("input[name='search']").val('');
 }
 
  /**
@@ -686,15 +702,11 @@ function do_toggle_annotation(el) {
                            data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
 
                       <div id='pub_search' class='collapse'>
-                      <table class='table pub-row'>
+                      <table class='table table-condensed' style="width:65%;">
                       {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
                       <tr>
                           <td style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
-                          {% if publication_id == 'definitionRole' %}
                           <td style="width:600px;">{{publication_field}}</td>
-                          {% else %}
-                          <td>{{publication_field}}</td>
-                          {% endif %}
                       </tr>
                       {% endfor %}
                       </table>
@@ -981,7 +993,7 @@ function do_toggle_annotation(el) {
 
              {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
              <li {% if p == page_obj.number %}class='active'{% endif %}>
-             <a href='?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}'>{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
              </li>
              {% endif %}
 
@@ -990,7 +1002,7 @@ function do_toggle_annotation(el) {
           {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
             <li><a>...</a></li>
             <li>
-            <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
 

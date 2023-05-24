@@ -14,6 +14,7 @@ import time
 from signbank.dictionary.adminviews import order_queryset_by_sort_order
 
 from signbank.dictionary.forms import *
+from signbank.dictionary.models import *
 from signbank.feedback.models import *
 from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, \
     update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology, subst_notes
@@ -21,10 +22,10 @@ import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
 from signbank.video.forms import VideoUploadForGlossForm
-from signbank.tools import save_media, MachineValueNotFoundError
+from signbank.tools import save_media
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
-    get_interface_language_and_default_language_codes
+    get_interface_language_and_default_language_codes, split_csv_lines_header_body
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
@@ -64,62 +65,6 @@ def index(request):
                                'query': ''})
 
 
-STATE_IMAGES = {'auslan_all': "images/maps/allstates.gif",
-                'auslan_nsw_act_qld': "images/maps/nsw-act-qld.gif",
-                'auslan_nsw': "images/maps/nsw.gif",
-                'auslan_nt':  "images/maps/nt.gif",
-                'auslan_qld': "images/maps/qld.gif",
-                'auslan_sa': "images/maps/sa.gif",
-                'auslan_tas': "images/maps/tas.gif",
-                'auslan_south': "images/maps/vic-wa-tas-sa-nt.gif",
-                'auslan_vic': "images/maps/vic.gif",
-                'auslan_wa': "images/maps/wa.gif",
-                }
-
-def map_image_for_dialects(dialects):
-    """Get the right map image for this dialect set
-
-
-    Relies on database contents, which is bad. This should
-    be in the database
-    """
-    # we only work for Auslan just now
-    dialects = dialects.filter(signlanguage__name__exact="Auslan")
-
-    if len(dialects) == 0:
-        return
-
-    # all states
-    if dialects.filter(name__exact="Australia Wide"):
-        return STATE_IMAGES['auslan_all']
-
-    if dialects.filter(name__exact="Southern Dialect"):
-        return STATE_IMAGES['auslan_south']
-
-    if dialects.filter(name__exact="Northern Dialect"):
-        return STATE_IMAGES['auslan_nsw_act_qld']
-
-    if dialects.filter(name__exact="New South Wales"):
-        return STATE_IMAGES['auslan_nsw']
-
-    if dialects.filter(name__exact="Queensland"):
-        return STATE_IMAGES['auslan_qld']
-
-    if dialects.filter(name__exact="Western Australia"):
-        return STATE_IMAGES['auslan_wa']
-
-    if dialects.filter(name__exact="South Australia"):
-        return STATE_IMAGES['auslan_sa']
-
-    if dialects.filter(name__exact="Tasmania"):
-        return STATE_IMAGES['auslan_tas']
-
-    if dialects.filter(name__exact="Victoria"):
-        return STATE_IMAGES['auslan_vic']
-
-    return None
-
-
 @login_required_config
 def word(request, keyword, n):
     """View of a single keyword that may have more than one sign"""
@@ -137,7 +82,7 @@ def word(request, keyword, n):
     (trans, total) =  word.match_request(request, n, )
 
     # and all the keywords associated with this sign
-    allkwds = trans.gloss.translation_set.all()
+    allkwds = trans.gloss.translation_set.all().order_by('translation__index')
 
     videourl = trans.gloss.get_video_url()
     if not os.path.exists(os.path.join(settings.MEDIA_ROOT, videourl)):
@@ -186,7 +131,6 @@ def word(request, keyword, n):
                                'total': total,
                                'matches': range(1, total+1),
                                'navigation': nav,
-                               'dialect_image': map_image_for_dialects(gloss.dialect.all()),
                                # lastmatch is a construction of the url for this word
                                # view that we use to pass to gloss pages
                                # could do with being a fn call to generate this name here and elsewhere
@@ -256,7 +200,7 @@ def gloss(request, glossid):
                                                        'selected_datasets': selected_datasets,
                                                        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
-    allkwds = gloss.translation_set.all()
+    allkwds = gloss.translation_set.all().order_by('translation__index')
     if len(allkwds) == 0:
         trans = None  # this seems to cause problems in the template, the title of the page ends up empty
     else:
@@ -339,7 +283,6 @@ def gloss(request, glossid):
                                'gloss_or_morpheme': 'gloss',
                                'allkwds': allkwds,
                                'notes_groupedby_role': notes_groupedby_role,
-                               'dialect_image': map_image_for_dialects(gloss.dialect.all()),
                                'lastmatch': lastmatch,
                                'videofile': videourl,
                                'viewname': word,
@@ -380,7 +323,7 @@ def morpheme(request, glossid):
     if not(request.user.has_perm('dictionary.search_gloss') or morpheme.inWeb):
         return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
 
-    allkwds = morpheme.translation_set.all().order_by('translation__text')
+    allkwds = morpheme.translation_set.all().order_by('translation__index')
     if len(allkwds) == 0:
         trans = None
     else:
@@ -441,7 +384,6 @@ def morpheme(request, glossid):
                                'definitions': morpheme.definitions(),
                                'gloss_or_morpheme': 'morpheme',
                                'allkwds': allkwds,
-                               'dialect_image': map_image_for_dialects(morpheme.dialect.all()),
                                'lastmatch': lastmatch,
                                'videofile': videourl,
                                'viewname': word,
@@ -1550,14 +1492,15 @@ def import_csv_update(request):
                     errors_found_string = '\n'.join(errors_found)
                     error.append(errors_found_string)
 
-            except MachineValueNotFoundError as e:
+            except KeyError as e:
 
                 e_string = str(e)
                 error.append(e_string)
         stage = 1
 
-    #Do changes
+    # Do changes
     elif len(request.POST) > 0:
+        gloss_fields = [f.name for f in Gloss._meta.fields]
 
         lemmaidglosstranslations_per_gloss = {}
         for key, new_value in request.POST.items():
@@ -1674,8 +1617,12 @@ def import_csv_update(request):
             if fieldname == 'Sequential Morphology':
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
+                # get the gloss ids out of the input
+                # the input is a sequence of role:id values
+                # these have already been parsed at the previous stage
+                glosses = [int(component.split(':')[1]) for component in new_human_value_list]
 
-                update_sequential_morphology(gloss,None,new_human_value_list)
+                update_sequential_morphology(gloss, None, glosses)
 
                 continue
 
@@ -1722,9 +1669,11 @@ def import_csv_update(request):
                 continue
 
             with override(settings.LANGUAGE_CODE):
-
-                #Replace the value for bools
-                if fieldname in Gloss._meta.get_fields() and Gloss._meta.get_field(fieldname).__class__.__name__ == 'BooleanField':
+                if fieldname not in gloss_fields:
+                    continue
+                field = Gloss._meta.get_field(fieldname)
+                # Replace the value for bools
+                if field.__class__.__name__ == 'BooleanField':
 
                     if new_value in ['true','True', 'TRUE']:
                         new_value = True
@@ -1732,13 +1681,18 @@ def import_csv_update(request):
                         new_value = None
                     else:
                         new_value = False
-
-                #Remember this for renaming the video later
+                elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+                    new_value = Handshape.objects.get(machine_value=int(new_value))
+                elif hasattr(field, 'field_choice_category'):
+                    new_value = FieldChoice.objects.get(machine_value=int(new_value),
+                                                        field=Gloss._meta.get_field(fieldname).field_choice_category)
+                # Remember this for renaming the video later
                 if fieldname == 'idgloss':
                     video_path_before = settings.WRITABLE_FOLDER+gloss.get_video_path()
 
-                #The normal change and save procedure
-                setattr(gloss,fieldname,new_value)
+                # The normal change and save procedure
+                # the new value machine value of Handshape or FieldChoice has been replaced with an object reference above
+                setattr(gloss, fieldname, new_value)
                 gloss.save()
 
                 #Also update the video if needed
@@ -1776,13 +1730,14 @@ def import_csv_update(request):
 def import_csv_lemmas(request):
     user = request.user
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
-    user_datasets_names = [ dataset.acronym for dataset in user_datasets ]
+    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
+    user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     translation_languages_dict = {}
-    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
+    # this dictionary is used in the template
+    # it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
     for dataset_object in user_datasets:
         translation_languages_dict[dataset_object] = []
 
@@ -1790,9 +1745,6 @@ def import_csv_lemmas(request):
             language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
             language_tuple = (language_name, language.language_code_2char)
             translation_languages_dict[dataset_object].append(language_tuple)
-
-    seen_datasets = []
-    seen_dataset_names = []
 
     # fatal errors are duplicate column headers, data in columns without headers
     # column headers that do not correspond to database fields
@@ -1803,15 +1755,32 @@ def import_csv_lemmas(request):
     # missing Lemma required for the dataset
 
     uploadform = signbank.dictionary.forms.CSVUploadForm
+    seen_datasets = []
     changes = []
     error = []
     earlier_updates_same_csv = []
     earlier_updates_lemmaidgloss = {}
 
-    encoding_error = False
+    if not selected_datasets or selected_datasets.count() > 1 or dataset not in user_datasets:
+        feedback_message = _('Please select a single dataset for which you have change permission.')
+        messages.add_message(request, messages.ERROR, feedback_message)
 
-    #Process Input File
+        return render(request, 'dictionary/import_csv_update_lemmas.html',
+                      {'form': uploadform, 'stage': 0, 'changes': changes,
+                       'error': error,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'translation_languages_dict': translation_languages_dict,
+                       'seen_datasets': seen_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+    # set the allowed dataset names to selected dataset, which must have change permission (checked below)
+    dataset = selected_datasets.first()
+    seen_dataset_names = [dataset.acronym]
+
+    # Process Input File
     if len(request.FILES) > 0:
+        # the multipurpose template is at stage 0
 
         new_file = request.FILES['file']
 
@@ -1820,15 +1789,7 @@ def import_csv_lemmas(request):
             # non UTF-8 encoded files also fail
             csv_text = new_file.read().decode('UTF-8-sig')
         except (UnicodeDecodeError, UnicodeError):
-            new_file.seek(0)
-            import magic
-            magic_file_type = magic.from_buffer(new_file.read(2048), mime=True)
-
-            if magic_file_type == 'text/plain':
-                feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
-            else:
-                feedback_message = _('Unrecognised format in selected CSV file.')
-
+            feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
             messages.add_message(request, messages.ERROR, feedback_message)
 
             return render(request, 'dictionary/import_csv_update_lemmas.html',
@@ -1841,7 +1802,7 @@ def import_csv_lemmas(request):
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         fatal_error = False
-        csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
+        csv_lines = re.compile('[\r\n]+').split(csv_text)  # split the csv text on new line characters
 
         # the following code allows for specifying a column delimiter in the import_csv_update_lemmas.html template
         if 'delimiter' in request.POST:
@@ -1867,30 +1828,26 @@ def import_csv_lemmas(request):
             delimiter = ','
             delimiter_radio = 'comma'
 
-        first_csv_line, rest_csv_lines = csv_lines[0], csv_lines[1:]
+        keys_found, extra_keys, csv_header, csv_body = split_csv_lines_header_body(dataset_languages, csv_lines,
+                                                                                   delimiter)
 
-        keys = first_csv_line.strip().split(delimiter)
-        if len(keys) < 2:
-            feedback_message = _('Incorrect Delimiter: ') + delimiter_radio + '.'
+        if not keys_found:
+            # this is intended to assist the user in the case that a wrong file was selected
+            feedback_message = _('The required column headers are missing.')
             messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        elif '' in keys:
-            feedback_message = _('Empty Column Header Found.')
+            return render(request, 'dictionary/import_csv_update_lemmas.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+        if extra_keys:
+            # this is intended to assist the user in the case that a wrong file was selected
+            feedback_message = _('Extra columns were found.')
             messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        elif len(keys) > len(list(set(keys))) :
-            feedback_message = _('Duplicate Column Header Found.')
-            messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        elif 'Lemma ID' not in keys:
-            feedback_message = _('The Lemma ID column is required.')
-            messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        elif 'Dataset' not in keys:
-            feedback_message = _('The Dataset column is required.')
-            messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        if encoding_error:
             return render(request, 'dictionary/import_csv_update_lemmas.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
                            'error': error,
@@ -1901,8 +1858,8 @@ def import_csv_lemmas(request):
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         # create a template for an empty row with the desired number of columns
-        empty_row = [''] * len(keys)
-        for nl, line in enumerate(rest_csv_lines):
+        empty_row = [''] * len(csv_header)
+        for nl, line in enumerate(csv_body):
             if len(line) == 0:
                 # this happens at the end of the file
                 continue
@@ -1912,12 +1869,12 @@ def import_csv_lemmas(request):
 
             # construct value_dict for row
             value_dict = {}
-            for nv,value in enumerate(values):
-                if nv >= len(keys):
+            for nv, value in enumerate(values):
+                if nv >= len(csv_header):
                     # this has already been checked above
                     # it's here to avoid needing an exception on the subscript [nv]
                     continue
-                value_dict[keys[nv]] = value
+                value_dict[csv_header[nv]] = value
 
             try:
                 pk = int(value_dict['Lemma ID'])
@@ -1925,98 +1882,60 @@ def import_csv_lemmas(request):
                 e = 'Row '+str(nl + 1) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
                 error.append(e)
                 fatal_error = True
-
-            if fatal_error:
                 break
-
-            # construct list of allowed columns
-            required_columns = ['Lemma ID', 'Dataset']
 
             dataset_name = value_dict['Dataset'].strip()
 
             # catch possible empty values for dataset, primarily for pretty printing error message
-            if dataset_name == '' or dataset_name == None or dataset_name == 0 or dataset_name == 'NULL':
+            if dataset_name == '' or dataset_name is None or dataset_name == 0 or dataset_name == 'NULL':
                 e_dataset_empty = 'Row ' + str(nl + 1) + ': The Dataset is missing.'
                 error.append(e_dataset_empty)
+                fatal_error = True
                 break
             if dataset_name not in seen_dataset_names:
-
-                try:
-                    dataset = Dataset.objects.get(acronym=dataset_name)
-                except ObjectDoesNotExist:
-                    print('exception trying to get dataset object')
-                    # An error message should be returned here, the dataset does not exist
-                    e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
-                    error.append(e_dataset_not_found)
-                    fatal_error = True
-                    break
-                if dataset_name not in user_datasets_names:
-                    e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
-                    error.append(e3)
-                    fatal_error = True
-                    break
-                if dataset not in selected_datasets:
-                    e3 = 'Row '+str(nl + 1) + ': Please select the dataset %s.' % value_dict['Dataset'].strip()
-                    error.append(e3)
-                    fatal_error = True
-                    break
-                if seen_datasets:
-                    # already seen a dataset
-                    if dataset in seen_datasets:
-                        pass
-                    else:
-                        # seen more than one dataset
-                        e3 = 'Row ' + str(nl + 1) + ': Seen more than one dataset: %s.' % value_dict['Dataset'].strip()
-                        error.append(e3)
-                        fatal_error = True
-                        break
-                else:
-                    seen_datasets.append(dataset)
-                    seen_dataset_names.append(dataset_name)
-                    # saw the first dataset
-
-            if fatal_error:
+                # seen more than one dataset
+                e3 = 'Row ' + str(nl + 1) + ': Dataset not in selected datasets: %s.' % dataset_name
+                error.append(e3)
+                fatal_error = True
                 break
+
             # The Lemma ID Gloss may already exist.
             lemmaidglosstranslations = {}
-            contextual_error_messages_lemmaidglosstranslations = []
             for language in dataset.translation_languages.all():
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 column_name = "Lemma ID Gloss (%s)" % language_name
-                required_columns.append(column_name)
                 if column_name in value_dict:
-                    lemma_idgloss_value = value_dict[column_name].strip()
+                    lemma_idgloss_value = value_dict[column_name]
                     # also stores empty values
                     lemmaidglosstranslations[language] = lemma_idgloss_value
 
             # if we get to here, the Lemma ID, Dataset, and Lemma ID Gloss columns have been checked
             # determine if any extra columns were found
             for key in value_dict.keys():
-                if key not in required_columns:
+                if key not in csv_header:
                     # too many columns found
                     e = 'Extra column found: ' + key
                     error.append(e)
                     # use a Boolean to catch all extra columns
                     fatal_error = True
-            if fatal_error:
-                break
+                    break
 
             # # updating lemmas, propose changes (make dict)
             try:
                 lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
             except ObjectDoesNotExist as e:
 
-                e = 'Row '+ str(nl + 1) + ': Could not find lemma for Lemma ID '+str(pk)
+                e = 'Row ' + str(nl + 1) + ': Could not find lemma for Lemma ID '+str(pk)
                 error.append(e)
                 continue
-            #
+
             if lemma.dataset.acronym != dataset_name:
-                e1 = 'Row '+ str(nl + 1) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Lemma ID (' \
-                                                    + str(pk) + ').'
+                e1 = 'Row ' + str(nl + 1) + ': The Dataset column (' + dataset.acronym \
+                     + ') does not correspond to that of the Lemma ID (' + str(pk) + ').'
                 error.append(e1)
                 # ignore the rest of the row
                 continue
-            # # dataset is the same
+            # dataset is the same
 
             # If there are changes in the LemmaIdglossTranslation, the changes should refer to another LemmaIdgloss
             current_lemmaidglosstranslations = {}
@@ -2029,7 +1948,7 @@ def import_csv_lemmas(request):
 
             try:
                 (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
-                            compare_valuedict_to_lemma(value_dict,lemma.id,user_datasets_names, nl,
+                            compare_valuedict_to_lemma(value_dict, lemma.id, user_datasets_names, nl,
                                                        lemmaidglosstranslations, current_lemmaidglosstranslations,
                                                        earlier_updates_same_csv, earlier_updates_lemmaidgloss)
                 changes += changes_found
@@ -2039,13 +1958,13 @@ def import_csv_lemmas(request):
                     errors_found_string = '\n'.join(errors_found)
                     error.append(errors_found_string)
 
-            except MachineValueNotFoundError as e:
+            except KeyError as e:
 
                 e_string = str(e)
                 error.append(e_string)
         stage = 1
 
-    #Do changes
+    # Do changes
     elif len(request.POST) > 0:
 
         for key, new_value in request.POST.items():
@@ -2070,7 +1989,7 @@ def import_csv_lemmas(request):
 
                     # compare new value to existing value
                     language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
-                    languages = Language.objects.filter(**{language_name_column:language_name})
+                    languages = Language.objects.filter(**{language_name_column: language_name})
                     if languages:
                         language = languages[0]
                         lemma_idglosses = lemma.lemmaidglosstranslation_set.filter(language=language)
@@ -2078,7 +1997,7 @@ def import_csv_lemmas(request):
                             # update the lemma translation
                             lemma_translation = lemma_idglosses.first()
                             if new_value:
-                                setattr(lemma_translation,'text',new_value)
+                                setattr(lemma_translation, 'text', new_value)
                                 lemma_translation.save()
                             else:
                                 # setting a translation to empty deletes the translation
@@ -2094,18 +2013,19 @@ def import_csv_lemmas(request):
 
         stage = 2
 
-    #Show uploadform
+    # Show uploadform
     else:
 
         stage = 0
 
-    return render(request,'dictionary/import_csv_update_lemmas.html',{'form':uploadform,'stage':stage,'changes':changes,
-                                                        'error':error,
-                                                        'dataset_languages':dataset_languages,
-                                                        'selected_datasets':selected_datasets,
-                                                        'translation_languages_dict': translation_languages_dict,
-                                                        'seen_datasets': seen_datasets,
-                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    return render(request, 'dictionary/import_csv_update_lemmas.html',
+                  {'form': uploadform, 'stage': stage, 'changes': changes,
+                   'error': error,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'translation_languages_dict': translation_languages_dict,
+                   'seen_datasets': seen_datasets,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 
@@ -2646,6 +2566,60 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     else:
         from django.views.static import serve
         return serve(request, filename, document_root, show_indexes)
+
+def show_glosses_with_no_lemma(request):
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
+    glosses_without_lemma = Gloss.objects.filter(lemma=None)
+    gloss_tuples = []
+    for g in glosses_without_lemma:
+        gloss_annotations = AnnotationIdglossTranslation.objects.filter(gloss=g)
+        gloss_annotation_languages = [ann.language.name for ann in gloss_annotations]
+        language_names = ', '.join(gloss_annotation_languages)
+        gloss_tuples.append((g, gloss_annotations, language_names))
+
+    all_datasets = Dataset.objects.all()
+    dummies_to_create = []
+    for this_dataset in all_datasets:
+        dataset_languages_this_dataset = this_dataset.translation_languages.all()
+        for lang in dataset_languages_this_dataset:
+            dummy_lemma_name = 'DUMMY_LEMMA_' + this_dataset.acronym.replace(' ', '') + '_' + lang.language_code_2char.upper()
+            dummy_lemma = LemmaIdgloss.objects.filter(dataset=this_dataset,
+                                                      lemmaidglosstranslation__text=dummy_lemma_name)
+            if not dummy_lemma.count():
+                if this_dataset not in dummies_to_create:
+                    dummies_to_create.append(this_dataset)
+
+    for dataset_to_dummy in dummies_to_create:
+        dataset_languages_this_dataset = dataset_to_dummy.translation_languages.all()
+        new_lemma = LemmaIdgloss(dataset=dataset_to_dummy)
+        new_lemma.save()
+        for lang in dataset_languages_this_dataset:
+            dummy_lemma_name = 'DUMMY_LEMMA_' + dataset_to_dummy.acronym.replace(' ', '') + '_' + lang.language_code_2char.upper()
+            dummy_translation = LemmaIdglossTranslation(text=dummy_lemma_name, lemma=new_lemma, language=lang)
+            dummy_translation.save()
+
+    dummy_lemma_name = 'DUMMY_LEMMA_'
+    dummy_lemmas = LemmaIdgloss.objects.filter(lemmaidglosstranslation__text__icontains=dummy_lemma_name).distinct()
+    lemma_choices = []
+    for dummy in dummy_lemmas:
+        dummy_translations = [t.language.name for t in dummy.lemmaidglosstranslation_set.all()]
+        select_string = ', '.join(dummy_translations)
+        lemma_choices.append((dummy, dummy.dataset.acronym + ': ' + select_string))
+
+    return render(request, "dictionary/glosses_with_no_lemma.html", {
+        'dataset_languages': dataset_languages,
+        'selected_datasets': selected_datasets,
+        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+        'glosses_without_lemma': gloss_tuples,
+        'dummy_lemmas': lemma_choices
+    })
 
 @login_required_config
 def show_unassigned_glosses(request):

@@ -7,7 +7,7 @@ from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete
-from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.translation import gettext_noop, gettext_lazy as _, get_language
 from django.utils.timezone import now
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
@@ -136,9 +136,10 @@ class Translation(models.Model):
     """A spoken language translation of signs"""
 
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
-    language = models.ForeignKey("Language", default=get_default_language_id, on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
     translation = models.ForeignKey("Keyword", on_delete=models.CASCADE)
     index = models.IntegerField("Index", default=0)
+    orderIndex = models.IntegerField(_("Sense Index"), default=1)
 
     def __str__(self):
         if self.translation and self.translation.text:
@@ -150,10 +151,10 @@ class Translation(models.Model):
         """Return a URL for a view of this translation."""
 
         alltrans = self.translation.translation_set.all()
-        idx = 0
+        idx = 1
         for tr in alltrans:
             if tr == self:
-                return "/dictionary/words/" + str(self.translation) + "-" + str(idx + 1) + ".html"
+                return "/dictionary/words/" + str(self.translation) + "-" + str(idx) + ".html"
             idx += 1
         return "/dictionary/"
 
@@ -1675,6 +1676,9 @@ class Gloss(models.Model):
                                    AnnotationIdglossTranslation.objects.filter(text__startswith="#")]
         q = Q(lemma__dataset_id=self.lemma.dataset.id)
 
+        q_number_or_letter = Q(**{'domhndsh_number': True}) | Q(**{'subhndsh_number': True}) | \
+                             Q(**{'domhndsh_letter': True}) | Q(**{'subhndsh_letter': True})
+
         # exclude glosses with empty handedness or empty strong hand
         handedness_filter = 'handedness__name__in'
         handedness_null = 'handedness__isnull'
@@ -1688,7 +1692,7 @@ class Gloss(models.Model):
                   Q(**{strong_hand_filter: empty_value})
 
         minimal_pairs_fields_qs = Gloss.objects.select_related('lemma').exclude(
-                id__in=finger_spelling_glosses).exclude(id=self.id).filter(q).exclude(q_empty)
+                id__in=finger_spelling_glosses).exclude(id=self.id).filter(q).exclude(q_empty).exclude(q_number_or_letter)
 
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
@@ -1698,7 +1702,7 @@ class Gloss(models.Model):
 
         for (field, value_of_this_field) in zipped_tuples:
             gloss_field = Gloss._meta.get_field(field)
-            if isinstance(gloss_field, Handshape):
+            if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                 # field is a handshape
                 different_field = 'different_' + field
                 field_compare = field + '__exact'
@@ -1715,7 +1719,7 @@ class Gloss(models.Model):
                 # field is a Boolean
                 different_field = 'different_' + field
                 field_compare = field + '__exact'
-                if value_of_this_field == True:
+                if value_of_this_field:
                     different_case = Case(When(**{ field_compare : True , 'then' : 0 }), default=1, output_field=IntegerField())
 
                     minimal_pairs_fields_qs = minimal_pairs_fields_qs.annotate(**{ different_field : different_case })
@@ -1778,7 +1782,7 @@ class Gloss(models.Model):
                     continue
                 if field_value != other_field_value:
                     gloss_field = Gloss._meta.get_field(field_name)
-                    field_label = gloss_field.verbose_name
+                    field_label = gettext_noop(gloss_field.verbose_name)
                     if field_name in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                         if field_value is not None:
                             field_value = Handshape.objects.get(machine_value=int(field_value)).name
@@ -2307,6 +2311,9 @@ class MorphologyDefinition(models.Model):
     def __str__(self):
         return self.morpheme.idgloss
 
+    def get_role(self):
+        return self.role.name if self.role else self.role
+
 
 class Morpheme(Gloss):
     """A morpheme definition uses all the fields of a gloss, but adds its own characteristics (#174)"""
@@ -2394,7 +2401,7 @@ class Morpheme(Gloss):
         abstract_meaning = []
         for language in all_languages:
             if language in translation_languages:
-                translations = self.translation_set.filter(language=language).order_by('translation__text')
+                translations = self.translation_set.filter(language=language).order_by('translation__index')
                 abstract_meaning.append((language, translations))
             else:
                 abstract_meaning.append((language, ''))
@@ -3259,7 +3266,13 @@ class QueryParameterMultilingual(QueryParameter):
         # Note Contains
         ('definitionContains', 'definitionContains'),
         # Created By
-        ('createdBy', 'createdBy')
+        ('createdBy', 'createdBy'),
+        # multilingual keywords
+        ('translation', 'translation'),
+        ('search', 'search'),
+        # dates as strings
+        ('createdBefore', 'createdBefore'),
+        ('createdAfter', 'createdAfter')
     ]
 
     fieldName = models.CharField(_("Text Search Field"), choices=QUERY_FIELDS, max_length=20)
@@ -3273,12 +3286,22 @@ class QueryParameterMultilingual(QueryParameter):
             searchFieldName = _('Note Contains')
         elif self.fieldName == 'createdBy':
             searchFieldName = _('Created By')
+        elif self.fieldName == 'createdBefore':
+            searchFieldName = _('Created Before')
+        elif self.fieldName == 'createdAfter':
+            searchFieldName = _('Created After')
+        elif self.fieldName == 'translation':
+            searchFieldName = _('Search Translation')
+        elif self.fieldName == 'search':
+            searchFieldName = _('Search Gloss')
         elif self.fieldName == 'glosssearch':
             searchFieldName = _('Annotation ID Gloss') + " (" + self.fieldLanguage.name + ")"
         elif self.fieldName == 'lemma':
             searchFieldName = _('Lemma ID Gloss') + " (" + self.fieldLanguage.name + ")"
-        else:
+        elif self.fieldName == 'keyword':
             searchFieldName = _('Translations') + " (" + self.fieldLanguage.name + ")"
+        else:
+            searchFieldName = self.fieldName
         return searchFieldName
 
     def __str__(self):
@@ -3305,7 +3328,9 @@ class SearchHistory(models.Model):
     def query_languages(self):
         multilingual_parameters = QueryParameterMultilingual.objects.filter(search_history=self)
         language_parameters = [p.fieldLanguage for p in multilingual_parameters
-                               if p.fieldName not in ['tags', 'definitionContains', 'createdBy']]
+                               if p.fieldName not in ['tags', 'definitionContains',
+                                                      'createdBy', 'createdBefore', 'createdAfter',
+                                                      'translation', 'search']]
         query_languages = list(set(language_parameters))
         return query_languages
 

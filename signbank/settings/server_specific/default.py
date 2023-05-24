@@ -230,9 +230,11 @@ API_FIELDS = ['idgloss']
 #How long will new glosses be considered new?
 import datetime
 RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=90)
+# The following is the ISO 8601 format
+DATE_FORMAT = "%Y-%m-%d"
 
 #Experimental feature to make the list view faster
-SPEED_UP_RETRIEVING_ALL_SIGNS =	True
+SPEED_UP_RETRIEVING_ALL_SIGNS = True
 
 #Delete the video and image files when a GlossVideo instance is deleted
 DELETE_FILES_ON_GLOSSVIDEO_DELETE = False

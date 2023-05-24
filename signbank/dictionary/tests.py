@@ -1,5 +1,3 @@
-from itertools import zip_longest
-from collections import OrderedDict
 
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
@@ -13,12 +11,7 @@ from django.test.client import RequestFactory, encode_multipart
 import json
 from django.core.serializers.json import DjangoJSONEncoder
 from django.test import Client
-from django.contrib.messages.storage.cookie import MessageDecoder
-from django.utils.safestring import mark_safe
-from django.contrib import messages
-from django.contrib.messages.storage.fallback import FallbackStorage
-from django.contrib.messages.storage.cookie import CookieStorage
-from itertools import *
+
 from pathlib import Path
 from os import path
 
@@ -35,6 +28,12 @@ class BasicCRUDTests(TestCase):
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
@@ -350,6 +349,12 @@ class BasicQueryTests(TestCase):
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
@@ -418,6 +423,12 @@ class ECVsNonEmptyTests(TestCase):
         # ecv files for non-existing datasets are reported if empty
 
         location_ecv_files = ECV_FOLDER
+        print('Checking for empty ECV files in location: ', location_ecv_files)
+        ecv_folder_exists = os.path.exists(location_ecv_files)
+        if not ecv_folder_exists:
+            print('The ECV folder is not in the correct location: ', location_ecv_files)
+            return
+
         found_errors = False
 
         from xml.etree import ElementTree
@@ -500,6 +511,12 @@ class ImportExportTests(TestCase):
 
         print('Test DatasetListView export_ecv with permission change_dataset')
         print('Test Dataset is: ', self.test_dataset.acronym)
+
+        location_ecv_files = ECV_FOLDER
+        dataset_ecv_folder_exists = os.path.exists(location_ecv_files)
+        if not dataset_ecv_folder_exists:
+            print('The ecv folder is missing: ', location_ecv_files)
+            return
 
         # Give the test user permission to change a dataset
         assign_perm('change_dataset', self.user, self.test_dataset)
@@ -1382,6 +1399,12 @@ class LemmaTests(TestCase):
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         #Create the glosses
         dataset_name = settings.DEFAULT_DATASET
@@ -1511,6 +1534,12 @@ class HandshapeTests(TestCase):
         assign_perm('dictionary.add_gloss', self.user)
         assign_perm('dictionary.change_gloss', self.user)
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.field_choice_handedness_1 = FieldChoice.objects.filter(field='Handeness', machine_value__gt=1).first()
         self.field_choice_handedness_2 = FieldChoice.objects.filter(field='Handeness', machine_value__gt=1).last()
@@ -1707,6 +1736,12 @@ class MultipleSelectTests(TestCase):
         assign_perm('dictionary.add_gloss', self.user)
         assign_perm('dictionary.change_gloss', self.user)
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
@@ -2390,6 +2425,12 @@ class testFrequencyAnalysis(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.client = Client()
 
@@ -2403,14 +2444,6 @@ class testFrequencyAnalysis(TestCase):
 
         self.test_handshape2 = Handshape(machine_value=max_used_machine_value+2, name='thisisatemporarytesthandshape2')
         self.test_handshape2.save()
-
-        self.test_handshape_fieldchoice_1 = FieldChoice(field='Handshape', machine_value=max_used_machine_value + 1,
-                                         name='thisisatemporarytesthandshape1')
-        self.test_handshape_fieldchoice_1.save()
-
-        self.test_handshape_fieldchoice_2 = FieldChoice(field='Handshape', machine_value=max_used_machine_value + 2,
-                                         name='thisisatemporarytesthandshape2')
-        self.test_handshape_fieldchoice_2.save()
 
         self.locprim_fieldchoice_1 = FieldChoice.objects.filter(field='Location', machine_value__gt=1).first()
         self.locprim_fieldchoice_2 = FieldChoice.objects.filter(field='Location', machine_value__gt=1).last()
@@ -2588,6 +2621,12 @@ class testSettings(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
     def test_Settings(self):
 
@@ -2628,7 +2667,8 @@ class testSettings(TestCase):
                 if first_file != second_file:
                     comparison_table_first_not_in_second[first_file][second_file] = []
                     for setting_first_file in all_settings_strings[first_file]:
-                        if setting_first_file in ['SECRET_KEY', 'SWITCH_TO_MYSQL', 'FILE_UPLOAD_MAX_MEMORY_SIZE']:
+                        if setting_first_file in ['SECRET_KEY', 'SWITCH_TO_MYSQL', 'DEFAULT_FROM_EMAIL',
+                                                  'FILE_UPLOAD_MAX_MEMORY_SIZE', 'CSRF_TRUSTED_ORIGINS']:
                             # skip these, since server specific
                             continue
                         if setting_first_file not in all_settings_strings[second_file]:
@@ -2767,6 +2807,12 @@ class RevisionHistoryTests(TestCase):
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
         assign_perm('dictionary.can_publish', self.user)
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
     def test_field_types(self):
 
@@ -2903,6 +2949,12 @@ class Corpus_Tests(TestCase):
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
         assign_perm('dictionary.change_gloss', self.user)
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         dataset_name = settings.DEFAULT_DATASET
         self.test_dataset = Dataset.objects.get(name=dataset_name)
@@ -3230,6 +3282,12 @@ class MinimalPairsTests(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
 
         self.client = Client()
 

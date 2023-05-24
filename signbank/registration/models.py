@@ -85,7 +85,7 @@ class RegistrationManager(models.Manager):
         
         """
         new_user = User.objects.create_user(username, email, password)
-        new_user.is_active = False
+        new_user.is_active = True
         new_user.first_name = firstname
         new_user.last_name = lastname
         group_guest = Group.objects.get(name='Guest')

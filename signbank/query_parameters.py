@@ -93,17 +93,17 @@ def apply_language_filters_to_results(qs, query_parameters):
     for get_key, get_value in query_parameters.items():
         if get_key.startswith(gloss_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_gloss_search_field_prefix:]
-            language = Language.objects.filter(language_code_2char=language_code_2char)
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
             qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
                            annotationidglosstranslation__language=language)
         elif get_key.startswith(lemma_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_lemma_search_field_prefix:]
-            language = Language.objects.filter(language_code_2char=language_code_2char)
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
             qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
                            lemma__lemmaidglosstranslation__language=language)
         elif get_key.startswith(keyword_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_keyword_search_field_prefix:]
-            language = Language.objects.filter(language_code_2char=language_code_2char)
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
             qs = qs.filter(translation__translation__text__iregex=get_value,
                            translation__language=language)
     return qs
@@ -129,8 +129,10 @@ def convert_query_parameters_to_filter(query_parameters):
     for get_key, get_value in query_parameters.items():
         if get_key == 'search_type':
             continue
-        elif get_key.startswith(glosssearch) or get_key.startswith(lemmasearch) or get_key.startswith(keywordsearch):
-            # because of joining tables, these are done in a separate function and directly applied to the query results (see previous function)
+        elif get_key.startswith(glosssearch) or get_key.startswith(lemmasearch) \
+                or get_key.startswith(keywordsearch):
+            # because of joining tables, these are done in a separate function
+            # and directly applied to the query results (see previous function)
             continue
         elif get_key == 'search' and get_value != '':
             from signbank.tools import strip_control_characters
@@ -140,7 +142,7 @@ def convert_query_parameters_to_filter(query_parameters):
                 query = query | Q(sn__exact=val)
             query_list.append(query)
 
-        elif get_key == 'keyword' and get_value != '':
+        elif get_key == 'translation' and get_value != '':
             query_list.append(Q(translation__translation__text__iregex=get_value))
 
         elif get_key == 'inWeb' and get_value != '':
@@ -186,7 +188,7 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(definition__published=val))
 
         elif get_key in ['definitionContains']:
-            definitions_with_this_text = Definition.objects.filter(text__iregex=get_value)
+            definitions_with_this_text = Definition.objects.filter(text__icontains=get_value)
 
             #Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
@@ -213,12 +215,12 @@ def convert_query_parameters_to_filter(query_parameters):
             q_filter = 'derivHist__in'
             query_list.append(Q(**{q_filter: get_value}))
         elif get_key == 'useInstr':
-            query_list.append(Q(useInstr__iregex=get_value))
+            query_list.append(Q(useInstr__icontains=get_value))
         elif get_key == 'createdBefore':
-            created_before_date = DT.datetime.strptime(get_value, "%m/%d/%Y").date()
+            created_before_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
             query_list.append(Q(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date)))
         elif get_key == 'createdAfter':
-            created_after_date = DT.datetime.strptime(get_value, "%m/%d/%Y").date()
+            created_after_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
             query_list.append(Q(creationDate__range=(created_after_date, DT.datetime.now())))
         elif get_key == 'createdBy':
             created_by_first_name = [gloss.pk for gloss in Gloss.objects.filter(creator__first_name__icontains=get_value)]
@@ -281,7 +283,7 @@ def convert_query_parameters_to_filter(query_parameters):
             field_obj = Gloss._meta.get_field(get_key)
 
             if type(field_obj) in [CharField,TextField]:
-                q_filter = get_key + '__iregex'
+                q_filter = get_key + '__icontains'
             elif hasattr(field_obj, 'field_choice_category'):
                 # just in case, field choice field that is not multi-select
                 q_filter = get_key + '__machine_value'
@@ -458,8 +460,8 @@ def pretty_print_query_values(dataset_languages,query_parameters):
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 query_dict[key] = query_parameters[key]
         elif key in ['createdBefore', 'createdAfter']:
-            created_date = DT.datetime.strptime(query_parameters[key], "%m/%d/%Y").date()
-            query_dict[key] = created_date
+            created_date = DT.datetime.strptime(query_parameters[key], settings.DATE_FORMAT).date()
+            query_dict[key] = created_date.strftime(settings.DATE_FORMAT)
         elif key in ['tags']:
             query_dict[key] = query_parameters[key]
         else:
