@@ -47,12 +47,12 @@ var busy_editing = 0;
 
      $('#enable_edit').click(function()
 	{
-		toggle_edit(false);
+		toggle_edit();
 	});
 
      $('#save_and_next_btn').click(function()
 	{
-		toggle_edit(true);
+		toggle_edit();
 	});
 
     $('#rewind').click(function()
@@ -247,23 +247,12 @@ function enable_edit() {
     $('#lemma a').hide();
 };
 
-function toggle_edit(redirect_to_next) {
+function toggle_edit() {
     if ($('#enable_edit').hasClass('edit_enabled'))
     {
         disable_edit();
         $('#enable_edit').removeClass('edit_enabled');
         $('#enable_edit').text(edit_mode_str);
-
-		if (redirect_to_next)
-		{
-		    // Check if this is a gloss or a morpheme
-		    if (!next_gloss_id || next_gloss_id === undefined)
-		    {
-			    window.location.href = url + '/dictionary/morpheme/'+next_morpheme_id;
-		    } else {
-			    window.location.href = url + '/dictionary/gloss/'+next_gloss_id;
-		    }
-		}
 
     } else {
         enable_edit();
@@ -511,7 +500,7 @@ function update_view_and_remember_original_value(change_summary)
             new_value = 'False';
         }
 
-        if (original_values_for_changes_made[id] == undefined)
+        if ($.isEmptyObject(original_values_for_changes_made[id]))
         {
             original_values_for_changes_made[id] = original_value;
             $(this).parent().removeClass('empty_row');

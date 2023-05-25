@@ -6132,8 +6132,6 @@ class MorphemeDetailView(DetailView):
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
         context['othermediaform'] = OtherMediaForm()
-        context['navigation'] = context['morpheme'].navigation(True)
-        context['SIGN_NAVIGATION'] = settings.SIGN_NAVIGATION
 
         # Get the set of all the Gloss signs that point to me
         other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__exact=context['morpheme'].id)
@@ -6148,19 +6146,7 @@ class MorphemeDetailView(DetailView):
 
             context['appears_in'].append((parent_gloss, translated_word_class))
 
-        try:
-            # Note: setting idgloss to context['morpheme'] is not enough; the ".idgloss" needs to be specified
-            next_morpheme = Morpheme.objects.get(idgloss=context['morpheme'].idgloss).admin_next_morpheme()
-        except:
-            next_morpheme = None
-        if next_morpheme == None:
-            context['nextmorphemeid'] = context['morpheme'].pk
-        else:
-            context['nextmorphemeid'] = next_morpheme.pk
-
-        if settings.SIGN_NAVIGATION:
-            context['glosscount'] = Morpheme.objects.count()
-            context['glossposn'] = Morpheme.objects.filter(sn__lt=context['morpheme'].sn).count() + 1
+        context['glosscount'] = Morpheme.objects.count()
 
         # Pass info about which fields we want to see
         gl = context['morpheme']
@@ -6205,7 +6191,7 @@ class MorphemeDetailView(DetailView):
 
             if field in ['semField', 'derivHist']:
                 # these are many to many fields and not in the gloss/morpheme table of the database
-                # they are not fields of Gloss
+                # they are not fields of Morpheme
                 continue
 
             # Take the human value in the language we are using
@@ -6213,19 +6199,13 @@ class MorphemeDetailView(DetailView):
 
             field_value = getattr(gl, gloss_field.name)
             if isinstance(field_value, FieldChoice):
-                if field_value:
-                    # this is a FieldChoice object
-                    human_value = field_value.name
-                else:
-                    # if this is a field choice field, it is empty
-                    human_value = field_value
-            else:
+                human_value = field_value.name if field_value else field_value
+            elif fieldname_to_kind(field) == 'text' and (field_value is None or field_value in ['-', ' ', '------', '']):
                 # otherwise, it's a value, not a choice
                 # take care of different representations of empty text in database
-                if fieldname_to_kind(field) == 'text' and (field_value is None or field_value in ['-',' ','------','']):
-                    human_value = ''
-                else:
-                    human_value = field_value
+                human_value = ''
+            else:
+                human_value = field_value
 
             # And add the kind of field
             context[topic + '_fields'].append([human_value, field, labels[field], kind])

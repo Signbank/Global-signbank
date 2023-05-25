@@ -2223,7 +2223,7 @@ def update_morpheme(request, morphemeid):
         else:
             try:
                 value = int(value)
-            except:
+            except IntegerField:
                 return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
 
             existing_morpheme = Morpheme.objects.filter(sn__exact=value)
@@ -2234,8 +2234,7 @@ def update_morpheme(request, morphemeid):
             else:
                 morpheme.sn = value
                 morpheme.save()
-                newvalue = value
-
+                newvalue = str(value)
 
     elif field == 'inWeb':
         # only modify if we have publish permission
@@ -2271,14 +2270,10 @@ def update_morpheme(request, morphemeid):
         if field not in [f.name for f in Morpheme._meta.get_fields()]:
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
-        whitespace = tuple(' \n\r\t')
-        if value.startswith(whitespace) or value.endswith(whitespace):
-            value = value.strip()
-        original_value = getattr(morpheme,field)
+        original_value = getattr(morpheme, field)
+        if isinstance(original_value, FieldChoice):
+            original_value = original_value.name if original_value else original_value
 
-        if field == 'idgloss' and value == '':
-            # don't allow user to set Lemma ID Gloss to empty
-            return HttpResponse(str(original_value), {'content-type': 'text/plain'})
         # special cases
         # - Foreign Key fields (Language, Dialect)
         # - keywords
@@ -2287,8 +2282,11 @@ def update_morpheme(request, morphemeid):
 
         # Translate the value if a boolean
         if isinstance(morpheme._meta.get_field(field), BooleanField):
-            newvalue = value
-            value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+            value = (value.lower() in [_('Yes').lower(), 'true', True, 1])
+            if value:
+                newvalue = _('Yes')
+            else:
+                newvalue = _('No')
 
         # special value of 'notset' or -1 means remove the value
         fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
@@ -2310,20 +2308,12 @@ def update_morpheme(request, morphemeid):
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-            gloss_field = Morpheme._meta.get_field(field)
-            try:
-                handshape = Handshape.objects.get(machine_value=value)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('Update handshape no unique machine value found: ', gloss_field.name, value)
-                print('Setting to machine value 0')
-                handshape = Handshape.objects.get(machine_value=0)
-            morpheme.__setattr__(field, handshape)
-            morpheme.save()
-            newvalue = handshape.name
+            # Handshapes not included, ignore
+            newvalue = ''
         elif field in fieldchoiceforeignkey_fields:
             gloss_field = Morpheme._meta.get_field(field)
             try:
-                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=int(value))
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 print('Update field choice no unique machine value found: ', gloss_field.name,
                       gloss_field.field_choice_category, value)
@@ -2333,7 +2323,7 @@ def update_morpheme(request, morphemeid):
             morpheme.save()
             newvalue = fieldchoice.name
 
-        elif value in ['notset',''] and field not in char_fields_not_null:
+        elif value in ['notset', ''] and field not in char_fields_not_null:
             morpheme.__setattr__(field, None)
             morpheme.save()
             newvalue = ''
@@ -2343,12 +2333,12 @@ def update_morpheme(request, morphemeid):
             morpheme.__setattr__(field, value)
             morpheme.save()
 
-            # If the value is not a Boolean, return the new value
-            if not isinstance(value, bool):
-                # field is a choice list and we need to get the translated human value
-                newvalue = newvalue.name if isinstance(value, FieldChoice) else value
+    if original_value is None:
+        original_value = ''
+    if newvalue is None:
+        newvalue = ''
 
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group), {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value + '\t' + str(lemma_gloss_group), {'content-type': 'text/plain'})
 
 
 def update_morpheme_definition(gloss, field, value):
