@@ -580,19 +580,21 @@ class Language(models.Model):
     def __str__(self):
         return self.name
 
+class SentenceType(models.Model):
+    """A sentence type is given to an example sentence"""
+
+    text = models.CharField(max_length=32)
+    description = models.CharField(max_length=32)
+
+    def __str__(self):
+        return self.text
+
 class ExampleSentence(models.Model):
     """An example sentence belongs to one or more sense(s)"""
     
-    SENTENCETYPES = (
-       ('declarative', _('Declarative (statement)')),
-       ('interrogative', _('Interrogative (question)')),
-       ('imperative', _('Imperative (command)')),
-       ('exclamative', _('Exclamative (exclamation)'))
-    )
-    
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
         default = settings.DEFAULT_DATASET_PK, help_text=_("Dataset an examplesentence is part of"), null=True)
-    sentencetype = models.CharField(max_length=32, choices=SENTENCETYPES, default="declarative")
+    sentencetype = models.ForeignKey("SentenceType", null=True, on_delete=models.SET_NULL)
     negative = models.BooleanField(default=False)
     video = models.TextField(max_length=32, default="zin_over_iets.mp4")
     

@@ -1126,8 +1126,9 @@ p {
                                                     <input type="hidden" name="senseid" value="{{ sense.id }}">
                                                     <input type='hidden' name='value' value='confirmed'>
                                                     Type: <select name="sentencetype">
-                                                        {% for val, name in SENTENCETYPES %}
-                                                        <option value="{{val}}" {% if examplesentence.sentencetype == val %}selected{% endif %}>{{name}}</option>
+                                                        {% for stype in sentencetypes %}
+                                                        {{examplesentence.sentencetype}}
+                                                        <option value="{{stype.text}}" {% if examplesentence.sentencetype.text == stype.text %}selected{% endif %}>{{stype.description}}</option>
                                                         {% endfor %}
                                                     </select><br><br>
                                                     <input type="hidden" name="negative" value=False>
@@ -1217,8 +1218,8 @@ p {
                                             <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
                                             <input type='hidden' name='value' value='confirmed'>
                                             Type: <select name="sentencetype">
-                                                {% for val, name in SENTENCETYPES %}
-                                                <option value="{{val}}" >{{name}}</option>
+                                                {% for stype in sentencetypes %}
+                                                <option value="{{stype.text}}" >{{stype.description}}</option>
                                                 {% endfor %}
                                             </select><br><br>
                                             <input type="hidden" name="negative" value=False>

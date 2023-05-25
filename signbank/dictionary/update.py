@@ -164,12 +164,7 @@ def update_examplesentence(request, examplesentenceid):
         negative = True
     else:
         negative = False
-    
-    # If change is made in negative or type then change and save that
-    if examplesentence.negative != negative or examplesentence.sentencetype != request.POST['sentencetype']:
-        examplesentence.negative=negative
-        examplesentence.sentencetype=request.POST['sentencetype']
-        examplesentence.save()
+    stype = SentenceType.objects.all().get(text = request.POST['sentencetype'])
 
     # Make a dictionary of the posted values
     vals = {}
@@ -178,24 +173,34 @@ def update_examplesentence(request, examplesentenceid):
         if stc != "":
             vals[str(dataset_language)] = stc
 
-    # Check if input was not empty and if both sentences already existed together
-    if len(vals) == 0 or vals == examplesentence.get_examplestc_translations_dict_without():
-        messages.add_message(request, messages.INFO, _('This example sentence was not changed.'))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
-    for examplestc in ExampleSentence.objects.filter(dataset=dataset):
-        if vals == examplestc.get_examplestc_translations_dict_without():
-            examplesentence.delete()
-            if examplestc not in sense.exampleSentences.all():
-                sense.exampleSentences.add(examplestc)
-                messages.add_message(request, messages.INFO, _('This example sentence already existed.'))
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-            else:
-                messages.add_message(request, messages.INFO, _('This example sentence was already in sense.'))
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-
     # Edit and save the sentence translations
     with atomic():
+
+        # If change is made in negative or type then change and save that
+        if examplesentence.sentencetype == None:
+            examplesentence.sentencetype = stype
+        elif examplesentence.sentencetype.text != stype.text: 
+            examplesentence.sentencetype = stype
+        if examplesentence.negative != negative:
+            examplesentence.negative=negative
+        examplesentence.save()
+
+        # Check if input was not empty and if both sentences already existed together
+        if len(vals) == 0 or vals == examplesentence.get_examplestc_translations_dict_without():
+            messages.add_message(request, messages.INFO, _('This example sentence was not changed.'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+        for examplestc in ExampleSentence.objects.filter(dataset=dataset):
+            if vals == examplestc.get_examplestc_translations_dict_without():
+                examplesentence.delete()
+                if examplestc not in sense.exampleSentences.all():
+                    sense.exampleSentences.add(examplestc)
+                    messages.add_message(request, messages.INFO, _('This example sentence already existed.'))
+                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                else:
+                    messages.add_message(request, messages.INFO, _('This example sentence was already in sense.'))
+                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                
         for dataset_language in dataset_languages:
             if ExampleSentenceTranslation.objects.filter(examplesentence=examplesentence, language=dataset_language).count() == 1:
                 examplesentencetranslation = ExampleSentenceTranslation.objects.all().get(examplesentence=examplesentence, language=dataset_language)
@@ -211,7 +216,7 @@ def update_examplesentence(request, examplesentenceid):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 def create_examplesentence(request, senseid):
-    """View to create a sense model from the editable modal"""
+    """View to create an exampelsentence model from the editable modal"""
 
     if not request.user.has_perm('dictionary.create_examplesentence'):
         return HttpResponseForbidden("Sense Creation Not Allowed")
@@ -241,14 +246,15 @@ def create_examplesentence(request, senseid):
         messages.add_message(request, messages.ERROR, _('No input sentence given.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
-    for examplesentence in ExampleSentence.objects.all():
-        if vals == examplesentence.get_examplestc_translations_dict_without():
-            sense.exampleSentences.add(examplesentence)
-            messages.add_message(request, messages.INFO, _('This examplesentences already existed in this dataset.'))
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    
     with atomic():
-        examplesentence = ExampleSentence.objects.create(negative=negative, sentencetype=request.POST['sentencetype'])
+        for examplesentence in ExampleSentence.objects.all():
+            if vals == examplesentence.get_examplestc_translations_dict_without():
+                sense.exampleSentences.add(examplesentence)
+                messages.add_message(request, messages.INFO, _('This examplesentences already existed in this dataset.'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    
+        stype = SentenceType.objects.all().get(text = request.POST['sentencetype'])
+        examplesentence = ExampleSentence.objects.create(negative=negative, sentencetype=stype)
         examplesentence.save()
         sense.exampleSentences.add(examplesentence)
         for dataset_language in dataset_languages:

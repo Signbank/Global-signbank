@@ -1328,6 +1328,10 @@ class KeywordTranslationAdmin(admin.ModelAdmin):
     search_fields = ['translation__text']
     list_filter = ['language']
 
+class SentenceTypeAdmin(admin.ModelAdmin):
+    list_display = ("text", "description")
+    search_fields = ['text']
+
 
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
@@ -1366,3 +1370,4 @@ admin.site.register(Sense, SenseAdmin)
 admin.site.register(ExampleSentence, ExampleSentenceAdmin)
 admin.site.register(ExampleSentenceTranslation, ExampleSentenceTranslationAdmin)
 admin.site.register(Translation, KeywordTranslationAdmin)
+admin.site.register(SentenceType, SentenceTypeAdmin)
