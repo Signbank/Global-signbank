@@ -3063,7 +3063,6 @@ def update_query(request, queryid):
 
     return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
 
-<<<<<<< HEAD
 
 def update_semfield(request, semfieldid):
 
