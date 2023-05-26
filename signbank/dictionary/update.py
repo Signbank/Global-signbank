@@ -2271,6 +2271,7 @@ def update_morpheme(request, morphemeid):
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
         original_value = getattr(morpheme, field)
+        newvalue = value
         if isinstance(original_value, FieldChoice):
             original_value = original_value.name if original_value else original_value
 
@@ -2332,11 +2333,6 @@ def update_morpheme(request, morphemeid):
         else:
             morpheme.__setattr__(field, value)
             morpheme.save()
-
-    if original_value is None:
-        original_value = ''
-    if newvalue is None:
-        newvalue = ''
 
     return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value + '\t' + str(lemma_gloss_group), {'content-type': 'text/plain'})
 
