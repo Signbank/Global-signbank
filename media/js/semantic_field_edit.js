@@ -1,6 +1,7 @@
-// javascript for template admin_search_history.html
+// javascript for template semanticfield_detail.html
 
 var original_values_for_changes_made = new Array();
+var busy_editing = 0;
 
 function hide_other_forms(focus_field) {
     // this function does nothing but is required to exist for the editable js code
@@ -20,10 +21,14 @@ function update_view_and_remember_original_value(change_summary)
         new_value = split_values[1];
 
 	    var semfieldid = $(this).attr("id");
-	    var searchHistoryTable = $("#semanticFieldTranslations");
-        var table_cell = '.semfieldtranslang_' + semfieldid;
-        var cell = searchHistoryTable.find(table_cell);
-        cell.html(new_value);
+	    if (semfieldid == 'description') {
+	        $(this).html(new_value)
+	    } else {
+            var searchHistoryTable = $("#semanticFieldTranslations");
+            var table_cell = '.semfieldtranslang_' + semfieldid;
+            var cell = searchHistoryTable.find(table_cell);
+            cell.html(new_value);
+        }
     }
 }
 
@@ -36,7 +41,7 @@ function configure_edit() {
     $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" type="cancel">Cancel</button>';
     $.fn.editable.defaults['cols'] = '40';
     $.fn.editable.defaults['rows'] = '1';
-    $.fn.editable.defaults['width'] = 'auto';
+    $.fn.editable.defaults['width'] = '400';
     $.fn.editable.defaults['height'] = 'auto';
     $.fn.editable.defaults['submitdata'] = {'csrfmiddlewaretoken': csrf_token};
     $.fn.editable.defaults['onerror']  = function(settings, original, xhr)
@@ -52,7 +57,46 @@ function configure_edit() {
 
 }
 
+function disable_edit() {
+    $('.edit').editable('disable');
+    $('.edit').css('color', 'black');
+    $('#edit_message').text('');
+    $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
+
+    if (busy_editing) {
+        busy_editing = false;
+    }
+}
+
+function enable_edit() {
+    $('.edit').editable('enable');
+    $('.edit').css('color', 'red');
+    $('#edit_message').text('Click on red text to edit  ');
+    $('#edit_message').css('color', 'black');
+    busy_editing = 1;
+}
+
+function toggle_edit() {
+    if ($('#enable_edit').hasClass('edit_enabled'))
+    {
+        disable_edit();
+        $('#enable_edit').removeClass('edit_enabled');
+        $('#enable_edit').text(edit_mode_str);
+    } else {
+        enable_edit();
+        $('#enable_edit').addClass('edit_enabled');
+        $('#enable_edit').text(turn_off_edit_mode_str);
+    }
+}
+
 $(document).ready(function() {
+
+     configure_edit();
+
+     $('#enable_edit').click(function()
+	 {
+        toggle_edit(false);
+	 });
 
     // setup required for Ajax POST
     function csrfSafeMethod(method) {
@@ -69,6 +113,4 @@ $(document).ready(function() {
         }
     });
 
-    configure_edit();
-    enable_edit();
 });

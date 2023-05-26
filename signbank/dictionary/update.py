@@ -3073,7 +3073,7 @@ def update_semfield(request, semfieldid):
         return HttpResponseForbidden("Semantic Field Update Not Allowed")
 
     if not request.method == "POST":
-        return HttpResponseForbidden("Semantic Field Update method must be POST")
+        return HttpResponse("", {'content-type': 'text/plain'})
 
     semfield = get_object_or_404(SemanticField, machine_value=int(semfieldid))
 
@@ -3081,9 +3081,14 @@ def update_semfield(request, semfieldid):
     value = request.POST.get('value', '')
     original_value = ''
 
-    (namefield, lang_code) = field.rsplit('_', 1)
-    language = Language.objects.filter(language_code_2char=lang_code)
-    if value and namefield == 'name' and language:
+    if value and field == 'description':
+        semfield.description = value
+        semfield.save()
+    elif value:
+        (namefield, lang_code) = field.rsplit('_', 1)
+        language = Language.objects.filter(language_code_2char=lang_code)
+        if not language:
+            return HttpResponse("", {'content-type': 'text/plain'})
         translation_for_language = semfield.semanticfieldtranslation_set.filter(language=language.first())
         for old_translation in translation_for_language:
             old_translation.delete()
