@@ -3088,6 +3088,25 @@ class SemanticFieldDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
+        existing_translation_languages = [ translation.language for translation in self.object.semanticfieldtranslation_set.all() ]
+        context['existing_translation_languages'] = existing_translation_languages
+
+        semanticfieldtranslationform = SemanticFieldTranslationForm(semField=self.object,
+                                                                    languages=dataset_languages)
+
+        context['semanticfieldtranslationform'] = semanticfieldtranslationform
+
+        translation_mapping = {}
+        for translation in self.object.semanticfieldtranslation_set.filter(language__in=dataset_languages):
+            translation_mapping[translation.language.language_code_2char] = translation.name
+        with override(settings.LANGUAGE_CODE):
+            default_initial = self.object.name
+        for language in dataset_languages:
+            if language.language_code_2char not in translation_mapping.keys():
+                translation_mapping[language.language_code_2char] = ""
+
+        context['translation_mapping'] = translation_mapping
+
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:

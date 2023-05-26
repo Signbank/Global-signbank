@@ -1,7 +1,7 @@
 from colorfield.fields import ColorWidget
 from django import forms
 from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.translation import override, gettext_lazy as _, get_language
 from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
@@ -10,7 +10,7 @@ from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Rel
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, \
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter, \
-                                        QueryParameterMultilingual, QueryParameterHandshape
+                                        QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
@@ -252,7 +252,7 @@ def get_morpheme_role_choices():
     return choices
 
 
-ATTRS_FOR_FORMS = {'class':'form-control'}
+ATTRS_FOR_FORMS = {'class': 'form-control'}
 
 class GlossSearchForm(forms.ModelForm):
 
@@ -1295,6 +1295,42 @@ class SemanticFieldForm(forms.ModelForm):
             # in the database,only the hex number is stored
             # adding a # has already been taken care for an instance object by the get_form of FieldChoiceAdmin
             self.fields['field_color'].widget = forms.TextInput(attrs={'type': 'color'})
+
+
+class SemanticFieldTranslationForm(forms.ModelForm):
+    # this ModelForm is needed in order to validate against duplicates
+
+    use_required_attribute = False
+    prepopulated_fields = {}
+
+    class Meta:
+        model = SemanticFieldTranslation
+        fields = ['semField', 'language', 'name', ]
+
+    def __init__(self, *args, **kwargs):
+        languages = kwargs.pop('languages')
+        semfield = kwargs.pop('semField')
+        with override(settings.LANGUAGE_CODE):
+            default_initial = semfield.name
+
+        super(SemanticFieldTranslationForm, self).__init__(*args, **kwargs)
+
+        if self.instance:
+            for lang in languages:
+                namefield = 'name_' + lang.language_code_2char
+                self.fields[namefield] = forms.TextInput(attrs=ATTRS_FOR_FORMS)
+
+            semfield_translations = semfield.semanticfieldtranslation_set.filter(language__in=languages)
+            self.fields['semField'].value = semfield
+            for lang in languages:
+                namefield = 'name_' + lang.language_code_2char
+                translation_exists = semfield_translations.filter(language=lang)
+                if translation_exists.count() > 0:
+                    semfield_translation = translation_exists.first()
+                    self.fields[namefield].value = semfield_translation.name
+                else:
+                    self.fields[namefield].value = default_initial
+
 
 class DerivationHistoryColorForm(forms.Form):
 

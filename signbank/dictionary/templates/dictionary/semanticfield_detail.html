@@ -1,16 +1,36 @@
 {% extends 'baselayout.html' %}
 {% load i18n %}
+{% load annotation_idgloss_translation %}
 {% load stylesheet %}
 {% load bootstrap3 %}
 
 {% load guardian_tags %}
+{% load has_group %}
 
 {% block extrajs %}
 
-    <script type='text/javascript'>
-    var url = '{{ URL }}'
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 
-    </script>
+<script type='text/javascript'>
+var url = '{{ PREFIX_URL }}'
+var edit_post_url = '{% url 'dictionary:update_semfield' semanticfield.pk %}';
+
+var language_code = '{{ LANGUAGE_CODE }}';
+var csrf_token = '{{csrf_token}}';
+
+{% trans "Edit" as edit_mode_str %}
+{% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
+{% trans "Saving..." as saving_str %}
+
+var edit_mode_str = '{{edit_mode_str|escapejs}}';
+var turn_off_edit_mode_str = '{{turn_off_edit_mode_str|escapejs}}';
+var saving_str = '{{saving_str|escapejs}}';
+
+</script>
+
+<script type='text/javascript' src="{{ STATIC_URL }}js/semantic_field_edit.js"></script>
+
 {% endblock %}
 
 {% block bootstrap3_title %}
@@ -21,8 +41,8 @@
 
 <h3>{% trans "Semantic Field Details" %}</h3>
 
-
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;width:1200px;">
+    <div class='btn-group' style="width:200px;">
     <ul class='nav nav-tabs'>
         <li class="nav-item">
         {% if not user.is_anonymous %}
@@ -30,31 +50,44 @@
         {% endif %}
         </li>
     </ul>
+    </div>
+
+{% if request.user|has_group:"Editor" %}
+<div class='pull-right' style="margin-right:15px;margin-top:10px;">
+     <span id='edit_message' style="padding-right: 1.8em;"></span>
+
+     <button id='enable_edit' class='btn btn-primary navbar-btn edit-mode'>{% trans "Edit" %}</button>
 </div>
+{% endif %}
+
 
 <div id="definitionblock">
 
-        <div class='panel-group' id="definition" style="z-index: 10;opacity:.99; position: relative; background-color: white;margin-top:15px;">
-            <table class='table table-condensed'>
+        <div class='panel-group' id="definition"
+             style="z-index: 10;opacity:.99; position: relative; background-color: white;margin-top:15px;" >
+        {% csrf_token %}
+            <table class='table table-condensed' id="semanticFieldTranslations">
                 <tr><th style="width:18em;">{% trans "Semantic Field " %}</th><td>{{ semanticfield.name }}</td></tr>
 
                 <tr><th>{% trans "Description" %}</th>
-                    <td align="left" id='description' name='description'>{{semanticfield.description}}</td></tr>
+                    <td align="left" id='description' name='description'
+                        class='edit edit_text' data-model-name="description" value="">{{semanticfield.description}}</td></tr>
 
+                <tr><th>{% trans "Translations" %}</th></tr>
 
-                <tr><th>{% trans "Translations" %}</th>
-                    {% if translations %}
-                    <td><table>
-                    {% for language, name in translations %}
-                        <tr><td>{{language}}</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>{{name}}</td></tr>
-                    {% endfor %}
-                    </table></td>
-                    {% else %}
-                    <td></td>
-                    {% endif %}
-                </tr>
-            </table>
+              {% for newtranslationlanguage in dataset_languages %}
+                {% with translation_mapping|keyvalue:newtranslationlanguage.language_code_2char as name_2char %}
+                    <tr id="semfieldtranslang_{{newtranslationlanguage.id}}">
+                        <td>{{newtranslationlanguage.name}}</td>
+                        <td class='edit edit_text' data-model-name="name" value=""
+                            id='name_{{newtranslationlanguage.language_code_2char}}'>{{name_2char}}</td>
+                    </tr>
+                {% endwith %}
+              {% endfor %}
+          </table>
         </div>
+</div>
+
 </div>
 
 {% endblock %}

@@ -3063,6 +3063,46 @@ def update_query(request, queryid):
 
     return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
 
+
+def update_semfield(request, semfieldid):
+
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Semantic Field Update Not Allowed")
+
+    if not request.user.has_perm('dictionary.add_semanticfieldtranslation'):
+        return HttpResponseForbidden("Semantic Field Update Not Allowed")
+
+    if not request.method == "POST":
+        return HttpResponse("", {'content-type': 'text/plain'})
+
+    semfield = get_object_or_404(SemanticField, machine_value=int(semfieldid))
+
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+    original_value = ''
+
+    if value and field == 'description':
+        semfield.description = value
+        semfield.save()
+    elif value:
+        (namefield, lang_code) = field.rsplit('_', 1)
+        language = Language.objects.filter(language_code_2char=lang_code)
+        if not language:
+            return HttpResponse("", {'content-type': 'text/plain'})
+        translation_for_language = semfield.semanticfieldtranslation_set.filter(language=language.first())
+        for old_translation in translation_for_language:
+            old_translation.delete()
+        new_translation = SemanticFieldTranslation(semField=semfield, language=language.first(), name=value)
+        new_translation.save()
+
+    if not value:
+        # if the user has tried to remove the query name but erasing the field, leave it as it was
+        # handling of the response value is done on return from the ajax call and displayed in the template
+        # this has the effect of doing nothing
+        value = original_value
+
+    return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+
 def assign_lemma_dataset_to_gloss(request, glossid):
 
     # if anything fails nothing is done, but messages are output
