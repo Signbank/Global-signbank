@@ -28,6 +28,7 @@ from signbank.frequency import document_identifiers_from_paths, documents_paths_
 from django.utils.translation import gettext_lazy as _
 
 from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
+from django.shortcuts import redirect
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -530,24 +531,224 @@ def update_keywords(gloss, field, value):
     kwds = [k.strip() for k in value.split(',')]
 
     keywords_list = []
-
-    # omit duplicates
+    # omit duplicates to make sure constraint holds
     for kwd in kwds:
         if kwd not in keywords_list:
             keywords_list.append(kwd)
 
-    # remove current keywords
-    current_trans = gloss.translation_set.filter(language=language)
-    current_trans.delete()
+    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    current_keywords = [t.translation.text for t in current_trans]
+
+    missing_keywords = []
+    for trans in current_trans:
+        if trans.translation.text not in keywords_list:
+            missing_keywords.append(trans)
+    # remove deleted keywords
+    for t in missing_keywords:
+        t.delete()
     # add new keywords
     for i in range(len(keywords_list)):
-        (kobj, created) = Keyword.objects.get_or_create(text=keywords_list[i])
-        trans = Translation(gloss=gloss, translation=kobj, index=i, language=language)
+        new_text = keywords_list[i]
+        if new_text in current_keywords:
+            continue
+        (keyword_object, created) = Keyword.objects.get_or_create(text=keywords_list[i])
+        trans = Translation(gloss=gloss, translation=keyword_object, index=i, language=language, orderIndex=1)
         trans.save()
     
     newvalue = ", ".join([t.translation.text for t in gloss.translation_set.filter(language=language)])
     
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
+
+
+def gloss_to_keywords_senses_groups(gloss, language):
+    glossXsenses = dict()
+    keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    if keyword_translations.count() > 0:
+        senses_groups = dict()
+        keywords_list = []
+        for trans in keyword_translations:
+            orderIndexKey = str(trans.orderIndex)
+            if orderIndexKey not in senses_groups.keys():
+                senses_groups[orderIndexKey] = []
+            senses_groups[orderIndexKey].append(trans.translation.text)
+            keywords_list.append(trans.translation.text)
+        glossXsenses['glossid'] = str(gloss.id)
+        glossXsenses['language'] = str(language.id)
+        glossXsenses['keywords'] = keywords_list
+        glossXsenses['senses_groups'] = senses_groups
+    return glossXsenses
+
+
+def edit_keywords(request, glossid):
+    """Edit the keywords"""
+    if not request.user.is_authenticated:
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    keyword_index_get = request.POST.get('keyword_index')
+    keyword_index_list_str = json.loads(keyword_index_get)
+    keyword_index = [ int(s) for s in keyword_index_list_str ]
+
+    language = request.POST.get('language', '')
+
+    translation_get = request.POST.get('translation')
+    translation_list_str = json.loads(translation_get)
+    translation = [ s for s in translation_list_str ]
+
+    if not language:
+        language = Language.objects.get(id=get_default_language_id())
+    else:
+        language = Language.objects.get(id=int(language))
+
+    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    current_keywords = [t.translation.text for t in current_trans]
+
+    # the input lists keyword_index and translation are exactly the same length
+    # pair them together in a dictionary, removing any space characters
+    paired_index_text = {}
+    for inx in keyword_index:
+        paired_index_text[inx] = translation[keyword_index.index(inx)].strip()
+
+    # omit duplicates by skipping the keyword_index and its corresponding translation
+    new_keywords_list = []
+    new_index_list = []
+    for inx, kwd in paired_index_text.items():
+        if kwd not in new_keywords_list:
+            new_keywords_list.append(kwd)
+            new_index_list.append(inx)
+
+    # update the new keywords
+    for i in range(len(new_keywords_list)):
+        new_text = new_keywords_list[i]
+        if new_text in current_keywords:
+            continue
+        index_to_update = new_index_list[i]
+        # fetch the keyword's translation object and change its keyword
+        keyword_to_update = Translation.objects.get(pk=index_to_update)
+        # new text is not in current keywords
+        # fetch or create the text and update the translation object
+        (keyword_object, created) = Keyword.objects.get_or_create(text=new_text)
+        keyword_to_update.translation = keyword_object
+        keyword_to_update.save()
+
+    glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
+
+    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
+
+
+def add_keyword(request, glossid):
+    """Add keywords"""
+    if not request.user.is_authenticated:
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+    language = request.POST.get('language', '')
+    keywords = request.POST.get('keywords')
+    # because of the way this is constructed in the javascript, a singleton list string is returned
+    translation_list_str = json.loads(keywords)
+    translation = [ s for s in translation_list_str ]
+    keyword = translation[0]
+
+    if not language:
+        language = Language.objects.get(id=get_default_language_id())
+    else:
+        language = Language.objects.get(id=int(language))
+
+    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    current_keywords = [t.translation.text for t in current_trans]
+    current_senses = [t.orderIndex for t in current_trans]
+    if len(current_senses) < 1:
+        new_sense = 1
+    else:
+        new_sense = max(current_senses) + 1
+    current_indices = [t.index for t in current_trans]
+    if len(current_indices) < 1:
+        new_index = 1
+    else:
+        new_index = max(current_indices) + 1
+        if len(current_indices) <= new_index:
+            new_index += 1
+
+    if keyword == '' or keyword in current_keywords:
+        # do nothing
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
+
+    new_translation_id = ''
+    if '' in current_keywords:
+        # fetch the empty keyword's translation object and change its keyword if possible
+        # legacy code added empty translations
+        translation_to_update = current_trans.filter(translation__text="").first()
+        try:
+            translation_to_update.translation = keyword_object
+            translation_to_update.save()
+            new_translation_id = str(translation_to_update.id)
+        except (ObjectDoesNotExist, KeyError, IntegrityError):
+            # make a new translation if it didn't work to update
+            trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language,
+                                orderIndex=new_sense)
+            trans.save()
+            new_translation_id = str(trans.id)
+    else:
+        # make a new translation
+        trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language, orderIndex=new_sense)
+        trans.save()
+        new_translation_id = str(trans.id)
+
+    glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
+    # creating a new keyword sends back its id
+    glossXsenses['new_translation'] = new_translation_id
+
+    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
+
+
+def group_keywords(request, glossid):
+    """Update the keyword field"""
+
+    if not request.user.is_authenticated:
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    group_index_get = request.POST.get('group_index')
+    group_index_list_str = json.loads(group_index_get)
+    group_index = [ int(s) for s in group_index_list_str ]
+
+    language = request.POST.get('language', '')
+
+    regroup_get = request.POST.get('regroup')
+    regroup_list_str = json.loads(regroup_get)
+    regroup = [ int(s) for s in regroup_list_str ]
+
+    if not language:
+        language = Language.objects.get(id=get_default_language_id())
+    else:
+        language = Language.objects.get(id=int(language))
+
+    translation_ids = [t.id for t in gloss.translation_set.filter(language=language).exclude(translation__text__exact='').order_by('orderIndex')]
+    for transid in translation_ids:
+        trans = Translation.objects.get(id=transid)
+        trans_id = trans.id
+        if trans_id in group_index:
+            target_sense_index = group_index.index(trans_id)
+            target_sense = regroup[target_sense_index]
+            trans.orderIndex = target_sense
+            trans.save()
+
+    glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
+
+    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
 
 def update_annotation_idgloss(gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""
@@ -1475,8 +1676,12 @@ def add_blend_definition(request, glossid):
 
 def update_handshape(request, handshapeid):
 
+    handshape_fields = [f.name for f in Handshape._meta.fields]
+
     if not request.method == "POST":
-        return HttpResponseForbidden("Update handshape method must be POST")
+        print(request.method.GET)
+        # return HttpResponseForbidden("Update handshape method must be POST")
+        return HttpResponse(" \t \t \t ", {'content-type': 'text/plain'})
 
     hs = get_object_or_404(Handshape, machine_value=handshapeid)
     hs.save() # This updates the lastUpdated field
@@ -1485,9 +1690,11 @@ def update_handshape(request, handshapeid):
     value = request.POST.get('value', '')
     original_value = ''
     value = str(value)
-    newPattern = ''
+    newPattern = ' '
 
     field = get_field
+    if field not in handshape_fields:
+        print(field, ' not in handshape fields')
 
     if len(value) == 0:
         value = ' '
@@ -1495,20 +1702,20 @@ def update_handshape(request, handshapeid):
     elif value[0] == '_':
         value = value[1:]
 
-    values = request.POST.getlist('value[]')  # in case we need multiple values
-
-    if value == '':
-        hs.__setattr__(field, None)
-        hs.save()
-        newvalue = ''
-    elif isinstance(Handshape._meta.get_field(field), FieldChoiceForeignKey):
+    handshape_field = Handshape._meta.get_field(field)
+    if hasattr(handshape_field, 'field_choice_category'):
         # this is needed because the new value is a machine value, not an id
-        field_choice_category = Handshape._meta.get_field(field).field_choice_category
-        original_value = getattr(hs, field)
+        field_choice_category = handshape_field.field_choice_category
+        original_value_object = getattr(hs, field)
         field_choice = FieldChoice.objects.get(field=field_choice_category, machine_value=int(value))
         setattr(hs, field, field_choice)
         hs.save()
-        newvalue = field_choice.name
+        newvalue = field_choice.name if field_choice else '-'
+        original_value = original_value_object.name if original_value_object else '-'
+    elif value == '':
+        hs.__setattr__(field, None)
+        hs.save()
+        newvalue = ''
     else:
         original_value = getattr(hs, field)
         hs.__setattr__(field, value)
@@ -1532,7 +1739,7 @@ def update_handshape(request, handshapeid):
             newPattern = hs_mod.get_fingerSelection_display()
             object_fingSelection = FieldChoice.objects.filter(field='FingerSelection', name__iexact=newPattern)
             if object_fingSelection:
-                mv = object_fingSelection[0].machine_value
+                mv = object_fingSelection.first()
                 hs_mod.__setattr__('hsFingSel', mv)
                 hs_mod.save()
             else:
@@ -1546,7 +1753,7 @@ def update_handshape(request, handshapeid):
             object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
                                                               name__iexact=newPattern)
             if object_fingSelection:
-                mv = object_fingSelection[0].machine_value
+                mv = object_fingSelection.first()
                 hs_mod.__setattr__('hsFingSel2', mv)
                 hs_mod.save()
             else:
@@ -1560,13 +1767,16 @@ def update_handshape(request, handshapeid):
             object_fingSelection = FieldChoice.objects.filter(field='FingerSelection',
                                                               name__iexact=newPattern)
             if object_fingSelection:
-                mv = object_fingSelection[0].machine_value
+                mv = object_fingSelection.first()
                 hs_mod.__setattr__('hsFingUnsel', mv)
                 hs_mod.save()
+            else:
+                print("finger selection not found: ", newPattern)
     else:
         category_value = 'fieldChoice'
 
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern), {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern),
+                        {'content-type': 'text/plain'})
 
 def add_othermedia(request):
 
@@ -2013,7 +2223,7 @@ def update_morpheme(request, morphemeid):
         else:
             try:
                 value = int(value)
-            except:
+            except IntegerField:
                 return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
 
             existing_morpheme = Morpheme.objects.filter(sn__exact=value)
@@ -2024,8 +2234,7 @@ def update_morpheme(request, morphemeid):
             else:
                 morpheme.sn = value
                 morpheme.save()
-                newvalue = value
-
+                newvalue = str(value)
 
     elif field == 'inWeb':
         # only modify if we have publish permission
@@ -2061,14 +2270,11 @@ def update_morpheme(request, morphemeid):
         if field not in [f.name for f in Morpheme._meta.get_fields()]:
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
-        whitespace = tuple(' \n\r\t')
-        if value.startswith(whitespace) or value.endswith(whitespace):
-            value = value.strip()
-        original_value = getattr(morpheme,field)
+        original_value = getattr(morpheme, field)
+        newvalue = value
+        if isinstance(original_value, FieldChoice):
+            original_value = original_value.name if original_value else original_value
 
-        if field == 'idgloss' and value == '':
-            # don't allow user to set Lemma ID Gloss to empty
-            return HttpResponse(str(original_value), {'content-type': 'text/plain'})
         # special cases
         # - Foreign Key fields (Language, Dialect)
         # - keywords
@@ -2077,8 +2283,11 @@ def update_morpheme(request, morphemeid):
 
         # Translate the value if a boolean
         if isinstance(morpheme._meta.get_field(field), BooleanField):
-            newvalue = value
-            value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+            value = (value.lower() in [_('Yes').lower(), 'true', True, 1])
+            if value:
+                newvalue = _('Yes')
+            else:
+                newvalue = _('No')
 
         # special value of 'notset' or -1 means remove the value
         fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
@@ -2100,20 +2309,12 @@ def update_morpheme(request, morphemeid):
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-            gloss_field = Morpheme._meta.get_field(field)
-            try:
-                handshape = Handshape.objects.get(machine_value=value)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('Update handshape no unique machine value found: ', gloss_field.name, value)
-                print('Setting to machine value 0')
-                handshape = Handshape.objects.get(machine_value=0)
-            morpheme.__setattr__(field, handshape)
-            morpheme.save()
-            newvalue = handshape.name
+            # Handshapes not included, ignore
+            newvalue = ''
         elif field in fieldchoiceforeignkey_fields:
             gloss_field = Morpheme._meta.get_field(field)
             try:
-                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=int(value))
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 print('Update field choice no unique machine value found: ', gloss_field.name,
                       gloss_field.field_choice_category, value)
@@ -2123,7 +2324,7 @@ def update_morpheme(request, morphemeid):
             morpheme.save()
             newvalue = fieldchoice.name
 
-        elif value in ['notset',''] and field not in char_fields_not_null:
+        elif value in ['notset', ''] and field not in char_fields_not_null:
             morpheme.__setattr__(field, None)
             morpheme.save()
             newvalue = ''
@@ -2133,12 +2334,7 @@ def update_morpheme(request, morphemeid):
             morpheme.__setattr__(field, value)
             morpheme.save()
 
-            # If the value is not a Boolean, return the new value
-            if not isinstance(value, bool):
-                # field is a choice list and we need to get the translated human value
-                newvalue = newvalue.name if isinstance(value, FieldChoice) else value
-
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group), {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value + '\t' + str(lemma_gloss_group), {'content-type': 'text/plain'})
 
 
 def update_morpheme_definition(gloss, field, value):
@@ -2283,7 +2479,6 @@ def change_dataset_selection(request):
             if attribute[:len(dataset_prefix)] == dataset_prefix:
                 dataset_name = attribute[len(dataset_prefix):]
                 selected_dataset_acronyms.append(dataset_name)
-
         if selected_dataset_acronyms:
             # check that the selected datasets exist
             for dataset_name in selected_dataset_acronyms:
@@ -2299,9 +2494,14 @@ def change_dataset_selection(request):
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
                     user_profile.selected_datasets.add(dataset)
-                except (ObjectDoesNotExist, KeyError, TransactionManagementError, DatabaseError, IntegrityError):
+                except (ObjectDoesNotExist, TransactionManagementError, DatabaseError, IntegrityError):
                     print('exception to updating selected datasets')
                     pass
+            user_profile.save()
+        else:
+            # no datasets selected
+            user_profile = UserProfile.objects.get(user=request.user)
+            user_profile.selected_datasets.clear()
             user_profile.save()
     else:
         # clear old selection
@@ -2334,7 +2534,7 @@ def change_dataset_selection(request):
     else:
         # set the last_used_dataset?
         pass
-    return HttpResponseRedirect(reverse('admin_dataset_select'))
+    return redirect(settings.PREFIX_URL + '/datasets/select')
 
 
 def update_dataset(request, datasetid):
@@ -2863,6 +3063,7 @@ def update_query(request, queryid):
 
     return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
 
+<<<<<<< HEAD
 
 def update_semfield(request, semfieldid):
 
@@ -2897,3 +3098,55 @@ def update_semfield(request, semfieldid):
         value = original_value
 
     return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+
+def assign_lemma_dataset_to_gloss(request, glossid):
+
+    # if anything fails nothing is done, but messages are output
+
+    if not request.user.is_authenticated:
+        messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        messages.add_message(self.request, messages.ERROR, _('You do not have permission to change glosses.'))
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    lemma_get = request.POST.get('lemmaid', '')
+    if not lemma_get:
+        print('assign_lemma_dataset_to_gloss: no lemmaid in POST.get')
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+    lemmaid = int(lemma_get)
+
+    try:
+        dummy_lemma = LemmaIdgloss.objects.get(pk=lemmaid)
+    except ObjectDoesNotExist:
+        print('assign_lemma_dataset_to_gloss: dummy lemma does not exist: ', lemmaid)
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    dataset_of_dummy = dummy_lemma.dataset
+    dummy_dataset_name = str(dataset_of_dummy.name)
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+
+    if not request.user.is_superuser:
+        # check that user can write to the dataset
+        datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset)
+        if dataset_of_dummy not in datasets_user_can_change:
+            failure_message = _('You do not have change permission for') + ' ' + dummy_lemma.dataset.name
+            return HttpResponse(json.dumps({'glossid': str(glossid),
+                                            'datasetname': str(failure_message) }), {'content-type': 'application/json'})
+
+    try:
+        gloss.lemma = dummy_lemma
+        gloss.save()
+    except (DatabaseError, IntegrityError):
+        failure_message = _('Error assigning lemma to gloss.')
+        return HttpResponse(json.dumps({'glossid': str(glossid),
+                                        'datasetname': str(failure_message)}), {'content-type': 'application/json'})
+
+    success_message = _('Gloss saved to dataset') + ' ' + dummy_lemma.dataset.name
+
+    return HttpResponse(json.dumps({'glossid': str(gloss.id),
+                                    'datasetname': str(success_message) }), {'content-type': 'application/json'})

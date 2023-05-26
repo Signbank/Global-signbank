@@ -8,7 +8,7 @@ from signbank.dictionary.forms import *
 from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossFrequencyView, GlossRelationsDetailView, MorphemeDetailView, \
     MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView, \
     create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView, \
-    DerivationHistoryListView, GlossVideosView
+    DerivationHistoryListView, GlossVideosView, KeywordListView
 
 from signbank.dictionary.views import create_citation_image
 
@@ -48,6 +48,8 @@ urlpatterns = [
     re_path(r'^update/morphemedefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_morpheme_definition, name='add_morphemedefinition'),
     re_path(r'^update/othermedia/', signbank.dictionary.update.add_othermedia, name='add_othermedia'),
     re_path(r'^update/gloss/', signbank.dictionary.update.add_gloss, name='add_gloss'),
+    re_path(r'^update/assign_lemma_dataset_to_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.assign_lemma_dataset_to_gloss,
+            name='assign_lemma_dataset_to_gloss'),
     re_path(r'^update/morpheme/', signbank.dictionary.update.add_morpheme, name='add_morpheme'),
     re_path(r'^update/blenddefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_blend_definition, name='add_blenddefinition'),
 
@@ -56,6 +58,12 @@ urlpatterns = [
 
     re_path(r'^update/query/(?P<queryid>\d+)$', signbank.dictionary.update.update_query, name='update_query'),
     re_path(r'^update/semanticfield/(?P<semfieldid>\d+)$', signbank.dictionary.update.update_semfield, name='update_semfield'),
+    re_path(r'^update/group_keywords/(?P<glossid>\d+)$', signbank.dictionary.update.group_keywords,
+            name='group_keywords'),
+    re_path(r'^update/edit_keywords/(?P<glossid>\d+)$', signbank.dictionary.update.edit_keywords,
+            name='edit_keywords'),
+    re_path(r'^update/add_keyword/(?P<glossid>\d+)$', signbank.dictionary.update.add_keyword,
+            name='add_keyword'),
 
     # The next one does not have a permission check because it should be accessible from a cronjob
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
@@ -125,6 +133,8 @@ urlpatterns = [
     re_path(r'^lemma/delete/(?P<pk>\d+)', permission_required('dictionary.delete_lemmaidgloss')(LemmaDeleteView.as_view()), name='delete_lemma'),
     re_path(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),
     re_path(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
+
+    re_path(r'^keywords/$', KeywordListView.as_view(), name='admin_keyword_list'),
 
     re_path(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples),
 

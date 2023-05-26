@@ -14,7 +14,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ URL }}'
+    var url = '{{ PREFIX_URL }}'
 
     var edit_mode_str = '{% trans "Edit" %}'
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}'
@@ -23,7 +23,6 @@
     var edit_post_url = '{% url 'dictionary:update_handshape' handshape.machine_value %}';
 
     var choice_lists = {{choice_lists|safe}};
-    <!--console.log(JSON.stringify(choice_lists));-->
     var csrf_token = '{{csrf_token}}';
 
     // This script gets and inserts the users last searched items on the handshape page
@@ -114,11 +113,21 @@
 
     <!-- Fields -->
     <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;margin-top:15px;">
+        <form method="POST">
+            {% csrf_token %}
         <fieldset>
             <table class='table table-condensed'>
                 <tr><th style="width:18em;">{% trans "Handshape " %}</th><td id='idhandshape'>{% value handshape.name %}</td></tr>
-                <tr><th style="width:18em;">Finger selection</th>
-                    <td id="#fingerSelection1">{{ handshape.get_fingerSelection_display }}</td></tr>
+
+                {% with handshape.get_fingerSelection_display as selection_display %}
+                {% if selection_display == '-' or selection_display == 'N/A' or selection_display == '' %}
+                <tr class="empty_row">
+                {% else %}
+                <tr>
+                {% endif %}
+                    <th style="width:18em;">Finger selection pattern</th>
+                    <td id="#fingerSelection1">{{ selection_display }}</td>
+                </tr>
                 <tr class="empty_row">
                     <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
                 </tr>
@@ -132,9 +141,11 @@
                     {% endif %}
 		        {% endfor %}
                 </tr>
+                {% endwith %}
+
 
 		{% for value,name,label,kind in handshape_fields %}
-                {% if value == '-' or value == 'N/A' %}
+                {% if value == '-' or value == 'N/A' or value == '' %}
                     <tr value="{{value}}" class="empty_row">
                     <th style="width:18em;">{{label}}</th>
                     <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
@@ -147,8 +158,14 @@
                 {% endif %}
 		{% endfor %}
 
-                <tr><th style="width:18em;">{% trans "Unselected fingers extended" %}</th>
-                    <td id="#unselectedFingers">{{ handshape.get_unselectedFingers_display }}</td></tr>
+                {% with handshape.get_unselectedFingers_display as unselected_display %}
+                {% if unselected_display %}
+                <tr>
+                {% else %}
+                <tr class="empty_row">
+                {% endif %}
+                    <th style="width:18em;">{% trans "Unselected fingers pattern" %}</th>
+                    <td id="#unselectedFingers">{{ unselected_display }}</td></tr>
                 <tr class="empty_row">
                     <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
                 </tr>
@@ -162,9 +179,17 @@
                     {% endif %}
 		        {% endfor %}
                 </tr>
+                {% endwith %}
 
-                <tr><th style="width:18em;">Finger selection 2</th>
-                    <td id="#otherFingerSection" name="#otherFingerSection">{{ handshape.get_fingerSelection2_display }}</td></tr>
+                {% with handshape.get_fingerSelection2_display as selection2_display %}
+                {% if selection2_display %}
+                <tr>
+                {% else %}
+                <tr class="empty_row">
+                {% endif %}
+                    <th style="width:18em;">Finger selection 2</th>
+                    <td id="#otherFingerSection" name="#otherFingerSection">{{ selection2_display }}</td>
+                </tr>
                 <tr class="empty_row">
                     <th/><th>T</th><th>I</th><th>M</th><th>R</th><th>P</th>
                 </tr>
@@ -178,6 +203,22 @@
                     {% endif %}
 		        {% endfor %}
                 </tr>
+                {% endwith %}
+
+                <!--Finger configuration 1 is a singleton list-->
+		        {% for value,name,label,kind in handshape_fields_FC1 %}
+                    {% if value == '-' or value == ' ' or value == '' or value == None or value == False %}
+                        <tr value="{{value}}" class="empty_row">
+                        <th style="width:18em;">{{label}}</th>
+                        <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
+                        </tr>
+                    {% else %}
+                        <tr value="{{value}}">
+                        <th style="width:18em;">{{label}}</th>
+                        <td class="edit edit_{{kind}}" id='{{name}}' colspan="5">{% value value %}</td>
+                        </tr>
+                    {% endif %}
+		        {% endfor %}
 
                 <!--Finger configuration 2 is a singleton list-->
 		        {% for value,name,label,kind in handshape_fields_FC2 %}
@@ -196,6 +237,7 @@
 
             </table>
         </fieldset>
+        </form>
     </div>
 </div>
 

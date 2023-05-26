@@ -395,7 +395,7 @@
 					var chosen_offset = 0;
 					$('ul', this).children().each(function (index) {
 						var indie = (settings.params === undefined) ? -1: settings.params.a;
-						if ($(this).data('value') == indie || $(this).text() == $.trim(original.revert)) {
+						if ($(this).data('value') == indie) {
 							$.extend(settings.submitdata, {
 								"value": settings.params.a
 							});
@@ -408,7 +408,7 @@
 								$('#preview_' + settings.params.field).html(settings.params.choices[this_val]);
 								$(this).siblings().each(function () {
 									$(this).attr('class', 'dropdown-item')
-								});; $(this).attr('class', 'dropdown-item active');
+								}); $(this).attr('class', 'dropdown-item active');
 								$.extend(settings.submitdata, {
 									"value": this_val
 								});

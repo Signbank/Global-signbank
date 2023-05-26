@@ -14,6 +14,7 @@ import time
 from signbank.dictionary.adminviews import order_queryset_by_sort_order
 
 from signbank.dictionary.forms import *
+from signbank.dictionary.models import *
 from signbank.feedback.models import *
 from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, \
     update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology, subst_notes
@@ -81,7 +82,7 @@ def word(request, keyword, n):
     (trans, total) =  word.match_request(request, n, )
 
     # and all the keywords associated with this sign
-    allkwds = trans.gloss.translation_set.all().order_by('translation__text')
+    allkwds = trans.gloss.translation_set.all().order_by('translation__index')
 
     videourl = trans.gloss.get_video_url()
     if not os.path.exists(os.path.join(settings.MEDIA_ROOT, videourl)):
@@ -199,7 +200,7 @@ def gloss(request, glossid):
                                                        'selected_datasets': selected_datasets,
                                                        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
-    allkwds = gloss.translation_set.all().order_by('translation__text')
+    allkwds = gloss.translation_set.all().order_by('translation__index')
     if len(allkwds) == 0:
         trans = None  # this seems to cause problems in the template, the title of the page ends up empty
     else:
@@ -322,7 +323,7 @@ def morpheme(request, glossid):
     if not(request.user.has_perm('dictionary.search_gloss') or morpheme.inWeb):
         return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
 
-    allkwds = morpheme.translation_set.all().order_by('translation__text')
+    allkwds = morpheme.translation_set.all().order_by('translation__index')
     if len(allkwds) == 0:
         trans = None
     else:
@@ -1497,8 +1498,9 @@ def import_csv_update(request):
                 error.append(e_string)
         stage = 1
 
-    #Do changes
+    # Do changes
     elif len(request.POST) > 0:
+        gloss_fields = [f.name for f in Gloss._meta.fields]
 
         lemmaidglosstranslations_per_gloss = {}
         for key, new_value in request.POST.items():
@@ -1667,9 +1669,11 @@ def import_csv_update(request):
                 continue
 
             with override(settings.LANGUAGE_CODE):
-
-                #Replace the value for bools
-                if fieldname in Gloss._meta.get_fields() and Gloss._meta.get_field(fieldname).__class__.__name__ == 'BooleanField':
+                if fieldname not in gloss_fields:
+                    continue
+                field = Gloss._meta.get_field(fieldname)
+                # Replace the value for bools
+                if field.__class__.__name__ == 'BooleanField':
 
                     if new_value in ['true','True', 'TRUE']:
                         new_value = True
@@ -1677,13 +1681,18 @@ def import_csv_update(request):
                         new_value = None
                     else:
                         new_value = False
-
-                #Remember this for renaming the video later
+                elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+                    new_value = Handshape.objects.get(machine_value=int(new_value))
+                elif hasattr(field, 'field_choice_category'):
+                    new_value = FieldChoice.objects.get(machine_value=int(new_value),
+                                                        field=Gloss._meta.get_field(fieldname).field_choice_category)
+                # Remember this for renaming the video later
                 if fieldname == 'idgloss':
                     video_path_before = settings.WRITABLE_FOLDER+gloss.get_video_path()
 
-                #The normal change and save procedure
-                setattr(gloss,fieldname,new_value)
+                # The normal change and save procedure
+                # the new value machine value of Handshape or FieldChoice has been replaced with an object reference above
+                setattr(gloss, fieldname, new_value)
                 gloss.save()
 
                 #Also update the video if needed
@@ -1747,15 +1756,12 @@ def import_csv_lemmas(request):
 
     uploadform = signbank.dictionary.forms.CSVUploadForm
     seen_datasets = []
-    # set the allowed dataset names to selected dataset, which must have change permission (checked below)
-    dataset = selected_datasets.first()
-    seen_dataset_names = [dataset.acronym]
     changes = []
     error = []
     earlier_updates_same_csv = []
     earlier_updates_lemmaidgloss = {}
 
-    if selected_datasets.count() > 1 or dataset not in user_datasets:
+    if not selected_datasets or selected_datasets.count() > 1 or dataset not in user_datasets:
         feedback_message = _('Please select a single dataset for which you have change permission.')
         messages.add_message(request, messages.ERROR, feedback_message)
 
@@ -1767,6 +1773,10 @@ def import_csv_lemmas(request):
                        'translation_languages_dict': translation_languages_dict,
                        'seen_datasets': seen_datasets,
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+    # set the allowed dataset names to selected dataset, which must have change permission (checked below)
+    dataset = selected_datasets.first()
+    seen_dataset_names = [dataset.acronym]
 
     # Process Input File
     if len(request.FILES) > 0:
@@ -2556,6 +2566,60 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     else:
         from django.views.static import serve
         return serve(request, filename, document_root, show_indexes)
+
+def show_glosses_with_no_lemma(request):
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        show_dataset_interface = False
+
+    glosses_without_lemma = Gloss.objects.filter(lemma=None)
+    gloss_tuples = []
+    for g in glosses_without_lemma:
+        gloss_annotations = AnnotationIdglossTranslation.objects.filter(gloss=g)
+        gloss_annotation_languages = [ann.language.name for ann in gloss_annotations]
+        language_names = ', '.join(gloss_annotation_languages)
+        gloss_tuples.append((g, gloss_annotations, language_names))
+
+    all_datasets = Dataset.objects.all()
+    dummies_to_create = []
+    for this_dataset in all_datasets:
+        dataset_languages_this_dataset = this_dataset.translation_languages.all()
+        for lang in dataset_languages_this_dataset:
+            dummy_lemma_name = 'DUMMY_LEMMA_' + this_dataset.acronym.replace(' ', '') + '_' + lang.language_code_2char.upper()
+            dummy_lemma = LemmaIdgloss.objects.filter(dataset=this_dataset,
+                                                      lemmaidglosstranslation__text=dummy_lemma_name)
+            if not dummy_lemma.count():
+                if this_dataset not in dummies_to_create:
+                    dummies_to_create.append(this_dataset)
+
+    for dataset_to_dummy in dummies_to_create:
+        dataset_languages_this_dataset = dataset_to_dummy.translation_languages.all()
+        new_lemma = LemmaIdgloss(dataset=dataset_to_dummy)
+        new_lemma.save()
+        for lang in dataset_languages_this_dataset:
+            dummy_lemma_name = 'DUMMY_LEMMA_' + dataset_to_dummy.acronym.replace(' ', '') + '_' + lang.language_code_2char.upper()
+            dummy_translation = LemmaIdglossTranslation(text=dummy_lemma_name, lemma=new_lemma, language=lang)
+            dummy_translation.save()
+
+    dummy_lemma_name = 'DUMMY_LEMMA_'
+    dummy_lemmas = LemmaIdgloss.objects.filter(lemmaidglosstranslation__text__icontains=dummy_lemma_name).distinct()
+    lemma_choices = []
+    for dummy in dummy_lemmas:
+        dummy_translations = [t.language.name for t in dummy.lemmaidglosstranslation_set.all()]
+        select_string = ', '.join(dummy_translations)
+        lemma_choices.append((dummy, dummy.dataset.acronym + ': ' + select_string))
+
+    return render(request, "dictionary/glosses_with_no_lemma.html", {
+        'dataset_languages': dataset_languages,
+        'selected_datasets': selected_datasets,
+        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+        'glosses_without_lemma': gloss_tuples,
+        'dummy_lemmas': lemma_choices
+    })
 
 @login_required_config
 def show_unassigned_glosses(request):

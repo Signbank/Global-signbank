@@ -120,6 +120,7 @@ urlpatterns = [
     re_path(r'^datasets/select', DatasetListView.as_view(), {'select': True}, name='admin_dataset_select'),
     re_path(r'^datasets/change_selection', signbank.dictionary.update.change_dataset_selection, name='change_dataset_selection'),
     re_path(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),
+    re_path(r'^datasets/show_glosses_with_no_lemma', signbank.dictionary.views.show_glosses_with_no_lemma, name="show_glosses_with_no_lemma"),
     re_path(r'^datasets/manager', login_required(DatasetManagerView.as_view()), name='admin_dataset_manager'),
     re_path(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
     re_path(r'^datasets/frequency/(?P<pk>\d+)$', DatasetFrequencyView.as_view(), name='admin_dataset_frequency'),
