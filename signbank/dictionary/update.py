@@ -563,19 +563,18 @@ def update_keywords(gloss, field, value):
 def gloss_to_keywords_senses_groups(gloss, language):
     glossXsenses = dict()
     keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
-    if keyword_translations.count() > 0:
-        senses_groups = dict()
-        keywords_list = []
-        for trans in keyword_translations:
-            orderIndexKey = str(trans.orderIndex)
-            if orderIndexKey not in senses_groups.keys():
-                senses_groups[orderIndexKey] = []
-            senses_groups[orderIndexKey].append(trans.translation.text)
-            keywords_list.append(trans.translation.text)
-        glossXsenses['glossid'] = str(gloss.id)
-        glossXsenses['language'] = str(language.id)
-        glossXsenses['keywords'] = keywords_list
-        glossXsenses['senses_groups'] = senses_groups
+    senses_groups = dict()
+    keywords_list = []
+    for trans in keyword_translations:
+        orderIndexKey = str(trans.orderIndex)
+        if orderIndexKey not in senses_groups.keys():
+            senses_groups[orderIndexKey] = []
+        senses_groups[orderIndexKey].append(trans.translation.text)
+        keywords_list.append(trans.translation.text)
+    glossXsenses['glossid'] = str(gloss.id)
+    glossXsenses['language'] = str(language.id)
+    glossXsenses['keywords'] = keywords_list
+    glossXsenses['senses_groups'] = senses_groups
     return glossXsenses
 
 
@@ -691,6 +690,7 @@ def add_keyword(request, glossid):
             translation_to_update.translation = keyword_object
             translation_to_update.save()
             new_translation_id = str(translation_to_update.id)
+            new_sense = translation_to_update.orderIndex
         except (ObjectDoesNotExist, KeyError, IntegrityError):
             # make a new translation if it didn't work to update
             trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language,
@@ -706,6 +706,7 @@ def add_keyword(request, glossid):
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
     # creating a new keyword sends back its id
     glossXsenses['new_translation'] = new_translation_id
+    glossXsenses['new_sense'] = str(new_sense)
 
     return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
 

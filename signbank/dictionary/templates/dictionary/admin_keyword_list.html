@@ -158,19 +158,23 @@ var csrf_token = '{{csrf_token}}';
                             action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
                       <table class='table table-condensed'>
-                          <tr><th>{% trans "Keyword" %}</th><th>{% trans "Sense Number" %}</th></tr>
+                          <thead>
+                            <tr><th>{% trans "Keyword" %}</th><th>{% trans "Sense Number" %}</th></tr>
+                          </thead>
+                          <tbody id="tbody_senses_table_{{gloss.id}}_{{language.id}}">
                           {% for sense in keywords %}
-                        <tr>
-                            <td>{{sense.translation.text}}</td>
-                            <input type="hidden" id="sense_id_{{sense.id}}"
-                                   name="group_index" value='{{sense.id}}' data-group_index='{{sense.id}}'>
-                            <td>
-                            <input type="number" id="regroup_{{sense.orderIndex}}"
-                                   name="regroup" value='{{sense.orderIndex}}' data-regroup='{{sense.orderIndex}}'
-                                   max={{senses.count}}>
-                            </td>
-                        </tr>
+                            <tr>
+                                <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{forloop.counter}}">{{sense.translation.text}}</td>
+                                <input type="hidden" id="sense_id_{{sense.id}}"
+                                       name="group_index" value='{{sense.id}}' data-group_index='{{sense.id}}'>
+                                <td>
+                                <input type="number" id="regroup_{{sense.orderIndex}}"
+                                       name="regroup" value='{{sense.orderIndex}}' data-regroup='{{sense.orderIndex}}'
+                                       max={{senses.count}}>
+                                </td>
+                            </tr>
                           {% endfor %}
+                          </tbody>
                       </table>
                           <input type="hidden" name="language" value="{{language.id}}">
                           {% if perms.dictionary.change_gloss %}

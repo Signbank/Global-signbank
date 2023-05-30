@@ -137,6 +137,15 @@ function update_gloss_keywords(data) {
         modalSensesCell.append(row);
     }
     modalSensesCell.append("</tr>");
+
+    // update the keyword text in the sense regroup table of the edit senses modal
+    // this relies on knowing that the for loop index of the template is used in the id of the table cell
+    for (var i = 0; i < keywords.length; i++) {
+        var keyIndex = i+1;
+        var keywordCellId = '#keyword_sense_index_'+glossid+'_'+language+'_'+keyIndex;
+        var keywordCell = $(keywordCellId);
+        keywordCell.html(keywords[i]);
+    }
 }
 
 function add_gloss_keywords(data) {
@@ -152,6 +161,10 @@ function add_gloss_keywords(data) {
     };
     var new_translation = data.new_translation;
     if ($.isEmptyObject(new_translation)) {
+        return;
+    };
+    var new_sense = data.new_sense;
+    if ($.isEmptyObject(new_sense)) {
         return;
     };
     var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;
@@ -171,7 +184,6 @@ function add_gloss_keywords(data) {
     }
     row.append("</td>");
     keywordsCell.append(row);
-
     for (var key in senses_groups) {
         var row = $("<tr/>");
         row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
@@ -228,6 +240,23 @@ function add_gloss_keywords(data) {
         modalSensesCell.append(row);
     }
     modalSensesCell.append("</tr>");
+    var modal_senses_groups_glossid = '#tbody_senses_table_' + glossid + '_' + language;
+    var modalSensesGroupsCell = $(modal_senses_groups_glossid);
+    var last_index = keywords.length - 1;
+    var max_index = keywords.length;
+    var row = $("<tr/>");
+    // the new row gets as id the max index of the keywords
+    row.append('<td id="keyword_sense_index_'+glossid+'_'+language+'_'+max_index+'" >'+keywords[last_index]+'</td>');
+    row.append('<input type="hidden" id="sense_id_'+new_translation+
+                    '" name="group_index" value="'+new_translation+'" data-group_index="'+new_translation+'">');
+    row.append("<td>");
+    row.append('<input type="number" id="regroup_'+new_sense+
+                            '" name="regroup" value="'+new_sense+
+                            '" data-regroup="'+new_sense+'" max=' + max_index + '>');
+    row.append("</td>");
+    row.append("</tr>");
+    modalSensesGroupsCell.append(row);
+    modalSensesGroupsCell.append("</tr>");
 
     var modal_edit_keywords_glossid = '#edit_keywords_table_' + glossid + '_' + language;
     var modalEditKeywordsCell = $(modal_edit_keywords_glossid);
