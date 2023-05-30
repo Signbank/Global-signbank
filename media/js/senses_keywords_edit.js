@@ -12,57 +12,6 @@ function update_gloss_senses(data) {
     if ($.isEmptyObject(senses_groups)) {
         return;
     };
-    var senses_glossid = '#tbody_senses_' + glossid + '_' + language;
-    var modal_senses_glossid = '#tbody_modal_senses_' + glossid + '_' + language;
-    var sensesCell = $(senses_glossid);
-    var modalSensesCell = $(modal_senses_glossid);
-    $(sensesCell).empty();
-    $(modalSensesCell).empty();
-    for (var key in senses_groups) {
-        var row = $("<tr/>");
-        row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
-        var group_keywords = senses_groups[key];
-        var num_commas = group_keywords.length - 1;
-        for (var inx in group_keywords) {
-            if (inx < num_commas) {
-                row.append("<span>"+group_keywords[inx]+"</span>, ");
-            } else {
-                row.append("<span>"+group_keywords[inx]+"</span>");
-            }
-        };
-        row.append("</td>");
-        modalSensesCell.append(row);
-    }
-    modalSensesCell.append("</tr>");
-    for (var key in senses_groups) {
-        var row = $("<tr/>");
-                row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
-        var group_keywords = senses_groups[key];
-        num_commas = group_keywords.length - 1;
-        for (var inx in group_keywords) {
-            if (inx < num_commas) {
-                row.append("<span>"+group_keywords[inx]+"</span>, ");
-            } else {
-                row.append("<span>"+group_keywords[inx]+"</span>");
-            }
-        };
-        row.append("</td>");
-        sensesCell.append(row);
-    }
-    sensesCell.append("</tr>");
-}
-
-function update_gloss_keywords(data) {
-    if ($.isEmptyObject(data)) {
-        return;
-    };
-    var glossid = data.glossid;
-    var language = data.language;
-    var keywords = data.keywords;
-    var senses_groups = data.senses_groups;
-    if ($.isEmptyObject(senses_groups)) {
-        return;
-    };
     var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;
     var modal_keywords_glossid = '#tbody_modal_keywords_' + glossid + '_' + language;
     var keywordsCell = $(keywords_glossid);
@@ -148,6 +97,8 @@ function update_gloss_keywords(data) {
     }
 }
 
+// the following function expects more fields from the ajax call json data
+// it adds new rows to tables
 function add_gloss_keywords(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -341,7 +292,7 @@ $(document).ready(function() {
                     'translation': JSON.stringify(translation),
                     'csrfmiddlewaretoken': csrf_token},
             datatype: "json",
-            success : update_gloss_keywords
+            success : update_gloss_senses
          });
      });
 
