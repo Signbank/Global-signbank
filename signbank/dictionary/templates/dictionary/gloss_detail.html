@@ -1072,13 +1072,18 @@ p {
                         {% for examplesentence in sense.exampleSentences.all %}
                             <tr>
                                 <td>
-                                    Type: {{ examplesentence.sentencetype }}
+                                    Type: 
+                                    {% if examplesentence.sentencetype %}
+                                    {{ examplesentence.sentencetype }}
+                                    {% else %}
+                                    - 
+                                    {% endif %}
                                     {% if examplesentence.negative %}
                                     (neg)
                                     {% endif %}
-                                    <div class="pull-right">
+                                    <!-- <div class="pull-right">
                                         <span id="camera-icon"><img id='camera' data-target="#exampleVidModal{{ examplesentence.id }}" data-toggle="modal" id="exVidBtn{{examplesentence.get_video_path}}" src='{{ STATIC_URL }}images/camera.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
-                                    </div>
+                                    </div> -->
                                 </td>
                             </tr>
                             <tr>
@@ -1127,7 +1132,6 @@ p {
                                                     <input type='hidden' name='value' value='confirmed'>
                                                     Type: <select name="sentencetype">
                                                         {% for stype in sentencetypes %}
-                                                        {{examplesentence.sentencetype}}
                                                         <option value="{{stype.text}}" {% if examplesentence.sentencetype.text == stype.text %}selected{% endif %}>{{stype.description}}</option>
                                                         {% endfor %}
                                                     </select><br><br>
@@ -1234,7 +1238,6 @@ p {
                                             <input type="submit" class="btn btn-primary" value='{% trans "Confirm add" %}'>
                                             </div>
                                         </form>
-
                                     </div>
                                 </div>
                             </div>
