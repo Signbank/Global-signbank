@@ -63,6 +63,7 @@ urlpatterns = [
         name='update_field_choice_color'),
 
     re_path(r'^update/query/(?P<queryid>\d+)$', signbank.dictionary.update.update_query, name='update_query'),
+    re_path(r'^update/semanticfield/(?P<semfieldid>\d+)$', signbank.dictionary.update.update_semfield, name='update_semfield'),
     re_path(r'^update/group_keywords/(?P<glossid>\d+)$', signbank.dictionary.update.group_keywords,
             name='group_keywords'),
     re_path(r'^update/edit_keywords/(?P<glossid>\d+)$', signbank.dictionary.update.edit_keywords,

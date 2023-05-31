@@ -5,6 +5,7 @@ from signbank.video.fields import VideoUploadToFLVField
 from django.utils.translation import gettext_lazy as _
 
 from django_summernote.admin import SummernoteModelAdmin
+from modeltranslation.admin import TranslationAdmin
 
 
 from signbank.log import debug
@@ -44,7 +45,7 @@ class PageVideoInline(admin.TabularInline):
     model = PageVideo  
     extra = 1
 
-class PageAdmin(SummernoteModelAdmin):
+class PageAdmin(TranslationAdmin, SummernoteModelAdmin):
     form = PageForm
     if hasattr(server_specific, 'SHOW_ENGLISH_ONLY') and server_specific.SHOW_ENGLISH_ONLY:
         fieldsets = (
@@ -54,9 +55,9 @@ class PageAdmin(SummernoteModelAdmin):
         )
     else:
         fieldsets = (
-            (None, {'fields': ('url', 'title', 'title_dutch', 'title_chinese', 'title_arabic', 'title_hebrew',
+            (None, {'fields': ('url', 'title',
                                'parent', 'index', 'publish',
-                               'content', 'content_dutch', 'content_chinese', 'content_arabic', 'content_hebrew')}),
+                               'content', )}),
             (_('Advanced options'), {'classes': ('collapse',), 'fields': ('group_required', 'template_name')}),
         )
     list_display = ('url', 'title', 'parent', 'index')

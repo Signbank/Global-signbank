@@ -12,57 +12,6 @@ function update_gloss_senses(data) {
     if ($.isEmptyObject(senses_groups)) {
         return;
     };
-    var senses_glossid = '#tbody_senses_' + glossid + '_' + language;
-    var modal_senses_glossid = '#tbody_modal_senses_' + glossid + '_' + language;
-    var sensesCell = $(senses_glossid);
-    var modalSensesCell = $(modal_senses_glossid);
-    $(sensesCell).empty();
-    $(modalSensesCell).empty();
-    for (var key in senses_groups) {
-        var row = $("<tr/>");
-        row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
-        var group_keywords = senses_groups[key];
-        var num_commas = group_keywords.length - 1;
-        for (var inx in group_keywords) {
-            if (inx < num_commas) {
-                row.append("<span>"+group_keywords[inx]+"</span>, ");
-            } else {
-                row.append("<span>"+group_keywords[inx]+"</span>");
-            }
-        };
-        row.append("</td>");
-        modalSensesCell.append(row);
-    }
-    modalSensesCell.append("</tr>");
-    for (var key in senses_groups) {
-        var row = $("<tr/>");
-                row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
-        var group_keywords = senses_groups[key];
-        num_commas = group_keywords.length - 1;
-        for (var inx in group_keywords) {
-            if (inx < num_commas) {
-                row.append("<span>"+group_keywords[inx]+"</span>, ");
-            } else {
-                row.append("<span>"+group_keywords[inx]+"</span>");
-            }
-        };
-        row.append("</td>");
-        sensesCell.append(row);
-    }
-    sensesCell.append("</tr>");
-}
-
-function update_gloss_keywords(data) {
-    if ($.isEmptyObject(data)) {
-        return;
-    };
-    var glossid = data.glossid;
-    var language = data.language;
-    var keywords = data.keywords;
-    var senses_groups = data.senses_groups;
-    if ($.isEmptyObject(senses_groups)) {
-        return;
-    };
     var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;
     var modal_keywords_glossid = '#tbody_modal_keywords_' + glossid + '_' + language;
     var keywordsCell = $(keywords_glossid);
@@ -137,8 +86,19 @@ function update_gloss_keywords(data) {
         modalSensesCell.append(row);
     }
     modalSensesCell.append("</tr>");
+
+    // update the keyword text in the sense regroup table of the edit senses modal
+    // this relies on knowing that the for loop index of the template is used in the id of the table cell
+    for (var i = 0; i < keywords.length; i++) {
+        var keyIndex = i+1;
+        var keywordCellId = '#keyword_sense_index_'+glossid+'_'+language+'_'+keyIndex;
+        var keywordCell = $(keywordCellId);
+        keywordCell.html(keywords[i]);
+    }
 }
 
+// the following function expects more fields from the ajax call json data
+// it adds new rows to tables
 function add_gloss_keywords(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -154,6 +114,10 @@ function add_gloss_keywords(data) {
     if ($.isEmptyObject(new_translation)) {
         return;
     };
+    var new_sense = data.new_sense;
+    if ($.isEmptyObject(new_sense)) {
+        return;
+    };
     var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;
     var modal_keywords_glossid = '#tbody_modal_keywords_' + glossid + '_' + language;
     var keywordsCell = $(keywords_glossid);
@@ -171,7 +135,6 @@ function add_gloss_keywords(data) {
     }
     row.append("</td>");
     keywordsCell.append(row);
-
     for (var key in senses_groups) {
         var row = $("<tr/>");
         row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
@@ -228,6 +191,23 @@ function add_gloss_keywords(data) {
         modalSensesCell.append(row);
     }
     modalSensesCell.append("</tr>");
+    var modal_senses_groups_glossid = '#tbody_senses_table_' + glossid + '_' + language;
+    var modalSensesGroupsCell = $(modal_senses_groups_glossid);
+    var last_index = keywords.length - 1;
+    var max_index = keywords.length;
+    var row = $("<tr/>");
+    // the new row gets as id the max index of the keywords
+    row.append('<td id="keyword_sense_index_'+glossid+'_'+language+'_'+max_index+'" >'+keywords[last_index]+'</td>');
+    row.append('<input type="hidden" id="sense_id_'+new_translation+
+                    '" name="group_index" value="'+new_translation+'" data-group_index="'+new_translation+'">');
+    row.append("<td>");
+    row.append('<input type="number" id="regroup_'+new_sense+
+                            '" name="regroup" value="'+new_sense+
+                            '" data-regroup="'+new_sense+'" max=' + max_index + '>');
+    row.append("</td>");
+    row.append("</tr>");
+    modalSensesGroupsCell.append(row);
+    modalSensesGroupsCell.append("</tr>");
 
     var modal_edit_keywords_glossid = '#edit_keywords_table_' + glossid + '_' + language;
     var modalEditKeywordsCell = $(modal_edit_keywords_glossid);
@@ -312,7 +292,7 @@ $(document).ready(function() {
                     'translation': JSON.stringify(translation),
                     'csrfmiddlewaretoken': csrf_token},
             datatype: "json",
-            success : update_gloss_keywords
+            success : update_gloss_senses
          });
      });
 

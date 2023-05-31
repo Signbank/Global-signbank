@@ -929,19 +929,18 @@ def update_keywords(gloss, field, value):
 def gloss_to_keywords_senses_groups(gloss, language):
     glossXsenses = dict()
     keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
-    if keyword_translations.count() > 0:
-        senses_groups = dict()
-        keywords_list = []
-        for trans in keyword_translations:
-            orderIndexKey = str(trans.orderIndex)
-            if orderIndexKey not in senses_groups.keys():
-                senses_groups[orderIndexKey] = []
-            senses_groups[orderIndexKey].append(trans.translation.text)
-            keywords_list.append(trans.translation.text)
-        glossXsenses['glossid'] = str(gloss.id)
-        glossXsenses['language'] = str(language.id)
-        glossXsenses['keywords'] = keywords_list
-        glossXsenses['senses_groups'] = senses_groups
+    senses_groups = dict()
+    keywords_list = []
+    for trans in keyword_translations:
+        orderIndexKey = str(trans.orderIndex)
+        if orderIndexKey not in senses_groups.keys():
+            senses_groups[orderIndexKey] = []
+        senses_groups[orderIndexKey].append(trans.translation.text)
+        keywords_list.append(trans.translation.text)
+    glossXsenses['glossid'] = str(gloss.id)
+    glossXsenses['language'] = str(language.id)
+    glossXsenses['keywords'] = keywords_list
+    glossXsenses['senses_groups'] = senses_groups
     return glossXsenses
 
 
@@ -1057,6 +1056,7 @@ def add_keyword(request, glossid):
             translation_to_update.translation = keyword_object
             translation_to_update.save()
             new_translation_id = str(translation_to_update.id)
+            new_sense = translation_to_update.orderIndex
         except (ObjectDoesNotExist, KeyError, IntegrityError):
             # make a new translation if it didn't work to update
             trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language,
@@ -1072,6 +1072,7 @@ def add_keyword(request, glossid):
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
     # creating a new keyword sends back its id
     glossXsenses['new_translation'] = new_translation_id
+    glossXsenses['new_sense'] = str(new_sense)
 
     return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
 
@@ -2589,7 +2590,7 @@ def update_morpheme(request, morphemeid):
         else:
             try:
                 value = int(value)
-            except:
+            except IntegerField:
                 return HttpResponseBadRequest("SN value must be integer", {'content-type': 'text/plain'})
 
             existing_morpheme = Morpheme.objects.filter(sn__exact=value)
@@ -2600,8 +2601,7 @@ def update_morpheme(request, morphemeid):
             else:
                 morpheme.sn = value
                 morpheme.save()
-                newvalue = value
-
+                newvalue = str(value)
 
     elif field == 'inWeb':
         # only modify if we have publish permission
@@ -2637,14 +2637,11 @@ def update_morpheme(request, morphemeid):
         if field not in [f.name for f in Morpheme._meta.get_fields()]:
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
-        whitespace = tuple(' \n\r\t')
-        if value.startswith(whitespace) or value.endswith(whitespace):
-            value = value.strip()
-        original_value = getattr(morpheme,field)
+        original_value = getattr(morpheme, field)
+        newvalue = value
+        if isinstance(original_value, FieldChoice):
+            original_value = original_value.name if original_value else original_value
 
-        if field == 'idgloss' and value == '':
-            # don't allow user to set Lemma ID Gloss to empty
-            return HttpResponse(str(original_value), {'content-type': 'text/plain'})
         # special cases
         # - Foreign Key fields (Language, Dialect)
         # - keywords
@@ -2653,8 +2650,11 @@ def update_morpheme(request, morphemeid):
 
         # Translate the value if a boolean
         if isinstance(morpheme._meta.get_field(field), BooleanField):
-            newvalue = value
-            value = (value in ['Yes', 'yes', 'ja', 'Ja', '是', 'true', 'True', True, 1])
+            value = (value.lower() in [_('Yes').lower(), 'true', True, 1])
+            if value:
+                newvalue = _('Yes')
+            else:
+                newvalue = _('No')
 
         # special value of 'notset' or -1 means remove the value
         fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
@@ -2676,20 +2676,12 @@ def update_morpheme(request, morphemeid):
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-            gloss_field = Morpheme._meta.get_field(field)
-            try:
-                handshape = Handshape.objects.get(machine_value=value)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('Update handshape no unique machine value found: ', gloss_field.name, value)
-                print('Setting to machine value 0')
-                handshape = Handshape.objects.get(machine_value=0)
-            morpheme.__setattr__(field, handshape)
-            morpheme.save()
-            newvalue = handshape.name
+            # Handshapes not included, ignore
+            newvalue = ''
         elif field in fieldchoiceforeignkey_fields:
             gloss_field = Morpheme._meta.get_field(field)
             try:
-                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
+                fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=int(value))
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 print('Update field choice no unique machine value found: ', gloss_field.name,
                       gloss_field.field_choice_category, value)
@@ -2699,7 +2691,7 @@ def update_morpheme(request, morphemeid):
             morpheme.save()
             newvalue = fieldchoice.name
 
-        elif value in ['notset',''] and field not in char_fields_not_null:
+        elif value in ['notset', ''] and field not in char_fields_not_null:
             morpheme.__setattr__(field, None)
             morpheme.save()
             newvalue = ''
@@ -2709,12 +2701,7 @@ def update_morpheme(request, morphemeid):
             morpheme.__setattr__(field, value)
             morpheme.save()
 
-            # If the value is not a Boolean, return the new value
-            if not isinstance(value, bool):
-                # field is a choice list and we need to get the translated human value
-                newvalue = newvalue.name if isinstance(value, FieldChoice) else value
-
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group), {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value + '\t' + str(lemma_gloss_group), {'content-type': 'text/plain'})
 
 
 def update_morpheme_definition(gloss, field, value):
@@ -3434,6 +3421,46 @@ def update_query(request, queryid):
     if field == "queryname" and value:
         query.queryName = value
         query.save()
+
+    if not value:
+        # if the user has tried to remove the query name but erasing the field, leave it as it was
+        # handling of the response value is done on return from the ajax call and displayed in the template
+        # this has the effect of doing nothing
+        value = original_value
+
+    return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
+
+
+def update_semfield(request, semfieldid):
+
+    if not request.user.is_authenticated:
+        return HttpResponseForbidden("Semantic Field Update Not Allowed")
+
+    if not request.user.has_perm('dictionary.add_semanticfieldtranslation'):
+        return HttpResponseForbidden("Semantic Field Update Not Allowed")
+
+    if not request.method == "POST":
+        return HttpResponse("", {'content-type': 'text/plain'})
+
+    semfield = get_object_or_404(SemanticField, machine_value=int(semfieldid))
+
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+    original_value = ''
+
+    if value and field == 'description':
+        semfield.description = value
+        semfield.save()
+    elif value:
+        (namefield, lang_code) = field.rsplit('_', 1)
+        language = Language.objects.filter(language_code_2char=lang_code)
+        if not language:
+            return HttpResponse("", {'content-type': 'text/plain'})
+        translation_for_language = semfield.semanticfieldtranslation_set.filter(language=language.first())
+        for old_translation in translation_for_language:
+            old_translation.delete()
+        new_translation = SemanticFieldTranslation(semField=semfield, language=language.first(), name=value)
+        new_translation.save()
 
     if not value:
         # if the user has tried to remove the query name but erasing the field, leave it as it was

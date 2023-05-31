@@ -128,8 +128,6 @@ option:not(:checked) {
     var static_choice_list_colors = {{static_choice_list_colors|safe}};
 
     var csrf_token = '{{csrf_token}}';
-    var next_gloss_id;
-    var next_morpheme_id = {{nextmorphemeid}};
 
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
@@ -262,23 +260,6 @@ function checkKey(e)
 
 
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
-   
-    <div class='btn-group'>
-        {% if SIGN_NAVIGATION %}
-        
-            {% if navigation.prev %}
-            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_morpheme_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %}</a>
-            {% endif %}
-            
-            <button class='btn navbar-btn'>{% blocktrans %}"Sign {{glossposn}} of {{glosscount}} in the dictionary" {% endblocktrans %}</button>
-            
-            {% if navigation.next %}
-            <a class="btn navbar-btn btn-default"
-               href="{% url 'dictionary:admin_morpheme_view' pk=navigation.next.id %}">{% trans "Next Sign &raquo;" %}</a>
-            {% endif %}
-        {% endif %}
-    </div>
-
 
     <ul class='nav nav-tabs'>
         <li class="nav-item">
@@ -295,8 +276,6 @@ function checkKey(e)
     <div class='pull-right' style="margin-right:15px;margin-top:10px;z-index:100;">
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
-         <!--<button id='rewind' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>Rewind</button>-->
-         <button id='save_and_next_btn' class='btn btn-default navbar-btn button-to-appear-in-edit-mode' data-toggle='modal' data-target=''>{% trans "Edit Next Morpheme" %}</button>
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
          
     </div>
@@ -563,11 +542,19 @@ function checkKey(e)
         <div id='phonology' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 		{% for value,name,label,kind in phonology_fields %}
-                <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %}>
+                {% if value == '-' or value == ' ' or value == '' or value == None or value == False %}
+                <tr class="empty_row">
+                {% else %}
+                <tr>
+                {% endif %}
                     <th>{{label}}</th>
+                    {% if kind == "check" %}
+                    <td class="edit edit_check"
+                        id='{{name}}' value='{{value}}' >{% if value %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                    {% else %}
                     <td class="edit edit_{{kind}}"
-                        id='{{name}}' value='{{value}}' >{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}
-                                                                    {% else %}{% value value %}{% endif %}</td>
+                        id='{{name}}' value='{{value}}' >{% value value %}</td>
+                    {% endif %}
                 <td></td>
                 </tr>
 
