@@ -6266,21 +6266,12 @@ class MorphemeDetailView(DetailView):
                 'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
 
-        # Get the list of choices for this field
-        # this code used to be a method in models.py
-        li = list(FieldChoice.objects.filter(field='MorphemeType', machine_value__lte=1)
-                         .order_by('machine_value').values_list('machine_value', 'name')) \
-                  + list([(field_choice.machine_value, field_choice.name) for field_choice in
-                          FieldChoice.objects.filter(field='MorphemeType', machine_value__gt=1)
-                         .order_by('name')])
-
-        # Sort the list
-        sorted_li = sorted(li, key=lambda x: x[1])
-
-        # Put it in another format
-        reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
-
-        context['morph_type'] = json.dumps(OrderedDict(reformatted_li))
+        morpheme_type_choice_list = FieldChoice.objects.filter(field__iexact='MorphemeType')
+        morpheme_type_choices = choicelist_queryset_to_translated_dict(morpheme_type_choice_list,
+                                                                       shortlist=False)
+        morpheme_type_choices_colors = choicelist_queryset_to_colors(morpheme_type_choice_list)
+        context['morph_type'] = json.dumps(morpheme_type_choices)
+        context['morph_type_colors'] = json.dumps(morpheme_type_choices_colors)
 
         # make lemma group empty for Morpheme (ask Onno about this)
         context['lemma_group'] = False
@@ -6295,7 +6286,7 @@ class MorphemeDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
-        translated_morph_type = gl.mrpType.name if gl.mrpType else ''
+        translated_morph_type = gl.mrpType.name if gl.mrpType else '-'
 
         context['morpheme_type'] = translated_morph_type
 

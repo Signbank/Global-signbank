@@ -478,6 +478,7 @@ function configure_edit() {
                 break;
             }
          };
+         $(this).attr('data-value', index_of_modified_field);
 		 $(this).editable(edit_post_url, {
 		     params : { a: index_of_modified_field,
 		                field: $(this).attr('id'),
@@ -543,6 +544,8 @@ function update_view_and_remember_original_value(change_summary)
         if (split_values_count > 3) {
 //        only the main update_gloss and update_morpheme functions return this extra information, their sub-functions do not
             lemma_group = split_values[4];
+            input_value = split_values[5];
+            $(this).attr('data-value', input_value);
         }
 
         id = $(this).attr('id');

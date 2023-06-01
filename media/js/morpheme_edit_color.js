@@ -370,14 +370,28 @@ function configure_edit() {
         data    : relation_delete_choices,
         callback : update_foreign_delete
      });
-     $('.edit_mrptype').editable(edit_post_url, {
-         params : { a: swap(morph_type)[$(this).attr('value')],
-                    field: 'mrpType',
-                    choices: morph_type,
-                    colors: morph_type_colors },
-         type      : 'select',
-         data      : morph_type,
-		 callback : update_view_and_remember_original_value
+     $('.edit_mrptype').click(function()
+	 {
+	     var this_data = $(this).attr('value');
+	     var index_of_modified_field = '_0';
+         for (var key in morph_type) {
+            var value = morph_type[key];
+            if (value == this_data) {
+                index_of_modified_field = key;
+                break;
+            }
+         };
+         $(this).attr('data-value', index_of_modified_field);
+		 $(this).editable(edit_post_url, {
+		     params : { a: index_of_modified_field,
+		                field: 'mrpType',
+		                display: $(this).attr('value'),
+		                colors: morph_type_colors,
+		                choices: morph_type },
+		     type      : 'select',
+		     data    : morph_type,
+			 callback : update_view_and_remember_original_value
+		 });
      });
 
      $('.edit_list').click(function()
@@ -393,6 +407,7 @@ function configure_edit() {
                 break;
             }
          };
+         $(this).attr('data-value', index_of_modified_field);
 		 $(this).editable(edit_post_url, {
 		     params : { a: index_of_modified_field,
 		                field: $(this).attr('id'),
@@ -483,6 +498,8 @@ function update_view_and_remember_original_value(change_summary)
         if (split_values_count > 3) {
 //        only the main update_gloss and update_morpheme functions return this extra information, their sub-functions do not
             lemma_group = split_values[4];
+            input_value = split_values[5];
+            $(this).attr('data-value', input_value);
         }
 
         id = $(this).attr('id');

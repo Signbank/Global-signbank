@@ -172,6 +172,7 @@ def update_gloss(request, glossid):
     other_glosses_in_lemma_group = Gloss.objects.filter(lemma__lemmaidglosstranslation__text__iexact=lemma_group_string).count()
     if other_glosses_in_lemma_group > 1:
         lemma_gloss_group = True
+    input_value = value
 
     if len(value) == 0:
         # this seems a bit dangerous
@@ -409,7 +410,10 @@ def update_gloss(request, glossid):
                 value = (value in ['letter', 'number'])
             else:
                 value = (value.lower() in [_('Yes').lower(),'true',True,1])
-                newvalue = value
+                if value:
+                    newvalue = _('Yes')
+                else:
+                    newvalue = _('No')
         # special value of 'notset' or -1 means remove the value
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
@@ -447,6 +451,8 @@ def update_gloss(request, glossid):
             gloss.save()
             newvalue = handshape.name
         elif field in fieldchoiceforeignkey_fields:
+            if value == '':
+                value = 0
             gloss_field = Gloss._meta.get_field(field)
             try:
                 fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
@@ -480,6 +486,7 @@ def update_gloss(request, glossid):
 
             #If the value is not a Boolean, get the human readable value
             if not isinstance(value,bool):
+                print('not boolean other field')
                 # if we get to here, field is a valid field of Gloss
                 newvalue = value
 
@@ -491,10 +498,6 @@ def update_gloss(request, glossid):
     #This is because you cannot concat none to a string in py3
     if original_value is None:
         original_value = ''
-    # this takes care of a problem with None not being allowed as a value in GlossRevision
-    # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
-    if newvalue is None:
-        newvalue = ''
 
     # if choice_list is empty, the original_value is returned by the called function
     # Remember this change for the history books
@@ -503,6 +506,10 @@ def update_gloss(request, glossid):
     # store a boolean in the Revision History rather than a human value as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
     else:
+        # this takes care of a problem with None not being allowed as a value in GlossRevision
+        # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
+        if newvalue is None:
+            newvalue = ''
         glossrevision_newvalue = newvalue
 
     revision = GlossRevision(old_value=original_human_value,
@@ -513,9 +520,8 @@ def update_gloss(request, glossid):
                              time=datetime.now(tz=get_current_timezone()))
     revision.save()
     # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
-    return HttpResponse(
-        str(original_value) + str('\t') + str(newvalue) + str('\t') +  str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group),
-        {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' +  str(value) + '\t' + category_value
+                        + '\t' + str(lemma_gloss_group) + '\t' + input_value, {'content-type': 'text/plain'})
 
 
 def update_keywords(gloss, field, value):
@@ -2116,6 +2122,8 @@ def update_morpheme(request, morphemeid):
     original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     lemma_gloss_group = False
+    # this copies any '_' + machine_value code to pass back to the success method, if relevant
+    input_value = value
 
     if len(value) == 0:
         value = ' '
@@ -2314,6 +2322,8 @@ def update_morpheme(request, morphemeid):
             newvalue = ''
         elif field in fieldchoiceforeignkey_fields:
             gloss_field = Morpheme._meta.get_field(field)
+            if value == ' ':
+                value = '0'
             try:
                 fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=int(value))
             except (ObjectDoesNotExist, MultipleObjectsReturned):
@@ -2321,7 +2331,7 @@ def update_morpheme(request, morphemeid):
                       gloss_field.field_choice_category, value)
                 print('Setting to machine value 0')
                 fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
-            morpheme.__setattr__(field, fieldchoice)
+            setattr(morpheme, field, fieldchoice)
             morpheme.save()
             newvalue = fieldchoice.name
 
@@ -2335,7 +2345,8 @@ def update_morpheme(request, morphemeid):
             morpheme.__setattr__(field, value)
             morpheme.save()
 
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value + '\t' + str(lemma_gloss_group), {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value
+                        + '\t' + str(lemma_gloss_group) + '\t' + input_value, {'content-type': 'text/plain'})
 
 
 def update_morpheme_definition(gloss, field, value):

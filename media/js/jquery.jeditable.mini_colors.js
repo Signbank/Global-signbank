@@ -177,7 +177,13 @@
 							} else {
 								var submitdata = {
 								};
-								submitdata[settings.name] = input.val();
+                                var this_val = $('#' + settings.params.field).attr('value');
+                                var this_key = $('#' + settings.params.field).attr('data-value');
+                                if (this_key !== undefined) {
+                                    submitdata[settings.name] = this_key;
+                                } else {
+								    submitdata[settings.name] = input.val();
+								}
 								submitdata[settings.id] = self.id;
 								if ($.isFunction(settings.submitdata)) {
 									$.extend(submitdata, settings.submitdata.apply(self,[self.revert, settings]));
@@ -205,7 +211,7 @@
 										onerror.apply(form,[settings, self, xhr]);
 									}
 								};
-								var this_val = $('#' + settings.params.field).attr('value');
+								var this_val = $('#' + settings.params.field).attr('data-value');
 								if (settings.type == 'text') {
 									$.extend(settings.submitdata, {
 										"value": input.val()
@@ -363,6 +369,7 @@
 					    });
 					};
 					select.attr('role', 'listbox');
+					select.attr('data-value', settings.params.a);
 					$(this).append(select);
 					return (select);
 				},
@@ -396,9 +403,6 @@
 					$('ul', this).children().each(function (index) {
 						var indie = (settings.params === undefined) ? -1: settings.params.a;
 						if ($(this).data('value') == indie) {
-							$.extend(settings.submitdata, {
-								"value": settings.params.a
-							});
 							$(this).attr('class', 'dropdown-item active');
 							chosen_offset = index*20;
 						} else {
@@ -409,9 +413,6 @@
 								$(this).siblings().each(function () {
 									$(this).attr('class', 'dropdown-item')
 								}); $(this).attr('class', 'dropdown-item active');
-								$.extend(settings.submitdata, {
-									"value": this_val
-								});
 							});
 						}
 					});
