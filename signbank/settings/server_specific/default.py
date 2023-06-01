@@ -7,6 +7,7 @@ BASE_DIR = 'repo/'
 #Where Signbank can store things like images and videos
 WRITABLE_FOLDER = 'writable/'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
+EXAMPLESENTENCE_VIDEO_DIRECTORY = 'sensevideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
 FEEDBANK_VIDEO_DIRECTORY = 'comments'
 HANDSHAPE_IMAGE_DIRECTORY = 'handshapeimage'

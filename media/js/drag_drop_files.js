@@ -8,27 +8,40 @@ let videoButtons = document.getElementById('video-buttons')
 let videoGallery = document.getElementById('videogallery')
 
 let dropImageArea = document.getElementById('drop-container-image')
-let inputImageArea = document.getElementById('id_imagefile')
-inputImageArea.onchange = function(){handleImageByButton(this.files)}
-let dropContainerImageStatus = document.getElementById('drop-container-image-status')
-let dropContainerImageTitle = document.getElementById('drop-container-title-image')
-let imageButtons = document.getElementById('image-buttons')
-let imageGallery = document.getElementById('imagegallery')
+var image = false
+if (typeof(dropImageArea) != 'undefined' && dropImageArea != null){
+    image = true
+}
+
+if (image){
+    let inputImageArea = document.getElementById('id_imagefile')
+    inputImageArea.onchange = function(){handleImageByButton(this.files)}
+    let dropContainerImageStatus = document.getElementById('drop-container-image-status')
+    let dropContainerImageTitle = document.getElementById('drop-container-title-image')
+    let imageButtons = document.getElementById('image-buttons')
+    let imageGallery = document.getElementById('imagegallery')
+}
 
 // Set event listeners for hovering/dropping files
 ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
     dropVideoArea.addEventListener(eventName, preventDefaults, false)
-    dropImageArea.addEventListener(eventName, preventDefaults, false)
+    if (image){
+        dropImageArea.addEventListener(eventName, preventDefaults, false)
+    }
 })
 
 ;['dragenter', 'dragover'].forEach(eventName => {
     dropVideoArea.addEventListener(eventName, highlightvideo, false)
-    dropImageArea.addEventListener(eventName, highlightimage, false)
+    if (image){
+        dropImageArea.addEventListener(eventName, highlightimage, false)
+    }
 })
 
 ;['dragleave', 'drop'].forEach(eventName => {
     dropVideoArea.addEventListener(eventName, unhighlightvideo, false)
-    dropImageArea.addEventListener(eventName, unhighlightimage, false)
+    if (image){
+        dropImageArea.addEventListener(eventName, unhighlightimage, false)
+    }
 })
 
 function preventDefaults(e) {
@@ -209,9 +222,11 @@ function handleVideoDrop(e) {
     handleDrop(e, 'video/mp4', 'video', 'video', inputVideoArea, videoGallery, dropContainerVideoTitle)
 }
 
-dropImageArea.addEventListener('drop', handleImageDrop, false)
-function handleImageDrop(e) {
-    handleDrop(e, 'image/jpeg', 'image', 'img', inputImageArea, imageGallery, dropContainerImageTitle)
+if (image){
+    dropImageArea.addEventListener('drop', handleImageDrop, false)
+    function handleImageDrop(e) {
+        handleDrop(e, 'image/jpeg', 'image', 'img', inputImageArea, imageGallery, dropContainerImageTitle)
+    }
 }
 
 /**

@@ -614,67 +614,65 @@ class ExampleSentence(models.Model):
         return [k+": "+v for k,v in self.get_examplestc_translations_dict_without().items()]
 
     def get_video_path(self):
-        return self.video
-    #     try:
-    #         glossvideo = self.glossvideo_set.get(version=0)
-    #         return str(glossvideo.videofile)
-    #     except ObjectDoesNotExist:
-    #         return ''
-    #     except MultipleObjectsReturned:
-    #         # Just return the first
-    #         glossvideos = self.glossvideo_set.filter(version=0)
-    #         return str(glossvideos[0].videofile)
+        try:
+            examplevideo = self.examplevideo_set.get(version=0)
+            return str(examplevideo.videofile)
+        except ObjectDoesNotExist:
+            return ''
+        except MultipleObjectsReturned:
+            # Just return the first
+            examplevideos = self.examplevideo_set.filter(version=0)
+            return str(examplevideos[0].videofile)
 
-    # def get_video_path_prefix(self):
-    #     try:
-    #         glossvideo = self.glossvideo_set.get(version=0)
-    #         prefix, extension = os.path.splitext(str(glossvideo))
-    #         return prefix
-    #     except ObjectDoesNotExist:
-    #         return ''
+    def get_video_path_prefix(self):
+        try:
+            examplesentence = self.examplesentence_set.get(version=0)
+            prefix, extension = os.path.splitext(str(examplesentence))
+            return prefix
+        except ObjectDoesNotExist:
+            return ''
         
-    # def get_video(self):
-    #     """Return the video object for this gloss or None if no video available"""
+    def get_video(self):
+        """Return the video object for this gloss or None if no video available"""
 
-    #     video_path = self.get_video_path()
-    #     filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
-    #     if os.path.exists(filepath.encode('utf-8')):
-    #         return video_path
-    #     else:
-    #         return ''
+        video_path = self.get_video_path()
+        filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
+        if os.path.exists(filepath.encode('utf-8')):
+            return video_path
+        else:
+            return ''
     
-    # def has_video(self):
-    #     """Test to see if the video for this sign is present"""
+    def has_video(self):
+        """Test to see if the video for this sign is present"""
 
-    #     return self.get_video() not in ['', None]
+        return self.get_video() not in ['', None]
 
-    # def add_video(self, user, videofile, recorded):
-    #     # Preventing circular import
-    #     from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
+    def add_video(self, user, videofile, recorded):
+        # Preventing circular import
+        from signbank.video.models import ExampleVideo, ExampleVideoHistory, get_sentence_video_file_path
 
-    #     # Backup the existing video objects stored in the database
-    #     existing_videos = GlossVideo.objects.filter(gloss=self)
-    #     for video_object in existing_videos:
-    #         video_object.reversion(revert=False)
+        # Backup the existing video objects stored in the database
+        existing_videos = ExampleVideo.objects.filter(examplesentence=self)
+        for video_object in existing_videos:
+            video_object.reversion(revert=False)
 
-    #     # Create a new GlossVideo object
-    #     if isinstance(videofile, File):
-    #         video = GlossVideo(gloss=self)
-    #         video.videofile.save(get_video_file_path(video, str(videofile)), videofile)
-    #     else:
-    #         video = GlossVideo(videofile=videofile, gloss=self)
-    #     video.save()
-    #     video.ch_own_mod_video()
-    #     video.make_small_video()
-    #     video.make_poster_image()
+        # Create a new ExampleVideo object
+        if isinstance(videofile, File):
+            video = ExampleVideo(examplesentence=self)
+            video.videofile.save(get_sentence_video_file_path(video, str(videofile)), videofile)
+        else:
+            video = ExampleVideo(videofile=videofile, examplesentence=self)
+        video.save()
+        video.ch_own_mod_video()
+        video.make_small_video()
 
-    #     # Create a GlossVideoHistory object
-    #     video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
-    #     glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
-    #                                           uploadfile=videofile, goal_location=video_file_full_path)
-    #     glossvideohistory.save()
+        # Create a GlossVideoHistory object
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
+        examplevideohistory = ExampleVideoHistory(action="upload", examplesentence=self, actor=user,
+                                              uploadfile=videofile, goal_location=video_file_full_path)
+        examplevideohistory.save()
 
-    #     return video
+        return video
 
     
     def __str__(self):

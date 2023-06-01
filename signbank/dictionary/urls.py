@@ -56,6 +56,7 @@ urlpatterns = [
     re_path(r'^update/examplesentence/(?P<examplesentenceid>\d+)$', signbank.dictionary.update.update_examplesentence, name='update_examplesentence'),
     re_path(r'^update/addexamplesentence/(?P<senseid>\d+)$', signbank.dictionary.update.create_examplesentence, name='create_examplesentence'),
     re_path(r'^update/deleteexamplesentence/(?P<senseid>\d+)$', signbank.dictionary.update.delete_examplesentence, name='delete_examplesentence'),
+    re_path(r'^update/addsentencevideo/(?P<glossid>\d+)/(?P<examplesentenceid>\d+)$', signbank.dictionary.update.add_sentence_video, name='add_sentence_video'),
     re_path(r'^update/morpheme/', signbank.dictionary.update.add_morpheme, name='add_morpheme'),
     re_path(r'^update/blenddefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_blend_definition, name='add_blenddefinition'),
 

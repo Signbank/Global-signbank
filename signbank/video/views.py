@@ -5,12 +5,12 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from signbank.video.models import Video, GlossVideo, GlossVideoHistory
-from signbank.video.forms import VideoUploadForm, VideoUploadForGlossForm
+from signbank.video.forms import VideoUploadForm, VideoUploadForGlossForm, VideoUploadForSentenceForm
 # from django.contrib.auth.models import User
 # from datetime import datetime as DT
 import os
 
-from signbank.dictionary.models import Gloss, DeletedGlossOrMedia
+from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence
 from signbank.settings.base import WRITABLE_FOLDER
 from signbank.tools import generate_still_image, get_default_annotationidglosstranslation
 
@@ -45,6 +45,35 @@ def addvideo(request):
         url = '/'
     return redirect(url)
 
+def addsentencevideo(request):
+    """View to present a video upload form and process
+    the upload"""
+
+    if request.method == 'POST':
+        form = VideoUploadForSentenceForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Unpack the form
+            examplesentence_id = form.cleaned_data['examplesentence_id']
+            vfile = form.cleaned_data['videofile']
+            redirect_url = form.cleaned_data['redirect']
+            recorded = form.cleaned_data['recorded']
+
+            # Get the example sentence
+            examplesentence = get_object_or_404(ExampleSentence, id=examplesentence_id)
+
+            examplesentence.add_video(request.user, vfile, recorded)
+
+            return redirect(redirect_url)
+
+    # if we can't process the form, just redirect back to the
+    # referring page, should just be the case of hitting
+    # Upload without choosing a file but could be
+    # a malicious request, if no referrer, go back to root
+    if 'HTTP_REFERER' in request.META:
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
+    return redirect(url)
 
 @login_required
 def deletevideo(request, videoid):

@@ -224,6 +224,7 @@ function checkKey(e)
 
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dropstyle.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/recordstyle.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/modalstyle.css">
     <style>
@@ -320,89 +321,6 @@ option:not(:checked) {
 .btn-query:hover .btn-query:focus {
     color: rgb(66, 139, 202);
     background-color: lightgrey;
-}
-</style>
-<style>
-.drop-container {
-    position: relative;
-    display: flex;
-    gap: 10px;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 200px;
-    padding: 0px;
-    border-radius: 10px;
-    border: 2px dashed #555;
-    color: #444;
-    cursor: pointer;
-    transition: background .2s ease-in-out, border .2s ease-in-out;
-}
-
-.drop-container:hover {
-    background: #ccc;
-    border-color: #111;
-}
-
-.drop-title {
-    color: #444;
-    font-size: 18px;
-    font-weight: bold;
-    text-align: center;
-    transition: color .2s ease-in-out;
-}
-
-.drop-container.highlight-green {
-    background: #d4e9ce;
-}
-
-.drop-container.highlight-red {
-    background: #F4A19B;
-}
-
-p {
-    margin-top: 0;
-}
-
-.gallery img {
-    width: 100px;
-    margin-right: 10px;
-    vertical-align: right;
-}
-
-.gallery video {
-    width: 100px;
-    margin-right: 10px;
-    vertical-align: right;
-}
-
-.button {
-    display: inline-block;
-    padding: 8px;
-    background: #ccc;
-    cursor: pointer;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-}
-
-.button:hover {
-    background: #ddd;
-}
-
-#hide{
-    opacity: 0;
-}
-
-.panel-heading {
-    padding: 0;
-}
-
-.sense-button {
-    width:auto;
-    font-size: 10px;
-    padding-left: 2px;
-    padding-right: 2px;
-    border-radius: 6px;
 }
 </style>
 
@@ -728,7 +646,7 @@ p {
                   <tr>
                     <td id="video-buttons">
                         <input type='hidden' name='gloss_id' value='{{gloss.pk}}'>
-                        <input class = 'btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>   
+                        <input class='btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>   
                         <input class='btn btn-primary' type='submit' value='Upload' />
                     </td>
                   </tr>
@@ -1081,9 +999,16 @@ p {
                                     {% if examplesentence.negative %}
                                     (neg)
                                     {% endif %}
-                                    <!-- <div class="pull-right">
-                                        <span id="camera-icon"><img id='camera' data-target="#exampleVidModal{{ examplesentence.id }}" data-toggle="modal" id="exVidBtn{{examplesentence.get_video_path}}" src='{{ STATIC_URL }}images/camera.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
-                                    </div> -->
+                                    {% if examplesentence.get_video %}
+                                    <div class="pull-right">
+                                        <span id="camera-icon"><img id='camera' data-target="#exampleVidModal{{ examplesentence.id }}" data-toggle="modal" id="exVidBtn{{examplesentence.get_video_path}}" src='{{ STATIC_URL }}images/playvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
+                                    </div>
+                                    {% endif %}
+                                    {% if "change_dataset" in dataset_perms %}
+                                    <div class="pull-right sense-icon">
+                                        <span id="camera-icon"><a href='{% url "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id %}'><img id='camera' src='{{ STATIC_URL }}images/addvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></a></span>
+                                    </div>
+                                    {% endif %}
                                 </td>
                             </tr>
                             <tr>
@@ -1160,8 +1085,8 @@ p {
                             </tr>
 
                             <div class="modal" id="exampleVidModal{{ examplesentence.id }}">
-                                <div class="modal-content">
-                                    <div id="videocontainer{{ examplesentence.id }}">
+                                <div class="modal-content" style="width:40%">
+                                    <div id="videocontainer{{ examplesentence.id }}"  style="width:100%">
                                         {% if not "None" in examplesentence.get_video_path %}                                            
                                             <div id="player">
                                                 <video id='videoplayer' src="{{ protected_media_url }}/sensevideo/{{ gloss.lemma.dataset }}/{{ examplesentence.id }}.mp4" controls type="video/mp4" autoplay muted></video>
@@ -1174,36 +1099,12 @@ p {
                                         {% endif %}
                                     </div>
 
-                                    <!-- {% if "change_dataset" in dataset_perms %}
-                                        <div class='editform'>
-                                            <fieldset>
-                                                <legend>{% trans "Upload New Video" %}</legend>
-                                                <label for="id_videofile_{{ examplesentence.id }}" class="drop-container" id="drop-container-video_{{ examplesentence.id }}">
-                                                <div id="videogallery_{{ examplesentence.id }}" class="gallery"></div>
-                                                <span id="drop-container-title-video_{{ examplesentence.id }}" class="drop-title">Drop video here<br>or...</span>
-                                                <label id="drop-container-video-status_{{ examplesentence.id }}", class="hide">Status here</label>
-                                                <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
-                                                    {% csrf_token %}
-                                                    <input type='hidden' name='redirect' value='{{request.path}}?edit'>
-                                                    <table id="staffops">
-                                                    <tr>
-                                                        <td>{{videoform.videofile}}</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td id="video-buttons_{{ examplesentence.id }}">
-                                                            <input type='hidden' name='sense_id' value='{{sense.pk}}'>
-                                                            <input class = 'btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>   
-                                                            <input class='btn btn-primary' type='submit' value='Upload' />
-                                                        </td>
-                                                    </tr>
-                                                    </table>
-                                                </form>
-                                                </label>
-                                            </fieldset>
-                                        </div>
-                                    {% endif %} -->
-
-                                    {{ examplesentence.get_video_path }}
+                                    Type: {{examplesentence.sentencetype}}
+                                    {% if examplesentence.negative %} (neg) {% endif %}<br><br>
+                                    Translations:<br>
+                                    {% for sentence in examplesentence.get_examplestc_translations %}
+                                        {{sentence}}<br>
+                                    {% endfor %}
                                 </div> 
                             </div>
                         {% endfor %}   
@@ -1289,8 +1190,7 @@ p {
 
         </table>
 
-        <script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_files.js"></script>
-        <script type="text/javascript" src="{{ STATIC_URL }}js/recordscript.js"></script>
+        
 
    {% if perms.dictionary.view_advanced_properties %}
 
@@ -1434,7 +1334,6 @@ p {
                                         <h2 id='modalTitleMrp'>{% trans "Delete This Morpheme" %}</h2>
                                     </div>
                                     <div class='modal-body'>
-
                                         <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
                                      </div>
                                   <form action='{% url "dictionary:update_gloss" gloss.id %}' method='post'>

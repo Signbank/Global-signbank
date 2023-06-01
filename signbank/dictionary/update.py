@@ -20,6 +20,8 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from django.conf import settings
 
+from signbank.video.forms import VideoUploadForSentenceForm
+
 from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier
@@ -281,6 +283,18 @@ def delete_examplesentence(request, senseid):
         examplesentence.delete()
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+
+def add_sentence_video(request, glossid, examplesentenceid):
+    template = 'dictionary/add_sentence_video.html'
+    examplesentence = ExampleSentence.objects.get(id=examplesentenceid)
+    gloss = Gloss.objects.get(id=glossid)
+    context = {
+        'examplesentence': examplesentence,
+        'gloss': gloss,
+        'videoform': VideoUploadForSentenceForm(),
+    }
+    return render(request, template, context)
 
 def update_sense(request, senseid):
     """View to update a sense model from the editable modal"""

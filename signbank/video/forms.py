@@ -16,4 +16,13 @@ class VideoUploadForGlossForm(forms.Form):
     gloss_id = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
     recorded = forms.BooleanField(required=False, initial=False)
+
+class VideoUploadForSentenceForm(forms.Form):
+    """Form for video upload for a particular example sentence"""
+    
+    videofile = forms.FileField(label="Upload Video",
+                                widget=forms.FileInput(attrs={'accept':'video/mp4, video/quicktime'}))
+    examplesentence_id = forms.CharField(widget=forms.HiddenInput)
+    redirect = forms.CharField(widget=forms.HiddenInput, required=False)
+    recorded = forms.BooleanField(required=False, initial=False)
     
