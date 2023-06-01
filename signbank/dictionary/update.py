@@ -2443,6 +2443,38 @@ def add_tag(request, glossid):
             
     return response
 
+@permission_required('dictionary.change_gloss')
+def toggle_sense_tag(request, glossid):
+
+    if not request.user.is_authenticated:
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    current_tags = [ tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
+
+    change_sense_tag = Tag.objects.get_or_create(name='check_senses')
+    (sense_tag, created) = change_sense_tag
+
+    if sense_tag.id not in current_tags:
+        Tag.objects.add_tag(gloss, 'check_senses')
+    else:
+        # delete tag from object
+        tagged_obj = TaggedItem.objects.get(object_id=gloss.id,tag_id=sense_tag.id)
+        tagged_obj.delete()
+
+    new_tag_ids = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = [tag.name.replace('_',' ') for tag in  Tag.objects.filter(id__in=new_tag_ids)]
+    result['tags_list'] = newvalue
+
+    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+
 
 def add_morphemetag(request, morphemeid):
     """View to add a tag to a morpheme"""

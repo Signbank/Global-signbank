@@ -2,6 +2,8 @@
 {% load i18n %}
 {% load stylesheet %}
 {% load bootstrap3 %}
+{% load tagging_tags %}
+
 {% load guardian_tags %}
 {% load annotation_idgloss_translation %}
 
@@ -22,6 +24,17 @@ var csrf_token = '{{csrf_token}}';
 
 {% endblock %}
 
+{% block extrahead %}
+<style>
+.tags-cell {
+    overflow-y: visible;
+    width: 255px;
+    box-sizing: inherit;
+    white-space: nowrap;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 
 <div id="definitionblock" style="padding-top: 30px;">
@@ -33,6 +46,45 @@ var csrf_token = '{{csrf_token}}';
     <div class="keywordsSenses" id="keywordsSenses">
     <h3>{% trans "Map Keywords to Senses" %}</h3>
 
+        <div id='searchform_outer' class='well '>
+        <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/dictionary/keywords/'>
+        {% csrf_token %}
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
+            </div>
+                <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+                <div id='searchformwell' class='well search-results-collapsable'>
+
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='' >
+                    <input name='search_type' class='form-control' value='filter'>
+                </div>
+
+                <div class="panel panel-default">
+                  <div class="panel-heading" data-toggle="collapse"
+                           data-target="#pub_search">{% trans "Search by Tags" %}</div>
+
+                      <div id='pub_search' class='collapse'>
+                      <table class='table table-condensed' style="width:65%;">
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
+                          <td style="width:600px;">{{searchform.tags}}</td>
+                      </tr>
+                      </table>
+                      </div>
+                    </div>
+                </div>
+        <div class='btn-group' style="margin-bottom: 20px">
+        <input class='btn btn-default' type='submit' name="filter" value='Apply Filter'>
+        <input class='btn btn-default' type='reset' onclick="clearForm();"
+                       value='{% trans "Reset" %}'>
+        </div>
+        </div>
+        </div>
+
+        </form>
+        </div>
+
 <table class='table table-condensed'>
     <thead>
       <tr>
@@ -40,6 +92,8 @@ var csrf_token = '{{csrf_token}}';
           <th style="width:50px;">{% trans "Actions" %}</th>
           <th style="width:300px;">{% trans "Keywords" %}</th>
           <th style="width:300px;">{% trans "Senses" %}</th>
+          <th>{% trans "Quick Tag Toggle" %}</th>
+          <th style="width:255px;">{% trans "Tags" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -117,6 +171,18 @@ var csrf_token = '{{csrf_token}}';
                     </tr>
                 {% endfor %}
                 </table>
+            </td>
+            <td>{% if perms.dictionary.change_gloss %}
+                <button id='quick_tag_btn_{{gloss.id}}' class="quick_tag" type="button" name='quick_tag_{{gloss.id}}'
+                        value='{{gloss.id}}' type="submit" >{% trans "Check Senses" %}
+                </button>
+                {% endif %}
+            </td>
+            {% load underscore_to_space %}
+            {% tags_for_object gloss as tag_list %}
+            <td class="field_tags" style="width:255px;">
+                <div class="tags-cell"
+                     id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
             </td>
         </tr>
       {% endfor %}
@@ -284,7 +350,8 @@ var csrf_token = '{{csrf_token}}';
         {% endwith %}
         {% endfor %}
 {% endfor %}
+</div>
 {% endif %}
-
+</div>
 {% endblock content %}
 
