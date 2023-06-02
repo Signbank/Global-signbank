@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from django.template import Context, RequestContext, loader
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
@@ -587,10 +587,10 @@ def gloss_to_keywords_senses_groups(gloss, language):
 def edit_keywords(request, glossid):
     """Edit the keywords"""
     if not request.user.is_authenticated:
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
@@ -642,16 +642,16 @@ def edit_keywords(request, glossid):
 
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
 
-    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
+    return JsonResponse(glossXsenses)
 
 
 def add_keyword(request, glossid):
     """Add keywords"""
     if not request.user.is_authenticated:
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     gloss = get_object_or_404(Gloss, id=glossid)
     language = request.POST.get('language', '')
@@ -683,7 +683,7 @@ def add_keyword(request, glossid):
 
     if keyword == '' or keyword in current_keywords:
         # do nothing
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
 
@@ -714,17 +714,17 @@ def add_keyword(request, glossid):
     glossXsenses['new_translation'] = new_translation_id
     glossXsenses['new_sense'] = str(new_sense)
 
-    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
+    return JsonResponse(glossXsenses)
 
 
 def group_keywords(request, glossid):
     """Update the keyword field"""
 
     if not request.user.is_authenticated:
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
@@ -755,7 +755,7 @@ def group_keywords(request, glossid):
 
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
 
-    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
+    return JsonResponse(glossXsenses)
 
 def update_annotation_idgloss(gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""
@@ -2447,10 +2447,10 @@ def add_tag(request, glossid):
 def toggle_sense_tag(request, glossid):
 
     if not request.user.is_authenticated:
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
@@ -2473,7 +2473,7 @@ def toggle_sense_tag(request, glossid):
     newvalue = [tag.name.replace('_',' ') for tag in  Tag.objects.filter(id__in=new_tag_ids)]
     result['tags_list'] = newvalue
 
-    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+    return JsonResponse(result)
 
 
 def add_morphemetag(request, morphemeid):
