@@ -7493,6 +7493,7 @@ class KeywordListView(ListView):
 
     model = Gloss
     template_name = 'dictionary/admin_keyword_list.html'
+    paginate_by = 25
 
     def get_context_data(self, **kwargs):
         context = super(KeywordListView, self).get_context_data(**kwargs)
@@ -7508,6 +7509,10 @@ class KeywordListView(ListView):
         else:
             dataset_language = selected_datasets.first().default_language
         context['dataset_language'] = dataset_language
+
+        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
+
+        context['searchform'] = search_form
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -7525,12 +7530,27 @@ class KeywordListView(ListView):
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
+        get = self.request.GET
+
         dataset_language = selected_datasets.first().default_language
 
         # multilingual
         dataset_languages = get_dataset_languages(selected_datasets)
 
         glosses_of_datasets = Gloss.objects.filter(lemma__dataset__in=selected_datasets)
+
+        if 'tags' in get and get['tags'] != '':
+            vals = get.getlist('tags')
+            tags = []
+            for t in vals:
+                tags.extend(Tag.objects.filter(name=t))
+
+            # search is an implicit AND so intersection
+            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
+
+            # intersection
+            glosses_of_datasets = glosses_of_datasets & tqs
+
         glossesXsenses = []
         for gloss in glosses_of_datasets:
             keyword_translations_per_language = dict()

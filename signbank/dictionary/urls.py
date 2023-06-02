@@ -64,6 +64,8 @@ urlpatterns = [
             name='edit_keywords'),
     re_path(r'^update/add_keyword/(?P<glossid>\d+)$', signbank.dictionary.update.add_keyword,
             name='add_keyword'),
+    re_path(r'^update/toggle_sense_tag/(?P<glossid>\d+)$', signbank.dictionary.update.toggle_sense_tag,
+            name='toggle_sense_tag'),
 
     # The next one does not have a permission check because it should be accessible from a cronjob
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
