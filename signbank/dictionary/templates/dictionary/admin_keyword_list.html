@@ -26,6 +26,43 @@ var csrf_token = '{{csrf_token}}';
 
 {% block extrahead %}
 <style>
+.actions {
+    color: white !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.actionLabel {
+    border: 1px solid;
+    text-align: center;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: white;
+    margin: 0 0 0 0;
+}
+.actionLabel:hover {
+    text-decoration: none;
+}
+.actionLabel:active:focus {
+    text-decoration: none;
+    outline: none;
+}
+.actionButton {
+    padding: 0;
+    border: 0px;
+    border-width: 0px;
+    margin: 0 0 0 0;
+    border-radius: 6px;
+    text-align: center;
+}
+.actionButton:hover {
+    text-decoration: none;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
 .tags-cell {
     overflow-y: visible;
     width: 255px;
@@ -107,23 +144,23 @@ var csrf_token = '{{csrf_token}}';
                 <tr>
                 <td>
                 <div class='btn-toolbar' style="margin-bottom: 20px">
-                <button id='edit_keywords_btn_{{gloss.id}}_{{language.id}}' type="button" class="btn btn-primary"
+                <button id='edit_keywords_btn_{{gloss.id}}_{{language.id}}' type="button" class="btn actionButton"
                         name='edit_keywords_{{gloss.id}}' value='edit_keywords_{{gloss.id}}'
                         data-toggle='modal' data-target='#edit_keywords_modal_{{gloss.id}}_{{language.id}}'>
-                    {% if perms.dictionary.change_gloss %}
+                    <a class="actionLabel">{% if perms.dictionary.change_gloss %}
                         {% trans "Edit" %}
                         {% else %}
                         {% trans "View" %}
                         {% endif %}
-                        {{language.name}}</button>
-                <button id='edit_senses_btn_{{gloss.id}}_{{language.id}}' type="button" class="btn btn-primary"
+                        {{language.name}}</a></button>
+                <button id='edit_senses_btn_{{gloss.id}}_{{language.id}}' type="button" class="btn actionButton"
                         name='edit_{{gloss.id}}' value='edit_{{gloss.id}}'
                         data-toggle='modal' data-target='#edit_senses_modal_{{gloss.id}}_{{language.id}}'>
-                    {% if perms.dictionary.change_gloss %}
+                    <a class="actionLabel">{% if perms.dictionary.change_gloss %}
                         {% trans "Group Senses" %}
                         {% else %}
                         {% trans "View Senses" %}
-                        {% endif %} {{language.name}}</button>
+                        {% endif %} {{language.name}}</a></button>
                 {% endfor %}
                 </div>
                 </td>
@@ -174,8 +211,8 @@ var csrf_token = '{{csrf_token}}';
                 </table>
             </td>
             <td>{% if perms.dictionary.change_gloss %}
-                <button id='quick_tag_btn_{{gloss.id}}' class="quick_tag btn btn-primary" name='quick_tag_{{gloss.id}}'
-                        value='{{gloss.id}}' type="submit" >{% trans "Check Senses" %}
+                <button id='quick_tag_btn_{{gloss.id}}' class="quick_tag btn actionButton" name='quick_tag_{{gloss.id}}'
+                        value='{{gloss.id}}' type="submit" ><a class="actionLabel">{% trans "Check Senses" %}</a>
                 </button>
                 {% endif %}
             </td>
@@ -274,7 +311,7 @@ var csrf_token = '{{csrf_token}}';
                         </form>
                      </div>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
                       </div>
                 </div>
             </div>
@@ -339,7 +376,7 @@ var csrf_token = '{{csrf_token}}';
                       </form>
                      </div>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
                       </div>
                 </div>
             </div>
