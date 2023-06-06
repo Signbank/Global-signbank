@@ -7495,6 +7495,9 @@ class KeywordListView(ListView):
     template_name = 'dictionary/admin_keyword_list.html'
     paginate_by = 25
 
+    def get(self, request, *args, **kwargs):
+        return super(KeywordListView, self).get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super(KeywordListView, self).get_context_data(**kwargs)
 
