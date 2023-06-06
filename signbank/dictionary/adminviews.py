@@ -7494,6 +7494,7 @@ class KeywordListView(ListView):
     model = Gloss
     template_name = 'dictionary/admin_keyword_list.html'
     paginate_by = 25
+    query_parameters = dict()
 
     def get(self, request, *args, **kwargs):
         return super(KeywordListView, self).get(request, *args, **kwargs)
@@ -7520,6 +7521,11 @@ class KeywordListView(ListView):
         multiple_select_gloss_fields = ['tags']
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
+        # data structures to store the query parameters in order to keep them in the form
+        context['query_parameters'] = json.dumps(self.query_parameters)
+        query_parameters_keys = list(self.query_parameters.keys())
+        context['query_parameters_keys'] = json.dumps(query_parameters_keys)
+
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
@@ -7543,17 +7549,24 @@ class KeywordListView(ListView):
         # multilingual
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        glosses_of_datasets = Gloss.objects.filter(lemma__dataset__in=selected_datasets)
+        # exclude morphemes
+        glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
+
+        # data structure to store the query parameters in order to keep them in the form
+        query_parameters = dict()
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
             if '' in vals:
                 vals.remove('')
             if vals != []:
+                query_parameters['tags[]'] = get.getlist('tags[]')
                 tags = Tag.objects.filter(name__in=vals)
                 tqs = TaggedItem.objects.filter(tag_id__in=tags, object_id__in=glosses_of_datasets)
                 glosses_with_tag = [taggeditem.object_id for taggeditem in tqs]
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
+
+        self.query_parameters = query_parameters
 
         glossesXsenses = []
         for gloss in glosses_of_datasets:

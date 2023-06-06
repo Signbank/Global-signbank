@@ -21,6 +21,8 @@ var url = '{{ PREFIX_URL }}';
 var saving_str = '{{saving_str|escapejs}}';
 var csrf_token = '{{csrf_token}}';
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+var query_parameters_keys = {{query_parameters_keys|safe}};
+var query_parameters_dict = {{query_parameters|safe}};
 </script>
 
 <script type='text/javascript' src="{{ STATIC_URL }}js/senses_keywords_edit.js"></script>
@@ -54,6 +56,17 @@ $(document).ready(function() {
      });
 
      $('.js-example-basic-multiple').val(null).trigger('change');
+
+     // initialize query parameters in multiple select fields
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = '#id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        if (query_parameters_keys.includes(this_var)) {
+            var query_initial = query_parameters_dict[this_var];
+            $(this_id).val(query_initial);
+            $(this_id).trigger('change');
+        };
+     }
 });
 </script>
 
@@ -117,11 +130,7 @@ function clearForm() {
 {% block content %}
 
 <div id="definitionblock" style="padding-top: 30px;">
-    {% if not object_list %}
-    <br>
-    {% trans "No senses found." %}
 
-    {% else %}
     <div class="keywordsSenses" id="keywordsSenses">
     <h3>{% trans "Map Keywords to Senses" %}</h3>
 
@@ -431,7 +440,7 @@ function clearForm() {
 </table>
 </div>
 </div>
-{% endif %}
+
 <div class="pagination">
     <span class="step-links">
         <ul class='pagination pagination-sm'>
