@@ -1069,7 +1069,7 @@ class LemmaUpdateForm(forms.ModelForm):
 
 class KeyMappingSearchForm(forms.ModelForm):
 
-    tags = forms.MultipleChoiceField(label=_('Tags'), choices=tag_choices)
+    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
 
     class Meta:
 

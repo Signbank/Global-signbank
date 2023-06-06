@@ -7514,6 +7514,9 @@ class KeywordListView(ListView):
 
         context['searchform'] = search_form
 
+        multiple_select_gloss_fields = ['tags']
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
@@ -7539,17 +7542,15 @@ class KeywordListView(ListView):
 
         glosses_of_datasets = Gloss.objects.filter(lemma__dataset__in=selected_datasets)
 
-        if 'tags' in get and get['tags'] != '':
-            vals = get.getlist('tags')
-            tags = []
-            for t in vals:
-                tags.extend(Tag.objects.filter(name=t))
-
-            # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
-
-            # intersection
-            glosses_of_datasets = glosses_of_datasets & tqs
+        if 'tags[]' in get:
+            vals = get.getlist('tags[]')
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                tags = Tag.objects.filter(name__in=vals)
+                tqs = TaggedItem.objects.filter(tag_id__in=tags, object_id__in=glosses_of_datasets)
+                glosses_with_tag = [taggeditem.object_id for taggeditem in tqs]
+                glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
 
         glossesXsenses = []
         for gloss in glosses_of_datasets:
