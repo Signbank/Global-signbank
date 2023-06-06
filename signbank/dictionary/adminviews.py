@@ -285,7 +285,7 @@ class GlossListView(ListView):
         selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
         sign_languages = []
         for sl in selected_datasets_signlanguage:
-            if not ((str(sl.id),sl.name) in sign_languages):
+            if (str(sl.id),sl.name) not in sign_languages:
                 sign_languages.append((str(sl.id), sl.name))
 
         selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage)\
@@ -1272,7 +1272,7 @@ class GlossListView(ListView):
         self.request.session['search_type'] = self.search_type
         self.request.session['web_search'] = self.web_search
 
-        if not 'last_used_dataset' in self.request.session.keys():
+        if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # Return the resulting filtered and sorted queryset
@@ -2382,7 +2382,7 @@ class MorphemeListView(ListView):
         selected_datasets_signlanguage = [ ds.signlanguage for ds in selected_datasets ]
         sign_languages = []
         for sl in selected_datasets_signlanguage:
-            if not ((str(sl.id), sl.name) in sign_languages):
+            if ((str(sl.id), sl.name) not in sign_languages):
                 sign_languages.append((str(sl.id), sl.name))
 
         selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage).distinct()
@@ -2760,7 +2760,7 @@ class MorphemeListView(ListView):
 
         self.request.session['search_type'] = 'morpheme'
 
-        if not ('last_used_dataset' in self.request.session.keys()):
+        if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # Return the resulting filtered and sorted queryset
@@ -4705,7 +4705,7 @@ class DatasetListView(ListView):
         for owner in owners_of_dataset:
 
             groups_of_user = owner.groups.all()
-            if not group_manager in groups_of_user:
+            if group_manager not in groups_of_user:
                 # this owner can't manage users
                 continue
 
@@ -4935,7 +4935,7 @@ class DatasetManagerView(ListView):
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         groups_of_user = self.request.user.groups.all()
-        if not group_manager in groups_of_user:
+        if group_manager not in groups_of_user:
             messages.add_message(self.request, messages.ERROR,
                                  _('You must be in group Dataset Manager to modify dataset permissions.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
@@ -5108,7 +5108,7 @@ class DatasetManagerView(ListView):
                                  _('User already has change permission for this dataset.'))
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
-            if not dataset_object in datasets_user_can_view:
+            if dataset_object not in datasets_user_can_view:
                 messages.add_message(self.request, messages.WARNING,
                                      _('User does not have view permission for this dataset. Please grant view permission first.'))
 
@@ -5294,7 +5294,7 @@ class DatasetManagerView(ListView):
                 return None
 
             groups_of_user = self.request.user.groups.all()
-            if not group_manager in groups_of_user:
+            if group_manager not in groups_of_user:
                 messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 
@@ -5431,7 +5431,7 @@ class DatasetDetailView(DetailView):
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         groups_of_user = self.request.user.groups.all()
-        if not group_manager in groups_of_user:
+        if group_manager not in groups_of_user:
             messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset Manager to modify dataset permissions.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
@@ -5605,7 +5605,7 @@ class DatasetFieldChoiceView(ListView):
                 return None
 
             groups_of_user = self.request.user.groups.all()
-            if not group_manager in groups_of_user:
+            if group_manager not in groups_of_user:
                 messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 

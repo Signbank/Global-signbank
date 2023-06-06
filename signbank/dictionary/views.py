@@ -2060,6 +2060,7 @@ def recently_added_glosses(request):
 
     items = construct_scrollbar(recent_glosses, 'sign', lang_attr_name)
     request.session['search_results'] = items
+    request.session.modified = True
 
     return render(request, 'dictionary/recently_added_glosses.html',
                   {'glosses': recent_glosses,

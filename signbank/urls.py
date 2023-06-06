@@ -78,7 +78,8 @@ urlpatterns = [
     re_path(r'^analysis/queries/$', QueryListView.as_view(), name='admin_query_list'),
     re_path(r'^analysis/search_history/$', SearchHistoryView.as_view(), name='admin_search_history'),
 
-    re_path(r'^signs/recently_added/$', signbank.dictionary.views.recently_added_glosses),
+    re_path(r'^signs/recently_added/$', login_required(signbank.dictionary.views.recently_added_glosses),
+            name='recently_added_glosses'),
     re_path(r'^signs/proposed_new/$', signbank.dictionary.views.proposed_new_signs),
     re_path(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
     re_path(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()),

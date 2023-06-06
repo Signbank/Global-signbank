@@ -71,7 +71,6 @@ urlpatterns = [
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
     re_path(r'^update/variants_of_gloss/$', signbank.dictionary.update.variants_of_gloss, name='variants_of_gloss'),
     re_path(r'^switch_to_language/(?P<language>[\-a-z]{2,20})$', signbank.dictionary.views.switch_to_language,name='switch_to_language'),
-    re_path(r'^recently_added_glosses/$', login_required(signbank.dictionary.views.recently_added_glosses),name='recently_added_glosses'),
 
     # Ajax urls
     re_path(r'^ajax/keyword/(?P<prefix>.*)$', signbank.dictionary.views.keyword_value_list),
