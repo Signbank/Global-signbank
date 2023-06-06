@@ -13,15 +13,57 @@
 
 {% block extrajs %}
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
 
 <script type='text/javascript'>
 var url = '{{ PREFIX_URL }}';
 var saving_str = '{{saving_str|escapejs}}';
 var csrf_token = '{{csrf_token}}';
+var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
 </script>
 
 <script type='text/javascript' src="{{ STATIC_URL }}js/senses_keywords_edit.js"></script>
 
+<script type='text/javascript'>
+$(document).ready(function() {
+
+    function makeMultipleSelect(fieldId,fieldVar) {
+        var target_pulldown = document.getElementById(fieldId);
+        if (!target_pulldown) { return; }
+        target_pulldown.setAttribute('multiple','multiple');
+        target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+        target_pulldown.setAttribute('name',fieldVar);
+        target_pulldown.style.width = '100%';
+    }
+
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = 'id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        makeMultipleSelect(this_id, this_var);
+     }
+
+     $('.js-example-basic-multiple').each(function() {
+         var thisId = this.id;
+         $(this).select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve',
+            placeholder: '',
+         });
+     });
+
+     $('.js-example-basic-multiple').val(null).trigger('change');
+});
+</script>
+
+<script type='text/javascript'>
+
+// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
+function clearForm() {
+     $('.js-example-basic-multiple').val(null).trigger('change');
+}
+</script>
 {% endblock %}
 
 {% block extrahead %}

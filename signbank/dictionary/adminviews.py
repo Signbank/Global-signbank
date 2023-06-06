@@ -7495,6 +7495,9 @@ class KeywordListView(ListView):
     template_name = 'dictionary/admin_keyword_list.html'
     paginate_by = 25
 
+    def get(self, request, *args, **kwargs):
+        return super(KeywordListView, self).get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super(KeywordListView, self).get_context_data(**kwargs)
 
@@ -7513,6 +7516,9 @@ class KeywordListView(ListView):
         search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
 
         context['searchform'] = search_form
+
+        multiple_select_gloss_fields = ['tags']
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -7539,17 +7545,15 @@ class KeywordListView(ListView):
 
         glosses_of_datasets = Gloss.objects.filter(lemma__dataset__in=selected_datasets)
 
-        if 'tags' in get and get['tags'] != '':
-            vals = get.getlist('tags')
-            tags = []
-            for t in vals:
-                tags.extend(Tag.objects.filter(name=t))
-
-            # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
-
-            # intersection
-            glosses_of_datasets = glosses_of_datasets & tqs
+        if 'tags[]' in get:
+            vals = get.getlist('tags[]')
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                tags = Tag.objects.filter(name__in=vals)
+                tqs = TaggedItem.objects.filter(tag_id__in=tags, object_id__in=glosses_of_datasets)
+                glosses_with_tag = [taggeditem.object_id for taggeditem in tqs]
+                glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
 
         glossesXsenses = []
         for gloss in glosses_of_datasets:
