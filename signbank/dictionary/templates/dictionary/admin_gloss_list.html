@@ -346,7 +346,7 @@ $(document).ready(function() {
 // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
 function clearForm() {
 
-      var inputElements = document.getElementById('searchfields').querySelectorAll("input");
+      var inputElements = document.getElementById('query-area').querySelectorAll("input");
       var selectElements = document.getElementById('searchpanels').querySelectorAll("select");
 
       for(i=0; i<inputElements.length; i++) {
@@ -359,7 +359,7 @@ function clearForm() {
             case "textarea":
             case "hidden":
 
-              inputElements[i].value = "";
+              inputElements[i].setAttribute('value','');
               break;
 
             case "radio":
