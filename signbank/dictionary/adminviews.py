@@ -16,6 +16,7 @@ from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.utils.translation import override, gettext_lazy as _, activate
+from django.utils.html import escape
 from django.forms.fields import ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
@@ -370,12 +371,12 @@ class GlossListView(ListView):
             val = self.request.GET['search']
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
-            gloss_fields_to_populate['search'] = val
+            gloss_fields_to_populate['search'] = escape(val)
         if 'translation' in self.request.GET and self.request.GET['translation'] != '':
             val = self.request.GET['translation']
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
-            gloss_fields_to_populate['translation'] = val
+            gloss_fields_to_populate['translation'] = escape(val)
         gloss_fields_to_populate_keys = list(gloss_fields_to_populate.keys())
         context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
         context['gloss_fields_to_populate_keys'] = gloss_fields_to_populate_keys
