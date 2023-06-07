@@ -4556,8 +4556,14 @@ class HandshapeListView(ListView):
                     qs = qs.filter(query)
 
                 if val not in ['', '0'] and fieldname not in ['hsNumSel', 'name']:
-                    kwargs = {key: val}
-                    qs = qs.filter(**kwargs)
+
+                    if isinstance(Handshape._meta.get_field(fieldname), FieldChoiceForeignKey):
+                        key = fieldname + '__machine_value'
+                        kwargs = {key: int(val)}
+                        qs = qs.filter(**kwargs)
+                    else:
+                        kwargs = {key: val}
+                        qs = qs.filter(**kwargs)
 
         if ('sortOrder' in get and get['sortOrder'] != 'machine_value'):
             # User has toggled the sort order for the column
