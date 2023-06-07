@@ -140,8 +140,8 @@ def add_gloss(request):
     except ValidationError as ve:
         return show_error(request, ve.message, form, dataset_languages)
 
-    if not ('search_results' in request.session.keys()):
-        request.session['search_results'] = None
+    if 'search_results' not in request.session.keys():
+        request.session['search_results'] = []
 
     # new gloss created successfully, go to GlossDetailView
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
@@ -2091,10 +2091,10 @@ def add_morpheme(request):
                                                  'selected_datasets': get_selected_datasets_for_user(request.user),
                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-        if not ('search_results' in request.session.keys()):
-            request.session['search_results'] = None
-        if not ('search_type' in request.session.keys()):
-            request.session['search_type'] = None
+        if 'search_results' not in request.session.keys():
+            request.session['search_results'] = []
+        if 'search_type' not in request.session.keys():
+            request.session['search_type'] = ''
         request.session['last_used_dataset'] = dataset.acronym
 
         return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id})+'?edit')
@@ -2567,7 +2567,7 @@ def change_dataset_selection(request):
         if successful:
             request.session['selected_datasets'] = new_selection
             # erase previous search results session variable since the dataset selection has changed
-            request.session['search_results'] = None
+            request.session['search_results'] = []
             request.session.modified = True
 
     # check whether the last used dataset is still in the selected datasets

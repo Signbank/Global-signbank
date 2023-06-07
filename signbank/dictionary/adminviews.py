@@ -10,7 +10,7 @@ from django.db.models.query import QuerySet
 from django.db.models.functions import Concat
 from django.db.models.fields import BooleanField, BooleanField
 from django.db.models.sql.where import NothingNode, WhereNode
-from django.http import HttpResponse, HttpResponseRedirect, QueryDict
+from django.http import HttpResponse, HttpResponseRedirect, QueryDict, JsonResponse
 from django.template import RequestContext
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
@@ -300,7 +300,7 @@ class GlossListView(ListView):
                 # if the query parameters are available, convert them to a dictionary
                 session_query_parameters = self.request.session['query_parameters']
                 self.query_parameters = json.loads(session_query_parameters)
-            elif 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
+            elif 'search_results' not in self.request.session.keys() or not self.request.session['search_results']:
                 self.query_parameters = {}
                 # save the default query parameters to the sessin variable
                 self.request.session['query_parameters'] = json.dumps(self.query_parameters)
@@ -1355,11 +1355,11 @@ class GlossDetailView(DetailView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
@@ -1980,11 +1980,11 @@ class GlossVideosView(DetailView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         # Call the base implementation first to get a context
         context = super(GlossVideosView, self).get_context_data(**kwargs)
@@ -3009,9 +3009,9 @@ class HandshapeDetailView(DetailView):
             if self.request.session['search_results'] and len(self.request.session['search_results']) > 0:
                 if self.request.session['search_results'][0]['href_type'] in ['gloss', 'morpheme']:
                     # if the previous search does not match the search type
-                    self.request.session['search_results'] = None
+                    self.request.session['search_results'] = []
 
-        if 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
+        if 'search_results' not in self.request.session.keys() or not self.request.session['search_results']:
             # there are no handshapes in the scrollbar, put some there
 
             qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
@@ -3387,7 +3387,7 @@ class MinimalPairsListView(ListView):
                 veld_list = self.request.GET.getlist(veld)
                 if '' in veld_list:
                     veld_list.remove('')
-                if veld_list is []:
+                if not veld_list:
                     continue
                 veld_value = veld_list
             gloss_fields_to_populate[veld] = veld_value
@@ -3456,7 +3456,7 @@ class MinimalPairsListView(ListView):
         if not get:
             # to speed things up, don't show anything on initial visit
             qs = Gloss.objects.none()
-            self.request.session['search_results'] = None
+            self.request.session['search_results'] = []
             self.request.session.modified = True
             return qs
 
@@ -3473,7 +3473,7 @@ class MinimalPairsListView(ListView):
             error_message = error_message_1 + error_message_2 + error_message_3
             messages.add_message(self.request, messages.ERROR, error_message)
             qs = Gloss.objects.none()
-            self.request.session['search_results'] = None
+            self.request.session['search_results'] = []
             self.request.session.modified = True
             return qs
 
@@ -3598,11 +3598,11 @@ class QueryListView(ListView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
 
@@ -3718,11 +3718,11 @@ class QueryListView(ListView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
 
@@ -3796,11 +3796,11 @@ class SearchHistoryView(ListView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         qs = SearchHistory.objects.filter(user=self.request.user).order_by('queryDate').reverse()
 
@@ -4051,11 +4051,11 @@ class GlossFrequencyView(DetailView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
@@ -6139,12 +6139,12 @@ class MorphemeDetailView(DetailView):
 
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['morpheme', 'gloss']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['morpheme', 'sign_or_morpheme']:
                 # user has not queried morphemes
                 # search_type is 'handshape', 'sign', 'sign_handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         else:
             self.request.session['search_type'] = self.search_type
 
@@ -6388,29 +6388,27 @@ class MorphemeDetailView(DetailView):
 
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""
-    if 'search_type' in request.session.keys():
-        if request.session['search_type'] in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
-            return HttpResponse(json.dumps(request.session['search_results']))
-        else:
-            return HttpResponse(json.dumps(None))
+    if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
+            and request.session['search_type'] in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+        return JsonResponse(request.session['search_results'], safe=False)
     else:
-        # gloss ajax search results: search type not in session
-        return HttpResponse(json.dumps(None))
+        return JsonResponse([])
 
 def handshape_ajax_search_results(request):
     """Returns a JSON list of handshapes that match the previous search stored in sessions"""
-    if 'search_type' in request.session.keys() and request.session['search_type'] == 'handshape':
-        return HttpResponse(json.dumps(request.session['search_results']))
+    if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
+            and request.session['search_type'] == 'handshape':
+        return JsonResponse(request.session['search_results'], safe=False)
     else:
-        return HttpResponse(json.dumps(None))
+        return JsonResponse([])
 
 def lemma_ajax_search_results(request):
     """Returns a JSON list of handshapes that match the previous search stored in sessions"""
-    if 'search_type' in request.session.keys() and request.session['search_type'] == 'lemma':
-        return HttpResponse(json.dumps(request.session['search_results']))
+    if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
+            and request.session['search_type'] == 'lemma':
+        return JsonResponse(request.session['search_results'], safe=False)
     else:
-        # lemma ajax search results: search type not in session
-        return HttpResponse(json.dumps(None))
+        return JsonResponse([])
 
 def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
@@ -6445,7 +6443,7 @@ def gloss_ajax_complete(request, prefix):
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
 
-    return HttpResponse(json.dumps(sorted_result), {'content-type': 'application/json'})
+    return JsonResponse(sorted_result, safe=False)
 
 def handshape_ajax_complete(request, prefix):
     """Return a list of handshapes matching the search term
@@ -6456,7 +6454,7 @@ def handshape_ajax_complete(request, prefix):
     for g in qs:
         result.append({'name': g.name, 'machine_value': g.machine_value})
 
-    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+    return JsonResponse(result, safe=False)
 
 def morph_ajax_complete(request, prefix):
     """Return a list of morphemes matching the search term
@@ -6476,7 +6474,7 @@ def morph_ajax_complete(request, prefix):
         result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss,
                        'pk': "%s" % (g.id)})
 
-    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+    return JsonResponse(result, safe=False)
 
 def user_ajax_complete(request, prefix):
     """Return a list of users matching the search term
@@ -6492,17 +6490,15 @@ def user_ajax_complete(request, prefix):
     for u in qs:
         result.append({'first_name': u.first_name, 'last_name': u.last_name, 'username': u.username})
 
-    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+    return JsonResponse(result, safe=False)
 
 
 def lemma_ajax_complete(request, dataset_id, language_code, q):
 
     # check that the user is logged in
-    if request.user.is_authenticated:
-        pass
-    else:
+    if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
     # the following code allows for specifying a language for the dataset in the add_gloss.html template
 
@@ -6533,7 +6529,7 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
                 trans_dict['lemma'] = translation.text
                 lemmas_dict_list.append(trans_dict)
     sorted_lemmas_dict = sorted(lemmas_dict_list, key=lambda x : (x['lemma'], len(x['lemma'])))
-    return HttpResponse(json.dumps(sorted_lemmas_dict), {'content-type': 'application/json'})
+    return JsonResponse(sorted_lemmas_dict, safe=False)
 
 def homonyms_ajax_complete(request, gloss_id):
 
@@ -6558,7 +6554,7 @@ def homonyms_ajax_complete(request, gloss_id):
 
     homonyms_dict = { str(gloss_id) : result }
 
-    return HttpResponse(json.dumps(homonyms_dict), {'content-type': 'application/json'})
+    return JsonResponse(homonyms_dict, safe=False)
 
 def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
@@ -7278,11 +7274,11 @@ class LemmaUpdateView(UpdateView):
             search_results = []
         if search_results and len(search_results) > 0:
             if not self.request.session['search_results'][0]['href_type'] == 'lemma/update':
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if not self.request.session['search_type'] == 'lemma':
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         self.request.session['search_type'] = self.search_type
 
         context['active_id'] = self.object.pk

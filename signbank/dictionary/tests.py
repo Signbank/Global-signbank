@@ -1593,7 +1593,7 @@ class HandshapeTests(TestCase):
 
         #Add info of the dataset to the session (normally done in the details)
         self.client.session['datasetid'] = test_dataset.pk
-        self.client.session['search_results'] = None
+        self.client.session['search_results'] = []
         self.client.session.save()
 
         new_handshape = self.create_handshape()

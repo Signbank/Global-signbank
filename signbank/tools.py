@@ -1941,16 +1941,16 @@ def construct_scrollbar(qs, search_type, language_code):
                 gloss_text = annotationidglosstranslations[0].text
                 if not gloss_text:
                     gloss_text = item.idgloss
-                items.append(dict(id=item.id, data_label=gloss_text, href_type=item_is_morpheme))
+                items.append(dict(id=str(item.id), data_label=gloss_text, href_type=item_is_morpheme))
             else:
                 # no annotations found for gloss
                 # idgloss defaults to the id if nothing is found
-                items.append(dict(id=item.id, data_label=item.idgloss, href_type=item_is_morpheme))
+                items.append(dict(id=str(item.id), data_label=item.idgloss, href_type=item_is_morpheme))
 
     elif search_type in ['handshape']:
         for item in qs:
             data_label = item.name
-            items.append(dict(id = item.machine_value, data_label = data_label, href_type = 'handshape'))
+            items.append(dict(id=str(item.machine_value), data_label=data_label, href_type='handshape'))
     elif search_type in ['lemma']:
         # there is no lemma details, so the href goes to lemma/update
         for item in qs:
@@ -1964,10 +1964,10 @@ def construct_scrollbar(qs, search_type, language_code):
                     for tr in lemmaidglosstranslations:
                         if tr.language.language_code_2char == language_code:
                             lemma_text = tr.text
-                items.append(dict(id=item.id, data_label=lemma_text, href_type='lemma/update'))
+                items.append(dict(id=str(item.id), data_label=lemma_text, href_type='lemma/update'))
             else:
                 # no translations found for lemma
-                items.append(dict(id=item.id, data_label=str(item.id), href_type='lemma/update'))
+                items.append(dict(id=str(item.id), data_label=str(item.id), href_type='lemma/update'))
 
     return items
 

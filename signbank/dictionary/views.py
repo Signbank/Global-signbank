@@ -175,7 +175,7 @@ def gloss(request, glossid):
     if search_results and len(search_results) > 0:
         if request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
             # if the results have the wrong type
-            request.session['search_results'] = None
+            request.session['search_results'] = []
     if 'search_type' in request.session.keys():
         # check that the search type matches the results
         # the session variables are used by the ajax call
@@ -2060,6 +2060,7 @@ def recently_added_glosses(request):
 
     items = construct_scrollbar(recent_glosses, 'sign', lang_attr_name)
     request.session['search_results'] = items
+    request.session['search_type'] = 'sign'
     request.session.modified = True
 
     return render(request, 'dictionary/recently_added_glosses.html',
