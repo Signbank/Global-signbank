@@ -21,7 +21,7 @@ from signbank.dictionary.update import update_keywords, update_signlanguage, upd
 import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
-from signbank.video.forms import VideoUploadForGlossForm
+from signbank.video.forms import VideoUploadForObjectForm
 from signbank.tools import save_media
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
@@ -110,7 +110,8 @@ def word(request, keyword, n):
 
     if request.user.has_perm('dictionary.search_gloss'):
         update_form = GlossModelForm(instance=trans.gloss)
-        video_form = VideoUploadForGlossForm(initial={'gloss_id': trans.gloss.pk,
+        video_form = VideoUploadForOjectForm(initial={'gloss_id': trans.gloss.pk,
+                                                      'object_type': 'g',
                                                       'redirect': request.path})
     else:
         update_form = None
@@ -229,7 +230,8 @@ def gloss(request, glossid):
 
     if request.user.has_perm('dictionary.search_gloss'):
         update_form = GlossModelForm(instance=gloss)
-        video_form = VideoUploadForGlossForm(initial={'gloss_id': gloss.pk,
+        video_form = VideoUploadForObjectForm(initial={'gloss_id': gloss.pk,
+                                                      'object_type': 'g',
                                                       'redirect': request.get_full_path()})
     else:
         update_form = None
@@ -352,7 +354,8 @@ def morpheme(request, glossid):
 
     if request.user.has_perm('dictionary.search_gloss'):
         update_form = GlossModelForm(instance=morpheme)
-        video_form = VideoUploadForGlossForm(initial={'gloss_id': morpheme.pk,
+        video_form = VideoUploadForObjectForm(initial={'gloss_id': morpheme.pk,
+                                                       'object_type': 'g',
                                                       'redirect': request.get_full_path()})
     else:
         update_form = None

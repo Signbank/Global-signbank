@@ -20,7 +20,7 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from django.conf import settings
 
-from signbank.video.forms import VideoUploadForSentenceForm
+from signbank.video.forms import VideoUploadForObjectForm
 
 from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
@@ -287,12 +287,12 @@ def delete_examplesentence(request, senseid):
 
 def add_sentence_video(request, glossid, examplesentenceid):
     template = 'dictionary/add_sentence_video.html'
-    examplesentence = ExampleSentence.objects.get(id=examplesentenceid)
     gloss = Gloss.objects.get(id=glossid)
+    examplesentence = ExampleSentence.objects.get(id=examplesentenceid)
     context = {
         'examplesentence': examplesentence,
         'gloss': gloss,
-        'videoform': VideoUploadForSentenceForm(),
+        'videoform': VideoUploadForObjectForm(),
     }
     return render(request, template, context)
 

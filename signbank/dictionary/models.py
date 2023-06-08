@@ -596,7 +596,6 @@ class ExampleSentence(models.Model):
         default = settings.DEFAULT_DATASET_PK, help_text=_("Dataset an examplesentence is part of"), null=True)
     sentencetype = models.ForeignKey("SentenceType", null=True, on_delete=models.SET_NULL)
     negative = models.BooleanField(default=False)
-    video = models.TextField(max_length=32, default="zin_over_iets.mp4")
     
     def get_examplestc_translations_dict_with(self):
         translations = {}
@@ -644,7 +643,7 @@ class ExampleSentence(models.Model):
     
     def has_video(self):
         """Test to see if the video for this sign is present"""
-
+        
         return self.get_video() not in ['', None]
 
     def add_video(self, user, videofile, recorded):
@@ -662,11 +661,11 @@ class ExampleSentence(models.Model):
             video.videofile.save(get_sentence_video_file_path(video, str(videofile)), videofile)
         else:
             video = ExampleVideo(videofile=videofile, examplesentence=self)
-        video.save()
+            video.save()
         video.ch_own_mod_video()
         video.make_small_video()
 
-        # Create a GlossVideoHistory object
+        # Create a ExampleVideoHistory object
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
         examplevideohistory = ExampleVideoHistory(action="upload", examplesentence=self, actor=user,
                                               uploadfile=videofile, goal_location=video_file_full_path)
@@ -677,7 +676,6 @@ class ExampleSentence(models.Model):
     
     def __str__(self):
         return self.get_video_path()
-        # return ", ".join([k.text for k in self.examplesentencetranslation_set.all()])
 
 
 class ExampleSentenceTranslation(models.Model):
@@ -2036,7 +2034,7 @@ class Gloss(models.Model):
             video.videofile.save(get_video_file_path(video, str(videofile)), videofile)
         else:
             video = GlossVideo(videofile=videofile, gloss=self)
-        video.save()
+            video.save()
         video.ch_own_mod_video()
         video.make_small_video()
         video.make_poster_image()

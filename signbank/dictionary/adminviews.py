@@ -36,7 +36,7 @@ from guardian.shortcuts import get_objects_for_user
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.feedback.models import *
-from signbank.video.forms import VideoUploadForGlossForm
+from signbank.video.forms import VideoUploadForObjectForm
 from tagging.models import Tag, TaggedItem
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, \
     LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP, LANGUAGES, LANGUAGES_LANGUAGE_CODE_3CHAR
@@ -1399,7 +1399,7 @@ class GlossDetailView(DetailView):
 
         # Add in a QuerySet of all the books
         context['tagform'] = TagUpdateForm()
-        context['videoform'] = VideoUploadForGlossForm()
+        context['videoform'] = VideoUploadForObjectForm()
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
@@ -6149,7 +6149,7 @@ class MorphemeDetailView(DetailView):
         context = super(MorphemeDetailView, self).get_context_data(**kwargs)
         # Add in a QuerySet of all the books
         context['tagform'] = TagUpdateForm()
-        context['videoform'] = VideoUploadForGlossForm()
+        context['videoform'] = VideoUploadForObjectForm()
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()

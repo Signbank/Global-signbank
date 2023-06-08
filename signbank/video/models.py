@@ -195,7 +195,6 @@ def get_video_file_path(instance, filename, version=0):
     :param version: the version to determine the number of .bak extensions
     :return: 
     """
-
     (base, ext) = os.path.splitext(filename)
 
     idgloss = instance.gloss.idgloss
@@ -255,12 +254,12 @@ def get_sentence_video_file_path(instance, filename, version=0):
     """
 
     (base, ext) = os.path.splitext(filename)
-
     video_dir = settings.EXAMPLESENTENCE_VIDEO_DIRECTORY
     try:
-        dataset_dir = instance.examplesentence.dataset.acronym
+        dataset_dir = os.path.join(instance.examplesentence.dataset.acronym, str(instance.examplesentence.id))
     except:
         dataset_dir = ""
+    
     filename = str(instance.examplesentence.id) + ext + (version * ".bak")
 
     path = os.path.join(video_dir, dataset_dir, filename)
@@ -520,6 +519,8 @@ class GlossVideo(models.Model):
     def ch_own_mod_video(self):
         """Change owner and permissions"""
         location = self.videofile.path
+        print(location)
+        
 
         # make sure they're readable by everyone
         # os.chown(location, 1000, 1002)
