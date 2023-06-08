@@ -1058,17 +1058,13 @@ class GlossListView(ListView):
         # SignLanguage and basic property filters
         # allows for multiselect
         vals = get.getlist('dialect[]')
-        if '' in vals:
-            vals.remove('')
         if vals != []:
-            query_parameters['dialect[]'] = get.getlist('dialect[]')
+            query_parameters['dialect[]'] = vals
             qs = qs.filter(dialect__in=vals)
 
         vals = get.getlist('tags[]')
-        if '' in vals:
-            vals.remove('')
         if vals != []:
-            query_parameters['tags[]'] = get.getlist('tags[]')
+            query_parameters['tags[]'] = vals
             tags = Tag.objects.filter(name__in=vals)
             tqs = TaggedItem.objects.filter(tag_id__in=tags)
             glosses_with_tag = [taggeditem.object_id for taggeditem in tqs]
@@ -1076,10 +1072,8 @@ class GlossListView(ListView):
 
         # allows for multiselect
         vals = get.getlist('signlanguage[]')
-        if '' in vals:
-            vals.remove('')
         if vals != []:
-            query_parameters['signlanguage[]'] = get.getlist('signlanguage[]')
+            query_parameters['signlanguage[]'] = vals
             qs = qs.filter(signlanguage__in=vals)
 
         if 'useInstr' in get and get['useInstr'] != '':
@@ -1092,10 +1086,8 @@ class GlossListView(ListView):
             fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
-            if '' in vals:
-                vals.remove('')
             if vals != []:
-                query_parameters[fieldnamemultiVarname] = get.getlist(fieldnamemultiVarname)
+                query_parameters[fieldnamemultiVarname] = vals
                 if fieldnamemulti == 'semField':
                     qs = qs.filter(semField__in=vals)
                 elif fieldnamemulti == 'derivHist':
@@ -1183,10 +1175,8 @@ class GlossListView(ListView):
 
         if 'hasComponentOfType[]' in get:
             vals = get.getlist('hasComponentOfType[]')
-            if '' in vals:
-                vals.remove('')
             if vals != []:
-                query_parameters['hasComponentOfType[]'] = get.getlist('hasComponentOfType[]')
+                query_parameters['hasComponentOfType[]'] = vals
 
                 morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=vals)
                 pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
@@ -1203,10 +1193,8 @@ class GlossListView(ListView):
         if 'definitionRole[]' in get:
 
             vals = get.getlist('definitionRole[]')
-            if '' in vals:
-                vals.remove('')
             if vals != []:
-                query_parameters['definitionRole[]'] = get.getlist('definitionRole[]')
+                query_parameters['definitionRole[]'] = vals
                 #Find all definitions with this role
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
 
@@ -1214,7 +1202,7 @@ class GlossListView(ListView):
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
-        if 'definitionContains' in get and get['definitionContains'] != '' and get['definitionContains'] not in ['', '0']:
+        if 'definitionContains' in get and get['definitionContains'] not in ['', '0']:
             query_parameters['definitionContains'] = get['definitionContains']
 
             definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains'])
@@ -2573,8 +2561,6 @@ class MorphemeListView(ListView):
         if 'definitionRole[]' in get:
 
             vals = get.getlist('definitionRole[]')
-            if '' in vals:
-                vals.remove('')
             if vals != []:
                 #Find all definitions with this role
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
@@ -2591,22 +2577,16 @@ class MorphemeListView(ListView):
         # SignLanguage and basic property filters
         # allows for multiselect
         vals = get.getlist('dialect[]')
-        if '' in vals:
-            vals.remove('')
         if vals != []:
             qs = qs.filter(dialect__in=vals)
 
         # allows for multiselect
         vals = get.getlist('signlanguage[]')
-        if '' in vals:
-            vals.remove('')
         if vals != []:
             qs = qs.filter(signlanguage__in=vals)
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
-            if '' in vals:
-                vals.remove('')
             if vals != []:
                 tags = Tag.objects.filter(name__in=vals)
                 tqs = TaggedItem.objects.filter(tag_id__in=tags, object_id__in=qs)
@@ -2630,8 +2610,6 @@ class MorphemeListView(ListView):
             fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
-            if '' in vals:
-                vals.remove('')
             if vals != []:
                 if fieldnamemulti == 'semField':
                     qs = qs.filter(semField__in=vals)
@@ -3352,8 +3330,6 @@ class MinimalPairsListView(ListView):
                 continue
             if veld[-2:] == '[]' :
                 veld_list = self.request.GET.getlist(veld)
-                if '' in veld_list:
-                    veld_list.remove('')
                 if not veld_list:
                     continue
                 veld_value = veld_list
@@ -3504,8 +3480,6 @@ class MinimalPairsListView(ListView):
                 fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
-            if '' in vals:
-                vals.remove('')
             if vals != []:
                 qs = qs.filter(**{ fieldnameQuery: vals })
 
@@ -7525,10 +7499,8 @@ class KeywordListView(ListView):
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
-            if '' in vals:
-                vals.remove('')
             if vals != []:
-                query_parameters['tags[]'] = get.getlist('tags[]')
+                query_parameters['tags[]'] = vals
                 tags = Tag.objects.filter(name__in=vals)
                 tqs = TaggedItem.objects.filter(tag_id__in=tags, object_id__in=glosses_of_datasets)
                 glosses_with_tag = [taggeditem.object_id for taggeditem in tqs]
