@@ -991,14 +991,14 @@ option:not(:checked) {
                         <table class='table table-condensed'>
                         {% for examplesentence in sense.exampleSentences.all %}
                             <tr>
-                                <th>
-                                {% if examplesentence.sentencetype %}
-                                {{ examplesentence.sentencetype }}
+                                <td>
+                                {% if examplesentence.sentenceType %}
+                                <i>{{ examplesentence.sentenceType.name }}</i>
                                 {% else %}
                                 - 
                                 {% endif %}
                                 {% if examplesentence.negative %}
-                                (neg)
+                                <i>(neg)</i>
                                 {% endif %}
                                 {% if examplesentence.has_video %}
                                 <div class="pull-right">
@@ -1020,7 +1020,7 @@ option:not(:checked) {
                                 </div>
                                 {% endif %}
                                 {% endif %}
-                                </th>
+                                </td>
                             </tr>
                             <tr>
                                 <td style="border: none" colspan="100%">
@@ -1066,9 +1066,9 @@ option:not(:checked) {
                                                     <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}">
                                                     <input type="hidden" name="senseid" value="{{ sense.id }}">
                                                     <input type='hidden' name='value' value='confirmed'>
-                                                    Type: <select name="sentencetype">
+                                                    Type: <select name="sentenceType">
                                                         {% for stype in sentencetypes %}
-                                                        <option value="{{stype.text}}" {% if examplesentence.sentencetype.text == stype.text %}selected{% endif %}>{{stype.description}}</option>
+                                                        <option value="{{stype.0}}" {% if examplesentence.sentenceType.machine_value|slugify == stype.0|slugify %}selected{% endif %}>{{stype.1}}</option>
                                                         {% endfor %}
                                                     </select><br><br>
                                                     <input type="hidden" name="negative" value=False>
@@ -1110,7 +1110,7 @@ option:not(:checked) {
                                         {% endif %}
                                     </div>
 
-                                    Type: {{examplesentence.sentencetype}}
+                                    Type: {{examplesentence.sentenceType.name}}
                                     {% if examplesentence.negative %} (neg) {% endif %}<br><br>
                                     Translations:<br>
                                     {% for sentence in examplesentence.get_examplestc_translations %}
@@ -1133,9 +1133,10 @@ option:not(:checked) {
                                             {% csrf_token %}
                                             <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
                                             <input type='hidden' name='value' value='confirmed'>
-                                            Type: <select name="sentencetype">
+                                            Type: 
+                                            <select name="sentenceType">
                                                 {% for stype in sentencetypes %}
-                                                <option value="{{stype.text}}" >{{stype.description}}</option>
+                                                <option value="{{stype.0}}" >{{stype.1}}</option>
                                                 {% endfor %}
                                             </select><br><br>
                                             <input type="hidden" name="negative" value=False>

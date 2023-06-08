@@ -166,7 +166,7 @@ def update_examplesentence(request, examplesentenceid):
         negative = True
     else:
         negative = False
-    stype = SentenceType.objects.all().get(text = request.POST['sentencetype'])
+    stype = FieldChoice.objects.filter(field='SentenceType').get(machine_value = request.POST['sentenceType'])
 
     # Make a dictionary of the posted values
     vals = {}
@@ -179,10 +179,10 @@ def update_examplesentence(request, examplesentenceid):
     with atomic():
 
         # If change is made in negative or type then change and save that
-        if examplesentence.sentencetype == None:
-            examplesentence.sentencetype = stype
-        elif examplesentence.sentencetype.text != stype.text: 
-            examplesentence.sentencetype = stype
+        if examplesentence.sentenceType == None:
+            examplesentence.sentenceType = stype
+        elif examplesentence.sentenceType != stype: 
+            examplesentence.sentenceType = stype
         if examplesentence.negative != negative:
             examplesentence.negative=negative
         examplesentence.save()
@@ -255,8 +255,8 @@ def create_examplesentence(request, senseid):
                 messages.add_message(request, messages.INFO, _('This examplesentences already existed in this dataset.'))
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     
-        stype = SentenceType.objects.all().get(text = request.POST['sentencetype'])
-        examplesentence = ExampleSentence.objects.create(negative=negative, sentencetype=stype)
+        stype = FieldChoice.objects.filter(field='SentenceType').get(machine_value = request.POST['sentenceType'])
+        examplesentence = ExampleSentence.objects.create(negative=negative, sentenceType=stype)
         examplesentence.save()
         sense.exampleSentences.add(examplesentence)
         for dataset_language in dataset_languages:

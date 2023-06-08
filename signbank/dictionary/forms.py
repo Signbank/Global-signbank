@@ -1244,8 +1244,8 @@ class FieldChoiceForm(forms.ModelForm):
         field = data_fields['field']
 
         qs_f = FieldChoice.objects.filter(field=field)
-        if qs_f.count() == 0:
-            raise forms.ValidationError(_('This Field Choice Category does not exist'))
+        # if qs_f.count() == 0:
+        #     raise forms.ValidationError(_('This Field Choice Category does not exist'))
 
         for language in MODELTRANSLATION_LANGUAGES:
             name_languagecode = 'name_'+ language.replace('-', '_')

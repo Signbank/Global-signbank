@@ -83,6 +83,7 @@ class FieldChoice(models.Model):
     THUMB = 'Thumb'
     VALENCE = 'Valence'
     WORDCLASS = 'WordClass'
+    SENTENCETYPE = 'SentenceType'
 
     FIELDCHOICE_FIELDS = [
         (ABSORIFING, 'AbsOriFing'),
@@ -115,7 +116,8 @@ class FieldChoice(models.Model):
         (SPREADING, 'Spreading'),
         (THUMB, 'Thumb'),
         (VALENCE, 'Valence'),
-        (WORDCLASS, 'WordClass')
+        (WORDCLASS, 'WordClass'),
+        (SENTENCETYPE, 'SentenceType')
     ]
 
     field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
@@ -580,21 +582,15 @@ class Language(models.Model):
     def __str__(self):
         return self.name
 
-class SentenceType(models.Model):
-    """A sentence type is given to an example sentence"""
-
-    text = models.CharField(max_length=32)
-    description = models.CharField(max_length=32)
-
-    def __str__(self):
-        return self.text
-
 class ExampleSentence(models.Model):
     """An example sentence belongs to one or more sense(s)"""
     
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
         default = settings.DEFAULT_DATASET_PK, help_text=_("Dataset an examplesentence is part of"), null=True)
-    sentencetype = models.ForeignKey("SentenceType", null=True, on_delete=models.SET_NULL)
+    sentenceType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.SENTENCETYPE},
+                                    field_choice_category=FieldChoice.SENTENCETYPE,
+                                    verbose_name=_("Sentence Type"), related_name="sentence_type")
     negative = models.BooleanField(default=False)
     
     def get_examplestc_translations_dict_with(self):
@@ -611,6 +607,9 @@ class ExampleSentence(models.Model):
 
     def get_examplestc_translations(self):
         return [k+": "+v for k,v in self.get_examplestc_translations_dict_without().items()]
+    
+    def get_type(self):
+        return self.sentenceType.name
 
     def get_video_path(self):
         try:
@@ -3065,7 +3064,9 @@ class QueryParameterFieldChoice(QueryParameter):
         # Definition Class
         ('definitionRole', 'definitionRole'),
         # MorphologyDefinition Class
-        ('hasComponentOfType', 'hasComponentOfType')
+        ('hasComponentOfType', 'hasComponentOfType'),
+        # SentenceType Class
+        ('sentenceType', 'sentenceType')
     ]
     QUERY_FIELD_CATEGORY = [
         ('wordClass', 'WordClass'),
@@ -3084,7 +3085,9 @@ class QueryParameterFieldChoice(QueryParameter):
         # Definition Class
         ('definitionRole', 'NoteType'),
         # MorphologyDefinition Class
-        ('hasComponentOfType', 'MorphologyType')
+        ('hasComponentOfType', 'MorphologyType'),
+        # SentenceType Class
+        ('sentenceType', 'SentenceType'),
     ]
     fieldName = models.CharField(_("Field Name"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"), on_delete=models.CASCADE)

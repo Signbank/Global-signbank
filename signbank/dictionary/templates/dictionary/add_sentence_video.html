@@ -21,7 +21,7 @@
         <legend>{% trans "Upload New Example Sentence Video" %}</legend>
         
         For the following sentence:<br><br>
-        Type: {{examplesentence.sentencetype}}
+        Type: {{examplesentence.sentenceType}}
         {% if examplesentence.negative %} (neg) {% endif %}<br><br>
         With translations:<br>
         {% for sentence in examplesentence.get_examplestc_translations %}
