@@ -119,10 +119,8 @@ option:not(:checked) {
     var wordclass_choices = {{morpheme.wordclass_choices|safe}};
 
     var morph_type = {{morph_type|safe}};
-    var morph_type_colors = '{}';
-    for (var key in morph_type) {
-        morph_type_colors[key] = 'ffffff';
-    };
+    var morph_type_colors = {{morph_type_colors|safe}};
+
     var choice_lists = [];
     var static_choice_lists = {{static_choice_lists|safe}};
     var static_choice_list_colors = {{static_choice_list_colors|safe}};
@@ -450,7 +448,7 @@ function checkKey(e)
             </tr>
             {% endfor %}
 
-            <tr>
+            <tr {%if morpheme_type == '-' %} class="empty_row"{% endif %}>
                 <th>{% trans "Morpheme Type" %}</th>
                 <td class='edit edit_mrptype' id='mrpType' value='{{morpheme_type}}'>{{morpheme_type}}</td>
             </tr>
@@ -542,7 +540,7 @@ function checkKey(e)
         <div id='phonology' class='panel-collapse collapse'>
             <table class='table table-condensed'>
 		{% for value,name,label,kind in phonology_fields %}
-                {% if value == '-' or value == ' ' or value == '' or value == None or value == False %}
+                {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %}
                 <tr class="empty_row">
                 {% else %}
                 <tr>
@@ -552,7 +550,7 @@ function checkKey(e)
                     <td class="edit edit_check"
                         id='{{name}}' value='{{value}}' >{% if value %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                     {% else %}
-                    <td class="edit edit_{{kind}}"
+                    <td class="edit edit_{{kind}}" data-value=""
                         id='{{name}}' value='{{value}}' >{% value value %}</td>
                     {% endif %}
                 <td></td>

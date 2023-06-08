@@ -10,12 +10,13 @@ from django.db.models.query import QuerySet
 from django.db.models.functions import Concat
 from django.db.models.fields import BooleanField, BooleanField
 from django.db.models.sql.where import NothingNode, WhereNode
-from django.http import HttpResponse, HttpResponseRedirect, QueryDict
+from django.http import HttpResponse, HttpResponseRedirect, QueryDict, JsonResponse
 from django.template import RequestContext
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.paginator import Paginator
 from django.utils.translation import override, gettext_lazy as _, activate
+from django.utils.html import escape
 from django.forms.fields import ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
@@ -285,7 +286,7 @@ class GlossListView(ListView):
         selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
         sign_languages = []
         for sl in selected_datasets_signlanguage:
-            if not ((str(sl.id),sl.name) in sign_languages):
+            if (str(sl.id),sl.name) not in sign_languages:
                 sign_languages.append((str(sl.id), sl.name))
 
         selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage)\
@@ -300,7 +301,7 @@ class GlossListView(ListView):
                 # if the query parameters are available, convert them to a dictionary
                 session_query_parameters = self.request.session['query_parameters']
                 self.query_parameters = json.loads(session_query_parameters)
-            elif 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
+            elif 'search_results' not in self.request.session.keys() or not self.request.session['search_results']:
                 self.query_parameters = {}
                 # save the default query parameters to the sessin variable
                 self.request.session['query_parameters'] = json.dumps(self.query_parameters)
@@ -370,12 +371,12 @@ class GlossListView(ListView):
             val = self.request.GET['search']
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
-            gloss_fields_to_populate['search'] = val
+            gloss_fields_to_populate['search'] = escape(val)
         if 'translation' in self.request.GET and self.request.GET['translation'] != '':
             val = self.request.GET['translation']
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
-            gloss_fields_to_populate['translation'] = val
+            gloss_fields_to_populate['translation'] = escape(val)
         gloss_fields_to_populate_keys = list(gloss_fields_to_populate.keys())
         context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
         context['gloss_fields_to_populate_keys'] = gloss_fields_to_populate_keys
@@ -1272,7 +1273,7 @@ class GlossListView(ListView):
         self.request.session['search_type'] = self.search_type
         self.request.session['web_search'] = self.web_search
 
-        if not 'last_used_dataset' in self.request.session.keys():
+        if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # Return the resulting filtered and sorted queryset
@@ -1355,11 +1356,11 @@ class GlossDetailView(DetailView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
@@ -1983,11 +1984,11 @@ class GlossVideosView(DetailView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         # Call the base implementation first to get a context
         context = super(GlossVideosView, self).get_context_data(**kwargs)
@@ -2385,7 +2386,7 @@ class MorphemeListView(ListView):
         selected_datasets_signlanguage = [ ds.signlanguage for ds in selected_datasets ]
         sign_languages = []
         for sl in selected_datasets_signlanguage:
-            if not ((str(sl.id), sl.name) in sign_languages):
+            if ((str(sl.id), sl.name) not in sign_languages):
                 sign_languages.append((str(sl.id), sl.name))
 
         selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage).distinct()
@@ -2763,7 +2764,7 @@ class MorphemeListView(ListView):
 
         self.request.session['search_type'] = 'morpheme'
 
-        if not ('last_used_dataset' in self.request.session.keys()):
+        if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # Return the resulting filtered and sorted queryset
@@ -3012,9 +3013,9 @@ class HandshapeDetailView(DetailView):
             if self.request.session['search_results'] and len(self.request.session['search_results']) > 0:
                 if self.request.session['search_results'][0]['href_type'] in ['gloss', 'morpheme']:
                     # if the previous search does not match the search type
-                    self.request.session['search_results'] = None
+                    self.request.session['search_results'] = []
 
-        if 'search_results' not in self.request.session.keys() or self.request.session['search_results'] is None:
+        if 'search_results' not in self.request.session.keys() or not self.request.session['search_results']:
             # there are no handshapes in the scrollbar, put some there
 
             qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
@@ -3390,7 +3391,7 @@ class MinimalPairsListView(ListView):
                 veld_list = self.request.GET.getlist(veld)
                 if '' in veld_list:
                     veld_list.remove('')
-                if veld_list is []:
+                if not veld_list:
                     continue
                 veld_value = veld_list
             gloss_fields_to_populate[veld] = veld_value
@@ -3459,7 +3460,7 @@ class MinimalPairsListView(ListView):
         if not get:
             # to speed things up, don't show anything on initial visit
             qs = Gloss.objects.none()
-            self.request.session['search_results'] = None
+            self.request.session['search_results'] = []
             self.request.session.modified = True
             return qs
 
@@ -3476,7 +3477,7 @@ class MinimalPairsListView(ListView):
             error_message = error_message_1 + error_message_2 + error_message_3
             messages.add_message(self.request, messages.ERROR, error_message)
             qs = Gloss.objects.none()
-            self.request.session['search_results'] = None
+            self.request.session['search_results'] = []
             self.request.session.modified = True
             return qs
 
@@ -3601,11 +3602,11 @@ class QueryListView(ListView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
 
@@ -3721,11 +3722,11 @@ class QueryListView(ListView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
 
@@ -3799,11 +3800,11 @@ class SearchHistoryView(ListView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         qs = SearchHistory.objects.filter(user=self.request.user).order_by('queryDate').reverse()
 
@@ -4054,11 +4055,11 @@ class GlossFrequencyView(DetailView):
             search_results = []
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
 
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
@@ -4559,8 +4560,14 @@ class HandshapeListView(ListView):
                     qs = qs.filter(query)
 
                 if val not in ['', '0'] and fieldname not in ['hsNumSel', 'name']:
-                    kwargs = {key: val}
-                    qs = qs.filter(**kwargs)
+
+                    if isinstance(Handshape._meta.get_field(fieldname), FieldChoiceForeignKey):
+                        key = fieldname + '__machine_value'
+                        kwargs = {key: int(val)}
+                        qs = qs.filter(**kwargs)
+                    else:
+                        kwargs = {key: val}
+                        qs = qs.filter(**kwargs)
 
         if ('sortOrder' in get and get['sortOrder'] != 'machine_value'):
             # User has toggled the sort order for the column
@@ -4708,7 +4715,7 @@ class DatasetListView(ListView):
         for owner in owners_of_dataset:
 
             groups_of_user = owner.groups.all()
-            if not group_manager in groups_of_user:
+            if group_manager not in groups_of_user:
                 # this owner can't manage users
                 continue
 
@@ -4938,7 +4945,7 @@ class DatasetManagerView(ListView):
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         groups_of_user = self.request.user.groups.all()
-        if not group_manager in groups_of_user:
+        if group_manager not in groups_of_user:
             messages.add_message(self.request, messages.ERROR,
                                  _('You must be in group Dataset Manager to modify dataset permissions.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
@@ -5111,7 +5118,7 @@ class DatasetManagerView(ListView):
                                  _('User already has change permission for this dataset.'))
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
-            if not dataset_object in datasets_user_can_view:
+            if dataset_object not in datasets_user_can_view:
                 messages.add_message(self.request, messages.WARNING,
                                      _('User does not have view permission for this dataset. Please grant view permission first.'))
 
@@ -5297,7 +5304,7 @@ class DatasetManagerView(ListView):
                 return None
 
             groups_of_user = self.request.user.groups.all()
-            if not group_manager in groups_of_user:
+            if group_manager not in groups_of_user:
                 messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 
@@ -5434,7 +5441,7 @@ class DatasetDetailView(DetailView):
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
         groups_of_user = self.request.user.groups.all()
-        if not group_manager in groups_of_user:
+        if group_manager not in groups_of_user:
             messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset Manager to modify dataset permissions.'))
             return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
 
@@ -5608,7 +5615,7 @@ class DatasetFieldChoiceView(ListView):
                 return None
 
             groups_of_user = self.request.user.groups.all()
-            if not group_manager in groups_of_user:
+            if group_manager not in groups_of_user:
                 messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset_Manager to use the requested functionality.'))
                 return None
 
@@ -6136,12 +6143,12 @@ class MorphemeDetailView(DetailView):
 
         if search_results and len(search_results) > 0:
             if self.request.session['search_results'][0]['href_type'] not in ['morpheme', 'gloss']:
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if self.request.session['search_type'] not in ['morpheme', 'sign_or_morpheme']:
                 # user has not queried morphemes
                 # search_type is 'handshape', 'sign', 'sign_handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         else:
             self.request.session['search_type'] = self.search_type
 
@@ -6269,21 +6276,12 @@ class MorphemeDetailView(DetailView):
                 'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
         context['other_media_field_choices'] = json.dumps(context['other_media_field_choices'])
 
-        # Get the list of choices for this field
-        # this code used to be a method in models.py
-        li = list(FieldChoice.objects.filter(field='MorphemeType', machine_value__lte=1)
-                         .order_by('machine_value').values_list('machine_value', 'name')) \
-                  + list([(field_choice.machine_value, field_choice.name) for field_choice in
-                          FieldChoice.objects.filter(field='MorphemeType', machine_value__gt=1)
-                         .order_by('name')])
-
-        # Sort the list
-        sorted_li = sorted(li, key=lambda x: x[1])
-
-        # Put it in another format
-        reformatted_li = [('_' + str(value), text) for value, text in sorted_li]
-
-        context['morph_type'] = json.dumps(OrderedDict(reformatted_li))
+        morpheme_type_choice_list = FieldChoice.objects.filter(field__iexact='MorphemeType')
+        morpheme_type_choices = choicelist_queryset_to_translated_dict(morpheme_type_choice_list,
+                                                                       shortlist=False)
+        morpheme_type_choices_colors = choicelist_queryset_to_colors(morpheme_type_choice_list)
+        context['morph_type'] = json.dumps(morpheme_type_choices)
+        context['morph_type_colors'] = json.dumps(morpheme_type_choices_colors)
 
         # make lemma group empty for Morpheme (ask Onno about this)
         context['lemma_group'] = False
@@ -6298,7 +6296,7 @@ class MorphemeDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
 
-        translated_morph_type = gl.mrpType.name if gl.mrpType else ''
+        translated_morph_type = gl.mrpType.name if gl.mrpType else '-'
 
         context['morpheme_type'] = translated_morph_type
 
@@ -6393,29 +6391,27 @@ class MorphemeDetailView(DetailView):
 
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""
-    if 'search_type' in request.session.keys():
-        if request.session['search_type'] in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
-            return HttpResponse(json.dumps(request.session['search_results']))
-        else:
-            return HttpResponse(json.dumps(None))
+    if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
+            and request.session['search_type'] in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+        return JsonResponse(request.session['search_results'], safe=False)
     else:
-        # gloss ajax search results: search type not in session
-        return HttpResponse(json.dumps(None))
+        return JsonResponse([])
 
 def handshape_ajax_search_results(request):
     """Returns a JSON list of handshapes that match the previous search stored in sessions"""
-    if 'search_type' in request.session.keys() and request.session['search_type'] == 'handshape':
-        return HttpResponse(json.dumps(request.session['search_results']))
+    if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
+            and request.session['search_type'] == 'handshape':
+        return JsonResponse(request.session['search_results'], safe=False)
     else:
-        return HttpResponse(json.dumps(None))
+        return JsonResponse([])
 
 def lemma_ajax_search_results(request):
     """Returns a JSON list of handshapes that match the previous search stored in sessions"""
-    if 'search_type' in request.session.keys() and request.session['search_type'] == 'lemma':
-        return HttpResponse(json.dumps(request.session['search_results']))
+    if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
+            and request.session['search_type'] == 'lemma':
+        return JsonResponse(request.session['search_results'], safe=False)
     else:
-        # lemma ajax search results: search type not in session
-        return HttpResponse(json.dumps(None))
+        return JsonResponse([])
 
 def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
@@ -6450,7 +6446,7 @@ def gloss_ajax_complete(request, prefix):
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
 
-    return HttpResponse(json.dumps(sorted_result), {'content-type': 'application/json'})
+    return JsonResponse(sorted_result, safe=False)
 
 def handshape_ajax_complete(request, prefix):
     """Return a list of handshapes matching the search term
@@ -6461,7 +6457,7 @@ def handshape_ajax_complete(request, prefix):
     for g in qs:
         result.append({'name': g.name, 'machine_value': g.machine_value})
 
-    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+    return JsonResponse(result, safe=False)
 
 def morph_ajax_complete(request, prefix):
     """Return a list of morphemes matching the search term
@@ -6481,7 +6477,7 @@ def morph_ajax_complete(request, prefix):
         result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss,
                        'pk': "%s" % (g.id)})
 
-    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+    return JsonResponse(result, safe=False)
 
 def user_ajax_complete(request, prefix):
     """Return a list of users matching the search term
@@ -6497,17 +6493,15 @@ def user_ajax_complete(request, prefix):
     for u in qs:
         result.append({'first_name': u.first_name, 'last_name': u.last_name, 'username': u.username})
 
-    return HttpResponse(json.dumps(result), {'content-type': 'application/json'})
+    return JsonResponse(result, safe=False)
 
 
 def lemma_ajax_complete(request, dataset_id, language_code, q):
 
     # check that the user is logged in
-    if request.user.is_authenticated:
-        pass
-    else:
+    if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
     # the following code allows for specifying a language for the dataset in the add_gloss.html template
 
@@ -6538,7 +6532,7 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
                 trans_dict['lemma'] = translation.text
                 lemmas_dict_list.append(trans_dict)
     sorted_lemmas_dict = sorted(lemmas_dict_list, key=lambda x : (x['lemma'], len(x['lemma'])))
-    return HttpResponse(json.dumps(sorted_lemmas_dict), {'content-type': 'application/json'})
+    return JsonResponse(sorted_lemmas_dict, safe=False)
 
 def homonyms_ajax_complete(request, gloss_id):
 
@@ -6563,7 +6557,7 @@ def homonyms_ajax_complete(request, gloss_id):
 
     homonyms_dict = { str(gloss_id) : result }
 
-    return HttpResponse(json.dumps(homonyms_dict), {'content-type': 'application/json'})
+    return JsonResponse(homonyms_dict, safe=False)
 
 def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
@@ -7283,11 +7277,11 @@ class LemmaUpdateView(UpdateView):
             search_results = []
         if search_results and len(search_results) > 0:
             if not self.request.session['search_results'][0]['href_type'] == 'lemma/update':
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
             if not self.request.session['search_type'] == 'lemma':
                 # search_type is 'handshape'
-                self.request.session['search_results'] = None
+                self.request.session['search_results'] = []
         self.request.session['search_type'] = self.search_type
 
         context['active_id'] = self.object.pk
@@ -7504,6 +7498,11 @@ class KeywordListView(ListView):
 
     model = Gloss
     template_name = 'dictionary/admin_keyword_list.html'
+    paginate_by = 25
+    query_parameters = dict()
+
+    def get(self, request, *args, **kwargs):
+        return super(KeywordListView, self).get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(KeywordListView, self).get_context_data(**kwargs)
@@ -7519,6 +7518,18 @@ class KeywordListView(ListView):
         else:
             dataset_language = selected_datasets.first().default_language
         context['dataset_language'] = dataset_language
+
+        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
+
+        context['searchform'] = search_form
+
+        multiple_select_gloss_fields = ['tags']
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+
+        # data structures to store the query parameters in order to keep them in the form
+        context['query_parameters'] = json.dumps(self.query_parameters)
+        query_parameters_keys = list(self.query_parameters.keys())
+        context['query_parameters_keys'] = json.dumps(query_parameters_keys)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -7536,12 +7547,32 @@ class KeywordListView(ListView):
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
+        get = self.request.GET
+
         dataset_language = selected_datasets.first().default_language
 
         # multilingual
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        glosses_of_datasets = Gloss.objects.filter(lemma__dataset__in=selected_datasets)
+        # exclude morphemes
+        glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
+
+        # data structure to store the query parameters in order to keep them in the form
+        query_parameters = dict()
+
+        if 'tags[]' in get:
+            vals = get.getlist('tags[]')
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                query_parameters['tags[]'] = get.getlist('tags[]')
+                tags = Tag.objects.filter(name__in=vals)
+                tqs = TaggedItem.objects.filter(tag_id__in=tags, object_id__in=glosses_of_datasets)
+                glosses_with_tag = [taggeditem.object_id for taggeditem in tqs]
+                glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
+
+        self.query_parameters = query_parameters
+
         glossesXsenses = []
         for gloss in glosses_of_datasets:
             keyword_translations_per_language = dict()

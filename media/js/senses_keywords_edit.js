@@ -227,6 +227,27 @@ function add_gloss_keywords(data) {
     modalEditKeywordsCell.append("</tr>");
 }
 
+function toggle_sense_tag(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var tags_list = data.tags_list;
+    var tagsCell = $("#tags_cell_"+glossid);
+    $(tagsCell).empty();
+    var cell = "";
+    var num_spaces = tags_list.length - 1;
+    for (var key in tags_list) {
+        if (key < num_spaces) {
+            cell = cell + "<span class='tag'>"+tags_list[key]+"</span> ";
+        } else {
+            cell = cell + "<span class='tag'>"+tags_list[key]+"</span>";
+        }
+    }
+    tagsCell.html(cell);
+}
+
+
 $(document).ready(function() {
 
     // setup required for Ajax POST
@@ -296,7 +317,7 @@ $(document).ready(function() {
          });
      });
 
-      $('.add_keyword').click(function(e)
+     $('.add_keyword').click(function(e)
 	 {
          e.preventDefault();
 	     var glossid = $(this).attr('value');
@@ -314,6 +335,19 @@ $(document).ready(function() {
                     'csrfmiddlewaretoken': csrf_token},
             datatype: "json",
             success : add_gloss_keywords
+         });
+     });
+
+     $('.quick_tag').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+         $.ajax({
+            url : url + "/dictionary/update/toggle_sense_tag/" + glossid,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_sense_tag
          });
      });
 });

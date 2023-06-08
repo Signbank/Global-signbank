@@ -1067,6 +1067,22 @@ class LemmaUpdateForm(forms.ModelForm):
         return
 
 
+class KeyMappingSearchForm(forms.ModelForm):
+
+    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = Gloss
+        fields = settings.MINIMAL_PAIRS_SEARCH_FIELDS
+
+    def __init__(self, queryDict, *args, **kwargs):
+        languages = kwargs.pop('languages')
+        super(KeyMappingSearchForm, self).__init__(queryDict, *args, **kwargs)
+
+
 class FocusGlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False #otherwise the html required attribute will show up on every form

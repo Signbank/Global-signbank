@@ -346,7 +346,7 @@ $(document).ready(function() {
 // http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
 function clearForm() {
 
-      var inputElements = document.getElementById('searchfields').querySelectorAll("input");
+      var inputElements = document.getElementById('query-area').querySelectorAll("input");
       var selectElements = document.getElementById('searchpanels').querySelectorAll("select");
 
       for(i=0; i<inputElements.length; i++) {
@@ -359,7 +359,7 @@ function clearForm() {
             case "textarea":
             case "hidden":
 
-              inputElements[i].value = "";
+              inputElements[i].setAttribute('value','');
               break;
 
             case "radio":
@@ -449,18 +449,24 @@ function ready_videos(el) {
 
     $(el).mouseenter(function ()
     {
-        $(this).find('img').hide();
-        $(this).find('video').show();
-        $(this).find('video').get(0).play();
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            $(this).find('img').hide();
+            video.show();
+            video.get(0).play();
+        }
     });
 
     $(el).mouseleave(function ()
     {
         $(this).find('img').show();
-        $(this).find('video').hide();
 
-        $(this).find('video').get(0).pause();
-        $(this).find('video').get(0).currentTime = 0;
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            video.hide();
+            video.get(0).pause();
+            video.get(0).currentTime = 0;
+        }
     });
 }
 

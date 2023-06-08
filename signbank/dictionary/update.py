@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from django.template import Context, RequestContext, loader
 from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
@@ -141,8 +141,8 @@ def add_gloss(request):
     except ValidationError as ve:
         return show_error(request, ve.message, form, dataset_languages)
 
-    if not ('search_results' in request.session.keys()):
-        request.session['search_results'] = None
+    if 'search_results' not in request.session.keys():
+        request.session['search_results'] = []
 
     # new gloss created successfully, go to GlossDetailView
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
@@ -552,6 +552,7 @@ def update_gloss(request, glossid):
     other_glosses_in_lemma_group = Gloss.objects.filter(lemma__lemmaidglosstranslation__text__iexact=lemma_group_string).count()
     if other_glosses_in_lemma_group > 1:
         lemma_gloss_group = True
+    input_value = value
 
     if len(value) == 0:
         # this seems a bit dangerous
@@ -789,7 +790,10 @@ def update_gloss(request, glossid):
                 value = (value in ['letter', 'number'])
             else:
                 value = (value.lower() in [_('Yes').lower(),'true',True,1])
-                newvalue = value
+                if value:
+                    newvalue = _('Yes')
+                else:
+                    newvalue = _('No')
         # special value of 'notset' or -1 means remove the value
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
@@ -827,6 +831,8 @@ def update_gloss(request, glossid):
             gloss.save()
             newvalue = handshape.name
         elif field in fieldchoiceforeignkey_fields:
+            if value == '':
+                value = 0
             gloss_field = Gloss._meta.get_field(field)
             try:
                 fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
@@ -860,6 +866,7 @@ def update_gloss(request, glossid):
 
             #If the value is not a Boolean, get the human readable value
             if not isinstance(value,bool):
+                print('not boolean other field')
                 # if we get to here, field is a valid field of Gloss
                 newvalue = value
 
@@ -871,10 +878,6 @@ def update_gloss(request, glossid):
     #This is because you cannot concat none to a string in py3
     if original_value is None:
         original_value = ''
-    # this takes care of a problem with None not being allowed as a value in GlossRevision
-    # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
-    if newvalue is None:
-        newvalue = ''
 
     # if choice_list is empty, the original_value is returned by the called function
     # Remember this change for the history books
@@ -883,6 +886,10 @@ def update_gloss(request, glossid):
     # store a boolean in the Revision History rather than a human value as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
     else:
+        # this takes care of a problem with None not being allowed as a value in GlossRevision
+        # the weakdrop and weakprop fields make use of three-valued logic and None is a legitimate value aka Neutral
+        if newvalue is None:
+            newvalue = ''
         glossrevision_newvalue = newvalue
 
     revision = GlossRevision(old_value=original_human_value,
@@ -893,9 +900,8 @@ def update_gloss(request, glossid):
                              time=datetime.now(tz=get_current_timezone()))
     revision.save()
     # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
-    return HttpResponse(
-        str(original_value) + str('\t') + str(newvalue) + str('\t') +  str(value) + str('\t') + str(category_value) + str('\t') + str(lemma_gloss_group),
-        {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' +  str(value) + '\t' + category_value
+                        + '\t' + str(lemma_gloss_group) + '\t' + input_value, {'content-type': 'text/plain'})
 
 
 def update_keywords(gloss, field, value):
@@ -961,10 +967,10 @@ def gloss_to_keywords_senses_groups(gloss, language):
 def edit_keywords(request, glossid):
     """Edit the keywords"""
     if not request.user.is_authenticated:
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
@@ -1016,16 +1022,16 @@ def edit_keywords(request, glossid):
 
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
 
-    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
+    return JsonResponse(glossXsenses)
 
 
 def add_keyword(request, glossid):
     """Add keywords"""
     if not request.user.is_authenticated:
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     gloss = get_object_or_404(Gloss, id=glossid)
     language = request.POST.get('language', '')
@@ -1057,7 +1063,7 @@ def add_keyword(request, glossid):
 
     if keyword == '' or keyword in current_keywords:
         # do nothing
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
 
@@ -1088,17 +1094,17 @@ def add_keyword(request, glossid):
     glossXsenses['new_translation'] = new_translation_id
     glossXsenses['new_sense'] = str(new_sense)
 
-    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
+    return JsonResponse(glossXsenses)
 
 
 def group_keywords(request, glossid):
     """Update the keyword field"""
 
     if not request.user.is_authenticated:
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
+        return JsonResponse({})
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
@@ -1129,7 +1135,7 @@ def group_keywords(request, glossid):
 
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
 
-    return HttpResponse(json.dumps(glossXsenses), {'content-type': 'application/json'})
+    return JsonResponse(glossXsenses)
 
 def update_annotation_idgloss(gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""
@@ -2465,10 +2471,10 @@ def add_morpheme(request):
                                                  'selected_datasets': get_selected_datasets_for_user(request.user),
                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-        if not ('search_results' in request.session.keys()):
-            request.session['search_results'] = None
-        if not ('search_type' in request.session.keys()):
-            request.session['search_type'] = None
+        if 'search_results' not in request.session.keys():
+            request.session['search_results'] = []
+        if 'search_type' not in request.session.keys():
+            request.session['search_type'] = ''
         request.session['last_used_dataset'] = dataset.acronym
 
         return HttpResponseRedirect(reverse('dictionary:admin_morpheme_view', kwargs={'pk': morpheme.id})+'?edit')
@@ -2496,6 +2502,8 @@ def update_morpheme(request, morphemeid):
     original_value = ''  # will in most cases be set later, but can't be empty in case it is not set
     category_value = ''
     lemma_gloss_group = False
+    # this copies any '_' + machine_value code to pass back to the success method, if relevant
+    input_value = value
 
     if len(value) == 0:
         value = ' '
@@ -2694,6 +2702,8 @@ def update_morpheme(request, morphemeid):
             newvalue = ''
         elif field in fieldchoiceforeignkey_fields:
             gloss_field = Morpheme._meta.get_field(field)
+            if value == ' ':
+                value = '0'
             try:
                 fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=int(value))
             except (ObjectDoesNotExist, MultipleObjectsReturned):
@@ -2701,7 +2711,7 @@ def update_morpheme(request, morphemeid):
                       gloss_field.field_choice_category, value)
                 print('Setting to machine value 0')
                 fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=0)
-            morpheme.__setattr__(field, fieldchoice)
+            setattr(morpheme, field, fieldchoice)
             morpheme.save()
             newvalue = fieldchoice.name
 
@@ -2715,7 +2725,8 @@ def update_morpheme(request, morphemeid):
             morpheme.__setattr__(field, value)
             morpheme.save()
 
-    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value + '\t' + str(lemma_gloss_group), {'content-type': 'text/plain'})
+    return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(value) + '\t' + category_value
+                        + '\t' + str(lemma_gloss_group) + '\t' + input_value, {'content-type': 'text/plain'})
 
 
 def update_morpheme_definition(gloss, field, value):
@@ -2812,6 +2823,38 @@ def add_tag(request, glossid):
             
     return response
 
+@permission_required('dictionary.change_gloss')
+def toggle_sense_tag(request, glossid):
+
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    current_tags = [ tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
+
+    change_sense_tag = Tag.objects.get_or_create(name='check_senses')
+    (sense_tag, created) = change_sense_tag
+
+    if sense_tag.id not in current_tags:
+        Tag.objects.add_tag(gloss, 'check_senses')
+    else:
+        # delete tag from object
+        tagged_obj = TaggedItem.objects.get(object_id=gloss.id,tag_id=sense_tag.id)
+        tagged_obj.delete()
+
+    new_tag_ids = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = [tag.name.replace('_',' ') for tag in  Tag.objects.filter(id__in=new_tag_ids)]
+    result['tags_list'] = newvalue
+
+    return JsonResponse(result)
+
 
 def add_morphemetag(request, morphemeid):
     """View to add a tag to a morpheme"""
@@ -2904,7 +2947,7 @@ def change_dataset_selection(request):
         if successful:
             request.session['selected_datasets'] = new_selection
             # erase previous search results session variable since the dataset selection has changed
-            request.session['search_results'] = None
+            request.session['search_results'] = []
             request.session.modified = True
 
     # check whether the last used dataset is still in the selected datasets
