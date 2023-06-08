@@ -1064,6 +1064,16 @@ class GlossListView(ListView):
             query_parameters['dialect[]'] = get.getlist('dialect[]')
             qs = qs.filter(dialect__in=vals)
 
+        vals = get.getlist('tags[]')
+        if '' in vals:
+            vals.remove('')
+        if vals != []:
+            query_parameters['tags[]'] = get.getlist('tags[]')
+            tags = Tag.objects.filter(name__in=vals)
+            tqs = TaggedItem.objects.filter(tag_id__in=tags)
+            glosses_with_tag = [taggeditem.object_id for taggeditem in tqs]
+            qs = qs.filter(id__in=glosses_with_tag)
+
         # allows for multiselect
         vals = get.getlist('signlanguage[]')
         if '' in vals:
@@ -1116,35 +1126,7 @@ class GlossListView(ListView):
                     kwargs = {key:val}
                     qs = qs.filter(**kwargs)
 
-        if 'tags' in get and get['tags'] != '':
-            query_parameters['tags'] = get.getlist('tags')
-            vals = get.getlist('tags')
-            tags = []
-            for t in vals:
-                tags.extend(Tag.objects.filter(name=t))
-
-
-            # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
-
-            # intersection
-            qs = qs & tqs
-
         qs = qs.distinct()
-
-        if 'nottags' in get and get['nottags'] != '':
-            query_parameters['nottags'] = get.getlist('nottags')
-            vals = get.getlist('nottags')
-
-            tags = []
-            for t in vals:
-                tags.extend(Tag.objects.filter(name=t))
-
-            # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
-
-            # exclude all of tqs from qs
-            qs = [q for q in qs if q not in tqs]
 
         if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
             query_parameters['relationToForeignSign'] = get['relationToForeignSign']
@@ -2621,6 +2603,16 @@ class MorphemeListView(ListView):
         if vals != []:
             qs = qs.filter(signlanguage__in=vals)
 
+        if 'tags[]' in get:
+            vals = get.getlist('tags[]')
+            if '' in vals:
+                vals.remove('')
+            if vals != []:
+                tags = Tag.objects.filter(name__in=vals)
+                tqs = TaggedItem.objects.filter(tag_id__in=tags, object_id__in=qs)
+                morphemes_with_tag = [taggeditem.object_id for taggeditem in tqs]
+                qs = qs.filter(id__in=morphemes_with_tag)
+
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
 
@@ -2693,33 +2685,7 @@ class MorphemeListView(ListView):
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val)
 
-        if 'tags' in get and get['tags'] != '':
-            vals = get.getlist('tags')
-
-            tags = []
-            for t in vals:
-                tags.extend(Tag.objects.filter(name=t))
-
-            # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Morpheme, tags)
-
-            # intersection
-            qs = qs & tqs
-
         qs = qs.distinct()
-
-        if 'nottags' in get and get['nottags'] != '':
-            vals = get.getlist('nottags')
-
-            tags = []
-            for t in vals:
-                tags.extend(Tag.objects.filter(name=t))
-
-            # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
-
-            # exclude all of tqs from qs
-            qs = [q for q in qs if q not in tqs]
 
         if 'definitionRole' in get and get['definitionRole'] != '':
 
@@ -3606,7 +3572,6 @@ class QueryListView(ListView):
                 self.request.session['search_results'] = []
 
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
-
         if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             # if the query parameters are available, convert them to a dictionary
             session_query_parameters = self.request.session['query_parameters']

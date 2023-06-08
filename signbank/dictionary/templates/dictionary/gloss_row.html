@@ -73,9 +73,22 @@
 
     {% if not user.is_anonymous %}
     {% load underscore_to_space %}
+    {% if focus_gloss.is_morpheme %}
+    {% with focus_gloss.morpheme as focus_morpheme %}
+    {% tags_for_object focus_morpheme as tag_list %}
+        <td class="field_tags" style="width:255px;">
+            <div class="tags-cell">{% for tag in tag_list %}
+                <span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}
+            </div>
+        </td>
+    {% endwith %}
+    {% else %}
     {% tags_for_object focus_gloss as tag_list %}
-    <td class="field_tags" style="width:255px;">
-        <div class="tags-cell">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
-    </td>
+        <td class="field_tags" style="width:255px;">
+            <div class="tags-cell">{% for tag in tag_list %}
+                <span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}
+            </div>
+        </td>
+    {% endif %}
     {% endif %}
 </tr>

@@ -196,6 +196,12 @@ def convert_query_parameters_to_filter(query_parameters):
 
         elif get_key == 'dialect[]':
             query_list.append(Q(dialect__in=get_value))
+
+        elif get_key == 'tags[]':
+            tags = Tag.objects.filter(name__in=get_value)
+            pks_for_glosses_with_tags = [item.object_id for item in TaggedItem.objects.filter(tag_id__in=tags)]
+            query_list.append(Q(pk__in=pks_for_glosses_with_tags))
+
         elif get_key == 'signlanguage[]':
             query_list.append(Q(signlanguage__in=get_value))
         elif get_key == 'definitionRole[]':
@@ -268,13 +274,6 @@ def convert_query_parameters_to_filter(query_parameters):
             target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType__machine_value=get_value) ]
             # this only works in the query is Sign or Morpheme
             query_list.append(Q(id__in=target_morphemes))
-        elif get_key in ['tags']:
-            tag_ids = [tag.id for tag in Tag.objects.filter(name__in=get_value)]
-            for tag_id in tag_ids:
-                # this has to be done sequentially, this is an AND of the choices in the form
-                # the get_queryset of GlossListView is also implemented as an AND
-                pks_for_glosses_with_tags = [ item.object_id for item in TaggedItem.objects.filter(tag_id=tag_id) ]
-                query_list.append(Q(pk__in=pks_for_glosses_with_tags))
 
         elif get_key in gloss_fields.keys():
             # not sure if this is needed, this case is Gloss fields rather than GlossSearchForm fields
@@ -414,6 +413,8 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         elif key == 'hasComponentOfType[]':
             choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', machine_value__in=query_parameters[key])
             query_dict[key] = [choice.name for choice in choices_for_category]
+        elif key == 'tags[]':
+            query_dict[key] = query_parameters[key]
         elif key[-2:] == '[]':
             # in the Gloss Search Form, multiple choice fields have a list of values
             # these are all displayed in the Query Parameters display (as non-selectable buttons in the template)
@@ -462,8 +463,6 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         elif key in ['createdBefore', 'createdAfter']:
             created_date = DT.datetime.strptime(query_parameters[key], settings.DATE_FORMAT).date()
             query_dict[key] = created_date.strftime(settings.DATE_FORMAT)
-        elif key in ['tags']:
-            query_dict[key] = query_parameters[key]
         else:
             # key can be keyword, just print the value
             # includes relationToForeignSign, relation
