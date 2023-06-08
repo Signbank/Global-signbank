@@ -1065,9 +1065,8 @@ class GlossListView(ListView):
         vals = get.getlist('tags[]')
         if vals != []:
             query_parameters['tags[]'] = vals
-            tags = Tag.objects.filter(name__in=vals)
-            tqs = TaggedItem.objects.filter(tag_id__in=tags)
-            glosses_with_tag = [taggeditem.object_id for taggeditem in tqs]
+            glosses_with_tag = list(
+                TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
             qs = qs.filter(id__in=glosses_with_tag)
 
         # allows for multiselect
@@ -2588,9 +2587,8 @@ class MorphemeListView(ListView):
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
             if vals != []:
-                tags = Tag.objects.filter(name__in=vals)
-                tqs = TaggedItem.objects.filter(tag_id__in=tags, object_id__in=qs)
-                morphemes_with_tag = [taggeditem.object_id for taggeditem in tqs]
+                morphemes_with_tag = list(
+                    TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
                 qs = qs.filter(id__in=morphemes_with_tag)
 
         if 'useInstr' in get and get['useInstr'] != '':
@@ -7501,9 +7499,8 @@ class KeywordListView(ListView):
             vals = get.getlist('tags[]')
             if vals != []:
                 query_parameters['tags[]'] = vals
-                tags = Tag.objects.filter(name__in=vals)
-                tqs = TaggedItem.objects.filter(tag_id__in=tags, object_id__in=glosses_of_datasets)
-                glosses_with_tag = [taggeditem.object_id for taggeditem in tqs]
+                glosses_with_tag = list(
+                    TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
 
         self.query_parameters = query_parameters

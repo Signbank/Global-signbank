@@ -190,7 +190,7 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key in ['definitionContains']:
             definitions_with_this_text = Definition.objects.filter(text__icontains=get_value)
 
-            #Remember the pk of all glosses that are referenced in the collection definitions
+            # Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
             query_list.append(Q(pk__in=pks_for_glosses_with_these_definitions))
 
@@ -198,8 +198,8 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(dialect__in=get_value))
 
         elif get_key == 'tags[]':
-            tags = Tag.objects.filter(name__in=get_value)
-            pks_for_glosses_with_tags = [item.object_id for item in TaggedItem.objects.filter(tag_id__in=tags)]
+            pks_for_glosses_with_tags = list(
+                TaggedItem.objects.filter(tag__name__in=get_value).values_list('object_id', flat=True))
             query_list.append(Q(pk__in=pks_for_glosses_with_tags))
 
         elif get_key == 'signlanguage[]':
