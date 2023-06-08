@@ -2921,9 +2921,11 @@ def gloss_api_get_sign_name_and_media_info(request):
             .order_by('lemma__lemmaidglosstranslation__text')[0:max_number_of_results]
 
     response = [
-            {'sign_name': str(gloss),
-             'video_url': gloss.get_video_url(),
-             'image_url': gloss.get_image_url()}
+            {
+                'id': gloss.id,
+                'sign_name': str(gloss),
+                'video_url': gloss.get_video_url(),
+                'image_url': gloss.get_image_url()}
             for gloss in glosses if gloss.get_video_url()]
 
     return HttpResponse(json.dumps(response), content_type="application/json")
