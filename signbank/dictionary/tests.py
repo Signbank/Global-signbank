@@ -3654,6 +3654,7 @@ class GlossApiGetSignNameAndMediaInfoTests(TestCase):
         """
         assert_json = []
         sign_json = {
+                "id": self.gloss_id
                 "sign_name": self.gloss_name,
                 "image_url": "",
                 "video_url": self.video_url
@@ -3671,6 +3672,7 @@ class GlossApiGetSignNameAndMediaInfoTests(TestCase):
         """
         assert_json = []
         sign_json = {
+                "id": self.gloss_id
                 "sign_name": self.gloss_name,
                 "image_url": "",
                 "video_url": self.video_url
