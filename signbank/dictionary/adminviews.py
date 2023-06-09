@@ -7510,13 +7510,12 @@ class KeywordListView(ListView):
             keyword_translations_per_language = dict()
             sense_groups_per_language = dict()
             for language in dataset_languages:
-                keyword_translations = gloss.translation_set.filter(language=language).exclude(translation__text__exact='').order_by('orderIndex', 'index')
+                keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
                 senses_groups = dict()
-                if keyword_translations.count() > 0:
-                    for trans in keyword_translations:
-                        if trans.orderIndex not in senses_groups.keys():
-                            senses_groups[trans.orderIndex] = []
-                        senses_groups[trans.orderIndex].append(trans)
+                for trans in keyword_translations:
+                    if trans.orderIndex not in senses_groups.keys():
+                        senses_groups[trans.orderIndex] = []
+                    senses_groups[trans.orderIndex].append(trans)
                 keyword_translations_per_language[language] = keyword_translations
                 sense_groups_per_language[language] = senses_groups
             glossesXsenses.append((gloss, keyword_translations_per_language, sense_groups_per_language))
