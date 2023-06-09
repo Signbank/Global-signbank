@@ -735,6 +735,12 @@ class Sense(models.Model):
     def get_sense_translations(self):
         return [k+": "+v for k,v in self.get_sense_translations_dict_without().items()]
     
+    def __str__(self):
+        str_sense = []
+        for sensetranslation in self.senseTranslations.all():
+            str_sense .append(str(sensetranslation))
+        return " | ".join(str_sense)
+
     class Meta:
         ordering = ['orderindex']
 

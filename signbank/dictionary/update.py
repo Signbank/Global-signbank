@@ -374,7 +374,11 @@ def update_sense(request, senseid):
                 sensetranslation.save()
                 for tr_v in vals[str(dataset_language)].split(","):
                     keyword = Keyword.objects.get_or_create(text =tr_v)[0]
-                    translation = Translation.objects.get_or_create(translation = keyword, language=dataset_language, gloss = gloss)[0]
+                    translation = None
+                    try:
+                        translation = Translation.objects.filter(translation = keyword, language = dataset_language)[0]
+                    except:
+                        translation = Translation.objects.create(translation = keyword, language = dataset_language, gloss = gloss)
                     sensetranslation.translations.add(translation)
                 sense.senseTranslations.add(sensetranslation)
 
@@ -412,12 +416,17 @@ def update_sense(request, senseid):
                     for tr_s in trs:
                         if tr_s.translation.text not in vals[str(dataset_language)].split(","):
                             sensetranslation.translations.remove(tr_s)
-                            if SenseTranslation.objects.filter(translations = tr_s).count() == 0:
-                                tr_s.delete()
+                            # Delete translation (disabled because might the translation may be used in another model)
+                            # if SenseTranslation.objects.filter(translations = tr_s).count() == 0:
+                            #     tr_s.delete()
                     for tr_v in vals[str(dataset_language)].split(","):
                         if tr_v not in trv:
                             keyword = Keyword.objects.get_or_create(text = tr_v)[0]
-                            translation = Translation.objects.get_or_create(translation=keyword, language = dataset_language, gloss = gloss)[0]
+                            translation = None
+                            try:
+                                translation = Translation.objects.filter(translation = keyword, language = dataset_language)[0]
+                            except:
+                                translation = Translation.objects.create(translation = keyword, language = dataset_language, gloss = gloss)
                             sensetranslation.translations.add(translation)
 
     messages.add_message(request, messages.INFO, _('Given sense was added.'))
@@ -483,7 +492,11 @@ def create_sense(request, glossid):
                     sense.senseTranslations.add(sensetranslation)
                     for kw in sorted(list(dict.fromkeys(vals[str(sensetranslation.language)].split(", ")))):
                         keyword = Keyword.objects.get_or_create(text = kw)[0]
-                        translation = Translation.objects.get_or_create(translation = keyword, language = dataset_language, gloss = gloss)[0]
+                        translation = None
+                        try:
+                            translation = Translation.objects.filter(translation = keyword, language = dataset_language)[0]
+                        except:
+                            translation = Translation.objects.create(translation = keyword, language = dataset_language, gloss = gloss)
                         sensetranslation.translations.add(translation)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -514,8 +527,9 @@ def delete_sense(request, glossid):
                     # also delete the translation (keyword) if it's the only sensetranslation it is in
                     for translation in sensetranslation.translations.all():
                         sensetranslation.translations.remove(translation)
-                        if SenseTranslation.objects.filter(translations = translation).count() == 0:
-                            translation.delete()
+                        # Delete translation (disabled because might the translation may be used in another model)
+                        # if SenseTranslation.objects.filter(translations = translation).count() == 0:
+                        #     translation.delete()
                     sense.senseTranslations.remove(sensetranslation)
                     sensetranslation.delete()
         # also remove its examplesentences if they are not in another sense

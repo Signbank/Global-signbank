@@ -415,7 +415,6 @@ class GlossListView(ListView):
 
         fields_with_choices['definitionRole'] = 'NoteType'
         fields_with_choices['hasComponentOfType'] = 'MorphologyType'
-        
         choices_colors = {}
         for (fieldname, field_category) in fields_with_choices.items():
             if field_category in CATEGORY_MODELS_MAPPING.keys():
@@ -1695,7 +1694,6 @@ class GlossDetailView(DetailView):
 
         sentencetype_choice_list = FieldChoice.objects.filter(field__iexact='SentenceType')
         context['sentencetypes'] = choicelist_queryset_to_translated_dict(sentencetype_choice_list, id_prefix='', ordered=False, shortlist=True)
-        print(context['sentencetypes'])
         context['senses'] = gl.senses.filter(dataset=gl.lemma.dataset)
 
         bad_dialect = False

@@ -114,8 +114,6 @@ class AnnotationIdglossTranslationInline(admin.TabularInline):
 
 class SenseInline(admin.TabularInline):
     model = Gloss.senses.through
-    # list_display = ["gloss_id.sense_id__get_sense_translations", "sense__orderindex"]
-    # fields = ["get_sense_translations", "orderindex"]
 
     extra = 0
 
