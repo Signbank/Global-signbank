@@ -8,6 +8,8 @@ def get_multiselect_fields():
     fields_with_choices = fields_to_fieldcategory_dict()
     fields_with_choices['definitionRole'] = 'NoteType'
     fields_with_choices['hasComponentOfType'] = 'MorphologyType'
+    # only the domain is used
+    fields_with_choices['tags'] = 'Tag'
     return fields_with_choices.keys()
 
 
@@ -175,10 +177,11 @@ def get_query_parameters(query):
                 field_name = multilingual.fieldName
             else:
                 field_name = multilingual.fieldName + '_' + multilingual.fieldLanguage.language_code_2char
-            if field_name not in search_history_parameters.keys():
-                search_history_parameters[field_name] = []
             if field_name == 'tags':
                 # tags are multi-select
+                field_name = field_name + '[]'
+                if field_name not in search_history_parameters.keys():
+                    search_history_parameters[field_name] = []
                 search_history_parameters[field_name].append(multilingual.fieldValue)
             else:
                 search_history_parameters[field_name] = multilingual.fieldValue
@@ -204,7 +207,6 @@ def fieldnames_from_query_parameters(query_parameters):
 
 
 def save_query_parameters(request, query_name, query_parameters):
-
     glosssearch = "glosssearch_"
     lemmasearch = "lemma_"
     keywordsearch = "keyword_"
@@ -216,7 +218,17 @@ def save_query_parameters(request, query_name, query_parameters):
             continue
         elif key[-2:] == '[]':
             # multiple choice fields have a list of values
-            if key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            if key == 'tags[]':
+                search_field = 'tags'
+                tag_values = query_parameters[key]
+                language_code_2char = LANGUAGE_CODE
+                language = Language.objects.get(language_code_2char=language_code_2char)
+                for tag_value in tag_values:
+                    qp = QueryParameterMultilingual(fieldName=search_field, fieldLanguage=language,
+                                                    fieldValue=tag_value, search_history=search_history)
+                    qp.save()
+                    search_history.parameters.add(qp)
+            elif key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
                 choices_for_category = Handshape.objects.filter(machine_value__in=query_parameters[key])
                 for query_value in choices_for_category:
                     qp = QueryParameterHandshape(fieldName=key[:-2], fieldValue=query_value, search_history=search_history)
@@ -296,16 +308,6 @@ def save_query_parameters(request, query_name, query_parameters):
                                             fieldValue=search_value, search_history=search_history, multiselect=False)
             qp.save()
             search_history.parameters.add(qp)
-        elif key == 'tags':
-            search_field = key
-            tag_values = query_parameters[key]
-            language_code_2char = LANGUAGE_CODE
-            language = Language.objects.get(language_code_2char=language_code_2char)
-            for tag_value in tag_values:
-                qp = QueryParameterMultilingual(fieldName=search_field, fieldLanguage=language,
-                                                fieldValue=tag_value, search_history=search_history)
-                qp.save()
-                search_history.parameters.add(qp)
         elif key in ['definitionContains', 'createdBy', 'createdBefore', 'createdAfter',
                      'translation', 'search']:
             search_field = key

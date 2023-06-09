@@ -183,7 +183,23 @@ $(document).ready(function() {
          $('#id_dialects').val(null).trigger('change');
     };
 
-    // initialize query parameters in multiple select fields
+     makeMultipleSelect('id_tags', 'tags[]');
+     $('#id_tags').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve',
+        placeholder: ''
+     });
+
+     if (query_parameters_keys.includes('tags[]')) {
+         var query_initial = query_parameters_dict['tags[]'];
+         $('#id_tags').val(query_initial);
+         $('#id_tags').trigger('change');
+     } else {
+         $('#id_tags').val(null).trigger('change');
+     };
+
+     // initialize query parameters in multiple select fields
      for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = '#id_' + multiple_select_fields[i];
         var this_var = multiple_select_fields[i] + '[]';
@@ -221,16 +237,6 @@ $(document).ready(function() {
             $language_search.val(query_initial);
         };
     }
-
-     if (query_parameters_keys.includes('tags')) {
-         var $select = $("select[name='tags']");
-         var query_initial = query_parameters_dict['tags'];
-         for (var i = 0; i < query_initial.length; i++) {
-             var tag_value = query_initial[i];
-             var $option = $select.find("option[value='" + tag_value + "']");
-             $option.attr("selected","selected");
-         };
-    };
 
      if (query_parameters_keys.includes('translation')) {
         var $translation = $("input[name='translation']");

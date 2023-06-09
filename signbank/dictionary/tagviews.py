@@ -1,6 +1,6 @@
 
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template import RequestContext
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import json
@@ -14,13 +14,11 @@ def taglist_json(request):
     
     tags = [t.name for t in Tag.objects.all()]
     
-    return HttpResponse(json.dumps(tags), {'content-type': 'application/json'})
-    
-    
+    return JsonResponse(tags, safe=False)
+
 
 def taglist(request, tag=None):
     """View of a list of tags or a list of signs with a given tag"""
-
 
     if tag:
         # get the glosses with this tag
@@ -31,7 +29,6 @@ def taglist(request, tag=None):
             taginfo = tag.split(':')
         else:
             taginfo = ('None', tag)
-
 
         paginator = Paginator(gloss_list, 50)
         
@@ -47,17 +44,13 @@ def taglist(request, tag=None):
     
         else:
             result_page = paginator.page(1)
-        
-        
 
-        return render(request, 'dictionary/gloss_list.html',
-                                  {'paginator': paginator,
-                                   'page': result_page,
-                                   'thistag': taginfo,
-                                   'tagdict': tag_dict()})
+        return render(request, 'dictionary/gloss_list.html', {'paginator': paginator,
+                                                              'page': result_page,
+                                                              'thistag': taginfo,
+                                                              'tagdict': tag_dict()})
     else:
-        return render(request, 'dictionary/gloss_list.html',
-                                  {'tagdict': tag_dict()})
+        return render(request, 'dictionary/gloss_list.html', {'tagdict': tag_dict()})
 
 
 def tag_dict():
