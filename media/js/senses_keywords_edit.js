@@ -37,9 +37,9 @@ function update_gloss_senses(data) {
         var num_commas = group_keywords.length - 1;
         for (var inx in group_keywords) {
             if (inx < num_commas) {
-                row.append("<span>"+group_keywords[inx]+"</span>, ");
+                row.append("<span>"+group_keywords[inx][1]+"</span>, ");
             } else {
-                row.append("<span>"+group_keywords[inx]+"</span>");
+                row.append("<span>"+group_keywords[inx][1]+"</span>");
             }
         };
         row.append("</td>");
@@ -57,9 +57,9 @@ function update_gloss_senses(data) {
         num_commas = group_keywords.length - 1;
         for (var inx in group_keywords) {
             if (inx < num_commas) {
-                row.append("<span>"+group_keywords[inx]+"</span>, ");
+                row.append("<span>"+group_keywords[inx][1]+"</span>, ");
             } else {
-                row.append("<span>"+group_keywords[inx]+"</span>");
+                row.append("<span>"+group_keywords[inx][1]+"</span>");
             }
         };
         row.append("</td>");
@@ -77,9 +77,9 @@ function update_gloss_senses(data) {
         var num_commas = group_keywords.length - 1;
         for (var inx in group_keywords) {
             if (inx < num_commas) {
-                row.append("<span>"+group_keywords[inx]+"</span>, ");
+                row.append("<span>"+group_keywords[inx][1]+"</span>, ");
             } else {
-                row.append("<span>"+group_keywords[inx]+"</span>");
+                row.append("<span>"+group_keywords[inx][1]+"</span>");
             }
         };
         row.append("</td>");
@@ -87,14 +87,43 @@ function update_gloss_senses(data) {
     }
     modalSensesCell.append("</tr>");
 
+    var modal_senses_groups_glossid = '#tbody_senses_table_' + glossid + '_' + language;
+    var modalSensesGroupsCell = $(modal_senses_groups_glossid);
+    $(modalSensesGroupsCell).empty();
+    var last_index = keywords.length - 1;
+    var max_index = keywords.length;
+    for (var key in senses_groups) {
+        var group_keywords = senses_groups[key];
+        var num_commas = group_keywords.length - 1;
+        for (var inx in group_keywords) {
+            var sense_keyword = group_keywords[inx];
+
+            var keywordCellId = '#keyword_sense_index_'+glossid+'_'+language+'_'+sense_keyword[0];
+
+            var row = $("<tr/>");
+            // the new row gets as id the max index of the keywords
+            row.append('<td id="keyword_sense_index_'+glossid+'_'+language+'_'+sense_keyword[0]+'" >'+sense_keyword[1]+'</td>');
+            row.append('<input type="hidden" id="sense_id_'+sense_keyword[0]+
+                            '" name="group_index" value="'+sense_keyword[0]+'" data-group_index="'+sense_keyword[0]+'">');
+            row.append("<td>");
+            row.append('<input type="number" id="regroup_'+key+
+                                    '" name="regroup" value="'+key+
+                                    '" data-regroup="'+key+'" >');
+            row.append("</td>");
+            row.append("</tr>");
+            modalSensesGroupsCell.append(row);
+        }
+    }
+    modalSensesGroupsCell.append("</tr>");
+
     // update the keyword text in the sense regroup table of the edit senses modal
     // this relies on knowing that the for loop index of the template is used in the id of the table cell
-    for (var i = 0; i < keywords.length; i++) {
-        var keyIndex = i+1;
-        var keywordCellId = '#keyword_sense_index_'+glossid+'_'+language+'_'+keyIndex;
-        var keywordCell = $(keywordCellId);
-        keywordCell.html(keywords[i]);
-    }
+//    for (var i = 0; i < keywords.length; i++) {
+//        var keyIndex = i+1;
+//        var keywordCellId = '#keyword_sense_index_'+glossid+'_'+language+'_'+keyIndex;
+//        var keywordCell = $(keywordCellId);
+//        keywordCell.html(keywords[i]);
+//    }
 }
 
 // the following function expects more fields from the ajax call json data
@@ -142,9 +171,9 @@ function add_gloss_keywords(data) {
         var num_commas = group_keywords.length - 1;
         for (var inx in group_keywords) {
             if (inx < num_commas) {
-                row.append("<span>"+group_keywords[inx]+"</span>, ");
+                row.append("<span>"+group_keywords[inx][1]+"</span>, ");
             } else {
-                row.append("<span>"+group_keywords[inx]+"</span>");
+                row.append("<span>"+group_keywords[inx][1]+"</span>");
             }
         };
         row.append("</td>");
@@ -162,9 +191,9 @@ function add_gloss_keywords(data) {
         num_commas = group_keywords.length - 1;
         for (var inx in group_keywords) {
             if (inx < num_commas) {
-                row.append("<span>"+group_keywords[inx]+"</span>, ");
+                row.append("<span>"+group_keywords[inx][1]+"</span>, ");
             } else {
-                row.append("<span>"+group_keywords[inx]+"</span>");
+                row.append("<span>"+group_keywords[inx][1]+"</span>");
             }
         };
         row.append("</td>");
@@ -182,9 +211,9 @@ function add_gloss_keywords(data) {
         var num_commas = group_keywords.length - 1;
         for (var inx in group_keywords) {
             if (inx < num_commas) {
-                row.append("<span>"+group_keywords[inx]+"</span>, ");
+                row.append("<span>"+group_keywords[inx][1]+"</span>, ");
             } else {
-                row.append("<span>"+group_keywords[inx]+"</span>");
+                row.append("<span>"+group_keywords[inx][1]+"</span>");
             }
         };
         row.append("</td>");
@@ -203,7 +232,7 @@ function add_gloss_keywords(data) {
     row.append("<td>");
     row.append('<input type="number" id="regroup_'+new_sense+
                             '" name="regroup" value="'+new_sense+
-                            '" data-regroup="'+new_sense+'" max=' + max_index + '>');
+                            '" data-regroup="'+new_sense+'" >');
     row.append("</td>");
     row.append("</tr>");
     modalSensesGroupsCell.append(row);

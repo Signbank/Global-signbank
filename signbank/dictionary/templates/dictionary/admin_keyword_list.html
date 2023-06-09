@@ -190,7 +190,7 @@ function clearForm() {
         <tr>
             <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}">{{gloss|get_default_annotation_idgloss_translation}}</a></td>
             <td class="actions">
-                <table>
+                <table class='table bordered'>
                 {% for language in dataset_languages %}
                 <tr>
                 <td>
@@ -219,7 +219,7 @@ function clearForm() {
                 </table>
             </td>
             <td class="keywords_{{gloss.id}}">
-                <table>
+                <table class='table bordered'>
                 {% for lang, keywords in keywords_per_language.items %}
                     <tr>
                     <td>{{lang.language_code_2char|upper}}</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
@@ -239,7 +239,7 @@ function clearForm() {
                 </table>
             </td>
             <td class="senses_{{gloss.id}}" id="senses_{{gloss.id}}">
-                <table>
+                <table class='table bordered'>
                 {% for lang, senses in senses_per_language.items %}
                     <tr><td>{{lang.language_code_2char|upper}}</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
                         <td>
@@ -315,20 +315,21 @@ function clearForm() {
                             <tr><th>{% trans "Keywords" %}</th><th>{% trans "Sense" %}</th></tr>
                           </thead>
                           <tbody id="tbody_senses_table_{{gloss.id}}_{{language.id}}">
-                          {% with keywords_per_language|get_item:language as keywords %}
-                          {% for sense in keywords %}
+                            {% with senses_per_language|get_item:language as senses_groups %}
+                            {% for order_index, keywords_list in senses_groups.items %}
+                            {% for sense in keywords_list %}
                             <tr>
-                                <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{forloop.counter}}">{{sense.translation.text}}</td>
+                                <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{sense.id}}">{{sense.translation.text}}</td>
                                 <input type="hidden" id="sense_id_{{sense.id}}"
                                        name="group_index" value='{{sense.id}}' data-group_index='{{sense.id}}'>
                                 <td>
-                                <input type="number" id="regroup_{{sense.orderIndex}}"
-                                       name="regroup" value='{{sense.orderIndex}}' data-regroup='{{sense.orderIndex}}'
-                                       max={{senses.count}}>
+                                <input type="number" id="regroup_{{order_index}}" class="regroup"
+                                       name="regroup" value='{{order_index}}' data-regroup='{{order_index}}'>
                                 </td>
                             </tr>
-                          {% endfor %}
-                          {% endwith %}
+                            {% endfor %}
+                            {% endfor %}
+                            {% endwith %}
                           </tbody>
                       </table>
                           <input type="hidden" name="language" value="{{language.id}}">
