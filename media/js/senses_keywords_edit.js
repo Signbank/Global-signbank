@@ -115,15 +115,6 @@ function update_gloss_senses(data) {
         }
     }
     modalSensesGroupsCell.append("</tr>");
-
-    // update the keyword text in the sense regroup table of the edit senses modal
-    // this relies on knowing that the for loop index of the template is used in the id of the table cell
-//    for (var i = 0; i < keywords.length; i++) {
-//        var keyIndex = i+1;
-//        var keywordCellId = '#keyword_sense_index_'+glossid+'_'+language+'_'+keyIndex;
-//        var keywordCell = $(keywordCellId);
-//        keywordCell.html(keywords[i]);
-//    }
 }
 
 // the following function expects more fields from the ajax call json data
