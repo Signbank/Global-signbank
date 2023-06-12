@@ -124,6 +124,11 @@ function clearForm() {
     box-sizing: inherit;
     white-space: nowrap;
 }
+input {
+    height: 20px;
+    font-size: 14px;
+    padding: 0;
+}
 </style>
 {% endblock %}
 
@@ -178,7 +183,7 @@ function clearForm() {
     <thead>
       <tr>
           <th style="width:200px;">{% trans "Gloss" %}</th>
-          <th style="width:360px;">{% trans "Actions" %}</th>
+          <th style="width:200px;">{% trans "Actions" %}</th>
           <th style="width:300px;">{% trans "Keywords" %}</th>
           <th style="width:300px;">{% trans "Senses" %}</th>
           <th>{% trans "Quick Tag Toggle" %}</th>
@@ -190,25 +195,16 @@ function clearForm() {
         <tr>
             <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}">{{gloss|get_default_annotation_idgloss_translation}}</a></td>
             <td class="actions">
-                <table class='table bordered'>
+                <table class='table table-condensed'>
                 {% for language in dataset_languages %}
                 <tr>
                 <td>
                 <div class='btn-toolbar' style="margin-bottom: 20px">
-                <button id='edit_keywords_btn_{{gloss.id}}_{{language.id}}' type="button" class="btn actionButton"
-                        name='edit_keywords_{{gloss.id}}' value='edit_keywords_{{gloss.id}}'
-                        data-toggle='modal' data-target='#edit_keywords_modal_{{gloss.id}}_{{language.id}}'>
-                    <a class="actionLabel">{% if perms.dictionary.change_gloss %}
-                        {% trans "Edit" %}
-                        {% else %}
-                        {% trans "View" %}
-                        {% endif %}
-                        {{language.name}}</a></button>
                 <button id='edit_senses_btn_{{gloss.id}}_{{language.id}}' type="button" class="btn actionButton"
                         name='edit_{{gloss.id}}' value='edit_{{gloss.id}}'
                         data-toggle='modal' data-target='#edit_senses_modal_{{gloss.id}}_{{language.id}}'>
                     <a class="actionLabel">{% if perms.dictionary.change_gloss %}
-                        {% trans "Group Senses" %}
+                        {% trans "Edit Senses" %}
                         {% else %}
                         {% trans "View Senses" %}
                         {% endif %} {{language.name}}</a></button>
@@ -219,10 +215,10 @@ function clearForm() {
                 </table>
             </td>
             <td class="keywords_{{gloss.id}}">
-                <table class='table bordered'>
+                <table class='table table-condensed'>
                 {% for lang, keywords in keywords_per_language.items %}
                     <tr>
-                    <td>{{lang.language_code_2char|upper}}</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                    <td>{{lang.language_code_2char|upper}}</td>
                     <td>
                         <table>
                         <tbody id="tbody_keywords_{{gloss.id}}_{{lang.id}}">
@@ -239,9 +235,9 @@ function clearForm() {
                 </table>
             </td>
             <td class="senses_{{gloss.id}}" id="senses_{{gloss.id}}">
-                <table class='table bordered'>
+                <table class='table table-condensed'>
                 {% for lang, senses in senses_per_language.items %}
-                    <tr><td>{{lang.language_code_2char|upper}}</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                    <tr><td>{{lang.language_code_2char|upper}}</td>
                         <td>
                         <table>
                             <tbody id="tbody_senses_{{gloss.id}}_{{lang.id}}">
@@ -281,14 +277,16 @@ function clearForm() {
              <div class="modal fade" id="edit_senses_modal_{{gloss.id}}_{{language.id}}" tabindex="-1" role="dialog"
                  aria-labelledby="#modalTitleEdit_{{gloss.id}}_{{language.id}}" aria-hidden="true">
              <div class="modal-dialog modal-lg" id='modalTitleEdit_{{gloss.id}}_{{language.id}}'>
+                <div class="col-md-12">
                 <div class="modal-content">
                     <div class='modal-header'>
-                        <h3>{% trans "Gloss Keywords Mapping to Senses" %} ({{language.name}})</h3>
+                        <h3>{% trans "Gloss Keywords Mapping to Senses" %}</h3>
                     </div>
                     <div class='modal-body'>
+                        <div class="col-md-12">
                         <table class="table table-condensed">
                             <thead>
-                            <tr><th colspan=3>{{gloss|get_default_annotation_idgloss_translation}}</th></tr>
+                            <tr><th colspan=2>{{gloss|get_default_annotation_idgloss_translation}}</th></tr>
                             </thead>
                             <tbody id="tbody_modal_senses_{{gloss.id}}_{{language.id}}">
                             {% with senses_per_language|get_item:language as senses_groups %}
@@ -307,23 +305,26 @@ function clearForm() {
                             {% endwith %}
                             </tbody>
                         </table>
+                        </div>
+                      <div class="col-md-4">
                       <form id="form_regroup_keywords_{{gloss.id}}_{{language.id}}"
                             action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
                       <table class='table table-condensed'>
                           <thead>
-                            <tr><th>{% trans "Keywords" %}</th><th>{% trans "Sense" %}</th></tr>
+                            <tr><th>{% trans "Keywords" %} {{language.name}}</th><th>{% trans "Sense" %}</th></tr>
                           </thead>
                           <tbody id="tbody_senses_table_{{gloss.id}}_{{language.id}}">
                             {% with senses_per_language|get_item:language as senses_groups %}
                             {% for order_index, keywords_list in senses_groups.items %}
                             {% for sense in keywords_list %}
                             <tr>
-                                <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{sense.id}}">{{sense.translation.text}}</td>
+                                <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{sense.id}}">{{sense.translation.text}}
                                 <input type="hidden" id="sense_id_{{sense.id}}"
                                        name="group_index" value='{{sense.id}}' data-group_index='{{sense.id}}'>
+                                </td>
                                 <td>
-                                <input type="number" id="regroup_{{order_index}}" class="regroup"
+                                <input type="number" id="regroup_{{order_index}}" class="regroup" size="5"
                                        name="regroup" value='{{order_index}}' data-regroup='{{order_index}}'>
                                 </td>
                             </tr>
@@ -339,6 +340,40 @@ function clearForm() {
                               {% trans "Regroup Kewords" %}</button>
                           {% endif %}
                       </form>
+                    </div>
+                    <div class="col-md-8">
+                      <form id="form_edit_keywords_{{gloss.id}}_{{language.id}}"
+                            action="{% url 'dictionary:edit_keywords' gloss.id %}" method='post'>
+                      {% csrf_token %}
+                      <table class='table table-condensed'>
+                          {% with keywords_per_language|get_item:language as keywords %}
+                          <thead>
+                          <tr><th>{% trans "New Text" %}</th></tr>
+                          </thead>
+                          <tbody id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
+                          {% for keyword in keywords %}
+                            <tr id="edit_keywords_row_{{gloss.id}}_{{language.id}}_{{keyword.id}}">
+                                <td>
+                                <input type="text" id="edit_keyword_text_{{keyword.id}}" size="30"
+                                       name="translation" value='{{keyword.translation.text}}'
+                                       data-translation='{{keyword.id}}'>
+                                <input type="hidden" id="keyword_index_{{keyword.id}}"
+                                       name="keyword_index" value='{{keyword.id}}' data-index='{{keyword.id}}'>
+                                </td>
+                            </tr>
+                          {% endfor %}
+                          </tbody>
+                          {% endwith %}
+                      </table>
+                          <input type="hidden" name="language" value="{{language.id}}">
+                          {% if perms.dictionary.change_gloss %}
+                          <button class="edit_keywords btn btn-primary" id="edit_keywords_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
+                                    data-language="{{language.id}}" type="submit">
+                              {% trans "Update Text" %}</button>
+                          {% endif %}
+                      </form>
+                    </div>
+                      <div class="col-md-12">
                        <br/>
                        <br/>
                        <h4>{% trans "Add Sense" %}</h4>
@@ -349,7 +384,7 @@ function clearForm() {
                                <tr>
                                    <td>{% trans "Keywords" %}</td>
                                    <td>
-                                       <input name='keyword' type="text"
+                                       <input name='keyword' type="text" size="30"
                                               placeholder='{% trans "Text" %}' value="">
                                    </td>
                                </tr>
@@ -361,78 +396,15 @@ function clearForm() {
                               {% trans "Add Sense" %}</button>
                           {% endif %}
                         </form>
+                        </div>
                      </div>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
                       </div>
                 </div>
-            </div>
-        </div>
-
-         <div class="modal fade" id="edit_keywords_modal_{{gloss.id}}_{{language.id}}" tabindex="-1" role="dialog"
-                 aria-labelledby="#modalKeywordsTitleEdit_{{gloss.id}}_{{language.id}}" aria-hidden="true">
-             <div class="modal-dialog modal-lg" id='modalKeywordsTitleEdit_{{gloss.id}}_{{language.id}}'>
-                <div class="modal-content">
-                    <div class='modal-header'>
-                        <h3>
-                            {% trans "Keywords" %} ({{language.name}})</h3>
-                    </div>
-                    <div class='modal-body'>
-                        <table class="table table-condensed">
-                            <thead>
-                            <tr><th colspan=3>{{gloss|get_default_annotation_idgloss_translation}}</th></tr>
-                            </thead>
-                            <tbody id="tbody_modal_keywords_{{gloss.id}}_{{language.id}}">
-                            {% with senses_per_language|get_item:language as senses_groups %}
-                            {% for order_index, keywords_list in senses_groups.items %}
-                            <tr id="modal_keywords_{{gloss.id}}_row_{{order_index}}">
-                            <td>{{order_index}}.</td>
-                            <td>
-                              {% for sense in keywords_list %}
-                                <span id="keywords_{{sense.orderIndex}}">
-                                    {{sense.translation.text|safe}}
-                                </span>{% if not forloop.last %}, {% endif %}
-                              {% endfor %}
-                            </td>
-                            {% endfor %}
-                            </tr>
-                            {% endwith %}
-                            </tbody>
-                        </table>
-                      <form id="form_edit_keywords_{{gloss.id}}_{{language.id}}"
-                            action="{% url 'dictionary:edit_keywords' gloss.id %}" method='post'>
-                      {% csrf_token %}
-                      <table class='table table-condensed' id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
-                          {% with keywords_per_language|get_item:language as keywords %}
-                          <tr><th>{% trans "Keywords" %}</th><th>{% trans "New Text" %}</th></tr>
-                          {% for keyword in keywords %}
-                        <tr id="edit_keywords_row_{{gloss.id}}_{{language.id}}_{{keyword.id}}">
-                            <td>{{keyword.translation.text}}</td>
-                            <input type="hidden" id="keyword_index_{{keyword.id}}"
-                                   name="keyword_index" value='{{keyword.id}}' data-index='{{keyword.id}}'>
-                            <td>
-                            <input type="text" id="edit_keyword_text_{{keyword.id}}"
-                                   name="translation" value='{{keyword.translation.text}}'
-                                   data-translation='{{keyword.id}}'>
-                            </td>
-                        </tr>
-                          {% endfor %}
-                          {% endwith %}
-                      </table>
-                          <input type="hidden" name="language" value="{{language.id}}">
-                          {% if perms.dictionary.change_gloss %}
-                          <button class="edit_keywords btn btn-primary" id="edit_keywords_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
-                                    data-language="{{language.id}}" type="submit">
-                              {% trans "Save Changes" %}</button>
-                          {% endif %}
-                      </form>
-                     </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
-                      </div>
-                </div>
-            </div>
-        </div>
+             </div>
+             </div>
+             </div>
         </td>
         </tr>
         {% endfor %}
