@@ -486,7 +486,6 @@ def update_gloss(request, glossid):
 
             #If the value is not a Boolean, get the human readable value
             if not isinstance(value,bool):
-                print('not boolean other field')
                 # if we get to here, field is a valid field of Gloss
                 newvalue = value
 
