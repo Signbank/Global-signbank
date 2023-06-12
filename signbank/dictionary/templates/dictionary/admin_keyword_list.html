@@ -341,20 +341,21 @@ input {
                           {% endif %}
                       </form>
                     </div>
-                    <div class="col-md-8">
+
+                    <div class="col-md-4">
+                    <br/>
+                    <br/>
+                    <h4>{% trans "Update Text" %}</h4>
                       <form id="form_edit_keywords_{{gloss.id}}_{{language.id}}"
                             action="{% url 'dictionary:edit_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
                       <table class='table table-condensed'>
                           {% with keywords_per_language|get_item:language as keywords %}
-                          <thead>
-                          <tr><th>{% trans "New Text" %}</th></tr>
-                          </thead>
                           <tbody id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
                           {% for keyword in keywords %}
                             <tr id="edit_keywords_row_{{gloss.id}}_{{language.id}}_{{keyword.id}}">
                                 <td>
-                                <input type="text" id="edit_keyword_text_{{keyword.id}}" size="30"
+                                <input type="text" id="edit_keyword_text_{{keyword.id}}" size="40"
                                        name="translation" value='{{keyword.translation.text}}'
                                        data-translation='{{keyword.id}}'>
                                 <input type="hidden" id="keyword_index_{{keyword.id}}"
@@ -384,7 +385,7 @@ input {
                                <tr>
                                    <td>{% trans "Keywords" %}</td>
                                    <td>
-                                       <input name='keyword' type="text" size="30"
+                                       <input name='keyword' type="text" size="40"
                                               placeholder='{% trans "Text" %}' value="">
                                    </td>
                                </tr>

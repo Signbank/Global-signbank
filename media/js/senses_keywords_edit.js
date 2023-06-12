@@ -107,7 +107,7 @@ function update_gloss_senses(data) {
             var keywords_row = 'edit_keywords_row_' + glossid + '_' + language + '_' + sense_keyword[0];
             var row = $('<tr id="' + keywords_row + '"/>');
             row.append('<td><input type="text" id="edit_keyword_text_'+sense_keyword[0]+
-                                    '" name="translation" size="30" value="'+sense_keyword[1]+
+                                    '" name="translation" size="40" value="'+sense_keyword[1]+
                                     '" data-translation="'+sense_keyword[0]+'">');
             row.append('<input type="hidden" id="keyword_index_'+sense_keyword[0]+
                             '" name="keyword_index" value="'+sense_keyword[0]+'" data-index="'+sense_keyword[0]+'">');
@@ -218,7 +218,7 @@ function add_gloss_keywords(data) {
 
     var row = $("<tr/>");
     row.append('<td><input type="text" id="edit_keyword_text_'+new_translation+
-                            '" name="translation" size="30" value="'+keywords[last_index]+
+                            '" name="translation" size="40" value="'+keywords[last_index]+
                             '" data-translation="'+new_translation+'">');
     row.append('<input type="hidden" id="keyword_index_'+new_translation+
                     '" name="keyword_index" value="'+new_translation+'" data-index="'+new_translation+'">');
