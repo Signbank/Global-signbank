@@ -1058,18 +1058,21 @@ class GlossListView(ListView):
         # SignLanguage and basic property filters
         # allows for multiselect
         vals = get.getlist('dialect[]')
-        if '' in vals:
-            vals.remove('')
         if vals != []:
-            query_parameters['dialect[]'] = get.getlist('dialect[]')
+            query_parameters['dialect[]'] = vals
             qs = qs.filter(dialect__in=vals)
+
+        vals = get.getlist('tags[]')
+        if vals != []:
+            query_parameters['tags[]'] = vals
+            glosses_with_tag = list(
+                TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
+            qs = qs.filter(id__in=glosses_with_tag)
 
         # allows for multiselect
         vals = get.getlist('signlanguage[]')
-        if '' in vals:
-            vals.remove('')
         if vals != []:
-            query_parameters['signlanguage[]'] = get.getlist('signlanguage[]')
+            query_parameters['signlanguage[]'] = vals
             qs = qs.filter(signlanguage__in=vals)
 
         if 'useInstr' in get and get['useInstr'] != '':
@@ -1082,10 +1085,8 @@ class GlossListView(ListView):
             fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
-            if '' in vals:
-                vals.remove('')
             if vals != []:
-                query_parameters[fieldnamemultiVarname] = get.getlist(fieldnamemultiVarname)
+                query_parameters[fieldnamemultiVarname] = vals
                 if fieldnamemulti == 'semField':
                     qs = qs.filter(semField__in=vals)
                 elif fieldnamemulti == 'derivHist':
@@ -1116,35 +1117,7 @@ class GlossListView(ListView):
                     kwargs = {key:val}
                     qs = qs.filter(**kwargs)
 
-        if 'tags' in get and get['tags'] != '':
-            query_parameters['tags'] = get.getlist('tags')
-            vals = get.getlist('tags')
-            tags = []
-            for t in vals:
-                tags.extend(Tag.objects.filter(name=t))
-
-
-            # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
-
-            # intersection
-            qs = qs & tqs
-
         qs = qs.distinct()
-
-        if 'nottags' in get and get['nottags'] != '':
-            query_parameters['nottags'] = get.getlist('nottags')
-            vals = get.getlist('nottags')
-
-            tags = []
-            for t in vals:
-                tags.extend(Tag.objects.filter(name=t))
-
-            # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
-
-            # exclude all of tqs from qs
-            qs = [q for q in qs if q not in tqs]
 
         if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
             query_parameters['relationToForeignSign'] = get['relationToForeignSign']
@@ -1201,10 +1174,8 @@ class GlossListView(ListView):
 
         if 'hasComponentOfType[]' in get:
             vals = get.getlist('hasComponentOfType[]')
-            if '' in vals:
-                vals.remove('')
             if vals != []:
-                query_parameters['hasComponentOfType[]'] = get.getlist('hasComponentOfType[]')
+                query_parameters['hasComponentOfType[]'] = vals
 
                 morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=vals)
                 pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
@@ -1221,10 +1192,8 @@ class GlossListView(ListView):
         if 'definitionRole[]' in get:
 
             vals = get.getlist('definitionRole[]')
-            if '' in vals:
-                vals.remove('')
             if vals != []:
-                query_parameters['definitionRole[]'] = get.getlist('definitionRole[]')
+                query_parameters['definitionRole[]'] = vals
                 #Find all definitions with this role
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
 
@@ -1232,7 +1201,7 @@ class GlossListView(ListView):
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
-        if 'definitionContains' in get and get['definitionContains'] != '' and get['definitionContains'] not in ['', '0']:
+        if 'definitionContains' in get and get['definitionContains'] not in ['', '0']:
             query_parameters['definitionContains'] = get['definitionContains']
 
             definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains'])
@@ -2595,8 +2564,6 @@ class MorphemeListView(ListView):
         if 'definitionRole[]' in get:
 
             vals = get.getlist('definitionRole[]')
-            if '' in vals:
-                vals.remove('')
             if vals != []:
                 #Find all definitions with this role
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
@@ -2613,17 +2580,20 @@ class MorphemeListView(ListView):
         # SignLanguage and basic property filters
         # allows for multiselect
         vals = get.getlist('dialect[]')
-        if '' in vals:
-            vals.remove('')
         if vals != []:
             qs = qs.filter(dialect__in=vals)
 
         # allows for multiselect
         vals = get.getlist('signlanguage[]')
-        if '' in vals:
-            vals.remove('')
         if vals != []:
             qs = qs.filter(signlanguage__in=vals)
+
+        if 'tags[]' in get:
+            vals = get.getlist('tags[]')
+            if vals != []:
+                morphemes_with_tag = list(
+                    TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
+                qs = qs.filter(id__in=morphemes_with_tag)
 
         if 'useInstr' in get and get['useInstr'] != '':
             qs = qs.filter(useInstr__icontains=get['useInstr'])
@@ -2642,8 +2612,6 @@ class MorphemeListView(ListView):
             fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
-            if '' in vals:
-                vals.remove('')
             if vals != []:
                 if fieldnamemulti == 'semField':
                     qs = qs.filter(semField__in=vals)
@@ -2697,33 +2665,7 @@ class MorphemeListView(ListView):
             val = get['final_secondary_loc']
             qs = qs.filter(final_secondary_loc__exact=val)
 
-        if 'tags' in get and get['tags'] != '':
-            vals = get.getlist('tags')
-
-            tags = []
-            for t in vals:
-                tags.extend(Tag.objects.filter(name=t))
-
-            # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Morpheme, tags)
-
-            # intersection
-            qs = qs & tqs
-
         qs = qs.distinct()
-
-        if 'nottags' in get and get['nottags'] != '':
-            vals = get.getlist('nottags')
-
-            tags = []
-            for t in vals:
-                tags.extend(Tag.objects.filter(name=t))
-
-            # search is an implicit AND so intersection
-            tqs = TaggedItem.objects.get_intersection_by_model(Gloss, tags)
-
-            # exclude all of tqs from qs
-            qs = [q for q in qs if q not in tqs]
 
         if 'definitionRole' in get and get['definitionRole'] != '':
 
@@ -3390,8 +3332,6 @@ class MinimalPairsListView(ListView):
                 continue
             if veld[-2:] == '[]' :
                 veld_list = self.request.GET.getlist(veld)
-                if '' in veld_list:
-                    veld_list.remove('')
                 if not veld_list:
                     continue
                 veld_value = veld_list
@@ -3542,8 +3482,6 @@ class MinimalPairsListView(ListView):
                 fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
-            if '' in vals:
-                vals.remove('')
             if vals != []:
                 qs = qs.filter(**{ fieldnameQuery: vals })
 
@@ -3610,7 +3548,6 @@ class QueryListView(ListView):
                 self.request.session['search_results'] = []
 
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
-
         if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             # if the query parameters are available, convert them to a dictionary
             session_query_parameters = self.request.session['query_parameters']
@@ -7563,13 +7500,10 @@ class KeywordListView(ListView):
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
-            if '' in vals:
-                vals.remove('')
             if vals != []:
-                query_parameters['tags[]'] = get.getlist('tags[]')
-                tags = Tag.objects.filter(name__in=vals)
-                tqs = TaggedItem.objects.filter(tag_id__in=tags, object_id__in=glosses_of_datasets)
-                glosses_with_tag = [taggeditem.object_id for taggeditem in tqs]
+                query_parameters['tags[]'] = vals
+                glosses_with_tag = list(
+                    TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
 
         self.query_parameters = query_parameters
@@ -7579,13 +7513,12 @@ class KeywordListView(ListView):
             keyword_translations_per_language = dict()
             sense_groups_per_language = dict()
             for language in dataset_languages:
-                keyword_translations = gloss.translation_set.filter(language=language).exclude(translation__text__exact='').order_by('orderIndex', 'index')
+                keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
                 senses_groups = dict()
-                if keyword_translations.count() > 0:
-                    for trans in keyword_translations:
-                        if trans.orderIndex not in senses_groups.keys():
-                            senses_groups[trans.orderIndex] = []
-                        senses_groups[trans.orderIndex].append(trans)
+                for trans in keyword_translations:
+                    if trans.orderIndex not in senses_groups.keys():
+                        senses_groups[trans.orderIndex] = []
+                    senses_groups[trans.orderIndex].append(trans)
                 keyword_translations_per_language[language] = keyword_translations
                 sense_groups_per_language[language] = senses_groups
             glossesXsenses.append((gloss, keyword_translations_per_language, sense_groups_per_language))

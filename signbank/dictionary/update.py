@@ -969,7 +969,7 @@ def gloss_to_keywords_senses_groups(gloss, language):
         orderIndexKey = str(trans.orderIndex)
         if orderIndexKey not in senses_groups.keys():
             senses_groups[orderIndexKey] = []
-        senses_groups[orderIndexKey].append(trans.translation.text)
+        senses_groups[orderIndexKey].append((str(trans.id), trans.translation.text))
         keywords_list.append(trans.translation.text)
     glossXsenses['glossid'] = str(gloss.id)
     glossXsenses['language'] = str(language.id)
@@ -1137,7 +1137,7 @@ def group_keywords(request, glossid):
     else:
         language = Language.objects.get(id=int(language))
 
-    translation_ids = [t.id for t in gloss.translation_set.filter(language=language).exclude(translation__text__exact='').order_by('orderIndex')]
+    translation_ids = [t.id for t in gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')]
     for transid in translation_ids:
         trans = Translation.objects.get(id=transid)
         trans_id = trans.id

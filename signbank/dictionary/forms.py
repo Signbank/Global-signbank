@@ -40,14 +40,6 @@ def tag_choices():
     return tag_choices_list
 
 
-def not_tag_choices():
-    try:
-        not_tag_choices_list = [(tag.name, tag.name) for tag in Tag.objects.all()]
-    except:
-        not_tag_choices_list = []
-    return not_tag_choices_list
-
-
 class UserSignSearchForm(forms.Form):
 
     glossQuery = forms.CharField(label=_(u'Glosses Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -217,6 +209,15 @@ class TagUpdateForm(forms.Form):
                             choices=tag_choices)
     delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
 
+    def __init__(self, *args, **kwargs):
+        super(TagUpdateForm, self).__init__(*args, **kwargs)
+
+        self.fields['tag'] = forms.ChoiceField(label=_('Tags'),
+                                               choices=[(tag.name, tag.name.replace('_', ' '))
+                                                        for tag in Tag.objects.all()],
+                                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+
 YESNOCHOICES = (('unspecified', "---------" ), ('yes', 'Yes'), ('no', 'No'))
 NULLBOOLEANCHOICES = [(0,'---------'),(2,'True'),(3,'False')]
 NONEBOOLEANCHOICES = [(0,'---------'),(1,'None'),(2,'True'),(3,'False')]
@@ -260,8 +261,7 @@ class GlossSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_('Search Gloss'))
     sortOrder = forms.CharField(label=_('Sort Order'))       # Used in glosslistview to store user-selection
-    tags = forms.MultipleChoiceField(label=_('Tags'), choices=tag_choices)
-    nottags = forms.MultipleChoiceField(label=_('Not Tags'), choices=not_tag_choices)  # this field is not used in the template
+    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
     translation = forms.CharField(label=_('Search Translations'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
@@ -397,13 +397,17 @@ class GlossSearchForm(forms.ModelForm):
                                                           ),
                                            widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         self.fields['hasMorphemeOfType'] = forms.ChoiceField(label=_(u'Has Morpheme Type'),
-                                                          choices=choicelist_queryset_to_translated_dict(
+                                                             choices=choicelist_queryset_to_translated_dict(
                                                               list(
                                                                   FieldChoice.objects.filter(field='MorphemeType').order_by(
                                                                       'machine_value')),
                                                               ordered=False, id_prefix='', shortlist=False
                                                           ),
                                            widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['tags'] = forms.ChoiceField(label=_('Tags'),
+                                                choices=[(tag.name, tag.name.replace('_', ' '))
+                                                         for tag in Tag.objects.all()],
+                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
 def check_language_fields(SearchForm, queryDict, languages):
@@ -461,8 +465,7 @@ class MorphemeSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
-    tags = forms.MultipleChoiceField(label=_('Tags'), choices=tag_choices)
-    nottags = forms.MultipleChoiceField(label=_('Not Tags'), choices=not_tag_choices)
+    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
     translation = forms.CharField(label=_('Search Translations'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
@@ -559,11 +562,15 @@ class MorphemeSearchForm(forms.ModelForm):
                 field_choices = Handshape.objects.all()
             else:
                 field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='',shortlist=True)
+            translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False, id_prefix='',
+                                                                        shortlist=True)
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
-                                                        choices=translated_choices,
-                                                        required=False, widget=Select2)
-
+                                                                    choices=translated_choices,
+                                                                    required=False, widget=Select2)
+        self.fields['tags'] = forms.ChoiceField(label=_('Tags'),
+                                                choices=[(tag.name, tag.name.replace('_', ' '))
+                                                         for tag in Tag.objects.all()],
+                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 class DefinitionForm(forms.ModelForm):
     class Meta:
@@ -1082,6 +1089,10 @@ class KeyMappingSearchForm(forms.ModelForm):
         languages = kwargs.pop('languages')
         super(KeyMappingSearchForm, self).__init__(queryDict, *args, **kwargs)
 
+        self.fields['tags'] = forms.ChoiceField(label=_('Tags'),
+                                                choices=[(tag.name, tag.name.replace('_', ' '))
+                                                         for tag in Tag.objects.all()],
+                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 class FocusGlossSearchForm(forms.ModelForm):
 

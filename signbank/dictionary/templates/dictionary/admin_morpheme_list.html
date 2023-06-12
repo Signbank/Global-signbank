@@ -149,6 +149,14 @@ $(document).ready(function(){
      });
      $('#id_dialects').val(null).trigger('change');
 
+     makeMultipleSelect('id_tags', 'tags[]');
+     $('#id_tags').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve',
+        placeholder: ''
+     });
+     $('#id_tags').val(null).trigger('change');
 });
 
 </script>
