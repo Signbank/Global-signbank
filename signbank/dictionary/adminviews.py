@@ -7433,7 +7433,7 @@ class KeywordListView(ListView):
 
     model = Gloss
     template_name = 'dictionary/admin_keyword_list.html'
-    paginate_by = 25
+    paginate_by = 50
     query_parameters = dict()
 
     def get(self, request, *args, **kwargs):
@@ -7521,13 +7521,16 @@ class KeywordListView(ListView):
             translated_senses = dict()
             sense_translations = gloss.translation_set.all().order_by('orderIndex', 'index')
             for sense_translation in sense_translations:
-                this_orderIndex = sense_translation.orderIndex
-                this_language = sense_translation.language
-                if this_orderIndex not in translated_senses.keys():
-                    translated_senses[this_orderIndex] = dict()
-                if this_language not in translated_senses[this_orderIndex].keys():
-                    translated_senses[this_orderIndex][this_language] = []
-                translated_senses[this_orderIndex][this_language].append(sense_translation)
+                orderIndex = sense_translation.orderIndex
+                if orderIndex not in translated_senses.keys():
+                    translated_senses[orderIndex] = dict()
+                    for language in dataset_languages:
+                        # initialize all dataset languages for looping purposes in the template
+                        translated_senses[orderIndex][language] = dict()
+                language = sense_translation.language
+                if sense_translation.id not in translated_senses[orderIndex][language].keys():
+                    translated_senses[orderIndex][language][sense_translation.id] = dict()
+                translated_senses[orderIndex][language][sense_translation.id][sense_translation.index] = sense_translation
             glossesXsenses.append((gloss,
                                    keyword_translations_per_language,
                                    sense_groups_per_language,

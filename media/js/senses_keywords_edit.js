@@ -248,6 +248,58 @@ function toggle_sense_tag(data) {
     tagsCell.html(cell);
 }
 
+function update_matrix(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var keywords = data.keywords;
+    var senses_groups = data.senses_groups;
+    if ($.isEmptyObject(senses_groups)) {
+        return;
+    };
+
+    for (var language in keywords) {
+        var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;
+        var keywordsCell = $(keywords_glossid);
+        $(keywordsCell).empty();
+        var language_keywords = keywords[language];
+        num_commas = language_keywords.length - 1;
+        var row = $("<tr/>");
+        row.append("<td/>");
+        for (var inx in language_keywords) {
+            if (inx < num_commas) {
+                row.append("<span>"+language_keywords[inx]+"</span>, ");
+            } else {
+                row.append("<span>"+language_keywords[inx]+"</span>");
+            }
+        }
+        row.append("</td></tr>");
+        keywordsCell.append(row);
+    }
+
+    for (var language in senses_groups) {
+        var senses_glossid = '#tbody_senses_' + glossid + '_' + language;
+        var sensesCell = $(senses_glossid);
+        $(sensesCell).empty();
+        var language_senses = senses_groups[language];
+        for (var key in language_senses) {
+            var row = $("<tr/>");
+            row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
+            var group_keywords = language_senses[key];
+            num_commas = group_keywords.length - 1;
+            for (var inx in group_keywords) {
+                if (inx < num_commas) {
+                    row.append("<span>"+group_keywords[inx][1]+"</span>, ");
+                } else {
+                    row.append("<span>"+group_keywords[inx][1]+"</span>");
+                }
+            };
+            row.append("</td></tr>");
+            sensesCell.append(row);
+        }
+    }
+}
 
 $(document).ready(function() {
 
@@ -349,6 +401,55 @@ $(document).ready(function() {
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
             success : toggle_sense_tag
+         });
+     });
+
+     $('.update_translations').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+         var form_id = '#form_edit_sense_matrix_' + glossid;
+         var new_translation = [];
+         $(form_id).find('input[name="new_translation"]').each(function() {
+            new_translation.push(this.value);
+         });
+         var new_language = [];
+         $(form_id).find('input[name="new_language"]').each(function() {
+            new_language.push(this.value);
+         });
+         var new_order_index = [];
+         $(form_id).find('input[name="new_order_index"]').each(function() {
+            new_order_index.push(this.value);
+         });
+         var translation = [];
+         $(form_id).find('input[name="translation"]').each(function() {
+            translation.push(this.value);
+         });
+         var language = [];
+         $(form_id).find('input[name="language"]').each(function() {
+            language.push(this.value);
+         });
+         var sense_id = [];
+         $(form_id).find('input[name="sense_id"]').each(function() {
+            sense_id.push(this.value);
+         });
+         var order_index = [];
+         $(form_id).find('input[name="order_index"]').each(function() {
+            order_index.push(this.value);
+         });
+         $.ajax({
+            url : url + "/dictionary/update/edit_senses_matrix/" + glossid,
+            type: 'POST',
+            data: { 'new_translation': JSON.stringify(new_translation),
+                    'new_language': JSON.stringify(new_language),
+                    'new_order_index': JSON.stringify(new_order_index),
+                    'translation': JSON.stringify(translation),
+                    'language': JSON.stringify(language),
+                    'sense_id': JSON.stringify(sense_id),
+                    'order_index': JSON.stringify(order_index),
+                    'csrfmiddlewaretoken': csrf_token},
+            datatype: "json",
+            success : update_matrix
          });
      });
 });

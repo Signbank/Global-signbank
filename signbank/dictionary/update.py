@@ -756,6 +756,110 @@ def group_keywords(request, glossid):
 
     return JsonResponse(glossXsenses)
 
+
+def gloss_to_keywords_senses_groups(gloss):
+    glossXsenses = dict()
+    keyword_translations = gloss.translation_set.all().order_by('orderIndex', 'index')
+    senses_groups = dict()
+    keywords_translations = dict()
+    translation_languages = gloss.lemma.dataset.translation_languages.all()
+    for language in translation_languages:
+        senses_groups[str(language.id)] = dict()
+        keywords_translations[str(language.id)] = []
+    for trans in keyword_translations:
+        orderIndexKey = str(trans.orderIndex)
+        if orderIndexKey not in senses_groups[str(trans.language.id)].keys():
+            senses_groups[str(trans.language.id)][orderIndexKey] = []
+        senses_groups[str(trans.language.id)][orderIndexKey].append((str(trans.id), trans.translation.text))
+        keywords_translations[str(trans.language.id)].append(trans.translation.text)
+    glossXsenses['glossid'] = str(gloss.id)
+    glossXsenses['keywords'] = keywords_translations
+    glossXsenses['senses_groups'] = senses_groups
+    return glossXsenses
+
+
+def edit_senses_matrix(request, glossid):
+    """Edit the keywords"""
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+    current_trans = gloss.translation_set.all()
+    current_indices = [t.index for t in current_trans]
+    if len(current_indices) < 1:
+        new_index = 1
+    else:
+        new_index = max(current_indices) + 1
+        if len(current_indices) <= new_index:
+            new_index += 1
+
+    new_translation_get = request.POST.get('new_translation')
+    new_translation_list = json.loads(new_translation_get) if new_translation_get else []
+    new_translation = [s for s in new_translation_list]
+
+    new_language_get = request.POST.get('new_language')
+    new_language_list = json.loads(new_language_get) if new_language_get else []
+    new_language = [int(s) for s in new_language_list]
+
+    new_order_index_get = request.POST.get('new_order_index')
+    new_order_index_list = json.loads(new_order_index_get) if new_order_index_get else []
+    new_order_index = [int(s) for s in new_order_index_list]
+
+    language_get = request.POST.get('language')
+    language_list = json.loads(language_get) if language_get else []
+    language = [int(s) for s in language_list]
+
+    sense_id_get = request.POST.get('sense_id')
+    sense_id_list = json.loads(sense_id_get) if sense_id_get else []
+    sense_id = [int(s) for s in sense_id_list]
+
+    order_index_get = request.POST.get('order_index')
+    order_index_list = json.loads(order_index_get) if order_index_get else []
+    order_index = [int(s) for s in order_index_list]
+
+    translation_get = request.POST.get('translation')
+    translation_list_str = json.loads(translation_get) if translation_get else []
+    translation = [ s for s in translation_list_str ]
+
+    # update the text fields
+    for transid in sense_id:
+        target_sense_index = sense_id.index(transid)
+        target_language = language[target_sense_index]
+        target_sense = order_index[target_sense_index]
+        target_text = translation[target_sense_index]
+
+        trans = Translation.objects.get(pk=transid)
+
+        if trans.language.id != target_language:
+            # this should not happen, something is wrong with the form
+            continue
+
+        trans.orderIndex = target_sense
+        (keyword_object, created) = Keyword.objects.get_or_create(text=target_text)
+        trans.translation = keyword_object
+        trans.save()
+
+    for new_trans in new_translation:
+        if new_trans == '':
+            continue
+        target_sense_index = new_translation.index(new_trans)
+        target_language = new_language[target_sense_index]
+        target_sense = new_order_index[target_sense_index]
+        language = Language.objects.get(id=target_language)
+
+        (keyword_object, created) = Keyword.objects.get_or_create(text=new_trans)
+        trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language, orderIndex=target_sense)
+        trans.save()
+        new_index = new_index + 1
+
+    glossXsenses = gloss_to_keywords_senses_groups(gloss)
+
+    return JsonResponse(glossXsenses)
+
+
 def update_annotation_idgloss(gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""
 

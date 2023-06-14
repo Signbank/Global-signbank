@@ -125,9 +125,12 @@ function clearForm() {
     white-space: nowrap;
 }
 input {
-    height: 20px;
+    height: 26px;
     font-size: 14px;
     padding: 0;
+}
+.span-cell {
+    padding: 1px;
 }
 </style>
 {% endblock %}
@@ -167,7 +170,7 @@ input {
                       </div>
                     </div>
                 </div>
-        <div class='btn-toolbar' style="margin-bottom: 20px">
+        <div class='btn-group' style="margin-bottom: 20px">
         <input class='btn btn-primary' type='submit' name="filter" value='Apply Filter'>
         <input class='btn btn-primary' type='reset' onclick="clearForm();"
                        value='{% trans "Reset" %}'>
@@ -198,18 +201,14 @@ input {
                 <button id='edit_sense_translations_btn_{{gloss.id}}' type="button" class="btn actionButton"
                         name='edit_translations_{{gloss.id}}' value='edit_translations_{{gloss.id}}'
                         data-toggle='modal' data-target='#edit_sense_translations_modal_{{gloss.id}}'>
-                    <a class="actionLabel">{% if perms.dictionary.change_gloss %}
-                        {% trans "Edit Senses" %}
-                        {% else %}
-                        {% trans "View Senses" %}
-                        {% endif %}</a></button>
+                    <a class="actionLabel">{% trans "Senses Matrix" %}</a></button>
             </td>
             <td>
                 <table class='table table-condensed'>
                 {% for language in dataset_languages %}
                 <tr>
                 <td>
-                <div class='btn-toolbar' style="margin-bottom: 20px">
+                <div class='btn-group' style="margin-bottom: 20px">
                 <button id='edit_senses_btn_{{gloss.id}}_{{language.id}}' type="button" class="btn actionButton"
                         name='edit_{{gloss.id}}' value='edit_{{gloss.id}}'
                         data-toggle='modal' data-target='#edit_senses_modal_{{gloss.id}}_{{language.id}}'>
@@ -294,7 +293,10 @@ input {
                     </div>
                     <div class='modal-body'>
                         <div class="col-md-12">
-                        <table class="table table-condensed">
+                          <form id="form_edit_sense_matrix_{{gloss.id}}"
+                            action="{% url 'dictionary:edit_senses_matrix' gloss.id %}" method='post'>
+                            {% csrf_token %}
+                            <table class="table table-condensed">
                             <thead>
                             <tr>
                                 <th>{% trans "Sense" %}</th>
@@ -305,21 +307,60 @@ input {
                             </thead>
                             <tbody id="tbody_modal_sensetranslations_{{gloss.id}}_{{language.id}}">
                             {% for order_index, sense_translations in translated_senses.items %}
-                            <tr id="modal_sensetranslationss_{{gloss.id}}_row_{{order_index}}">
+                            <tr id="modal_sensetranslations_{{gloss.id}}_row_{{order_index}}">
                                 <td>{{order_index}}</td>
                             {% for language in dataset_languages %}
+                            {% with sense_translations|get_item:language as translations %}
                                 <td>
-                                {% with sense_translations|get_item:language as translations %}
-                                {% for sense in translations %}
-                                {{sense.translation.text|safe}}{% if not forloop.last %}, {% endif %}
-                                {% endfor %}
-                                {% endwith %}
+                                   <table>
+                                    <tbody>
+                                    <tr>
+                                    {% if not translations.items %}
+                                    <td id="new_sense_translations_{{gloss.id}}_{{language.id}}">
+                                    <span>
+                                    <input type="text" id="new_sense_translation_text_{{gloss.id}}_{{language.id}}" size="40"
+                                           name="new_translation">
+                                    <input type="hidden" id="new_sense_language_{{language.id}}"
+                                           name="new_language" value='{{language.id}}' data-new_language='{{language.id}}'>
+                                    <input type="hidden" id="new_order_index_{{gloss.id}}_{{language.id}}"
+                                           name="new_order_index" value='{{order_index}}' data-new_order_index='{{order_index}}'>
+                                    </span>
+                                    </td>
+                                    {% else %}
+                                    <td>
+                                    {% for senseid, keywords_translations in translations.items %}
+                                    {% for index, keywords in keywords_translations.items %}
+                                    <span class="span-cell">
+                                    <input type="text" size="40"
+                                           name="translation" value='{{keywords.translation.text}}'
+                                           data-translation='{{keywords.translation.text}}'>
+                                    <input type="hidden"
+                                           name="sense_id" value='{{keywords.id}}' data-sense_id='{{keywords.id}}'>
+                                    <input type="hidden"
+                                           name="order_index" value='{{order_index}}' data-order_index='{{order_index}}'>
+                                    <input type="hidden"
+                                           name="language" value='{{language.id}}' data-language='{{language.id}}'>
+                                    </span>
+                                    {% endfor %}
+                                    {% endfor %}
+                                    </td>
+                                    {% endif %}
+                                  </tr>
+                                  </tbody>
+                                   </table>
                                 </td>
+                            {% endwith %}
                             {% endfor %}
                             </tr>
                             {% endfor %}
                             </tbody>
-                        </table>
+                            </table>
+                              {% if perms.dictionary.change_gloss %}
+                              <button class="update_translations btn btn-primary" id="update_translations_{{gloss.id}}"
+                                      value='{{gloss.id}}' type="submit">
+                                  {% trans "Save" %}</button>
+                              {% endif %}
+                          </form>
                         </div>
                     </div>
                     <div class="modal-footer">
