@@ -757,7 +757,7 @@ def group_keywords(request, glossid):
     return JsonResponse(glossXsenses)
 
 
-def gloss_to_keywords_senses_groups(gloss):
+def gloss_to_keywords_senses_groups_matrix(gloss):
     glossXsenses = dict()
     keyword_translations = gloss.translation_set.all().order_by('orderIndex', 'index')
     senses_groups = dict()
@@ -855,7 +855,7 @@ def edit_senses_matrix(request, glossid):
         trans.save()
         new_index = new_index + 1
 
-    glossXsenses = gloss_to_keywords_senses_groups(gloss)
+    glossXsenses = gloss_to_keywords_senses_groups_matrix(gloss)
 
     return JsonResponse(glossXsenses)
 
