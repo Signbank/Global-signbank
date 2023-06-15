@@ -258,6 +258,49 @@ function update_matrix(data) {
     if ($.isEmptyObject(senses_groups)) {
         return;
     };
+    var updated_translations = data.updated_translations;
+    var new_translations = data.new_translations;
+
+    for (var i=0; i < updated_translations.length; i++) {
+        var inputEltIndex = updated_translations[i]['inputEltIndex'];
+        var orderIndex = updated_translations[i]['orderIndex'];
+        var sense_id = updated_translations[i]['sense_id'];
+        var language = updated_translations[i]['language'];
+        var new_text = updated_translations[i]['text'];
+        var input_text_element_id = '#sense_translation_text_' + glossid + '_' + language + '_' + sense_id;
+        $(input_text_element_id).attr('value', new_text);
+        $(input_text_element_id).attr('data-translation', new_text);
+    }
+
+    for (var i=0; i < new_translations.length; i++) {
+        var inputEltIndex = new_translations[i]['inputEltIndex'];
+        var orderIndex = new_translations[i]['orderIndex'];
+        var sense_id = new_translations[i]['sense_id'];
+        var language = new_translations[i]['language'];
+        var new_text = new_translations[i]['text'];
+        var new_id = 'sense_translation_text_' + glossid + '_' + language + '_' + sense_id;
+        var form_id = '#form_edit_sense_matrix_' + glossid;
+        var new_translation = [];
+        $(form_id).find('input[name="new_translation"]').each(function( index ) {
+            if (index != inputEltIndex) { return; }
+            if ($(this).attr('data-language') != language) { return; }
+            if ($(this).attr('data-order_index') != orderIndex) { return; }
+            $(this).attr('id', new_id);
+            $(this).attr('data-translation', new_text);
+            $(this).attr('value', new_text);
+            $(this).attr('data-updated', new_text);
+        });
+    }
+    var elementsUpdated = [];
+    var form_id = '#form_edit_sense_matrix_' + glossid;
+    $(form_id).find('input[name="new_translation"]').each(function() {
+        if ($(this).attr('data-updated')) {
+            elementsUpdated.push($(this));
+        }
+    });
+    $.each(elementsUpdated, function(index, elt) {
+        $(elt).attr('name', 'translation');
+    });
 
     for (var language in keywords) {
         var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;

@@ -194,7 +194,7 @@ input {
       </tr>
     </thead>
     <tbody>
-    {% for gloss, keywords_per_language, senses_per_language, translated_senses in page_obj %}
+    {% for gloss, keywords_per_language, senses_per_language, translated_senses, matrix_dimensions in page_obj %}
         <tr>
             <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}">{{gloss|get_default_annotation_idgloss_translation}}</a></td>
             <td class="actions">
@@ -305,7 +305,7 @@ input {
                                 {% endfor %}
                             </tr>
                             </thead>
-                            <tbody id="tbody_modal_sensetranslations_{{gloss.id}}_{{language.id}}">
+                            <tbody>
                             {% for order_index, sense_translations in translated_senses.items %}
                             <tr id="modal_sensetranslations_{{gloss.id}}_row_{{order_index}}">
                                 <td>{{order_index}}</td>
@@ -313,25 +313,31 @@ input {
                             {% with sense_translations|get_item:language as translations %}
                                 <td>
                                    <table>
-                                    <tbody>
+                                   {% with matrix_dimensions|get_item:order_index as senses_matrix %}
+                                   {% with senses_matrix|get_item:language as matrix_data %}
+                                   {% with matrix_data|get_item:'range' as cellsrange %}
+                                   {% with matrix_data|get_item:'count' as cellscount %}
+                                   {% with matrix_data|get_item:'max' as cellsmax %}
+                                   {% with matrix_data|get_item:'padding' as cellspadding %}
+                                   <tbody id="tbody_modal_sensetranslations_{{gloss.id}}_{{language.id}}">
                                     <tr>
+                                    <td id="sense_translations_{{gloss.id}}_{{language.id}}">
                                     {% if not translations.items %}
-                                    <td id="new_sense_translations_{{gloss.id}}_{{language.id}}">
-                                    <span>
-                                    <input type="text" id="new_sense_translation_text_{{gloss.id}}_{{language.id}}" size="40"
+                                    {% for i in cellsrange %}
+                                    <span class="span-cell">
+                                    <input type="text"size="40" data-language='{{language.id}}' data-order_index='{{order_index}}'
                                            name="new_translation">
-                                    <input type="hidden" id="new_sense_language_{{language.id}}"
+                                    <input type="hidden"
                                            name="new_language" value='{{language.id}}' data-new_language='{{language.id}}'>
-                                    <input type="hidden" id="new_order_index_{{gloss.id}}_{{language.id}}"
+                                    <input type="hidden"
                                            name="new_order_index" value='{{order_index}}' data-new_order_index='{{order_index}}'>
                                     </span>
-                                    </td>
+                                    {% endfor %}
                                     {% else %}
-                                    <td>
                                     {% for senseid, keywords_translations in translations.items %}
                                     {% for index, keywords in keywords_translations.items %}
                                     <span class="span-cell">
-                                    <input type="text" size="40"
+                                    <input type="text" size="40" id="sense_translation_text_{{gloss.id}}_{{language.id}}_{{keywords.id}}"
                                            name="translation" value='{{keywords.translation.text}}'
                                            data-translation='{{keywords.translation.text}}'>
                                     <input type="hidden"
@@ -343,10 +349,28 @@ input {
                                     </span>
                                     {% endfor %}
                                     {% endfor %}
-                                    </td>
+                                    {% if cellsmax > cellscount %}
+                                    {% for i in cellspadding %}
+                                    <span class="span-cell">
+                                    <input type="text" size="40" data-language='{{language.id}}' data-order_index='{{order_index}}'
+                                           name="new_translation">
+                                    <input type="hidden"
+                                           name="new_language" value='{{language.id}}' data-new_language='{{language.id}}'>
+                                    <input type="hidden"
+                                           name="new_order_index" value='{{order_index}}' data-new_order_index='{{order_index}}'>
+                                    </span>
+                                    {% endfor %}
                                     {% endif %}
-                                  </tr>
-                                  </tbody>
+                                    {% endif %}
+                                    </td>
+                                    </tr>
+                                   </tbody>
+                                   {% endwith %}
+                                   {% endwith %}
+                                   {% endwith %}
+                                   {% endwith %}
+                                   {% endwith %}
+                                   {% endwith %}
                                    </table>
                                 </td>
                             {% endwith %}

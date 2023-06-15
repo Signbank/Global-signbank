@@ -759,10 +759,11 @@ def group_keywords(request, glossid):
 
 def gloss_to_keywords_senses_groups_matrix(gloss):
     glossXsenses = dict()
-    keyword_translations = gloss.translation_set.all().order_by('orderIndex', 'index')
+    keyword_translations = gloss.translation_set.all().order_by('orderIndex', 'language', 'index')
     senses_groups = dict()
     keywords_translations = dict()
     translation_languages = gloss.lemma.dataset.translation_languages.all()
+    senses_matrix = dict()
     for language in translation_languages:
         senses_groups[str(language.id)] = dict()
         keywords_translations[str(language.id)] = []
@@ -787,8 +788,10 @@ def edit_senses_matrix(request, glossid):
         return JsonResponse({})
 
     gloss = get_object_or_404(Gloss, id=glossid)
-    current_trans = gloss.translation_set.all()
+    current_trans = gloss.translation_set.all().order_by('orderIndex', 'language', 'index')
     current_indices = [t.index for t in current_trans]
+    current_keywords = [t.translation.text for t in current_trans]
+
     if len(current_indices) < 1:
         new_index = 1
     else:
@@ -824,6 +827,7 @@ def edit_senses_matrix(request, glossid):
     translation_list_str = json.loads(translation_get) if translation_get else []
     translation = [ s for s in translation_list_str ]
 
+    updated_translations = []
     # update the text fields
     for transid in sense_id:
         target_sense_index = sense_id.index(transid)
@@ -837,11 +841,21 @@ def edit_senses_matrix(request, glossid):
             # this should not happen, something is wrong with the form
             continue
 
+        if trans.translation.text == target_text:
+            # nothing changed
+            continue
+
         trans.orderIndex = target_sense
         (keyword_object, created) = Keyword.objects.get_or_create(text=target_text)
         trans.translation = keyword_object
         trans.save()
+        updated_translations.append({ 'inputEltIndex': target_sense_index,
+                                      'orderIndex': str(target_sense),
+                                      'sense_id': str(trans.id),
+                                      'language': str(target_language),
+                                      'text': target_text })
 
+    new_translations = []
     for new_trans in new_translation:
         if new_trans == '':
             continue
@@ -854,8 +868,15 @@ def edit_senses_matrix(request, glossid):
         trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language, orderIndex=target_sense)
         trans.save()
         new_index = new_index + 1
+        new_translations.append({ 'inputEltIndex': target_sense_index,
+                                  'orderIndex': str(target_sense),
+                                  'sense_id': str(trans.id),
+                                  'language': str(target_language),
+                                  'text': new_trans })
 
     glossXsenses = gloss_to_keywords_senses_groups_matrix(gloss)
+    glossXsenses['new_translations'] = new_translations
+    glossXsenses['updated_translations'] = updated_translations
 
     return JsonResponse(glossXsenses)
 
