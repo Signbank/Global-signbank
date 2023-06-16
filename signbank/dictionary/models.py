@@ -595,6 +595,7 @@ class ExampleSentence(models.Model):
     
     def get_examplestc_translations_dict_with(self):
         translations = {}
+        print(self.dataset)
         for dataset_translation_language in self.dataset.translation_languages.all():
             if self.examplesentencetranslation_set.filter(language = dataset_translation_language).count() == 1:
                 translations[str(dataset_translation_language)] = str(self.examplesentencetranslation_set.all().get(language = dataset_translation_language))
@@ -696,6 +697,12 @@ class SenseTranslation(models.Model):
     def get_translations(self):
         return ", ".join(sorted([t.translation.text.strip() for t in self.translations.all()]))
 
+    def get_translations_return(self):
+        return "\n".join(sorted([t.translation.text.strip() for t in self.translations.all()]))
+    
+    def get_translations_list(self):
+        return sorted([t.translation.text.strip() for t in self.translations.all()])
+
     def __str__(self):
         return self.get_translations()
     
@@ -723,14 +730,40 @@ class Sense(models.Model):
         sense_translations = {}
         for dataset_translation_language in self.dataset.translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
-                translation_list = ", ".join(sorted([k.get_translations() for k in self.senseTranslations.filter(language = dataset_translation_language)]))
+                translation_list = [st.get_translations() for st in self.senseTranslations.filter(language = dataset_translation_language)][0]
                 sense_translations[str(dataset_translation_language)]= translation_list
             else:
                 sense_translations[str(dataset_translation_language)]= ""
         return sense_translations
     
+    def get_sense_translations_dict_with_return(self):
+        sense_translations = {}
+        for dataset_translation_language in self.dataset.translation_languages.all():
+            if self.senseTranslations.filter(language = dataset_translation_language).exists():
+                translation_list = sorted([st.get_translations_return() for st in self.senseTranslations.filter(language = dataset_translation_language)])[0]
+                sense_translations[str(dataset_translation_language)]= translation_list
+            else:
+                sense_translations[str(dataset_translation_language)]= ""
+        return sense_translations
+
+    def get_sense_translations_dict_with_list(self):
+        sense_translations = {}
+        for dataset_translation_language in self.dataset.translation_languages.all():
+            if self.senseTranslations.filter(language = dataset_translation_language).exists():
+                translation_list = sorted([st.get_translations_list() for st in self.senseTranslations.filter(language = dataset_translation_language)])[0]
+                sense_translations[str(dataset_translation_language)]= translation_list
+            else:
+                sense_translations[str(dataset_translation_language)]= ""
+        return sense_translations
+    
+    def get_sense_translations_dict_without_return(self):
+        return {k: v for k, v in self.get_sense_translations_dict_with_return().items() if v}
+
     def get_sense_translations_dict_without(self):
         return {k: v for k, v in self.get_sense_translations_dict_with().items() if v}
+
+    def get_sense_translations_dict_without_list(self):
+        return {k: v for k, v in self.get_sense_translations_dict_with_list().items() if v}
 
     def get_sense_translations(self):
         return [k+": "+v for k,v in self.get_sense_translations_dict_without().items()]
@@ -740,9 +773,6 @@ class Sense(models.Model):
         for sensetranslation in self.senseTranslations.all():
             str_sense .append(str(sensetranslation))
         return " | ".join(str_sense)
-
-    class Meta:
-        ordering = ['orderindex']
 
 class Gloss(models.Model):
     class Meta:
@@ -1174,13 +1204,6 @@ class Gloss(models.Model):
         fields["Link"] = settings.URL + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
 
         return fields
-
-    
-    def get_transltns(self):
-        senses = models.ManyToManyField(Sense)
-        alltranslations = ""
-        for sensei, sense in enumerate(senses):
-            allkeywors = alltranslations + sensei + ". " + sense.get_translations + "\n"
 
     def navigation(self, is_staff):
         """Return a gloss navigation structure that can be used to

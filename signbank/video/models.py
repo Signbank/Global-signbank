@@ -136,8 +136,8 @@ class ExampleVideoHistory(models.Model):
     def __str__(self):
 
         # Basic feedback from one History item: gloss-action-date
-        name = self.examplesentence.id + ': ' + self.action + ', (' + str(self.datestamp) + ')'
-        return name.encode('ascii', errors='replace')
+        name = str(self.examplesentence.id) + ': ' + self.action + ', (' + str(self.datestamp) + ')'
+        return str(name.encode('ascii', errors='replace'))
 
     class Meta:
         ordering = ['datestamp']

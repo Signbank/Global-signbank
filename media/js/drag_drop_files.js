@@ -236,7 +236,6 @@ if (typeof(dropImageArea) != 'undefined' && dropImageArea != null){
 }
 
 if (image === true){
-    console.log("HELLO")
     let inputImageArea = document.getElementById('id_imagefile')
     inputImageArea.onchange = function(){handleImageByButton(this.files)}
     let dropContainerImageStatus = document.getElementById('drop-container-image-status')
