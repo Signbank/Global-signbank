@@ -1663,7 +1663,7 @@ class GlossDetailView(DetailView):
 
         sentencetype_choice_list = FieldChoice.objects.filter(field__iexact='SentenceType')
         context['sentencetypes'] = choicelist_queryset_to_translated_dict(sentencetype_choice_list, id_prefix='', ordered=False, shortlist=True)
-        context['senses'] = gl.senses.filter(dataset=gl.lemma.dataset)
+        context['senses'] = gl.senses.filter(dataset=gl.lemma.dataset).order_by('glosssense')
 
         bad_dialect = False
         gloss_dialects = []

@@ -958,7 +958,7 @@ class Gloss(models.Model):
     sense.list_filter_sense = True
 
     senses = models.ManyToManyField(Sense, 
-                                    through = 'GlossSense',
+        through = 'GlossSense',
         related_name    = 'senses',
         verbose_name    = _(u'Senses'),
         help_text           = _(u'Senses in this Gloss')

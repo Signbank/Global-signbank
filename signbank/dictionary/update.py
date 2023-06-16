@@ -284,6 +284,27 @@ def delete_examplesentence(request, senseid):
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+def sort_sense(request, glossid, order, direction):
+    order = int(order)
+    gloss = Gloss.objects.get(id=glossid)
+    glosssense = GlossSense.objects.all().get(gloss=gloss, order = order-1)
+    direction = direction
+    if direction == "up":
+        glosssenseabove = GlossSense.objects.all().get(gloss=gloss, order=order-2)
+        glosssenseabove.order = order - 1
+        glosssense.order = order - 2
+        glosssense.save()
+        glosssenseabove.save()
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    if direction == "down":
+        glosssensebeneath = GlossSense.objects.all().get(gloss=gloss, order=order)
+        glosssensebeneath.order = order -1
+        glosssense.order = order 
+        glosssense.save()
+        glosssensebeneath.save()
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 def add_sentence_video(request, glossid, examplesentenceid):
     template = 'dictionary/add_sentence_video.html'
