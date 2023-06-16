@@ -113,7 +113,7 @@ class AnnotationIdglossTranslationInline(admin.TabularInline):
     extra = 0
 
 class SenseInline(admin.TabularInline):
-    model = Gloss.senses.through
+    model = GlossSense
 
     extra = 0
 
@@ -1301,13 +1301,16 @@ class SearchHistoryAdmin(VersionAdmin):
         view = super(SearchHistoryAdmin, self).change_view(request, object_id, form_url, extra_context)
         return view
 
+class GlossSenseAdmin(admin.ModelAdmin):
+    list_display = ("gloss", "sense", "order")
+
 class SenseTranslationAdmin(admin.ModelAdmin):
     list_display = ("get_translations", "language")
     list_filter = ['language']
     search_fields = ['translations__translation__text']
 
 class SenseAdmin(admin.ModelAdmin):
-    list_display = ("get_sense_translations", "get_example_sentences", "dataset", "orderindex")
+    list_display = ("get_sense_translations", "get_example_sentences", "dataset")
     search_fields = ['senseTranslations__translations__translation__text']
     list_filter = ['dataset']
 
@@ -1360,6 +1363,7 @@ admin.site.register(QueryParameterMultilingual, QueryParameterMultilingualAdmin)
 admin.site.register(SearchHistory, SearchHistoryAdmin)
 
 admin.site.register(SenseTranslation, SenseTranslationAdmin)
+admin.site.register(GlossSense, GlossSenseAdmin)
 admin.site.register(Sense, SenseAdmin)
 admin.site.register(ExampleSentence, ExampleSentenceAdmin)
 admin.site.register(ExampleSentenceTranslation, ExampleSentenceTranslationAdmin)

@@ -709,7 +709,6 @@ class SenseTranslation(models.Model):
 class Sense(models.Model):
     """A sense belongs to a gloss and consists of a set of translation(s)"""
     
-    orderindex = models.IntegerField(default = 0)
     senseTranslations = models.ManyToManyField(SenseTranslation)
     exampleSentences = models.ManyToManyField(ExampleSentence)
     dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
@@ -958,7 +957,12 @@ class Gloss(models.Model):
                                 help_text="If there is more than one sense of a sign enter a number here, all signs with sense>1 will use the same video as sense=1")
     sense.list_filter_sense = True
 
-    senses = models.ManyToManyField(Sense)
+    senses = models.ManyToManyField(Sense, 
+                                    through = 'GlossSense',
+        related_name    = 'senses',
+        verbose_name    = _(u'Senses'),
+        help_text           = _(u'Senses in this Gloss')
+    )
 
     sn = models.IntegerField(_("Sign Number"),
                              help_text="Sign Number must be a unique integer and defines the ordering of signs in the dictionary",
@@ -1133,6 +1137,14 @@ class Gloss(models.Model):
             return self.lemma.lemmaidglosstranslation_set.first().text
         except:
             return str(self.id)
+
+    def reorder_senses(self):
+        "when a sense is deleted, the senses should be reordered"
+        for sense_i, sense in enumerate(self.senses.all()):
+            glossense = GlossSense.objects.all().get(gloss=self, sense=sense)
+            glossense.order = sense_i
+            glossense.save()
+
 
     def annotation_idgloss(self, language_code):
         # this function is used in Relations View to dynamically get the Annotation of related glosses
@@ -2299,6 +2311,24 @@ def fieldname_to_kind(fieldname):
         field_kind = fieldname
 
     return field_kind
+
+
+class GlossSense(models.Model):
+    """A relation between a gloss and a sense to determine in what order to show the senses"""
+    gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
+    sense = models.ForeignKey(Sense, on_delete=models.CASCADE)       
+    order = models.IntegerField(
+        verbose_name    = _(u'Order'),
+        help_text           = _(u'What order to display this sense within the gloss.')
+    )
+
+    class Meta:
+        verbose_name = _(u"Gloss sense")
+        verbose_name_plural = _(u"Gloss senses")
+        ordering = ['order',]
+
+    def __unicode__(self):
+        return "Sense: " + str(self.sense.sensetranslations) + " is a member of " + str(self.gloss) + (" in position %d" % self.order)
 
 
 class Relation(models.Model):

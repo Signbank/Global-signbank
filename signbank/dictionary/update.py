@@ -338,8 +338,10 @@ def update_sense(request, senseid):
             # Replace this sense by the found sense object
             gloss = Gloss.objects.all().get(pk=request.POST['glossid'])
             gloss.senses.remove(sense)
+            gloss.reorder_senses()
             if s not in gloss.senses.all():
-                gloss.senses.add(s)
+                glosssense = GlossSense(gloss=gloss, sense=s, order=gloss.senses.count())
+                glosssense.save()
 
             # If the sense does not exist in any other gloss, delete it and its translations and examplesentences
             if Gloss.objects.filter(lemma__dataset_id=dataset.id, senses = sense).count() == 0:
@@ -467,13 +469,15 @@ def create_sense(request, glossid):
             if sense in gloss.senses.all():
                 messages.add_message(request, messages.ERROR, _('Sense is already in this gloss.'))
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-            gloss.senses.add(sense)
+            glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count())
+            glosssense.save()
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     
     # Make a new sense object
     sense = Sense.objects.create(dataset = dataset)
     sense.save()
-    gloss.senses.add(sense)
+    glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count())
+    glosssense.save()
 
     # Add or remove keywords to the sense translations
     with atomic():
@@ -516,6 +520,7 @@ def delete_sense(request, glossid):
     dataset_languages = dataset.translation_languages.all()
 
     gloss.senses.remove(sense)
+    gloss.reorder_senses()
 
     # If this is this only gloss this sense was in, delete the sense
     if Gloss.objects.filter(senses = sense).count() == 0:
