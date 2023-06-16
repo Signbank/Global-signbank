@@ -159,7 +159,7 @@ class Translation(models.Model):
         return "/dictionary/"
 
     class Meta:
-        unique_together = (("gloss", "language", "translation"),)
+        unique_together = (("gloss", "language", "translation", "orderIndex"),)
         ordering = ['gloss', 'index']
 
     class Admin:

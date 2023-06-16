@@ -417,12 +417,12 @@ input {
                             <tbody id="tbody_modal_senses_{{gloss.id}}_{{language.id}}">
                             {% with senses_per_language|get_item:language as senses_groups %}
                             {% for order_index, keywords_list in senses_groups.items %}
-                            <tr id="modal_senses_{{gloss.id}}_row_{{order_index}}">
+                            <tr id="modal_senses_{{gloss.id}}_{{language.id}}_row_{{order_index}}">
                             <td>{{order_index}}.</td>
-                            <td>
-                              {% for sense in keywords_list %}
-                                <span id="sensegroup_{{sense.orderIndex}}">
-                                    {{sense.translation.text|safe}}
+                            <td id="modal_senses_order_language_cell_{{gloss.id}}_{{language.id}}_{{order_index}}">
+                              {% for keyword in keywords_list %}
+                                <span id="sensegroup_{{gloss.id}}_{{order_index}}_{{language.id}}_{{keyword.id}}">
+                                    {{keyword.translation.text|safe}}
                                 </span>{% if not forloop.last %}, {% endif %}
                               {% endfor %}
                             </td>
@@ -481,9 +481,9 @@ input {
                           {% for keyword in keywords %}
                             <tr id="edit_keywords_row_{{gloss.id}}_{{language.id}}_{{keyword.id}}">
                                 <td>
-                                <input type="text" id="edit_keyword_text_{{keyword.id}}" size="40"
+                                <input type="text" id="edit_keyword_text_{{gloss.id}}_{{language.id}}_{{keyword.id}}" size="40"
                                        name="translation" value='{{keyword.translation.text}}'
-                                       data-translation='{{keyword.id}}'>
+                                       data-translation='{{keyword.translation.text}}'>
                                 <input type="hidden" id="keyword_index_{{keyword.id}}"
                                        name="keyword_index" value='{{keyword.id}}' data-index='{{keyword.id}}'>
                                 </td>
