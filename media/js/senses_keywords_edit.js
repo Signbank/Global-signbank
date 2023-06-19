@@ -51,7 +51,7 @@ function update_gloss_senses(data) {
     var modalSensesCell = $(modal_senses_glossid);
     $(modalSensesCell).empty();
     for (var key in senses_groups) {
-        var senses_row_id = 'modal_senses_' + glossid +'_' + language +'_row_' + orderIndex;
+        var senses_row_id = 'modal_senses_' + glossid +'_' + language +'_row_' + key;
         var cell_id = 'modal_senses_order_language_cell_' + glossid +'_' + language + '_' + key;
         var row = $('<tr id="'+ senses_row_id + '"/>');
         row.append("<td>"+key+'.</td><td id="'+ cell_id + '"/>');
@@ -145,6 +145,10 @@ function add_gloss_keywords(data) {
     if ($.isEmptyObject(new_sense)) {
         return;
     };
+    var dataset_languages = data.dataset_languages;
+    if ($.isEmptyObject(dataset_languages)) {
+        return;
+    };
     var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;
     var keywordsCell = $(keywords_glossid);
     $(keywordsCell).empty();
@@ -209,7 +213,7 @@ function add_gloss_keywords(data) {
     var max_index = keywords.length;
     var row = $("<tr/>");
     // the new row gets as id the max index of the keywords
-    row.append('<td id="keyword_sense_index_'+glossid+'_'+language+'_'+max_index+'" >'+keywords[last_index]);
+    row.append('<td id="keyword_sense_index_'+glossid+'_'+language+'_'+max_index+'" />'+keywords[last_index]);
     row.append("</td>");
     row.append('<td><input type="number" id="regroup_'+new_sense+
                             '" name="regroup" size="5" value="'+new_sense+
@@ -235,6 +239,71 @@ function add_gloss_keywords(data) {
     row.append("</tr>");
     modalEditKeywordsCell.append(row);
     modalEditKeywordsCell.append("</tr>");
+
+    // new_sense is orderIndex of new sense
+    // new_translation is id of new translation
+    // new text is keywords[last_index]
+    var tbody_modal_senses = '#tbody_modal_sensetranslations_' + glossid;
+    var modalSensesTable = $(tbody_modal_senses);
+    var order_index_row = 'modal_sensetranslations_' + glossid + '_row_' + new_sense;
+
+    if (!$('#'+order_index_row).length) {
+        // no row for sense order index
+        var row = $('<tr id="'+ order_index_row + '"/>');
+        row.append("<td>"+new_sense+'.</td>');
+        for (var inx in dataset_languages) {
+            var cell_lang = 'sense_translations_' + glossid + '_' + dataset_languages[inx] + '_' + new_sense;
+            var cellTD = '<td id="'+ cell_lang + '">';
+            if (language == dataset_languages[inx]) {
+                var span_id = 'span_cell_' + glossid + '_' + language + '_' + new_translation;
+                var span = $(cellTD + '<span class="span-cell" id="'+span_id+'"/>');
+                span.append('<input type="text" id="sense_translation_text_' + glossid + '_' + language + '_' + new_translation +
+                            '" name="translation" size="40" value="'+keywords[last_index]+
+                            '" data-translation="'+keywords[last_index]+'">');
+                span.append('<input type="hidden" name="sense_id" value="'+new_translation+'" data-sense_id="'+new_translation+'">');
+                span.append('<input type="hidden" name="order_index" value="'+new_sense+'" data-order_index="'+new_sense+'">');
+                span.append('<input type="hidden" name="language" value="'+language+'" data-language="'+language+'">');
+                span.append("</span>").append("</td>");
+                row.append(span);
+            } else {
+                var span = $(cellTD + '<span class="span-cell"/>');
+                span.append('<input type="text" size="40" data-order_index="'+new_sense + '" data-language="'+
+                            dataset_languages[inx]+'" name="new_translation">');
+                span.append('<input type="hidden" name="new_order_index" value="'+new_sense+'" data-new_order_index="'+new_sense+'">');
+                span.append('<input type="hidden" name="new_language" value="'+dataset_languages[inx]+'" data-new_language="'+
+                                    dataset_languages[inx]+'">');
+                span.append("</span>").append("</td>");
+                row.append(span);
+            }
+        }
+        modalSensesTable.append(row).append("</tr>");
+    } else {
+        for (var inx in dataset_languages) {
+            var cell_lang = '#sense_translations_' + glossid +'_' + dataset_languages[inx] + '_' + new_sense;
+            var senseLangCell = $(cell_lang + ' span');
+            if (language == dataset_languages[inx]) {
+                var span_id = 'span_cell_' + glossid + '_' + language + '_' + new_translation;
+                var span = $('<span class="span-cell" id="'+span_id+'"/>');
+                span.append('<input type="text" id="sense_translation_text_' + glossid + '_' + language + '_' + new_translation +
+                            '" name="translation" size="40" value="'+keywords[last_index]+
+                            '" data-translation="'+keywords[last_index]+'">');
+                span.append('<input type="hidden" name="sense_id" value="'+new_translation+'" data-sense_id="'+new_translation+'">');
+                span.append('<input type="hidden" name="order_index" value="'+new_sense+'" data-order_index="'+new_sense+'">');
+                span.append('<input type="hidden" name="language" value="'+language+'" data-language="'+language+'">');
+                span.append("</span>");
+                senseLangCell.append(span);
+            } else {
+                var span = $('<span class="span-cell"/>');
+                span.append('<input type="text" size="40" data-order_index="'+new_sense + '" data-language="'+
+                            dataset_languages[inx]+'" name="new_translation">');
+                span.append('<input type="hidden" name="new_order_index" value="'+new_sense+'" data-new_order_index="'+new_sense+'">');
+                span.append('<input type="hidden" name="new_language" value="'+dataset_languages[inx]+'" data-new_language="'+
+                                    dataset_languages[inx]+'">');
+                span.append("</span>");
+                senseLangCell.append(span);
+            }
+        }
+    }
 }
 
 function toggle_sense_tag(data) {
@@ -314,6 +383,7 @@ function update_matrix(data) {
         var modal_senses_glossid = '#tbody_modal_senses_' + glossid + '_' + language;
         var modalSensesCell = $(modal_senses_glossid);
         var senses_row = '#modal_senses_' + glossid +'_' + language +'_row_' + orderIndex;
+        var span_id = 'sensegroup_' + glossid + '_' + orderIndex + '_' + language + '_' + sense_id;
         if (!$(senses_row).length) {
             // no senses for this language
             var senses_row_id = 'modal_senses_' + glossid +'_' + language +'_row_' + orderIndex;
@@ -326,7 +396,6 @@ function update_matrix(data) {
         } else {
             // add the new keyword to the end of the sense
             var cell = '#modal_senses_order_language_cell_' + glossid +'_' + language + '_' + orderIndex;
-            var span_id = 'sensegroup_' + glossid + '_' + orderIndex + '_' + language + '_' + sense_id;
             var span = $('<span id="'+span_id+'">'+new_text+"</span>");
             $(cell).append(', ').append(span);
         }

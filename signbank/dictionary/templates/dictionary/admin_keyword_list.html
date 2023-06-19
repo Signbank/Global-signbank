@@ -296,7 +296,7 @@ input {
                           <form id="form_edit_sense_matrix_{{gloss.id}}"
                             action="{% url 'dictionary:edit_senses_matrix' gloss.id %}" method='post'>
                             {% csrf_token %}
-                            <table class="table table-condensed">
+                            <table class="table">
                             <thead>
                             <tr>
                                 <th>{% trans "Sense" %}</th>
@@ -305,23 +305,19 @@ input {
                                 {% endfor %}
                             </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tbody_modal_sensetranslations_{{gloss.id}}">
                             {% for order_index, sense_translations in translated_senses.items %}
                             <tr id="modal_sensetranslations_{{gloss.id}}_row_{{order_index}}">
                                 <td>{{order_index}}</td>
                             {% for language in dataset_languages %}
                             {% with sense_translations|get_item:language as translations %}
-                                <td>
-                                   <table>
                                    {% with matrix_dimensions|get_item:order_index as senses_matrix %}
                                    {% with senses_matrix|get_item:language as matrix_data %}
                                    {% with matrix_data|get_item:'range' as cellsrange %}
                                    {% with matrix_data|get_item:'count' as cellscount %}
                                    {% with matrix_data|get_item:'max' as cellsmax %}
                                    {% with matrix_data|get_item:'padding' as cellspadding %}
-                                   <tbody id="tbody_modal_sensetranslations_{{gloss.id}}_{{language.id}}">
-                                    <tr>
-                                    <td id="sense_translations_{{gloss.id}}_{{language.id}}">
+                                    <td id="sense_translations_{{gloss.id}}_{{language.id}}_{{order_index}}">
                                     {% if not translations.items %}
                                     {% for i in cellsrange %}
                                     <span class="span-cell">
@@ -336,7 +332,7 @@ input {
                                     {% else %}
                                     {% for senseid, keywords_translations in translations.items %}
                                     {% for index, keywords in keywords_translations.items %}
-                                    <span class="span-cell">
+                                    <span class="span-cell" id="span_cell_{{gloss.id}}_{{language.id}}_{{keywords.id}}">
                                     <input type="text" size="40" id="sense_translation_text_{{gloss.id}}_{{language.id}}_{{keywords.id}}"
                                            name="translation" value='{{keywords.translation.text}}'
                                            data-translation='{{keywords.translation.text}}'>
@@ -363,16 +359,12 @@ input {
                                     {% endif %}
                                     {% endif %}
                                     </td>
-                                    </tr>
-                                   </tbody>
                                    {% endwith %}
                                    {% endwith %}
                                    {% endwith %}
                                    {% endwith %}
                                    {% endwith %}
                                    {% endwith %}
-                                   </table>
-                                </td>
                             {% endwith %}
                             {% endfor %}
                             </tr>

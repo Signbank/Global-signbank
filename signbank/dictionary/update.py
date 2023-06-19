@@ -653,6 +653,9 @@ def add_keyword(request, glossid):
         return JsonResponse({})
 
     gloss = get_object_or_404(Gloss, id=glossid)
+
+    dataset_languages = [str(lang.id) for lang in gloss.lemma.dataset.translation_languages.all()]
+
     language = request.POST.get('language', '')
     keywords = request.POST.get('keywords')
     # because of the way this is constructed in the javascript, a singleton list string is returned
@@ -712,6 +715,7 @@ def add_keyword(request, glossid):
     # creating a new keyword sends back its id
     glossXsenses['new_translation'] = new_translation_id
     glossXsenses['new_sense'] = str(new_sense)
+    glossXsenses['dataset_languages'] = dataset_languages
 
     return JsonResponse(glossXsenses)
 
