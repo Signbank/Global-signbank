@@ -656,13 +656,13 @@ class ExampleSentence(models.Model):
             video_object.reversion(revert=False)
 
         # Create a new ExampleVideo object
-        if isinstance(videofile, File):
+        if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = ExampleVideo(examplesentence=self)
             video.videofile.save(get_sentence_video_file_path(video, str(videofile)), videofile)
         else:
             video = ExampleVideo(videofile=videofile, examplesentence=self)
         video.save()
-        video.ch_own_mod_video()
+        # video.ch_own_mod_video()
         video.make_small_video()
 
         # Create a ExampleVideoHistory object
@@ -963,6 +963,10 @@ class Gloss(models.Model):
         verbose_name    = _(u'Senses'),
         help_text           = _(u'Senses in this Gloss')
     )
+
+    def ordered_senses(self):
+        "Return a properly ordered set of senses"
+        return self.senses.all().order_by('glosssense__order')
 
     sn = models.IntegerField(_("Sign Number"),
                              help_text="Sign Number must be a unique integer and defines the ordering of signs in the dictionary",

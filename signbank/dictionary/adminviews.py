@@ -1653,13 +1653,13 @@ class GlossDetailView(DetailView):
             context['annotation_idgloss'][language] = annotation_text
 
         # Put translations (keywords) per language in the context
-        context['translations_per_language'] = {}
+        context['sensetranslations_per_language'] = {}
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
-                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+                context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
         else:
             language = Language.objects.get(id=get_default_language_id())
-            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+            context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
 
         sentencetype_choice_list = FieldChoice.objects.filter(field__iexact='SentenceType')
         context['sentencetypes'] = choicelist_queryset_to_translated_dict(sentencetype_choice_list, id_prefix='', ordered=False, shortlist=True)
@@ -6251,13 +6251,13 @@ class MorphemeDetailView(DetailView):
         context['gloss_derivationhistory'] = gloss_derivationhistory
 
         # Put translations (keywords) per language in the context
-        context['translations_per_language'] = {}
+        context['sensetranslations_per_language'] = {}
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
-                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+                context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
         else:
             language = Language.objects.get(id=get_default_language_id())
-            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+            context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
@@ -6629,9 +6629,15 @@ def glosslist_ajax_complete(request, gloss_id):
     dataset_languages = get_dataset_languages(selected_datasets)
 
     # Put translations (keywords) per language in the context
-    translations_per_language = []
+    sensetranslations_per_language = []
     for language in dataset_languages:
-        translations_per_language.append((language,this_gloss.translation_set.filter(language=language).order_by('translation__index')))
+        sensetranslations_for_language = {}
+        for sensei, sense in enumerate(this_gloss.ordered_senses().all()):
+            if sense.senseTranslations.all().filter(language=language).exists():
+                sensetranslations_for_language[sensei+1] = sense.senseTranslations.all().get(language=language)
+            else:
+                sensetranslations_for_language[sensei+1] = ""
+        sensetranslations_per_language.append((language,sensetranslations_for_language))
 
     column_values = []
     for fieldname in display_fields:
@@ -6715,7 +6721,7 @@ def glosslist_ajax_complete(request, gloss_id):
     return render(request, 'dictionary/gloss_row.html', { 'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
                                                           'selected_datasets': selected_datasets,
-                                                          'translations_per_language': translations_per_language,
+                                                          'sensetranslations_per_language': sensetranslations_per_language,
                                                           'column_values': column_values,
                                                           'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
 
@@ -6802,9 +6808,15 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
     dataset_languages = get_dataset_languages(selected_datasets)
 
     # Put translations (keywords) per language in the context
-    translations_per_language = {}
+    sensetranslations_per_language = {}
     for language in dataset_languages:
-        translations_per_language[language] = this_gloss.translation_set.filter(language=language).order_by('translation__index')
+        sensetranslations_for_language = {}
+        for sensei, sense in enumerate(this_gloss.ordered_senses().all()):
+            if sense.senseTranslations.all().filter(language=language).exists():
+                sensetranslations_for_language[sensei+1] = sense.senseTranslations.all().get(language=language)
+            else:
+                sensetranslations_for_language[sensei+1] = ""
+        sensetranslations_per_language[language] = sensetranslations_for_language
 
     column_values = []
     gloss_list_display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
@@ -6826,7 +6838,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
 
     return render(request, 'dictionary/lemma_gloss_row.html', { 'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
-                                                          'translations_per_language': translations_per_language,
+                                                          'sensetranslations_per_language': sensetranslations_per_language,
                                                           'column_values': column_values,
                                                           'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
 

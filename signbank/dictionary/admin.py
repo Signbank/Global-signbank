@@ -1324,11 +1324,6 @@ class ExampleSentenceTranslationAdmin(admin.ModelAdmin):
     search_fields = ['text']
     list_filter = ['language']
 
-class KeywordTranslationAdmin(admin.ModelAdmin):
-    list_display = ("translation", "language", "gloss")
-    search_fields = ['translation__text']
-    list_filter = ['language']
-
 
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
@@ -1367,4 +1362,3 @@ admin.site.register(GlossSense, GlossSenseAdmin)
 admin.site.register(Sense, SenseAdmin)
 admin.site.register(ExampleSentence, ExampleSentenceAdmin)
 admin.site.register(ExampleSentenceTranslation, ExampleSentenceTranslationAdmin)
-admin.site.register(Translation, KeywordTranslationAdmin)

@@ -20,8 +20,14 @@
     {% endwith %}
     {% endfor %}
 
-    {% for lang, translations in translations_per_language.items %}
-    <td>{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+    {% for lang, sensetranslations in sensetranslations_per_language.items %}
+    <td>
+        <div>
+        {% for key, value in sensetranslations.items %}
+            {% if value != "" %}{{key}}. {% endif %}{{ value|safe }}{% if not forloop.last %}<br> {% endif %}
+        {% endfor %}
+        </div>
+    </td>
     {% endfor %}
 
     {% for field,value in column_values %}

@@ -316,7 +316,6 @@ class ExampleVideo(models.Model):
     def ch_own_mod_video(self):
         """Change owner and permissions"""
         location = self.videofile.path
-
         # make sure they're readable by everyone
         # os.chown(location, 1000, 1002)
         os.chmod(location, stat.S_IRWXU | stat.S_IRWXG)
@@ -519,7 +518,6 @@ class GlossVideo(models.Model):
     def ch_own_mod_video(self):
         """Change owner and permissions"""
         location = self.videofile.path
-        print(location)
         
 
         # make sure they're readable by everyone

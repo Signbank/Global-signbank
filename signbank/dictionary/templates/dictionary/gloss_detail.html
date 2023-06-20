@@ -903,15 +903,6 @@ option:not(:checked) {
             </tr>
             {% endfor %}
 
-            {% for lang, translations in translations_per_language.items %}
-            <tr>
-                <th>
-                    {% trans "Translation Equivalents for" %} {{ lang }}
-                </th>
-                <td id='keyword_{{ lang.language_code_2char }}' >{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td><td/>
-            </tr>
-            {% endfor %}
-
             <tr>
                 <th>
                     Senses
@@ -920,7 +911,18 @@ option:not(:checked) {
                     <table class='table table-condensed'>
                         {% for sense in senses %}
                             <tr>
-                                <th style="width:10px">{{ forloop.counter }}. </th>
+                                <th 
+                                    style="width:10px">{{ forloop.counter }}. <br>
+                                    {% if "change_dataset" in dataset_perms %}
+                                        {% if not forloop.first %}  
+                                        <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "up" %}'>&#x25B2;</a></span>
+                                        <br>
+                                        {% endif %}
+                                        {% if not forloop.last %}  
+                                        <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "down" %}'>&#x25BC;</a></span>
+                                        {% endif %}
+                                    {% endif %}
+                                </th>
                                 <td>
                                     {% if sense.get_sense_translations_dict_without %}
                                         {% for key, value in sense.get_sense_translations_dict_without.items %}
