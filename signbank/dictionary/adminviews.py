@@ -7519,7 +7519,27 @@ class KeywordListView(ListView):
                 keyword_translations_per_language[language] = keyword_translations
                 sense_groups_per_language[language] = senses_groups
             translated_senses = dict()
-            sense_translations = gloss.translation_set.all().order_by('orderIndex', 'index')
+            sense_translations = gloss.translation_set.all().order_by('orderIndex', 'language', 'index')
+            matrix_dimensions = dict()
+            for sense_translation in sense_translations:
+                orderIndex = sense_translation.orderIndex
+                if orderIndex not in matrix_dimensions.keys():
+                    matrix_dimensions[orderIndex] = dict()
+                    for language in dataset_languages:
+                        matrix_dimensions[orderIndex][language] = dict()
+                for order in matrix_dimensions.keys():
+                    count_keywords = []
+                    count_keywords_dict = dict()
+                    for language in dataset_languages:
+                        count = sense_translations.filter(language=language, orderIndex=order).count()
+                        count_keywords.append(count)
+                        count_keywords_dict[language] = count
+                    for language in dataset_languages:
+                        matrix_dimensions[orderIndex][language]['range'] = range(max(count_keywords))
+                        matrix_dimensions[orderIndex][language]['count'] = count_keywords_dict[language]
+                        matrix_dimensions[orderIndex][language]['max'] = max(count_keywords)
+                        matrix_dimensions[orderIndex][language]['padding'] = range(max(count_keywords)-count_keywords_dict[language])
+
             for sense_translation in sense_translations:
                 orderIndex = sense_translation.orderIndex
                 if orderIndex not in translated_senses.keys():
@@ -7534,6 +7554,7 @@ class KeywordListView(ListView):
             glossesXsenses.append((gloss,
                                    keyword_translations_per_language,
                                    sense_groups_per_language,
-                                   translated_senses))
+                                   translated_senses,
+                                   matrix_dimensions))
         return glossesXsenses
 
