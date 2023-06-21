@@ -238,16 +238,16 @@ $(document).ready(function() {
         };
     }
 
-     if (query_parameters_keys.includes('translation')) {
-        var $translation = $("input[name='translation']");
-        var query_initial = query_parameters_dict['translation'];
-        $translation.val(query_initial);
+     if (query_parameters_keys.includes('sensetranslation')) {
+        var $sensetranslation = $("input[name='sensetranslation']");
+        var query_initial = query_parameters_dict['sensetranslation'];
+        $sensetranslation.val(query_initial);
     };
 
-     if (gloss_fields_to_populate_keys.includes('translation')) {
-        var $translation = $("input[name='translation']");
-        var query_initial = gloss_fields_to_populate['translation'];
-        $translation.val(query_initial);
+     if (gloss_fields_to_populate_keys.includes('sensetranslation')) {
+        var $sensetranslation = $("input[name='sensetranslation']");
+        var query_initial = gloss_fields_to_populate['sensetranslation'];
+        $sensetranslation.val(query_initial);
     };
 
      if (query_parameters_keys.includes('search')) {

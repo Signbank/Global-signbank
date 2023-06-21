@@ -439,12 +439,18 @@ function checkKey(e)
             </tr>
             {% endfor %}
 
-            {% for lang, translations in sensetranslations_per_language.items %}
+            {% for lang, sensetranslations in sensetranslations_per_language.items %}
             <tr>
                 <th>
                     {% trans "Abstract Meaning" %} ({{ lang }})
                 </th>
-                <td class='edit edit_text' id='keyword_{{ lang.language_code_2char }}'>{% for trn in translations %}{{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                <td>
+                    <div>
+                    {% for key, value in sensetranslations.items %}
+                        {% if value != "" %}{{key}}. {% endif %}{{ value|safe }}{% if not forloop.last %}<br> {% endif %}
+                    {% endfor %}
+                    </div>
+                </td>
             </tr>
             {% endfor %}
 

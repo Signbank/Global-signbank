@@ -372,11 +372,11 @@ class GlossListView(ListView):
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
             gloss_fields_to_populate['search'] = escape(val)
-        if 'translation' in self.request.GET and self.request.GET['translation'] != '':
-            val = self.request.GET['translation']
+        if 'sensetranslation' in self.request.GET and self.request.GET['sensetranslation'] != '':
+            val = self.request.GET['sensetranslation']
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
-            gloss_fields_to_populate['translation'] = escape(val)
+            gloss_fields_to_populate['sensetranslation'] = escape(val)
         gloss_fields_to_populate_keys = list(gloss_fields_to_populate.keys())
         context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
         context['gloss_fields_to_populate_keys'] = gloss_fields_to_populate_keys
@@ -1012,11 +1012,11 @@ class GlossListView(ListView):
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
-                               
-        if 'translation' in get and get['translation'] != '':
-            val = get['translation']
-            query_parameters['translation'] = get['translation']
-            qs = qs.filter(translation__translation__text__iregex=val)
+                
+        if 'sensetranslation' in get and get['sensetranslation'] != '':
+            val = get['sensetranslation']
+            query_parameters['sensetranslation'] = get['sensetranslation']
+            qs = qs.filter(senses__senseTranslations__translations__translation__text__iregex=val)
 
         if 'inWeb' in get and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
