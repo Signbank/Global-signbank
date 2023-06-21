@@ -593,6 +593,8 @@ def edit_keywords(request, glossid):
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
+    dataset_languages = [str(lang.id) for lang in gloss.lemma.dataset.translation_languages.all()]
+
     keyword_index_get = request.POST.get('keyword_index')
     keyword_index_list_str = json.loads(keyword_index_get)
     keyword_index = [ int(s) for s in keyword_index_list_str ]
@@ -640,6 +642,8 @@ def edit_keywords(request, glossid):
         keyword_to_update.save()
 
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
+    glossXsenses['regrouped_keywords'] = []
+    glossXsenses['dataset_languages'] = dataset_languages
 
     return JsonResponse(glossXsenses)
 
@@ -731,6 +735,8 @@ def group_keywords(request, glossid):
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
+    dataset_languages = [str(lang.id) for lang in gloss.lemma.dataset.translation_languages.all()]
+
     group_index_get = request.POST.get('group_index')
     group_index_list_str = json.loads(group_index_get)
     group_index = [ int(s) for s in group_index_list_str ]
@@ -746,6 +752,7 @@ def group_keywords(request, glossid):
     else:
         language = Language.objects.get(id=int(language))
 
+    regrouped_keywords = []
     translation_ids = [t.id for t in gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')]
     for transid in translation_ids:
         trans = Translation.objects.get(id=transid)
@@ -753,10 +760,20 @@ def group_keywords(request, glossid):
         if trans_id in group_index:
             target_sense_index = group_index.index(trans_id)
             target_sense = regroup[target_sense_index]
+            if target_sense == trans.orderIndex:
+                continue
+            original_order_index = trans.orderIndex
             trans.orderIndex = target_sense
             trans.save()
 
+            regrouped_keywords.append({'inputEltIndex': target_sense_index,
+                                       'originalIndex': str(original_order_index),
+                                       'orderIndex': str(target_sense),
+                                       'sense_id': str(trans.id)})
+
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
+    glossXsenses['regrouped_keywords'] = regrouped_keywords
+    glossXsenses['dataset_languages'] = dataset_languages
 
     return JsonResponse(glossXsenses)
 
