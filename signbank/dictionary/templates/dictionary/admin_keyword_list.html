@@ -131,6 +131,17 @@ input {
 }
 .span-cell {
     padding: 1px;
+    height: auto;
+}
+.table-condensed {
+    border-collapse: separate;
+    box-sizing: content-box;
+}
+.table-condensed td {
+    height: auto;
+}
+.modal-dialog {
+    width: 1200px;
 }
 </style>
 {% endblock %}
@@ -284,7 +295,7 @@ input {
             <td colspan=6>
              <div class="modal fade" id="edit_sense_translations_modal_{{gloss.id}}" tabindex="-1" role="dialog"
                  aria-labelledby="#modalTitleEditTrans_{{gloss.id}}" aria-hidden="true">
-             <div class="modal-dialog modal-lg" id='modalTitleEditTrans_{{gloss.id}}'>
+             <div class="modal-dialog modal-lg" id='modalTitleEditTrans_{{gloss.id}}' role="document">
                 <div class="col-md-12">
                 <div class="modal-content">
                     <div class='modal-header'>
@@ -296,7 +307,7 @@ input {
                           <form id="form_edit_sense_matrix_{{gloss.id}}"
                             action="{% url 'dictionary:edit_senses_matrix' gloss.id %}" method='post'>
                             {% csrf_token %}
-                            <table class="table">
+                            <table class="table table-condensed">
                             <thead>
                             <tr>
                                 <th>{% trans "Sense" %}</th>
@@ -402,7 +413,7 @@ input {
                     </div>
                     <div class='modal-body'>
                         <div class="col-md-12">
-                        <table class="table table-condensed">
+                        <table class="table">
                             <thead>
                             <tr><th colspan=2>{{gloss|get_default_annotation_idgloss_translation}}</th></tr>
                             </thead>
@@ -436,7 +447,7 @@ input {
                             {% with senses_per_language|get_item:language as senses_groups %}
                             {% for order_index, keywords_list in senses_groups.items %}
                             {% for sense in keywords_list %}
-                            <tr>
+                            <tr id="keywords_regroup_row_{{gloss.id}}_{{language.id}}_{{sense.id}}">
                                 <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{sense.id}}">{{sense.translation.text}}
                                 <input type="hidden" id="sense_id_{{sense.id}}"
                                        name="group_index" value='{{sense.id}}' data-group_index='{{sense.id}}'>

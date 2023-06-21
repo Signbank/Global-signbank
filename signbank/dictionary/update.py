@@ -849,6 +849,7 @@ def edit_senses_matrix(request, glossid):
     translation = [ s for s in translation_list_str ]
 
     updated_translations = []
+    deleted_translations = []
     # update the text fields
     for transid in sense_id:
         target_sense_index = sense_id.index(transid)
@@ -866,15 +867,22 @@ def edit_senses_matrix(request, glossid):
             # nothing changed
             continue
 
-        trans.orderIndex = target_sense
-        (keyword_object, created) = Keyword.objects.get_or_create(text=target_text)
-        trans.translation = keyword_object
-        trans.save()
-        updated_translations.append({ 'inputEltIndex': target_sense_index,
-                                      'orderIndex': str(target_sense),
-                                      'sense_id': str(trans.id),
-                                      'language': str(target_language),
-                                      'text': target_text })
+        if target_text == "":
+            trans.delete()
+            deleted_translations.append({ 'inputEltIndex': target_sense_index,
+                                          'orderIndex': str(target_sense),
+                                          'sense_id': str(transid),
+                                          'language': str(target_language)})
+        else:
+            trans.orderIndex = target_sense
+            (keyword_object, created) = Keyword.objects.get_or_create(text=target_text)
+            trans.translation = keyword_object
+            trans.save()
+            updated_translations.append({ 'inputEltIndex': target_sense_index,
+                                          'orderIndex': str(target_sense),
+                                          'sense_id': str(trans.id),
+                                          'language': str(target_language),
+                                          'text': target_text })
 
     new_translations = []
     for new_trans in new_translation:
@@ -898,6 +906,7 @@ def edit_senses_matrix(request, glossid):
     glossXsenses = gloss_to_keywords_senses_groups_matrix(gloss)
     glossXsenses['new_translations'] = new_translations
     glossXsenses['updated_translations'] = updated_translations
+    glossXsenses['deleted_translations'] = deleted_translations
 
     return JsonResponse(glossXsenses)
 
