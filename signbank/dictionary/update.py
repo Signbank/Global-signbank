@@ -784,7 +784,6 @@ def gloss_to_keywords_senses_groups_matrix(gloss):
     senses_groups = dict()
     keywords_translations = dict()
     translation_languages = gloss.lemma.dataset.translation_languages.all()
-    senses_matrix = dict()
     for language in translation_languages:
         senses_groups[str(language.id)] = dict()
         keywords_translations[str(language.id)] = []
@@ -811,7 +810,10 @@ def edit_senses_matrix(request, glossid):
     gloss = get_object_or_404(Gloss, id=glossid)
     current_trans = gloss.translation_set.all().order_by('orderIndex', 'language', 'index')
     current_indices = [t.index for t in current_trans]
-    current_keywords = [t.translation.text for t in current_trans]
+    current_orderIndex = list(set([t.orderIndex for t in current_trans]))
+    current_keywords = dict()
+    for order in current_orderIndex:
+        current_keywords[order] = [t.translation.text for t in current_trans if t.orderIndex == order]
 
     if len(current_indices) < 1:
         new_index = 1
@@ -846,7 +848,7 @@ def edit_senses_matrix(request, glossid):
 
     translation_get = request.POST.get('translation')
     translation_list_str = json.loads(translation_get) if translation_get else []
-    translation = [ s for s in translation_list_str ]
+    translation = [s for s in translation_list_str]
 
     updated_translations = []
     deleted_translations = []
@@ -863,8 +865,12 @@ def edit_senses_matrix(request, glossid):
             # this should not happen, something is wrong with the form
             continue
 
-        if trans.translation.text == target_text:
+        if trans.translation.text == target_text and trans.orderIndex == target_sense:
             # nothing changed
+            continue
+
+        if target_text != "" and target_text in current_keywords[target_sense]:
+            # attempt to put duplicate keyword in same sense number
             continue
 
         if target_text == "":
@@ -893,8 +899,13 @@ def edit_senses_matrix(request, glossid):
         target_sense = new_order_index[target_sense_index]
         language = Language.objects.get(id=target_language)
 
+        if new_trans in current_keywords[target_sense]:
+            # attempt to put duplicate keyword in same sense number
+            continue
+
         (keyword_object, created) = Keyword.objects.get_or_create(text=new_trans)
-        trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language, orderIndex=target_sense)
+        trans = Translation(gloss=gloss, translation=keyword_object, index=new_index,
+                            language=language, orderIndex=target_sense)
         trans.save()
         new_index = new_index + 1
         new_translations.append({ 'inputEltIndex': target_sense_index,
