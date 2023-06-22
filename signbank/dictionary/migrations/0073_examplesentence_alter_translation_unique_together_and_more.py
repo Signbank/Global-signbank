@@ -8,7 +8,7 @@ import signbank.dictionary.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('dictionary', '0071_translation_orderindex_alter_translation_language'),
+        ('dictionary', '0072_alter_translation_unique_together'),
     ]
 
     operations = [

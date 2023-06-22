@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('dictionary', '0072_examplesentence_alter_translation_unique_together_and_more'),
+        ('dictionary', '0073_examplesentence_alter_translation_unique_together_and_more'),
         ('video', '0004_auto_20191120_0937'),
     ]
 
