@@ -7448,7 +7448,7 @@ class KeywordListView(ListView):
 
     model = Gloss
     template_name = 'dictionary/admin_keyword_list.html'
-    paginate_by = 25
+    paginate_by = 50
     query_parameters = dict()
 
     def get(self, request, *args, **kwargs):
@@ -7533,7 +7533,43 @@ class KeywordListView(ListView):
                     senses_groups[trans.orderIndex].append(trans)
                 keyword_translations_per_language[language] = keyword_translations
                 sense_groups_per_language[language] = senses_groups
-            glossesXsenses.append((gloss, keyword_translations_per_language, sense_groups_per_language))
+            translated_senses = dict()
+            sense_translations = gloss.translation_set.all().order_by('orderIndex', 'language', 'index')
+            matrix_dimensions = dict()
+            for sense_translation in sense_translations:
+                orderIndex = sense_translation.orderIndex
+                if orderIndex not in matrix_dimensions.keys():
+                    matrix_dimensions[orderIndex] = dict()
+                    for language in dataset_languages:
+                        matrix_dimensions[orderIndex][language] = dict()
+                for order in matrix_dimensions.keys():
+                    count_keywords = []
+                    count_keywords_dict = dict()
+                    for language in dataset_languages:
+                        count = sense_translations.filter(language=language, orderIndex=order).count()
+                        count_keywords.append(count)
+                        count_keywords_dict[language] = count
+                    for language in dataset_languages:
+                        matrix_dimensions[orderIndex][language]['range'] = range(max(count_keywords))
+                        matrix_dimensions[orderIndex][language]['count'] = count_keywords_dict[language]
+                        matrix_dimensions[orderIndex][language]['max'] = max(count_keywords)
+                        matrix_dimensions[orderIndex][language]['padding'] = range(max(count_keywords)-count_keywords_dict[language])
 
+            for sense_translation in sense_translations:
+                orderIndex = sense_translation.orderIndex
+                if orderIndex not in translated_senses.keys():
+                    translated_senses[orderIndex] = dict()
+                    for language in dataset_languages:
+                        # initialize all dataset languages for looping purposes in the template
+                        translated_senses[orderIndex][language] = dict()
+                language = sense_translation.language
+                if sense_translation.id not in translated_senses[orderIndex][language].keys():
+                    translated_senses[orderIndex][language][sense_translation.id] = dict()
+                translated_senses[orderIndex][language][sense_translation.id][sense_translation.index] = sense_translation
+            glossesXsenses.append((gloss,
+                                   keyword_translations_per_language,
+                                   sense_groups_per_language,
+                                   translated_senses,
+                                   matrix_dimensions))
         return glossesXsenses
 
