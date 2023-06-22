@@ -595,7 +595,6 @@ class ExampleSentence(models.Model):
     
     def get_examplestc_translations_dict_with(self):
         translations = {}
-        print(self.dataset)
         for dataset_translation_language in self.dataset.translation_languages.all():
             if self.examplesentencetranslation_set.filter(language = dataset_translation_language).count() == 1:
                 translations[str(dataset_translation_language)] = str(self.examplesentencetranslation_set.all().get(language = dataset_translation_language))
@@ -662,7 +661,7 @@ class ExampleSentence(models.Model):
         else:
             video = ExampleVideo(videofile=videofile, examplesentence=self)
         video.save()
-        # video.ch_own_mod_video()
+        video.ch_own_mod_video()
         video.make_small_video()
 
         # Create a ExampleVideoHistory object
