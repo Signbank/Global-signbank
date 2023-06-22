@@ -1761,7 +1761,7 @@ def import_csv_lemmas(request):
     earlier_updates_same_csv = []
     earlier_updates_lemmaidgloss = {}
 
-    if not selected_datasets or selected_datasets.count() > 1 or dataset not in user_datasets:
+    if not selected_datasets or selected_datasets.count() > 1:
         feedback_message = _('Please select a single dataset for which you have change permission.')
         messages.add_message(request, messages.ERROR, feedback_message)
 
@@ -1777,6 +1777,19 @@ def import_csv_lemmas(request):
     # set the allowed dataset names to selected dataset, which must have change permission (checked below)
     dataset = selected_datasets.first()
     seen_dataset_names = [dataset.acronym]
+
+    if dataset not in user_datasets:
+        feedback_message = _('You do not have change permission for the chosen dataset.')
+        messages.add_message(request, messages.ERROR, feedback_message)
+
+        return render(request, 'dictionary/import_csv_update_lemmas.html',
+                      {'form': uploadform, 'stage': 0, 'changes': changes,
+                       'error': error,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'translation_languages_dict': translation_languages_dict,
+                       'seen_datasets': seen_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     # Process Input File
     if len(request.FILES) > 0:
