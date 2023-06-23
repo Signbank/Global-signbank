@@ -20,10 +20,6 @@ class Migration(migrations.Migration):
                 ('dataset', models.ForeignKey(default=5, help_text='Dataset an examplesentence is part of', null=True, on_delete=django.db.models.deletion.CASCADE, to='dictionary.dataset', verbose_name='Dataset')),
             ],
         ),
-        migrations.AlterUniqueTogether(
-            name='translation',
-            unique_together=set(),
-        ),
         migrations.AlterField(
             model_name='fieldchoice',
             name='field',
