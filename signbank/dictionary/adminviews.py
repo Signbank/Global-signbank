@@ -7507,6 +7507,8 @@ class KeywordListView(ListView):
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
+        active_dataset = selected_datasets.first()
+
         get = self.request.GET
 
         dataset_language = selected_datasets.first().default_language
@@ -7532,50 +7534,49 @@ class KeywordListView(ListView):
 
         glossesXsenses = []
         for gloss in glosses_of_datasets:
+            gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+            list_of_gloss_senses = [(gs.order, gs.sense) for gs in gloss_senses]
             keyword_translations_per_language = dict()
             sense_groups_per_language = dict()
             for language in dataset_languages:
-                keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+                keyword_translations_per_language[language] = []
                 senses_groups = dict()
-                for trans in keyword_translations:
-                    if trans.orderIndex not in senses_groups.keys():
-                        senses_groups[trans.orderIndex] = []
-                    senses_groups[trans.orderIndex].append(trans)
-                keyword_translations_per_language[language] = keyword_translations
+                for order, sense in list_of_gloss_senses:
+                    senses_groups[order] = []
+                    translations_for_language_for_sense = sense.senseTranslations.get(language=language)
+                    for trans in translations_for_language_for_sense.translations.all().order_by('index'):
+                        keyword_translations_per_language[language].append(trans)
+                        senses_groups[order].append(trans)
                 sense_groups_per_language[language] = senses_groups
-            translated_senses = dict()
-            sense_translations = gloss.translation_set.all().order_by('orderIndex', 'language', 'index')
-            matrix_dimensions = dict()
-            for sense_translation in sense_translations:
-                orderIndex = sense_translation.orderIndex
-                if orderIndex not in matrix_dimensions.keys():
-                    matrix_dimensions[orderIndex] = dict()
-                    for language in dataset_languages:
-                        matrix_dimensions[orderIndex][language] = dict()
-                for order in matrix_dimensions.keys():
-                    count_keywords = []
-                    count_keywords_dict = dict()
-                    for language in dataset_languages:
-                        count = sense_translations.filter(language=language, orderIndex=order).count()
-                        count_keywords.append(count)
-                        count_keywords_dict[language] = count
-                    for language in dataset_languages:
-                        matrix_dimensions[orderIndex][language]['range'] = range(max(count_keywords))
-                        matrix_dimensions[orderIndex][language]['count'] = count_keywords_dict[language]
-                        matrix_dimensions[orderIndex][language]['max'] = max(count_keywords)
-                        matrix_dimensions[orderIndex][language]['padding'] = range(max(count_keywords)-count_keywords_dict[language])
 
-            for sense_translation in sense_translations:
-                orderIndex = sense_translation.orderIndex
-                if orderIndex not in translated_senses.keys():
-                    translated_senses[orderIndex] = dict()
-                    for language in dataset_languages:
-                        # initialize all dataset languages for looping purposes in the template
-                        translated_senses[orderIndex][language] = dict()
-                language = sense_translation.language
-                if sense_translation.id not in translated_senses[orderIndex][language].keys():
-                    translated_senses[orderIndex][language][sense_translation.id] = dict()
-                translated_senses[orderIndex][language][sense_translation.id][sense_translation.index] = sense_translation
+            matrix_dimensions = dict()
+            for order, sense in list_of_gloss_senses:
+                matrix_dimensions[order] = dict()
+                keywords_count = []
+                for language in dataset_languages:
+                    if order in sense_groups_per_language[language].keys():
+                        keywords_count.append(len(sense_groups_per_language[language][order]))
+                    else:
+                        keywords_count.append(0)
+                for language in dataset_languages:
+                    matrix_dimensions[order][language] = dict()
+                    count = len(sense_groups_per_language[language][order])
+                    matrix_dimensions[order][language]['range'] = range(max(keywords_count))
+                    matrix_dimensions[order][language]['count'] = count
+                    matrix_dimensions[order][language]['max'] = max(keywords_count)
+                    matrix_dimensions[order][language]['padding'] = range(max(keywords_count)-count)
+
+            translated_senses = dict()
+            for order, sense in list_of_gloss_senses:
+                translated_senses[order] = dict()
+                for language in dataset_languages:
+                    translated_senses[order][language] = dict()
+                    sense_translations = sense_groups_per_language[language][order]
+                    for sensetrans in sense_translations:
+                        if sensetrans.id not in translated_senses[order][language].keys():
+                            translated_senses[order][language][sensetrans.id] = dict()
+                        translated_senses[order][language][sensetrans.id][sensetrans.index] = sensetrans
+
             glossesXsenses.append((gloss,
                                    keyword_translations_per_language,
                                    sense_groups_per_language,

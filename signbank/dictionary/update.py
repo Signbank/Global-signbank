@@ -987,15 +987,16 @@ def update_keywords(gloss, field, value):
 
 def gloss_to_keywords_senses_groups(gloss, language):
     glossXsenses = dict()
-    keyword_translations = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
+    gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+    list_of_gloss_senses = [(gs.order, gs.sense) for gs in gloss_senses]
     senses_groups = dict()
     keywords_list = []
-    for trans in keyword_translations:
-        orderIndexKey = str(trans.orderIndex)
-        if orderIndexKey not in senses_groups.keys():
-            senses_groups[orderIndexKey] = []
-        senses_groups[orderIndexKey].append((str(trans.id), trans.translation.text))
-        keywords_list.append(trans.translation.text)
+    for order, sense in list_of_gloss_senses:
+        senses_groups[order] = []
+        translations_for_language_for_sense = sense.senseTranslations.get(language=language)
+        for trans in translations_for_language_for_sense.translations.all().order_by('index'):
+            senses_groups[order].append((str(trans.id), trans.translation.text))
+            keywords_list.append(trans.translation.text)
     glossXsenses['glossid'] = str(gloss.id)
     glossXsenses['language'] = str(language.id)
     glossXsenses['keywords'] = keywords_list
@@ -1030,8 +1031,14 @@ def edit_keywords(request, glossid):
     else:
         language = Language.objects.get(id=int(language))
 
-    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
-    current_keywords = [t.translation.text for t in current_trans]
+    gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+    order_sense_tuples = [(gs.order, gs.sense) for gs in gloss_senses]
+    current_keywords = dict()
+    for order, sense in order_sense_tuples:
+        current_keywords[order] = []
+        sense_trans = sense.senseTranslations.get(language=language)
+        for trans in sense_trans.translations.all():
+            current_keywords[order].append(trans.translation.text)
 
     # the input lists keyword_index and translation are exactly the same length
     # pair them together in a dictionary, removing any space characters
@@ -1050,11 +1057,15 @@ def edit_keywords(request, glossid):
     # update the new keywords
     for i in range(len(new_keywords_list)):
         new_text = new_keywords_list[i]
-        if new_text in current_keywords:
-            continue
+
         index_to_update = new_index_list[i]
         # fetch the keyword's translation object and change its keyword
         keyword_to_update = Translation.objects.get(pk=index_to_update)
+
+        if new_text in current_keywords[keyword_to_update.orderIndex]:
+            # already appears in sense
+            continue
+
         # new text is not in current keywords
         # fetch or create the text and update the translation object
         (keyword_object, created) = Keyword.objects.get_or_create(text=new_text)
@@ -1092,14 +1103,25 @@ def add_keyword(request, glossid):
     else:
         language = Language.objects.get(id=int(language))
 
-    current_trans = gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')
-    current_keywords = [t.translation.text for t in current_trans]
-    current_senses = [t.orderIndex for t in current_trans]
+    gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+    order_sense_tuples = [(gs.order, gs.sense) for gs in gloss_senses]
+    current_senses = [gs.order for gs in gloss_senses]
+    current_keywords = []
+    current_trans = dict()
+    current_indices = []
+    for order, sense in order_sense_tuples:
+        current_trans[order] = []
+        sense_trans = sense.senseTranslations.get(language=language)
+        for trans in sense_trans.translations.all():
+            current_keywords.append(trans.translation.text)
+            current_indices.append(trans.index)
+            current_trans[order].append(trans.index)
+
     if len(current_senses) < 1:
         new_sense = 1
     else:
         new_sense = max(current_senses) + 1
-    current_indices = [t.index for t in current_trans]
+
     if len(current_indices) < 1:
         new_index = 1
     else:
@@ -1107,33 +1129,27 @@ def add_keyword(request, glossid):
         if len(current_indices) <= new_index:
             new_index += 1
 
-    if keyword == '' or keyword in current_keywords:
+    if keyword == '':
         # do nothing
         return JsonResponse({})
 
     (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
 
-    new_translation_id = ''
-    if '' in current_keywords:
-        # fetch the empty keyword's translation object and change its keyword if possible
-        # legacy code added empty translations
-        translation_to_update = current_trans.filter(translation__text="").first()
-        try:
-            translation_to_update.translation = keyword_object
-            translation_to_update.save()
-            new_translation_id = str(translation_to_update.id)
-            new_sense = translation_to_update.orderIndex
-        except (ObjectDoesNotExist, KeyError, IntegrityError):
-            # make a new translation if it didn't work to update
-            trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language,
-                                orderIndex=new_sense)
-            trans.save()
-            new_translation_id = str(trans.id)
-    else:
-        # make a new translation
-        trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language, orderIndex=new_sense)
-        trans.save()
-        new_translation_id = str(trans.id)
+    # make a new translation
+    trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language, orderIndex=new_sense)
+    trans.save()
+    new_translation_id = str(trans.id)
+    # make a new sense and translations for it
+    sense_for_gloss = Sense(dataset=gloss.lemma.dataset)
+    sense_for_gloss.save()
+    glosssense = GlossSense(gloss=gloss, sense=sense_for_gloss, order=new_sense)
+    glosssense.save()
+    for dataset_language in gloss.lemma.dataset.translation_languages.all():
+        glosssenselanguage = SenseTranslation(language=dataset_language)
+        glosssenselanguage.save()
+        sense_for_gloss.senseTranslations.add(glosssenselanguage)
+        if dataset_language == language:
+            glosssenselanguage.translations.add(trans)
 
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
     # creating a new keyword sends back its id
@@ -1172,19 +1188,35 @@ def group_keywords(request, glossid):
     else:
         language = Language.objects.get(id=int(language))
 
+    gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+    order_sense_dict = {gs.order: gs.sense for gs in gloss_senses}
+    current_senses = [gs.order for gs in gloss_senses]
+    translation_ids = []
+    for order in order_sense_dict.keys():
+        sense = order_sense_dict[order]
+        sense_trans = sense.senseTranslations.get(language=language)
+        for trans in sense_trans.translations.all():
+            translation_ids.append(trans.id)
+
     regrouped_keywords = []
-    translation_ids = [t.id for t in gloss.translation_set.filter(language=language).order_by('orderIndex', 'index')]
+
     for transid in translation_ids:
         trans = Translation.objects.get(id=transid)
         trans_id = trans.id
         if trans_id in group_index:
             target_sense_index = group_index.index(trans_id)
-            target_sense = regroup[target_sense_index]
-            if target_sense == trans.orderIndex:
+            target_sense_group = regroup[target_sense_index]
+            if target_sense_group == trans.orderIndex or target_sense_group not in current_senses:
                 continue
             original_order_index = trans.orderIndex
-            trans.orderIndex = target_sense
+            original_sense = order_sense_dict[original_order_index]
+            original_sense_translations = original_sense.senseTranslations.get(language=language)
+            target_sense = order_sense_dict[target_sense_group]
+            target_sense_translations = target_sense.senseTranslations.get(language=language)
+            original_sense_translations.translations.remove(trans)
+            trans.orderIndex = target_sense_group
             trans.save()
+            target_sense_translations.translations.add(trans)
 
             regrouped_keywords.append({'inputEltIndex': target_sense_index,
                                        'originalIndex': str(original_order_index),
@@ -1200,19 +1232,23 @@ def group_keywords(request, glossid):
 
 def gloss_to_keywords_senses_groups_matrix(gloss):
     glossXsenses = dict()
-    keyword_translations = gloss.translation_set.all().order_by('orderIndex', 'language', 'index')
+    gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+    list_of_gloss_senses = [(gs.order, gs.sense) for gs in gloss_senses]
+    sense_numbers = [gs.order for gs in gloss_senses]
     senses_groups = dict()
     keywords_translations = dict()
     translation_languages = gloss.lemma.dataset.translation_languages.all()
     for language in translation_languages:
         senses_groups[str(language.id)] = dict()
         keywords_translations[str(language.id)] = []
-    for trans in keyword_translations:
-        orderIndexKey = str(trans.orderIndex)
-        if orderIndexKey not in senses_groups[str(trans.language.id)].keys():
-            senses_groups[str(trans.language.id)][orderIndexKey] = []
-        senses_groups[str(trans.language.id)][orderIndexKey].append((str(trans.id), trans.translation.text))
-        keywords_translations[str(trans.language.id)].append(trans.translation.text)
+        for sense_index in sense_numbers:
+            senses_groups[str(language.id)][sense_index] = []
+    for order, sense in list_of_gloss_senses:
+        for language in translation_languages:
+            translations_for_language_for_sense = sense.senseTranslations.get(language=language)
+            for trans in translations_for_language_for_sense.translations.all():
+                keywords_translations[str(language.id)].append(trans.translation.text)
+                senses_groups[str(language.id)][order].append((str(trans.id), trans.translation.text))
     glossXsenses['glossid'] = str(gloss.id)
     glossXsenses['keywords'] = keywords_translations
     glossXsenses['senses_groups'] = senses_groups
@@ -1228,11 +1264,24 @@ def edit_senses_matrix(request, glossid):
         return JsonResponse({})
 
     gloss = get_object_or_404(Gloss, id=glossid)
-    current_trans = gloss.translation_set.all().order_by('orderIndex', 'language', 'index')
-    current_indices = [t.index for t in current_trans]
-    current_orderIndex = list(set([t.orderIndex for t in current_trans]))
+    translation_languages = gloss.lemma.dataset.translation_languages.all()
+    gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+    order_sense_dict = {gs.order: gs.sense for gs in gloss_senses}
+    current_senses = [gs.order for gs in gloss_senses]
+    translation_ids = []
+    current_trans = []
+    current_indices = []
+    for order in order_sense_dict.keys():
+        sense = order_sense_dict[order]
+        for dataset_language in translation_languages:
+            sense_trans = sense.senseTranslations.get(language=dataset_language)
+            for trans in sense_trans.translations.all():
+                current_indices.append(trans.index)
+                current_trans.append(trans)
+                translation_ids.append(trans.id)
+
     current_keywords = dict()
-    for order in current_orderIndex:
+    for order in current_senses:
         current_keywords[order] = [t.translation.text for t in current_trans if t.orderIndex == order]
 
     if len(current_indices) < 1:
@@ -1294,13 +1343,15 @@ def edit_senses_matrix(request, glossid):
             continue
 
         if target_text == "":
+            original_sense = order_sense_dict[target_sense]
+            original_sense_translations = original_sense.senseTranslations.get(language=language)
+            original_sense_translations.translations.remove(trans)
             trans.delete()
             deleted_translations.append({ 'inputEltIndex': target_sense_index,
                                           'orderIndex': str(target_sense),
                                           'sense_id': str(transid),
                                           'language': str(target_language)})
         else:
-            trans.orderIndex = target_sense
             (keyword_object, created) = Keyword.objects.get_or_create(text=target_text)
             trans.translation = keyword_object
             trans.save()
@@ -1322,11 +1373,26 @@ def edit_senses_matrix(request, glossid):
         if new_trans in current_keywords[target_sense]:
             # attempt to put duplicate keyword in same sense number
             continue
+        if target_sense not in current_senses:
+            # ignore this case, this should not happen
+            continue
+
+        original_sense = order_sense_dict[target_sense]
+        original_sense_translations = original_sense.senseTranslations.get(language=language)
 
         (keyword_object, created) = Keyword.objects.get_or_create(text=new_trans)
-        trans = Translation(gloss=gloss, translation=keyword_object, index=new_index,
-                            language=language, orderIndex=target_sense)
-        trans.save()
+        already_exists = Translation.objects.filter(gloss=gloss, translation=keyword_object,
+                                                    language=language, orderIndex=target_sense).first()
+        if already_exists:
+            # this should not happen
+            print('already exists')
+            continue
+        else:
+            trans = Translation(gloss=gloss, translation=keyword_object,
+                                language=language, orderIndex=target_sense, index=new_index)
+            trans.save()
+            original_sense_translations.translations.add(trans)
+
         new_index = new_index + 1
         new_translations.append({ 'inputEltIndex': target_sense_index,
                                   'orderIndex': str(target_sense),
