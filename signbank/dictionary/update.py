@@ -1115,13 +1115,13 @@ def group_keywords(request, glossid):
     group_index_get = request.POST.get('group_index')
     group_index_list_str = json.loads(group_index_get)
     group_index = [ int(s) for s in group_index_list_str ]
-    print('group index: ', group_index)
+
     language = request.POST.get('language', '')
-    print('language: ', language)
+
     regroup_get = request.POST.get('regroup')
     regroup_list_str = json.loads(regroup_get)
     regroup = [ int(s) for s in regroup_list_str ]
-    print('regroup: ', regroup)
+
     language_obj = Language.objects.get(id=int(language))
 
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
