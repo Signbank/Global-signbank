@@ -35,7 +35,7 @@ function update_gloss_senses(data) {
     var sensesCell = $(senses_glossid);
     $(sensesCell).empty();
     for (var key in senses_groups) {
-        var senses_row_id = '#senses_' + glossid  + '_' + language + '_row_' + key;
+        var senses_row_id = 'senses_' + glossid  + '_' + language + '_row_' + key;
         var row = $('<tr id="'+ senses_row_id + '"/>');
         row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
         var group_keywords = senses_groups[key];
@@ -269,7 +269,7 @@ function add_gloss_keywords(data) {
         $(sensesCell).empty();
         var language_senses = senses_groups[language];
         for (var key in language_senses) {
-            var senses_row_id = '#senses_' + glossid  + '_' + language + '_row_' + key;
+            var senses_row_id = 'senses_' + glossid  + '_' + language + '_row_' + key;
             var row = $('<tr id="'+ senses_row_id + '"/>');
             row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
             var group_keywords = language_senses[key];
@@ -600,7 +600,7 @@ function update_matrix(data) {
         $(sensesCell).empty();
         var language_senses = senses_groups[language];
         for (var key in language_senses) {
-            var senses_row_id = '#senses_' + glossid  + '_' + language + '_row_' + key;
+            var senses_row_id = 'senses_' + glossid  + '_' + language + '_row_' + key;
             var row = $('<tr id="'+ senses_row_id + '"/>');
             row.append("<td>"+key+".</td><td>&nbsp;&nbsp;</td><td/>");
             var group_keywords = language_senses[key];
