@@ -22,7 +22,7 @@ function update_gloss_senses(data) {
     var row = $("<tr/>");
     var num_commas = keywords.length - 1;
     for (var key in keywords) {
-        if (key < num_commas) {
+        if (num_commas > 0 && key < num_commas) {
             row.append("<span>"+keywords[key]+"</span>, ");
         } else {
             row.append("<span>"+keywords[key]+"</span>");
@@ -41,7 +41,7 @@ function update_gloss_senses(data) {
         var group_keywords = senses_groups[key];
         num_commas = group_keywords.length - 1;
         for (var inx in group_keywords) {
-            if (inx < num_commas) {
+            if (num_commas > 0 && inx < num_commas) {
                 row.append("<span>"+group_keywords[inx][1]+"</span>, ");
             } else {
                 row.append("<span>"+group_keywords[inx][1]+"</span>");
@@ -64,7 +64,7 @@ function update_gloss_senses(data) {
         var num_commas = group_keywords.length - 1;
         for (var inx in group_keywords) {
             var span_id = 'sensegroup_' + glossid + '_' + key + '_' + language + '_' + group_keywords[inx][0];
-            if (inx < num_commas) {
+            if (num_commas > 0 && inx < num_commas) {
                 row.append('<span id="'+ span_id + '">'+group_keywords[inx][1]+"</span>, ");
             } else {
                 row.append('<span id="'+ span_id + '">'+group_keywords[inx][1]+"</span>");
@@ -254,7 +254,7 @@ function add_gloss_keywords(data) {
         var row = $("<tr/>");
         row.append("<td/>");
         for (var inx in language_keywords) {
-            if (inx < num_commas) {
+            if (num_commas > 0 && inx < num_commas) {
                 row.append("<span>"+language_keywords[inx]+"</span>, ");
             } else {
                 row.append("<span>"+language_keywords[inx]+"</span>");
@@ -275,7 +275,7 @@ function add_gloss_keywords(data) {
             var group_keywords = language_senses[key];
             num_commas = group_keywords.length - 1;
             for (var inx in group_keywords) {
-                if (inx < num_commas) {
+                if (num_commas > 0 && inx < num_commas) {
                     row.append("<span>"+group_keywords[inx][1]+"</span>, ");
                 } else {
                     row.append("<span>"+group_keywords[inx][1]+"</span>");
@@ -299,8 +299,8 @@ function add_gloss_keywords(data) {
             var group_keywords = language_senses[key];
             var num_commas = group_keywords.length - 1;
             for (var inx in group_keywords) {
-                if (inx < num_commas) {
-                    var span_id = 'sensegroup_' + glossid + '_' + key + '_' + language + '_' + group_keywords[inx][0];
+                var span_id = 'sensegroup_' + glossid + '_' + key + '_' + language + '_' + group_keywords[inx][0];
+                if (num_commas > 0 && inx < num_commas) {
                     row.append('<span id="'+span_id+'">'+group_keywords[inx][1]+"</span>, ");
                 } else {
                     row.append('<span id="'+span_id+'">'+group_keywords[inx][1]+"</span>");
@@ -460,7 +460,7 @@ function update_matrix(data) {
             var num_commas = group_keywords.length - 1;
             for (var inx in group_keywords) {
                 var span_id = 'sensegroup_' + glossid + '_' + key + '_' + language + '_' + group_keywords[inx][0];
-                if (inx < num_commas) {
+                if (num_commas > 0 && inx < num_commas) {
                     groupCell.append('<span id="'+ span_id + '">'+group_keywords[inx][1]+"</span>, ");
                 } else {
                     groupCell.append('<span id="'+ span_id + '">'+group_keywords[inx][1]+"</span>");
@@ -529,7 +529,7 @@ function update_matrix(data) {
             // add the new keyword to the end of the sense
             var cell = '#modal_senses_order_language_cell_' + glossid +'_' + language + '_' + orderIndex;
             var span = $('<span id="'+span_id+'">'+new_text+"</span>");
-            $(cell).append(', ').append(span);
+            $(cell).append(' ').append(span);
         }
 
         // add row to regroup panel of language modal
@@ -584,7 +584,7 @@ function update_matrix(data) {
         var row = $("<tr/>");
         row.append("<td/>");
         for (var inx in language_keywords) {
-            if (inx < num_commas) {
+            if (num_commas > 0 && inx < num_commas) {
                 row.append("<span>"+language_keywords[inx]+"</span>, ");
             } else {
                 row.append("<span>"+language_keywords[inx]+"</span>");
@@ -606,7 +606,7 @@ function update_matrix(data) {
             var group_keywords = language_senses[key];
             num_commas = group_keywords.length - 1;
             for (var inx in group_keywords) {
-                if (inx < num_commas) {
+                if (num_commas > 0 && inx < num_commas) {
                     row.append("<span>"+group_keywords[inx][1]+"</span>, ");
                 } else {
                     row.append("<span>"+group_keywords[inx][1]+"</span>");

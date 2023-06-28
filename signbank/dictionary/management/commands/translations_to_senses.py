@@ -18,7 +18,7 @@ class Command(BaseCommand):
             # determine the sense numbers
             orderIndices = list(set([gti.orderIndex for gti in gloss_translations]))
             for oi in orderIndices:
-                sense_for_gloss = Sense(dataset=dataset)
+                sense_for_gloss = Sense()
                 sense_for_gloss.save()
                 glosssense = GlossSense(gloss=gloss, sense=sense_for_gloss, order=oi)
                 glosssense.save()
