@@ -585,17 +585,18 @@ class Language(models.Model):
 class ExampleSentence(models.Model):
     """An example sentence belongs to one or more sense(s)"""
     
-    dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
-        default = settings.DEFAULT_DATASET_PK, help_text=_("Dataset an examplesentence is part of"), null=True)
     sentenceType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
                                     limit_choices_to={'field': FieldChoice.SENTENCETYPE},
                                     field_choice_category=FieldChoice.SENTENCETYPE,
                                     verbose_name=_("Sentence Type"), related_name="sentence_type")
     negative = models.BooleanField(default=False)
     
+    def get_dataset(self):
+        return self.sense_set.first().glosses.first().lemma.dataset
+
     def get_examplestc_translations_dict_with(self):
         translations = {}
-        for dataset_translation_language in self.dataset.translation_languages.all():
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
             if self.examplesentencetranslation_set.filter(language = dataset_translation_language).count() == 1:
                 translations[str(dataset_translation_language)] = str(self.examplesentencetranslation_set.all().get(language = dataset_translation_language))
             else:
@@ -674,7 +675,7 @@ class ExampleSentence(models.Model):
 
     
     def __str__(self):
-        return self.get_video_path()
+        return (" | ").join(self.get_examplestc_translations())
 
 
 class ExampleSentenceTranslation(models.Model):
@@ -710,12 +711,13 @@ class Sense(models.Model):
     
     senseTranslations = models.ManyToManyField(SenseTranslation)
     exampleSentences = models.ManyToManyField(ExampleSentence)
-    dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
-        default = settings.DEFAULT_DATASET_PK, help_text=_("Dataset a sense is part of"), null=True)
+
+    def get_dataset(self):
+        return self.glosses.first().lemma.dataset
 
     def get_example_sentences(self):
         translations = []
-        for dataset_translation_language in self.dataset.translation_languages.all():
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
             sentences = []
             for exampleSentence in self.exampleSentences.all():
                 if exampleSentence.examplesentencetranslation_set.filter(language = dataset_translation_language).exists():
@@ -726,7 +728,7 @@ class Sense(models.Model):
 
     def get_sense_translations_dict_with(self):
         sense_translations = {}
-        for dataset_translation_language in self.dataset.translation_languages.all():
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
                 translation_list = [st.get_translations() for st in self.senseTranslations.filter(language = dataset_translation_language)][0]
                 sense_translations[str(dataset_translation_language)]= translation_list
@@ -736,7 +738,7 @@ class Sense(models.Model):
     
     def get_sense_translations_dict_with_return(self):
         sense_translations = {}
-        for dataset_translation_language in self.dataset.translation_languages.all():
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
                 translation_list = sorted([st.get_translations_return() for st in self.senseTranslations.filter(language = dataset_translation_language)])[0]
                 sense_translations[str(dataset_translation_language)]= translation_list
@@ -746,7 +748,7 @@ class Sense(models.Model):
 
     def get_sense_translations_dict_with_list(self):
         sense_translations = {}
-        for dataset_translation_language in self.dataset.translation_languages.all():
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
                 translation_list = sorted([st.get_translations_list() for st in self.senseTranslations.filter(language = dataset_translation_language)])[0]
                 sense_translations[str(dataset_translation_language)]= translation_list
@@ -959,7 +961,7 @@ class Gloss(models.Model):
 
     senses = models.ManyToManyField(Sense, 
         through = 'GlossSense',
-        related_name    = 'senses',
+        related_name    = 'glosses',
         verbose_name    = _(u'Senses'),
         help_text           = _(u'Senses in this Gloss')
     )

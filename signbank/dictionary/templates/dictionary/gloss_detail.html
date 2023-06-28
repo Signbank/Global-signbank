@@ -1081,7 +1081,7 @@ option:not(:checked) {
                                                                             {% for key, value in examplesentence.get_examplestc_translations_dict_with.items %}
                                                                                 {% if key|slugify == dataset_lang|slugify %}
                                                                                     {{ dataset_lang.name }}:
-                                                                                    <input style="width:100%" name="{{ key }}" value="{{ value }}" maxlength="10" type="text"/>
+                                                                                    <input style="width:100%" name="{{ key }}" value="{{ value }}" maxlength="200" type="text"/>
                                                                                         <br><br>
                                                                                 {% endif %}
                                                                             {% endfor %}

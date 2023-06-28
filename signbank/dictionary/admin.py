@@ -1310,14 +1310,14 @@ class SenseTranslationAdmin(admin.ModelAdmin):
     search_fields = ['translations__translation__text']
 
 class SenseAdmin(admin.ModelAdmin):
-    list_display = ("get_sense_translations", "get_example_sentences", "dataset")
+    list_display = ("get_sense_translations", "get_example_sentences", "get_dataset")
     search_fields = ['senseTranslations__translations__translation__text']
-    list_filter = ['dataset']
+    # list_filter = ['get_dataset']
 
 class ExampleSentenceAdmin(admin.ModelAdmin):
-    list_display = ("get_examplestc_translations", "get_type", "negative", "dataset", "get_video_path")
+    list_display = ("get_examplestc_translations", "get_type", "negative", "get_dataset", "get_video_path")
     search_fields = ['examplesentencetranslation__text']
-    list_filter = ['dataset']
+    # list_filter = ['dataset']
 
 class ExampleSentenceTranslationAdmin(admin.ModelAdmin):
     list_display = ("text", "examplesentence", "language")
