@@ -42,7 +42,7 @@ class KeywordAdmin(VersionAdmin):
 
 class TranslationInline(admin.TabularInline):
     model = Translation
-    readonly_fields = ['id', 'language', 'translation']
+    readonly_fields = ['id', 'language']
     list_display = ['id', 'language', 'translation', 'index', 'orderIndex']
     fields = ['id', 'language', 'translation', 'index', 'orderIndex']
     extra = 0
