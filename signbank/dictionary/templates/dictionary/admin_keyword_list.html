@@ -262,7 +262,7 @@ input {
                         <table>
                             <tbody id="tbody_senses_{{gloss.id}}_{{lang.id}}">
                             {% for grp, kwds in senses.items %}
-                                <tr id="senses_{{gloss.id}}_row_{{grp}}">
+                                <tr id="senses_{{gloss.id}}_{{lang.id}}_row_{{grp}}">
                                 <td>{{grp}}.</td><td>&nbsp;&nbsp;</td>
                                 <td>{% for kw in kwds %}
                                     {{ kw.translation.text|safe }}{% if not forloop.last %}, {% endif %}
@@ -389,6 +389,34 @@ input {
                               {% endif %}
                           </form>
                         </div>
+                      <div class="col-md-12">
+                       <br/>
+                       <br/>
+                       <h4>{% trans "Add Sense" %}</h4>
+                       <form id='add_keyword_form_{{gloss.id}}'
+                             method='post' action='{% url "dictionary:add_keyword" gloss.id %}'>
+                           {% csrf_token %}
+                           <table class='table table-condensed'>
+                               <tr>
+                                   <td>{% trans "Keywords" %}</td>
+                                   {% for language in dataset_languages %}
+                                   <td>
+                                       <input name='keyword' type="text" size="40"
+                                              placeholder='{% trans "Text" %}' value="">
+                                       <input type="hidden"
+                                           name="language" value='{{language.id}}' data-language='{{language.id}}'>
+
+                                   </td>
+                                   {% endfor %}
+                               </tr>
+                           </table>
+                          {% if perms.dictionary.change_gloss %}
+                          <button class="add_keyword btn btn-primary" id="add_keyword_{{gloss.id}}" value='{{gloss.id}}'
+                                    type="submit">
+                              {% trans "Add Sense" %}</button>
+                          {% endif %}
+                        </form>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
@@ -503,30 +531,6 @@ input {
                           {% endif %}
                       </form>
                     </div>
-                      <div class="col-md-12">
-                       <br/>
-                       <br/>
-                       <h4>{% trans "Add Sense" %}</h4>
-                       <form id='add_keyword_form_{{gloss.id}}_{{language.id}}'
-                             method='post' action='{% url "dictionary:add_keyword" gloss.id %}'>
-                           {% csrf_token %}
-                           <table class='table table-condensed'>
-                               <tr>
-                                   <td>{% trans "Keywords" %}</td>
-                                   <td>
-                                       <input name='keyword' type="text" size="40"
-                                              placeholder='{% trans "Text" %}' value="">
-                                   </td>
-                               </tr>
-                           </table>
-                          <input type="hidden" name="language" value="{{language.id}}">
-                          {% if perms.dictionary.change_gloss %}
-                          <button class="add_keyword btn btn-primary" id="add_keyword_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
-                                    data-language="{{language.id}}" type="submit">
-                              {% trans "Add Sense" %}</button>
-                          {% endif %}
-                        </form>
-                        </div>
                      </div>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>

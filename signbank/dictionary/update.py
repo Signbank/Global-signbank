@@ -1079,87 +1079,7 @@ def edit_keywords(request, glossid):
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
     glossXsenses['regrouped_keywords'] = []
     glossXsenses['dataset_languages'] = dataset_languages
-
-    return JsonResponse(glossXsenses)
-
-
-def add_keyword(request, glossid):
-    """Add keywords"""
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
-    gloss = get_object_or_404(Gloss, id=glossid)
-
-    dataset_languages = [str(lang.id) for lang in gloss.lemma.dataset.translation_languages.all()]
-
-    language = request.POST.get('language', '')
-    keywords = request.POST.get('keywords')
-    # because of the way this is constructed in the javascript, a singleton list string is returned
-    translation_list_str = json.loads(keywords)
-    translation = [ s for s in translation_list_str ]
-    keyword = translation[0]
-
-    if not language:
-        language = Language.objects.get(id=get_default_language_id())
-    else:
-        language = Language.objects.get(id=int(language))
-
-    gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
-    order_sense_tuples = [(gs.order, gs.sense) for gs in gloss_senses]
-    current_senses = [gs.order for gs in gloss_senses]
-    current_keywords = []
-    current_trans = dict()
-    current_indices = []
-    for order, sense in order_sense_tuples:
-        current_trans[order] = []
-        sense_trans = sense.senseTranslations.get(language=language)
-        for trans in sense_trans.translations.all().order_by('index'):
-            current_keywords.append(trans.translation.text)
-            current_indices.append(trans.index)
-            current_trans[order].append(trans.index)
-
-    if len(current_senses) < 1:
-        new_sense = 1
-    else:
-        new_sense = max(current_senses) + 1
-
-    if len(current_indices) < 1:
-        new_index = 1
-    else:
-        new_index = max(current_indices) + 1
-        if len(current_indices) <= new_index:
-            new_index += 1
-
-    if keyword == '':
-        # do nothing
-        return JsonResponse({})
-
-    (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
-
-    # make a new translation
-    trans = Translation(gloss=gloss, translation=keyword_object, index=new_index, language=language, orderIndex=new_sense)
-    trans.save()
-    new_translation_id = str(trans.id)
-    # make a new sense and translations for it
-    sense_for_gloss = Sense(dataset=gloss.lemma.dataset)
-    sense_for_gloss.save()
-    glosssense = GlossSense(gloss=gloss, sense=sense_for_gloss, order=new_sense)
-    glosssense.save()
-    for dataset_language in gloss.lemma.dataset.translation_languages.all():
-        glosssenselanguage = SenseTranslation(language=dataset_language)
-        glosssenselanguage.save()
-        sense_for_gloss.senseTranslations.add(glosssenselanguage)
-        if dataset_language == language:
-            glosssenselanguage.translations.add(trans)
-
-    glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
-    # creating a new keyword sends back its id
-    glossXsenses['new_translation'] = new_translation_id
-    glossXsenses['new_sense'] = str(new_sense)
-    glossXsenses['dataset_languages'] = dataset_languages
+    glossXsenses['deleted_sense_numbers'] = []
 
     return JsonResponse(glossXsenses)
 
@@ -1225,9 +1145,30 @@ def group_keywords(request, glossid):
                                        'orderIndex': str(target_sense_group),
                                        'sense_id': str(trans.id)})
 
+    senses_to_delete = []
+    for order in order_sense_dict.keys():
+        sense = order_sense_dict[order]
+        count_keywords = 0
+        for dataset_language in gloss.lemma.dataset.translation_languages.all():
+            sense_trans = sense.senseTranslations.get(language=dataset_language)
+            count_keywords += sense_trans.translations.all().count()
+        if count_keywords == 0:
+            senses_to_delete.append(sense)
+
+    deleted_sense_numbers = []
+    for sense in senses_to_delete:
+        gloss_sense = GlossSense.objects.filter(gloss=gloss, sense=sense).first()
+        deleted_sense_numbers.append(str(gloss_sense.order))
+        for sensetranslation in sense.senseTranslations.all():
+            sense.senseTranslations.remove(sensetranslation)
+            sensetranslation.delete()
+        gloss_sense.delete()
+        sense.delete()
+
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language)
     glossXsenses['regrouped_keywords'] = regrouped_keywords
     glossXsenses['dataset_languages'] = dataset_languages
+    glossXsenses['deleted_sense_numbers'] = deleted_sense_numbers
 
     return JsonResponse(glossXsenses)
 
@@ -1255,6 +1196,107 @@ def gloss_to_keywords_senses_groups_matrix(gloss):
     glossXsenses['keywords'] = keywords_translations
     glossXsenses['senses_groups'] = senses_groups
     return glossXsenses
+
+
+def add_keyword(request, glossid):
+    """Add keywords"""
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    dataset_languages = [str(lang.id) for lang in gloss.lemma.dataset.translation_languages.all()]
+
+    keywords = request.POST.get('keywords')
+    translation_list_str = json.loads(keywords)
+    translation = [s for s in translation_list_str]
+
+    language_get = request.POST.get('language')
+    language_list = json.loads(language_get) if language_get else []
+    language = [int(s) for s in language_list]
+
+    gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+    order_sense_tuples = [(gs.order, gs.sense) for gs in gloss_senses]
+    current_senses = [gs.order for gs in gloss_senses]
+    current_keywords = []
+    current_trans = dict()
+    current_indices = []
+    for order, sense in order_sense_tuples:
+        current_trans[order] = []
+        for dataset_language in gloss.lemma.dataset.translation_languages.all():
+            sense_trans = sense.senseTranslations.get(language=dataset_language)
+            for trans in sense_trans.translations.all().order_by('index'):
+                current_keywords.append(trans.translation.text)
+                current_indices.append(trans.index)
+                current_trans[order].append(trans.index)
+
+    if len(current_senses) < 1:
+        new_sense = 1
+    else:
+        new_sense = max(current_senses) + 1
+
+    if len(current_indices) < 1:
+        new_index = 1
+    else:
+        new_index = max(current_indices) + 1
+        if len(current_indices) <= new_index:
+            new_index += 1
+
+    # make a new sense and translations for it
+    sense_translations = dict()
+    sense_for_gloss = Sense(dataset=gloss.lemma.dataset)
+    sense_for_gloss.save()
+    glosssense = GlossSense(gloss=gloss, sense=sense_for_gloss, order=new_sense)
+    glosssense.save()
+    for dataset_language in gloss.lemma.dataset.translation_languages.all():
+        glosssenselanguage = SenseTranslation(language=dataset_language)
+        glosssenselanguage.save()
+        sense_for_gloss.senseTranslations.add(glosssenselanguage)
+        sense_translations[dataset_language.id] = glosssenselanguage
+
+    new_translations = []
+    translations_row = dict()
+    for new_text in translation:
+
+        target_index = translation.index(new_text)
+        target_language = language[target_index]
+        language_obj = Language.objects.get(id=target_language)
+
+        if not new_text:
+            # these will set up an empty cell in the matrix
+            new_translations.append({'new_text': '',
+                                     'new_trans_id': '',
+                                     'new_language': str(target_language)})
+            translations_row[str(target_language)] = {'new_text': '',
+                                                      'new_trans_id': ''}
+            continue
+
+        (keyword_object, created) = Keyword.objects.get_or_create(text=new_text)
+
+        # make a new translation
+        trans = Translation(gloss=gloss, translation=keyword_object, index=new_index,
+                            language=language_obj, orderIndex=new_sense)
+        trans.save()
+        new_translations.append({'new_text': new_text,
+                                 'new_trans_id': str(trans.id),
+                                 'new_language': str(target_language)})
+        translations_row[str(target_language)] = {'new_text': new_text,
+                                                  'new_trans_id': str(trans.id)}
+
+        sense_language = sense_translations[target_language]
+        sense_language.translations.add(trans)
+
+    glossXsenses = gloss_to_keywords_senses_groups_matrix(gloss)
+    # creating a new sense sends back extra info
+    glossXsenses['new_translations'] = new_translations
+    glossXsenses['translations_row'] = translations_row
+    glossXsenses['new_sense'] = new_sense
+    glossXsenses['dataset_languages'] = dataset_languages
+
+    return JsonResponse(glossXsenses)
 
 
 def edit_senses_matrix(request, glossid):
