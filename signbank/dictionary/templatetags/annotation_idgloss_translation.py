@@ -177,7 +177,3 @@ def get_gloss_description(gloss, language_code_2char):
 def translated_annotationidgloss(gloss, language_code):
     annotationidgloss = gloss.annotation_idgloss(language_code)
     return annotationidgloss
-
-@register.filter
-def in_dataset(sense, ds):
-    return sense.filter(dataset=ds)

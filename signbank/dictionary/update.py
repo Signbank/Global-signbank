@@ -295,24 +295,25 @@ def delete_examplesentence(request, senseid):
 def sort_sense(request, glossid, order, direction):
     order = int(order)
     gloss = Gloss.objects.get(id=glossid)
-    glosssense = GlossSense.objects.all().get(gloss=gloss, order = order-1)
-    direction = direction
-    if direction == "up":
-        glosssenseabove = GlossSense.objects.all().get(gloss=gloss, order=order-2)
-        glosssenseabove.order = order - 1
-        glosssense.order = order - 2
-        glosssense.save()
-        glosssenseabove.save()
+    glosssense = GlossSense.objects.all().get(gloss=gloss, order = order)
+    try:
+        if direction == "up":
+            glosssenseabove = GlossSense.objects.all().get(gloss=gloss, order=order-1)
+            glosssenseabove.order = order 
+            glosssense.order = order - 1
+            glosssense.save()
+            glosssenseabove.save()
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        if direction == "down":
+            glosssensebeneath = GlossSense.objects.all().get(gloss=gloss, order=order+1)
+            glosssensebeneath.order = order
+            glosssense.order = order + 1 
+            glosssense.save()
+            glosssensebeneath.save()
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    except:
+        messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    if direction == "down":
-        glosssensebeneath = GlossSense.objects.all().get(gloss=gloss, order=order)
-        glosssensebeneath.order = order -1
-        glosssense.order = order 
-        glosssense.save()
-        glosssensebeneath.save()
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 def add_sentence_video(request, glossid, examplesentenceid):
     template = 'dictionary/add_sentence_video.html'
@@ -371,7 +372,7 @@ def update_sense(request, senseid):
             gloss.senses.remove(sense)
             gloss.reorder_senses()
             if s not in gloss.senses.all():
-                glosssense = GlossSense(gloss=gloss, sense=s, order=gloss.senses.count())
+                glosssense = GlossSense(gloss=gloss, sense=s, order=gloss.senses.count()+1)
                 glosssense.save()
 
             # If the sense does not exist in any other gloss, delete it and its translations and examplesentences
@@ -502,14 +503,14 @@ def create_sense(request, glossid):
             if sense in gloss.senses.all():
                 messages.add_message(request, messages.ERROR, _('Sense is already in this gloss.'))
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-            glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count())
+            glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count()+1)
             glosssense.save()
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     
     # Make a new sense object
     sense = Sense.objects.create()
     sense.save()
-    glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count())
+    glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count()+1)
     glosssense.save()
 
     # Add or remove keywords to the sense translations
