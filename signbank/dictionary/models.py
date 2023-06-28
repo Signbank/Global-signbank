@@ -1146,11 +1146,10 @@ class Gloss(models.Model):
 
     def reorder_senses(self):
         "when a sense is deleted, the senses should be reordered"
-        for sense_i, sense in enumerate(self.senses.all()):
+        for sense_i, sense in enumerate(self.ordered_senses().all()):
             glossense = GlossSense.objects.all().get(gloss=self, sense=sense)
-            glossense.order = sense_i
+            glossense.order = sense_i+1
             glossense.save()
-
 
     def annotation_idgloss(self, language_code):
         # this function is used in Relations View to dynamically get the Annotation of related glosses
@@ -2325,7 +2324,8 @@ class GlossSense(models.Model):
     sense = models.ForeignKey(Sense, on_delete=models.CASCADE)       
     order = models.IntegerField(
         verbose_name    = _(u'Order'),
-        help_text           = _(u'What order to display this sense within the gloss.')
+        help_text           = _(u'What order to display this sense within the gloss.'),
+        default = 1
     )
 
     class Meta:

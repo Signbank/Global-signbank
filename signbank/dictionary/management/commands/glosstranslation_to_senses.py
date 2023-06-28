@@ -36,12 +36,12 @@ class Command(BaseCommand):
                 existing_senses.extend(existing_gloss.senses.all())
             for existing_sense in existing_senses:
                 if existing_sense.get_sense_translations_dict_without() == vals and existing_sense not in gloss.senses.all():
-                    GlossSense.objects.create(gloss=gloss, sense=existing_sense, order=gloss.senses.count())
+                    GlossSense.objects.create(gloss=gloss, sense=existing_sense, order=gloss.senses.count()+1)
                     break
 
             # Make a new sense object
             sense = Sense.objects.create()
-            GlossSense.objects.create(gloss=gloss, sense=sense, order=gloss.senses.count())
+            GlossSense.objects.create(gloss=gloss, sense=sense, order=gloss.senses.count()+1)
 
             # Add or remove keywords to the sense translations
             for dataset_language in dataset.translation_languages.all():
