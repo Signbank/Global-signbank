@@ -410,7 +410,7 @@ def update_sense(request, senseid):
                     keyword = Keyword.objects.get_or_create(text =tr_v)[0]
                     translation = None
                     try:
-                        translation = Translation.objects.filter(translation = keyword, language = dataset_language)[0]
+                        translation = Translation.objects.filter(translation = keyword, language = dataset_language, gloss=gloss)[0]
                     except:
                         translation = Translation.objects.create(translation = keyword, language = dataset_language, gloss = gloss)
                     sensetranslation.translations.add(translation)
@@ -458,7 +458,7 @@ def update_sense(request, senseid):
                             keyword = Keyword.objects.get_or_create(text = tr_v)[0]
                             translation = None
                             try:
-                                translation = Translation.objects.filter(translation = keyword, language = dataset_language)[0]
+                                translation = Translation.objects.filter(translation = keyword, language = dataset_language, gloss=gloss)[0]
                             except:
                                 translation = Translation.objects.create(translation = keyword, language = dataset_language, gloss = gloss)
                             sensetranslation.translations.add(translation)
@@ -536,7 +536,7 @@ def create_sense(request, glossid):
                         keyword = Keyword.objects.get_or_create(text = kw)[0]
                         translation = None
                         try:
-                            translation = Translation.objects.filter(translation = keyword, language = dataset_language)[0]
+                            translation = Translation.objects.filter(translation = keyword, language = dataset_language, gloss=gloss)[0]
                         except:
                             translation = Translation.objects.create(translation = keyword, language = dataset_language, gloss = gloss)
                         sensetranslation.translations.add(translation)
