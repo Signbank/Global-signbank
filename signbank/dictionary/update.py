@@ -1171,6 +1171,7 @@ def group_keywords(request, glossid):
                 regrouped_keywords.append({'inputEltIndex': target_sense_index,
                                            'originalIndex': str(original_order_index),
                                            'orderIndex': str(target_sense_group),
+                                           'language': str(language_obj.id),
                                            'sense_id': str(trans.id)})
             except (IntegrityError, DatabaseError, TransactionManagementError):
                 print('error saving translation object')
