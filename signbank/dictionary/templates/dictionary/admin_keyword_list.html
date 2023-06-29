@@ -399,13 +399,14 @@ input {
                            <table class='table table-condensed'>
                                <tr>
                                    <td>{% trans "Keywords" %}</td>
-                                   {% for language in dataset_languages %}
+                                   {% for keywords_language in dataset_languages %}
                                    <td>
-                                       <input name='keyword' type="text" size="40"
+                                       <input name='keyword' id="new_sense_keywords_{{gloss.id}}_{{language.id}}"
+                                              type="text" size="40"
+                                              data-language='{{keywords_language.id}}'
                                               placeholder='{% trans "Text" %}' value="">
                                        <input type="hidden"
-                                           name="language" value='{{language.id}}' data-language='{{language.id}}'>
-
+                                           name="language" value='{{keywords_language.id}}' data-language='{{keywords_language.id}}'>
                                    </td>
                                    {% endfor %}
                                </tr>
@@ -476,13 +477,12 @@ input {
                             {% for order_index, keywords_list in senses_groups.items %}
                             {% for sense in keywords_list %}
                             <tr id="keywords_regroup_row_{{gloss.id}}_{{language.id}}_{{sense.id}}">
-                                <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{sense.id}}">{{sense.translation.text}}
+                                <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{sense.id}}">{{sense.translation.text}}</td>
+                                <td>
+                                <input type="number" id="regroup_{{gloss.id}}_{{language.id}}_{{order_index}}" class="regroup" size="5"
+                                       name="regroup" value='{{order_index}}' data-regroup='{{order_index}}'>
                                 <input type="hidden" id="sense_id_{{sense.id}}"
                                        name="group_index" value='{{sense.id}}' data-group_index='{{sense.id}}'>
-                                </td>
-                                <td>
-                                <input type="number" id="regroup_{{order_index}}" class="regroup" size="5"
-                                       name="regroup" value='{{order_index}}' data-regroup='{{order_index}}'>
                                 </td>
                             </tr>
                             {% endfor %}
