@@ -108,14 +108,6 @@ class GlossCreateForm(forms.ModelForm):
         gloss.creationDate = DT.datetime.now()
         gloss.save()
 
-        default_language = Language.objects.get(language_code_2char=DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
-        # create empty keywords (Keyword '' has default language)
-        # when the newly created gloss is later edited in GlossDetailView, when the user enters new keywords,
-        # the old keywords are removed on (via clear), so setting the initial keywords to '' here is a placeholder
-        (kobj, created) = Keyword.objects.get_or_create(text='')
-        trans = Translation(gloss=gloss, translation=kobj, index=0, language=default_language, orderIndex=1)
-        trans.save()
-
         return gloss
 
 
@@ -190,14 +182,6 @@ class MorphemeCreateForm(forms.ModelForm):
         morpheme.creator.add(self.user)
         morpheme.creationDate = DT.datetime.now()
         morpheme.save()
-
-        default_language = Language.objects.get(language_code_2char=DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
-        # create empty keywords (Keyword '' has default language)
-        # when the newly created morpheme is later edited in MorphemeDetailView, when the user enters new keywords,
-        # the old keywords are removed (via clear), so setting the initial keywords to '' here is a placeholder
-        (kobj, created) = Keyword.objects.get_or_create(text='')
-        trans = Translation(gloss=morpheme, translation=kobj, index=0, language=default_language, orderIndex=1)
-        trans.save()
 
         return morpheme
 
