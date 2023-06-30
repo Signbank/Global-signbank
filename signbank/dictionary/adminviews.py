@@ -7470,14 +7470,12 @@ class KeywordListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
 
-        dataset_languages = get_dataset_languages(selected_datasets)
-        context['dataset_languages'] = dataset_languages
-
-        if not selected_datasets:
-            dataset_language = Language.objects.get(id=get_default_language_id())
+        if not selected_datasets or selected_datasets.count() > 1:
+            dataset_languages = Language.objects.filter(id=get_default_language_id())
         else:
-            dataset_language = selected_datasets.first().default_language
-        context['dataset_language'] = dataset_language
+            dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+
+        context['dataset_languages'] = dataset_languages
 
         search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
 
@@ -7507,14 +7505,11 @@ class KeywordListView(ListView):
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
-        active_dataset = selected_datasets.first()
-
         get = self.request.GET
 
-        dataset_language = selected_datasets.first().default_language
-
         # multilingual
-        dataset_languages = get_dataset_languages(selected_datasets)
+        # this needs to be sorted for jquery purposes
+        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
 
         # exclude morphemes
         glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
