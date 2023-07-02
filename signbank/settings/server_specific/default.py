@@ -259,3 +259,5 @@ ADMIN_URL = 'admin'
 LOGOUT_REDIRECT_URL = '/'
 
 FILESYSTEM_SIGNBANK_GROUPS = ['signbank', 'www-data', 'signbank-writable', 'wwwsignbank']
+
+SHARE_SENSES = False
