@@ -654,7 +654,7 @@ class GlossListView(ListView):
         lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
                                           for language in dataset_languages]
 
-        keyword_fields = ["Keywords" + " (" + getattr(language, lang_attr_name) + ")"
+        keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
                                                for language in dataset_languages]
         writer = csv.writer(response)
 
@@ -697,18 +697,21 @@ class GlossListView(ListView):
                 else:
                     row.append("")
 
-            # Keywords per language
+            # Put senses (keywords) per language in a cell
+            gloss_senses = [(gs.order, gs.sense) for gs in GlossSense.objects.filter(gloss=gloss).order_by('order')]
+            translations_per_language = dict()
             for language in dataset_languages:
-                keywords_in_language = gloss.translation_set.filter(language=language).order_by('translation__index')
-                # get rid of any invisible characters at the end such as \t
-                keyword_translations = [t.translation.text.strip() for t in keywords_in_language]
-                if len(keyword_translations) == 1:
-                    row.append(keyword_translations[0])
-                elif not keyword_translations:
-                    row.append("")
-                else:
-                    keywords_joined = ', '.join(keyword_translations)
-                    row.append(keywords_joined)
+                sensetranslations_for_language = []
+                for order, sense in gloss_senses:
+                    sensetranslation = sense.senseTranslations.filter(language=language).first()
+                    if sensetranslation:
+                        sensetranslations_for_language.append(str(order) + '. ' + sensetranslation.get_translations())
+                    else:
+                        sensetranslations_for_language.append(str(order) + '. ')
+                translations_per_language[language] = '\n'.join(sensetranslations_for_language)
+            for language in dataset_languages:
+                row.append(translations_per_language[language])
+
             for f in fields:
                 #Try the value of the choicelist
                 if hasattr(f, 'field_choice_category'):
