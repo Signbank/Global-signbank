@@ -16,6 +16,7 @@ function update_gloss_senses(data) {
     };
     var regrouped_keywords = data.regrouped_keywords;
     var dataset_languages = data.dataset_languages;
+    var deleted_translations = data.deleted_translations;
     var deleted_sense_numbers = data.deleted_sense_numbers;
 
     var keywords_glossid = '#tbody_keywords_' + glossid + '_' + changed_language;
@@ -198,33 +199,36 @@ function update_gloss_senses(data) {
             }
         }
     }
-    // remove table rows with empty senses
-    for (var order in deleted_sense_numbers) {
-        var empty_row_id = '#modal_sensetranslations_' + glossid + '_row_'
-                                    + deleted_sense_numbers[order];
-        var empty_row = $(empty_row_id);
-        if (empty_row.length) {
-            empty_row.remove();
+
+    for (var i=0; i < deleted_translations.length; i++) {
+        var orderIndex = deleted_translations[i]['orderIndex'];
+        var sense_id = deleted_translations[i]['sense_id'];
+        var language = deleted_translations[i]['language'];
+        var span_id = '#span_cell_' + glossid + '_' + language + '_' + sense_id;
+        var spanTDParent = $(span_id).parent();
+        var spanCell = $(span_id).remove();
+        // replace with an empty cell
+        var empty_span_html = '<span class="span-cell"/>';
+        empty_span_html += '<input type="text" size="40" data-order_index="'+orderIndex + '" data-language="'+
+                    language+'" name="new_translation">';
+        empty_span_html += '<input type="hidden" name="new_order_index" value="'+orderIndex+'" data-new_order_index="'+orderIndex+'">';
+        empty_span_html += '<input type="hidden" name="new_language" value="'+language+'" data-new_language="'+
+                            language+'">';
+        empty_span_html += "</span>";
+        spanTDParent.append(empty_span_html);
+        // remove row of regroup table
+        var keywords_regroup_row_id = '#keywords_regroup_row_' + glossid + '_' + language + '_' + sense_id;
+        var keywordsRegroupRow = $(keywords_regroup_row_id);
+        if (keywordsRegroupRow) {
+            keywordsRegroupRow.empty();
+            keywordsRegroupRow.remove();
         }
-    }
-    for (var inx in dataset_languages) {
-        for (var order in deleted_sense_numbers) {
-            var tbody = $('#tbody_senses_' + glossid  + '_' + dataset_languages[inx]);
-            var outer_senses_row_id = '#senses_' + glossid  + '_'
-                                    + dataset_languages[inx] + '_row_' + deleted_sense_numbers[order];
-            var outer_senses_row = $(outer_senses_row_id);
-            if (outer_senses_row) {
-                outer_senses_row.empty();
-                outer_senses_row.remove();
-            }
-            var tbody = $('#tbody_modal_senses_' + glossid  + '_' + dataset_languages[inx]);
-            var sense_row_id = '#modal_senses_' + glossid + '_'
-                                    + dataset_languages[inx] + '_row_' + deleted_sense_numbers[order];
-            var sense_row = $(sense_row_id);
-            if (sense_row) {
-                sense_row.empty();
-                sense_row.remove();
-            }
+        // remove row of Update Text in language modal
+        var keywords_update_row_id = '#edit_keywords_row_' + glossid + '_' + language + '_' + sense_id;
+        var keywordsUpdateRow = $(keywords_update_row_id);
+        if (keywordsUpdateRow) {
+            keywordsUpdateRow.empty();
+            keywordsUpdateRow.remove();
         }
     }
 }
@@ -417,6 +421,8 @@ function update_matrix(data) {
     var updated_translations = data.updated_translations;
     var new_translations = data.new_translations;
     var deleted_translations = data.deleted_translations;
+    var translation_languages = data.translation_languages;
+    var deleted_sense_numbers = data.deleted_sense_numbers;
 
     for (var i=0; i < new_translations.length; i++) {
         var inputEltIndex = new_translations[i]['inputEltIndex'];
@@ -523,8 +529,9 @@ function update_matrix(data) {
         var sense_id = deleted_translations[i]['sense_id'];
         var language = deleted_translations[i]['language'];
         var span_id = '#span_cell_' + glossid + '_' + language + '_' + sense_id;
-        var spanTDParent = $(span_id).parent();
-        var spanCell = $(span_id).remove();
+        var spanCell = $(span_id);
+        var spanTDParent = spanCell.parent();
+        spanCell.remove();
         // replace with an empty cell
         var empty_span_html = '<span class="span-cell"/>';
         empty_span_html += '<input type="text" size="40" data-order_index="'+orderIndex + '" data-language="'+
@@ -536,11 +543,18 @@ function update_matrix(data) {
         spanTDParent.append(empty_span_html);
         // remove row of regroup table
         var keywords_regroup_row_id = '#keywords_regroup_row_' + glossid + '_' + language + '_' + sense_id;
-        var keywordsRegroupRow = $(keywords_regroup_row_id).detach();
+        var keywordsRegroupRow = $(keywords_regroup_row_id);
+        if (keywordsRegroupRow) {
+            keywordsRegroupRow.detach();
+            keywordsRegroupRow.remove();
+        }
         // remove row of Update Text in language modal
         var keywords_update_row_id = '#edit_keywords_row_' + glossid + '_' + language + '_' + sense_id;
-        var keywordsUpdateRow = $(keywords_update_row_id).detach();
-
+        var keywordsUpdateRow = $(keywords_update_row_id);
+        if (keywordsUpdateRow) {
+            keywordsUpdateRow.detach();
+            keywordsUpdateRow.remove();
+        }
         var keywords_language = senses_groups[language];
         var group_keywords = keywords_language[parseInt(orderIndex)];
         if (group_keywords === undefined) {
@@ -606,6 +620,36 @@ function update_matrix(data) {
             };
             row.append("</td></tr>");
             sensesCell.append(row);
+        }
+    }
+    // remove table rows with empty senses
+    for (var order in deleted_sense_numbers) {
+        var empty_row_id = '#modal_sensetranslations_' + glossid + '_row_'
+                                    + deleted_sense_numbers[order];
+        var empty_row = $(empty_row_id);
+        if (empty_row) {
+            empty_row.empty();
+            empty_row.remove();
+        }
+    }
+    for (var inx in translation_languages) {
+        for (var order in deleted_sense_numbers) {
+            var tbody = $('#tbody_senses_' + glossid  + '_' + translation_languages[inx]);
+            var outer_senses_row_id = '#senses_' + glossid  + '_'
+                                    + translation_languages[inx] + '_row_' + deleted_sense_numbers[order];
+            var outer_senses_row = $(outer_senses_row_id);
+            if (outer_senses_row) {
+                outer_senses_row.empty();
+                outer_senses_row.remove();
+            }
+            var tbody = $('#tbody_modal_senses_' + glossid  + '_' + translation_languages[inx]);
+            var sense_row_id = '#modal_senses_' + glossid + '_'
+                                    + translation_languages[inx] + '_row_' + deleted_sense_numbers[order];
+            var sense_row = $(sense_row_id);
+            if (sense_row) {
+                sense_row.empty();
+                sense_row.remove();
+            }
         }
     }
 }
