@@ -57,6 +57,7 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
+from signbank.csv_interface import sense_translations_per_language
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
@@ -698,19 +699,9 @@ class GlossListView(ListView):
                     row.append("")
 
             # Put senses (keywords) per language in a cell
-            gloss_senses = [(gs.order, gs.sense) for gs in GlossSense.objects.filter(gloss=gloss).order_by('order')]
-            translations_per_language = dict()
+            gloss_senses_per_language = sense_translations_per_language(gloss, dataset_languages)
             for language in dataset_languages:
-                sensetranslations_for_language = []
-                for order, sense in gloss_senses:
-                    sensetranslation = sense.senseTranslations.filter(language=language).first()
-                    if sensetranslation:
-                        sensetranslations_for_language.append(str(order) + '. ' + sensetranslation.get_translations())
-                    else:
-                        sensetranslations_for_language.append(str(order) + '. ')
-                translations_per_language[language] = '\n'.join(sensetranslations_for_language)
-            for language in dataset_languages:
-                row.append(translations_per_language[language])
+                row.append(gloss_senses_per_language[language])
 
             for f in fields:
                 #Try the value of the choicelist
@@ -7537,15 +7528,19 @@ class KeywordListView(ListView):
             keyword_translations_per_language = dict()
             sense_groups_per_language = dict()
             for language in dataset_languages:
+                sense_groups_per_language[language] = dict()
                 keyword_translations_per_language[language] = []
                 senses_groups = dict()
                 for order, sense in list_of_gloss_senses:
-                    senses_groups[order] = []
+                    if order not in senses_groups.keys():
+                        senses_groups[order] = []
                     translations_for_language_for_sense = sense.senseTranslations.get(language=language)
                     for trans in translations_for_language_for_sense.translations.all().order_by('index'):
+                        if trans.orderIndex != order:
+                            print(order, gloss.id, gloss, trans.translation.text, trans.__dict__)
                         keyword_translations_per_language[language].append(trans)
                         senses_groups[order].append(trans)
-                sense_groups_per_language[language] = senses_groups
+                    sense_groups_per_language[language][order] = senses_groups[order]
 
             matrix_dimensions = dict()
             for order, sense in list_of_gloss_senses:

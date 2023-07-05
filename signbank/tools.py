@@ -17,6 +17,7 @@ from django.utils.translation import override, gettext_lazy as _, activate
 
 from django.http import HttpResponse, HttpResponseRedirect
 
+from signbank.csv_interface import sense_translations_for_language, update_senses_parse
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from django.utils.dateformat import format
@@ -339,17 +340,19 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         errors_found += [error_string]
                 continue
 
-            keywords_key_prefix = "Keywords ("
+            keywords_key_prefix = "Senses ("
             if human_key.startswith(keywords_key_prefix):
                 language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(keywords_key_prefix):-1]
-                languages = Language.objects.filter(**{language_name_column:language_name})
-                if languages:
-                    language = languages[0]
-                    translations = [t.translation.text for t in gloss.translation_set.filter(language=language).order_by('translation__index')]
-                    current_keyword_string = ", ".join(translations)
+                language = Language.objects.filter(**{language_name_column:language_name}).first()
+                if language:
+                    current_keyword_string = sense_translations_for_language(gloss, language)
+                    okay = update_senses_parse(new_human_value)
+                    if not okay:
+                        error_string = 'ERROR: Error parsing value in Senses column ' + human_key + ': ' + new_human_value
+                        errors_found += [error_string]
                 else:
-                    error_string = 'ERROR: Non-existent language specified for Keywords column: ' + human_key
+                    error_string = 'ERROR: Non-existent language specified for Senses column: ' + human_key
                     errors_found += [error_string]
 
                 if current_keyword_string != new_human_value and new_human_value != 'None' and new_human_value != '':

@@ -28,6 +28,7 @@ from signbank.tools import get_selected_datasets_for_user, get_default_annotatio
     get_interface_language_and_default_language_codes, split_csv_lines_header_body
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
+from signbank.csv_interface import update_senses
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -1565,17 +1566,14 @@ def import_csv_update(request):
                         annotation_idgloss.save()
                 continue
 
-            keywords_key_prefix = "Keywords ("
+            keywords_key_prefix = "Senses ("
             # Updating the keywords is a special procedure, because it has relations to other parts of the database
             if fieldname.startswith(keywords_key_prefix):
                 language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = fieldname[len(keywords_key_prefix):-1]
-                languages = Language.objects.filter(**{language_name_column:language_name})
-                if languages:
-                    language = languages.first()
-                    language_code_2char = language.language_code_2char
-                    update_keywords(gloss, "keyword_" + language_code_2char, new_value)
-                    gloss.save()
+                language = Language.objects.filter(**{language_name_column: language_name}).first()
+                if language:
+                    update_senses(gloss, language, new_value)
                 continue
 
             if fieldname == 'SignLanguages':
