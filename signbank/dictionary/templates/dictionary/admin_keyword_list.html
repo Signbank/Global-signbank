@@ -332,12 +332,8 @@ input {
                                     {% if not translations.items %}
                                     {% for i in cellsrange %}
                                     <span class="span-cell">
-                                    <input type="text"size="40" data-language='{{language.id}}' data-order_index='{{order_index}}'
+                                    <input type="text"size="40" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
                                            name="new_translation">
-                                    <input type="hidden"
-                                           name="new_language" value='{{language.id}}' data-new_language='{{language.id}}'>
-                                    <input type="hidden"
-                                           name="new_order_index" value='{{order_index}}' data-new_order_index='{{order_index}}'>
                                     </span>
                                     {% endfor %}
                                     {% else %}
@@ -346,25 +342,16 @@ input {
                                     <span class="span-cell" id="span_cell_{{gloss.id}}_{{language.id}}_{{keywords.id}}">
                                     <input type="text" size="40" id="sense_translation_text_{{gloss.id}}_{{language.id}}_{{keywords.id}}"
                                            name="translation" value='{{keywords.translation.text}}'
-                                           data-translation='{{keywords.translation.text}}'>
-                                    <input type="hidden"
-                                           name="sense_id" value='{{keywords.id}}' data-sense_id='{{keywords.id}}'>
-                                    <input type="hidden"
-                                           name="order_index" value='{{order_index}}' data-order_index='{{order_index}}'>
-                                    <input type="hidden"
-                                           name="language" value='{{language.id}}' data-language='{{language.id}}'>
+                                           data-translation='{{keywords.translation.text}}' data-trans_id='{{keywords.id}}'
+                                           data-order_index='{{order_index}}' data-language='{{language.id}}'>
                                     </span>
                                     {% endfor %}
                                     {% endfor %}
                                     {% if cellsmax > cellscount %}
                                     {% for i in cellspadding %}
                                     <span class="span-cell">
-                                    <input type="text" size="40" data-language='{{language.id}}' data-order_index='{{order_index}}'
+                                    <input type="text" size="40" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
                                            name="new_translation">
-                                    <input type="hidden"
-                                           name="new_language" value='{{language.id}}' data-new_language='{{language.id}}'>
-                                    <input type="hidden"
-                                           name="new_order_index" value='{{order_index}}' data-new_order_index='{{order_index}}'>
                                     </span>
                                     {% endfor %}
                                     {% endif %}
@@ -401,12 +388,10 @@ input {
                                    <td>{% trans "Keywords" %}</td>
                                    {% for keywords_language in dataset_languages %}
                                    <td>
-                                       <input name='keyword' id="new_sense_keywords_{{gloss.id}}_{{language.id}}"
+                                       <input name='keyword' id="new_sense_keywords_{{gloss.id}}_{{keywords_language.id}}"
                                               type="text" size="40"
                                               data-language='{{keywords_language.id}}'
                                               placeholder='{% trans "Text" %}' value="">
-                                       <input type="hidden"
-                                           name="language" value='{{keywords_language.id}}' data-language='{{keywords_language.id}}'>
                                    </td>
                                    {% endfor %}
                                </tr>
@@ -479,10 +464,9 @@ input {
                             <tr id="keywords_regroup_row_{{gloss.id}}_{{language.id}}_{{sense.id}}">
                                 <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{sense.id}}">{{sense.translation.text}}</td>
                                 <td>
-                                <input type="number" id="regroup_{{gloss.id}}_{{language.id}}_{{order_index}}" class="regroup" size="5"
-                                       name="regroup" value='{{order_index}}' data-regroup='{{order_index}}'>
-                                <input type="hidden" id="sense_id_{{sense.id}}"
-                                       name="group_index" value='{{sense.id}}' data-group_index='{{sense.id}}'>
+                                <input type="number" id="regroup_{{gloss.id}}_{{language.id}}_{{sense.id}}" class="regroup" size="5"
+                                       name="regroup" value='{{order_index}}' data-regroup='{{order_index}}'
+                                        data-group_index='{{sense.id}}'>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -490,7 +474,6 @@ input {
                             {% endwith %}
                           </tbody>
                       </table>
-                          <input type="hidden" name="language" value="{{language.id}}">
                           {% if perms.dictionary.change_gloss %}
                           <button class="regroup_keywords btn btn-primary" id="regroup_keywords_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
                                     data-language="{{language.id}}" type="submit">
@@ -507,23 +490,21 @@ input {
                             action="{% url 'dictionary:edit_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
                       <table class='table table-condensed'>
-                          {% with keywords_per_language|get_item:language as keywords %}
+                          {% with keywords_per_language|get_item:language as sense_translations %}
                           <tbody id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
-                          {% for keyword in keywords %}
-                            <tr id="edit_keywords_row_{{gloss.id}}_{{language.id}}_{{keyword.id}}">
+                          {% for trans in sense_translations %}
+                            <tr id="edit_keywords_row_{{gloss.id}}_{{language.id}}_{{trans.id}}">
                                 <td>
-                                <input type="text" id="edit_keyword_text_{{gloss.id}}_{{language.id}}_{{keyword.id}}" size="40"
-                                       name="translation" value='{{keyword.translation.text}}'
-                                       data-translation='{{keyword.translation.text}}'>
-                                <input type="hidden" id="keyword_index_{{keyword.id}}"
-                                       name="keyword_index" value='{{keyword.id}}' data-index='{{keyword.id}}'>
+                                <input type="text" id="edit_keyword_text_{{gloss.id}}_{{language.id}}_{{trans.id}}" size="40"
+                                       name="translation" value='{{trans.translation.text}}'
+                                       data-translation='{{trans.translation.text}}' data-trans_id='{{trans.id}}'
+                                       data-order_index="{{trans.orderIndex}}">
                                 </td>
                             </tr>
                           {% endfor %}
                           </tbody>
                           {% endwith %}
                       </table>
-                          <input type="hidden" name="language" value="{{language.id}}">
                           {% if perms.dictionary.change_gloss %}
                           <button class="edit_keywords btn btn-primary" id="edit_keywords_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
                                     data-language="{{language.id}}" type="submit">

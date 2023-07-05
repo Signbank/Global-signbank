@@ -7534,13 +7534,18 @@ class KeywordListView(ListView):
                 for order, sense in list_of_gloss_senses:
                     if order not in senses_groups.keys():
                         senses_groups[order] = []
-                    translations_for_language_for_sense = sense.senseTranslations.get(language=language)
-                    for trans in translations_for_language_for_sense.translations.all().order_by('index'):
-                        if trans.orderIndex != order:
-                            print(order, gloss.id, gloss, trans.translation.text, trans.__dict__)
-                        keyword_translations_per_language[language].append(trans)
-                        senses_groups[order].append(trans)
-                    sense_groups_per_language[language][order] = senses_groups[order]
+                    translations_for_language_for_sense = sense.senseTranslations.filter(language=language).first()
+                    if not translations_for_language_for_sense:
+                        print('KeywordsListView: ', gloss, ' (' + gloss.id + ') has no SenseTranslation object for ', language)
+                        sense_groups_per_language[language][order] = senses_groups[order]
+                    else:
+                        for trans in translations_for_language_for_sense.translations.all().order_by('index'):
+                            if trans.orderIndex != order:
+                                print('orderIndex of translation does not match senseTranslation language: ',
+                                      order, gloss.id, gloss, trans.translation.text, trans.__dict__)
+                            keyword_translations_per_language[language].append(trans)
+                            senses_groups[order].append(trans)
+                        sense_groups_per_language[language][order] = senses_groups[order]
 
             matrix_dimensions = dict()
             for order, sense in list_of_gloss_senses:

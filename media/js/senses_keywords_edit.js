@@ -92,11 +92,9 @@ function update_gloss_senses(data) {
             // the new row gets as id the max index of the keywords
             regroup_row_html += '<td id="keyword_sense_index_'+glossid+'_'
                         +changed_language+'_'+sense_keyword[0]+'" >'+sense_keyword[1] + "</td>";
-            regroup_row_html += '<td><input type="number" id="regroup_'+ glossid + '_' + changed_language + '_' +key+
+            regroup_row_html += '<td><input type="number" id="regroup_'+ glossid + '_' + changed_language + '_' +sense_keyword[0]+
                                     '" name="regroup" size="5" value="'+key+
-                                    '" data-regroup="'+key+'" >';
-            regroup_row_html += '<input type="hidden" id="sense_id_'+sense_keyword[0]+
-                            '" name="group_index" value="'+sense_keyword[0]+'" data-group_index="'+sense_keyword[0]+'">';
+                                    '" data-regroup="'+key+'" data-group_index="'+sense_keyword[0]+'">';
             regroup_row_html += "</td></tr>";
             modalSensesGroupsCell.append(regroup_row_html);
         }
@@ -114,14 +112,16 @@ function update_gloss_senses(data) {
             var input_text_element_id = '#sense_translation_text_' + glossid + '_' + changed_language + '_' + sense_keyword[0];
             $(input_text_element_id).attr('value', sense_keyword[1]);
             $(input_text_element_id).attr('data-translation', sense_keyword[1]);
+            $(input_text_element_id).attr('data-trans_id', sense_keyword[0]);
+            $(input_text_element_id).attr('data-language', changed_language);
+            $(input_text_element_id).attr('data-order_index', key);
             // add new row to update text panel of language modal
             var keywords_row = 'edit_keywords_row_' + glossid + '_' + changed_language + '_' + sense_keyword[0];
             var edit_row_html = '<tr id="' + keywords_row + '"/>';
             edit_row_html += '<td><input type="text" id="edit_keyword_text_' + glossid + '_' + changed_language + '_' + sense_keyword[0] +
                                     '" name="translation" size="40" value="'+sense_keyword[1]+
-                                    '" data-translation="'+sense_keyword[1]+'">';
-            edit_row_html += '<input type="hidden" id="keyword_index_'+sense_keyword[0]+
-                            '" name="keyword_index" value="'+sense_keyword[0]+'" data-index="'+sense_keyword[0]+'">';
+                                    '" data-translation="'+sense_keyword[1]+'" data-trans_id="'+sense_keyword[0]+
+                                    '" data-order_index="'+key+'">';
             edit_row_html += "</td></tr>";
             modalEditKeywordsCell.append(edit_row_html);
         }
@@ -143,11 +143,8 @@ function update_gloss_senses(data) {
         spanCellOrderInput.attr('data-order_index', orderIndex).attr('value', orderIndex);
         // replace with an empty cell
         var span_html = '<span class="span-cell"/>';
-        span_html += '<input type="text" size="40" data-order_index="'+orderIndex + '" data-language="'+
+        span_html += '<input type="text" size="40" data-new_order_index="'+orderIndex + '" data-new_language="'+
                     langid+'" name="new_translation">';
-        span_html += '<input type="hidden" name="new_order_index" value="'+orderIndex+'" data-new_order_index="'+orderIndex+'">';
-        span_html += '<input type="hidden" name="new_language" value="'+langid+'" data-new_language="'+
-                            langid+'">';
         span_html += "</span>";
         // append empty cell to parent
         spanTDParent.append(span_html);
@@ -165,12 +162,8 @@ function update_gloss_senses(data) {
                     cellTDhtml += spanCell.html();
                 } else {
                     cellTDhtml += '<span class="span-cell"/>';
-                    cellTDhtml += '<input type="text" size="40" data-order_index="'+orderIndex + '" data-language="'+
+                    cellTDhtml += '<input type="text" size="40" data-new_order_index="'+orderIndex + '" data-new_language="'+
                                 dataset_languages[inx]+'" name="new_translation">';
-                    cellTDhtml += '<input type="hidden" name="new_order_index" value="'+orderIndex+
-                                '" data-new_order_index="'+orderIndex+'">';
-                    cellTDhtml += '<input type="hidden" name="new_language" value="'+dataset_languages[inx]+'" data-new_language="'+
-                                        dataset_languages[inx]+'">';
                     cellTDhtml += "</span>";
                 }
                 cellTDhtml += "</td>";
@@ -187,12 +180,8 @@ function update_gloss_senses(data) {
                     senseLangCell.append(spanCell);
                 } else {
                     var span_cell_html = '<span class="span-cell"/>';
-                    span_cell_html += '<input type="text" size="40" data-order_index="'+orderIndex + '" data-language="'+
+                    span_cell_html += '<input type="text" size="40" data-new_order_index="'+orderIndex + '" data-new_language="'+
                                 dataset_languages[inx]+'" name="new_translation">';
-                    span_cell_html += '<input type="hidden" name="new_order_index" value="'+orderIndex+
-                                '" data-new_order_index="'+orderIndex+'">';
-                    span_cell_html += '<input type="hidden" name="new_language" value="'+dataset_languages[inx]+'" data-new_language="'+
-                                        dataset_languages[inx]+'">';
                     span_cell_html += "</span>";
                     senseLangCell.append(span_cell_html);
                 }
@@ -209,11 +198,8 @@ function update_gloss_senses(data) {
         var spanCell = $(span_id).remove();
         // replace with an empty cell
         var empty_span_html = '<span class="span-cell"/>';
-        empty_span_html += '<input type="text" size="40" data-order_index="'+orderIndex + '" data-language="'+
+        empty_span_html += '<input type="text" size="40" data-new_order_index="'+orderIndex + '" data-new_language="'+
                     language+'" name="new_translation">';
-        empty_span_html += '<input type="hidden" name="new_order_index" value="'+orderIndex+'" data-new_order_index="'+orderIndex+'">';
-        empty_span_html += '<input type="hidden" name="new_language" value="'+language+'" data-new_language="'+
-                            language+'">';
         empty_span_html += "</span>";
         spanTDParent.append(empty_span_html);
         // remove row of regroup table
@@ -327,11 +313,9 @@ function add_gloss_keywords(data) {
         var keywords_update_row_id = 'keywords_regroup_row_' + glossid + '_' + language + '_' + new_trans_id;
         var regroup_row_html = '<tr id="' + keywords_update_row_id + '"/>';
         regroup_row_html += '<td id="keyword_sense_index_'+glossid+'_'+language+'_'+new_trans_id+'" />'+new_text + "</td>";
-        regroup_row_html += '<td><input type="number" id="regroup_'+ glossid + '_' + language + '_' +new_sense_number+
+        regroup_row_html += '<td><input type="number" id="regroup_'+ glossid + '_' + language + '_' +new_trans_id+
                                 '" name="regroup" size="5" value="'+new_sense_number+
-                                '" data-regroup="'+new_sense_number+'" >';
-        regroup_row_html += '<input type="hidden" id="sense_id_'+new_trans_id+
-                        '" name="group_index" value="'+new_trans_id+'" data-group_index="'+new_trans_id+'">';
+                                '" data-regroup="'+new_sense_number+'"  data-group_index="'+new_trans_id+'">';
         regroup_row_html += "</td></tr>";
         modalSensesGroupsCell.append(regroup_row_html);
 
@@ -341,9 +325,8 @@ function add_gloss_keywords(data) {
         var edit_row_html = "<tr/>";
         edit_row_html += '<td><input type="text" id="edit_keyword_text_' + glossid + '_' + language + '_' +new_trans_id+
                                 '" name="translation" size="40" value="'+new_text+
-                                '" data-translation="'+new_text+'">';
-        edit_row_html += '<input type="hidden" id="keyword_index_'+new_trans_id+
-                        '" name="keyword_index" value="'+new_trans_id+'" data-index="'+new_trans_id+'">';
+                                '" data-translation="'+new_text+'" data-trans_id="'+new_trans_id+
+                                '" data-order_index="'+new_sense_number+'">';
         edit_row_html += "</td></tr>";
         modalEditKeywordsCell.append(edit_row_html);
     }
@@ -366,20 +349,14 @@ function add_gloss_keywords(data) {
             cellTDhtml += '<span class="span-cell" id="'+span_id+'"/>';
             cellTDhtml += '<input type="text" id="sense_translation_text_' + glossid + '_' + langid + '_' + new_trans_id +
                         '" name="translation" size="40" value="'+new_text+
-                        '" data-translation="'+new_text+'">';
-            cellTDhtml += '<input type="hidden" name="sense_id" value="'+new_trans_id+'" data-sense_id="'+new_trans_id+'">';
-            cellTDhtml += '<input type="hidden" name="order_index" value="'+new_sense_number+'" data-order_index="'+new_sense_number+'">';
-            cellTDhtml += '<input type="hidden" name="language" value="'+langid+'" data-language="'+langid+'">';
+                        '" data-translation="'+new_text+'" data-trans_id="'+new_trans_id+
+                        '" data-order_index="'+new_sense_number+'" data-language="'+langid+'">';
             cellTDhtml += "</span></td>";
             row.append(cellTDhtml);
         } else {
             cellTDhtml += '<span class="span-cell"/>';
-            cellTDhtml += '<input type="text" size="40" data-order_index="'+new_sense_number + '" data-language="'+
+            cellTDhtml += '<input type="text" size="40" data-new_order_index="'+new_sense_number + '" data-new_language="'+
                         langid+'" name="new_translation">';
-            cellTDhtml += '<input type="hidden" name="new_order_index" value="'+new_sense_number+'" data-new_order_index="'+
-                        new_sense_number+'">';
-            cellTDhtml += '<input type="hidden" name="new_language" value="'+langid+'" data-new_language="'+
-                                langid+'">';
             cellTDhtml += "</span></td>";
             row.append(cellTDhtml);
         }
@@ -435,7 +412,7 @@ function update_matrix(data) {
         var new_translation = [];
         $(form_id).find('input[name="new_translation"]').each(function( index ) {
             if (index != inputEltIndex) { return; }
-            if ($(this).attr('data-language') != language || $(this).attr('data-order_index') != orderIndex) { return; }
+            if ($(this).attr('data-new_language') != language || $(this).attr('data-new_order_index') != orderIndex) { return; }
             $(this).attr('id', new_id);
             $(this).attr('data-translation', new_text);
             $(this).attr('value', new_text);
@@ -470,11 +447,9 @@ function update_matrix(data) {
         var keywords_update_row_id = 'keywords_regroup_row_' + glossid + '_' + language + '_' + sense_id;
         var regroup_row_html = '<tr id="' + keywords_update_row_id + '"/>';
         regroup_row_html += '<td id="keyword_sense_index_'+glossid+'_'+language+'_'+sense_id+'" >'+new_text+"</td>";
-        regroup_row_html += '<td><input type="number" id="regroup_'+ glossid + '_' + language + '_' +orderIndex+
+        regroup_row_html += '<td><input type="number" id="regroup_'+ glossid + '_' + language + '_' +sense_id+
                                 '" name="regroup" size="5" value="'+orderIndex+
-                                '" data-regroup="'+orderIndex+'" >';
-        regroup_row_html += '<input type="hidden" id="sense_id_'+sense_id+
-                        '" name="group_index" value="'+sense_id+'" data-group_index="'+sense_id+'">';
+                                '" data-regroup="'+orderIndex+'" data-group_index="'+sense_id+'">';
         regroup_row_html += "</td></tr>";
         modalSensesGroupsCell.append(regroup_row_html);
 
@@ -485,9 +460,8 @@ function update_matrix(data) {
         var edit_row_html = '<tr id="' + keywords_row + '"/>';
         edit_row_html += '<td><input type="text" id="edit_keyword_text_' + glossid + '_' + language + '_' + sense_id +
                                 '" name="translation" size="40" value="'+new_text+
-                                '" data-translation="'+new_text+'">';
-        edit_row_html += '<input type="hidden" id="keyword_index_'+sense_id+
-                        '" name="keyword_index" value="'+sense_id+'" data-index="'+sense_id+'">';
+                                '" data-translation="'+new_text+'" data-trans_id="'+sense_id+
+                                '" data-order_index="'+orderIndex+'">';
         edit_row_html += "</td></tr>";
         modalEditKeywordsCell.append(edit_row_html);
     }
@@ -512,6 +486,9 @@ function update_matrix(data) {
         var input_text_element_id = '#sense_translation_text_' + glossid + '_' + language + '_' + sense_id;
         $(input_text_element_id).attr('value', new_text);
         $(input_text_element_id).attr('data-translation', new_text);
+        $(input_text_element_id).attr('data-trans_id', sense_id);
+        $(input_text_element_id).attr('data-language', language);
+        $(input_text_element_id).attr('data-order_index', orderIndex);
         // update field of language matrix
         var input_text_element_id = '#edit_keyword_text_' + glossid + '_' + language + '_' + sense_id;
         $(input_text_element_id).attr('value', new_text);
@@ -534,11 +511,8 @@ function update_matrix(data) {
         spanCell.remove();
         // replace with an empty cell
         var empty_span_html = '<span class="span-cell"/>';
-        empty_span_html += '<input type="text" size="40" data-order_index="'+orderIndex + '" data-language="'+
+        empty_span_html += '<input type="text" size="40" data-new_order_index="'+orderIndex + '" data-new_language="'+
                     language+'" name="new_translation">';
-        empty_span_html += '<input type="hidden" name="new_order_index" value="'+orderIndex+'" data-new_order_index="'+orderIndex+'">';
-        empty_span_html += '<input type="hidden" name="new_language" value="'+language+'" data-new_language="'+
-                            language+'">';
         empty_span_html += "</span>";
         spanTDParent.append(empty_span_html);
         // remove row of regroup table
@@ -678,12 +652,11 @@ $(document).ready(function() {
          var language = $(this).attr("data-language");
          var form_id = '#form_regroup_keywords_' + glossid + '_' + language;
          var regroup = [];
+         var group_index = [];
          $(form_id).find('input[name="regroup"]').each(function() {
             regroup.push(this.value);
-         });
-         var group_index = [];
-         $(form_id).find('input[name="group_index"]').each(function() {
-            group_index.push(this.value);
+            var this_sense_id = $(this).attr('data-group_index');
+            group_index.push(this_sense_id);
          });
          $.ajax({
             url : url + "/dictionary/update/group_keywords/" + glossid,
@@ -704,12 +677,14 @@ $(document).ready(function() {
          var language = $(this).attr("data-language");
          var form_id = '#form_edit_keywords_' + glossid + '_' + language;
          var keyword_index = [];
-         $(form_id).find('input[name="keyword_index"]').each(function() {
-            keyword_index.push(this.value);
-         });
          var translation = [];
+         var order_index = [];
          $(form_id).find('input[name="translation"]').each(function() {
             translation.push(this.value);
+            var this_sense_id = $(this).attr('data-trans_id');
+            keyword_index.push(this_sense_id);
+            var this_order_index = $(this).attr('data-order_index');
+            order_index.push(this_order_index);
          });
          $.ajax({
             url : url + "/dictionary/update/edit_keywords/" + glossid,
@@ -717,6 +692,7 @@ $(document).ready(function() {
             data: { 'language': language,
                     'keyword_index': JSON.stringify(keyword_index),
                     'translation': JSON.stringify(translation),
+                    'order_index': JSON.stringify(order_index),
                     'csrfmiddlewaretoken': csrf_token},
             datatype: "json",
             success : update_gloss_senses
@@ -765,32 +741,27 @@ $(document).ready(function() {
 	     var glossid = $(this).attr('value');
          var form_id = '#form_edit_sense_matrix_' + glossid;
          var new_translation = [];
+         var new_language = [];
+         var new_order_index = [];
          $(form_id).find('input[name="new_translation"]').each(function() {
             new_translation.push(this.value);
-         });
-         var new_language = [];
-         $(form_id).find('input[name="new_language"]').each(function() {
-            new_language.push(this.value);
-         });
-         var new_order_index = [];
-         $(form_id).find('input[name="new_order_index"]').each(function() {
-            new_order_index.push(this.value);
+            var this_new_language = $(this).attr('data-new_language');
+            new_language.push(this_new_language);
+            var this_new_order_index = $(this).attr('data-new_order_index');
+            new_order_index.push(this_new_order_index);
          });
          var translation = [];
+         var language = [];
+         var sense_id = [];
+         var order_index = [];
          $(form_id).find('input[name="translation"]').each(function() {
             translation.push(this.value);
-         });
-         var language = [];
-         $(form_id).find('input[name="language"]').each(function() {
-            language.push(this.value);
-         });
-         var sense_id = [];
-         $(form_id).find('input[name="sense_id"]').each(function() {
-            sense_id.push(this.value);
-         });
-         var order_index = [];
-         $(form_id).find('input[name="order_index"]').each(function() {
-            order_index.push(this.value);
+            var this_sense_id = $(this).attr('data-trans_id');
+            sense_id.push(this_sense_id);
+            var this_language = $(this).attr('data-language');
+            language.push(this_language);
+            var this_order_index = $(this).attr('data-order_index');
+            order_index.push(this_order_index);
          });
          $.ajax({
             url : url + "/dictionary/update/edit_senses_matrix/" + glossid,
