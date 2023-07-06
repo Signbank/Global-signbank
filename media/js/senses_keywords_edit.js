@@ -17,7 +17,65 @@ function update_gloss_senses(data) {
     var regrouped_keywords = data.regrouped_keywords;
     var dataset_languages = data.dataset_languages;
     var deleted_translations = data.deleted_translations;
+    var new_translations = data.new_translations;
     var deleted_sense_numbers = data.deleted_sense_numbers;
+
+    // if there are new_translations, nothing else has been set
+    if (new_translations.length) {
+        // there is only one element in the list
+        var new_order_index = new_translations[0]['new_order_index'];
+        var new_trans_id = new_translations[0]['new_trans_id'];
+        var new_language = new_translations[0]['new_language'];
+        var new_text = new_translations[0]['new_text'];
+
+        var new_edit_empty_row = '#edit_keywords_empty_row_' + glossid + '_' + new_language;
+        var keywordsCell = $(new_edit_empty_row);
+        keywordsCell.empty();
+        keywordsCell.remove();
+
+        var tbody_modal_senses = '#tbody_modal_sensetranslations_' + glossid;
+        var modalSensesTable = $(tbody_modal_senses);
+        var order_index_row = 'modal_sensetranslations_' + glossid + '_row_' + new_order_index;
+        // no row for sense order index
+        var senseRow = $('#'+order_index_row);
+        if (senseRow.length) {
+            // matrix already has a row
+            var cell_lang = '#sense_translations_' + glossid + '_' + new_language + '_' + new_order_index;
+            var cellTD = $(cell_lang);
+            var span_id = 'span_cell_' + glossid + '_' + new_language + '_' + new_trans_id;
+            cellTDhtml = '<span class="span-cell" id="'+span_id+'"/>';
+            cellTDhtml += '<input type="text" id="sense_translation_text_' + glossid + '_' + new_language + '_' + new_trans_id +
+                        '" name="translation" size="40" value="'+new_text+
+                        '" data-translation="'+new_text+'" data-trans_id="'+new_trans_id+
+                        '" data-order_index="'+new_order_index+'" data-language="'+new_language+'">';
+            cellTDhtml += "</span>";
+            cellTD.html(cellTDhtml);
+        } else {
+            var row = $('<tr id="'+ order_index_row + '"/>');
+            row.append("<td>"+new_order_index+'.</td>');
+            for (var inx in dataset_languages) {
+                var cell_lang = 'sense_translations_' + glossid + '_' + dataset_languages[inx] + '_' + new_order_index;
+                var cellTDhtml = '<td id="'+ cell_lang + '"/>';
+                if (new_language == dataset_languages[inx]) {
+                    var span_id = 'span_cell_' + glossid + '_' + new_language + '_' + new_trans_id;
+                    cellTDhtml += '<span class="span-cell" id="'+span_id+'"/>';
+                    cellTDhtml += '<input type="text" id="sense_translation_text_' + glossid + '_' + new_language + '_' + new_trans_id +
+                                '" name="translation" size="40" value="'+new_text+
+                                '" data-translation="'+new_text+'" data-trans_id="'+new_trans_id+
+                                '" data-order_index="'+new_order_index+'" data-language="'+new_language+'">';
+                    cellTDhtml += "</span></td>";
+                } else {
+                    cellTDhtml += '<span class="span-cell"/>';
+                    cellTDhtml += '<input type="text" size="40" data-new_order_index="'+new_order_index + '" data-new_language="'+
+                                dataset_languages[inx]+'" name="new_translation">';
+                    cellTDhtml += "</span></td>";
+                }
+                row.append(cellTDhtml);
+            }
+            row.append("</tr>");
+            modalSensesTable.append(row);
+        }
+    }
 
     var keywords_glossid = '#tbody_keywords_' + glossid + '_' + changed_language;
     var keywordsCell = $(keywords_glossid);
@@ -686,6 +744,10 @@ $(document).ready(function() {
             var this_order_index = $(this).attr('data-order_index');
             order_index.push(this_order_index);
          });
+         var new_translation = [];
+         $(form_id).find('input[name="empty_translation"]').each(function() {
+            new_translation.push(this.value);
+         });
          $.ajax({
             url : url + "/dictionary/update/edit_keywords/" + glossid,
             type: 'POST',
@@ -693,6 +755,7 @@ $(document).ready(function() {
                     'trans_id': JSON.stringify(trans_id),
                     'translation': JSON.stringify(translation),
                     'order_index': JSON.stringify(order_index),
+                    'new_translation': JSON.stringify(new_translation),
                     'csrfmiddlewaretoken': csrf_token},
             datatype: "json",
             success : update_gloss_senses

@@ -329,7 +329,7 @@ input {
                                    {% with matrix_data|get_item:'max' as cellsmax %}
                                    {% with matrix_data|get_item:'padding' as cellspadding %}
                                     <td id="sense_translations_{{gloss.id}}_{{language.id}}_{{order_index}}">
-                                    {% if not translations.items %}
+                                    {% if not translations %}
                                     {% for i in cellsrange %}
                                     <span class="span-cell">
                                     <input type="text"size="40" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
@@ -337,15 +337,13 @@ input {
                                     </span>
                                     {% endfor %}
                                     {% else %}
-                                    {% for senseid, keywords_translations in translations.items %}
-                                    {% for index, keywords in keywords_translations.items %}
-                                    <span class="span-cell" id="span_cell_{{gloss.id}}_{{language.id}}_{{keywords.id}}">
-                                    <input type="text" size="40" id="sense_translation_text_{{gloss.id}}_{{language.id}}_{{keywords.id}}"
-                                           name="translation" value='{{keywords.translation.text}}'
-                                           data-translation='{{keywords.translation.text}}' data-trans_id='{{keywords.id}}'
+                                    {% for trans in translations %}
+                                    <span class="span-cell" id="span_cell_{{gloss.id}}_{{language.id}}_{{trans.id}}">
+                                    <input type="text" size="40" id="sense_translation_text_{{gloss.id}}_{{language.id}}_{{trans.id}}"
+                                           name="translation" value='{{trans.translation.text}}'
+                                           data-translation='{{trans.translation.text}}' data-trans_id='{{trans.id}}'
                                            data-order_index='{{order_index}}' data-language='{{language.id}}'>
                                     </span>
-                                    {% endfor %}
                                     {% endfor %}
                                     {% if cellsmax > cellscount %}
                                     {% for i in cellspadding %}
@@ -492,6 +490,13 @@ input {
                       <table class='table table-condensed'>
                           {% with keywords_per_language|get_item:language as sense_translations %}
                           <tbody id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
+                          {% if not sense_translations %}
+                            <tr id="edit_keywords_empty_row_{{gloss.id}}_{{language.id}}">
+                                <td>
+                                <input type="text" size="40" name="empty_translation">
+                                </td>
+                            </tr>
+                          {% else %}
                           {% for trans in sense_translations %}
                             <tr id="edit_keywords_row_{{gloss.id}}_{{language.id}}_{{trans.id}}">
                                 <td>
@@ -502,6 +507,7 @@ input {
                                 </td>
                             </tr>
                           {% endfor %}
+                          {% endif %}
                           </tbody>
                           {% endwith %}
                       </table>

@@ -12,6 +12,23 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
 
+def create_empty_sense(gloss, order):
+
+    # make a new sense and translations for it
+    translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    sense_translations = dict()
+    sense_for_gloss = Sense()
+    sense_for_gloss.save()
+    glosssense = GlossSense(gloss=gloss, sense=sense_for_gloss, order=order)
+    glosssense.save()
+    for dataset_language in translation_languages:
+        glosssenselanguage = SenseTranslation(language=dataset_language)
+        glosssenselanguage.save()
+        sense_for_gloss.senseTranslations.add(glosssenselanguage)
+        sense_translations[dataset_language] = glosssenselanguage
+    return sense_for_gloss, sense_translations
+
+
 def gloss_to_keywords_senses_groups(gloss, language):
     glossXsenses = dict()
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
@@ -20,7 +37,9 @@ def gloss_to_keywords_senses_groups(gloss, language):
     keywords_list = []
     for order, sense in list_of_gloss_senses:
         senses_groups[order] = []
-        translations_for_language_for_sense = sense.senseTranslations.get(language=language)
+        translations_for_language_for_sense = sense.senseTranslations.filter(language=language).first()
+        if not translations_for_language_for_sense:
+            continue
         for trans in translations_for_language_for_sense.translations.all().order_by('index'):
             if trans.orderIndex != order:
                 print(trans, ' has wrong order index: ', trans)
@@ -60,20 +79,45 @@ def mapping_edit_keywords(request, glossid):
     translation_list_str = json.loads(translation_get)
     translation = [s for s in translation_list_str]
 
+    new_translation_get = request.POST.get('new_translation')
+    new_translation_list_str = json.loads(new_translation_get)
+    new_translation = [s for s in new_translation_list_str]
+
     language_obj = Language.objects.get(id=int(language))
 
+    gloss_senses = GlossSense.objects.filter(gloss=gloss).count()
+
+    if not gloss_senses:
+        create_empty_sense(gloss, 1)
+
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+
     order_sense_tuples = [(gs.order, gs.sense) for gs in gloss_senses]
     current_keywords = dict()
     for order, sense in order_sense_tuples:
         current_keywords[order] = []
-        sense_trans = sense.senseTranslations.get(language=language_obj)
+        sense_trans = sense.senseTranslations.filter(language=language_obj).first()
+        if not sense_trans:
+            # there is currently to SenseTranslation object for this language
+            # this can happen if a sense was created in GlossDetailView
+            sense_trans = SenseTranslation(language=language_obj)
+            sense_trans.save()
+            sense.senseTranslations.add(sense_trans)
         for trans in sense_trans.translations.all():
             current_keywords[order].append(trans.translation.text)
 
     order_sense_dict = dict()
     for glosssense in gloss_senses:
         order_sense_dict[glosssense.order] = glosssense.sense.senseTranslations.filter(language=language_obj).first()
+
+    # the following is used to obtain translations for the gloss with the empty string keyword
+    current_trans = gloss.translation_set.all()
+
+    current_keywords_gloss = [t.translation.text for t in current_trans.filter(language=language_obj)]
+    empty_translations_for_gloss = []
+    empty_translations = current_trans.filter(language=language, translation__text='')
+    if empty_translations.count():
+        empty_translations_for_gloss.append(empty_translations.first())
 
     deleted_translations = []
     # update the new keywords
@@ -113,30 +157,72 @@ def mapping_edit_keywords(request, glossid):
         keyword_to_update.translation = keyword_object
         keyword_to_update.save()
 
+    new_translations = []
+    new_sense_number = 1
+    new_index = 1
+    # the following is only executed if the gloss currently has no keywords for this language
+    for inx, new_text in enumerate(new_translation):
+        if new_text == '':
+            continue
+        (keyword_object, created) = Keyword.objects.get_or_create(text=new_text)
+
+        # check if there are any '' translations for this gloss
+        saved_translation = []
+        if '' in current_keywords_gloss and empty_translations_for_gloss:
+            # fetch the empty keyword's translation object and change its keyword if possible
+            # legacy code added empty translations
+            translation_to_update = empty_translations_for_gloss[0]
+            try:
+                translation_to_update.translation = keyword_object
+                translation_to_update.orderIndex = new_sense_number
+                translation_to_update.index = new_index
+                translation_to_update.language = language_obj
+                translation_to_update.save()
+                saved_translation.append(translation_to_update)
+                new_index += 1
+                # remove the reused empty keyword and empty translation from temporary storage
+                empty_translations_for_gloss.pop(0)
+                current_keywords_gloss.remove('')
+            except (ObjectDoesNotExist, KeyError, IntegrityError, TransactionManagementError):
+                # make a new translation if it didn't work to update
+                try:
+                    trans = Translation(gloss=gloss, translation=keyword_object, index=new_index,
+                                        language=language_obj, orderIndex=new_sense_number)
+                    trans.save()
+                    saved_translation.append(trans)
+                    new_index += 1
+                except (IntegrityError, DatabaseError, TransactionManagementError):
+                    print('error creating translation: ', gloss, new_text, language_obj, ' order ', new_sense_number)
+                    new_index += 1
+                    continue
+        else:
+            # make a new translation using new sense number and new index numer
+            try:
+                trans = Translation(gloss=gloss, translation=keyword_object, index=new_index,
+                                    language=language_obj, orderIndex=new_sense_number)
+                trans.save()
+                saved_translation.append(trans)
+                new_index += 1
+            except (IntegrityError, DatabaseError, TransactionManagementError):
+                print('error creating translation: ', gloss, new_text, language_obj, ' order ', new_sense_number)
+                new_index += 1
+                continue
+        new_trans = saved_translation[0]
+        new_translations.append({'new_text': new_text,
+                                 'new_trans_id': str(new_trans.id),
+                                 'new_order_index': str(new_sense_number),
+                                 'new_language': language})
+        sense_language = order_sense_dict[new_sense_number]
+        sense_language.translations.add(new_trans)
+
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language_obj)
     glossXsenses['regrouped_keywords'] = []
     glossXsenses['dataset_languages'] = dataset_languages
     glossXsenses['deleted_translations'] = deleted_translations
     glossXsenses['deleted_sense_numbers'] = []
+    glossXsenses['new_translations'] = new_translations
 
     return glossXsenses
-
-
-def create_empty_sense(gloss, order):
-
-    # make a new sense and translations for it
-    translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
-    sense_translations = dict()
-    sense_for_gloss = Sense()
-    sense_for_gloss.save()
-    glosssense = GlossSense(gloss=gloss, sense=sense_for_gloss, order=order)
-    glosssense.save()
-    for dataset_language in translation_languages:
-        glosssenselanguage = SenseTranslation(language=dataset_language)
-        glosssenselanguage.save()
-        sense_for_gloss.senseTranslations.add(glosssenselanguage)
-        sense_translations[dataset_language] = glosssenselanguage
-    return sense_for_gloss, sense_translations
 
 
 def delete_empty_senses(gloss):
@@ -147,7 +233,9 @@ def delete_empty_senses(gloss):
     for glosssense in gloss_senses:
         order_sense_dict[glosssense.order] = dict()
         for dataset_language in translation_languages:
-            order_sense_dict[glosssense.order][dataset_language] = glosssense.sense.senseTranslations.get(language=dataset_language)
+            senseTranslation = glosssense.sense.senseTranslations.filter(language=dataset_language).first()
+            if senseTranslation:
+                order_sense_dict[glosssense.order][dataset_language] = senseTranslation
 
     senses_to_delete = []
     for order in order_sense_dict.keys():
@@ -167,7 +255,8 @@ def delete_empty_senses(gloss):
         if not gloss_sense:
             continue
         sense = gloss_sense.sense
-        for sensetranslation in sense.senseTranslations.all():
+        sense_translations = sense.senseTranslations.all()
+        for sensetranslation in sense_translations:
             # there are no translation objects for this sense
             sense.senseTranslations.remove(sensetranslation)
             sensetranslation.delete()
@@ -208,8 +297,16 @@ def mapping_group_keywords(request, glossid):
     order_sense_dict = dict()
     for glosssense in gloss_senses:
         order_sense_dict[glosssense.order] = dict()
+        sense = glosssense.sense
         for dataset_language in translation_languages:
-            order_sense_dict[glosssense.order][dataset_language] = glosssense.sense.senseTranslations.get(language=dataset_language)
+            sense_trans = sense.senseTranslations.filter(language=dataset_language).first()
+            if not sense_trans:
+                # there is currently to SenseTranslation object for this language
+                # this can happen if a sense was created in GlossDetailView
+                sense_trans = SenseTranslation(language=dataset_language)
+                sense_trans.save()
+                sense.senseTranslations.add(sense_trans)
+            order_sense_dict[glosssense.order][dataset_language] = sense_trans
 
     current_senses = [gs.order for gs in gloss_senses]
     for inx, regroup_sense_number in enumerate(regroup):
@@ -265,11 +362,13 @@ def mapping_group_keywords(request, glossid):
 
     deleted_sense_numbers = []
     deleted_translations = []
+    new_translations = []
     glossXsenses = gloss_to_keywords_senses_groups(gloss, changed_language)
     glossXsenses['regrouped_keywords'] = regrouped_keywords
     glossXsenses['dataset_languages'] = dataset_languages
     glossXsenses['deleted_sense_numbers'] = deleted_sense_numbers
     glossXsenses['deleted_translations'] = deleted_translations
+    glossXsenses['new_translations'] = new_translations
 
     return glossXsenses
 
@@ -329,7 +428,13 @@ def mapping_add_keyword(request, glossid):
     for order, sense in order_sense_tuples:
         sense_keywords[order] = []
         for dataset_language in translation_languages:
-            sense_trans = sense.senseTranslations.get(language=dataset_language)
+            sense_trans = sense.senseTranslations.filter(language=dataset_language).first()
+            if not sense_trans:
+                # there is currently to SenseTranslation object for this language
+                # this can happen if a sense was created in GlossDetailView
+                sense_trans = SenseTranslation(language=dataset_language)
+                sense_trans.save()
+                sense.senseTranslations.add(sense_trans)
             for trans in sense_trans.translations.all():
                 if trans.translation.text:
                     if trans.orderIndex != order:
@@ -468,7 +573,13 @@ def mapping_edit_senses_matrix(request, glossid):
     for order in order_sense_dict.keys():
         sense = order_sense_dict[order]
         for dataset_language in translation_languages:
-            sense_trans = sense.senseTranslations.get(language=dataset_language)
+            sense_trans = sense.senseTranslations.filter(language=dataset_language).first()
+            if not sense_trans:
+                # there is currently to SenseTranslation object for this language
+                # this can happen if a sense was created in GlossDetailView
+                sense_trans = SenseTranslation(language=dataset_language)
+                sense_trans.save()
+                sense.senseTranslations.add(sense_trans)
             for trans in sense_trans.translations.all().order_by('index'):
                 current_indices.append(trans.index)
                 current_trans.append(trans)

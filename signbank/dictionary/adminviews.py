@@ -7568,13 +7568,10 @@ class KeywordListView(ListView):
             for order, sense in list_of_gloss_senses:
                 translated_senses[order] = dict()
                 for language in dataset_languages:
-                    translated_senses[order][language] = dict()
+                    translated_senses[order][language] = []
                     sense_translations = sense_groups_per_language[language][order]
-                    for sensetrans in sense_translations:
-                        if sensetrans.id not in translated_senses[order][language].keys():
-                            translated_senses[order][language][sensetrans.id] = dict()
-                        translated_senses[order][language][sensetrans.id][sensetrans.index] = sensetrans
-
+                    for trans in sense_translations:
+                        translated_senses[order][language].append(trans)
             glossesXsenses.append((gloss,
                                    keyword_translations_per_language,
                                    sense_groups_per_language,
