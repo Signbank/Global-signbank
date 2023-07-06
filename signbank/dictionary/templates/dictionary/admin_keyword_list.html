@@ -372,7 +372,7 @@ input {
                               {% if perms.dictionary.change_gloss %}
                               <button class="update_translations btn btn-primary" id="update_translations_{{gloss.id}}"
                                       value='{{gloss.id}}' type="submit">
-                                  {% trans "Save" %}</button>
+                                  {% trans "Update" %}</button>
                               {% endif %}
                           </form>
                         </div>
@@ -437,9 +437,9 @@ input {
                             <tr id="modal_senses_{{gloss.id}}_{{language.id}}_row_{{order_index}}">
                             <td>{{order_index}}.</td>
                             <td id="modal_senses_order_language_cell_{{gloss.id}}_{{language.id}}_{{order_index}}">
-                              {% for keyword in keywords_list %}
-                                <span id="sensegroup_{{gloss.id}}_{{order_index}}_{{language.id}}_{{keyword.id}}">
-                                    {{keyword.translation.text|safe}}
+                              {% for trans in keywords_list %}
+                                <span id="sensegroup_{{gloss.id}}_{{order_index}}_{{language.id}}_{{trans.id}}">
+                                    {{trans.translation.text|safe}}
                                 </span>{% if not forloop.last %}, {% endif %}
                               {% endfor %}
                             </td>
@@ -460,13 +460,13 @@ input {
                           <tbody id="tbody_senses_table_{{gloss.id}}_{{language.id}}">
                             {% with senses_per_language|get_item:language as senses_groups %}
                             {% for order_index, keywords_list in senses_groups.items %}
-                            {% for sense in keywords_list %}
-                            <tr id="keywords_regroup_row_{{gloss.id}}_{{language.id}}_{{sense.id}}">
-                                <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{sense.id}}">{{sense.translation.text}}</td>
+                            {% for trans in keywords_list %}
+                            <tr id="keywords_regroup_row_{{gloss.id}}_{{language.id}}_{{trans.id}}">
+                                <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{trans.id}}">{{trans.translation.text}}</td>
                                 <td>
-                                <input type="number" id="regroup_{{gloss.id}}_{{language.id}}_{{sense.id}}" class="regroup" size="5"
+                                <input type="number" id="regroup_{{gloss.id}}_{{language.id}}_{{trans.id}}" class="regroup" size="5"
                                        name="regroup" value='{{order_index}}' data-regroup='{{order_index}}'
-                                        data-group_index='{{sense.id}}'>
+                                        data-trans_id='{{trans.id}}'>
                                 </td>
                             </tr>
                             {% endfor %}

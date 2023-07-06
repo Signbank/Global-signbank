@@ -50,9 +50,9 @@ def mapping_edit_keywords(request, glossid):
     order_index_list_str = json.loads(order_index_get)
     order_index = [int(s) for s in order_index_list_str]
 
-    keyword_index_get = request.POST.get('keyword_index')
-    keyword_index_list_str = json.loads(keyword_index_get)
-    keyword_index = [int(s) for s in keyword_index_list_str]
+    trans_id_get = request.POST.get('trans_id')
+    trans_id_list_str = json.loads(trans_id_get)
+    trans_id = [int(s) for s in trans_id_list_str]
 
     language = request.POST.get('language', '')
 
@@ -79,7 +79,7 @@ def mapping_edit_keywords(request, glossid):
     # update the new keywords
     for inx, new_text in enumerate(translation):
         input_order_index = order_index[inx]
-        index_to_update = keyword_index[inx]
+        index_to_update = trans_id[inx]
         # fetch the keyword's translation object and change its keyword
         keyword_to_update = Translation.objects.get(pk=index_to_update)
         keyword_order = keyword_to_update.orderIndex
@@ -103,7 +103,7 @@ def mapping_edit_keywords(request, glossid):
             keyword_to_update.delete()
             deleted_translations.append({'inputEltIndex': inx,
                                          'orderIndex': str(keyword_order),
-                                         'sense_id': str(index_to_update),
+                                         'trans_id': str(index_to_update),
                                          'language': str(language)})
             continue
 
@@ -192,9 +192,9 @@ def mapping_group_keywords(request, glossid):
                          for lang in gloss.lemma.dataset.translation_languages.all().order_by('id')]
     translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
 
-    group_index_get = request.POST.get('group_index')
-    group_index_list_str = json.loads(group_index_get) if group_index_get else []
-    group_index = [int(s) for s in group_index_list_str]
+    trans_id_get = request.POST.get('trans_id')
+    trans_id_list_str = json.loads(trans_id_get) if trans_id_get else []
+    trans_id = [int(s) for s in trans_id_list_str]
 
     language = request.POST.get('language', '')
 
@@ -229,7 +229,7 @@ def mapping_group_keywords(request, glossid):
                 keywords_per_sense[order][lang.id].append(trans.translation.text)
 
     regrouped_keywords = []
-    for inx, transid in enumerate(group_index):
+    for inx, transid in enumerate(trans_id):
         target_sense_group = regroup[inx]
         try:
             trans = Translation.objects.get(id=transid)
@@ -258,7 +258,7 @@ def mapping_group_keywords(request, glossid):
                                        'originalIndex': str(original_order_index),
                                        'orderIndex': str(target_sense_group),
                                        'language': str(changed_language.id),
-                                       'sense_id': str(trans.id)})
+                                       'trans_id': str(trans.id)})
         except (IntegrityError, DatabaseError, TransactionManagementError):
             print('regroup error saving translation object: ', gloss, trans, target_sense_group)
             continue
@@ -338,6 +338,7 @@ def mapping_add_keyword(request, glossid):
 
     # the indices just computed could differ if there are translations with keyword ''
     gloss_translation_indices = [trans.index for trans in gloss.translation_set.all()]
+    # the following is used to obtain translations for the gloss with the empty string keyword
     current_trans = gloss.translation_set.all()
     current_keywords_gloss = dict()
     for dataset_language in translation_languages:
@@ -505,9 +506,9 @@ def mapping_edit_senses_matrix(request, glossid):
     language_list = json.loads(language_get) if language_get else []
     language = [int(s) for s in language_list]
 
-    sense_id_get = request.POST.get('sense_id')
-    sense_id_list = json.loads(sense_id_get) if sense_id_get else []
-    sense_id = [int(s) for s in sense_id_list]
+    trans_id_get = request.POST.get('trans_id')
+    trans_id_list = json.loads(trans_id_get) if trans_id_get else []
+    trans_id = [int(s) for s in trans_id_list]
 
     order_index_get = request.POST.get('order_index')
     order_index_list = json.loads(order_index_get) if order_index_get else []
@@ -520,7 +521,7 @@ def mapping_edit_senses_matrix(request, glossid):
     updated_translations = []
     deleted_translations = []
     # update the text fields
-    for inx, transid in enumerate(sense_id):
+    for inx, transid in enumerate(trans_id):
         target_language = language[inx]
         target_sense_number = order_index[inx]
         target_text = translation[inx]
@@ -551,7 +552,7 @@ def mapping_edit_senses_matrix(request, glossid):
             trans.delete()
             deleted_translations.append({ 'inputEltIndex': inx,
                                           'orderIndex': str(target_sense_number),
-                                          'sense_id': str(transid),
+                                          'trans_id': str(transid),
                                           'language': str(target_language)})
         else:
             (keyword_object, created) = Keyword.objects.get_or_create(text=target_text)
@@ -561,7 +562,7 @@ def mapping_edit_senses_matrix(request, glossid):
             trans.save()
             updated_translations.append({ 'inputEltIndex': inx,
                                           'orderIndex': str(target_sense_number),
-                                          'sense_id': str(trans.id),
+                                          'trans_id': str(trans.id),
                                           'language': str(target_language),
                                           'text': target_text })
 
@@ -598,7 +599,7 @@ def mapping_edit_senses_matrix(request, glossid):
         new_index = new_index + 1
         new_translations.append({ 'inputEltIndex': inx,
                                   'orderIndex': str(target_sense_number),
-                                  'sense_id': str(trans.id),
+                                  'trans_id': str(trans.id),
                                   'language': str(target_language),
                                   'text': new_trans })
 
