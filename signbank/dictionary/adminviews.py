@@ -7536,7 +7536,7 @@ class KeywordListView(ListView):
                         senses_groups[order] = []
                     translations_for_language_for_sense = sense.senseTranslations.filter(language=language).first()
                     if not translations_for_language_for_sense:
-                        print('KeywordsListView: ', gloss, ' (' + gloss.id + ') has no SenseTranslation object for ', language)
+                        print('KeywordsListView: ', gloss, ' (' + str(gloss.id) + ') has no SenseTranslation object for ', language)
                         sense_groups_per_language[language][order] = senses_groups[order]
                     else:
                         for trans in translations_for_language_for_sense.translations.all().order_by('index'):
