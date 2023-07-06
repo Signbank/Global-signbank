@@ -35,16 +35,17 @@ def sense_translations_per_language(gloss, dataset_languages):
 
 
 def sense_translations_for_language(gloss, language):
+    # in contrast to the previous function, this only works for one language
     glosssenses = GlossSense.objects.all().prefetch_related('sense').filter(gloss=gloss).order_by('order')
     if not glosssenses:
         return ""
     gloss_senses = dict()
     for gs in glosssenses:
-        gloss_senses[gs.order] = Sense.objects.get(id=gs.sense.id)
-    print(gloss.id, language, gloss_senses)
+        gloss_senses[gs.order] = gs.sense
+    # print(gloss.id, language, gloss_senses)
     translations_per_language = []
     for order, sense in gloss_senses.items():
-        print(gloss.id, gloss, order, sense)
+        # print(gloss.id, gloss, order, sense)
         try:
             sensetranslation = sense.senseTranslations.get(language=language)
         except ObjectDoesNotExist:
@@ -52,13 +53,13 @@ def sense_translations_for_language(gloss, language):
             print('no st object for language: ', gloss, order, sense)
             continue
         sense_keywords = []
-        for translation in sensetranslation.translations.all():
+        for translation in sensetranslation.translations.all().order_by('index'):
             sense_keywords.append(translation.translation.text)
-        sense_translations = ', '.join(sense_keywords)
-        translations_per_language.append(str(order) + '. ' + sense_translations)
-        print('append translations to order: ', gloss.id, order, sense_translations)
+        sense_translations = str(order) + '. ' + ', '.join(sense_keywords)
+        translations_per_language.append(sense_translations)
+        # print('append translations to order: ', gloss.id, sense_translations)
     sense_translations = ' | '.join(translations_per_language)
-    print('sense translations: ', gloss.id, gloss, sense_translations)
+    # print('sense translations: ', gloss.id, gloss, sense_translations)
     return sense_translations
 
 
@@ -75,25 +76,31 @@ def update_senses_parse(new_senses_string):
             order_string, keywords_string = ns.split('. ')
         except ValueError:
             # incorrect separator between sense number and keywords
+            print('first error: ', ns)
             return False
         try:
             order = int(order_string)
         except ValueError:
             # sense is not a number
+            print('second error: ', ns, order_string, keywords_string)
             return False
         if order not in range(1, 9):
             # sense out of range
+            print('third error: ', ns, order, keywords_string)
             return False
         if order in order_list:
             # duplicate sense number found
+            print('fourth error: ', ns, order, keywords_string)
             return False
         order_list.append(order)
         try:
             keywords_list = keywords_string.split(', ')
         except ValueError:
+            print('fifth error: ', ns, order, keywords_string)
             return False
         if len(keywords_list) != len(list(set(keywords_list))):
             # duplicates in same sense
+            print('sixth error: ', ns, order, keywords_list)
             return False
 
     return True
