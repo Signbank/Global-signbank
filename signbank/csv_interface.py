@@ -18,48 +18,43 @@ def create_empty_sense(gloss, order):
     return sense_for_gloss, sense_translations
 
 
-def sense_translations_per_language(gloss, dataset_languages):
-
-    gloss_senses = [(gs.order, gs.sense) for gs in GlossSense.objects.filter(gloss=gloss).order_by('order')]
-    translations_per_language = dict()
-    for language in dataset_languages:
-        sensetranslations_for_language = []
-        for order, sense in gloss_senses:
-            sensetranslation = sense.senseTranslations.filter(language=language).first()
-            if sensetranslation:
-                sensetranslations_for_language.append(str(order) + '. ' + sensetranslation.get_translations())
-            else:
-                sensetranslations_for_language.append(str(order) + '. ')
-        translations_per_language[language] = ' | '.join(sensetranslations_for_language)
-    return translations_per_language
-
-
 def sense_translations_for_language(gloss, language):
-    # in contrast to the previous function, this only works for one language
+    # This finds the sense translations for one language
+    # It is used for export of CSV
+    # It is used again for import CSV update
+    # The exact same function is used in order to identify whether a cell has been modified
+    # The code is flattened out, avoiding usage of 'join' on empty lists
+    # The 'join' on empty lists causes problems with spaces not matching
+    # The SenseTranslation get_translations method causes problems with spaces not matching
     glosssenses = GlossSense.objects.all().prefetch_related('sense').filter(gloss=gloss).order_by('order')
     if not glosssenses:
         return ""
     gloss_senses = dict()
     for gs in glosssenses:
         gloss_senses[gs.order] = gs.sense
-    # print(gloss.id, language, gloss_senses)
     translations_per_language = []
     for order, sense in gloss_senses.items():
-        # print(gloss.id, gloss, order, sense)
-        try:
-            sensetranslation = sense.senseTranslations.get(language=language)
-        except ObjectDoesNotExist:
-            # no SenseTranslation object stored for language
-            print('no st object for language: ', gloss, order, sense)
+        sensetranslations = sense.senseTranslations.filter(language=language)
+        if not sensetranslations.count():
+            if settings.DEBUG_CSV:
+                print('No sensetranslation object for ', gloss, ' ( ', str(gloss.id), ') ', language)
             continue
-        sense_keywords = []
-        for translation in sensetranslation.translations.all().order_by('index'):
-            sense_keywords.append(translation.translation.text)
-        sense_translations = str(order) + '. ' + ', '.join(sense_keywords)
-        translations_per_language.append(sense_translations)
-        # print('append translations to order: ', gloss.id, sense_translations)
-    sense_translations = ' | '.join(translations_per_language)
-    # print('sense translations: ', gloss.id, gloss, sense_translations)
+        elif sensetranslations.count() > 1:
+            if settings.DEBUG_CSV:
+                print('Multiple sensetranslation objects for ', gloss, ' ( ', str(gloss.id), ') ', sensetranslations)
+        sensetranslation = sensetranslations.first()
+        keywords_list = []
+        translations = sensetranslation.translations.all().order_by('index')
+        for translation in translations:
+            keywords_list.append(translation.translation.text)
+        if keywords_list:
+            keywords = ', '.join(keywords_list)
+            sense_translations = str(order) + '. ' + keywords
+            translations_per_language.append(sense_translations)
+    if translations_per_language:
+        sense_translations = ' | '.join(translations_per_language)
+    else:
+        sense_translations = ""
     return sense_translations
 
 
@@ -67,6 +62,7 @@ def update_senses_parse(new_senses_string):
     """CSV Import Update check the parsing of the senses field"""
 
     if not new_senses_string:
+        # do nothing
         return True
 
     new_senses = [k for k in new_senses_string.split(' | ')]
@@ -76,31 +72,42 @@ def update_senses_parse(new_senses_string):
             order_string, keywords_string = ns.split('. ')
         except ValueError:
             # incorrect separator between sense number and keywords
-            print('first error: ', ns)
+            if settings.DEBUG_CSV:
+                print('first error: ', ns)
             return False
         try:
             order = int(order_string)
         except ValueError:
             # sense is not a number
-            print('second error: ', ns, order_string, keywords_string)
+            if settings.DEBUG_CSV:
+                print('second error: ', ns, order_string, keywords_string)
             return False
         if order not in range(1, 9):
             # sense out of range
-            print('third error: ', ns, order, keywords_string)
+            if settings.DEBUG_CSV:
+                print('third error: ', ns, order, keywords_string)
             return False
         if order in order_list:
             # duplicate sense number found
-            print('fourth error: ', ns, order, keywords_string)
+            if settings.DEBUG_CSV:
+                print('fourth error: ', ns, order, keywords_string)
             return False
         order_list.append(order)
+        if not keywords_string:
+            if settings.DEBUG_CSV:
+                # no keywords specified
+                print('fifth error: ', ns)
+                return False
         try:
             keywords_list = keywords_string.split(', ')
         except ValueError:
-            print('fifth error: ', ns, order, keywords_string)
+            if settings.DEBUG_CSV:
+                print('sixth error: ', ns, order, keywords_string)
             return False
         if len(keywords_list) != len(list(set(keywords_list))):
             # duplicates in same sense
-            print('sixth error: ', ns, order, keywords_list)
+            if settings.DEBUG_CSV:
+                print('seventh error: ', ns, order, keywords_list)
             return False
 
     return True
@@ -110,6 +117,7 @@ def update_senses(gloss, language, new_senses_string):
     """CSV Import Update the senses field"""
     # this function assumes the new_senses_string is correctly parsed
     # the function update_senses_parse tests this
+    # the sense numbers in the new_senses_string are unique numbers between 1 and 9
 
     if not new_senses_string:
         return
@@ -124,7 +132,7 @@ def update_senses(gloss, language, new_senses_string):
     print('new senses: ', new_senses_dict)
 
     gloss_senses = GlossSense.objects.filter(gloss=gloss)
-    print(gloss_senses)
+
     for gs in gloss_senses:
         print('gloss sense: ', gs.gloss.id, gs.order, gs.gloss, gs.sense)
     if gloss_senses:

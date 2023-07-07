@@ -57,7 +57,7 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
-from signbank.csv_interface import sense_translations_per_language
+from signbank.csv_interface import sense_translations_for_language
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
@@ -699,9 +699,9 @@ class GlossListView(ListView):
                     row.append("")
 
             # Put senses (keywords) per language in a cell
-            gloss_senses_per_language = sense_translations_per_language(gloss, dataset_languages)
             for language in dataset_languages:
-                row.append(gloss_senses_per_language[language])
+                gloss_senses_of_language = sense_translations_for_language(gloss, language)
+                row.append(gloss_senses_of_language)
 
             for f in fields:
                 #Try the value of the choicelist
