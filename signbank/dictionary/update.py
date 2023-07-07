@@ -297,7 +297,42 @@ def delete_examplesentence(request, senseid):
 def sort_sense(request, glossid, order, direction):
     order = int(order)
     gloss = Gloss.objects.get(id=glossid)
-    glosssense = GlossSense.objects.all().get(gloss=gloss, order = order)
+    gloss_senses_matching_order = GlossSense.objects.filter(gloss=gloss, order=order)
+    glosssenses = GlossSense.objects.filter(gloss=gloss)
+    gloss_sense_orders = [gs.order for gs in glosssenses]
+    # use a list to store potential duplicates with no translations
+    duplicates_with_empty_senses = []
+    for gs in glosssenses:
+        if gloss_sense_orders.count(gs.order) > 1:
+            # duplicates found with same order
+            gs_sense_translations = gs.sense.senseTranslations.all()
+            is_empty = True
+            for st in gs_sense_translations:
+                if st.translations.all():
+                    is_empty = False
+            if is_empty:
+                duplicates_with_empty_senses.append(gs)
+    if duplicates_with_empty_senses:
+        # delete senses with no translations
+        for gs in duplicates_with_empty_senses:
+            sense = gs.sense
+            sense_translations = sense.senseTranslations.all()
+            for st in sense_translations:
+                sense.senseTranslations.remove(st)
+                st.delete()
+            if gs in gloss_senses_matching_order:
+                gloss_senses_matching_order.remove(gs)
+            gs.delete()
+            sense.delete()
+    # reorder after deleting empty objects
+    gloss.reorder_senses()
+    try:
+        glosssense = GlossSense.objects.get(gloss=gloss, order=order)
+    except (ObjectDoesNotExist, MultipleObjectsReturned):
+        # if some empty senses were deleted and the sense no longer has this order
+        # just return to the Detail View
+        messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     try:
         if direction == "up":
             glosssenseabove = GlossSense.objects.all().get(gloss=gloss, order=order-1)
@@ -313,7 +348,7 @@ def sort_sense(request, glossid, order, direction):
             glosssense.save()
             glosssensebeneath.save()
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    except:
+    except (ObjectDoesNotExist, MultipleObjectsReturned):
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 

@@ -354,10 +354,11 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         error_string = 'ERROR Gloss ' + str(gloss.id) + ': Error parsing value in Senses column ' + human_key + ': ' + new_human_value
                         errors_found += [error_string]
                 else:
+                    current_keyword_string = ""
                     error_string = 'ERROR: Non-existent language specified for Senses column: ' + human_key
                     errors_found += [error_string]
 
-                if current_keyword_string != new_human_value and new_human_value != 'None' and new_human_value != '':
+                if new_human_value not in ['None', ''] and current_keyword_string != new_human_value:
                     differences.append({'pk': gloss_id,
                                         'dataset': current_dataset,
                                         'annotationidglosstranslation': default_annotationidglosstranslation,

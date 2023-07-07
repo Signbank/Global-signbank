@@ -26,12 +26,19 @@ def sense_translations_for_language(gloss, language):
     # The code is flattened out, avoiding usage of 'join' on empty lists
     # The 'join' on empty lists causes problems with spaces not matching
     # The SenseTranslation get_translations method causes problems with spaces not matching
-    glosssenses = GlossSense.objects.all().prefetch_related('sense').filter(gloss=gloss).order_by('order')
+    glosssenses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+
     if not glosssenses:
         return ""
     gloss_senses = dict()
     for gs in glosssenses:
-        gloss_senses[gs.order] = gs.sense
+        order = gs.order
+        sense = gs.sense
+        if order in gloss_senses.keys():
+            print('ERROR: duplicate order: ', order)
+            print(gloss, str(gloss.id), order, sense)
+        gloss_senses[order] = sense
+
     translations_per_language = []
     for order, sense in gloss_senses.items():
         sensetranslations = sense.senseTranslations.filter(language=language)
@@ -55,6 +62,8 @@ def sense_translations_for_language(gloss, language):
         sense_translations = ' | '.join(translations_per_language)
     else:
         sense_translations = ""
+    if settings.DEBUG_CSV:
+        print(gloss, str(gloss.id), language, sense_translations)
     return sense_translations
 
 
@@ -113,12 +122,44 @@ def update_senses_parse(new_senses_string):
     return True
 
 
+def sense_translations_for_language_mapping(gloss, language):
+
+    sense_keywords_mapping = dict()
+    glosssenses = GlossSense.objects.all().prefetch_related('sense').filter(gloss=gloss).order_by('order')
+    if not glosssenses:
+        return sense_keywords_mapping
+
+    gloss_senses = dict()
+    for gs in glosssenses:
+        gloss_senses[gs.order] = gs.sense
+    for order, sense in gloss_senses.items():
+        sensetranslations = sense.senseTranslations.filter(language=language)
+        if not sensetranslations.count():
+            if settings.DEBUG_CSV:
+                print('No sensetranslation object for ', gloss, ' ( ', str(gloss.id), ') ', language)
+            continue
+        elif sensetranslations.count() > 1:
+            if settings.DEBUG_CSV:
+                print('Multiple sensetranslation objects for ', gloss, ' ( ', str(gloss.id), ') ', sensetranslations)
+        sensetranslation = sensetranslations.first()
+        keywords_list = []
+        translations = sensetranslation.translations.all().order_by('index')
+        for translation in translations:
+            keywords_list.append(translation.translation.text)
+        if keywords_list:
+            sense_keywords_mapping[order] = keywords_list
+    if settings.DEBUG_CSV:
+        print('sense_translations_for_language_mapping: ', gloss, str(gloss.id), language, sense_keywords_mapping)
+    return sense_keywords_mapping
+
+
 def update_senses(gloss, language, new_senses_string):
     """CSV Import Update the senses field"""
     # this function assumes the new_senses_string is correctly parsed
     # the function update_senses_parse tests this
     # the sense numbers in the new_senses_string are unique numbers between 1 and 9
-
+    if settings.DEBUG_CSV:
+        print('call to update_senses: ', gloss, str(gloss.id), language, new_senses_string)
     if not new_senses_string:
         return
 
@@ -142,18 +183,7 @@ def update_senses(gloss, language, new_senses_string):
         print('new sense orders: ', new_senses_orders)
         create_empty_sense(gloss, new_senses_orders[0])
 
-    existing_gloss_senses = sense_translations_for_language(gloss, language)
-
-    original_senses_string = existing_gloss_senses[language]
-
-    original_senses = [k for k in original_senses_string.split(' | ')]
-
-    original_senses_dict = dict()
-    for os in original_senses:
-        order_string, keywords_string = os.split('. ')
-        keywords_list = keywords_string.split(', ')
-        original_senses_dict[int(order_string)] = keywords_list
-    print(original_senses_dict)
+    original_senses_dict = sense_translations_for_language_mapping(gloss, language)
 
     updated_senses = dict()
     new_senses = dict()
