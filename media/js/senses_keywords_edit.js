@@ -826,6 +826,7 @@ $(document).ready(function() {
             var this_order_index = $(this).attr('data-order_index');
             order_index.push(this_order_index);
          });
+         console.log(language);
          $.ajax({
             url : url + "/dictionary/update/edit_senses_matrix/" + glossid,
             type: 'POST',

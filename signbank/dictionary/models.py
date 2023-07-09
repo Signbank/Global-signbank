@@ -1150,11 +1150,14 @@ class Gloss(models.Model):
             glossense = GlossSense.objects.all().get(gloss=self, sense=sense)
             glossense.order = sense_i+1
             glossense.save()
-        for glosssense in GlossSense.objects.filter(gloss=self):
+        for glosssense in GlossSense.objects.filter(gloss=self).order_by('order'):
             for sensetrans in glosssense.sense.senseTranslations.all():
-                for trans in sensetrans.translations.all():
+                index = 1
+                for trans in sensetrans.translations.all().order_by('index', 'translation__text'):
                     trans.orderIndex = glosssense.order
+                    trans.index = index
                     trans.save()
+                    index += 1
 
     def annotation_idgloss(self, language_code):
         # this function is used in Relations View to dynamically get the Annotation of related glosses

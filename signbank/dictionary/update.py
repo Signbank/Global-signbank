@@ -294,63 +294,46 @@ def delete_examplesentence(request, senseid):
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
+
 def sort_sense(request, glossid, order, direction):
     order = int(order)
     gloss = Gloss.objects.get(id=glossid)
-    gloss_senses_matching_order = GlossSense.objects.filter(gloss=gloss, order=order)
-    glosssenses = GlossSense.objects.filter(gloss=gloss)
-    gloss_sense_orders = [gs.order for gs in glosssenses]
-    # use a list to store potential duplicates with no translations
-    duplicates_with_empty_senses = []
-    for gs in glosssenses:
-        if gloss_sense_orders.count(gs.order) > 1:
-            # duplicates found with same order
-            gs_sense_translations = gs.sense.senseTranslations.all()
-            is_empty = True
-            for st in gs_sense_translations:
-                if st.translations.all():
-                    is_empty = False
-            if is_empty:
-                duplicates_with_empty_senses.append(gs)
-    if duplicates_with_empty_senses:
-        # delete senses with no translations
-        for gs in duplicates_with_empty_senses:
-            sense = gs.sense
-            sense_translations = sense.senseTranslations.all()
-            for st in sense_translations:
-                sense.senseTranslations.remove(st)
-                st.delete()
-            if gs in gloss_senses_matching_order:
-                gloss_senses_matching_order.remove(gs)
-            gs.delete()
-            sense.delete()
-    # reorder after deleting empty objects
-    gloss.reorder_senses()
-    try:
-        glosssense = GlossSense.objects.get(gloss=gloss, order=order)
-    except (ObjectDoesNotExist, MultipleObjectsReturned):
-        # if some empty senses were deleted and the sense no longer has this order
-        # just return to the Detail View
+    gloss_senses_matching_order = GlossSense.objects.filter(gloss=gloss, order=order).count()
+    if gloss_senses_matching_order != 1:
+        print('sort_sense: multiple or no match for order: ', glossid, str(order))
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    glosssense = GlossSense.objects.get(gloss=gloss, order=order)
     try:
         if direction == "up":
-            glosssenseabove = GlossSense.objects.all().get(gloss=gloss, order=order-1)
-            glosssenseabove.order = order 
+            try:
+                glosssenseabove = GlossSense.objects.get(gloss=gloss, order=order-1)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('sort_sense UP: multiple or no match for order: ', glossid, str(order-1))
+                messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            glosssenseabove.order = order
             glosssense.order = order - 1
             glosssense.save()
             glosssenseabove.save()
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         if direction == "down":
-            glosssensebeneath = GlossSense.objects.all().get(gloss=gloss, order=order+1)
+            try:
+                glosssensebeneath = GlossSense.objects.get(gloss=gloss, order=order+1)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('sort_sense DOWN: multiple or no match for order: ', glossid, str(order+1))
+                messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
             glosssensebeneath.order = order
             glosssense.order = order + 1 
             glosssense.save()
             glosssensebeneath.save()
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    except (ObjectDoesNotExist, MultipleObjectsReturned):
+    except (ObjectDoesNotExist, MultipleObjectsReturned, DatabaseError, TransactionManagementError):
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
 
 def add_sentence_video(request, glossid, examplesentenceid):
     template = 'dictionary/add_sentence_video.html'
@@ -391,14 +374,16 @@ def update_sense(request, senseid):
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     
     # Check if this sense changed at all
-    sense = Sense.objects.all().get(id = senseid)
+    sense = Sense.objects.get(id = senseid)
     sensetranslation_dict = sense.get_sense_translations_dict_without_list()
+    print(sensetranslation_dict)
     if sensetranslation_dict == vals:
         messages.add_message(request, messages.ERROR, _('Sense did not change.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     glossid = request.POST['glossid']
     gloss_senses = GlossSense.objects.filter(gloss_id=glossid, sense=sense)
+
     if not gloss_senses.count():
         messages.add_message(request, messages.ERROR, _('Sense not found for gloss.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -440,6 +425,7 @@ def update_sense(request, senseid):
     gloss = Gloss.objects.all().get(id = request.POST['glossid'])
     # Update sensetranslations
     gloss_senses_count = gloss.senses.count()
+
     for dataset_language in dataset_languages:
         # sense translation is added, so create it if it doesn't already exist
         if str(dataset_language) not in sensetranslation_dict and str(dataset_language) not in vals:
@@ -468,6 +454,7 @@ def update_sense(request, senseid):
                                                                  language=dataset_language,
                                                                  gloss=gloss,
                                                                  orderIndex=gloss_senses_count)
+                    print(translation)
                     sensetranslation.translations.add(translation)
 
         else:
@@ -523,6 +510,7 @@ def update_sense(request, senseid):
                                                                          language=dataset_language,
                                                                          gloss=gloss,
                                                                          orderIndex=gloss_senses_count)
+                            print(translation)
                             sensetranslation.translations.add(translation)
 
     messages.add_message(request, messages.INFO, _('Given sense was added.'))

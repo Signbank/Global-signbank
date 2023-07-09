@@ -1,5 +1,6 @@
 
 from signbank.dictionary.models import *
+from signbank.dictionary.update_senses_mapping import check_consistency_senses
 
 def create_empty_sense(gloss, order):
 
@@ -26,6 +27,8 @@ def sense_translations_for_language(gloss, language):
     # The code is flattened out, avoiding usage of 'join' on empty lists
     # The 'join' on empty lists causes problems with spaces not matching
     # The SenseTranslation get_translations method causes problems with spaces not matching
+
+    check_consistency_senses(gloss, delete_empty=True)
     glosssenses = GlossSense.objects.filter(gloss=gloss).order_by('order')
 
     if not glosssenses:

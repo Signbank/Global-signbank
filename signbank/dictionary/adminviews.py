@@ -58,6 +58,8 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
 from signbank.csv_interface import sense_translations_for_language
+from signbank.dictionary.update_senses_mapping import check_consistency_senses, reorder_translations, \
+    delete_empty_senses, reorder_senses
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
@@ -7521,6 +7523,23 @@ class KeywordListView(ListView):
 
         self.query_parameters = query_parameters
 
+        for gloss in glosses_of_datasets:
+            gloss_translations = gloss.translation_set.all().order_by('index')
+            # print(gloss, ': gloss.translation_set.all(): ', gloss_translations)
+            check_consistency_senses(gloss, delete_empty=False)
+            deleted_sense_numbers = delete_empty_senses(gloss)
+            if deleted_sense_numbers:
+                print('deleted empty senses: ', deleted_sense_numbers)
+            reorder_senses(gloss)
+            gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+            for gs in gloss_senses:
+                gs_sense_translations = gs.sense.senseTranslations.all()
+                for st in gs_sense_translations:
+                    inconsistent_translations = reorder_translations(gs.gloss, st, gs.order,
+                                                                     reset=True, force_reset=True)
+                    if inconsistent_translations:
+                        print('inconsisten translations: ', gloss, st, inconsistent_translations)
+
         glossesXsenses = []
         for gloss in glosses_of_datasets:
             gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
@@ -7536,13 +7555,14 @@ class KeywordListView(ListView):
                         senses_groups[order] = []
                     translations_for_language_for_sense = sense.senseTranslations.filter(language=language).first()
                     if not translations_for_language_for_sense:
-                        print('KeywordsListView: ', gloss, ' (' + str(gloss.id) + ') has no SenseTranslation object for ', language)
                         sense_groups_per_language[language][order] = senses_groups[order]
                     else:
                         for trans in translations_for_language_for_sense.translations.all().order_by('index'):
-                            if trans.orderIndex != order:
-                                print('orderIndex of translation does not match senseTranslation language: ',
-                                      order, gloss.id, gloss, trans.translation.text, trans.__dict__)
+                            # if trans.orderIndex != order:
+                            #     print('adminviews glossesXsenses')
+                            #     print('trans does not match order: ', gloss, order, trans.translation.text)
+                            #     if trans.gloss != gloss:
+                            #         print('trans gloss different than this gloss: ', trans.gloss)
                             keyword_translations_per_language[language].append(trans)
                             senses_groups[order].append(trans)
                         sense_groups_per_language[language][order] = senses_groups[order]
