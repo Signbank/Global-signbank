@@ -213,7 +213,7 @@ def mapping_edit_keywords(request, glossid):
     trans_id_list_str = json.loads(trans_id_get)
     trans_id = [int(s) for s in trans_id_list_str]
 
-    language = request.POST.get('language', '')
+    changed_language_id = request.POST.get('language', '')
 
     translation_get = request.POST.get('translation')
     translation_list_str = json.loads(translation_get)
@@ -223,7 +223,7 @@ def mapping_edit_keywords(request, glossid):
     new_translation_list_str = json.loads(new_translation_get)
     new_translation = [s for s in new_translation_list_str]
 
-    language_obj = Language.objects.get(id=int(language))
+    language_obj = Language.objects.get(id=int(changed_language_id))
 
     gloss_senses = GlossSense.objects.filter(gloss=gloss).count()
 
@@ -282,7 +282,7 @@ def mapping_edit_keywords(request, glossid):
             deleted_translations.append({'inputEltIndex': inx,
                                          'orderIndex': str(keyword_order),
                                          'trans_id': str(index_to_update),
-                                         'language': str(language)})
+                                         'language': changed_language_id})
             continue
 
         # new text is not in current keywords
@@ -318,7 +318,7 @@ def mapping_edit_keywords(request, glossid):
         new_translations.append({'new_text': new_text,
                                  'new_trans_id': str(new_trans.id),
                                  'new_order_index': str(new_sense_number),
-                                 'new_language': language})
+                                 'new_language': changed_language_id})
         sense_language = order_sense_dict[new_sense_number]
         sense_language.translations.add(new_trans)
 
@@ -498,13 +498,13 @@ def gloss_to_keywords_senses_groups_matrix(gloss):
         senses_groups[str(language.id)] = dict()
         keywords_translations[str(language.id)] = []
         for sense_index in sense_numbers:
-            senses_groups[str(language.id)][sense_index] = []
+            senses_groups[str(language.id)][str(sense_index)] = []
     for order, sense in list_of_gloss_senses:
         for language in translation_languages:
             translations_for_language_for_sense = sense.senseTranslations.get(language=language)
             for trans in translations_for_language_for_sense.translations.all().order_by('index'):
                 keywords_translations[str(language.id)].append(trans.translation.text)
-                senses_groups[str(language.id)][order].append((str(trans.id), trans.translation.text))
+                senses_groups[str(language.id)][str(order)].append((str(trans.id), trans.translation.text))
     glossXsenses['glossid'] = str(gloss.id)
     glossXsenses['keywords'] = keywords_translations
     glossXsenses['senses_groups'] = senses_groups
@@ -645,8 +645,12 @@ def mapping_edit_senses_matrix(request, glossid):
         return {}
 
     gloss = get_object_or_404(Gloss, id=glossid)
+
+    # for some reason these assignments need to be done in the same way in all functions
+    dataset_languages = [str(lang.id)
+                         for lang in gloss.lemma.dataset.translation_languages.all().order_by('id')]
     translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
-    dataset_languages = [str(lang.id) for lang in translation_languages.order_by('id')]
+
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
     order_sense_lookup = dict()
     for gs in gloss_senses:
@@ -735,7 +739,7 @@ def mapping_edit_senses_matrix(request, glossid):
             continue
 
         if target_text == "":
-            original_sense = order_sense_dict[target_sense_number]
+            original_sense = order_sense_lookup[target_sense_number]
             original_sense_translations = original_sense.senseTranslations.get(language=language_obj)
             original_sense_translations.translations.remove(trans)
             trans.delete()
@@ -792,13 +796,13 @@ def mapping_edit_senses_matrix(request, glossid):
                                   'language': str(target_language),
                                   'text': new_trans })
 
-    # deleted_sense_numbers = delete_empty_senses(gloss)
+    deleted_sense_numbers = delete_empty_senses(gloss)
 
     glossXsenses = gloss_to_keywords_senses_groups_matrix(gloss)
     glossXsenses['new_translations'] = new_translations
     glossXsenses['updated_translations'] = updated_translations
     glossXsenses['deleted_translations'] = deleted_translations
-    glossXsenses['deleted_sense_numbers'] = []
+    glossXsenses['deleted_sense_numbers'] = deleted_sense_numbers
     glossXsenses['translation_languages'] = dataset_languages
 
     return glossXsenses

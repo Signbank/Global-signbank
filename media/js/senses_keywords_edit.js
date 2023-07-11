@@ -197,11 +197,11 @@ function update_gloss_senses(data) {
         // this is the cell for the sense keyword
         var spanTDParent = $(span_id).parent();
         var spanCell = $(span_id).detach();
-        var spanCellOrderInput = spanCell.find('input[name="order_index"]').first();
-        spanCellOrderInput.attr('data-order_index', orderIndex).attr('value', orderIndex);
+        var spanCellOrderInput = spanCell.find('input[name="translation"]');
+        spanCellOrderInput.attr('data-order_index', orderIndex);
         // replace with an empty cell
         var span_html = '<span class="span-cell"/>';
-        span_html += '<input type="text" size="40" data-new_order_index="'+orderIndex + '" data-new_language="'+
+        span_html += '<input type="text" size="40" data-new_order_index="'+originalIndex + '" data-new_language="'+
                     langid+'" name="new_translation">';
         span_html += "</span>";
         // append empty cell to parent
@@ -458,7 +458,6 @@ function update_matrix(data) {
     var deleted_translations = data.deleted_translations;
     var translation_languages = data.translation_languages;
     var deleted_sense_numbers = data.deleted_sense_numbers;
-
     for (var i=0; i < new_translations.length; i++) {
         var inputEltIndex = new_translations[i]['inputEltIndex'];
         var orderIndex = new_translations[i]['orderIndex'];
@@ -467,73 +466,99 @@ function update_matrix(data) {
         var new_text = new_translations[i]['text'];
         var new_id = 'sense_translation_text_' + glossid + '_' + language + '_' + trans_id;
         var form_id = '#form_edit_sense_matrix_' + glossid;
-        var new_translation = [];
-        $(form_id).find('input[name="new_translation"]').each(function( index ) {
+        $(form_id).find('input[name="new_translation"]').each(function(index , elt) {
             if (index != inputEltIndex) { return; }
-            if ($(this).attr('data-new_language') != language || $(this).attr('data-new_order_index') != orderIndex) { return; }
-            $(this).attr('id', new_id);
-            $(this).attr('data-translation', new_text);
-            $(this).attr('value', new_text);
+            // see if this is needed, only one index should match so it should not be necessary
+            //      if ($(elt).attr('data-new_language') != language
+            //            || $(elt).attr('data-new_order_index') != orderIndex) { return; }
+            $(elt).attr('id', new_id);
+            $(elt).attr('data-translation', new_text);
+            $(elt).attr('value', new_text);
+            $(elt).removeAttr('data-new_language');
+            $(elt).removeAttr('data-new_order_index');
+            $(elt).attr('data-order_index', orderIndex);
+            $(elt).attr('data-language', language);
+            $(elt).attr('data-trans_id', trans_id);
             // add temporary attribute in order to identify this input element
-            $(this).attr('data-updated', new_text);
+            $(elt).attr('data-updated', new_text);
         });
-
-        var modal_senses_glossid = '#tbody_modal_senses_' + glossid + '_' + language;
-        var modalSensesCell = $(modal_senses_glossid);
-        var senses_row = '#modal_senses_' + glossid +'_' + language +'_row_' + orderIndex;
-        var span_id = 'sensegroup_' + glossid + '_' + orderIndex + '_' + language + '_' + trans_id;
-        if (!$(senses_row).length) {
-            // no senses for this language
-            var senses_row_id = 'modal_senses_' + glossid +'_' + language +'_row_' + orderIndex;
-            var cell_id = 'modal_senses_order_language_cell_' + glossid +'_' + language + '_' + orderIndex;
-            var row = $('<tr id="'+ senses_row_id + '"/>');
-            row.append("<td>"+orderIndex+'.</td>');
-            cellTD = '<td id="'+ cell_id + '"/>';
-            var span = $(cellTD + '<span id="'+span_id+'">'+new_text+"</span>");
-            row.append(span).append("</td>");
-            modalSensesCell.append(row).append("</tr>");
-        } else {
-            // add the new keyword to the end of the sense
-            var cell = '#modal_senses_order_language_cell_' + glossid +'_' + language + '_' + orderIndex;
-            var span = $('<span id="'+span_id+'">'+new_text+"</span>");
-            $(cell).append(' ').append(span);
-        }
-
-        // add row to regroup panel of language modal
-        var modal_senses_groups_glossid = '#tbody_senses_table_' + glossid + '_' + language;
-        var modalSensesGroupsCell = $(modal_senses_groups_glossid);
-        var keywords_update_row_id = 'keywords_regroup_row_' + glossid + '_' + language + '_' + trans_id;
-        var regroup_row_html = '<tr id="' + keywords_update_row_id + '"/>';
-        regroup_row_html += '<td id="keyword_sense_index_'+glossid+'_'+language+'_'+trans_id+'" >'+new_text+"</td>";
-        regroup_row_html += '<td><input type="number" id="regroup_'+ glossid + '_' + language + '_' +trans_id+
-                                '" name="regroup" size="5" value="'+orderIndex+
-                                '" data-regroup="'+orderIndex+'" data-trans_id="'+trans_id+'">';
-        regroup_row_html += "</td></tr>";
-        modalSensesGroupsCell.append(regroup_row_html);
-
-        // add row to Update Text
-        var modal_edit_keywords_glossid = '#edit_keywords_table_' + glossid + '_' + language;
-        var modalEditKeywordsCell = $(modal_edit_keywords_glossid);
-        var keywords_row = 'edit_keywords_row_' + glossid + '_' + language + '_' + trans_id;
-        var edit_row_html = '<tr id="' + keywords_row + '"/>';
-        edit_row_html += '<td><input type="text" id="edit_keyword_text_' + glossid + '_' + language + '_' + trans_id +
-                                '" name="translation" size="40" value="'+new_text+
-                                '" data-translation="'+new_text+'" data-trans_id="'+trans_id+
-                                '" data-order_index="'+orderIndex+'">';
-        edit_row_html += "</td></tr>";
-        modalEditKeywordsCell.append(edit_row_html);
     }
     var elementsUpdated = [];
     var form_id = '#form_edit_sense_matrix_' + glossid;
-    $(form_id).find('input[name="new_translation"]').each(function() {
-        if ($(this).attr('data-updated')) {
-            elementsUpdated.push($(this));
+    $(form_id).find('input[name="new_translation"]').each(function(index, elt) {
+        if ($(elt).attr('data-updated')) {
+            elementsUpdated.push($(elt));
         }
     });
     $.each(elementsUpdated, function(index, elt) {
         $(elt).attr('name', 'translation');
-        $(elt).removeAttr("'data-updated'");
+        $(elt).removeAttr('data-updated');
     });
+
+    // regenerate modals for each language
+    for (var changed_language in senses_groups) {
+        var senses_per_language = senses_groups[changed_language];
+        var modal_senses_glossid = '#tbody_modal_senses_' + glossid + '_' + changed_language;
+        var modalSensesCell = $(modal_senses_glossid);
+        $(modalSensesCell).empty();
+        var modal_senses_groups_glossid = '#tbody_senses_table_' + glossid + '_' + changed_language;
+        var regroupKeywordsTable = $(modal_senses_groups_glossid);
+        $(regroupKeywordsTable).empty();
+        var modal_edit_keywords_glossid = '#edit_keywords_table_' + glossid + '_' + changed_language;
+        var modalEditKeywordsTable = $(modal_edit_keywords_glossid);
+        $(modalEditKeywordsTable).empty();
+        for (var sense_number in senses_per_language) {
+            // update senses row summary
+            var group_keywords = senses_per_language[sense_number];
+            var num_commas = group_keywords.length - 1;
+            var senses_row_id = 'modal_senses_' + glossid +'_' + changed_language +'_row_' + sense_number;
+            var cell_id = 'modal_senses_order_language_cell_' + glossid +'_' + changed_language + '_' + sense_number;
+            var row = $('<tr id="'+ senses_row_id + '"/>');
+            var changed_language_cell_html = "<td>"+sense_number+'.</td><td id="'+ cell_id + '"/>';
+            for (var inx in group_keywords) {
+                var sense_keyword = group_keywords[inx];
+                console.log(JSON.stringify(sense_keyword));
+                var span_id = 'sensegroup_' + glossid + '_' + sense_number + '_' + changed_language + '_' + sense_keyword[0];
+                if (num_commas > 0 && inx < num_commas) {
+                    changed_language_cell_html += '<span id="'+ span_id + '">'+sense_keyword[1]+"</span>, ";
+                } else {
+                    changed_language_cell_html += '<span id="'+ span_id + '">'+sense_keyword[1]+"</span>";
+                }
+            };
+            changed_language_cell_html += "</td>";
+            row.append(changed_language_cell_html).append("</tr>");
+            modalSensesCell.append(row);
+            // update regroup table
+            var group_keywords = senses_per_language[sense_number];
+            for (var inx in group_keywords) {
+                var sense_keyword = group_keywords[inx];
+                var keywords_update_row_id = 'keywords_regroup_row_' + glossid + '_' + changed_language + '_' + sense_keyword[0];
+                var regroup_row_html = '<tr id="' + keywords_update_row_id + '"/>';
+                regroup_row_html += '<td id="keyword_sense_index_'+glossid+'_'
+                            +changed_language+'_'+sense_keyword[0]+'" >'+sense_keyword[1] + "</td>";
+                regroup_row_html += '<td><input type="number" id="regroup_'+ glossid + '_' + changed_language + '_' +sense_keyword[0]+
+                                        '" name="regroup" size="5" value="'+sense_number+
+                                        '" data-regroup="'+sense_number+'" data-trans_id="'+sense_keyword[0]+'">';
+                regroup_row_html += "</td></tr>";
+                console.log('append row: '+regroup_row_html);
+                regroupKeywordsTable.append(regroup_row_html);
+            }
+            // update edit keywords table
+            var group_keywords = senses_per_language[sense_number];
+            for (var inx in group_keywords) {
+                var sense_keyword = group_keywords[inx];
+                // add new row to update text panel of language modal
+                var keywords_row = 'edit_keywords_row_' + glossid + '_' + changed_language + '_' + sense_keyword[0];
+                var edit_row_html = '<tr id="' + keywords_row + '"/>';
+                edit_row_html += '<td><input type="text" id="edit_keyword_text_' + glossid + '_' + changed_language + '_' + sense_keyword[0] +
+                                        '" name="translation" size="40" value="'+sense_keyword[1]+
+                                        '" data-translation="'+sense_keyword[1]+'" data-trans_id="'+sense_keyword[0]+
+                                        '" data-order_index="'+sense_number+'">';
+                edit_row_html += "</td></tr>";
+                modalEditKeywordsTable.append(edit_row_html);
+            }
+        }
+    }
 
     for (var i=0; i < updated_translations.length; i++) {
         var orderIndex = updated_translations[i]['orderIndex'];
@@ -612,7 +637,7 @@ function update_matrix(data) {
             groupCell.append("</td>");
         }
     }
-
+    // update outer row keywords
     for (var language in keywords) {
         var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;
         var keywordsCell = $(keywords_glossid);
@@ -631,7 +656,7 @@ function update_matrix(data) {
         row.append("</td></tr>");
         keywordsCell.append(row);
     }
-
+    // update outer row senses
     for (var language in senses_groups) {
         var senses_glossid = '#tbody_senses_' + glossid + '_' + language;
         var sensesCell = $(senses_glossid);
@@ -826,7 +851,6 @@ $(document).ready(function() {
             var this_order_index = $(this).attr('data-order_index');
             order_index.push(this_order_index);
          });
-         console.log(language);
          $.ajax({
             url : url + "/dictionary/update/edit_senses_matrix/" + glossid,
             type: 'POST',
