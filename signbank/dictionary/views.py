@@ -28,7 +28,7 @@ from signbank.tools import get_selected_datasets_for_user, get_default_annotatio
     get_interface_language_and_default_language_codes, split_csv_lines_header_body
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
-from signbank.csv_interface import update_senses
+from signbank.csv_interface import csv_create_senses
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -1573,7 +1573,7 @@ def import_csv_update(request):
                 language_name = fieldname[len(keywords_key_prefix):-1]
                 language = Language.objects.filter(**{language_name_column: language_name}).first()
                 if language:
-                    update_senses(gloss, language, new_value)
+                    csv_create_senses(gloss, language, new_value, create=True)
                 continue
 
             if fieldname == 'SignLanguages':

@@ -345,20 +345,25 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(keywords_key_prefix):-1]
                 language = Language.objects.filter(**{language_name_column:language_name}).first()
-                if language:
-                    current_keyword_string = sense_translations_for_language(gloss, language)
-                    okay = update_senses_parse(new_human_value)
-                    if not okay:
-                        print('not okay current: ', current_keyword_string)
-                        print('new string: ', new_human_value)
-                        error_string = 'ERROR Gloss ' + str(gloss.id) + ': Error parsing value in Senses column ' + human_key + ': ' + new_human_value
-                        errors_found += [error_string]
-                else:
+                if not language:
                     current_keyword_string = ""
                     error_string = 'ERROR: Non-existent language specified for Senses column: ' + human_key
                     errors_found += [error_string]
+                else:
+                    current_keyword_string = sense_translations_for_language(gloss, language)
+                    if current_keyword_string:
+                        # update of existing senses currently not supported
+                        pass
+                    else:
+                        okay = update_senses_parse(new_human_value)
+                        if not okay:
+                            print('current senses: ', current_keyword_string)
+                            print('not okay new string: ', new_human_value)
+                            error_string = 'ERROR Gloss ' + str(
+                                gloss.id) + ': Error parsing value in Senses column ' + human_key + ': ' + new_human_value
+                            errors_found += [error_string]
 
-                if new_human_value not in ['None', ''] and current_keyword_string != new_human_value:
+                if new_human_value not in ['None', ''] and not current_keyword_string:
                     differences.append({'pk': gloss_id,
                                         'dataset': current_dataset,
                                         'annotationidglosstranslation': default_annotationidglosstranslation,

@@ -33,7 +33,7 @@ from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_
 from django.shortcuts import redirect
 from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, mapping_group_keywords, mapping_add_keyword, \
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
-
+from signbank.dictionary.consistency_senses import reorder_translations
 
 def show_error(request, translated_message, form, dataset_languages):
     # this function is used by the add_gloss function below
@@ -317,6 +317,8 @@ def sort_sense(request, glossid, order, direction):
             glosssense.order = order - 1
             glosssense.save()
             glosssenseabove.save()
+            reorder_translations(gloss, order)
+            reorder_translations(gloss, order-1)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         if direction == "down":
             try:
@@ -329,6 +331,8 @@ def sort_sense(request, glossid, order, direction):
             glosssense.order = order + 1 
             glosssense.save()
             glosssensebeneath.save()
+            reorder_translations(gloss, order)
+            reorder_translations(gloss, order+1)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     except (ObjectDoesNotExist, MultipleObjectsReturned, DatabaseError, TransactionManagementError):
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
@@ -376,7 +380,7 @@ def update_sense(request, senseid):
     # Check if this sense changed at all
     sense = Sense.objects.get(id = senseid)
     sensetranslation_dict = sense.get_sense_translations_dict_without_list()
-    print(sensetranslation_dict)
+
     if sensetranslation_dict == vals:
         messages.add_message(request, messages.ERROR, _('Sense did not change.'))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -454,7 +458,6 @@ def update_sense(request, senseid):
                                                                  language=dataset_language,
                                                                  gloss=gloss,
                                                                  orderIndex=gloss_senses_count)
-                    print(translation)
                     sensetranslation.translations.add(translation)
 
         else:
