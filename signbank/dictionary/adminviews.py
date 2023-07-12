@@ -7528,16 +7528,12 @@ class KeywordListView(ListView):
         self.query_parameters = query_parameters
 
         for gloss in glosses_of_datasets:
-            gloss_translations = gloss.translation_set.all().order_by('index')
-            # print(gloss, ': gloss.translation_set.all(): ', gloss_translations)
             consistent = consistent_senses(gloss, include_translations=True)
             if not consistent:
-                print('gloss senses inconsistent: ', gloss, str(gloss.id))
-            # check_consistency_senses(gloss, delete_empty=False)
-            # deleted_sense_numbers = delete_empty_senses(gloss)
-            # if deleted_sense_numbers:
-            #     print('deleted empty senses: ', deleted_sense_numbers)
-            # reorder_senses(gloss)
+                print('gloss senses are not consistent: ', gloss, str(gloss.id))
+                # the following method prints whether duplicate senses with no translations have been found
+                check_consistency_senses(gloss, delete_empty=True)
+                reorder_senses(gloss)
             gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
             for gs in gloss_senses:
                 gs_sense_translations = gs.sense.senseTranslations.all()
