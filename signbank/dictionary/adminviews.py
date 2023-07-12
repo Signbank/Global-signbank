@@ -299,22 +299,11 @@ class GlossListView(ListView):
             dialect_name = dl.signlanguage.name + "/" + dl.name
             dialects.append((str(dl.id),dialect_name))
 
-        if not self.show_all and ('query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']):
-            if 'query' in self.request.GET:
-                # if the query parameters are available, convert them to a dictionary
-                session_query_parameters = self.request.session['query_parameters']
-                self.query_parameters = json.loads(session_query_parameters)
-            elif 'search_results' not in self.request.session.keys() or not self.request.session['search_results']:
-                self.query_parameters = {}
-                # save the default query parameters to the sessin variable
-                self.request.session['query_parameters'] = json.dumps(self.query_parameters)
-                self.request.session.modified = True
-                # self.request.session['query_parameters'] = ''
-                # self.request.session.modified = True
-            else:
-                # if the query parameters are available, convert them to a dictionary
-                session_query_parameters = self.request.session['query_parameters']
-                self.query_parameters = json.loads(session_query_parameters)
+        if not self.show_all and ('query_parameters' in self.request.session.keys()
+                                  and self.request.session['query_parameters'] not in ['', '{}']):
+            # if the query parameters are available, convert them to a dictionary
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
 
         search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
                                           dialects=dialects)
@@ -375,11 +364,11 @@ class GlossListView(ListView):
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
             gloss_fields_to_populate['search'] = escape(val)
-        if 'sensetranslation' in self.request.GET and self.request.GET['sensetranslation'] != '':
-            val = self.request.GET['sensetranslation']
+        if 'translation' in self.request.GET and self.request.GET['translation'] != '':
+            val = self.request.GET['translation']
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
-            gloss_fields_to_populate['sensetranslation'] = escape(val)
+            gloss_fields_to_populate['translation'] = escape(val)
         gloss_fields_to_populate_keys = list(gloss_fields_to_populate.keys())
         context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
         context['gloss_fields_to_populate_keys'] = gloss_fields_to_populate_keys
@@ -1007,9 +996,9 @@ class GlossListView(ListView):
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
                 
-        if 'sensetranslation' in get and get['sensetranslation'] != '':
-            val = get['sensetranslation']
-            query_parameters['sensetranslation'] = get['sensetranslation']
+        if 'translation' in get and get['translation'] != '':
+            val = get['translation']
+            query_parameters['translation'] = get['translation']
             qs = qs.filter(senses__senseTranslations__translations__translation__text__iregex=val)
 
         if 'inWeb' in get and get['inWeb'] != '0':
@@ -3553,7 +3542,7 @@ class QueryListView(ListView):
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
         if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
             # if the query parameters are available, convert them to a dictionary
-            session_query_parameters = self.request.session['query_parameters']
+            session_query_parameters = self.request.session.get('query_parameters', '{}')
             query_parameters = json.loads(session_query_parameters)
         else:
             # local query parameters

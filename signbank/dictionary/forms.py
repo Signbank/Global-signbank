@@ -43,7 +43,7 @@ def tag_choices():
 class UserSignSearchForm(forms.Form):
 
     glossQuery = forms.CharField(label=_(u'Glosses Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    query = forms.CharField(label=_(u'Translations Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    query = forms.CharField(label=_(u'Senses Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
     category = forms.ChoiceField(label=_(u'Search'), choices=CATEGORY_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-control'}))
         
 
@@ -246,7 +246,7 @@ class GlossSearchForm(forms.ModelForm):
     search = forms.CharField(label=_('Search Gloss'))
     sortOrder = forms.CharField(label=_('Sort Order'))       # Used in glosslistview to store user-selection
     tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
-    translation = forms.CharField(label=_('Search Translations'))
+    translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
@@ -312,7 +312,7 @@ class GlossSearchForm(forms.ModelForm):
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
     menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Translation"
+    menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
 
@@ -335,7 +335,7 @@ class GlossSearchForm(forms.ModelForm):
 
             # do the same for Translations
             keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
-            setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
+            setattr(self, keyword_field_name, forms.CharField(label=_("Senses")+(" (%s)" % language.name)))
             if keyword_field_name in queryDict:
                 getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
 
@@ -416,7 +416,7 @@ def check_language_fields(SearchForm, queryDict, languages):
             keyword_field_name = SearchForm.keyword_search_field_prefix + language.language_code_2char
             if keyword_field_name in queryDict.keys():
                 language_field_values[keyword_field_name] = queryDict[keyword_field_name]
-                language_field_labels[keyword_field_name] = _("Translations")+(" (%s)" % language.name)
+                language_field_labels[keyword_field_name] = _("Senses")+(" (%s)" % language.name)
 
         # and for LemmaIdgloss
         if hasattr(SearchForm, 'lemma_search_field_prefix'):
@@ -450,7 +450,7 @@ class MorphemeSearchForm(forms.ModelForm):
     search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
     tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
-    translation = forms.CharField(label=_('Search Translations'))
+    translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     useInstr = forms.CharField(label=_("Annotation instructions"))
@@ -489,7 +489,7 @@ class MorphemeSearchForm(forms.ModelForm):
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
     menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Translation"
+    menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'}
@@ -511,6 +511,7 @@ class MorphemeSearchForm(forms.ModelForm):
                 getattr(self, morphemesearch_field_name).value = queryDict[morphemesearch_field_name]
 
             # do the same for Translations
+            # Morphemes have translations not senses
             keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
             setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
             if keyword_field_name in queryDict:
@@ -1084,7 +1085,7 @@ class FocusGlossSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
-    translation = forms.CharField(label=_('Search Translations'))
+    translation = forms.CharField(label=_('Search Senses'))
 
     oriChAbd = forms.ChoiceField(label=_(u'Abduction Change'),choices=NULLBOOLEANCHOICES)
     oriChFlex = forms.ChoiceField(label=_(u'Flexion Change'),choices=NULLBOOLEANCHOICES)
@@ -1096,7 +1097,7 @@ class FocusGlossSearchForm(forms.ModelForm):
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
     menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Translation"
+    menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
 
@@ -1117,7 +1118,7 @@ class FocusGlossSearchForm(forms.ModelForm):
 
             # do the same for Translations
             keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
-            setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
+            setattr(self, keyword_field_name, forms.CharField(label=_("Senses")+(" (%s)" % language.name)))
             if keyword_field_name in queryDict:
                 getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
 

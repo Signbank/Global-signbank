@@ -362,7 +362,7 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
             query_dict[lemma_field_name] = _('Lemma ID Gloss') + " (" + language.name + ")"
         keyword_field_name = keyword_search_field_prefix + language.language_code_2char
         if keyword_field_name in query_parameters:
-            query_dict[keyword_field_name] = _('Translations') + " (" + language.name + ")"
+            query_dict[keyword_field_name] = _('Senses') + " (" + language.name + ")"
 
     return query_dict
 

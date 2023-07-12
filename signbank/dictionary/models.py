@@ -1152,12 +1152,11 @@ class Gloss(models.Model):
             glossense.save()
         for glosssense in GlossSense.objects.filter(gloss=self).order_by('order'):
             for sensetrans in glosssense.sense.senseTranslations.all():
-                index = 1
-                for trans in sensetrans.translations.all().order_by('index', 'translation__text'):
+                translations = sensetrans.translations.all().order_by('index', 'translation__text')
+                for index, trans in enumerate(translations, 1):
                     trans.orderIndex = glosssense.order
                     trans.index = index
                     trans.save()
-                    index += 1
 
     def annotation_idgloss(self, language_code):
         # this function is used in Relations View to dynamically get the Annotation of related glosses
@@ -3173,6 +3172,8 @@ class QueryParameterFieldChoice(QueryParameter):
                 glossFieldName = Definition._meta.get_field('role').verbose_name.encode('utf-8').decode()
             elif self.fieldName in ['hasComponentOfType']:
                 glossFieldName = MorphologyDefinition._meta.get_field('role').verbose_name.encode('utf-8').decode()
+            elif self.fieldName in ['sentenceType']:
+                glossFieldName = ExampleSentence._meta.get_field('sentenceType').verbose_name.encode('utf-8').decode()
             else:
                 glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
@@ -3374,7 +3375,7 @@ class QueryParameterMultilingual(QueryParameter):
         elif self.fieldName == 'lemma':
             searchFieldName = _('Lemma ID Gloss') + " (" + self.fieldLanguage.name + ")"
         elif self.fieldName == 'keyword':
-            searchFieldName = _('Translations') + " (" + self.fieldLanguage.name + ")"
+            searchFieldName = _('Senses') + " (" + self.fieldLanguage.name + ")"
         else:
             searchFieldName = self.fieldName
         return searchFieldName
