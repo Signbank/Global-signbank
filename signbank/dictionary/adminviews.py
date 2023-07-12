@@ -7498,6 +7498,8 @@ class KeywordListView(ListView):
         return context
 
     def get_queryset(self):
+        # this is a ListView for a complicated data structure
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         if not selected_datasets or selected_datasets.count() > 1:
@@ -7534,11 +7536,16 @@ class KeywordListView(ListView):
                 print('gloss senses are not consistent: ', gloss, str(gloss.id))
                 # the following method prints whether duplicate senses with no translations have been found
                 check_consistency_senses(gloss, delete_empty=True)
+                # the senses and their translation objects are renumbered in case anything was deleted
                 reorder_senses(gloss)
             gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
             for gs in gloss_senses:
                 gs_sense_translations = gs.sense.senseTranslations.all()
                 for st in gs_sense_translations:
+                    # the code below tries to repair Translation objects that have consistency problems
+                    # by fixing, if necessary, the gloss, language, and orderIndex fields to match the sense
+                    # conventiently, the index fields are also renumbered here
+                    # anything in the result was not able to be fixed
                     inconsistent_translations = reorder_sensetranslations(gs.gloss, st, gs.order,
                                                                      reset=True, force_reset=True)
                     if inconsistent_translations:
@@ -7557,20 +7564,18 @@ class KeywordListView(ListView):
                 for order, sense in list_of_gloss_senses:
                     if order not in senses_groups.keys():
                         senses_groups[order] = []
+                    # first() is used below to avoid crashing if the SenseTranslation object is missing for the language
+                    # greater than one has been caught in the consistency and repair code above
                     translations_for_language_for_sense = sense.senseTranslations.filter(language=language).first()
                     if not translations_for_language_for_sense:
                         sense_groups_per_language[language][order] = senses_groups[order]
                     else:
                         for trans in translations_for_language_for_sense.translations.all().order_by('index'):
-                            # if trans.orderIndex != order:
-                            #     print('adminviews glossesXsenses')
-                            #     print('trans does not match order: ', gloss, order, trans.translation.text)
-                            #     if trans.gloss != gloss:
-                            #         print('trans gloss different than this gloss: ', trans.gloss)
                             keyword_translations_per_language[language].append(trans)
                             senses_groups[order].append(trans)
                         sense_groups_per_language[language][order] = senses_groups[order]
 
+            # the matrix dimensions tells the view how many cells are needed in the sense number/language matrix
             matrix_dimensions = dict()
             for order, sense in list_of_gloss_senses:
                 matrix_dimensions[order] = dict()
@@ -7588,6 +7593,7 @@ class KeywordListView(ListView):
                     matrix_dimensions[order][language]['max'] = max(keywords_count)
                     matrix_dimensions[order][language]['padding'] = range(max(keywords_count)-count)
 
+            # the following is needed for the matrix, which is ordered by sense number, then language
             translated_senses = dict()
             for order, sense in list_of_gloss_senses:
                 translated_senses[order] = dict()

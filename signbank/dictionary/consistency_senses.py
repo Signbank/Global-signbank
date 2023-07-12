@@ -198,12 +198,10 @@ def reorder_sensetranslations(gloss, sensetranslation, order, reset=False, force
                 trans.delete()
 
     all_translations = [tr for tr in sensetranslation.translations.all().order_by('index')]
-    index = 1
-    for trans in all_translations:
+    for index, trans in enumerate(all_translations, 1):
         # this does not violate any constraint
         trans.index = index
         trans.save()
-        index += 1
     return inconsistent_translations
 
 
