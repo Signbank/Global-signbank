@@ -6260,14 +6260,15 @@ class MorphemeDetailView(DetailView):
 
         context['gloss_derivationhistory'] = gloss_derivationhistory
 
+        # morphemes keep using keywords, not senses
         # Put translations (keywords) per language in the context
-        context['sensetranslations_per_language'] = {}
+        context['translations_per_language'] = {}
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
-                context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
         else:
             language = Language.objects.get(id=get_default_language_id())
-            context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
