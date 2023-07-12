@@ -78,7 +78,6 @@ def reorder_translations(gloss, order):
     sense = gloss_sense.sense
     for sensetranslation in sense.senseTranslations.all():
         inconsistent_translations = []
-        inconsistent_translation_ids = []
         wrong_gloss_translations = []
         wrong_language_translations = []
         wrong_order_index_translations = []
@@ -98,7 +97,6 @@ def reorder_translations(gloss, order):
                 this_trans_okay = False
             if not this_trans_okay:
                 inconsistent_translations.append(trans)
-                inconsistent_translation_ids.append(trans.id)
 
         if wrong_order_index_translations:
             for trans in wrong_order_index_translations:
@@ -131,13 +129,12 @@ def reorder_translations(gloss, order):
                     inconsistent_translations.remove(trans)
                     trans.delete()
 
+        # these are translations for one language
         all_translations = [tr for tr in sensetranslation.translations.all().order_by('index')]
-        index = 1
-        for trans in all_translations:
+        for index, trans in enumerate(all_translations, 1):
             # this does not violate any constraint
             trans.index = index
             trans.save()
-            index += 1
         if inconsistent_translations:
             print(inconsistent_translations)
 

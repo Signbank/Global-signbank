@@ -262,13 +262,13 @@ def csv_update_senses(gloss, language, new_senses_string, update=False):
     for order, keywords in new_senses.items():
         sense, sense_translations = create_empty_sense(gloss, order)
         gloss_sense_translation = sense_translations[language]
-        for inx, keyword in enumerate(keywords):
+        for inx, keyword in enumerate(keywords, 1):
             (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
             translation = Translation.objects.create(gloss=gloss,
                                                      language=language,
                                                      orderIndex=order,
                                                      translation=keyword_object,
-                                                     index=inx+1)
+                                                     index=inx)
             translation.save()
             gloss_sense_translation.translations.add(translation)
 
@@ -284,7 +284,7 @@ def csv_update_senses(gloss, language, new_senses_string, update=False):
                 continue
             gloss_sense_translation.translations.remove(translation)
             translation.delete()
-        for inx, keyword in enumerate(keywords):
+        for inx, keyword in enumerate(keywords, 1):
             if keyword in existing_keywords:
                 # this keyword already exists
                 print('already existing keyword: ', keyword)
@@ -294,7 +294,7 @@ def csv_update_senses(gloss, language, new_senses_string, update=False):
                                                      language=language,
                                                      orderIndex=order,
                                                      translation=keyword_object,
-                                                     index=inx+1)
+                                                     index=inx)
             translation.save()
             gloss_sense_translation.translations.add(translation)
 
@@ -358,13 +358,13 @@ def csv_create_senses(gloss, language, new_senses_string, create=False):
     for order, keywords in new_senses_dict.items():
         sense, sense_translations = create_empty_sense(gloss, order, erase=False)
         gloss_sense_translation = sense_translations[language]
-        for inx, keyword in enumerate(keywords):
+        for inx, keyword in enumerate(keywords, 1):
             (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
             translation = Translation.objects.create(gloss=gloss,
                                                      language=language,
                                                      orderIndex=order,
                                                      translation=keyword_object,
-                                                     index=inx+1)
+                                                     index=inx)
             translation.save()
             gloss_sense_translation.translations.add(translation)
 
