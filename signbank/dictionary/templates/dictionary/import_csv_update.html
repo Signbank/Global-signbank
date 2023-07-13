@@ -76,6 +76,38 @@
                 </div>
             </div>
             <br>
+            <div class="row" id="senses_settings">
+                <div class="panel panel-default col-xs-offset-2 col-xs-7">
+                    <div class='panel-heading'>
+                        <div class='panel-title'>
+                            <a data-toggle='collapse' data-parent='#senses_settings'
+                               href="#senses_column_settings">{% trans "Senses Column" %}</a>
+                        </div>
+                    </div>
+            <div id='senses_column_settings' class='collapse'>
+            <div class="col-xs-offset-1 col-xs-7">
+                {% blocktrans trimmed %}
+                <p>Senses can be created for a dataset language via CSV import.
+                    At the moment, existing senses cannot be edited this way.</p>
+                <p>For splitting existing senses into separate senses, use
+                    <a class='nav-link' href="{{PREFIX_URL}}/dictionary/keywords/">Map Keywords to Senses</a> instead.</p>
+                <br>
+                <p>The senses cell for each language should have this format:<br/>
+                <pre>
+<code>
+1.&nbsp;keywords for sense, separated by commas&nbsp;|&nbsp;2.&nbsp;more, keywords
+</code>
+                </pre>
+                Parsing errors will be reported in the first phase of import.
+                If parsing is successful, the proposed new senses will be shown with a button to confirm.
+                If the changes found do not look as intended, edit your Spreadsheet/CSV file again.
+                </p>
+                {% endblocktrans %}
+            </div>
+            </div>
+            </div>
+            </div>
+            <br>
             <div class="row" id="notes_settings">
                 <div class="panel panel-default col-xs-offset-2 col-xs-7">
                     <div class='panel-heading'>
