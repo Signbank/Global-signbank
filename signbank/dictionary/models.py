@@ -140,7 +140,7 @@ class Translation(models.Model):
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
     translation = models.ForeignKey("Keyword", on_delete=models.CASCADE)
-    index = models.IntegerField("Index", default=0)
+    index = models.IntegerField("Index", default=1)
     orderIndex = models.IntegerField(_("Sense Index"), default=1)
 
     def __str__(self):
@@ -608,9 +608,9 @@ class ExampleSentence(models.Model):
 
     def get_examplestc_translations(self):
         return [k+": "+v for k,v in self.get_examplestc_translations_dict_without().items()]
-    
+
     def get_type(self):
-        return self.sentenceType.name
+        return self.sentenceType.name if self.sentenceType else ''
 
     def get_video_path(self):
         try:
