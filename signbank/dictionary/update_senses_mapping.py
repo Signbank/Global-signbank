@@ -83,11 +83,12 @@ def mapping_edit_keywords(request, glossid):
 
     translation_get = request.POST.get('translation')
     translation_list_str = json.loads(translation_get)
-    translation = [s for s in translation_list_str]
+    translation = [s.strip() for s in translation_list_str]
 
+    # this one is set if this is the first keyword and first sense
     new_translation_get = request.POST.get('new_translation')
     new_translation_list_str = json.loads(new_translation_get)
-    new_translation = [s for s in new_translation_list_str]
+    new_translation = [s.strip() for s in new_translation_list_str]
 
     language_obj = Language.objects.get(id=int(changed_language_id))
 
@@ -393,7 +394,7 @@ def mapping_add_keyword(request, glossid):
 
     keywords = request.POST.get('keywords')
     translation_list_str = json.loads(keywords)
-    new_sense_keywords = [s for s in translation_list_str]
+    new_sense_keywords = [s.strip() for s in translation_list_str]
 
     languages_get = request.POST.get('languages')
     languages_list = json.loads(languages_get) if languages_get else []
@@ -556,7 +557,7 @@ def mapping_edit_senses_matrix(request, glossid):
 
     new_translation_get = request.POST.get('new_translation')
     new_translation_list = json.loads(new_translation_get) if new_translation_get else []
-    new_translation = [s for s in new_translation_list]
+    new_translation = [s.strip() for s in new_translation_list]
 
     new_language_get = request.POST.get('new_language')
     new_language_list = json.loads(new_language_get) if new_language_get else []
@@ -580,7 +581,7 @@ def mapping_edit_senses_matrix(request, glossid):
 
     translation_get = request.POST.get('translation')
     translation_list_str = json.loads(translation_get) if translation_get else []
-    translation = [s for s in translation_list_str]
+    translation = [s.strip() for s in translation_list_str]
 
     updated_translations = []
     deleted_translations = []

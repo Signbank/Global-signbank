@@ -28,11 +28,6 @@ function update_gloss_senses(data) {
         var new_language = new_translations[0]['new_language'];
         var new_text = new_translations[0]['new_text'];
 
-        var new_edit_empty_row = '#edit_keywords_empty_row_' + glossid + '_' + new_language;
-        var keywordsCell = $(new_edit_empty_row);
-        keywordsCell.empty();
-        keywordsCell.remove();
-
         var tbody_modal_senses = '#tbody_modal_sensetranslations_' + glossid;
         var modalSensesTable = $(tbody_modal_senses);
         var order_index_row = 'modal_sensetranslations_' + glossid + '_row_' + new_order_index;
@@ -173,6 +168,13 @@ function update_gloss_senses(data) {
             $(input_text_element_id).attr('data-trans_id', sense_keyword[0]);
             $(input_text_element_id).attr('data-language', changed_language);
             $(input_text_element_id).attr('data-order_index', key);
+            // check if there is an empty cell
+            var new_edit_empty_row = '#edit_keywords_empty_row_' + glossid + '_' + changed_language;
+            var keywordsCell = $(new_edit_empty_row);
+            if (keywordsCell) {
+                keywordsCell.empty();
+                keywordsCell.remove();
+            }
             // add new row to update text panel of language modal
             var keywords_row = 'edit_keywords_row_' + glossid + '_' + changed_language + '_' + sense_keyword[0];
             var edit_row_html = '<tr id="' + keywords_row + '"/>';
