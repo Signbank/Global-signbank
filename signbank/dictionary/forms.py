@@ -10,7 +10,8 @@ from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Rel
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, \
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter, \
-                                        QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation
+                                        QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation, \
+                                        ExampleSentence
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
@@ -359,7 +360,7 @@ class GlossSearchForm(forms.ModelForm):
             if fieldname == 'definitionRole':
                 field_label = _(u'Note Type')
             else:
-                field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+                field_label = Gloss.get_field(fieldname).verbose_name
             if fieldname.startswith('semField'):
                 field_choices = SemanticField.objects.all()
             elif fieldname.startswith('derivHist'):
@@ -534,18 +535,23 @@ class MorphemeSearchForm(forms.ModelForm):
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
         fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
         fields_with_choices['definitionRole'] = 'NoteType'
+
         for (fieldname, field_category) in fields_with_choices.items():
+            # morphemes do not have Handshape fields, these are hidden, see issue #638
             if fieldname == 'definitionRole':
                 field_label = _(u'Note Type')
-            else:
-                field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
-            if fieldname.startswith('semField'):
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            elif fieldname.startswith('mrpType'):
+                field_label = Morpheme.get_field(fieldname).verbose_name
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            elif fieldname.startswith('semField'):
+                field_label = Gloss.get_field(fieldname).verbose_name
                 field_choices = SemanticField.objects.all()
             elif fieldname.startswith('derivHist'):
+                field_label = Gloss.get_field(fieldname).verbose_name
                 field_choices = DerivationHistory.objects.all()
-            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                field_choices = Handshape.objects.all()
             else:
+                field_label = Gloss.get_field(fieldname).verbose_name
                 field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False, id_prefix='',
                                                                         shortlist=True)
@@ -556,6 +562,7 @@ class MorphemeSearchForm(forms.ModelForm):
                                                 choices=[(tag.name, tag.name.replace('_', ' '))
                                                          for tag in Tag.objects.all()],
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
 
 class DefinitionForm(forms.ModelForm):
     class Meta:
@@ -877,7 +884,7 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
             search_field_name = 'name_' + language.language_code_2char
             if search_field_name in queryDict.keys():
                 language_field_values[search_field_name] = queryDict[search_field_name]
-                language_field_labels[search_field_name] = ClassModel.__meta.get_field(search_field_name).verbose_name+(
+                language_field_labels[search_field_name] = ClassModel.get_field(search_field_name).verbose_name+(
                         " (%s)" % language.name)
 
     import re
@@ -1079,6 +1086,7 @@ class KeyMappingSearchForm(forms.ModelForm):
                                                          for tag in Tag.objects.all()],
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
+
 class FocusGlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False #otherwise the html required attribute will show up on every form
@@ -1132,7 +1140,7 @@ class FocusGlossSearchForm(forms.ModelForm):
         fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
 
         for (fieldname, field_category) in fields_with_choices.items():
-            field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+            field_label = Gloss.get_field(fieldname).verbose_name
             if fieldname.startswith('semField'):
                 field_choices = SemanticField.objects.all()
             elif fieldname.startswith('derivHist'):

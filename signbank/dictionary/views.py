@@ -1246,10 +1246,12 @@ def import_csv_update(request):
 
     # this is needed in case the user has exported the csv first and not removed the frequency columns
     # this code retrieves the column headers in English
-    with override(LANGUAGE_CODE):
-        columns_to_skip = {field.verbose_name: field for field in Gloss._meta.fields if field.name in FIELDS['frequency']}
 
-    #Process Input File
+    gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
+    with override(LANGUAGE_CODE):
+        columns_to_skip = {field.verbose_name: field for field in gloss_fields if field.name in FIELDS['frequency']}
+
+    # Process Input File
     if len(request.FILES) > 0:
 
         new_file = request.FILES['file']
@@ -1504,7 +1506,7 @@ def import_csv_update(request):
 
     # Do changes
     elif len(request.POST) > 0:
-        gloss_fields = [f.name for f in Gloss._meta.fields]
+        gloss_fields = Gloss.get_field_names()
 
         lemmaidglosstranslations_per_gloss = {}
         for key, new_value in request.POST.items():
@@ -1672,7 +1674,7 @@ def import_csv_update(request):
             with override(settings.LANGUAGE_CODE):
                 if fieldname not in gloss_fields:
                     continue
-                field = Gloss._meta.get_field(fieldname)
+                field = Gloss.get_field(fieldname)
                 # Replace the value for bools
                 if field.__class__.__name__ == 'BooleanField':
 
@@ -1686,7 +1688,7 @@ def import_csv_update(request):
                     new_value = Handshape.objects.get(machine_value=int(new_value))
                 elif hasattr(field, 'field_choice_category'):
                     new_value = FieldChoice.objects.get(machine_value=int(new_value),
-                                                        field=Gloss._meta.get_field(fieldname).field_choice_category)
+                                                        field=Gloss.get_field(fieldname).field_choice_category)
                 # Remember this for renaming the video later
                 if fieldname == 'idgloss':
                     video_path_before = settings.WRITABLE_FOLDER+gloss.get_video_path()
@@ -2783,8 +2785,8 @@ def gloss_revision_history(request,gloss_pk):
 
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
-        if revision.field_name in [f.name for f in Gloss._meta.fields]:
-            revision_verbose_fieldname = _(Gloss._meta.get_field(revision.field_name).verbose_name)
+        if revision.field_name in Gloss.get_field_names():
+            revision_verbose_fieldname = _(Gloss.get_field(revision.field_name).verbose_name)
         else:
             revision_verbose_fieldname = _(revision.field_name)
 

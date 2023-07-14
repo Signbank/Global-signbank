@@ -247,6 +247,16 @@ class Definition(models.Model):
         list_filter = ['role']
         search_fields = ['gloss__idgloss']
 
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
+
     def get_role_display(self):
         return self.role.name if self.role else '-'
 
@@ -427,6 +437,16 @@ class Handshape(models.Model):
                 d[f.name] = _(field.name)
         return d
 
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
+
     def get_image_path(self, check_existance=True):
         """Returns the path within the writable and static folder"""
 
@@ -590,7 +610,17 @@ class ExampleSentence(models.Model):
                                     field_choice_category=FieldChoice.SENTENCETYPE,
                                     verbose_name=_("Sentence Type"), related_name="sentence_type")
     negative = models.BooleanField(default=False)
-    
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
+
     def get_dataset(self):
         return self.sense_set.first().glosses.first().lemma.dataset
 
@@ -821,6 +851,16 @@ class Gloss(models.Model):
                 d[f.name] = _(field.name)
         return d
 
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
+
     lemma = models.ForeignKey("LemmaIdgloss", null=True, on_delete=models.SET_NULL)
 
     # languages that this gloss is part of
@@ -1021,7 +1061,6 @@ class Gloss(models.Model):
                                           verbose_name=_("Handshape Change"),
                                            related_name="handshape_change")
 
-
     repeat = models.BooleanField(_("Repeated Movement"), null=True, default=False)
     altern = models.BooleanField(_("Alternating Movement"), null=True, default=False)
 
@@ -1187,8 +1226,9 @@ class Gloss(models.Model):
 
     def get_fields_dict(self):
 
+        gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
         fields_data = []
-        for field in Gloss._meta.fields:
+        for field in gloss_fields:
             if field.name in settings.API_FIELDS:
                 if hasattr(field, 'field_choice_category'):
                     fc_category = field.field_choice_category
@@ -2380,6 +2420,16 @@ class MorphologyDefinition(models.Model):
     def __str__(self):
         return self.morpheme.idgloss
 
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
+
     def get_role(self):
         return self.role.name if self.role else self.role
 
@@ -2402,6 +2452,16 @@ class Morpheme(Gloss):
         # We won't use this method in the interface but leave it for debugging purposes
 
         return self.idgloss
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
 
     def get_mrpType_display(self):
         # to avoid extra code in the template, return '-' if the type has not been set
@@ -2574,6 +2634,15 @@ class OtherMedia(models.Model):
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
 
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
 
     def get_othermedia_path(self, gloss_id, check_existence=False):
         # read only method
@@ -2648,6 +2717,16 @@ class Dataset(models.Model):
 
     def __str__(self):
         return self.acronym
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
 
     def generate_short_name(self):
 
@@ -2749,7 +2828,7 @@ class Dataset(models.Model):
 
         fields_data = []
         for field in fields_to_map:
-            gloss_field = Gloss._meta.get_field(field)
+            gloss_field = Gloss.get_field(field)
             if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                 fields_data.append(
                     (field, gloss_field.verbose_name.title(), 'Handshape'))
@@ -3169,13 +3248,13 @@ class QueryParameterFieldChoice(QueryParameter):
         glossFieldName = '-'
         if self.fieldName:
             if self.fieldName in ['definitionRole']:
-                glossFieldName = Definition._meta.get_field('role').verbose_name.encode('utf-8').decode()
+                glossFieldName = Definition.get_field('role').verbose_name.encode('utf-8').decode()
             elif self.fieldName in ['hasComponentOfType']:
-                glossFieldName = MorphologyDefinition._meta.get_field('role').verbose_name.encode('utf-8').decode()
+                glossFieldName = MorphologyDefinition.get_field('role').verbose_name.encode('utf-8').decode()
             elif self.fieldName in ['sentenceType']:
-                glossFieldName = ExampleSentence._meta.get_field('sentenceType').verbose_name.encode('utf-8').decode()
+                glossFieldName = ExampleSentence.get_field('sentenceType').verbose_name.encode('utf-8').decode()
             else:
-                glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+                glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
     def __str__(self):
@@ -3208,7 +3287,7 @@ class QueryParameterHandshape(QueryParameter):
     def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
     def display_fieldvalue(self):
@@ -3233,7 +3312,7 @@ class QueryParameterSemanticField(QueryParameter):
     def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
     def __str__(self):
@@ -3257,7 +3336,7 @@ class QueryParameterDerivationHistory(QueryParameter):
     def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
     def __str__(self):
@@ -3297,8 +3376,8 @@ class QueryParameterBoolean(QueryParameter):
     fieldValue = models.BooleanField(_("Field Value"), null=True, blank=True)
 
     def display_verbose_fieldname(self):
-        if self.fieldName in Gloss._meta.fields:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        if self.fieldName in Gloss.get_field_names():
+            glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         elif self.fieldName == 'defspublished':
             glossFieldName = _("All Definitions Published")
         elif self.fieldName == 'hasRelationToForeignSign':

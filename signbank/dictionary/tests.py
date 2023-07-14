@@ -20,6 +20,7 @@ from guardian.shortcuts import assign_perm
 from signbank.video.models import GlossVideo
 from signbank.dictionary.views import gloss_api_get_sign_name_and_media_info
 
+
 class BasicCRUDTests(TestCase):
 
     def setUp(self):
@@ -27,6 +28,7 @@ class BasicCRUDTests(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        self.user.user_permissions.add(Permission.objects.get(name='Can change morpheme'))
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
@@ -37,24 +39,23 @@ class BasicCRUDTests(TestCase):
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
-
+        print(self.handedness_fieldchoice_1, self.handedness_fieldchoice_2)
         self.locprim_fieldchoice_1 = FieldChoice.objects.filter(field='Location', machine_value__gt=1).first()
         self.locprim_fieldchoice_2 = FieldChoice.objects.filter(field='Location', machine_value__gt=1).last()
 
     def test_CRUD(self):
 
-        #Is the gloss there before?
+        # Is the morpheme there before?
         found = 0
-        total_nr_of_glosses = 0
-        for gloss in Gloss.objects.filter(handedness=self.handedness_fieldchoice_1):
-            if gloss.idgloss == 'thisisatemporarytestlemmaidglosstranslation':
+        total_nr_of_morphemes = 0
+        for morpheme in Morpheme.objects.filter(handedness=self.handedness_fieldchoice_1):
+            if morpheme.idgloss == 'thisisatemporarytestlemmaidglosstranslation':
                 found += 1
-            total_nr_of_glosses += 1
+            total_nr_of_morphemes += 1
 
-        self.assertEqual(found,0)
-        #self.assertGreater(total_nr_of_glosses,0) #Verify that the database is not empty
+        self.assertEqual(found, 0)
 
-        # Create the glosses
+        # Create the morphemes
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
@@ -68,76 +69,82 @@ class BasicCRUDTests(TestCase):
                                                                   lemma=new_lemma, language=language)
             new_lemmaidglosstranslation.save()
 
-        #Create the gloss
-        new_gloss = Gloss()
-        new_gloss.handedness = self.handedness_fieldchoice_1
-        new_gloss.lemma = new_lemma
-        new_gloss.save()
+        # Create the morpheme
+        new_morpheme = Morpheme()
+        new_morpheme.handedness = self.handedness_fieldchoice_1
+        new_morpheme.lemma = new_lemma
+        new_morpheme.save()
 
-        #Is the gloss there now?
+        # Is the morpheme there now?
         found = 0
-        for gloss in Gloss.objects.filter(handedness=self.handedness_fieldchoice_1):
-            if gloss.idgloss == 'thisisatemporarytestlemmaidglosstranslation':
+        for morpheme in Morpheme.objects.filter(handedness=self.handedness_fieldchoice_1):
+            if morpheme.idgloss == 'thisisatemporarytestlemmaidglosstranslation':
                 found += 1
 
         self.assertEqual(found, 1)
 
-        #The handedness before was 4
-        self.assertEqual(new_gloss.handedness,self.handedness_fieldchoice_1)
+        # The handedness before was 4
+        self.assertEqual(new_morpheme.handedness, self.handedness_fieldchoice_1)
 
-        #If you run an update post request, you can change the gloss
+        # If you run an update post request, you can change the morpheme
         new_value_handedness = '_'+str(self.handedness_fieldchoice_2.machine_value)
+        print(new_value_handedness)
         client = Client()
         client.login(username='test-user', password='test-user')
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'handedness','value':new_value_handedness})
+        client.post('/dictionary/update/morpheme/'+str(new_morpheme.pk),
+                    {'id': 'handedness', 'value': new_value_handedness})
 
-        changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
-        self.assertEqual(changed_gloss.handedness, self.handedness_fieldchoice_2)
+        changed_morpheme = Morpheme.objects.get(pk = new_morpheme.pk)
+        print(changed_morpheme)
+        self.assertEqual(changed_morpheme.handedness, self.handedness_fieldchoice_2)
 
         # set up keyword search parameter for default language
         default_language = Language.objects.get(id=get_default_language_id())
         keyword_search_field_prefix = "keyword_"
         keyword_field_name = keyword_search_field_prefix + default_language.language_code_2char
 
-        #We can even add and remove stuff to the keyword table
+        # We can even add and remove stuff to the keyword table
 
         # to start with, both tables are empty in the test database
         self.assertEqual(Keyword.objects.all().count(), 0)
         self.assertEqual(Translation.objects.all().count(), 0)
 
         # add five keywords to the translations of this gloss
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c, d, e'})
+        client.post('/dictionary/update/morpheme/'+str(new_morpheme.pk),
+                    {'id': keyword_field_name, 'value': 'a, b, c, d, e'})
 
         all_keywords = Keyword.objects.all()
         for k in all_keywords:
             print('test_CRUD update1 keyword: ', k)
         all_translations = Translation.objects.all()
         for t in all_translations:
-            print('test_CRUD update1 gloss translation: ', t)
+            print('test_CRUD update1 morpheme translation: ', t)
 
         self.assertEqual(Keyword.objects.all().count(), 5)
         self.assertEqual(Translation.objects.all().count(), 5)
 
-        # update the gloss to only have three of the translations
-        # the keyword table still has the same data, but only three translations are associated with the gloss
+        # update the morpheme to only have three of the translations
+        # the keyword table still has the same data, but only three translations are associated with the morpheme
 
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c'})
+        client.post('/dictionary/update/morpheme/'+str(new_morpheme.pk),
+                    {'id': keyword_field_name, 'value': 'a, b, c'})
 
         all_keywords = Keyword.objects.all()
         for k in all_keywords:
             print('test_CRUD update2 keyword: ', k)
         all_translations = Translation.objects.all()
         for t in all_translations:
-            print('test_CRUD update2 gloss translation: ', t)
+            print('test_CRUD update2 morpheme translation: ', t)
 
         self.assertEqual(Keyword.objects.all().count(), 5)
         self.assertEqual(Translation.objects.all().count(), 3)
 
-        #Throwing stuff away with the update functionality
-        client.post(settings.PREFIX_URL + '/dictionary/update/gloss/'+str(new_gloss.pk),{'id':'deletegloss','value':'confirmed'})
+        # Throwing stuff away with the update functionality
+        client.post(settings.PREFIX_URL + '/dictionary/update/morpheme/'+str(new_morpheme.pk),
+                    {'id': 'deletegloss', 'value': 'confirmed'})
         found = 0
-        for gloss in Gloss.objects.filter(handedness=self.handedness_fieldchoice_1):
-            if gloss.idgloss == 'thisisatemporarytestgloss':
+        for morpheme in Morpheme.objects.filter(handedness=self.handedness_fieldchoice_1):
+            if morpheme.idgloss == 'thisisatemporarytestgloss':
                 found += 1
 
         self.assertEqual(found, 0)
@@ -305,7 +312,7 @@ class BasicCRUDTests(TestCase):
         new_lemmaidglosstranslation.save()
 
         # #Create the gloss
-        new_gloss = Gloss()
+        new_gloss = Morpheme()
         # to test the package functionality of phonology fields, add some to settings.API_FIELDS
         # for this test, the local settings file has added these two fields
         # they are visible in the result if they appear in API_FIELDS
@@ -327,9 +334,9 @@ class BasicCRUDTests(TestCase):
 
         # keywords: this is merely part of the setup for the test
         # add five keywords to the translations of this gloss
-        client.post('/dictionary/update/gloss/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c, d, e'})
+        client.post('/dictionary/update/morpheme/'+str(new_gloss.pk),{'id': keyword_field_name,'value':'a, b, c, d, e'})
 
-        changed_gloss = Gloss.objects.get(pk = new_gloss.pk)
+        changed_gloss = Morpheme.objects.get(pk = new_gloss.pk)
 
         # this calculates the data retrieved by get_gloss_data for packages
         # it shows the format/display of the returned gloss fields
@@ -2561,7 +2568,7 @@ class testFrequencyAnalysis(TestCase):
 
             fields_data = []
             for field_name in frequency_fields:
-                gloss_field = Gloss._meta.get_field(field_name)
+                gloss_field = Gloss.get_field(field_name)
                 if hasattr(gloss_field, 'field_choice_category'):
                     fields_data.append((field_name, gloss_field.verbose_name.title(), gloss_field.field_choice_category))
                 elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
@@ -2689,20 +2696,17 @@ class testSettings(TestCase):
         # this test is intended to help find potential errors in templates that use choice lists for fields
         if 'phonology' in settings.FIELDS.keys():
             phonology_fields = settings.FIELDS['phonology']
-            gloss_fields_names = { f.name: f for f in Gloss._meta.fields }
+            gloss_fields_names = Gloss.get_field_names()
             print('Testing phonology fields for declaration in Gloss model with field_choice_category in FieldChoice table.')
             for f in phonology_fields:
                 # make sure all phonology fields in settings are defined in Gloss
-                try:
-                    gloss_field = Gloss._meta.get_field(f)
-                    field_exists = True
-                except (KeyError, ObjectDoesNotExist):
-                    field_exists = False
+                field_exists = f in gloss_fields_names
                 self.assertTrue(field_exists)
                 if not field_exists:
                     continue
                 # make sure the field_choice_category attribute (only) appears on fields we expect to have choice lists
-                if isinstance(gloss_field, models.ForeignKey) and gloss_fields_names[f].related_model == Handshape:
+                gloss_field = Gloss.get_field(f)
+                if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                     self.assertEqual(fieldname_to_kind_table[f], 'list')
                 elif not isinstance(gloss_field, FieldChoiceForeignKey):
                     # field is instance of: BooleanField, IntegerField, TextField, DateField, DateTimeField, ForeignKey, ManyToManyField
@@ -2726,7 +2730,7 @@ class testSettings(TestCase):
             for f in semantics_fields:
                 # make sure all semantics fields are defined in Gloss
                 try:
-                    gloss_field = Gloss._meta.get_field(f)
+                    gloss_field = Gloss.get_field(f)
                     field_exists = True
                 except (KeyError, ObjectDoesNotExist):
                     field_exists = False
@@ -2758,7 +2762,7 @@ class testSettings(TestCase):
             for f in handshape_fields:
                 # make sure all handshape fields are defined in Gloss
                 try:
-                    handshape_field = Handshape._meta.get_field(f)
+                    handshape_field = Handshape.get_field(f)
                     field_exists = True
                 except (KeyError, ObjectDoesNotExist):
                     field_exists = False
@@ -2838,7 +2842,7 @@ class RevisionHistoryTests(TestCase):
 
         mapped_categories = []
         for f in gloss_fields:
-            gloss_field = Gloss._meta.get_field(f)
+            gloss_field = Gloss.get_field(f)
 
             if f == 'semField':
                 mapped_category = 'SemField'
@@ -2890,7 +2894,7 @@ class RevisionHistoryTests(TestCase):
         # rather than the gloss model field name
         gloss_update_phonology_keys = []
         for f in gloss_fields:
-            gloss_field = Gloss._meta.get_field(f)
+            gloss_field = Gloss.get_field(f)
             if f == 'semField':
                 new_machine_value_string = '_500'
                 gloss_update_phonology_data.append({'id' : 'semanticfield', 'value' : new_machine_value_string})

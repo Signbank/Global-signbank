@@ -127,8 +127,10 @@ def add_gloss(request):
         gloss.excludeFromEcv = False
         gloss.lemma = lemmaidgloss
 
+        gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
+
         # Set a default for all FieldChoice fields
-        for field in [f for f in Gloss._meta.fields if isinstance(f, FieldChoiceForeignKey)]:
+        for field in [f for f in gloss_fields if isinstance(f, FieldChoiceForeignKey)]:
             field_value = getattr(gloss, field.name)
             if field_value is None:
                 field_choice_category = field.field_choice_category
@@ -862,7 +864,7 @@ def update_gloss(request, glossid):
     else:
 
 
-        if field not in [f.name for f in Gloss._meta.get_fields()]:
+        if field not in Gloss.get_field_names():
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
         whitespace = tuple(' \n\r\t')
@@ -881,10 +883,12 @@ def update_gloss(request, glossid):
         # - videos
         # - tags
 
+        gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
+
         #Translate the value if a boolean
         # Language values are needed here!
         newvalue = value
-        if isinstance(gloss._meta.get_field(field),BooleanField):
+        if isinstance(Gloss.get_field(field),BooleanField):
             # value is the html 'value' received during editing
             # value gets converted to a Boolean by the following statement
             if field in ['weakdrop', 'weakprop']:
@@ -911,31 +915,31 @@ def update_gloss(request, glossid):
                     newvalue = _('No')
         # special value of 'notset' or -1 means remove the value
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
-        fieldchoiceforeignkey_fields = [f.name for f in Gloss._meta.fields
+        fieldchoiceforeignkey_fields = [f.name for f in gloss_fields
                                         if f.name in fieldnames
-                                        and isinstance(Gloss._meta.get_field(f.name), FieldChoiceForeignKey)]
-        fields_empty_null = [f.name for f in Gloss._meta.fields
+                                        and isinstance(f, FieldChoiceForeignKey)]
+        fields_empty_null = [f.name for f in gloss_fields
                                 if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields ]
 
-        char_fields_not_null = [f.name for f in Gloss._meta.fields
+        char_fields_not_null = [f.name for f in gloss_fields
                                 if f.name in fieldnames and f.__class__.__name__ == 'CharField'
                                     and f.name not in fieldchoiceforeignkey_fields and not f.null]
 
-        char_fields = [f.name for f in Gloss._meta.fields
+        char_fields = [f.name for f in gloss_fields
                                 if f.name in fieldnames and f.__class__.__name__ == 'CharField'
                                     and f.name not in fieldchoiceforeignkey_fields]
 
-        text_fields = [f.name for f in Gloss._meta.fields
+        text_fields = [f.name for f in gloss_fields
                                 if f.name in fieldnames and f.__class__.__name__ == 'TextField' ]
 
-        text_fields_not_null = [f.name for f in Gloss._meta.fields
+        text_fields_not_null = [f.name for f in gloss_fields
                                 if f.name in fieldnames and f.__class__.__name__ == 'TextField' and not f.null]
 
         # The following code relies on the order of if else testing
         # The updates ignore Placeholder empty fields of '-' and '------'
         # The Placeholders are needed in the template Edit view so the user can "see" something to edit
         if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-            gloss_field = Gloss._meta.get_field(field)
+            gloss_field = Gloss.get_field(field)
             try:
                 handshape = Handshape.objects.get(machine_value=value)
             except (ObjectDoesNotExist, MultipleObjectsReturned):
@@ -948,7 +952,7 @@ def update_gloss(request, glossid):
         elif field in fieldchoiceforeignkey_fields:
             if value == '':
                 value = 0
-            gloss_field = Gloss._meta.get_field(field)
+            gloss_field = Gloss.get_field(field)
             try:
                 fieldchoice = FieldChoice.objects.get(field=gloss_field.field_choice_category, machine_value=value)
             except (ObjectDoesNotExist, MultipleObjectsReturned):
@@ -1986,7 +1990,7 @@ def add_blend_definition(request, glossid):
 
 def update_handshape(request, handshapeid):
 
-    handshape_fields = [f.name for f in Handshape._meta.fields]
+    handshape_fields = Handshape.get_field_names()
 
     if not request.method == "POST":
         print(request.method.GET)
@@ -2012,7 +2016,7 @@ def update_handshape(request, handshapeid):
     elif value[0] == '_':
         value = value[1:]
 
-    handshape_field = Handshape._meta.get_field(field)
+    handshape_field = Handshape.get_field(field)
     if hasattr(handshape_field, 'field_choice_category'):
         # this is needed because the new value is a machine value, not an id
         field_choice_category = handshape_field.field_choice_category
@@ -2579,7 +2583,7 @@ def update_morpheme(request, morphemeid):
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     else:
-        if field not in [f.name for f in Morpheme._meta.get_fields()]:
+        if field not in Morpheme.get_field_names():
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
         original_value = getattr(morpheme, field)
@@ -2593,8 +2597,10 @@ def update_morpheme(request, morphemeid):
         # - videos
         # - tags
 
+        morpheme_fields = [Morpheme.get_field(fname) for fname in Morpheme.get_field_names()]
+
         # Translate the value if a boolean
-        if isinstance(morpheme._meta.get_field(field), BooleanField):
+        if isinstance(Morpheme.get_field(field), BooleanField):
             value = (value.lower() in [_('Yes').lower(), 'true', True, 1])
             if value:
                 newvalue = _('Yes')
@@ -2608,14 +2614,14 @@ def update_morpheme(request, morphemeid):
             # this is used as part of the feedback to the interface, to alert the user to refresh the display
             category_value = 'phonology'
 
-        fieldchoiceforeignkey_fields = [f.name for f in Morpheme._meta.fields
-                                        if f.name in fieldnames
-                                        and isinstance(Morpheme._meta.get_field(f.name), FieldChoiceForeignKey)]
-        fields_empty_null = [f.name for f in Morpheme._meta.fields
-                             if f.name in fieldnames and f.null and f.name not in fieldchoiceforeignkey_fields]
+        fieldchoiceforeignkey_fields = [field.name for field in morpheme_fields
+                                        if field.name in fieldnames
+                                        and isinstance(field, FieldChoiceForeignKey)]
+        fields_empty_null = [field.name for field in morpheme_fields
+                             if field.name in fieldnames and field.null and field.name not in fieldchoiceforeignkey_fields]
 
-        char_fields_not_null = [f.name for f in Morpheme._meta.fields
-                                if f.name in fieldnames and f.name not in fieldchoiceforeignkey_fields and not f.null]
+        char_fields_not_null = [field.name for field in morpheme_fields
+                                if field.name in fieldnames and field.name not in fieldchoiceforeignkey_fields and not field.null]
 
         # The following code relies on the order of if else testing
         # The updates ignore Placeholder empty fields of '-' and '------'
@@ -2624,7 +2630,7 @@ def update_morpheme(request, morphemeid):
             # Handshapes not included, ignore
             newvalue = ''
         elif field in fieldchoiceforeignkey_fields:
-            gloss_field = Morpheme._meta.get_field(field)
+            gloss_field = Morpheme.get_field(field)
             if value == ' ':
                 value = '0'
             try:
@@ -3010,7 +3016,7 @@ def update_dataset(request, datasetid):
             return HttpResponse(str(original_value) + str('\t') + str(value), {'content-type': 'text/plain'})
         else:
 
-            if not field in [f.name for f in Dataset._meta.get_fields()]:
+            if not field in Dataset.get_field_names():
                 return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
 
             # unknown if we need this code yet for the above fields

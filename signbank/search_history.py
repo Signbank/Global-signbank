@@ -249,11 +249,11 @@ def save_query_parameters(request, query_name, query_parameters):
             else:
                 field = key[:-2]
                 if field == 'definitionRole':
-                    field_category = Definition._meta.get_field('role').field_choice_category
+                    field_category = Definition.get_field('role').field_choice_category
                 elif field == 'hasComponentOfType':
-                    field_category = MorphologyDefinition._meta.get_field('role').field_choice_category
+                    field_category = MorphologyDefinition.get_field('role').field_choice_category
                 else:
-                    field_category = Gloss._meta.get_field(field).field_choice_category
+                    field_category = Gloss.get_field(field).field_choice_category
                 choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
                 for query_value in choices_for_category:
                     qp = QueryParameterFieldChoice(fieldName=key[:-2], fieldValue=query_value, search_history=search_history)

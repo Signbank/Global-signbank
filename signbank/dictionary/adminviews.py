@@ -532,7 +532,7 @@ class GlossListView(ListView):
 
         column_headers = []
         for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
-            field_label = Gloss._meta.get_field(fieldname).verbose_name
+            field_label = Gloss.get_field(fieldname).verbose_name
             column_headers.append((fieldname, field_label))
         context['column_headers'] = column_headers
         return context
@@ -637,7 +637,7 @@ class GlossListView(ListView):
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
 
-        fields = [Gloss._meta.get_field(fieldname) for fieldname in fieldnames]
+        fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -1082,7 +1082,7 @@ class GlossListView(ListView):
         for fieldname in fieldnames:
 
             if fieldname in get and get[fieldname] != '':
-                field_obj = Gloss._meta.get_field(fieldname)
+                field_obj = Gloss.get_field(fieldname)
 
                 if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
                     key = fieldname + '__icontains'
@@ -2104,7 +2104,7 @@ class GlossRelationsDetailView(DetailView):
 
             for field in FIELDS[topic]:
                 choice_list = []
-                gloss_field = Gloss._meta.get_field(field)
+                gloss_field = Gloss.get_field(field)
                 #Get and save the choice list for this field
                 if hasattr(gloss_field, 'field_choice_category'):
                     fieldchoice_category = gloss_field.field_choice_category
@@ -2618,7 +2618,7 @@ class MorphemeListView(ListView):
                 key = fieldname + '__exact'
                 val = get[fieldname]
 
-                if isinstance(Gloss._meta.get_field(fieldname), BooleanField):
+                if isinstance(Gloss.get_field(fieldname), BooleanField):
                     val = {'0': '', '1': None, '2': True, '3': False}[val]
 
                 if val != '':
@@ -2727,13 +2727,12 @@ class MorphemeListView(ListView):
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="dictionary-morph-export.csv"'
 
-        #        fields = [f.name for f in Gloss._meta.fields]
         # We want to manually set which fields to export here
 
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
 
         # Different from Gloss: we use Morpheme here
-        fields = [Morpheme._meta.get_field(fieldname) for fieldname in fieldnames]
+        fields = [Morpheme.get_field(fname) for fname in fieldnames if fname in Morpheme.get_field_names()]
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -2895,9 +2894,9 @@ class HandshapeDetailView(DetailView):
         UNSELECTED_FINGERS_FIELDS = ['hsFingUnsel', 'ufT', 'ufI', 'ufM', 'ufR', 'ufP']
 
         handshape_fields_lookup = {}
-        for f in Handshape._meta.fields:
-            if f.name in settings.FIELDS['handshape']:
-                handshape_fields_lookup[f.name] = f
+        for fname in Handshape.get_field_names():
+            if fname in settings.FIELDS['handshape']:
+                handshape_fields_lookup[fname] = Handshape.get_field(fname)
 
         choice_lists = dict()
         for field in handshape_fields_lookup.keys():
@@ -3278,7 +3277,7 @@ class MinimalPairsListView(ListView):
 
         field_names = []
         for field in FIELDS['phonology']:
-            field_object = Gloss._meta.get_field(field)
+            field_object = Gloss.get_field(field)
             # don't consider text fields that are not choice lists
             if isinstance(field_object, models.CharField) or isinstance(field_object, models.TextField):
                 continue
@@ -3286,7 +3285,7 @@ class MinimalPairsListView(ListView):
 
         field_labels = dict()
         for field in field_names:
-            field_label = Gloss._meta.get_field(field).verbose_name
+            field_label = Gloss.get_field(field).verbose_name
             field_labels[field] = field_label.encode('utf-8').decode()
 
         context['field_labels'] = field_labels
@@ -3460,9 +3459,9 @@ class MinimalPairsListView(ListView):
 
         fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
         fields_with_choices = fields_to_fieldcategory_dict()
-        multiple_select_gloss_fields = [field.name for field in Gloss._meta.fields
-                                                    if field.name in fieldnames
-                                                    and field.name in fields_with_choices.keys()]
+        multiple_select_gloss_fields = [fname for fname in Gloss.get_field_names()
+                                                    if fname in fieldnames
+                                                    and fname in fields_with_choices.keys()]
 
         for fieldnamemulti in multiple_select_gloss_fields:
             fieldnamemultiVarname = fieldnamemulti + '[]'
@@ -3481,7 +3480,7 @@ class MinimalPairsListView(ListView):
         for fieldname in fieldnames:
 
             if fieldname in get and get[fieldname] != '':
-                field_obj = Gloss._meta.get_field(fieldname)
+                field_obj = Gloss.get_field(fieldname)
 
                 if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
                     key = fieldname + '__icontains'
@@ -3799,10 +3798,10 @@ class FrequencyListView(ListView):
         for field in FIELDS['phonology']:
             if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                 continue
-            if field not in [f.name for f in Gloss._meta.fields]:
+            if field not in Gloss.get_field_names():
                 continue
             if fieldname_to_kind(field) == 'list':
-                field_label = Gloss._meta.get_field(field).verbose_name
+                field_label = Gloss.get_field(field).verbose_name
                 field_labels[field] = field_label.encode('utf-8').decode()
 
         # note on context variables below: there are two variables for the same data
@@ -3822,7 +3821,7 @@ class FrequencyListView(ListView):
         # this is used for display in the template, by lookup
         field_labels_choices = dict()
         for field, label in field_labels.items():
-            gloss_field = Gloss._meta.get_field(field)
+            gloss_field = Gloss.get_field(field)
 
             # Get and save the choice list for this field
             if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
@@ -3845,7 +3844,7 @@ class FrequencyListView(ListView):
         field_labels_semantics = dict()
         for field in FIELDS['semantics']:
             if fieldname_to_kind(field) == 'list':
-                field_label = Gloss._meta.get_field(field).verbose_name
+                field_label = Gloss.get_field(field).verbose_name
                 field_labels_semantics[field] = field_label.encode('utf-8').decode()
 
         field_labels_semantics_list = [ (k, v) for (k, v) in sorted(field_labels_semantics.items(), key=lambda x: x[1])]
@@ -3854,7 +3853,7 @@ class FrequencyListView(ListView):
 
         field_labels_semantics_choices = dict()
         for field, label in field_labels_semantics.items():
-            gloss_field = Gloss._meta.get_field(field)
+            gloss_field = Gloss.get_field(field)
             # Get and save the choice list for this field
             if hasattr(gloss_field, 'field_choice_category'):
                 field_category = gloss_field.field_choice_category
@@ -4403,8 +4402,8 @@ class HandshapeListView(ListView):
     def get_queryset(self):
 
         handshape_fields = {}
-        for f in Handshape._meta.fields:
-            handshape_fields[f.name] = f
+        for fname in Handshape.get_field_names():
+            handshape_fields[fname] = Handshape.get_field(fname)
 
         # get query terms from self.request
         get = self.request.GET
@@ -4489,7 +4488,7 @@ class HandshapeListView(ListView):
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
                                                         output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(**{query_hsNumSel:val}))
 
-                if isinstance(Handshape._meta.get_field(fieldname), BooleanField):
+                if isinstance(Handshape.get_field(fieldname), BooleanField):
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': '' }[val]
 
                 if fieldname == 'name' and val != '':
@@ -4498,7 +4497,7 @@ class HandshapeListView(ListView):
 
                 if val not in ['', '0'] and fieldname not in ['hsNumSel', 'name']:
 
-                    if isinstance(Handshape._meta.get_field(fieldname), FieldChoiceForeignKey):
+                    if isinstance(Handshape.get_field(fieldname), FieldChoiceForeignKey):
                         key = fieldname + '__machine_value'
                         kwargs = {key: int(val)}
                         qs = qs.filter(**kwargs)
@@ -5464,11 +5463,13 @@ class DatasetFieldChoiceView(ListView):
         else:
             context['SHOW_FIELD_CHOICE_COLORS'] = False
 
+        gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
+
         all_choice_lists = {}
         for topic in ['main', 'phonology', 'semantics', 'frequency']:
 
-            fields_with_choices = [(field, field.field_choice_category) for field in Gloss._meta.fields if
-                                   field.name in FIELDS[topic] and hasattr(field, 'field_choice_category')
+            fields_with_choices = [(field, field.field_choice_category) for field in gloss_fields
+                                   if field.name in FIELDS[topic] and hasattr(field, 'field_choice_category')
                                    and field.name not in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh'] ]
 
             for (field, fieldchoice_category) in fields_with_choices:
@@ -5969,9 +5970,9 @@ def order_handshape_queryset_by_sort_order(get, qs):
         sort_order = sort_order[1:]
         reverse = True
 
-    if hasattr(Handshape._meta.get_field(sort_order), 'field_choice_category'):
+    if hasattr(Handshape.get_field(sort_order), 'field_choice_category'):
         # The Handshape field is a FK to a FieldChoice
-        field_choice_category = Handshape._meta.get_field(sort_order).field_choice_category
+        field_choice_category = Handshape.get_field(sort_order).field_choice_category
         order_dict = dict([(v, i) for i, v in enumerate(
             list(FieldChoice.objects.filter(field=field_choice_category, machine_value__lt=2)
                  .values_list('machine_value', flat=True))
@@ -6161,7 +6162,7 @@ class MorphemeDetailView(DetailView):
                 continue
 
             # Take the human value in the language we are using
-            gloss_field = Morpheme._meta.get_field(field)
+            gloss_field = Morpheme.get_field(field)
 
             field_value = getattr(gl, gloss_field.name)
             if isinstance(field_value, FieldChoice):
@@ -6703,11 +6704,11 @@ def glosslist_ajax_complete(request, gloss_id):
             relations_to_foreign_signs = RelationToForeignSign.objects.filter(gloss=this_gloss)
             relations = ", ".join([x.other_lang + ':' + x.other_lang_gloss for x in relations_to_foreign_signs])
             column_values.append((fieldname, relations))
-        elif fieldname not in [ f.name for f in Gloss._meta.fields ]:
+        elif fieldname not in Gloss.get_field_names():
             continue
         else:
             machine_value = getattr(this_gloss, fieldname)
-            gloss_field = Gloss._meta.get_field(fieldname)
+            gloss_field = Gloss.get_field(fieldname)
             if machine_value and isinstance(machine_value, Handshape):
                 human_value = machine_value.name
             elif machine_value and isinstance(machine_value, FieldChoice):
@@ -6770,10 +6771,10 @@ def glosslistheader_ajax(request):
                 column_headers.append((fieldname, relation_type))
             else:
                 column_headers.append((fieldname, _("Type of Relation")))
-        elif fieldname not in [ f.name for f in Gloss._meta.fields ]:
+        elif fieldname not in Gloss.get_field_names():
             continue
         else:
-            field_label = Gloss._meta.get_field(fieldname).verbose_name
+            field_label = Gloss.get_field(fieldname).verbose_name
             column_headers.append((fieldname, field_label))
 
     sortOrder = ''
@@ -6824,7 +6825,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
 
         machine_value = getattr(this_gloss,fieldname)
 
-        gloss_field = Gloss._meta.get_field(fieldname)
+        gloss_field = Gloss.get_field(fieldname)
         if machine_value and isinstance(machine_value, Handshape):
             human_value = machine_value.name
         elif machine_value and isinstance(machine_value, FieldChoice):

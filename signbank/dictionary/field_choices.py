@@ -19,15 +19,17 @@ def fields_to_categories():
                 if field not in choice_categories:
                     choice_categories.append(field)
                 continue
-            # the following check will be used when querying is added, at the moment these don't appear in the phonology list
+
             if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                 continue
-            if field in [f.name for f in Gloss._meta.fields]:
-                field_field = Gloss._meta.get_field(field)
-            elif field in [f.name for f in Handshape._meta.fields]:
-                field_field = Handshape._meta.get_field(field)
-            elif field in [f.name for f in Morpheme._meta.fields]:
-                field_field = Morpheme._meta.get_field(field)
+            if field in Gloss.get_field_names():
+                field_field = Gloss.get_field(field)
+            elif field in Handshape.get_field_names():
+                field_field = Handshape.get_field(field)
+            elif field in Morpheme.get_field_names():
+                field_field = Morpheme.get_field(field)
+            elif field in ExampleSentence.get_field_names():
+                field_field = ExampleSentence.get_field(field)
             else:
                 print('field_to_categories: field not found in Gloss, Handshape, Morpheme: ', field)
                 continue
@@ -56,21 +58,23 @@ def fields_to_fieldcategory_dict(fieldnames=[]):
         elif field in ['derivHist']:
             choice_categories[field] = 'derivHist'
             continue
-        # the following check will be used when querying is added, at the moment these don't appear in the phonology list
+
         if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
             continue
-        if field in [f.name for f in Gloss._meta.fields]:
-            field_field = Gloss._meta.get_field(field)
-        elif field in [f.name for f in Handshape._meta.fields]:
-            field_field = Handshape._meta.get_field(field)
-        elif field in [f.name for f in Morpheme._meta.fields]:
-            field_field = Morpheme._meta.get_field(field)
-        elif field in [f.name for f in Definition._meta.fields]:
-            field_field = Definition._meta.get_field(field)
-        elif field in [f.name for f in OtherMedia._meta.fields]:
-            field_field = OtherMedia._meta.get_field(field)
-        elif field in [f.name for f in MorphologyDefinition._meta.fields]:
-            field_field = MorphologyDefinition._meta.get_field(field)
+        if field in Gloss.get_field_names():
+            field_field = Gloss.get_field(field)
+        elif field in Handshape.get_field_names():
+            field_field = Handshape.get_field(field)
+        elif field in Morpheme.get_field_names():
+            field_field = Morpheme.get_field(field)
+        elif field in Definition.get_field_names():
+            field_field = Definition.get_field(field)
+        elif field in OtherMedia.get_field_names():
+            field_field = OtherMedia.get_field(field)
+        elif field in MorphologyDefinition.get_field_names():
+            field_field = MorphologyDefinition.get_field(field)
+        elif field in ExampleSentence.get_field_names():
+            field_field = ExampleSentence.get_field(field)
         else:
             print('field_to_categories: field not found in Gloss, Handshape, Morpheme: ', field)
             continue
@@ -89,23 +93,24 @@ def get_static_choice_lists(fieldname):
     # these are eventually used in the select2 pull-downs
     static_choice_lists = dict()
     static_choice_list_colors = dict()
+    choice_list = []
     if fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
         choice_list = Handshape.objects.all()
     elif fieldname in ['semField']:
         choice_list = SemanticField.objects.all()
     elif fieldname in ['derivHist']:
         choice_list = DerivationHistory.objects.all()
-    elif fieldname in [f.name for f in Gloss._meta.fields]:
-        gloss_field = Gloss._meta.get_field(fieldname)
+    elif fieldname in Gloss.get_field_names():
+        gloss_field = Gloss.get_field(fieldname)
         if hasattr(gloss_field, 'field_choice_category'):
             choice_list = FieldChoice.objects.filter(field__iexact=gloss_field.field_choice_category)
         else:
             # there are no choices for this field
             # it does not have a declared category or recognised choices model
-            return (static_choice_lists, static_choice_list_colors)
+            return static_choice_lists, static_choice_list_colors
     if len(choice_list) == 0:
         # there are no choices in the database for this field
-        return (static_choice_lists, static_choice_list_colors)
+        return static_choice_lists, static_choice_list_colors
 
     # there are choices for the fieldname parameter
     # these functions add the '_' prefix to the machine value key
@@ -119,7 +124,8 @@ def get_static_choice_lists(fieldname):
         this_value = value
         static_choice_list_colors[key] = this_value
 
-    return (static_choice_lists, static_choice_list_colors)
+    return static_choice_lists, static_choice_list_colors
+
 
 def get_frequencies_for_category(category, fields, selected_datasets):
 
