@@ -2165,19 +2165,32 @@ class Gloss(models.Model):
 
     def options_to_json(self, options):
         """Convert an options list to a json dict"""
-
         result = []
         for k, v in options:
+            result.append('"%s":"%s"' % (k, v))
+        return "{" + ",".join(result) + "}"
+
+    def ordered_dict_options_to_json(self, options):
+        """Convert an options list to a json dict"""
+        result = []
+        for k, v in options.items():
             result.append('"%s":"%s"' % (k, v))
         return "{" + ",".join(result) + "}"
 
     def definition_role_choices_json(self):
         """Return JSON for the definition role choice list"""
         definition_role_choices = choicelist_queryset_to_translated_dict(
-                                 FieldChoice.objects.filter(field='NoteType'),
-                                 ordered=False, id_prefix=''
-                             )
-        return self.options_to_json(definition_role_choices)
+                                 FieldChoice.objects.filter(field='NoteType').order_by('machine_value'))
+        return self.ordered_dict_options_to_json(definition_role_choices)
+
+    def definition_role_choices_reverse_json(self):
+        """Return JSON for the etymology choice list"""
+
+        definition_role_choices = FieldChoice.objects.filter(field='NoteType').order_by('machine_value')
+        reverse_choices = []
+        for note_type_field_choice in definition_role_choices:
+            reverse_choices.append((note_type_field_choice.name, '_'+str(note_type_field_choice.machine_value)))
+        return self.options_to_json(reverse_choices)
 
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""

@@ -386,7 +386,11 @@
 						if ('selected' == key) {
 							continue;
 						}
-						var key_color = (settings.params === undefined) ? 'fffff': settings.params.colors[key];
+						var key_color = 'fffff';
+						if (settings.params.hasOwnProperty("colors") &&
+						        settings.params.colors.hasOwnProperty(key)) {
+						    key_color = settings.params.colors[key];
+                        }
 						var option = $('<li />');
 						option.attr('value', key);
 						option.attr('name',json[key]);

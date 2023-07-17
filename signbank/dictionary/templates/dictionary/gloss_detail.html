@@ -45,11 +45,16 @@
 
     var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
     var definition_role_choices = {{gloss.definition_role_choices_json|safe}};
+    var definition_role_choices_colors = {};
+    for (var key in definition_role_choices) {
+        definition_role_choices_colors[key] = 'ffffff';
+    };
+    var definition_role_choices_reverse_json = {{gloss.definition_role_choices_reverse_json|safe}};
     var relation_role_choices = {{gloss.relation_role_choices_json|safe}};
-    var relation_delete_choices = '{ "delete" : "Delete" }';
-    var relation_delete_choices_colors = '{ "delete" : "ffffff" }';
+    var relation_delete_choices = { "delete" : "Delete" };
+    var relation_delete_choices_colors = { "delete" : "ffffff" };
     var handedness_weak_choices = {{gloss.handedness_weak_drop_prop_json|safe}};
-    var handedness_weak_choices_colors = '{}';
+    var handedness_weak_choices_colors = {};
     for (var key in handedness_weak_choices) {
         handedness_weak_choices_colors[key] = 'ffffff';
     };
@@ -2036,7 +2041,8 @@ option:not(:checked) {
                 <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'
                     value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
-                <td class='edit edit_role' id='definitionrole_{{def.id}}'>{{role_id.1}}</td>
+                <td id='definitionrole_{{def.id}}'
+                    data-field='definitionrole'>{{role_id.1}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
               </tr>
               {% endfor %}
@@ -2138,7 +2144,7 @@ option:not(:checked) {
 				            download="{{ file_name }}" href="{{ PREFIX_URL }}/{{ path }}">Download</a>
                     </td>
                     <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
-                    <td class='edit edit_list' id='other-media-type_{{ pk }}'>{{ type }}</td>
+                    <td id='other-media-type_{{ pk }}'>{{ type }}</td>
                     <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
                 </tr>
                {% endfor %}
