@@ -149,17 +149,6 @@ class Translation(models.Model):
         else:
             return self.gloss.idgloss
 
-    def get_absolute_url(self):
-        """Return a URL for a view of this translation."""
-
-        alltrans = self.translation.translation_set.all()
-        idx = 1
-        for tr in alltrans:
-            if tr == self:
-                return "/dictionary/words/" + str(self.translation) + "-" + str(idx) + ".html"
-            idx += 1
-        return "/dictionary/"
-
     class Meta:
         unique_together = (("gloss", "language", "translation", "orderIndex"),)
         ordering = ['gloss', 'index']
@@ -176,52 +165,12 @@ class Keyword(models.Model):
         return self.text
 
     text = models.CharField(max_length=100, unique=True)
-    
-    def inWeb(self):
-        """Return True if some gloss associated with this
-        keyword is in the web version of the dictionary"""
-
-        return len(self.translation_set.filter(gloss__inWeb__exact=True)) != 0
 
     class Meta:
         ordering = ['text']
 
     class Admin:
         search_fields = ['text']
-
-    def match_request(self, request, n):
-        """Find the translation matching a keyword request given an index 'n'
-        response depends on login status
-        Returns a tuple (translation, count) where count is the total number
-        of matches."""
-
-        if request.user.has_perm('dictionary.search_gloss'):
-            alltrans = self.translation_set.all()
-        else:
-            alltrans = self.translation_set.filter(gloss__inWeb__exact=True)
-
-        # remove crude signs for non-authenticated users if ANON_SAFE_SEARCH is on
-        try:
-            crudetag = tagging.models.Tag.objects.get(name='lexis:crude')
-        except:
-            crudetag = None
-
-        safe = (not request.user.is_authenticated) and settings.ANON_SAFE_SEARCH
-        if safe and crudetag:
-            alltrans = [tr for tr in alltrans if not crudetag in tagging.models.Tag.objects.get_for_object(tr.gloss)]
-
-        # if there are no translations, generate a 404
-        if len(alltrans) == 0:
-            raise Http404
-
-        # take the nth translation if n is in range
-        # otherwise take the last
-        if n - 1 < len(alltrans):
-            trans = alltrans[n - 1]
-        else:
-            trans = alltrans[len(alltrans) - 1]
-
-        return (trans, len(alltrans))
 
 
 class Definition(models.Model):

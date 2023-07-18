@@ -6180,10 +6180,7 @@ class MorphemeDetailView(DetailView):
         notes = context['morpheme'].definition_set.all()
         notes_groupedby_role = {}
         for note in notes:
-            if note.role is not None:
-                translated_note_role = note.role.name
-            else:
-                translated_note_role = ''
+            translated_note_role = note.role.name if note.role else '-'
             role_id = (note.role, translated_note_role)
             if role_id not in notes_groupedby_role:
                 notes_groupedby_role[role_id] = []

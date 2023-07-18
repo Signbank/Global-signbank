@@ -1689,6 +1689,13 @@ def morph_from_identifier(value):
 def update_definition(request, gloss, field, value):
     """Update one of the definition fields"""
 
+    if gloss.is_morpheme():
+        gloss_or_morpheme = gloss.morpheme
+        reverse_url = 'dictionary:admin_morpheme_view'
+    else:
+        gloss_or_morpheme = gloss
+        reverse_url = 'dictionary:admin_gloss_view'
+
     newvalue = ''
     (what, defid) = field.split('_')
     try:
@@ -1696,12 +1703,12 @@ def update_definition(request, gloss, field, value):
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Bad Definition ID '%s'" % defid, {'content-type': 'text/plain'})
 
-    if not defn.gloss == gloss:
+    if not defn.gloss.id == gloss_or_morpheme.id:
         return HttpResponseBadRequest("Definition doesn't match gloss", {'content-type': 'text/plain'})
     
     if what == 'definitiondelete':
         defn.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editdef')
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editdef')
     
     if what == 'definition':
         # update the definition
@@ -1731,6 +1738,13 @@ def update_definition(request, gloss, field, value):
 
 def update_other_media(gloss,field,value):
 
+    if gloss.is_morpheme():
+        gloss_or_morpheme = gloss.morpheme
+        reverse_url = 'dictionary:admin_morpheme_view'
+    else:
+        gloss_or_morpheme = gloss
+        reverse_url = 'dictionary:admin_gloss_view'
+
     action_or_fieldname, other_media_id = field.split('_')
 
     other_media = None
@@ -1739,12 +1753,13 @@ def update_other_media(gloss,field,value):
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Bad OtherMedia ID '%s'" % other_media, {'content-type': 'text/plain'})
 
-    if not other_media.parent_gloss == gloss:
+    if not other_media.parent_gloss.id == gloss_or_morpheme.id:
         return HttpResponseBadRequest("OtherMedia doesn't match gloss", {'content-type': 'text/plain'})
 
     if action_or_fieldname == 'other-media-delete':
         other_media.delete()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.pk})+'?editothermedia')
+        return HttpResponseRedirect(reverse(reverse_url,
+                                            kwargs={'pk': gloss_or_morpheme.pk})+'?editothermedia')
 
     elif action_or_fieldname == 'other-media-type':
         # value is the (str) machine value of the Other Media Type from the choice list in the template
@@ -1858,7 +1873,14 @@ def add_definition(request, glossid):
     """Add a new definition for this gloss"""
 
     thisgloss = get_object_or_404(Gloss, id=glossid)
-    
+
+    if thisgloss.is_morpheme():
+        gloss_or_morpheme = thisgloss.morpheme
+        reverse_url = 'dictionary:admin_morpheme_view'
+    else:
+        gloss_or_morpheme = thisgloss
+        reverse_url = 'dictionary:admin_gloss_view'
+
     if not request.method == "POST":
         return HttpResponseForbidden("Add definition method must be POST")
 
@@ -1873,10 +1895,10 @@ def add_definition(request, glossid):
     role = FieldChoice.objects.get(field='NoteType', machine_value=int(form.cleaned_data['note']))
     text = form.cleaned_data['text']
 
-    defn = Definition(gloss=thisgloss, count=count, role=role, text=text, published=published)
+    defn = Definition(gloss=gloss_or_morpheme, count=count, role=role, text=text, published=published)
     defn.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editdef')
+    return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.id})+'?editdef')
 
 
 def add_morphology_definition(request):
@@ -2092,6 +2114,7 @@ def update_handshape(request, handshapeid):
     return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern),
                         {'content-type': 'text/plain'})
 
+
 def add_othermedia(request):
 
     if not request.method == "POST":
@@ -2103,10 +2126,13 @@ def add_othermedia(request):
         # fallback to the requesting page
         return HttpResponseRedirect('/')
 
-    morpheme__or_gloss = Gloss.objects.get(id=request.POST['gloss'])
-    if morpheme__or_gloss.is_morpheme():
+    morpheme_or_gloss = Gloss.objects.get(id=request.POST['gloss'])
+
+    if morpheme_or_gloss.is_morpheme():
+        gloss_or_morpheme = morpheme_or_gloss.morpheme
         reverse_url = 'dictionary:admin_morpheme_view'
     else:
+        gloss_or_morpheme = morpheme_or_gloss
         reverse_url = 'dictionary:admin_gloss_view'
 
     import os
@@ -2114,10 +2140,10 @@ def add_othermedia(request):
     othermedia_exists = os.path.exists(OTHER_MEDIA_DIRECTORY)
     if not othermedia_exists:
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The othermedia folder is missing."))
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     # Create the folder if needed
-    goal_directory = os.path.join(OTHER_MEDIA_DIRECTORY,request.POST['gloss'])
+    goal_directory = os.path.join(OTHER_MEDIA_DIRECTORY, str(gloss_or_morpheme.pk))
 
     filename = request.FILES['file'].name
     filetype = request.FILES['file'].content_type
@@ -2134,7 +2160,7 @@ def add_othermedia(request):
     if not filetype:
         # unrecognised file type has been uploaded
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has an unknown type."))
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     norm_filename = os.path.normpath(filename)
     split_norm_filename = norm_filename.split('.')
@@ -2142,7 +2168,7 @@ def add_othermedia(request):
     if len(split_norm_filename) == 1:
         # file has no extension
         messages.add_message(request, messages.ERROR, _("Upload other media failed: The file has no extension."))
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss_or_morpheme.pk}))
 
     extension = split_norm_filename[-1]
     filename_base = '.'.join(split_norm_filename[:-1])
@@ -2161,13 +2187,12 @@ def add_othermedia(request):
 
     # to accommodate large files, the Other Media data is first stored in the database
     # if something goes wrong this object is deleted again
-    #Save the database record
-    parent_gloss = Gloss.objects.filter(pk=request.POST['gloss'])[0]
-    other_media_path = request.POST['gloss']+'/'+destination_filename
+    # Save the database record
+    other_media_path = str(gloss_or_morpheme.pk)+'/'+destination_filename
     newothermedia = OtherMedia(path=other_media_path,
                                alternative_gloss=request.POST['alternative_gloss'],
                                type=othermediatype,
-                               parent_gloss=parent_gloss)
+                               parent_gloss=gloss_or_morpheme)
     newothermedia.save()
 
     # the above creates the new OtherMedia object

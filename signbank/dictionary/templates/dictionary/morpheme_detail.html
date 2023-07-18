@@ -651,8 +651,6 @@ function checkKey(e)
             </div>
         </div>
         <div id='definitions' class='collapse'>
-            
-            {% regroup morpheme.definition_set.all by role as roles %}
 
             <table class='table'>
               <tr>
@@ -701,7 +699,8 @@ function checkKey(e)
                 <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'
                     value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
-                <td class='edit edit_role' id='definitionrole_{{def.id}}' value='{{def.role}}'>{{def.get_role_display}}</td>
+                <td id='definitionrole_{{def.id}}'
+                    data-field='definitionrole'>{{role_id.1}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
               </tr>
               {% endfor %}
