@@ -7,11 +7,11 @@
 
 {# Translators: Page title #}
 {% block bootstrap3_title %}
-{% if translation %}
+{% if public_title %}
 {% if gloss_or_morpheme == 'morpheme' %}
-{% blocktrans %}Morpheme for {{ gloss }}{% endblocktrans %}
+{% blocktrans %}Morpheme for {{ public_title }}{% endblocktrans %}
 {% else %}
-{% blocktrans %}Sign for {{ gloss }}{% endblocktrans %}
+{% blocktrans %}Sign for {{ public_title }}{% endblocktrans %}
 {% endif %}
 {% else %}{{ gloss.idgloss }}{% endif %}
 {% endblock %}
@@ -30,7 +30,7 @@
 
 {% block extrahead %}
 <meta name="twitter:card" content="summary_large_image">
-<meta property="og:title" content="{% for kwd in allkwds %}{% if forloop.first %}{{ kwd.translation.text|title }}{% else %}{{ kwd.translation.text|safe }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %} (in {{gloss.dataset.acronym}})" />
+<meta property="og:title" content="{{public_title}} (in {{gloss.dataset.acronym}})" />
 <meta property="og:url" content="{{ request.build_absolute_uri  }}" />
 <meta property="og:type" content="website" />
 <meta property="og:description" content="From the {{gloss.dataset.acronym}} dataset in Global Signbank." />
@@ -61,7 +61,7 @@
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
 <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
-    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+    {% if request.session.search_results %}
     <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
     </div>
     {% endif %}
@@ -89,10 +89,10 @@
             <li class="nav-item">
                 <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
             </li>
-            {% endif %}
             <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos" %}</a>
             </li>
+            {% endif %}
         </ul>
         <br>
         {% endif %}
@@ -101,44 +101,81 @@
 
     <div id="definitionblock">
 
-        <div id='annotation_idgloss_summary' class="col-md-6 col-md-6-pull">
-        <table class='table table-condensed'>
-            <tr class="empty_row"></tr>
-            {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
-            <tr>
-                <th>
-                    {% trans "Annotation ID Gloss" %} ({{ lang }})
-                </th>
-                <td id='annotation_idgloss_{{ lang.language_code_2char }}'>{{ annotation_idgloss_translations.0.text|safe }}</td>
-            </tr>
-            {% endfor %}
-
-        <tr id="keywords">
-            {# Translators: Keywords #}
-            <th>{% blocktrans %}Translation equivalents{% endblocktrans %}</th>
-            <td>
-             {% for kwd in allkwds %}
-               {% if translation == kwd.translation.text %}<strong>{{ kwd.translation.text|safe }}</strong>{% else %}{{ kwd.translation.text|safe }}{% endif %}{% if not forloop.last %},{% endif %}
-             {% endfor %}
-             </td>
+    <div id='annotation_idgloss_summary' class="col-md-6 col-md-6-pull">
+    <table class='table table-condensed'>
+        <tr class="empty_row"></tr>
+        {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+        <tr>
+            <th>
+                {% trans "Annotation ID Gloss" %} ({{ lang }})
+            </th>
+            <td id='annotation_idgloss_{{ lang.language_code_2char }}'>{{ annotation_idgloss_translations.0.text|safe }}</td>
         </tr>
-            {% if notes_groupedby_role.items %}
-            <tr id="notes">
-                <th>{% blocktrans %}Note(s){% endblocktrans %}</th>
-                <td>
-                    <table>
-                    {% for role_id, note_list in notes_groupedby_role.items %}
-                        {% for def in note_list %}
-                            {% if def.published %}
-                                <tr><th id='definitionrole_{{def.id}}'>{{role_id.1}}</th></tr>
-                                <tr><td id='definition_{{def.id}}'>{{def.text}}</td></tr>
-                            {% endif %}
-                        {% endfor %}
+        {% endfor %}
+
+        {% if gloss.dialect.all %}
+            <tr>
+               <th>{% trans "Dialects" %}</th>
+               <td>
+                    {% for dialect in gloss.dialect.all %}
+                      <span>{{ dialect.name}}</span>
+                    {% if not forloop.last %}, {% endif %}
                     {% endfor %}
-                    </table>
                 </td>
             </tr>
-            {% endif %}
+        {% endif %}
+
+        {% if gloss_or_morpheme == 'gloss' %}
+        {% if sensetranslations_per_language %}
+        {% for lang, sensetranslations in sensetranslations_per_language.items %}
+        {% if sensetranslations %}
+        <tr id="senses_{{lang.language_code_2char}}">
+            <th>{% trans "Senses" %} ({{lang.name}})</th>
+            <td class="translation_{{lang.language_code_2char}}">
+                <div>
+                {% for key, value in sensetranslations.items %}
+                    {% if value != "" %}
+                        {{key}}. {{ value|safe }}
+                    {% if not forloop.last %}<br> {% endif %}
+                    {% endif %}
+                {% endfor %}
+                </div>
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        {% endif %}
+        {% else %}
+        {% if translations_per_language %}
+        {% for lang, translations in translations_per_language.items %}
+        <tr>
+            <th>
+                {% trans "Abstract Meaning" %} ({{ lang }})
+            </th>
+            <td class='edit edit_text'
+                id='keyword_{{ lang.language_code_2char }}'>{% for trn in translations %}{{ trn.translation.text|safe }}
+                                                            {% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+        {% endif %}
+        {% if notes_groupedby_role %}
+        <tr id="notes">
+            <th>{% blocktrans %}Note(s){% endblocktrans %}</th>
+            <td>
+                <table>
+                {% for role_id, note_list in notes_groupedby_role.items %}
+                    {% for def in note_list %}
+                        {% if def.published %}
+                            <tr><th id='definitionrole_{{def.id}}'>{{role_id.1}}</th></tr>
+                            <tr><td id='definition_{{def.id}}'>{{def.text}}</td></tr>
+                        {% endif %}
+                    {% endfor %}
+                {% endfor %}
+                </table>
+            </td>
+        </tr>
+        {% endif %}
         </table>
         </div>
         <div class='col-md-6'>
@@ -156,51 +193,12 @@
                 {% endif %}
             </div>
 
-            {% if gloss.dialect.all %}
-            <div>
-                {# Translators: Header4 #}
-                <h4>{% blocktrans %}Sign Distribution{% endblocktrans %}</h4>
-                <ul>
-                    {% for dialect in gloss.dialect.all %}
-                      <li>{{ dialect.name }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            {% endif %}
         </div>
 
-        {% if DEFINITION_FIELDS and gloss.published_definitions %}
-        <div  class='col-md-8'>
-            {# Translators: Header2 #}
-            <h2>{% blocktrans %}Sign Definition{% endblocktrans %}</h2>
-
-            {% for deftype in DEFINITION_FIELDS %}
-        
-                 {% regroup gloss.published_definitions by role as roles %}
-        
-                 {% for role in roles %}
-              
-                      {% if deftype == role.grouper %}  
-                  
-                          <h3>{{role.list.0.get_role_display}}</h3>
-                  
-                          <ol>
-                          {% for def in role.list %}     
-                            <li>{{def.text}}</li>
-                          {% endfor %}
-                          </ol>
-                  
-                      {% endif %}
-                 {% endfor %}
-            {% endfor %}
-        
-        </div>
-        {% endif %}
-    
     </div>
 
 <div class="social">
-  <a target="_blank" href="mailto:?subject={% for kwd in allkwds %}{% if forloop.first %}{{ kwd.translation.text|title }}{% else %}{{ kwd.translation.text|safe }}{% endif %}{% if not forloop.last %}, {% endif %}{% endfor %} (in {{gloss.dataset.acronym}})&amp;body={{ request.build_absolute_uri  }}" id="share-em" class="sharer button"><i class="fa fa-3x fa-envelope-square"></i></a>
+  <a target="_blank" href="mailto:?subject={{public_title}} (in {{gloss.dataset.acronym}})&amp;body={{ request.build_absolute_uri  }}" id="share-em" class="sharer button"><i class="fa fa-3x fa-envelope-square"></i></a>
   <a target="_blank" href="http://www.twitter.com/share?url={{ request.build_absolute_uri  }}" id="share-tw" class="sharer button"><i class="fa fa-3x fa-twitter-square"></i></a>
   <a target="_blank" href="https://api.whatsapp.com/send?text={{ request.build_absolute_uri  }}" id="share-wa" class="sharer button"><i class="fa fa-3x fa-whatsapp"></i></a>
   <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=#url" id="share-fb" class="sharer button"><i class="fa fa-3x fa-facebook-square"></i></a>

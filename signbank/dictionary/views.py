@@ -43,7 +43,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
 
 
-
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
 
@@ -53,117 +52,9 @@ def login_required_config(f):
         return f
 
 
-
-@login_required_config
-def index(request):
-    """Default view showing a browse/search entry
-    point to the dictionary"""
-
-
-    return render(request,"dictionary/search_result.html",
-                              {'form': UserSignSearchForm(),
-                               'language': settings.LANGUAGE_NAME,
-                               'query': ''})
-
-
-@login_required_config
-def word(request, keyword, n):
-    """View of a single keyword that may have more than one sign"""
-
-    n = int(n)
-
-    if 'feedbackmessage' in request.GET:
-        feedbackmessage = request.GET['feedbackmessage']
-    else:
-        feedbackmessage = False
-
-    word = get_object_or_404(Keyword, text=keyword)
-
-    # returns (matching translation, number of matches)
-    (trans, total) =  word.match_request(request, n, )
-
-    # and all the keywords associated with this sign
-    allkwds = trans.gloss.translation_set.all().order_by('translation__index')
-
-    videourl = trans.gloss.get_video_url()
-    if not os.path.exists(os.path.join(settings.MEDIA_ROOT, videourl)):
-        videourl = None
-
-    trans.homophones = trans.gloss.relation_sources.filter(role='homophone')
-
-    # work out the number of this gloss and the total number
-    gloss = trans.gloss
-    if gloss.sn != None:
-        if request.user.has_perm('dictionary.search_gloss'):
-            glosscount = Gloss.objects.count()
-            glossposn = Gloss.objects.filter(sn__lt=gloss.sn).count()+1
-        else:
-            glosscount = Gloss.objects.filter(inWeb__exact=True).count()
-            glossposn = Gloss.objects.filter(inWeb__exact=True, sn__lt=gloss.sn).count()+1
-    else:
-        glosscount = 0
-        glossposn = 0
-
-    # navigation gives us the next and previous signs
-    nav = gloss.navigation(request.user.has_perm('dictionary.search_gloss'))
-
-    # the gloss update form for staff
-
-    if request.user.has_perm('dictionary.search_gloss'):
-        update_form = GlossModelForm(instance=trans.gloss)
-        video_form = VideoUploadForOjectForm(initial={'gloss_id': trans.gloss.pk,
-                                                      'object_type': 'g',
-                                                      'redirect': request.path})
-    else:
-        update_form = None
-        video_form = None
-
-    if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
-        show_query_parameters_as_button = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
-    else:
-        show_query_parameters_as_button = False
-
-    return render(request,"dictionary/word.html",
-                              {'translation': trans.translation.text.encode('utf-8'),
-                               'viewname': 'words',
-                               'definitions': trans.gloss.definitions(),
-                               'gloss_or_morpheme': 'gloss',
-                               'allkwds': allkwds,
-                               'n': n,
-                               'total': total,
-                               'matches': range(1, total+1),
-                               'navigation': nav,
-                               # lastmatch is a construction of the url for this word
-                               # view that we use to pass to gloss pages
-                               # could do with being a fn call to generate this name here and elsewhere
-                               'lastmatch': trans.translation.text.encode('utf-8')+"-"+str(n),
-                               'videofile': videourl,
-                               'update_form': update_form,
-                               'videoform': video_form,
-                               'gloss': gloss,
-                               'glosscount': glosscount,
-                               'glossposn': glossposn,
-                               'feedback' : True,
-                               'feedbackmessage': feedbackmessage,
-                               'tagform': TagUpdateForm(),
-                               'annotation_idgloss': {},
-                               'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
-                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
-                               'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button })
-
 def gloss(request, glossid):
-    """View of a gloss - mimics the word view, really for admin use
-       when we want to preview a particular gloss"""
     # this is public view of a gloss
 
-    if 'feedbackmessage' in request.GET:
-        feedbackmessage = request.GET['feedbackmessage']
-    else:
-        feedbackmessage = False
-
-    # we should only be able to get a single gloss, but since the URL
-    # pattern could be spoofed, we might get zero or many
-    # so we filter first and raise a 404 if we don't get one
     try:
         gloss = Gloss.objects.get(id=glossid)
     except ObjectDoesNotExist:
@@ -197,47 +88,36 @@ def gloss(request, glossid):
         show_dataset_interface = False
 
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
-        return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.',
-                                                       'dataset_languages': dataset_languages,
-                                                       'selected_datasets': selected_datasets,
-                                                       'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+        feedbackmessage = _('You are not allowed to see this sign.')
 
-    allkwds = gloss.translation_set.all().order_by('translation__index')
-    if len(allkwds) == 0:
-        trans = None  # this seems to cause problems in the template, the title of the page ends up empty
-    else:
-        trans = allkwds[0]
+        messages.add_message(request, messages.ERROR, feedbackmessage)
 
-    videourl = gloss.get_video_url()
-    if not os.path.exists(os.path.join(settings.MEDIA_ROOT, videourl)):
-        videourl = None
+        return render(request, "dictionary/word.html",
+                      { 'sensetranslations_per_language': {},
+                        'public_title': '',
+                        'gloss_or_morpheme': 'gloss',
+                        'notes_groupedby_role': {},
+                        'translations_per_language': {},
+                        'gloss': gloss,
+                        'active_id': glossid,  # used by search_result_bar.html
+                        'annotation_idgloss': {},
+                        'dataset_languages': dataset_languages,
+                        'selected_datasets': selected_datasets,
+                        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
-    if gloss.sn != None:
-        if request.user.has_perm('dictionary.search_gloss'):
-            glosscount = Gloss.objects.count()
-            glossposn = Gloss.objects.filter(sn__lt=gloss.sn).count()+1
-        else:
-            glosscount = Gloss.objects.filter(inWeb__exact=True).count()
-            glossposn = Gloss.objects.filter(inWeb__exact=True, sn__lt=gloss.sn).count()+1
-    else:
-        glosscount = 0
-        glossposn = 0
-
-    # navigation gives us the next and previous signs
-    nav = gloss.navigation(request.user.has_perm('dictionary.search_gloss'))
-
-    # the gloss update form for staff
-    update_form = None
-
-    if request.user.has_perm('dictionary.search_gloss'):
-        update_form = GlossModelForm(instance=gloss)
-        video_form = VideoUploadForObjectForm(initial={'gloss_id': gloss.pk,
-                                                      'object_type': 'g',
-                                                      'redirect': request.get_full_path()})
-    else:
-        update_form = None
-        video_form = None
-
+    # Put translations (senses) per language in the context
+    sensetranslations_per_language = dict()
+    for language in gloss.lemma.dataset.translation_languages.all():
+        sensetranslations_per_language[language] = dict()
+        sensetranslations_for_language = dict()
+        for sensei, sense in enumerate(gloss.ordered_senses().all(), 1):
+            if sense.senseTranslations.filter(language=language).exists():
+                sensetranslation = sense.senseTranslations.get(language=language)
+                translations = sensetranslation.translations.all().order_by('index')
+                if translations:
+                    keywords_list = [trans.translation.text for trans in translations]
+                    sensetranslations_for_language[sensei] = ', '.join(keywords_list)
+        sensetranslations_per_language[language] = sensetranslations_for_language
 
     # Put annotation_idgloss per language in the context
     annotation_idgloss = {}
@@ -249,18 +129,11 @@ def gloss(request, glossid):
         annotation_idgloss[language] = gloss.annotationidglosstranslation_set.filter(language=language)
 
     default_language = Language.objects.get(id=get_default_language_id())
-    if not trans:
-        # this prevents an empty title in the template
-        # this essentially overrides the "gloss.idgloss" method to prevent it from putting translations between parentheses
-        try:
-            trans = gloss.annotationidglosstranslation_set.get(language=default_language).text
-        except (ObjectDoesNotExist, MultipleObjectsReturned):
-            # this catches the case where the annotation field has not been set
-            trans = str(gloss.id)
+    public_title = gloss.annotation_idgloss(settings.LANGUAGE_CODE)
 
     # Regroup notes
     note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
-    notes = gloss.definition_set.all()
+    notes = gloss.definition_set.filter(published__exact=True)
     notes_groupedby_role = {}
     for note in notes:
         note_role_machine_value = note.role.machine_value if note.role else 0
@@ -270,50 +143,30 @@ def gloss(request, glossid):
             notes_groupedby_role[role_id] = []
         notes_groupedby_role[role_id].append(note)
 
-    # get the last match keyword if there is one passed along as a form variable
-    if 'lastmatch' in request.GET:
-        lastmatch = request.GET['lastmatch']
-        print('lastmatch: ', lastmatch)
-        if lastmatch == "None":
-            # this looks weird, comparing to None in quotes
-            lastmatch = False
-    else:
-        lastmatch = False
-
     return render(request,"dictionary/word.html",
-                              {'translation': trans,
-                               'definitions': gloss.definitions(),
+                              {'sensetranslations_per_language': sensetranslations_per_language,
+                               'public_title': public_title,
                                'gloss_or_morpheme': 'gloss',
-                               'allkwds': allkwds,
                                'notes_groupedby_role': notes_groupedby_role,
-                               'lastmatch': lastmatch,
-                               'videofile': videourl,
-                               'viewname': word,
-                               'feedback': None,
+                               'translations_per_language': {},
                                'gloss': gloss,
-                               'glosscount': glosscount,
-                               'glossposn': glossposn,
-                               'navigation': nav,
-                               'update_form': update_form,
-                               'videoform': video_form,
-                               'tagform': TagUpdateForm(),
-                               'feedbackmessage': feedbackmessage,
+                               'active_id': glossid,  # used by search_result_bar.html
                                'annotation_idgloss': annotation_idgloss,
-                               'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
-                               'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS,
                                'dataset_languages': dataset_languages,
                                'selected_datasets': selected_datasets,
-                               'active_id': glossid,
                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
 
 def morpheme(request, glossid):
     # this is public view of a morpheme
 
-    if 'feedbackmessage' in request.GET:
-        feedbackmessage = request.GET['feedbackmessage']
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
     else:
-        feedbackmessage = False
+        show_dataset_interface = False
 
     # we should only be able to get a single gloss, but since the URL
     # pattern could be spoofed, we might get zero or many
@@ -324,46 +177,40 @@ def morpheme(request, glossid):
         raise Http404
 
     if not(request.user.has_perm('dictionary.search_gloss') or morpheme.inWeb):
-        return render(request,"dictionary/word.html",{'feedbackmessage': 'You are not allowed to see this sign.'})
+        feedbackmessage = _('You are not allowed to see this morpheme.')
 
-    allkwds = morpheme.translation_set.all().order_by('translation__index')
-    if len(allkwds) == 0:
-        trans = None
+        messages.add_message(request, messages.ERROR, feedbackmessage)
+        return render(request, "dictionary/word.html",
+                      {'sensetranslations_per_language': {},
+                       'public_title': '',
+                       'gloss_or_morpheme': 'morpheme',
+                       'notes_groupedby_role': {},
+                       'translations_per_language': {},
+                       'gloss': morpheme,
+                       'active_id': glossid,  # used by search_result_bar.html
+                       'annotation_idgloss': {},
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface}
+                      )
+
+    # morphemes use translations not senses
+    translations_per_language = {}
+    if morpheme.lemma.dataset:
+        for language in morpheme.dataset.translation_languages.all():
+            translations_per_language[language] = morpheme.translation_set.filter(language=language).order_by(
+                'translation__index')
     else:
-        trans = allkwds[0]
+        language = Language.objects.get(id=get_default_language_id())
+        translations_per_language[language] = morpheme.translation_set.filter(language=language).order_by(
+            'translation__index')
 
     videourl = morpheme.get_video_url()
     if not os.path.exists(os.path.join(settings.MEDIA_ROOT, videourl)):
         videourl = None
 
-    if morpheme.sn != None:
-        if request.user.has_perm('dictionary.search_gloss'):
-            glosscount = Morpheme.objects.count()
-            glossposn = Morpheme.objects.filter(sn__lt=morpheme.sn).count()+1
-        else:
-            glosscount = Morpheme.objects.filter(inWeb__exact=True).count()
-            glossposn = Morpheme.objects.filter(inWeb__exact=True, sn__lt=morpheme.sn).count()+1
-    else:
-        glosscount = 0
-        glossposn = 0
+    public_title = morpheme.annotation_idgloss(settings.LANGUAGE_CODE)
 
-    # navigation gives us the next and previous signs
-    nav = morpheme.navigation(request.user.has_perm('dictionary.search_gloss'))
-
-    # the gloss update form for staff
-    update_form = None
-
-    if request.user.has_perm('dictionary.search_gloss'):
-        update_form = GlossModelForm(instance=morpheme)
-        video_form = VideoUploadForObjectForm(initial={'gloss_id': morpheme.pk,
-                                                       'object_type': 'g',
-                                                      'redirect': request.get_full_path()})
-    else:
-        update_form = None
-        video_form = None
-
-
-    # Put annotation_idgloss per language in the context
     annotation_idgloss = {}
     if morpheme.dataset:
         for language in morpheme.dataset.translation_languages.all():
@@ -372,37 +219,28 @@ def morpheme(request, glossid):
         language = Language.objects.get(id=get_default_language_id())
         annotation_idgloss[language] = morpheme.annotationidglosstranslation_set.filter(language=language)
 
-
-    # get the last match keyword if there is one passed along as a form variable
-    if 'lastmatch' in request.GET:
-        lastmatch = request.GET['lastmatch']
-        print('lastmatch: ', lastmatch)
-        if lastmatch == "None":
-            # this looks weird, comparing to None in quotes
-            lastmatch = False
-    else:
-        lastmatch = False
+    # Regroup notes
+    note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
+    notes = morpheme.definition_set.filter(published__exact=True)
+    notes_groupedby_role = {}
+    for note in notes:
+        note_role_machine_value = note.role.machine_value if note.role else 0
+        translated_note_role = machine_value_to_translated_human_value(note_role_machine_value, note_role_choices)
+        role_id = (note.role, translated_note_role)
+        if role_id not in notes_groupedby_role:
+            notes_groupedby_role[role_id] = []
+        notes_groupedby_role[role_id].append(note)
 
     return render(request,"dictionary/word.html",
-                              {'translation': trans,
-                               'definitions': morpheme.definitions(),
+                              {'sensetranslations_per_language': {},
                                'gloss_or_morpheme': 'morpheme',
-                               'allkwds': allkwds,
-                               'lastmatch': lastmatch,
+                               'notes_groupedby_role': notes_groupedby_role,
+                               'public_title': public_title,
+                               'translations_per_language': translations_per_language,
                                'videofile': videourl,
-                               'viewname': word,
-                               'feedback': None,
                                'gloss': morpheme,
-                               'glosscount': glosscount,
-                               'glossposn': glossposn,
-                               'navigation': nav,
-                               'update_form': update_form,
-                               'videoform': video_form,
-                               'tagform': TagUpdateForm(),
-                               'feedbackmessage': feedbackmessage,
                                'annotation_idgloss': annotation_idgloss,
-                               'SIGN_NAVIGATION' : settings.SIGN_NAVIGATION,
-                               'active_id': glossid,
+                               'active_id': glossid,  # used by search_result_bar.html
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 
@@ -422,15 +260,6 @@ def search(request):
         term = quote(term)
 
         return HttpResponseRedirect('../../signs/search/?search='+glossQuery+'&keyword='+term)
-
-def keyword_value_list(request, prefix=None):
-    """View to generate a list of possible values for
-    a keyword given a prefix."""
-
-
-    kwds = Keyword.objects.filter(text__startswith=prefix)
-    kwds_list = [k.text for k in kwds]
-    return HttpResponse("\n".join(kwds_list), content_type='text/plain')
 
 
 def missing_video_list():
@@ -635,31 +464,6 @@ def try_code(request):
 
     return HttpResponse(str(interesting_lemmata))
 
-def import_authors(request):
-
-    """In a few cases the authors were delivered separately; this imports a json file and adds it to the correct glossess"""
-
-    import json
-
-    JSON_FILE_LOCATION = '/scratch2/www/ASL-signbank/repo/NGT-signbank/signbank/dictionary/migrations/asl_authors.json'
-    author_data = json.load(open(JSON_FILE_LOCATION))
-    result = ''
-
-    for gloss in Gloss.objects.all():
-
-        #Try to find an author for this gloss
-        try:
-            author_names = author_data[gloss.idgloss]
-        except KeyError:
-            continue
-
-        for author_name in author_names:
-            author = User.objects.filter(username=author_name)[0]
-            result += str(author)
-
-            gloss.creator.add(author)
-
-    return HttpResponse('OKS')
 
 # this method is called from the Signbank menu bar
 def add_new_sign(request):
