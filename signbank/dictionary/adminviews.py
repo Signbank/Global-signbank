@@ -6419,6 +6419,39 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
     sorted_lemmas_dict = sorted(lemmas_dict_list, key=lambda x : (x['lemma'], len(x['lemma'])))
     return JsonResponse(sorted_lemmas_dict, safe=False)
 
+def sensetranslation_ajax_complete(request, dataset_id, language_code, q):
+
+    # Only suggest if at least three characters are provided in the query
+    if len(q)<1:
+        return JsonResponse({}, safe=False)
+    
+    # check that the user is logged in
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
+
+    # the following code allows for specifying a language for the dataset in the add_gloss.html template
+
+    # ideally, filter the results by language, but this is not implemented at the moment
+    # language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+    # language = Language.objects.get(language_code_3char=interface_language_3char)
+
+    dataset = Dataset.objects.get(id=dataset_id)
+
+    sensetranslations = SenseTranslation.objects.filter(sense__glosssense__gloss__lemma__dataset = dataset, translations__translation__text__icontains=q).order_by('translations')
+    sensetranslations_dict_list = []
+    for sensetranslation in set(sensetranslations):
+        trans_dict = {}
+        for translation in sensetranslation.translations.all():
+            trans_dict['pk'] = sensetranslation.pk
+            trans_dict['language'] = str(sensetranslation.language)
+            trans_dict['sensetranslation'] = sensetranslation.get_translations_return()
+            # Only sugges a sensetranslation (text) once
+            if not any(d['sensetranslation'] == trans_dict['sensetranslation'] for d in sensetranslations_dict_list):
+                sensetranslations_dict_list.append(trans_dict)
+    sorted_sensetranslations_dict = sorted(sensetranslations_dict_list, key=lambda x : len(x['sensetranslation']))
+    return JsonResponse(sorted_sensetranslations_dict, safe=False)
+
 def homonyms_ajax_complete(request, gloss_id):
 
     try:

@@ -81,6 +81,13 @@ var busy_editing = 0;
     $('.lemmatypeahead').on("input", function() {
           $(this).parent().next().val("")
         });
+    sensetranslationtypeahead($('.sensetranslationtypeahead'));
+    $('.sensetranslationtypeahead').bind('sensetranslationtypeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk)
+        });
+    $('.sensetranslationtypeahead').on("input", function() {
+          $(this).parent().next().val("")
+        });
 
 
     // this is needed to help check different browsers
@@ -728,6 +735,54 @@ $.editable.addInputType('lemmatypeahead', {
 
       return (input);
    },
+});
+
+
+var sensetranslation_bloodhound = new Bloodhound({
+    datumTokenizer: function(d) { return d.tokens; },
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    remote: url+'/dictionary/ajax/sensetranslation/'+gloss_dataset_id+'/'+gloss_default_language_code+'/%QUERY'
+  });
+
+sensetranslation_bloodhound.initialize();
+
+// Check which textarea has been typed in
+let currentInputLanguage; // Declare the variable outside the event listener's scope
+const textareas = document.querySelectorAll('textarea');
+// Add event listener to each textarea
+textareas.forEach(textarea => {
+  textarea.addEventListener('input', function() {
+    currentInputLanguage = this.id; // Assign the id to the variable
+  });
+});
+
+function sensetranslationtypeahead(target) {
+    $(target).typeahead(null, {
+        name: 'sensetranslationtarget',
+        displayKey: 'sensetranslation',
+        source: sensetranslation_bloodhound.ttAdapter(),
+        templates: {
+            suggestion: function(sensetranslation) {
+                if ((currentInputLanguage) && (sensetranslation.language == currentInputLanguage)){
+                    return("<p><strong>" + sensetranslation.sensetranslation + "</strong></p>");
+                }
+                else{
+                    return ''
+                }
+            }
+        }
+    });
+};
+
+$.editable.addInputType('sensetranslationtypeahead', {
+    element: function(settings, original) {
+        var input = $('<input type="text" class="sensetranslationtypeahead">');
+        $(this).append(input);
+
+        sensetranslationtypeahead(input);
+
+        return (input);
+    },
 });
 
 /*
