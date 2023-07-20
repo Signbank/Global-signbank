@@ -565,7 +565,7 @@ thead tr th {
     {% endfor %}
     </td>
 
-    <td><span>{% trans "Translations" %}</span>
+    <td><span>{% trans "Senses" %}</span>
     {% for dataset_lang in dataset_languages %}
     <button name="button_translation_{{dataset_lang.language_code_2char}}"
             id="button_translation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_translations(this);"

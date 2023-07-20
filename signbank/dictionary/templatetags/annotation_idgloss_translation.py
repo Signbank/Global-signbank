@@ -2,7 +2,7 @@ from django.template import Library
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.tools import get_default_annotationidglosstranslation
 import json
-
+from signbank.dictionary.senses_display import senses_per_language
 register = Library()
 
 
@@ -177,3 +177,9 @@ def get_gloss_description(gloss, language_code_2char):
 def translated_annotationidgloss(gloss, language_code):
     annotationidgloss = gloss.annotation_idgloss(language_code)
     return annotationidgloss
+
+@register.filter
+def get_senses_for_language(sensetranslations, language):
+    if language not in sensetranslations.keys():
+        return ""
+    return sensetranslations[language]

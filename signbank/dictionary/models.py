@@ -1449,56 +1449,56 @@ class Gloss(models.Model):
 
     def homonyms_count(self):
 
-        homonyms_count = self.relation_sources.filter(role='homonym').count()
+        homonyms_count = self.relation_sources.filter(role='homonym').exclude(target=self).count()
 
         return homonyms_count
 
     def synonyms_count(self):
 
-        synonyms_count = self.relation_sources.filter(role='synonym').count()
+        synonyms_count = self.relation_sources.filter(role='synonym').exclude(target=self).count()
 
         return synonyms_count
 
     def antonyms_count(self):
 
-        antonyms_count = self.relation_sources.filter(role='antonym').count()
+        antonyms_count = self.relation_sources.filter(role='antonym').exclude(target=self).count()
 
         return antonyms_count
 
     def hyponyms_count(self):
 
-        hyponyms_count = self.relation_sources.filter(role='hyponym').count()
+        hyponyms_count = self.relation_sources.filter(role='hyponym').exclude(target=self).count()
 
         return hyponyms_count
 
     def hypernyms_count(self):
 
-        hypernyms_count = self.relation_sources.filter(role='hypernym').count()
+        hypernyms_count = self.relation_sources.filter(role='hypernym').exclude(target=self).count()
 
         return hypernyms_count
 
     def seealso_count(self):
 
-        seealso_count = self.relation_sources.filter(role='seealso').count()
+        seealso_count = self.relation_sources.filter(role='seealso').exclude(target=self).count()
 
         return seealso_count
 
     def paradigm_count(self):
 
-        paradigm_count = self.relation_sources.filter(role='paradigm').count()
+        paradigm_count = self.relation_sources.filter(role='paradigm').exclude(target=self).count()
 
         return paradigm_count
 
     def variant_count(self):
 
-        variant_count = self.relation_sources.filter(role='variant').count()
+        variant_count = self.relation_sources.filter(role='variant').exclude(target=self).count()
 
         return variant_count
 
     def relations_count(self):
 
         relations_count = self.relation_sources.filter(
-            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso', 'variant']).count()
+            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso', 'variant']).exclude(target=self).count()
 
         return relations_count
 
@@ -1548,19 +1548,19 @@ class Gloss(models.Model):
             related_gloss_ids = [relation.target.id for relation in self.other_relations()]
             pattern_variants = Gloss.objects.filter(merged_query_expression).exclude(id__in=related_gloss_ids).distinct()
         else:
-            pattern_variants = [ self ]
+            pattern_variants = [self]
         return pattern_variants
 
     def other_relations(self):
 
         other_relations = self.relation_sources.filter(
-            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso'])
+            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso']).exclude(target=self)
 
         return other_relations
 
     def variant_relations(self):
 
-        variant_relations = self.relation_sources.filter(role__in=['variant'])
+        variant_relations = self.relation_sources.filter(role__in=['variant']).exclude(target=self)
 
         return variant_relations
 
@@ -1614,7 +1614,6 @@ class Gloss(models.Model):
                                                                  'hyponym', 'hypernym', 'seealso', 'paradigm'])
 
         return (other_relations, variant_relations)
-
 
     def phonology_matrix_homonymns(self, use_machine_value=False):
         # this method uses string representations for Boolean values
