@@ -1299,7 +1299,8 @@ class GlossDetailView(DetailView):
                                'selected_datasets': selected_datasets,
                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
-        senses_consistent = consistent_senses(self.object, include_translations=True)
+        senses_consistent = consistent_senses(self.object, include_translations=True,
+                                              allow_empty_language=True)
         if not senses_consistent:
             print('gloss senses are not consistent')
         context = self.get_context_data(object=self.object)
@@ -7509,7 +7510,8 @@ class KeywordListView(ListView):
         self.query_parameters = query_parameters
 
         for gloss in glosses_of_datasets:
-            consistent = consistent_senses(gloss, include_translations=True)
+            consistent = consistent_senses(gloss, include_translations=True,
+                                           allow_empty_language=True)
             if not consistent:
                 print('gloss senses are not consistent: ', gloss, str(gloss.id))
                 # the following method prints whether duplicate senses with no translations have been found

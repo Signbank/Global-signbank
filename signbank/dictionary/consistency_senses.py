@@ -7,7 +7,7 @@ from django.db.transaction import TransactionManagementError
 from signbank.dictionary.models import *
 
 
-def consistent_senses(gloss, include_translations=False):
+def consistent_senses(gloss, include_translations=False, allow_empty_language=False):
     # this method is unambiguous in its coding
     # it explicitly codes everything it checks
     translation_languages = gloss.lemma.dataset.translation_languages.all()
@@ -15,25 +15,33 @@ def consistent_senses(gloss, include_translations=False):
     gloss_senses_lookup = dict()
     for gs in glosssenses:
         if gs.order in gloss_senses_lookup.keys():
+            print('sense order appears twice')
             return False
         gloss_senses_lookup[gs.order] = gs.sense
     for order, sense in gloss_senses_lookup.items():
         for language in translation_languages:
             sense_translations = sense.senseTranslations.filter(language=language)
             if sense_translations.count() > 1:
+                print('more than one sense translation object for language ', language)
                 return False
             sense_translation = sense_translations.first()
-            if not sense_translation:
+            if not sense_translation and not allow_empty_language:
+                print('no sense translation object for ', language)
                 return False
             if not include_translations:
+                continue
+            if allow_empty_language and not sense_translation:
                 continue
             translations = sense_translation.translations.all()
             for trans in translations:
                 if trans.language != language:
+                    print('translation object language does not match')
                     return False
                 if trans.orderIndex != order:
+                    print('translation order index does not match')
                     return False
                 if trans.gloss != gloss:
+                    print('gloss does not match')
                     return False
     return True
 
@@ -99,6 +107,7 @@ def reorder_translations(gloss, order):
                 inconsistent_translations.append(trans)
 
         if wrong_order_index_translations:
+            print('wrong order index: ', wrong_language_translations)
             for trans in wrong_order_index_translations:
                 try:
                     trans.orderIndex = order
@@ -109,6 +118,7 @@ def reorder_translations(gloss, order):
                     inconsistent_translations.remove(trans)
                     trans.delete()
         if wrong_language_translations:
+            print('wrong language: ', wrong_language_translations)
             for trans in wrong_language_translations:
                 try:
                     trans.language = sensetranslation.language
@@ -119,6 +129,7 @@ def reorder_translations(gloss, order):
                     inconsistent_translations.remove(trans)
                     trans.delete()
         if wrong_gloss_translations:
+            print('wrong gloss: ', wrong_gloss_translations)
             for trans in wrong_gloss_translations:
                 try:
                     trans.gloss = gloss
