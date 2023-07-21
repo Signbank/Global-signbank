@@ -194,7 +194,7 @@ def update_examplesentence(request, examplesentenceid):
         # Check if input was not empty and if both sentences already existed together
         if len(vals) == 0 or vals == examplesentence.get_examplestc_translations_dict_without():
             messages.add_message(request, messages.INFO, _('This example sentence was not changed.'))
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
         # Check if the examplesentences already exist
         existing_examplesentences = []
@@ -207,10 +207,10 @@ def update_examplesentence(request, examplesentenceid):
                 if existing_examplesentence not in sense.exampleSentences.all():
                     sense.exampleSentences.add(existing_examplesentence)
                     messages.add_message(request, messages.INFO, _('This example sentence already existed.'))
-                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                    return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
                 else:
                     messages.add_message(request, messages.INFO, _('This example sentence was already in sense.'))
-                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                    return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
         
         # Update the examplesentence with examplesentencetranslations
         for dataset_language in dataset_languages:
@@ -224,7 +224,7 @@ def update_examplesentence(request, examplesentenceid):
             elif str(dataset_language) in vals:
                 examplesentencetranslation = ExampleSentenceTranslation.objects.create(examplesentence=examplesentence, language=dataset_language, text=vals[str(dataset_language)])
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
 def create_examplesentence(request, senseid):
     """View to create an exampelsentence model from the editable modal"""
@@ -255,7 +255,7 @@ def create_examplesentence(request, senseid):
     # Check if input was not empty and if both sentences already existed together
     if len(vals) == 0:
         messages.add_message(request, messages.ERROR, _('No input sentence given.'))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
     with atomic():
         existing_examplesentences = []
@@ -267,7 +267,7 @@ def create_examplesentence(request, senseid):
             if vals == examplesentence.get_examplestc_translations_dict_without():
                 sense.exampleSentences.add(examplesentence)
                 messages.add_message(request, messages.INFO, _('This examplesentences already existed in this dataset.'))
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
     
         stype = FieldChoice.objects.filter(field='SentenceType').get(machine_value = request.POST['sentenceType'])
         examplesentence = ExampleSentence.objects.create(negative=negative, sentenceType=stype)
@@ -276,7 +276,7 @@ def create_examplesentence(request, senseid):
             if str(dataset_language) in vals:
                 ExampleSentenceTranslation.objects.create(language=dataset_language, examplesentence=examplesentence, text=vals[str(dataset_language)])
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
 def delete_examplesentence(request, senseid):
     """View to delete an examplesentence model from the editable modal"""
@@ -294,7 +294,7 @@ def delete_examplesentence(request, senseid):
     if Sense.objects.filter(exampleSentences = examplesentence).count() == 0:
         examplesentence.delete()
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
 
 def sort_sense(request, glossid, order, direction):
@@ -304,7 +304,7 @@ def sort_sense(request, glossid, order, direction):
     if gloss_senses_matching_order != 1:
         print('sort_sense: multiple or no match for order: ', glossid, str(order))
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
     glosssense = GlossSense.objects.get(gloss=gloss, order=order)
     try:
@@ -314,31 +314,31 @@ def sort_sense(request, glossid, order, direction):
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 print('sort_sense UP: multiple or no match for order: ', glossid, str(order-1))
                 messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
             glosssenseabove.order = order
             glosssense.order = order - 1
             glosssense.save()
             glosssenseabove.save()
             reorder_translations(gloss, order)
             reorder_translations(gloss, order-1)
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
         if direction == "down":
             try:
                 glosssensebeneath = GlossSense.objects.get(gloss=gloss, order=order+1)
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 print('sort_sense DOWN: multiple or no match for order: ', glossid, str(order+1))
                 messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
             glosssensebeneath.order = order
             glosssense.order = order + 1 
             glosssense.save()
             glosssensebeneath.save()
             reorder_translations(gloss, order)
             reorder_translations(gloss, order+1)
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
     except (ObjectDoesNotExist, MultipleObjectsReturned, DatabaseError, TransactionManagementError):
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
 
 def add_sentence_video(request, glossid, examplesentenceid):
@@ -377,7 +377,7 @@ def update_sense(request, senseid):
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, _('No keywords given for edited sense.'))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
     
     # Check if this sense changed at all
     sense = Sense.objects.get(id = senseid)
@@ -385,17 +385,17 @@ def update_sense(request, senseid):
 
     if sensetranslation_dict == vals:
         messages.add_message(request, messages.ERROR, _('Sense did not change.'))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
     glossid = request.POST['glossid']
     gloss_senses = GlossSense.objects.filter(gloss_id=glossid, sense=sense)
 
     if not gloss_senses.count():
         messages.add_message(request, messages.ERROR, _('Sense not found for gloss.'))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
     if gloss_senses.count() > 1:
         messages.add_message(request, messages.ERROR, _('Sense duplicate found for gloss.'))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
     if settings.SHARE_SENSES:
         # Check if sense already existed in another gloss
@@ -426,7 +426,7 @@ def update_sense(request, senseid):
                     sense.delete()
 
                 messages.add_message(request, messages.INFO, _('Sense is already in (existing) gloss.'))
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
     gloss = Gloss.objects.all().get(id = request.POST['glossid'])
     # Update sensetranslations
@@ -519,7 +519,7 @@ def update_sense(request, senseid):
                             sensetranslation.translations.add(translation)
 
     messages.add_message(request, messages.INFO, _('Given sense was added.'))
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
 def create_sense(request, glossid):
     """View to create a sense model from the editable modal"""
@@ -547,7 +547,7 @@ def create_sense(request, glossid):
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, _('No keywords given for new sense.'))
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
     if settings.SHARE_SENSES:
         # Check if this sense already exists
@@ -558,10 +558,10 @@ def create_sense(request, glossid):
             if sense.get_sense_translations_dict_without_list() == vals:
                 if sense in gloss.senses.all():
                     messages.add_message(request, messages.ERROR, _('Sense is already in this gloss.'))
-                    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                    return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
                 glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count()+1)
                 glosssense.save()
-                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
     
     # Make a new sense object
     sense = Sense()
@@ -604,7 +604,7 @@ def create_sense(request, glossid):
                                                                      orderIndex=gloss_senses_count)
                         sensetranslation.translations.add(translation)
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
 def delete_sense(request, glossid):
     """View to delete a sense model from the editable modal"""
@@ -646,7 +646,7 @@ def delete_sense(request, glossid):
                 examplesentence.delete()
         sense.delete()
 
-    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
 
 def update_gloss(request, glossid):
     """View to update a gloss model from the jeditable jquery form
