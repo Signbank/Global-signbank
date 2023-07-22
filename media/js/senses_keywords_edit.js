@@ -367,6 +367,16 @@ function add_gloss_keywords(data) {
         var new_trans_id = new_sense_keywords[i]['new_trans_id'];
         var language = new_sense_keywords[i]['new_language'];
         var new_text = new_sense_keywords[i]['new_text'];
+        if (!new_trans_id) {
+            continue
+        }
+        // check if there is an empty cell
+        var new_edit_empty_row = '#edit_keywords_empty_row_' + glossid + '_' + language;
+        var keywordsCell = $(new_edit_empty_row);
+        if (keywordsCell) {
+            keywordsCell.empty();
+            keywordsCell.remove();
+        }
         var modal_senses_groups_glossid = '#tbody_senses_table_' + glossid + '_' + language;
         var modalSensesGroupsCell = $(modal_senses_groups_glossid);
 
@@ -400,6 +410,7 @@ function add_gloss_keywords(data) {
     var row = $('<tr id="'+ order_index_row + '"/>');
     row.append("<td>"+new_sense_number+'.</td>');
     for (var langid in translations_row) {
+        // new_trans_id can be empty if the user has not entered text for a language
         var new_trans_id = translations_row[langid]['new_trans_id']
         var new_text = translations_row[langid]['new_text']
         var cell_lang = 'sense_translations_' + glossid + '_' + langid + '_' + new_sense_number;

@@ -319,8 +319,8 @@ def sort_sense(request, glossid, order, direction):
             glosssense.order = order - 1
             glosssense.save()
             glosssenseabove.save()
-            reorder_translations(gloss, order)
-            reorder_translations(gloss, order-1)
+            reorder_translations(glosssense, order-1)
+            reorder_translations(glosssenseabove, order)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
         if direction == "down":
             try:
@@ -333,8 +333,8 @@ def sort_sense(request, glossid, order, direction):
             glosssense.order = order + 1 
             glosssense.save()
             glosssensebeneath.save()
-            reorder_translations(gloss, order)
-            reorder_translations(gloss, order+1)
+            reorder_translations(glosssensebeneath, order)
+            reorder_translations(glosssense, order+1)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
     except (ObjectDoesNotExist, MultipleObjectsReturned, DatabaseError, TransactionManagementError):
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
@@ -515,7 +515,6 @@ def update_sense(request, senseid):
                                                                          language=dataset_language,
                                                                          gloss=gloss,
                                                                          orderIndex=gloss_senses_count)
-                            print(translation)
                             sensetranslation.translations.add(translation)
 
     messages.add_message(request, messages.INFO, _('Given sense was added.'))
@@ -568,6 +567,7 @@ def create_sense(request, glossid):
     sense.save()
     glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count()+1)
     glosssense.save()
+    # this is the order of the new sense
     gloss_senses_count = gloss.senses.count()
     # Add or remove keywords to the sense translations
     existing_sensetranslations = []
@@ -586,22 +586,25 @@ def create_sense(request, glossid):
                             existed = True
 
                 if not existed:
-                    sensetranslation = sense.senseTranslations.filter(language=dataset_language).first()
-                    if not sensetranslation:
-                        sensetranslation = SenseTranslation.objects.create(language = dataset_language)
+                    try:
+                        sensetranslation = sense.senseTranslations.get(language=dataset_language)
+                    except ObjectDoesNotExist:
+                        # there should only be one per language
+                        sensetranslation = SenseTranslation(language=dataset_language)
                         sensetranslation.save()
                         sense.senseTranslations.add(sensetranslation)
-                    for kw in sorted(list(dict.fromkeys(vals[str(sensetranslation.language)]))):
-                        keyword = Keyword.objects.get_or_create(text = kw)[0]
-                        translation = Translation.objects.filter(translation=keyword,
-                                                                 language=dataset_language,
-                                                                 gloss=gloss,
-                                                                 orderIndex=gloss_senses_count).first()
-                        if not translation:
-                            translation = Translation.objects.create(translation=keyword,
-                                                                     language=dataset_language,
-                                                                     gloss=gloss,
-                                                                     orderIndex=gloss_senses_count)
+                    sorted_list_keywords = list(dict.fromkeys(vals[str(sensetranslation.language)]))
+                    for inx, kw in enumerate(sorted_list_keywords, 1):
+                        # this is a new sense so it has no translations yet
+                        # the combination with gloss, language, orderIndex does not exist yet
+                        # the index is the order the keyword was entered by the user
+                        keyword = Keyword.objects.get_or_create(text=kw)[0]
+                        translation = Translation(translation=keyword,
+                                                  language=dataset_language,
+                                                  gloss=gloss,
+                                                  orderIndex=gloss_senses_count,
+                                                  index=inx)
+                        translation.save()
                         sensetranslation.translations.add(translation)
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER')+'?edit')
@@ -624,7 +627,6 @@ def delete_sense(request, glossid):
     gloss.reorder_senses()
 
     other_glosses_for_sense = GlossSense.objects.filter(sense=sense).exclude(gloss=gloss).count()
-
     if not settings.SHARE_SENSES and not other_glosses_for_sense:
         # If this is this only gloss this sense was in, delete the sense
         for dataset_language in dataset_languages:
@@ -632,17 +634,20 @@ def delete_sense(request, glossid):
             # this code also removes spurious sense translations
             # this is done as a separate variable for use in the loop since the loop removes objects
             sensetranslation_for_language = sense.senseTranslations.filter(language=dataset_language)
-            for sensetranslation in sensetranslation_for_language:
-                sense_translations = sense.senseTranslations.all()
+            sense_translations_list = [st for st in sensetranslation_for_language]
+            for sensetranslation in sense_translations_list:
+                # iterate over a list because the objects will be removed
+                sense_translations = sensetranslation.translations.all()
                 for translation in sense_translations:
                     sensetranslation.translations.remove(translation)
                     translation.delete()
                 sense.senseTranslations.remove(sensetranslation)
                 sensetranslation.delete()
         # also remove its examplesentences if they are not in another sense
-        for examplesentence in sense.exampleSentences.all():
+        example_sentences = sense.exampleSentences.all()
+        for examplesentence in example_sentences:
             sense.exampleSentences.remove(examplesentence)
-            if Sense.objects.filter(exampleSentences = examplesentence).count() == 0:
+            if Sense.objects.filter(exampleSentences=examplesentence).count() == 0:
                 examplesentence.delete()
         sense.delete()
 

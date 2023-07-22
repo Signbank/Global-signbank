@@ -300,7 +300,10 @@ input {
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h3>{% trans "Gloss Sense Translations" %}</h3>
-                        <h4>{{gloss|get_default_annotation_idgloss_translation}}</h4>
+                        {% blocktrans %}
+                        <p>Here you can update keywords and add translations to senses.</p>
+                        <p>The update button updates keywords and removes empty senses.</p>
+                        {% endblocktrans %}
                     </div>
                     <div class='modal-body'>
                         <div class="col-md-12">
@@ -309,6 +312,14 @@ input {
                             {% csrf_token %}
                             <table class="table table-condensed">
                             <thead>
+                            <tr>
+                                <th></th>
+                                {% for language in dataset_languages %}
+                                {% with gloss|get_annotation_idgloss_translation:language as annotationidglosstranslation %}
+                                    <th>{{annotationidglosstranslation}}</th>
+                                {% endwith %}
+                                {% endfor %}
+                            </tr>
                             <tr>
                                 <th>{% trans "Sense" %}</th>
                                 {% for language in dataset_languages %}
@@ -389,7 +400,7 @@ input {
                                        <input name='keyword' id="new_sense_keywords_{{gloss.id}}_{{keywords_language.id}}"
                                               type="text" size="40"
                                               data-language='{{keywords_language.id}}'
-                                              placeholder='{% trans "Text" %}' value="">
+                                              placeholder='{{keywords_language.name}} {% trans "Text" %}' value="">
                                    </td>
                                    {% endfor %}
                                </tr>
@@ -421,7 +432,13 @@ input {
                 <div class="col-md-12">
                 <div class="modal-content">
                     <div class='modal-header'>
-                        <h3>{% trans "Gloss Keywords Mapping to Senses" %}</h3>
+                        <h3>{% trans "Gloss Keywords Mapping to Senses" %} ({{language.name}})</h3>
+                        {% blocktrans %}
+                        <p>Here you can edit keywords and regroup them to another sense by changing the sense number.</p>
+                        <p>If a sense number appears without keywords, switch to the Senses Matrix popup to
+                           view all languages.</p>
+                        <p>You can also remove empty senses there.</p>
+                        {% endblocktrans %}
                     </div>
                     <div class='modal-body'>
                         <div class="col-md-12">

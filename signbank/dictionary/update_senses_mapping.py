@@ -404,6 +404,12 @@ def mapping_add_keyword(request, glossid):
     order_sense_tuples = [(gs.order, gs.sense) for gs in gloss_senses]
     current_senses = [gs.order for gs in gloss_senses]
 
+    check_non_empty = list(set(new_sense_keywords))
+
+    if len(check_non_empty) == 1 and check_non_empty[0] == '':
+        # no text was filled in
+        return {}
+
     sense_keywords = dict()
     for order, sense in order_sense_tuples:
         sense_keywords[order] = []
@@ -429,12 +435,6 @@ def mapping_add_keyword(request, glossid):
 
     # the indices just computed could differ if there are translations with keyword ''
     gloss_translation_indices = [trans.index for trans in gloss.translation_set.all()]
-    # the following is used to obtain translations for the gloss with the empty string keyword
-    current_trans = gloss.translation_set.all()
-    current_keywords_gloss = dict()
-    for dataset_language in translation_languages:
-        current_keywords_gloss[dataset_language.id] = [t.translation.text
-                                                       for t in current_trans.filter(language=dataset_language)]
 
     if not current_senses:
         new_sense = 1
@@ -487,8 +487,8 @@ def mapping_add_keyword(request, glossid):
         new_translations.append({'new_text': new_text,
                                  'new_trans_id': str(new_trans.id),
                                  'new_language': str(target_language_id)})
-        translations_row[str(target_language)] = {'new_text': new_text,
-                                                  'new_trans_id': str(new_trans.id)}
+        translations_row[str(target_language_id)] = {'new_text': new_text,
+                                                     'new_trans_id': str(new_trans.id)}
 
         sense_language = sense_translations[target_language]
         sense_language.translations.add(new_trans)
@@ -533,7 +533,12 @@ def mapping_edit_senses_matrix(request, glossid):
         for dataset_language in translation_languages:
             try:
                 sense_trans = sense.senseTranslations.get(language=dataset_language)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
+            except ObjectDoesNotExist:
+                # there should only be one
+                sense_trans = SenseTranslation(language=dataset_language)
+                sense_trans.save()
+                sense.senseTranslations.add(sense_trans)
+                # the new sense translation object is empty
                 continue
             for trans in sense_trans.translations.all().order_by('index'):
                 current_indices.append(trans.index)
@@ -642,6 +647,7 @@ def mapping_edit_senses_matrix(request, glossid):
             continue
 
         original_sense = order_sense_lookup[target_sense_number]
+        # above it was ensured that there is a SenseTranslation object for each language
         original_sense_translations = original_sense.senseTranslations.get(language=language_obj)
 
         (keyword_object, created) = Keyword.objects.get_or_create(text=new_trans)

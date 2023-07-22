@@ -76,13 +76,13 @@ def check_consistency_senses(gloss, delete_empty=False):
                 sense.delete()
 
 
-def reorder_translations(gloss, order):
+def reorder_translations(gloss_sense, order):
 
+    gloss = gloss_sense.gloss
     consistent = consistent_senses(gloss, include_translations=False)
     if not consistent:
         print('inconsistent senses: ', gloss, str(gloss.id))
         return
-    gloss_sense = GlossSense.objects.get(gloss=gloss, order=order)
     sense = gloss_sense.sense
     for sensetranslation in sense.senseTranslations.all():
         inconsistent_translations = []
@@ -107,7 +107,7 @@ def reorder_translations(gloss, order):
                 inconsistent_translations.append(trans)
 
         if wrong_order_index_translations:
-            print('wrong order index: ', wrong_language_translations)
+            # these are being updated or removed if not possible
             for trans in wrong_order_index_translations:
                 try:
                     trans.orderIndex = order
@@ -146,8 +146,6 @@ def reorder_translations(gloss, order):
             # this does not violate any constraint
             trans.index = index
             trans.save()
-        if inconsistent_translations:
-            print(inconsistent_translations)
 
 
 def reorder_sensetranslations(gloss, sensetranslation, order, reset=False, force_reset=False):
