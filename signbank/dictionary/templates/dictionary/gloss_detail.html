@@ -1058,6 +1058,7 @@ option:not(:checked) {
                                                                     <form name="delete_examplesentence_form" method="post" action="{% url 'dictionary:delete_examplesentence' sense.id %}" >
                                                                         {% csrf_token %}
                                                                         <input type='hidden' name='examplesentenceid' value='{{examplesentence.id}}'>
+                                                                        <input type='hidden' name='glossid' value='{{gloss.id}}'>
                                                                         <div class="modal-footer">
                                                                             <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
                                                                             <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
@@ -1078,6 +1079,7 @@ option:not(:checked) {
                                                                         {% csrf_token %}
                                                                         <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}">
                                                                         <input type="hidden" name="senseid" value="{{ sense.id }}">
+                                                                        <input type="hidden" name="glossid" value="{{ gloss.id }}">
                                                                         <input type='hidden' name='value' value='confirmed'>
                                                                         Type: <select name="sentenceType">
                                                                             {% for stype in sentencetypes %}
@@ -1144,6 +1146,7 @@ option:not(:checked) {
                                                                 <form name="create_examplesentence_form" action='{% url "dictionary:create_examplesentence" sense.id %}' method='post'>
                                                                     {% csrf_token %}
                                                                     <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
+                                                                    <input type="hidden" name="glossid" value="{{ gloss.id }}"/>
                                                                     <input type='hidden' name='value' value='confirmed'>
                                                                     Type: 
                                                                     <select name="sentenceType">
