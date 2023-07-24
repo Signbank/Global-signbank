@@ -371,7 +371,7 @@ def update_sense(request, senseid):
             if not values[0] == '':
                 for k, v in enumerate(values): 
                     values[k] = str(v.strip())
-                values = sorted(values)
+                values = values
                 vals[str(dataset_language)]=values
     
     # Check if input given is empty
@@ -540,7 +540,7 @@ def create_sense(request, glossid):
             if not values[0] == '':
                 for k, v in enumerate(values): 
                     values[k] = v.strip()
-                values = sorted(values)
+                values = values
                 vals[str(dataset_language)]=values
 
     # Check if input given is empty

@@ -674,13 +674,13 @@ class SenseTranslation(models.Model):
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
     def get_translations(self):
-        return ", ".join(sorted([t.translation.text.strip() for t in self.translations.all()]))
+        return ", ".join([t.translation.text.strip() for t in self.translations.all()])
 
     def get_translations_return(self):
-        return "\n".join(sorted([t.translation.text.strip() for t in self.translations.all()]))
+        return "\n".join([t.translation.text.strip() for t in self.translations.all()])
     
     def get_translations_list(self):
-        return sorted([t.translation.text.strip() for t in self.translations.all()])
+        return [t.translation.text.strip() for t in self.translations.all()]
 
     def __str__(self):
         return self.get_translations()
@@ -719,7 +719,7 @@ class Sense(models.Model):
         sense_translations = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
-                translation_list = sorted([st.get_translations_return() for st in self.senseTranslations.filter(language = dataset_translation_language)])[0]
+                translation_list = [st.get_translations_return() for st in self.senseTranslations.filter(language = dataset_translation_language)][0]
                 sense_translations[str(dataset_translation_language)]= translation_list
             else:
                 sense_translations[str(dataset_translation_language)]= ""
@@ -729,7 +729,7 @@ class Sense(models.Model):
         sense_translations = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
-                translation_list = sorted([st.get_translations_list() for st in self.senseTranslations.filter(language = dataset_translation_language)])[0]
+                translation_list = [st.get_translations_list() for st in self.senseTranslations.filter(language = dataset_translation_language)][0]
                 sense_translations[str(dataset_translation_language)]= translation_list
             else:
                 sense_translations[str(dataset_translation_language)]= ""
