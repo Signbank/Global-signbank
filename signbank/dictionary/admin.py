@@ -775,9 +775,20 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     else:
         show_field_choice_colors = False
 
-    list_display = ['name'] \
+    list_display = ['choice'] \
                    + ['machine_value', 'field']
     list_filter = ['field']
+
+    def choice(self, obj=None):
+        if obj is None:
+            return ""
+        if obj.name:
+            return obj.name
+        if obj.machine_value == 0:
+            return '-'
+        if obj.machine_value == 1:
+            return 'N/A'
+        return str(obj.machine_value)
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
@@ -907,8 +918,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # print('ADMIN has_change_permission is False for FingerSelection')
             return False
 
-        if obj is not None and obj.machine_value in [0,1]:
-            return False
+        if obj is not None and obj.machine_value in [0, 1]:
+            if obj.name in ['-', 'N/A']:
+                return False
 
         opts = self.opts
         codename = get_permission_codename('change', opts)
@@ -924,7 +936,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     def save_model(self, request, obj, form, change):
 
-        if obj.machine_value == None:
+        if not obj.machine_value:
             # Check out the query-set and make sure that it exists
             qs = FieldChoice.objects.filter(field=obj.field)
             if qs.count() == 0:
@@ -937,12 +949,26 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 # Calculate highest currently occurring value
                 highest_machine_value = max([field_choice.machine_value for field_choice in qs])
                 # The automatic machine value we calculate is 1 higher
-                obj.machine_value= highest_machine_value+1
+                obj.machine_value = highest_machine_value+1
         elif obj.machine_value < 2:
             # this case is prevented in the interface via Permission Denied
-            # it may be possible during testing
-            print('Not allowed to update field choices with machine value 0 or 1.')
-            return
+            # check if the name field is set
+            with override(LANGUAGE_CODE):
+                name_field = 'name_'+LANGUAGE_CODE
+                original_value = getattr(obj, name_field)
+                name_field_name = 'name'
+                original_value_name = getattr(obj, name_field_name)
+                if obj.machine_value == 0 and (original_value_name != '-' or original_value != '-'):
+                    setattr(obj, name_field_name, '-')
+                    setattr(obj, name_field, '-')
+                    obj.save()
+                elif obj.machine_value == 1 and (original_value_name != 'N/A' or original_value != 'N/A'):
+                    setattr(obj, name_field_name, 'N/A')
+                    setattr(obj, name_field, 'N/A')
+                    obj.save()
+                else:
+                    print('Not allowed to update field choices with machine value 0 or 1.')
+                    return
 
         if 'field_color' in form.data.keys():
             new_color = form.data['field_color']

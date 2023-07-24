@@ -1,6 +1,6 @@
 from modeltranslation.translator import translator, TranslationOptions
 from .models import Language, FieldChoice, Handshape, SemanticField, DerivationHistory
-from signbank.settings.server_specific import LANGUAGES, MODELTRANSLATION_LANGUAGES
+from signbank.settings.server_specific import LANGUAGES, MODELTRANSLATION_LANGUAGES, MODELTRANSLATION_FIELDCHOICE_LANGUAGES
 
 # This file lists settings for django-modeltranslation.
 # Here you can define which fields from which models to translate.
@@ -16,7 +16,7 @@ translator.register(Language, LanguageTranslationOptions)
 
 class FieldChoiceTranslationOptions(TranslationOptions):
     fields = ('name',)
-    required_languages = tuple([t for t in MODELTRANSLATION_LANGUAGES])
+    required_languages = tuple([t for t in MODELTRANSLATION_FIELDCHOICE_LANGUAGES])
 
 
 translator.register(FieldChoice, FieldChoiceTranslationOptions)

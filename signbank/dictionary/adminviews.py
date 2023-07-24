@@ -1647,8 +1647,9 @@ class GlossDetailView(DetailView):
             language = Language.objects.get(id=get_default_language_id())
             context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
 
-        sentencetype_choice_list = FieldChoice.objects.filter(field__iexact='SentenceType')
-        context['sentencetypes'] = choicelist_queryset_to_translated_dict(sentencetype_choice_list, id_prefix='', ordered=False, shortlist=True)
+        sentencetype_choices = FieldChoice.objects.filter(field__iexact='SentenceType').order_by('machine_value')
+        sentencetype_choice_list = choicelist_queryset_to_translated_dict(sentencetype_choices, id_prefix='', ordered=False)
+        context['sentencetypes'] = sentencetype_choice_list
         context['senses'] = gl.senses.all().order_by('glosssense')
 
         bad_dialect = False
