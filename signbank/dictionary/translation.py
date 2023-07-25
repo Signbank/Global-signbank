@@ -16,7 +16,7 @@ translator.register(Language, LanguageTranslationOptions)
 
 class FieldChoiceTranslationOptions(TranslationOptions):
     fields = ('name',)
-    required_languages = tuple([t for t in MODELTRANSLATION_FIELDCHOICE_LANGUAGES])
+    required_languages = tuple([t for t in MODELTRANSLATION_LANGUAGES])
 
 
 translator.register(FieldChoice, FieldChoiceTranslationOptions)

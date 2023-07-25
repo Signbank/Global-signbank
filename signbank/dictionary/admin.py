@@ -829,18 +829,22 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # these are no longer field choices, allow to delete obsolete field choices
             return True
 
+        fieldchoices_with_same_machine_value = FieldChoice.objects.filter(field=field_value,
+                                                                          machine_value=field_machine_value).count()
+
         if not field_machine_value or field_machine_value < 2:
             # do not allow to delete '-' (0) and 'N/A' (1)
-            return False
+            if fieldchoices_with_same_machine_value == 1:
+                return False
 
         # check if this is a duplicate, if so allow deletion
-        fieldchoices_with_same_machine_value = FieldChoice.objects.filter(field=field_value,machine_value=field_machine_value).count()
         if fieldchoices_with_same_machine_value > 1:
             return True
 
         from signbank.tools import fields_with_choices_glosses, fields_with_choices_handshapes, \
             fields_with_choices_definition, fields_with_choices_morphology_definition, \
-            fields_with_choices_other_media_type, fields_with_choices_morpheme_type
+            fields_with_choices_other_media_type, fields_with_choices_morpheme_type, \
+            fields_with_choices_examplesentences
 
         fields_with_choices_glosses = fields_with_choices_glosses()
         if field_value in fields_with_choices_glosses.keys():
@@ -860,6 +864,16 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             for item in queries_h:
                 query_h |= item
             count_in_use = Handshape.objects.filter(query_h).count()
+            return not count_in_use
+
+        fields_with_choices_examplesentences = fields_with_choices_examplesentences()
+        if field_value in fields_with_choices_examplesentences.keys():
+            queries_h = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                         for field_name in fields_with_choices_examplesentences[field_value]]
+            query_h = queries_h.pop()
+            for item in queries_h:
+                query_h |= item
+            count_in_use = ExampleSentence.objects.filter(query_h).count()
             return not count_in_use
 
         fields_with_choices_definition = fields_with_choices_definition()
@@ -919,8 +933,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             return False
 
         if obj is not None and obj.machine_value in [0, 1]:
-            if obj.name in ['-', 'N/A']:
-                return False
+            return False
 
         opts = self.opts
         codename = get_permission_codename('change', opts)
@@ -952,23 +965,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 obj.machine_value = highest_machine_value+1
         elif obj.machine_value < 2:
             # this case is prevented in the interface via Permission Denied
-            # check if the name field is set
-            with override(LANGUAGE_CODE):
-                name_field = 'name_'+LANGUAGE_CODE
-                original_value = getattr(obj, name_field)
-                name_field_name = 'name'
-                original_value_name = getattr(obj, name_field_name)
-                if obj.machine_value == 0 and (original_value_name != '-' or original_value != '-'):
-                    setattr(obj, name_field_name, '-')
-                    setattr(obj, name_field, '-')
-                    obj.save()
-                elif obj.machine_value == 1 and (original_value_name != 'N/A' or original_value != 'N/A'):
-                    setattr(obj, name_field_name, 'N/A')
-                    setattr(obj, name_field, 'N/A')
-                    obj.save()
-                else:
-                    print('Not allowed to update field choices with machine value 0 or 1.')
-                    return
+            return
 
         if 'field_color' in form.data.keys():
             new_color = form.data['field_color']
