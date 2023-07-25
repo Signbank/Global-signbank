@@ -11,9 +11,20 @@ def add_default_sentencetypes(apps, schema_editor):
     :return:
     """
     FieldChoice = apps.get_model('dictionary', 'FieldChoice')
-    new_field_choice_0, created = FieldChoice.objects.get_or_create(field='SentenceType', name='-', machine_value=0)
-    new_field_choice_1, created = FieldChoice.objects.get_or_create(field='SentenceType', name='N/A', machine_value=1)
-
+    new_field_choice_0, created = FieldChoice.objects.get_or_create(field='SentenceType', machine_value=0)
+    new_field_choice_1, created = FieldChoice.objects.get_or_create(field='SentenceType', machine_value=1)
+    new_field_choice_0.name_en = '-'
+    new_field_choice_0.name_nl = '-'
+    new_field_choice_0.name_zh_hans = '-'
+    new_field_choice_0.name_he = '-'
+    new_field_choice_0.name_ar = '-'
+    new_field_choice_0.save()
+    new_field_choice_1.name_en = 'N/A'
+    new_field_choice_1.name_nl = 'N/A'
+    new_field_choice_1.name_zh_hans = 'N/A'
+    new_field_choice_1.name_he = 'N/A'
+    new_field_choice_1.name_ar = 'N/A'
+    new_field_choice_1.save()
 
 class Migration(migrations.Migration):
 
