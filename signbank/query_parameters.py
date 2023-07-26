@@ -326,7 +326,7 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
     query_dict = dict()
     for key in query_parameters:
         if key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) \
-                or key.startswith(lemma_search_field_prefix):
+                or key.startswith(lemma_search_field_prefix) or key == 'translation':
             # language-based fields are done later
             continue
         elif key == 'search_type':
@@ -364,7 +364,8 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
         keyword_field_name = keyword_search_field_prefix + language.language_code_2char
         if keyword_field_name in query_parameters:
             query_dict[keyword_field_name] = _('Senses') + " (" + language.name + ")"
-
+        if 'translation' in query_parameters:
+            query_dict['translation'] = _('Search Senses')
     return query_dict
 
 def pretty_print_query_values(dataset_languages,query_parameters):

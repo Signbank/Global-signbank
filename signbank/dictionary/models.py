@@ -199,7 +199,7 @@ class Definition(models.Model):
     @classmethod
     def get_field_names(cls):
         fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields]
+        return [field.name for field in fields if field.concrete]
 
     @classmethod
     def get_field(cls, field):
@@ -389,7 +389,7 @@ class Handshape(models.Model):
     @classmethod
     def get_field_names(cls):
         fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields]
+        return [field.name for field in fields if field.concrete]
 
     @classmethod
     def get_field(cls, field):
@@ -563,7 +563,7 @@ class ExampleSentence(models.Model):
     @classmethod
     def get_field_names(cls):
         fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields]
+        return [field.name for field in fields if field.concrete]
 
     @classmethod
     def get_field(cls, field):
@@ -803,7 +803,7 @@ class Gloss(models.Model):
     @classmethod
     def get_field_names(cls):
         fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields]
+        return [field.name for field in fields if field.concrete]
 
     @classmethod
     def get_field(cls, field):
@@ -2384,7 +2384,7 @@ class MorphologyDefinition(models.Model):
     @classmethod
     def get_field_names(cls):
         fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields]
+        return [field.name for field in fields if field.concrete]
 
     @classmethod
     def get_field(cls, field):
@@ -2417,7 +2417,7 @@ class Morpheme(Gloss):
     @classmethod
     def get_field_names(cls):
         fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields]
+        return [field.name for field in fields if field.concrete]
 
     @classmethod
     def get_field(cls, field):
@@ -2598,7 +2598,7 @@ class OtherMedia(models.Model):
     @classmethod
     def get_field_names(cls):
         fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields]
+        return [field.name for field in fields if field.concrete]
 
     @classmethod
     def get_field(cls, field):
@@ -2682,7 +2682,7 @@ class Dataset(models.Model):
     @classmethod
     def get_field_names(cls):
         fields = cls._meta.get_fields(include_hidden=True)
-        return [field.name for field in fields]
+        return [field.name for field in fields if field.concrete]
 
     @classmethod
     def get_field(cls, field):
