@@ -264,16 +264,18 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
         default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
+        # these are the same fields as for csv export
+        # do not include frequency fields
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
+
+        glossfieldnames = [fname for fname in fieldnames
+                           if fname in Gloss.get_field_names()]
+
         fields = dict()
-        columns_to_skip = dict()
-        for fieldname in Gloss.get_field_names():
+        # this data structure is set up to reverse map column names to gloss fields
+        for fieldname in glossfieldnames:
             field = Gloss.get_field(fieldname)
-            if fieldname in FIELDS['frequency']:
-                columns_to_skip[field.verbose_name] = field
-            elif hasattr(field, 'verbose_name'):
-                fields[field.verbose_name] = field
-            else:
-                fields[field] = field
+            fields[field.verbose_name] = field
 
         if gloss.lemma.dataset:
             current_dataset = gloss.lemma.dataset.acronym
@@ -283,9 +285,6 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
         # Go through all values in the value dict, looking for differences with the gloss
         for human_key, new_human_value in valuedict.items():
-
-            if human_key in columns_to_skip.keys():
-                continue
 
             new_human_value = new_human_value.strip()
 
