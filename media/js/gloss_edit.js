@@ -198,6 +198,8 @@ function disable_edit() {
     $('#subhndsh').css('color', 'blue');
     $('.editform').hide();
     $('.button-to-appear-in-edit-mode').hide();
+    $('.sense-button-to-appear-in-edit-mod').hide();
+    $('.sense-icon').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
     $('#add_relation_form').hide();
@@ -272,6 +274,8 @@ function enable_edit() {
     $('#idgloss').html(lemma_group_text);
     $('.editform').show();
     $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
+    $('.sense-button').show();
+    $('.sense-icon').show();
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();
     $('#add_relation_form').show();

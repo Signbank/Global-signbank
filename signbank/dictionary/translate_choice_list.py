@@ -129,8 +129,8 @@ def check_value_to_translated_human_value(field_name, check_value):
     # used to translate the values stored in GlossRevision when booleans
     # the Gloss model needs to be imported here, at runtime
     from signbank.dictionary.models import Gloss
-    gloss_fields = [ field.name for field in Gloss._meta.get_fields() ]
-    if field_name not in gloss_fields or Gloss._meta.get_field(field_name).__class__.__name__ != 'BooleanField':
+    gloss_fields = Gloss.get_field_names()
+    if field_name not in gloss_fields or Gloss.get_field(field_name).__class__.__name__ != 'BooleanField':
         # don't do anything to value
         return check_value
 

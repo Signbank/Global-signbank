@@ -81,6 +81,13 @@ var busy_editing = 0;
     $('.lemmatypeahead').on("input", function() {
           $(this).parent().next().val("")
         });
+    sensetranslationtypeahead($('.sensetranslationtypeahead'));
+    $('.sensetranslationtypeahead').bind('sensetranslationtypeahead:selected', function(ev, suggestion) {
+          $(this).parent().next().val(suggestion.pk)
+        });
+    $('.sensetranslationtypeahead').on("input", function() {
+          $(this).parent().next().val("")
+        });
 
 
     // this is needed to help check different browsers
@@ -182,6 +189,8 @@ function disable_edit() {
     $('#subhndsh').css('color', 'blue');
     $('.editform').hide();
     $('.button-to-appear-in-edit-mode').hide();
+    $('.sense-button').hide();
+    $('.sense-icon').hide();
     $('#enable_edit').addClass('btn-primary').removeClass('btn-danger');
     $('#add_definition').hide();
     $('#add_relation_form').hide();
@@ -251,6 +260,8 @@ function enable_edit() {
     $('#idgloss').html(lemma_group_text);
     $('.editform').show();
     $('.button-to-appear-in-edit-mode').show().addClass('btn-danger');
+    $('.sense-button').show();
+    $('.sense-icon').show();
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
     $('#add_definition').show();
     $('#add_relation_form').show();
@@ -381,8 +392,13 @@ function configure_edit() {
          type      : 'textarea',
 		 callback : update_view_and_remember_original_value
      });
+     // edit_role needs a new/different edit_post_url
      $('.edit_role').editable(edit_post_url, {
-         params : { a: swap(definition_role_choices)[$(this).attr('value')] },
+         params : { a: definition_role_choices_reverse_json[$(this).attr('value')],
+                    field: $(this).attr('id'),
+                    display: $(this).attr('value'),
+                    colors: definition_role_choices_colors,
+                    choices: definition_role_choices },
          type      : 'select',
          data      : definition_role_choices,
 		 callback : update_view_and_remember_original_value
@@ -719,6 +735,54 @@ $.editable.addInputType('lemmatypeahead', {
 
       return (input);
    },
+});
+
+
+var sensetranslation_bloodhound = new Bloodhound({
+    datumTokenizer: function(d) { return d.tokens; },
+    queryTokenizer: Bloodhound.tokenizers.whitespace,
+    remote: url+'/dictionary/ajax/sensetranslation/'+gloss_dataset_id+'/'+gloss_default_language_code+'/%QUERY'
+  });
+
+sensetranslation_bloodhound.initialize();
+
+// Check which textarea has been typed in
+let currentInputLanguage; // Declare the variable outside the event listener's scope
+const textareas = document.querySelectorAll('textarea');
+// Add event listener to each textarea
+textareas.forEach(textarea => {
+  textarea.addEventListener('input', function() {
+    currentInputLanguage = this.id; // Assign the id to the variable
+  });
+});
+
+function sensetranslationtypeahead(target) {
+    $(target).typeahead(null, {
+        name: 'sensetranslationtarget',
+        displayKey: 'sensetranslation',
+        source: sensetranslation_bloodhound.ttAdapter(),
+        templates: {
+            suggestion: function(sensetranslation) {
+                if ((currentInputLanguage) && (sensetranslation.language == currentInputLanguage)){
+                    return("<p><strong>" + sensetranslation.sensetranslation + "</strong></p>");
+                }
+                else{
+                    return ''
+                }
+            }
+        }
+    });
+};
+
+$.editable.addInputType('sensetranslationtypeahead', {
+    element: function(settings, original) {
+        var input = $('<input type="text" class="sensetranslationtypeahead">');
+        $(this).append(input);
+
+        sensetranslationtypeahead(input);
+
+        return (input);
+    },
 });
 
 /*

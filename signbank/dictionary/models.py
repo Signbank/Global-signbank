@@ -83,6 +83,7 @@ class FieldChoice(models.Model):
     THUMB = 'Thumb'
     VALENCE = 'Valence'
     WORDCLASS = 'WordClass'
+    SENTENCETYPE = 'SentenceType'
 
     FIELDCHOICE_FIELDS = [
         (ABSORIFING, 'AbsOriFing'),
@@ -115,7 +116,8 @@ class FieldChoice(models.Model):
         (SPREADING, 'Spreading'),
         (THUMB, 'Thumb'),
         (VALENCE, 'Valence'),
-        (WORDCLASS, 'WordClass')
+        (WORDCLASS, 'WordClass'),
+        (SENTENCETYPE, 'SentenceType')
     ]
 
     field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)
@@ -138,7 +140,7 @@ class Translation(models.Model):
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
     translation = models.ForeignKey("Keyword", on_delete=models.CASCADE)
-    index = models.IntegerField("Index")
+    index = models.IntegerField("Index", default=1)
     orderIndex = models.IntegerField(_("Sense Index"), default=1)
 
     def __str__(self):
@@ -146,17 +148,6 @@ class Translation(models.Model):
             return self.gloss.idgloss + ' (' + self.translation.text + ')'
         else:
             return self.gloss.idgloss
-
-    def get_absolute_url(self):
-        """Return a URL for a view of this translation."""
-
-        alltrans = self.translation.translation_set.all()
-        idx = 1
-        for tr in alltrans:
-            if tr == self:
-                return "/dictionary/words/" + str(self.translation) + "-" + str(idx) + ".html"
-            idx += 1
-        return "/dictionary/"
 
     class Meta:
         unique_together = (("gloss", "language", "translation", "orderIndex"),)
@@ -175,51 +166,11 @@ class Keyword(models.Model):
 
     text = models.CharField(max_length=100, unique=True)
 
-    def inWeb(self):
-        """Return True if some gloss associated with this
-        keyword is in the web version of the dictionary"""
-
-        return len(self.translation_set.filter(gloss__inWeb__exact=True)) != 0
-
     class Meta:
         ordering = ['text']
 
     class Admin:
         search_fields = ['text']
-
-    def match_request(self, request, n):
-        """Find the translation matching a keyword request given an index 'n'
-        response depends on login status
-        Returns a tuple (translation, count) where count is the total number
-        of matches."""
-
-        if request.user.has_perm('dictionary.search_gloss'):
-            alltrans = self.translation_set.all()
-        else:
-            alltrans = self.translation_set.filter(gloss__inWeb__exact=True)
-
-        # remove crude signs for non-authenticated users if ANON_SAFE_SEARCH is on
-        try:
-            crudetag = tagging.models.Tag.objects.get(name='lexis:crude')
-        except:
-            crudetag = None
-
-        safe = (not request.user.is_authenticated) and settings.ANON_SAFE_SEARCH
-        if safe and crudetag:
-            alltrans = [tr for tr in alltrans if not crudetag in tagging.models.Tag.objects.get_for_object(tr.gloss)]
-
-        # if there are no translations, generate a 404
-        if len(alltrans) == 0:
-            raise Http404
-
-        # take the nth translation if n is in range
-        # otherwise take the last
-        if n - 1 < len(alltrans):
-            trans = alltrans[n - 1]
-        else:
-            trans = alltrans[len(alltrans) - 1]
-
-        return (trans, len(alltrans))
 
 
 class Definition(models.Model):
@@ -244,6 +195,16 @@ class Definition(models.Model):
         list_display = ['gloss', 'role', 'count', 'text']
         list_filter = ['role']
         search_fields = ['gloss__idgloss']
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
 
     def get_role_display(self):
         return self.role.name if self.role else '-'
@@ -425,6 +386,16 @@ class Handshape(models.Model):
                 d[f.name] = _(field.name)
         return d
 
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
+
     def get_image_path(self, check_existance=True):
         """Returns the path within the writable and static folder"""
 
@@ -565,7 +536,6 @@ class Handshape(models.Model):
             count_selected_fingers += 1
         return count_selected_fingers
 
-
 class Language(models.Model):
     """A written language, used for translations in written languages."""
     name = models.CharField(max_length=50)
@@ -580,6 +550,208 @@ class Language(models.Model):
 
     def __str__(self):
         return self.name
+
+class ExampleSentence(models.Model):
+    """An example sentence belongs to one or more sense(s)"""
+    
+    sentenceType = FieldChoiceForeignKey(FieldChoice, on_delete=models.SET_NULL, null=True,
+                                    limit_choices_to={'field': FieldChoice.SENTENCETYPE},
+                                    field_choice_category=FieldChoice.SENTENCETYPE,
+                                    verbose_name=_("Sentence Type"), related_name="sentence_type")
+    negative = models.BooleanField(default=False)
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
+
+    def get_dataset(self):
+        return self.sense_set.first().glosses.first().lemma.dataset
+
+    def get_examplestc_translations_dict_with(self):
+        translations = {}
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
+            if self.examplesentencetranslation_set.filter(language = dataset_translation_language).count() == 1:
+                translations[str(dataset_translation_language)] = str(self.examplesentencetranslation_set.all().get(language = dataset_translation_language))
+            else:
+                translations[str(dataset_translation_language)] = ""
+        return translations
+
+    def get_examplestc_translations_dict_without(self):
+        return {k: v for k, v in self.get_examplestc_translations_dict_with().items() if v}
+
+    def get_examplestc_translations(self):
+        return [k+": "+v for k,v in self.get_examplestc_translations_dict_without().items()]
+
+    def get_type(self):
+        return self.sentenceType.name if self.sentenceType else ''
+
+    def get_video_path(self):
+        try:
+            examplevideo = self.examplevideo_set.get(version=0)
+            return str(examplevideo.videofile)
+        except ObjectDoesNotExist:
+            return ''
+        except MultipleObjectsReturned:
+            # Just return the first
+            examplevideos = self.examplevideo_set.filter(version=0)
+            return str(examplevideos[0].videofile)
+
+    def get_video_path_prefix(self):
+        try:
+            examplesentence = self.examplesentence_set.get(version=0)
+            prefix, extension = os.path.splitext(str(examplesentence))
+            return prefix
+        except ObjectDoesNotExist:
+            return ''
+        
+    def get_video(self):
+        """Return the video object for this gloss or None if no video available"""
+
+        video_path = self.get_video_path()
+        filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
+        if os.path.exists(filepath.encode('utf-8')):
+            return video_path
+        else:
+            return ''
+    
+    def has_video(self):
+        """Test to see if the video for this sign is present"""
+        
+        return self.get_video() not in ['', None]
+
+    def add_video(self, user, videofile, recorded):
+        # Preventing circular import
+        from signbank.video.models import ExampleVideo, ExampleVideoHistory, get_sentence_video_file_path
+
+        # Backup the existing video objects stored in the database
+        existing_videos = ExampleVideo.objects.filter(examplesentence=self)
+        for video_object in existing_videos:
+            video_object.reversion(revert=False)
+
+        # Create a new ExampleVideo object
+        if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
+            video = ExampleVideo(examplesentence=self)
+            video.videofile.save(get_sentence_video_file_path(video, str(videofile)), videofile)
+        else:
+            video = ExampleVideo(videofile=videofile, examplesentence=self)
+        video.save()
+        video.ch_own_mod_video()
+        video.make_small_video()
+
+        # Create a ExampleVideoHistory object
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
+        examplevideohistory = ExampleVideoHistory(action="upload", examplesentence=self, actor=user,
+                                              uploadfile=videofile, goal_location=video_file_full_path)
+        examplevideohistory.save()
+
+        return video
+
+    
+    def __str__(self):
+        return (" | ").join(self.get_examplestc_translations())
+
+
+class ExampleSentenceTranslation(models.Model):
+    """A sentence translation belongs to one example sentence"""
+    
+    text = models.TextField()
+    examplesentence = models.ForeignKey(ExampleSentence, on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
+
+class SenseTranslation(models.Model):
+    """A sense translation belongs to a sense"""
+    
+    translations = models.ManyToManyField(Translation)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
+
+    def get_translations(self):
+        return ", ".join([t.translation.text.strip() for t in self.translations.all()])
+
+    def get_translations_return(self):
+        return "\n".join([t.translation.text.strip() for t in self.translations.all()])
+    
+    def get_translations_list(self):
+        return [t.translation.text.strip() for t in self.translations.all()]
+
+    def __str__(self):
+        return self.get_translations()
+    
+class Sense(models.Model):
+    """A sense belongs to a gloss and consists of a set of translation(s)"""
+    
+    senseTranslations = models.ManyToManyField(SenseTranslation)
+    exampleSentences = models.ManyToManyField(ExampleSentence)
+
+    def get_dataset(self):
+        return self.glosses.first().lemma.dataset
+
+    def get_example_sentences(self):
+        translations = []
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
+            sentences = []
+            for exampleSentence in self.exampleSentences.all():
+                if exampleSentence.examplesentencetranslation_set.filter(language = dataset_translation_language).exists():
+                    sentences.append(exampleSentence.examplesentencetranslation_set.all().get(language = dataset_translation_language).text)
+            if len(sentences) > 0:
+                translations.append(str(dataset_translation_language) + ": " + (", ").join(sentences))
+        return (", ").join(translations)
+
+    def get_sense_translations_dict_with(self):
+        sense_translations = {}
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
+            if self.senseTranslations.filter(language = dataset_translation_language).exists():
+                translation_list = [st.get_translations() for st in self.senseTranslations.filter(language = dataset_translation_language)][0]
+                sense_translations[str(dataset_translation_language)]= translation_list
+            else:
+                sense_translations[str(dataset_translation_language)]= ""
+        return sense_translations
+    
+    def get_sense_translations_dict_with_return(self):
+        sense_translations = {}
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
+            if self.senseTranslations.filter(language = dataset_translation_language).exists():
+                translation_list = [st.get_translations_return() for st in self.senseTranslations.filter(language = dataset_translation_language)][0]
+                sense_translations[str(dataset_translation_language)]= translation_list
+            else:
+                sense_translations[str(dataset_translation_language)]= ""
+        return sense_translations
+
+    def get_sense_translations_dict_with_list(self):
+        sense_translations = {}
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
+            if self.senseTranslations.filter(language = dataset_translation_language).exists():
+                translation_list = [st.get_translations_list() for st in self.senseTranslations.filter(language = dataset_translation_language)][0]
+                sense_translations[str(dataset_translation_language)]= translation_list
+            else:
+                sense_translations[str(dataset_translation_language)]= ""
+        return sense_translations
+    
+    def get_sense_translations_dict_without_return(self):
+        return {k: v for k, v in self.get_sense_translations_dict_with_return().items() if v}
+
+    def get_sense_translations_dict_without(self):
+        return {k: v for k, v in self.get_sense_translations_dict_with().items() if v}
+
+    def get_sense_translations_dict_without_list(self):
+        return {k: v for k, v in self.get_sense_translations_dict_with_list().items() if v}
+
+    def get_sense_translations(self):
+        return [k+": "+v for k,v in self.get_sense_translations_dict_without().items()]
+    
+    def __str__(self):
+        str_sense = []
+        for sensetranslation in self.senseTranslations.all():
+            str_sense .append(str(sensetranslation))
+        return " | ".join(str_sense)
 
 
 class Gloss(models.Model):
@@ -627,6 +799,16 @@ class Gloss(models.Model):
             else:
                 d[f.name] = _(field.name)
         return d
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
 
     lemma = models.ForeignKey("LemmaIdgloss", null=True, on_delete=models.SET_NULL)
 
@@ -766,6 +948,17 @@ class Gloss(models.Model):
                                 help_text="If there is more than one sense of a sign enter a number here, all signs with sense>1 will use the same video as sense=1")
     sense.list_filter_sense = True
 
+    senses = models.ManyToManyField(Sense, 
+        through = 'GlossSense',
+        related_name    = 'glosses',
+        verbose_name    = _(u'Senses'),
+        help_text           = _(u'Senses in this Gloss')
+    )
+
+    def ordered_senses(self):
+        "Return a properly ordered set of senses"
+        return self.senses.all().order_by('glosssense__order')
+
     sn = models.IntegerField(_("Sign Number"),
                              help_text="Sign Number must be a unique integer and defines the ordering of signs in the dictionary",
                              null=True, blank=True, unique=True)
@@ -816,7 +1009,6 @@ class Gloss(models.Model):
                                           field_choice_category=FieldChoice.HANDSHAPECHANGE,
                                           verbose_name=_("Handshape Change"),
                                            related_name="handshape_change")
-
 
     repeat = models.BooleanField(_("Repeated Movement"), null=True, default=False)
     altern = models.BooleanField(_("Alternating Movement"), null=True, default=False)
@@ -940,6 +1132,20 @@ class Gloss(models.Model):
         except:
             return str(self.id)
 
+    def reorder_senses(self):
+        "when a sense is deleted, the senses should be reordered"
+        for sense_i, sense in enumerate(self.ordered_senses().all()):
+            glossense = GlossSense.objects.all().get(gloss=self, sense=sense)
+            glossense.order = sense_i+1
+            glossense.save()
+        for glosssense in GlossSense.objects.filter(gloss=self).order_by('order'):
+            for sensetrans in glosssense.sense.senseTranslations.all():
+                translations = sensetrans.translations.all().order_by('index', 'translation__text')
+                for index, trans in enumerate(translations, 1):
+                    trans.orderIndex = glosssense.order
+                    trans.index = index
+                    trans.save()
+
     def annotation_idgloss(self, language_code):
         # this function is used in Relations View to dynamically get the Annotation of related glosses
         # it is called by a template tag on the gloss using the interface language code
@@ -969,8 +1175,9 @@ class Gloss(models.Model):
 
     def get_fields_dict(self):
 
+        gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
         fields_data = []
-        for field in Gloss._meta.fields:
+        for field in gloss_fields:
             if field.name in settings.API_FIELDS:
                 if hasattr(field, 'field_choice_category'):
                     fc_category = field.field_choice_category
@@ -1242,56 +1449,56 @@ class Gloss(models.Model):
 
     def homonyms_count(self):
 
-        homonyms_count = self.relation_sources.filter(role='homonym').count()
+        homonyms_count = self.relation_sources.filter(role='homonym').exclude(target=self).count()
 
         return homonyms_count
 
     def synonyms_count(self):
 
-        synonyms_count = self.relation_sources.filter(role='synonym').count()
+        synonyms_count = self.relation_sources.filter(role='synonym').exclude(target=self).count()
 
         return synonyms_count
 
     def antonyms_count(self):
 
-        antonyms_count = self.relation_sources.filter(role='antonym').count()
+        antonyms_count = self.relation_sources.filter(role='antonym').exclude(target=self).count()
 
         return antonyms_count
 
     def hyponyms_count(self):
 
-        hyponyms_count = self.relation_sources.filter(role='hyponym').count()
+        hyponyms_count = self.relation_sources.filter(role='hyponym').exclude(target=self).count()
 
         return hyponyms_count
 
     def hypernyms_count(self):
 
-        hypernyms_count = self.relation_sources.filter(role='hypernym').count()
+        hypernyms_count = self.relation_sources.filter(role='hypernym').exclude(target=self).count()
 
         return hypernyms_count
 
     def seealso_count(self):
 
-        seealso_count = self.relation_sources.filter(role='seealso').count()
+        seealso_count = self.relation_sources.filter(role='seealso').exclude(target=self).count()
 
         return seealso_count
 
     def paradigm_count(self):
 
-        paradigm_count = self.relation_sources.filter(role='paradigm').count()
+        paradigm_count = self.relation_sources.filter(role='paradigm').exclude(target=self).count()
 
         return paradigm_count
 
     def variant_count(self):
 
-        variant_count = self.relation_sources.filter(role='variant').count()
+        variant_count = self.relation_sources.filter(role='variant').exclude(target=self).count()
 
         return variant_count
 
     def relations_count(self):
 
         relations_count = self.relation_sources.filter(
-            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso', 'variant']).count()
+            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso', 'variant']).exclude(target=self).count()
 
         return relations_count
 
@@ -1341,19 +1548,19 @@ class Gloss(models.Model):
             related_gloss_ids = [relation.target.id for relation in self.other_relations()]
             pattern_variants = Gloss.objects.filter(merged_query_expression).exclude(id__in=related_gloss_ids).distinct()
         else:
-            pattern_variants = [ self ]
+            pattern_variants = [self]
         return pattern_variants
 
     def other_relations(self):
 
         other_relations = self.relation_sources.filter(
-            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso'])
+            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso']).exclude(target=self)
 
         return other_relations
 
     def variant_relations(self):
 
-        variant_relations = self.relation_sources.filter(role__in=['variant'])
+        variant_relations = self.relation_sources.filter(role__in=['variant']).exclude(target=self)
 
         return variant_relations
 
@@ -1407,7 +1614,6 @@ class Gloss(models.Model):
                                                                  'hyponym', 'hypernym', 'seealso', 'paradigm'])
 
         return (other_relations, variant_relations)
-
 
     def phonology_matrix_homonymns(self, use_machine_value=False):
         # this method uses string representations for Boolean values
@@ -1907,19 +2113,32 @@ class Gloss(models.Model):
 
     def options_to_json(self, options):
         """Convert an options list to a json dict"""
-
         result = []
         for k, v in options:
+            result.append('"%s":"%s"' % (k, v))
+        return "{" + ",".join(result) + "}"
+
+    def ordered_dict_options_to_json(self, options):
+        """Convert an options list to a json dict"""
+        result = []
+        for k, v in options.items():
             result.append('"%s":"%s"' % (k, v))
         return "{" + ",".join(result) + "}"
 
     def definition_role_choices_json(self):
         """Return JSON for the definition role choice list"""
         definition_role_choices = choicelist_queryset_to_translated_dict(
-                                 FieldChoice.objects.filter(field='NoteType'),
-                                 ordered=False, id_prefix=''
-                             )
-        return self.options_to_json(definition_role_choices)
+                                 FieldChoice.objects.filter(field='NoteType').order_by('machine_value'))
+        return self.ordered_dict_options_to_json(definition_role_choices)
+
+    def definition_role_choices_reverse_json(self):
+        """Return JSON for the etymology choice list"""
+
+        definition_role_choices = FieldChoice.objects.filter(field='NoteType').order_by('machine_value')
+        reverse_choices = []
+        for note_type_field_choice in definition_role_choices:
+            reverse_choices.append((note_type_field_choice.name, '_'+str(note_type_field_choice.machine_value)))
+        return self.options_to_json(reverse_choices)
 
     def relation_role_choices_json(self):
         """Return JSON for the relation role choice list"""
@@ -2107,6 +2326,25 @@ def fieldname_to_kind(fieldname):
     return field_kind
 
 
+class GlossSense(models.Model):
+    """A relation between a gloss and a sense to determine in what order to show the senses"""
+    gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
+    sense = models.ForeignKey(Sense, on_delete=models.CASCADE)       
+    order = models.IntegerField(
+        verbose_name    = _(u'Order'),
+        help_text           = _(u'What order to display this sense within the gloss.'),
+        default = 1
+    )
+
+    class Meta:
+        verbose_name = _(u"Gloss sense")
+        verbose_name_plural = _(u"Gloss senses")
+        ordering = ['order',]
+
+    def __unicode__(self):
+        return "Sense: " + str(self.sense.sensetranslations) + " is a member of " + str(self.gloss) + (" in position %d" % self.order)
+
+
 class Relation(models.Model):
     """A relation between two glosses"""
 
@@ -2143,6 +2381,16 @@ class MorphologyDefinition(models.Model):
     def __str__(self):
         return self.morpheme.idgloss
 
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
+
     def get_role(self):
         return self.role.name if self.role else self.role
 
@@ -2165,6 +2413,16 @@ class Morpheme(Gloss):
         # We won't use this method in the interface but leave it for debugging purposes
 
         return self.idgloss
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
 
     def get_mrpType_display(self):
         # to avoid extra code in the template, return '-' if the type has not been set
@@ -2337,6 +2595,15 @@ class OtherMedia(models.Model):
     alternative_gloss = models.CharField(max_length=50)
     path = models.CharField(max_length=100)
 
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
 
     def get_othermedia_path(self, gloss_id, check_existence=False):
         # read only method
@@ -2411,6 +2678,16 @@ class Dataset(models.Model):
 
     def __str__(self):
         return self.acronym
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls._meta.get_fields(include_hidden=True)
+        return [field.name for field in fields]
+
+    @classmethod
+    def get_field(cls, field):
+        field = cls._meta.get_field(field)
+        return field
 
     def generate_short_name(self):
 
@@ -2512,7 +2789,7 @@ class Dataset(models.Model):
 
         fields_data = []
         for field in fields_to_map:
-            gloss_field = Gloss._meta.get_field(field)
+            gloss_field = Gloss.get_field(field)
             if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
                 fields_data.append(
                     (field, gloss_field.verbose_name.title(), 'Handshape'))
@@ -2900,7 +3177,9 @@ class QueryParameterFieldChoice(QueryParameter):
         # Definition Class
         ('definitionRole', 'definitionRole'),
         # MorphologyDefinition Class
-        ('hasComponentOfType', 'hasComponentOfType')
+        ('hasComponentOfType', 'hasComponentOfType'),
+        # SentenceType Class
+        ('sentenceType', 'sentenceType')
     ]
     QUERY_FIELD_CATEGORY = [
         ('wordClass', 'WordClass'),
@@ -2919,7 +3198,9 @@ class QueryParameterFieldChoice(QueryParameter):
         # Definition Class
         ('definitionRole', 'NoteType'),
         # MorphologyDefinition Class
-        ('hasComponentOfType', 'MorphologyType')
+        ('hasComponentOfType', 'MorphologyType'),
+        # SentenceType Class
+        ('sentenceType', 'SentenceType'),
     ]
     fieldName = models.CharField(_("Field Name"), choices=QUERY_FIELDS, max_length=20)
     fieldValue = models.ForeignKey(FieldChoice, null=True, verbose_name=_("Field Value"), on_delete=models.CASCADE)
@@ -2928,11 +3209,13 @@ class QueryParameterFieldChoice(QueryParameter):
         glossFieldName = '-'
         if self.fieldName:
             if self.fieldName in ['definitionRole']:
-                glossFieldName = Definition._meta.get_field('role').verbose_name.encode('utf-8').decode()
+                glossFieldName = Definition.get_field('role').verbose_name.encode('utf-8').decode()
             elif self.fieldName in ['hasComponentOfType']:
-                glossFieldName = MorphologyDefinition._meta.get_field('role').verbose_name.encode('utf-8').decode()
+                glossFieldName = MorphologyDefinition.get_field('role').verbose_name.encode('utf-8').decode()
+            elif self.fieldName in ['sentenceType']:
+                glossFieldName = ExampleSentence.get_field('sentenceType').verbose_name.encode('utf-8').decode()
             else:
-                glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+                glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
     def __str__(self):
@@ -2965,7 +3248,7 @@ class QueryParameterHandshape(QueryParameter):
     def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
     def display_fieldvalue(self):
@@ -2990,7 +3273,7 @@ class QueryParameterSemanticField(QueryParameter):
     def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
     def __str__(self):
@@ -3014,7 +3297,7 @@ class QueryParameterDerivationHistory(QueryParameter):
     def display_verbose_fieldname(self):
         glossFieldName = '-'
         if self.fieldName:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+            glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         return glossFieldName
 
     def __str__(self):
@@ -3054,8 +3337,8 @@ class QueryParameterBoolean(QueryParameter):
     fieldValue = models.BooleanField(_("Field Value"), null=True, blank=True)
 
     def display_verbose_fieldname(self):
-        if self.fieldName in Gloss._meta.fields:
-            glossFieldName = Gloss._meta.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
+        if self.fieldName in Gloss.get_field_names():
+            glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         elif self.fieldName == 'defspublished':
             glossFieldName = _("All Definitions Published")
         elif self.fieldName == 'hasRelationToForeignSign':
@@ -3132,7 +3415,7 @@ class QueryParameterMultilingual(QueryParameter):
         elif self.fieldName == 'lemma':
             searchFieldName = _('Lemma ID Gloss') + " (" + self.fieldLanguage.name + ")"
         elif self.fieldName == 'keyword':
-            searchFieldName = _('Translations') + " (" + self.fieldLanguage.name + ")"
+            searchFieldName = _('Senses') + " (" + self.fieldLanguage.name + ")"
         else:
             searchFieldName = self.fieldName
         return searchFieldName

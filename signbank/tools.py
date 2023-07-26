@@ -17,6 +17,7 @@ from django.utils.translation import override, gettext_lazy as _, activate
 
 from django.http import HttpResponse, HttpResponseRedirect
 
+from signbank.csv_interface import sense_translations_for_language, update_senses_parse
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from django.utils.dateformat import format
@@ -263,11 +264,18 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
         default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
-        # There are too many to show the user!
+        # these are the same fields as for csv export
+        # do not include frequency fields
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
 
-        fields = {field.verbose_name: field for field in Gloss._meta.fields if field.name not in FIELDS['frequency']}
+        glossfieldnames = [fname for fname in fieldnames
+                           if fname in Gloss.get_field_names()]
 
-        columns_to_skip = {field.verbose_name: field for field in Gloss._meta.fields if field.name in FIELDS['frequency']}
+        fields = dict()
+        # this data structure is set up to reverse map column names to gloss fields
+        for fieldname in glossfieldnames:
+            field = Gloss.get_field(fieldname)
+            fields[field.verbose_name] = field
 
         if gloss.lemma.dataset:
             current_dataset = gloss.lemma.dataset.acronym
@@ -277,9 +285,6 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
         # Go through all values in the value dict, looking for differences with the gloss
         for human_key, new_human_value in valuedict.items():
-
-            if human_key in columns_to_skip.keys():
-                continue
 
             new_human_value = new_human_value.strip()
 
@@ -339,20 +344,30 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         errors_found += [error_string]
                 continue
 
-            keywords_key_prefix = "Keywords ("
+            keywords_key_prefix = "Senses ("
             if human_key.startswith(keywords_key_prefix):
                 language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(keywords_key_prefix):-1]
-                languages = Language.objects.filter(**{language_name_column:language_name})
-                if languages:
-                    language = languages[0]
-                    translations = [t.translation.text for t in gloss.translation_set.filter(language=language).order_by('translation__index')]
-                    current_keyword_string = ", ".join(translations)
-                else:
-                    error_string = 'ERROR: Non-existent language specified for Keywords column: ' + human_key
+                language = Language.objects.filter(**{language_name_column:language_name}).first()
+                if not language:
+                    current_keyword_string = ""
+                    error_string = 'ERROR: Non-existent language specified for Senses column: ' + human_key
                     errors_found += [error_string]
+                else:
+                    current_keyword_string = sense_translations_for_language(gloss, language)
+                    if current_keyword_string:
+                        # update of existing senses currently not supported
+                        pass
+                    else:
+                        okay = update_senses_parse(new_human_value)
+                        if not okay:
+                            print('current senses: ', current_keyword_string)
+                            print('not okay new string: ', new_human_value)
+                            error_string = 'ERROR Gloss ' + str(
+                                gloss.id) + ': Error parsing value in Senses column ' + human_key + ': ' + new_human_value
+                            errors_found += [error_string]
 
-                if current_keyword_string != new_human_value and new_human_value != 'None' and new_human_value != '':
+                if new_human_value not in ['None', ''] and not current_keyword_string:
                     differences.append({'pk': gloss_id,
                                         'dataset': current_dataset,
                                         'annotationidglosstranslation': default_annotationidglosstranslation,
@@ -1637,7 +1652,8 @@ def gloss_handshape_fields():
     fields_list = []
 
     from signbank.dictionary.models import Gloss
-    for gloss_field in Gloss._meta.fields:
+    for gloss_fieldname in Gloss.get_field_names():
+        gloss_field = Gloss.get_field(gloss_fieldname)
         if isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
             fields_list.append(gloss_field.name)
     return fields_list
@@ -1649,7 +1665,8 @@ def fields_with_choices_glosses():
     fields_dict = {}
 
     from signbank.dictionary.models import Gloss
-    for field in Gloss._meta.fields:
+    for fieldname in Gloss.get_field_names():
+        field = Gloss.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
@@ -1665,7 +1682,25 @@ def fields_with_choices_handshapes():
     fields_dict = {}
 
     from signbank.dictionary.models import Handshape
-    for field in Handshape._meta.fields:
+    for fieldname in Handshape.get_field_names():
+        field = Handshape.get_field(fieldname)
+        if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
+            # field has choices
+            field_category = field.field_choice_category
+            if field_category in fields_dict.keys():
+                fields_dict[field_category].append(field.name)
+            else:
+                fields_dict[field_category] = [field.name]
+    return fields_dict
+
+def fields_with_choices_examplesentences():
+    # return a dict that maps the field choice categories to the fields of Handshape that have the category
+
+    fields_dict = {}
+
+    from signbank.dictionary.models import ExampleSentence
+    for fieldname in ExampleSentence.get_field_names():
+        field = ExampleSentence.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
@@ -1681,7 +1716,8 @@ def fields_with_choices_definition():
     fields_dict = {}
 
     from signbank.dictionary.models import Definition
-    for field in Definition._meta.fields:
+    for fieldname in Definition.get_field_names():
+        field = Definition.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
@@ -1697,7 +1733,8 @@ def fields_with_choices_morphology_definition():
     fields_dict = {}
 
     from signbank.dictionary.models import MorphologyDefinition
-    for field in MorphologyDefinition._meta.fields:
+    for fieldname in MorphologyDefinition.get_field_names():
+        field = MorphologyDefinition.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
@@ -1713,7 +1750,8 @@ def fields_with_choices_other_media_type():
     fields_dict = {}
 
     from signbank.dictionary.models import OtherMedia
-    for field in OtherMedia._meta.fields:
+    for fieldname in OtherMedia.get_field_names():
+        field = OtherMedia.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
@@ -1729,10 +1767,11 @@ def fields_with_choices_morpheme_type():
     fields_dict = {}
 
     from signbank.dictionary.models import Morpheme
-    for field in Morpheme._meta.fields:
-        if field in Gloss._meta.fields:
+    for fieldname in Morpheme.get_field_names():
+        if fieldname in Gloss.get_field_names():
             # skip fields that are also in superclass Gloss
             continue
+        field = Morpheme.get_field(fieldname)
         if hasattr(field, 'field_choice_category') and isinstance(field, FieldChoiceForeignKey):
             # field has choices
             field_category = field.field_choice_category
@@ -1872,12 +1911,12 @@ def get_value_for_ecv(gloss, fieldname):
     return value
 
 def write_csv_for_handshapes(handshapelistview, csvwriter):
-#  called from the HandshapeListView when search_type is handshape
+    # called from the HandshapeListView when search_type is handshape
 
-    fields = [Handshape._meta.get_field(fieldname) for fieldname in settings.HANDSHAPE_RESULT_FIELDS]
+    fields = [Handshape.get_field(fieldname) for fieldname in settings.HANDSHAPE_RESULT_FIELDS]
 
     activate(LANGUAGES[0][0])
-    header = ['Handshape ID'] + [ f.verbose_name.encode('ascii', 'ignore').decode() for f in fields ]
+    header = ['Handshape ID'] + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
 
     csvwriter.writerow(header)
 

@@ -18,9 +18,9 @@
         {% trans "Lemma ID Gloss" as lemma_header %}
         <th class="lemmas_multicolumn" colspan="{{dataset_languages|length}}"
             style="border-bottom: 1px solid grey; white-space:nowrap;">{{ lemma_header }}</th>
-        {% trans "Translations" as translations_header %}
+        {% trans "Senses" as senses_header %}
         <th class="translations_multicolumn" colspan="{{dataset_languages|length}}"
-            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ translations_header }}</th>
+            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ senses_header }}</th>
 
           {% for fieldname,column in column_headers %}
             <th class="field_{{fieldname}}" style="border-bottom: 1px solid grey; white-space:nowrap;"></th>

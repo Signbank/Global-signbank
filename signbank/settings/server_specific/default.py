@@ -7,6 +7,7 @@ BASE_DIR = 'repo/'
 #Where Signbank can store things like images and videos
 WRITABLE_FOLDER = 'writable/'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
+EXAMPLESENTENCE_VIDEO_DIRECTORY = 'sensevideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
 FEEDBANK_VIDEO_DIRECTORY = 'comments'
 HANDSHAPE_IMAGE_DIRECTORY = 'handshapeimage'
@@ -67,6 +68,8 @@ LANGUAGES = (
 )
 
 MODELTRANSLATION_LANGUAGES = ['en']
+
+MODELTRANSLATION_FIELDCHOICE_LANGUAGES = ['en']
 
 LANGUAGES_LANGUAGE_CODE_3CHAR = (
     ('en', 'eng'),
@@ -258,3 +261,7 @@ ADMIN_URL = 'admin'
 LOGOUT_REDIRECT_URL = '/'
 
 FILESYSTEM_SIGNBANK_GROUPS = ['signbank', 'www-data', 'signbank-writable', 'wwwsignbank']
+
+SHARE_SENSES = False
+
+DEBUG_CSV = False

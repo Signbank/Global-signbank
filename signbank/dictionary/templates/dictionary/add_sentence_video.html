@@ -1,0 +1,128 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+{% block bootstrap3_title %}
+{% endblock %}
+
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dropstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/recordstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/modalstyle.css">
+{% endblock %}
+
+{% block content %}
+
+{% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
+{% if "change_dataset" in dataset_perms %}
+<div class='editform', style="width:500px">
+    <fieldset>
+        <legend>{% trans "Upload New Example Sentence Video" %}</legend>
+        
+        For the following sentence:<br><br>
+        Type: {{examplesentence.sentenceType.name}}
+        {% if examplesentence.negative %} (neg) {% endif %}<br><br>
+        With translations:<br>
+        {% for sentence in examplesentence.get_examplestc_translations %}
+            {{sentence}}<br>
+        {% endfor %}<br><br>
+
+        <label for="id_videofile" class="drop-container" id="drop-container-video">
+        <div id="videogallery" class="gallery"></div>
+        <span id="drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
+        <label id="drop-container-video-status", class="hide">Status here</label>
+        <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type='hidden' name='redirect' value='/dictionary/gloss/{{gloss.id}}'>
+            <input type='hidden' name='object_id' value='{{examplesentence.id}}'>
+            <input type='hidden' name='object_type' value='s'>
+            <table id="staffops">
+            <tr>
+                <td>{{videoform.videofile}}</td>
+            </tr>
+            <tr>
+                <td id="video-buttons">
+                    <input class='btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>   
+                    <input class='btn btn-primary' type='submit' value='Upload' />
+                </td>
+            </tr>
+          </table>
+        </form>
+      </label>
+  </fieldset>
+
+  <!-- Trigger/Open the Video Record Modal -->
+  <br> or <input id="recordBtn" class="btn btn-primary" value='Record a video'></input>
+
+  <!-- The Modal -->
+  <div id="recordModal" class="modal">
+
+      <!-- Modal content -->
+      <div class="modal-content">
+
+          <span class="close">&times;</span>
+
+          <div id="container">
+              <table>
+                  <thead>
+                      <tr>
+                          <th>
+                              <div class="wrap">
+                                  <video src="" id="gum" playsinline autoplay muted></video>
+                                  <div class="overlay">
+                                      <img id="img0" class="over" src='{{ STATIC_URL }}images/overlay0.png'>
+                                      <img id="img1" class="over invis" src='{{ STATIC_URL }}images/overlay1.png'>
+                                      <img id="img2" class="over invis" src='{{ STATIC_URL }}images/overlay2.png'>
+                                      <img id="img3" class="over invis" src='{{ STATIC_URL }}images/overlay3.png'>                       
+                                  </div>
+                              </div>
+                          </th>
+                          <th>
+                              <div class="wrap">
+                                  <video id="recorded" playslinline></video>
+                              </div>
+                          </th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr>
+                      <td>
+                          <button class='btn' id='start'>Start Camera</button>
+                          <button class='btn' id='record' disabled>Record</button>
+                      </td>
+                      <td>
+                          <button class='btn' id='play' disabled>Play</button>
+                          <button class='btn' id='download' disabled>Download</button><br>
+                          <form action='{{PREFIX_URL}}/video/upload/' method='post' enctype='multipart/form-data' onsubmit='return reloadVideo()'>
+                              {% csrf_token %}
+                              <input type='hidden' name='redirect' value='/dictionary/gloss/{{gloss.id}}'>
+                              <input type='hidden' name='object_id' value='{{examplesentence.id}}'>
+                              <input type='hidden' name='object_type' value='s'>
+                              <input type='file' name='videofile' id='videofile'>
+                              <input type='hidden' name='recorded' value='True'>
+                              <input class='btn btn-primary' type='submit' id='uploadrecorded' value ='Upload' disabled></input>
+                          </form>
+                      </td>
+                      </tr>
+                  </tbody>
+                  </table>
+              </label>
+          </div>
+  
+          <div>
+              <span id="errorMsg"></span>
+          </div>
+
+      </div>
+      
+  </div>
+
+</div>
+
+
+<script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_files.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/recordscript.js"></script>
+
+{% endif %}
+{% endblock %}

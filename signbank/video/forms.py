@@ -8,12 +8,13 @@ class VideoUploadForm(forms.ModelForm):
         model = GlossVideo
         fields = '__all__'
 
-class VideoUploadForGlossForm(forms.Form):
-    """Form for video upload for a particular gloss"""
+class VideoUploadForObjectForm(forms.Form):
+    """Form for video upload for a particular example sentence"""
     
     videofile = forms.FileField(label="Upload Video",
                                 widget=forms.FileInput(attrs={'accept':'video/mp4, video/quicktime'}))
-    gloss_id = forms.CharField(widget=forms.HiddenInput)
+    object_id = forms.CharField(widget=forms.HiddenInput)
+    object_type = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
     recorded = forms.BooleanField(required=False, initial=False)
     

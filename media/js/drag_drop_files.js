@@ -1,36 +1,3 @@
-// Initialize variables for both upload forms
-let dropVideoArea = document.getElementById('drop-container-video')
-let inputVideoArea = document.getElementById('id_videofile')
-inputVideoArea.onchange = function(){handleVideoByButton(this.files)}
-let dropContainerVideoStatus = document.getElementById('drop-container-video-status')
-let dropContainerVideoTitle = document.getElementById('drop-container-title-video')
-let videoButtons = document.getElementById('video-buttons')
-let videoGallery = document.getElementById('videogallery')
-
-let dropImageArea = document.getElementById('drop-container-image')
-let inputImageArea = document.getElementById('id_imagefile')
-inputImageArea.onchange = function(){handleImageByButton(this.files)}
-let dropContainerImageStatus = document.getElementById('drop-container-image-status')
-let dropContainerImageTitle = document.getElementById('drop-container-title-image')
-let imageButtons = document.getElementById('image-buttons')
-let imageGallery = document.getElementById('imagegallery')
-
-// Set event listeners for hovering/dropping files
-;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropVideoArea.addEventListener(eventName, preventDefaults, false)
-    dropImageArea.addEventListener(eventName, preventDefaults, false)
-})
-
-;['dragenter', 'dragover'].forEach(eventName => {
-    dropVideoArea.addEventListener(eventName, highlightvideo, false)
-    dropImageArea.addEventListener(eventName, highlightimage, false)
-})
-
-;['dragleave', 'drop'].forEach(eventName => {
-    dropVideoArea.addEventListener(eventName, unhighlightvideo, false)
-    dropImageArea.addEventListener(eventName, unhighlightimage, false)
-})
-
 function preventDefaults(e) {
     e.preventDefault()
     e.stopPropagation()
@@ -64,14 +31,6 @@ function preventDefaults(e) {
     e.preventDefault();
 }
 
-function highlightvideo(e) {
-    highlight(e, dropContainerVideoStatus, dropContainerVideoTitle, dropVideoArea, inputVideoArea, videoButtons, videoGallery, 'video/mp4', 'video')
-}
-
-function highlightimage(e) {
-    highlight(e, dropContainerImageStatus, dropContainerImageTitle, dropImageArea, inputImageArea, imageButtons, imageGallery, 'image/jpeg', 'image')
-}
-
 /**
  * Revert back to original/grey upload forms
  * @param {event} e 
@@ -90,14 +49,6 @@ function unhighlight(e, dropArea, inputArea, dropContainerTitle, dropContainerSt
     typeGallery.classList.remove('hide');
     dropContainerStatus.classList.add('hide');
     e.preventDefault();
-}
-
-function unhighlightvideo(e) {
-    unhighlight(e, dropVideoArea, inputVideoArea, dropContainerVideoTitle, dropContainerVideoStatus, videoButtons, videoGallery)
-}
-
-function unhighlightimage(e) {
-    unhighlight(e, dropImageArea, inputImageArea, dropContainerImageTitle, dropContainerImageStatus, imageButtons, imageGallery)
 }
 
 
@@ -156,15 +107,6 @@ function handleByButton(files, dropContainerTitle, fileType, fileTypeP, inputAre
     }
 }
 
-function handleImageByButton(files) {
-    removeImageUploads(false)
-    handleByButton(files, dropContainerImageTitle, 'image/jpeg', 'img', inputImageArea, imageGallery)
-}
-
-function handleVideoByButton(files) {
-    removeVideoUploads(false)
-    handleByButton(files, dropContainerVideoTitle, 'video/mp4', 'video', inputVideoArea, videoGallery)
-}
 
 /**
  * If upload through drag&drop, empty gallery and show new previews
@@ -204,15 +146,6 @@ function handleDrop(e, fileType, fileTypeT, fileTypeP, inputArea, typeGallery, d
     e.preventDefault();
 }
 
-dropVideoArea.addEventListener('drop', handleVideoDrop, false)
-function handleVideoDrop(e) {
-    handleDrop(e, 'video/mp4', 'video', 'video', inputVideoArea, videoGallery, dropContainerVideoTitle)
-}
-
-dropImageArea.addEventListener('drop', handleImageDrop, false)
-function handleImageDrop(e) {
-    handleDrop(e, 'image/jpeg', 'image', 'img', inputImageArea, imageGallery, dropContainerImageTitle)
-}
 
 /**
  * Remove the previewed files from the gallery
@@ -231,13 +164,6 @@ function removeUploads(remove_file_name, inputArea, dropContainerTitle, typeGall
     }
 }
 
-function removeImageUploads(remove_file_name){
-    removeUploads(remove_file_name, inputImageArea, dropContainerImageTitle, imageGallery)
-}
-
-function removeVideoUploads(remove_file_name){
-    removeUploads(remove_file_name, inputVideoArea, dropContainerVideoTitle, videoGallery)
-}
 
 /**
  * Show the file to upload as preview
@@ -252,6 +178,104 @@ function previewFile(file, fileTypeP, typeGallery) {
         prev = document.createElement(fileTypeP)
         prev.src = reader.result
         typeGallery.appendChild(prev)
+    }
+}
+
+
+///////////////////////////////////////////////
+// Initialize variables for video
+let dropVideoArea = document.getElementById('drop-container-video')
+let inputVideoArea = document.getElementById('id_videofile')
+inputVideoArea.onchange = function(){handleVideoByButton(this.files)}
+let dropContainerVideoStatus = document.getElementById('drop-container-video-status')
+let dropContainerVideoTitle = document.getElementById('drop-container-title-video')
+let videoButtons = document.getElementById('video-buttons')
+let videoGallery = document.getElementById('videogallery')
+
+// Set event listeners for hovering/dropping files
+;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropVideoArea.addEventListener(eventName, preventDefaults, false)
+})
+
+;['dragenter', 'dragover'].forEach(eventName => {
+    dropVideoArea.addEventListener(eventName, highlightvideo, false)
+})
+
+;['dragleave', 'drop'].forEach(eventName => {
+    dropVideoArea.addEventListener(eventName, unhighlightvideo, false)
+})
+
+function highlightvideo(e) {
+    highlight(e, dropContainerVideoStatus, dropContainerVideoTitle, dropVideoArea, inputVideoArea, videoButtons, videoGallery, 'video/mp4', 'video')
+}
+
+function unhighlightvideo(e) {
+    unhighlight(e, dropVideoArea, inputVideoArea, dropContainerVideoTitle, dropContainerVideoStatus, videoButtons, videoGallery)
+}
+
+function handleVideoByButton(files) {
+    removeVideoUploads(false)
+    handleByButton(files, dropContainerVideoTitle, 'video/mp4', 'video', inputVideoArea, videoGallery)
+}
+
+dropVideoArea.addEventListener('drop', handleVideoDrop, false)
+function handleVideoDrop(e) {
+    handleDrop(e, 'video/mp4', 'video', 'video', inputVideoArea, videoGallery, dropContainerVideoTitle)
+}
+
+function removeVideoUploads(remove_file_name){
+    removeUploads(remove_file_name, inputVideoArea, dropContainerVideoTitle, videoGallery)
+}
+
+///////////////////////////////////////////////////////
+// Initialize variables for image, if this is possible
+let dropImageArea = document.getElementById('drop-container-image')
+let image = false
+if (typeof(dropImageArea) != 'undefined' && dropImageArea != null){
+    image = true
+}
+
+if (image === true){
+    let inputImageArea = document.getElementById('id_imagefile')
+    inputImageArea.onchange = function(){handleImageByButton(this.files)}
+    let dropContainerImageStatus = document.getElementById('drop-container-image-status')
+    let dropContainerImageTitle = document.getElementById('drop-container-title-image')
+    let imageButtons = document.getElementById('image-buttons')
+    let imageGallery = document.getElementById('imagegallery')
+    
+    // Set event listeners for hovering/dropping files
+    ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropImageArea.addEventListener(eventName, preventDefaults, false)
+    })
+
+    ;['dragenter', 'dragover'].forEach(eventName => {
+        dropImageArea.addEventListener(eventName, highlightimage, false)
+    })
+
+    ;['dragleave', 'drop'].forEach(eventName => {
+        dropImageArea.addEventListener(eventName, unhighlightimage, false)
+    })
+
+    function highlightimage(e) {
+        highlight(e, dropContainerImageStatus, dropContainerImageTitle, dropImageArea, inputImageArea, imageButtons, imageGallery, 'image/jpeg', 'image')
+    }
+
+    function unhighlightimage(e) {
+        unhighlight(e, dropImageArea, inputImageArea, dropContainerImageTitle, dropContainerImageStatus, imageButtons, imageGallery)
+    }
+
+    function handleImageByButton(files) {
+        removeImageUploads(false)
+        handleByButton(files, dropContainerImageTitle, 'image/jpeg', 'img', inputImageArea, imageGallery)
+    }
+
+    dropImageArea.addEventListener('drop', handleImageDrop, false)
+    function handleImageDrop(e) {
+        handleDrop(e, 'image/jpeg', 'image', 'img', inputImageArea, imageGallery, dropContainerImageTitle)
+    }
+
+    function removeImageUploads(remove_file_name){
+        removeUploads(remove_file_name, inputImageArea, dropContainerImageTitle, imageGallery)
     }
 }
 

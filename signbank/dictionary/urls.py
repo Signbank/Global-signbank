@@ -23,14 +23,9 @@ urlpatterns = [
     # index page is just the search page
     re_path(r'^$', signbank.dictionary.views.search),
 
-    # we use the same view for a definition and for the feedback form on that
-    # definition, the first component of the path is word or feedback in each case
-    re_path(r'^words/(?P<keyword>.+)-(?P<n>\d+).html$',
-            signbank.dictionary.views.word),
-
     re_path(r'^tag/(?P<tag>[^/]*)/?$', signbank.dictionary.tagviews.taglist),
 
-    # and and alternate view for direct display of a gloss
+    # an alternate view for direct display of a gloss
     re_path(r'gloss/(?P<glossid>\d+).html$', signbank.dictionary.views.gloss, name='public_gloss'),
     re_path(r'morpheme/(?P<glossid>\d+).html$', signbank.dictionary.views.morpheme, name='public_morpheme'),
 
@@ -50,6 +45,14 @@ urlpatterns = [
     re_path(r'^update/gloss/', signbank.dictionary.update.add_gloss, name='add_gloss'),
     re_path(r'^update/assign_lemma_dataset_to_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.assign_lemma_dataset_to_gloss,
             name='assign_lemma_dataset_to_gloss'),
+    re_path(r'^update/sense/(?P<senseid>\d+)$', signbank.dictionary.update.update_sense, name='update_sense'),
+    re_path(r'^update/addsense/(?P<glossid>\d+)$', signbank.dictionary.update.create_sense, name='create_sense'),
+    re_path(r'^update/sortsense/(?P<glossid>\d+)/(?P<order>\d+)/(?P<direction>\w+)$', signbank.dictionary.update.sort_sense, name='sort_sense'),
+    re_path(r'^update/deletesense/(?P<glossid>\d+)$', signbank.dictionary.update.delete_sense, name='delete_sense'),
+    re_path(r'^update/examplesentence/(?P<examplesentenceid>\d+)$', signbank.dictionary.update.update_examplesentence, name='update_examplesentence'),
+    re_path(r'^update/addexamplesentence/(?P<senseid>\d+)$', signbank.dictionary.update.create_examplesentence, name='create_examplesentence'),
+    re_path(r'^update/deleteexamplesentence/(?P<senseid>\d+)$', signbank.dictionary.update.delete_examplesentence, name='delete_examplesentence'),
+    re_path(r'^update/addsentencevideo/(?P<glossid>\d+)/(?P<examplesentenceid>\d+)$', signbank.dictionary.update.add_sentence_video, name='add_sentence_video'),
     re_path(r'^update/morpheme/', signbank.dictionary.update.add_morpheme, name='add_morpheme'),
     re_path(r'^update/blenddefinition/(?P<glossid>\d+)$', signbank.dictionary.update.add_blend_definition, name='add_blenddefinition'),
 
@@ -75,7 +78,6 @@ urlpatterns = [
     re_path(r'^switch_to_language/(?P<language>[\-a-z]{2,20})$', signbank.dictionary.views.switch_to_language,name='switch_to_language'),
 
     # Ajax urls
-    re_path(r'^ajax/keyword/(?P<prefix>.*)$', signbank.dictionary.views.keyword_value_list),
     re_path(r'^ajax/tags/$', signbank.dictionary.tagviews.taglist_json),
     re_path(r'^ajax/gloss/(?P<prefix>.*)$', signbank.dictionary.adminviews.gloss_ajax_complete, name='gloss_complete'),
     re_path(r'^ajax/handshape/(?P<prefix>.*)$', signbank.dictionary.adminviews.handshape_ajax_complete, name='handshape_complete'),
@@ -85,6 +87,7 @@ urlpatterns = [
     re_path(r'^ajax/handshapesearchresults/$', signbank.dictionary.adminviews.handshape_ajax_search_results, name='handshape_ajax_search_results'),
     re_path(r'^ajax/lemmasearchresults/$', signbank.dictionary.adminviews.lemma_ajax_search_results, name='lemma_ajax_search_results'),
     re_path(r'^ajax/lemma/(?P<dataset_id>.*)/(?P<language_code>.*)/(?P<q>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.lemma_ajax_complete), name='lemma_complete'),
+    re_path(r'^ajax/sensetranslation/(?P<dataset_id>.*)/(?P<language_code>.*)/(?P<q>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.sensetranslation_ajax_complete), name='sensetranslation_complete'),
     re_path(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete, name='homonyms_ajax_complete'),
     re_path(r'^ajax/minimalpairs/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.minimalpairs_ajax_complete, name='minimalpairs_ajax_complete'),
     re_path(r'^ajax/glossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.glosslist_ajax_complete, name='glosslist_ajax_complete'),
@@ -111,7 +114,6 @@ urlpatterns = [
     # Admin views
     re_path(r'^try/$', signbank.dictionary.views.try_code), #A view for the developer to try out some things
     re_path(r'^gif_prototype/$', signbank.dictionary.views.gif_prototype),
-    re_path(r'^import_authors/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_authors)),
 
     re_path(r'^list/$', permission_required('dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),
     re_path(r'^morphemes/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view()), name='admin_morpheme_list'),

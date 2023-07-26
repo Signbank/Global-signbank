@@ -10,7 +10,8 @@ from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Rel
                                         AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, \
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter, \
-                                        QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation
+                                        QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation, \
+                                        ExampleSentence
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
@@ -43,7 +44,7 @@ def tag_choices():
 class UserSignSearchForm(forms.Form):
 
     glossQuery = forms.CharField(label=_(u'Glosses Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    query = forms.CharField(label=_(u'Translations Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    query = forms.CharField(label=_(u'Senses Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
     category = forms.ChoiceField(label=_(u'Search'), choices=CATEGORY_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-control'}))
         
 
@@ -107,14 +108,6 @@ class GlossCreateForm(forms.ModelForm):
         gloss.creator.add(self.user)
         gloss.creationDate = DT.datetime.now()
         gloss.save()
-
-        default_language = Language.objects.get(language_code_2char=DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
-        # create empty keywords (Keyword '' has default language)
-        # when the newly created gloss is later edited in GlossDetailView, when the user enters new keywords,
-        # the old keywords are removed on (via clear), so setting the initial keywords to '' here is a placeholder
-        (kobj, created) = Keyword.objects.get_or_create(text='')
-        trans = Translation(gloss=gloss, translation=kobj, index=0, language=default_language, orderIndex=1)
-        trans.save()
 
         return gloss
 
@@ -191,14 +184,6 @@ class MorphemeCreateForm(forms.ModelForm):
         morpheme.creationDate = DT.datetime.now()
         morpheme.save()
 
-        default_language = Language.objects.get(language_code_2char=DEFAULT_KEYWORDS_LANGUAGE['language_code_2char'])
-        # create empty keywords (Keyword '' has default language)
-        # when the newly created morpheme is later edited in MorphemeDetailView, when the user enters new keywords,
-        # the old keywords are removed (via clear), so setting the initial keywords to '' here is a placeholder
-        (kobj, created) = Keyword.objects.get_or_create(text='')
-        trans = Translation(gloss=morpheme, translation=kobj, index=0, language=default_language, orderIndex=1)
-        trans.save()
-
         return morpheme
 
 
@@ -262,7 +247,7 @@ class GlossSearchForm(forms.ModelForm):
     search = forms.CharField(label=_('Search Gloss'))
     sortOrder = forms.CharField(label=_('Sort Order'))       # Used in glosslistview to store user-selection
     tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
-    translation = forms.CharField(label=_('Search Translations'))
+    translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
@@ -328,7 +313,7 @@ class GlossSearchForm(forms.ModelForm):
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
     menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Translation"
+    menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
 
@@ -351,7 +336,7 @@ class GlossSearchForm(forms.ModelForm):
 
             # do the same for Translations
             keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
-            setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
+            setattr(self, keyword_field_name, forms.CharField(label=_("Senses")+(" (%s)" % language.name)))
             if keyword_field_name in queryDict:
                 getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
 
@@ -375,7 +360,7 @@ class GlossSearchForm(forms.ModelForm):
             if fieldname == 'definitionRole':
                 field_label = _(u'Note Type')
             else:
-                field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+                field_label = Gloss.get_field(fieldname).verbose_name
             if fieldname.startswith('semField'):
                 field_choices = SemanticField.objects.all()
             elif fieldname.startswith('derivHist'):
@@ -432,7 +417,7 @@ def check_language_fields(SearchForm, queryDict, languages):
             keyword_field_name = SearchForm.keyword_search_field_prefix + language.language_code_2char
             if keyword_field_name in queryDict.keys():
                 language_field_values[keyword_field_name] = queryDict[keyword_field_name]
-                language_field_labels[keyword_field_name] = _("Translations")+(" (%s)" % language.name)
+                language_field_labels[keyword_field_name] = _("Senses")+(" (%s)" % language.name)
 
         # and for LemmaIdgloss
         if hasattr(SearchForm, 'lemma_search_field_prefix'):
@@ -466,7 +451,7 @@ class MorphemeSearchForm(forms.ModelForm):
     search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
     tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
-    translation = forms.CharField(label=_('Search Translations'))
+    translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     useInstr = forms.CharField(label=_("Annotation instructions"))
@@ -505,7 +490,7 @@ class MorphemeSearchForm(forms.ModelForm):
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
     menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Translation"
+    menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
         ATTRS_FOR_FORMS = {'class': 'form-control'}
@@ -527,6 +512,7 @@ class MorphemeSearchForm(forms.ModelForm):
                 getattr(self, morphemesearch_field_name).value = queryDict[morphemesearch_field_name]
 
             # do the same for Translations
+            # Morphemes have translations not senses
             keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
             setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
             if keyword_field_name in queryDict:
@@ -549,18 +535,23 @@ class MorphemeSearchForm(forms.ModelForm):
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
         fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
         fields_with_choices['definitionRole'] = 'NoteType'
+
         for (fieldname, field_category) in fields_with_choices.items():
+            # morphemes do not have Handshape fields, these are hidden, see issue #638
             if fieldname == 'definitionRole':
                 field_label = _(u'Note Type')
-            else:
-                field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
-            if fieldname.startswith('semField'):
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            elif fieldname.startswith('mrpType'):
+                field_label = Morpheme.get_field(fieldname).verbose_name
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            elif fieldname.startswith('semField'):
+                field_label = Gloss.get_field(fieldname).verbose_name
                 field_choices = SemanticField.objects.all()
             elif fieldname.startswith('derivHist'):
+                field_label = Gloss.get_field(fieldname).verbose_name
                 field_choices = DerivationHistory.objects.all()
-            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                field_choices = Handshape.objects.all()
             else:
+                field_label = Gloss.get_field(fieldname).verbose_name
                 field_choices = FieldChoice.objects.filter(field__iexact=field_category)
             translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False, id_prefix='',
                                                                         shortlist=True)
@@ -571,6 +562,7 @@ class MorphemeSearchForm(forms.ModelForm):
                                                 choices=[(tag.name, tag.name.replace('_', ' '))
                                                          for tag in Tag.objects.all()],
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
 
 class DefinitionForm(forms.ModelForm):
     class Meta:
@@ -892,7 +884,7 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
             search_field_name = 'name_' + language.language_code_2char
             if search_field_name in queryDict.keys():
                 language_field_values[search_field_name] = queryDict[search_field_name]
-                language_field_labels[search_field_name] = ClassModel.__meta.get_field(search_field_name).verbose_name+(
+                language_field_labels[search_field_name] = ClassModel.get_field(search_field_name).verbose_name+(
                         " (%s)" % language.name)
 
     import re
@@ -1094,13 +1086,14 @@ class KeyMappingSearchForm(forms.ModelForm):
                                                          for tag in Tag.objects.all()],
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
+
 class FocusGlossSearchForm(forms.ModelForm):
 
     use_required_attribute = False #otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
-    translation = forms.CharField(label=_('Search Translations'))
+    translation = forms.CharField(label=_('Search Senses'))
 
     oriChAbd = forms.ChoiceField(label=_(u'Abduction Change'),choices=NULLBOOLEANCHOICES)
     oriChFlex = forms.ChoiceField(label=_(u'Flexion Change'),choices=NULLBOOLEANCHOICES)
@@ -1112,7 +1105,7 @@ class FocusGlossSearchForm(forms.ModelForm):
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
     menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Translation"
+    menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
 
@@ -1133,7 +1126,7 @@ class FocusGlossSearchForm(forms.ModelForm):
 
             # do the same for Translations
             keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
-            setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
+            setattr(self, keyword_field_name, forms.CharField(label=_("Senses")+(" (%s)" % language.name)))
             if keyword_field_name in queryDict:
                 getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
 
@@ -1147,7 +1140,7 @@ class FocusGlossSearchForm(forms.ModelForm):
         fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
 
         for (fieldname, field_category) in fields_with_choices.items():
-            field_label = self.Meta.model._meta.get_field(fieldname).verbose_name
+            field_label = Gloss.get_field(fieldname).verbose_name
             if fieldname.startswith('semField'):
                 field_choices = SemanticField.objects.all()
             elif fieldname.startswith('derivHist'):
@@ -1255,8 +1248,8 @@ class FieldChoiceForm(forms.ModelForm):
         field = data_fields['field']
 
         qs_f = FieldChoice.objects.filter(field=field)
-        if qs_f.count() == 0:
-            raise forms.ValidationError(_('This Field Choice Category does not exist'))
+        # if qs_f.count() == 0:
+        #     raise forms.ValidationError(_('This Field Choice Category does not exist'))
 
         for language in MODELTRANSLATION_LANGUAGES:
             name_languagecode = 'name_'+ language.replace('-', '_')

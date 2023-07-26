@@ -42,7 +42,7 @@ class KeywordAdmin(VersionAdmin):
 
 class TranslationInline(admin.TabularInline):
     model = Translation
-    readonly_fields = ['id', 'language', 'translation']
+    readonly_fields = ['id', 'language']
     list_display = ['id', 'language', 'translation', 'index', 'orderIndex']
     fields = ['id', 'language', 'translation', 'index', 'orderIndex']
     extra = 0
@@ -109,6 +109,11 @@ class AnnotationIdglossTranslationInline(admin.TabularInline):
     list_display = ['id', 'language', 'text']
     readonly_fields = ['id', 'language', 'text']
     fields = ['id', 'language', 'text']
+
+    extra = 0
+
+class SenseInline(admin.TabularInline):
+    model = GlossSense
 
     extra = 0
 
@@ -301,10 +306,9 @@ class GlossAdmin(VersionAdmin):
     list_display = ['id', 'lemma', 'inWeb']
 
     search_fields = ['^lemma__lemmaidglosstranslation__text', 'id']
-    inlines = [ AnnotationIdglossTranslationInline, RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline ]
+    inlines = [ AnnotationIdglossTranslationInline, RelationInline, RelationToForeignSignInline, DefinitionInline, TranslationInline, OtherMediaInline, SenseInline]
 
     history_latest_first = True
-
 
     model = Gloss
     form = GlossAdminForm
@@ -771,9 +775,20 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
     else:
         show_field_choice_colors = False
 
-    list_display = ['name'] \
+    list_display = ['choice'] \
                    + ['machine_value', 'field']
     list_filter = ['field']
+
+    def choice(self, obj=None):
+        if obj is None:
+            return ""
+        if obj.name:
+            return obj.name
+        if obj.machine_value == 0:
+            return '-'
+        if obj.machine_value == 1:
+            return 'N/A'
+        return str(obj.machine_value)
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(FieldChoiceAdmin, self).get_form(request, obj, **kwargs)
@@ -814,18 +829,22 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # these are no longer field choices, allow to delete obsolete field choices
             return True
 
+        fieldchoices_with_same_machine_value = FieldChoice.objects.filter(field=field_value,
+                                                                          machine_value=field_machine_value).count()
+
         if not field_machine_value or field_machine_value < 2:
             # do not allow to delete '-' (0) and 'N/A' (1)
-            return False
+            if fieldchoices_with_same_machine_value == 1:
+                return False
 
         # check if this is a duplicate, if so allow deletion
-        fieldchoices_with_same_machine_value = FieldChoice.objects.filter(field=field_value,machine_value=field_machine_value).count()
         if fieldchoices_with_same_machine_value > 1:
             return True
 
         from signbank.tools import fields_with_choices_glosses, fields_with_choices_handshapes, \
             fields_with_choices_definition, fields_with_choices_morphology_definition, \
-            fields_with_choices_other_media_type, fields_with_choices_morpheme_type
+            fields_with_choices_other_media_type, fields_with_choices_morpheme_type, \
+            fields_with_choices_examplesentences
 
         fields_with_choices_glosses = fields_with_choices_glosses()
         if field_value in fields_with_choices_glosses.keys():
@@ -845,6 +864,16 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             for item in queries_h:
                 query_h |= item
             count_in_use = Handshape.objects.filter(query_h).count()
+            return not count_in_use
+
+        fields_with_choices_examplesentences = fields_with_choices_examplesentences()
+        if field_value in fields_with_choices_examplesentences.keys():
+            queries_h = [Q(**{ field_name + '__machine_value' : field_machine_value })
+                         for field_name in fields_with_choices_examplesentences[field_value]]
+            query_h = queries_h.pop()
+            for item in queries_h:
+                query_h |= item
+            count_in_use = ExampleSentence.objects.filter(query_h).count()
             return not count_in_use
 
         fields_with_choices_definition = fields_with_choices_definition()
@@ -903,7 +932,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
             # print('ADMIN has_change_permission is False for FingerSelection')
             return False
 
-        if obj is not None and obj.machine_value in [0,1]:
+        if obj is not None and obj.machine_value in [0, 1]:
             return False
 
         opts = self.opts
@@ -920,7 +949,7 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
 
     def save_model(self, request, obj, form, change):
 
-        if obj.machine_value == None:
+        if not obj.machine_value:
             # Check out the query-set and make sure that it exists
             qs = FieldChoice.objects.filter(field=obj.field)
             if qs.count() == 0:
@@ -933,11 +962,9 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 # Calculate highest currently occurring value
                 highest_machine_value = max([field_choice.machine_value for field_choice in qs])
                 # The automatic machine value we calculate is 1 higher
-                obj.machine_value= highest_machine_value+1
+                obj.machine_value = highest_machine_value+1
         elif obj.machine_value < 2:
             # this case is prevented in the interface via Permission Denied
-            # it may be possible during testing
-            print('Not allowed to update field choices with machine value 0 or 1.')
             return
 
         if 'field_color' in form.data.keys():
@@ -1297,6 +1324,27 @@ class SearchHistoryAdmin(VersionAdmin):
         view = super(SearchHistoryAdmin, self).change_view(request, object_id, form_url, extra_context)
         return view
 
+class GlossSenseAdmin(admin.ModelAdmin):
+    list_display = ("gloss", "sense", "order")
+
+class SenseTranslationAdmin(admin.ModelAdmin):
+    list_display = ("get_translations", "language")
+    list_filter = ['language']
+    search_fields = ['translations__translation__text']
+
+class SenseAdmin(admin.ModelAdmin):
+    list_display = ("get_sense_translations", "get_example_sentences", "get_dataset")
+    search_fields = ['senseTranslations__translations__translation__text']
+
+class ExampleSentenceAdmin(admin.ModelAdmin):
+    list_display = ("get_examplestc_translations", "get_type", "negative", "get_dataset", "get_video_path")
+    search_fields = ['examplesentencetranslation__text']
+
+class ExampleSentenceTranslationAdmin(admin.ModelAdmin):
+    list_display = ("text", "examplesentence", "language")
+    search_fields = ['text']
+    list_filter = ['language']
+
 
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
@@ -1330,3 +1378,8 @@ admin.site.register(QueryParameterBoolean, QueryParameterBooleanAdmin)
 admin.site.register(QueryParameterMultilingual, QueryParameterMultilingualAdmin)
 admin.site.register(SearchHistory, SearchHistoryAdmin)
 
+admin.site.register(SenseTranslation, SenseTranslationAdmin)
+admin.site.register(GlossSense, GlossSenseAdmin)
+admin.site.register(Sense, SenseAdmin)
+admin.site.register(ExampleSentence, ExampleSentenceAdmin)
+admin.site.register(ExampleSentenceTranslation, ExampleSentenceTranslationAdmin)

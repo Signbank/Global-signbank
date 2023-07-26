@@ -72,17 +72,6 @@ def get_contructed_video(gloss):
     return constructed_video_path, constructed_video_exists
 
 
-def get_fields_that_differ(model, obj1, obj2):
-    """Returns the fields that differ when comparing two instances of the same model."""
-    if type(obj1) == type(obj2):
-        field_names = [f.name for f in model._meta.get_fields() if not f.unique]
-        fields_that_differ = [f for f in
-                              filter(lambda field: getattr(obj1, field, None) != getattr(obj2, field, None), field_names)]
-        return fields_that_differ
-    else:
-        pass  # TODO throw an exception?
-
-
 def get_glossvideo_path(gloss, dry_run):
     """Get the video path from GlossVideo"""
     glossvideo = None

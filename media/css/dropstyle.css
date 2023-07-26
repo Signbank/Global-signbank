@@ -1,0 +1,81 @@
+.drop-container {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    padding: 0px;
+    border-radius: 10px;
+    border: 2px dashed #555;
+    color: #444;
+    cursor: pointer;
+    transition: background .2s ease-in-out, border .2s ease-in-out;
+}
+
+.drop-container:hover {
+    background: #ccc;
+    border-color: #111;
+}
+
+.drop-title {
+    color: #444;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    transition: color .2s ease-in-out;
+}
+
+.drop-container.highlight-green {
+    background: #d4e9ce;
+}
+
+.drop-container.highlight-red {
+    background: #F4A19B;
+}
+
+p {
+    margin-top: 0;
+}
+
+.gallery img {
+    width: 100px;
+    margin-right: 10px;
+    vertical-align: right;
+}
+
+.gallery video {
+    width: 100px;
+    margin-right: 10px;
+    vertical-align: right;
+}
+
+.button {
+    display: inline-block;
+    padding: 8px;
+    background: #ccc;
+    cursor: pointer;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.button:hover {
+    background: #ddd;
+}
+
+#hide{
+    opacity: 0;
+}
+
+.panel-heading {
+    padding: 0;
+}
+
+.sense-button {
+    width:auto;
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+    border-radius: 6px;
+}

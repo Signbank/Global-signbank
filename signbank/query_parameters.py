@@ -118,12 +118,12 @@ def convert_query_parameters_to_filter(query_parameters):
     keywordsearch = "keyword_"
 
     gloss_fields = {}
-    for f in Gloss._meta.fields:
-        gloss_fields[f.name] = f
+    for fname in Gloss.get_field_names():
+        gloss_fields[fname] = Gloss.get_field(fname)
 
     fields_with_choices = fields_to_fieldcategory_dict()
-    multiple_select_gloss_fields = [field.name + '[]' for field in Gloss._meta.fields
-                                    if field.name in fields_with_choices.keys()]
+    multiple_select_gloss_fields = [fieldname + '[]' for fieldname in Gloss.get_field_names()
+                                    if fieldname in fields_with_choices.keys()]
 
     query_list = []
     for get_key, get_value in query_parameters.items():
@@ -279,7 +279,7 @@ def convert_query_parameters_to_filter(query_parameters):
             # not sure if this is needed, this case is Gloss fields rather than GlossSearchForm fields
             # this should be the fall through for fields not in multiselect and not covered above
             # it could happen that a ForeignKey field falls through which is not included in multiselect
-            field_obj = Gloss._meta.get_field(get_key)
+            field_obj = Gloss.get_field(get_key)
 
             if type(field_obj) in [CharField,TextField]:
                 q_filter = get_key + '__icontains'
@@ -318,14 +318,15 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
     # print statements are shown in the log in cases where no appropriate description was found
     # it is expected that as the functionality of Query Parameters is extended that the descriptions will evolve
     # depending on what the user wants to be able to do
-    gloss_fields = [f.name for f in Gloss._meta.fields]
+    gloss_fields = Gloss.get_field_names()
     form_fields = GlossSearchForm.__dict__['base_fields']
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
     query_dict = dict()
     for key in query_parameters:
-        if key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):
+        if key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) \
+                or key.startswith(lemma_search_field_prefix):
             # language-based fields are done later
             continue
         elif key == 'search_type':
@@ -338,7 +339,7 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
             query_dict[key] = gettext("Note Type")
         elif key[-2:] == '[]':
             if key[:-2] in gloss_fields:
-                query_dict[key] = Gloss._meta.get_field(key[:-2]).verbose_name.encode('utf-8').decode()
+                query_dict[key] = Gloss.get_field(key[:-2]).verbose_name.encode('utf-8').decode()
             elif key[:-2] in form_fields:
                 query_dict[key] = GlossSearchForm.__dict__['base_fields'][key[:-2]].label.encode('utf-8').decode()
             else:
@@ -351,7 +352,7 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
                 print('pretty_print_query_fields: key not in gloss_fields, not in form_fields:', key)
                 query_dict[key] = key
         else:
-            query_dict[key] = Gloss._meta.get_field(key).verbose_name.encode('utf-8').decode()
+            query_dict[key] = Gloss.get_field(key).verbose_name.encode('utf-8').decode()
 
     for language in dataset_languages:
         glosssearch_field_name = gloss_search_field_prefix + language.language_code_2char
@@ -362,7 +363,7 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
             query_dict[lemma_field_name] = _('Lemma ID Gloss') + " (" + language.name + ")"
         keyword_field_name = keyword_search_field_prefix + language.language_code_2char
         if keyword_field_name in query_parameters:
-            query_dict[keyword_field_name] = _('Translations') + " (" + language.name + ")"
+            query_dict[keyword_field_name] = _('Senses') + " (" + language.name + ")"
 
     return query_dict
 
@@ -426,7 +427,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                 choices_for_category = DerivationHistory.objects.filter(machine_value__in=query_parameters[key])
             else:
                 field = key[:-2]
-                field_category = Gloss._meta.get_field(field).field_choice_category
+                field_category = Gloss.get_field(field).field_choice_category
                 choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
             query_dict[key] = [ choice.name for choice in choices_for_category ]
         elif key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):
