@@ -128,13 +128,12 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
 
     def order_queryset_by_translation(qs, sOrder):
         language_code_2char = sOrder[-2:]
-        query_sort_parameter = 'translation__index'
         sOrderAsc = sOrder
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrderAsc = sOrder[1:]
-        translations = Translation.objects.filter(gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char).order_by(query_sort_parameter)
-        qs = qs.annotate(**{sOrderAsc: Subquery(translations.values('translation__index')[:1])}).order_by(sOrder)
+        translations = Translation.objects.filter(sensetranslation__sense__glosssense__gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char)
+        qs = qs.annotate(**{sOrderAsc: Subquery(translations.values('translation__text')[:1])}).order_by(sOrder)
         return qs
 
     # Set the default sort order
