@@ -6622,7 +6622,7 @@ def glosslist_ajax_complete(request, gloss_id):
         sensetranslations_for_language = {}
         for sensei, sense in enumerate(this_gloss.ordered_senses().all()):
             if sense.senseTranslations.all().filter(language=language).exists():
-                sensetranslations_for_language[sensei+1] = sense.senseTranslations.all().get(language=language)
+                sensetranslations_for_language[sensei+1] = str(sense.senseTranslations.all().get(language=language))
             else:
                 sensetranslations_for_language[sensei+1] = ""
         sensetranslations_per_language.append((language,sensetranslations_for_language))
