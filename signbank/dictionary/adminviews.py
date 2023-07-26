@@ -126,15 +126,14 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
         qs = qs.annotate(**{sOrderAsc: Subquery(lemmaidglosstranslation.values('text')[:1])}).order_by(sOrder)
         return qs
 
-    def order_queryset_by_translation(qs, sOrder):
+    def order_queryset_by_sense(qs, sOrder):
         language_code_2char = sOrder[-2:]
-        query_sort_parameter = 'translation__index'
         sOrderAsc = sOrder
         if (sOrder[0:1] == '-'):
             # A starting '-' sign means: descending order
             sOrderAsc = sOrder[1:]
-        translations = Translation.objects.filter(gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char).order_by(query_sort_parameter)
-        qs = qs.annotate(**{sOrderAsc: Subquery(translations.values('translation__index')[:1])}).order_by(sOrder)
+        translations = Translation.objects.filter(sensetranslation__sense__glosssense__gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char)
+        qs = qs.annotate(**{sOrderAsc: Subquery(translations.values('translation__text')[:1])}).order_by(sOrder)
         return qs
 
     # Set the default sort order
@@ -172,8 +171,8 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
         ordered = order_queryset_by_annotationidglosstranslation(qs, sOrder)
     elif sOrder.startswith("lemmaidglosstranslation_order_") or sOrder.startswith("-lemmaidglosstranslation_order_"):
         ordered = order_queryset_by_lemmaidglosstranslation(qs, sOrder)
-    elif sOrder.startswith("translation_") or sOrder.startswith("-translation_"):
-        ordered = order_queryset_by_translation(qs, sOrder)
+    elif sOrder.startswith("sense_") or sOrder.startswith("-sense_"):
+        ordered = order_queryset_by_sense(qs, sOrder)
     else:
         # Use straightforward ordering on field [sOrder]
         if default_sort_order:
