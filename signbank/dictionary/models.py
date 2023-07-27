@@ -747,6 +747,12 @@ class Sense(models.Model):
     def get_sense_translations(self):
         return [k+": "+v for k,v in self.get_sense_translations_dict_without().items()]
     
+    def has_examplesentence_with_video(self):
+        for examplesentence in self.exampleSentences.all():
+            if examplesentence.has_video():
+                return True
+        return False
+
     def __str__(self):
         str_sense = []
         for sensetranslation in self.senseTranslations.all():
@@ -954,6 +960,12 @@ class Gloss(models.Model):
         verbose_name    = _(u'Senses'),
         help_text           = _(u'Senses in this Gloss')
     )
+
+    def has_sense_with_examplesentence_with_video(self):
+        for sense in self.senses.all():
+            if sense.has_examplesentence_with_video():
+                return True
+        return False
 
     def ordered_senses(self):
         "Return a properly ordered set of senses"

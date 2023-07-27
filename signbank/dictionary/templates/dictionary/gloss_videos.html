@@ -155,67 +155,63 @@
 
         <!-- Example Sentences -->
         <div class="panel panel-default">
-            {% if senses %}
-            <div class="panel-heading"><h3>{% trans "Example Sentences" %}</h3></div>
-            <div class="panel-body">
-            <table class='table table-condensed'>
-                {% for sense in senses %}
-                <tr>
-                    <th style="width:10px">
-                        {{ forloop.counter }}. <br>
-                    </th>
-                    <td style="width:20%">
-                        {% if sense.get_sense_translations_dict_without %}
-                            {% for key, value in sense.get_sense_translations_dict_without.items %}
-                                {{key}}: {{ value }}
-                                {% if not forloop.last %}<br>{% endif %}
-                            {% endfor %}
-                        {% endif %}<br><br>
-                    </td>
-                    <td style="width:80%">
-                        <table class='table table-condensed'>
-                            {% for examplesentence in sense.exampleSentences.all %}
-                                <tr>
-                                    <td style="width:50%">
-                                        {% if examplesentence.sentenceType %}
-                                        <i>{{ examplesentence.sentenceType.name }}</i>
-                                        {% else %}
-                                        - 
-                                        {% endif %}
-                                        {% if examplesentence.negative %}
-                                        <i>(neg)</i>
-                                        {% endif %}
-                                        <br><br>
+            {% if gloss.has_sense_with_examplesentence_with_video %}
+                {% if senses %}
+                <div class="panel-heading"><h3>{% trans "Example Sentences" %}</h3></div>
+                <div class="panel-body">
+                <table class='table table-condensed'>
+                    {% for sense in senses %}
+                        {% if sense.has_examplesentence_with_video %}
+                            <tr>
+                                <th style="width:10px">
+                                    {{ forloop.counter }}. <br>
+                                </th>
+                                <td style="width:20%">
+                                    {% if sense.get_sense_translations_dict_without%}
+                                        {% for key, value in sense.get_sense_translations_dict_without.items %}
+                                            {{key}}: {{ value }}
+                                            {% if not forloop.last %}<br>{% endif %}
+                                        {% endfor %}
+                                    {% endif %}<br><br>
+                                </td>
+                                <td style="width:80%">
+                                    <table class='table table-condensed'>
+                                        {% for examplesentence in sense.exampleSentences.all %}
+                                            {% if examplesentence.has_video %}
+                                            <tr>
+                                                <td style="width:50%">
+                                                    {% if examplesentence.sentenceType %}
+                                                    <i>{{ examplesentence.sentenceType.name }}</i>
+                                                    {% else %}
+                                                    - 
+                                                    {% endif %}
+                                                    {% if examplesentence.negative %}
+                                                    <i>(neg)</i>
+                                                    {% endif %}
+                                                    <br><br>
 
-                                        {% for key, value in examplesentence.get_examplestc_translations_dict_without.items %}
-                                            {{ key }}: {{ value }} {% if not forloop.last %}<br>{% endif %}
-                                        {% endfor %}<br><br>
+                                                    {% for key, value in examplesentence.get_examplestc_translations_dict_without.items %}
+                                                        {{ key }}: {{ value }} {% if not forloop.last %}<br>{% endif %}
+                                                    {% endfor %}<br><br>
 
-                                    </td>
-                                    <td style="width:50%">
-
-                                        {% if examplesentence.has_video %}
-
-                                        <div id="player">
-                                            <video id='videoplayer' src="{{protected_media_url}}{{examplesentence.get_video_path}}" style="width:100%; min-width:300px; max-width:700px;" controls muted></video>
-                                            </div>
-                                            <div id="replay"></div>
-                            
-                                        {% else %}
-                                            <div id='player'>
-                                                <img id='novideo' src='{{ STATIC_URL }}images/no-video-ngt.png'>
-                                                <!-- {{ gloss.get_video }} -->
-                                            </div>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}                              
-                        </table>
-                    </td>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
+                                                </td>
+                                                <td style="width:50%">
+                                                    <div id="player">
+                                                        <video id='videoplayer' src="{{protected_media_url}}{{examplesentence.get_video_path}}" style="width:100%; min-width:300px; max-width:700px;" controls muted></video>
+                                                    </div>
+                                                    <div id="replay"></div>
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                        {% endfor %}                              
+                                    </table>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+                </div>
+                {% endif %}
             {% endif %}
         </div>
 
