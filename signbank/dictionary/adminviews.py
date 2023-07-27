@@ -1984,6 +1984,8 @@ class GlossVideosView(DetailView):
             context['other_media_field_choices'][
                 'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
 
+        context['senses'] = gl.senses.all().order_by('glosssense')
+
         # the lemma field is non-empty because it's caught in the get method
         dataset_of_requested_gloss = gl.lemma.dataset
 

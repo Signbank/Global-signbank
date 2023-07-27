@@ -12,7 +12,7 @@
 
 
 {% block extrajs %}
-    <script type='text/javascript'>
+<script type='text/javascript'>
     var url = '{{ PREFIX_URL }}';
 
     var language_code = '{{ LANGUAGE_CODE }}';
@@ -41,21 +41,21 @@
         video_player.type = "video/mp4";
         video_player.load();
     }
-    </script>
+</script>
 
 <script type='text/javascript'>
-        $('#searchresults').css({'padding-top': 10});
-        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 30)});
+    $('#searchresults').css({'padding-top': 10});
+    $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 30)});
 </script>
 {% endblock %}
 
 {% block extrahead %}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
-    <style>
-        #panel-expand-collapse-btn-group.affix {
-            position:fixed;
-        }
-    </style>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+<style>
+    #panel-expand-collapse-btn-group.affix {
+        position:fixed;
+    }
+</style>
 
 {% endblock %}
 
@@ -63,13 +63,12 @@
 
 <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
-    </div>
+        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;"></div>
     {% endif %}
 </div>
 
 {% if request.GET.warning %}
-<div class="alert alert-warning">{{ request.GET.warning }}</div>
+    <div class="alert alert-warning">{{ request.GET.warning }}</div>
 {% endif %}
 
 
@@ -79,15 +78,15 @@
         {% if SIGN_NAVIGATION %}
 
             {% if navigation.prev %}
-            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_gloss_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %]
-            </a>
+                <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_gloss_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %]
+                </a>
             {% endif %}
 
             <button class='btn navbar-btn'>{% blocktrans %}"Sign {{glossposn}} of {{glosscount}} in the dictionary" {% endblocktrans %}</button>
 
             {% if navigation.next %}
-            <a class="btn navbar-btn btn-default"
-               href="{% url 'dictionary:admin_gloss_view' pk=navigation.next.id %}">{% trans "Next Sign &raquo;" %}</a>
+                <a class="btn navbar-btn btn-default"
+                    href="{% url 'dictionary:admin_gloss_view' pk=navigation.next.id %}">{% trans "Next Sign &raquo;" %}</a>
             {% endif %}
          {% endif %}
     </div>
@@ -103,9 +102,9 @@
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations" %}</a>
         </li>
         {% if gloss.has_frequency_data %}
-        <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_frequency/{{gloss.id}}/">{% trans "Frequencies" %}</a>
-        </li>
+            <li class="nav-item">
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_frequency/{{gloss.id}}/">{% trans "Frequencies" %}</a>
+            </li>
         {% endif %}
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
@@ -122,82 +121,153 @@
 <div id="definitionblock" style="z-index:0;">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
-    <h3>{% trans "Video" %}</h3>
-    <div id="videocontainer">
-    {% if gloss.has_video %}
+        <h3>{% trans "Video" %}</h3>
+        <div id="videocontainer">
+            {% if gloss.has_video %}
 
-     <!-- {{ gloss.get_video }} -->
+            <!-- {{ gloss.get_video }} -->
 
-        <div id="player">
-          <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}" controls autoplay muted></video>
+                <div id="player">
+                <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}" controls autoplay muted></video>
+                </div>
+                <div id="replay"></div>
+
+            {% else %}
+                <div id='player'>
+                    <img id='novideo' src='{{ STATIC_URL }}images/no-video-ngt.png'>
+                    <!-- {{ gloss.get_video }} -->
+                </div>
+            {% endif %}
         </div>
-        <div id="replay"></div>
 
-    {% else %}
-    <div id='player'>
-     <img id='novideo' src='{{ STATIC_URL }}images/no-video-ngt.png'>
-     <!-- {{ gloss.get_video }} -->
-    </div>
-    {% endif %}
-
-    </div>
-    <h3>{% trans "Citation Form Image" %}</h3>
-    <div>
-        {% if gloss.get_image_path %}
-            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}" style="height:259px;width:auto;">
-        {% else %}
-        <p>{% trans "There is no citation form image for this gloss." %}</p>
-        {% endif %}
-    </div>
+        <h3>{% trans "Citation Form Image" %}</h3>
+        <div>
+            {% if gloss.get_image_path %}
+                <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}" style="height:259px;width:auto;">
+            {% else %}
+                <p>{% trans "There is no citation form image for this gloss." %}</p>
+            {% endif %}
+        </div>
     </div>
 
     <div class='panel-group' id="definition"
          style="width:auto; z-index: 0;opacity:.99; position: relative; background-color: white;">
 
-    <!-- Other media -->
-    <div class="panel panel-default">
-        {% if other_media %}
-                <h3>{% trans "Other Media" %}</h3>
+        <!-- Example Sentences -->
+        <div class="panel panel-default">
+            {% if senses %}
+            <div class="panel-heading"><h3>{% trans "Example Sentences" %}</h3></div>
+            <div class="panel-body">
+            <table class='table table-condensed'>
+                {% for sense in senses %}
+                <tr>
+                    <th style="width:10px">
+                        {{ forloop.counter }}. <br>
+                    </th>
+                    <td style="width:20%">
+                        {% if sense.get_sense_translations_dict_without %}
+                            {% for key, value in sense.get_sense_translations_dict_without.items %}
+                                {{key}}: {{ value }}
+                                {% if not forloop.last %}<br>{% endif %}
+                            {% endfor %}
+                        {% endif %}<br><br>
+                    </td>
+                    <td style="width:80%">
+                        <table class='table table-condensed'>
+                            {% for examplesentence in sense.exampleSentences.all %}
+                                <tr>
+                                    <td style="width:50%">
+                                        {% if examplesentence.sentenceType %}
+                                        <i>{{ examplesentence.sentenceType.name }}</i>
+                                        {% else %}
+                                        - 
+                                        {% endif %}
+                                        {% if examplesentence.negative %}
+                                        <i>(neg)</i>
+                                        {% endif %}
+                                        <br><br>
 
+                                        {% for key, value in examplesentence.get_examplestc_translations_dict_without.items %}
+                                            {{ key }}: {{ value }} {% if not forloop.last %}<br>{% endif %}
+                                        {% endfor %}<br><br>
 
-           <table class='table table-condensed'>
+                                    </td>
+                                    <td style="width:50%">
 
-               {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
-               <tr >
-                   <td style="width:auto;" colspan="2">
-                       {% if media_okay and file_type == 'video/mp4' %}
-                    <div id="player_{{pk}}" style="width:auto;">
-                    <video id='videoplayer_{{pk}}' width="450" controls autoplay muted>
-                        <source src="{{ PREFIX_URL }}{{ path }}" type="video/mp4">
-                        <source src="{{ PREFIX_URL }}{{ path }}" type="video/quicktime"
-                        codecs="avc1.42E01E mp4a.40.2">
-                        {% trans "Your browser does not support this format." %}
-                    </video>
-                    </div>
-                       {% endif %}
-                   </td>
-               </tr>
-               <tr>
-                  <th style='width:6em'>{% trans "Download" %}</th>
-               </tr>
-               <tr>
-                    <td>{% if not media_okay %}
-                            <a disabled style="color:rgb(150,150,150);" onclick="return false;" style="color:rgb(150,150,150);"
-				                    download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">{{file_name}}</a>
-                        {% else %}
-                        <a download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">{{file_name}}</a>
-                        {% endif %}
+                                        {% if examplesentence.has_video %}
+
+                                        <div id="player">
+                                            <video id='videoplayer' src="{{protected_media_url}}{{examplesentence.get_video_path}}" style="width:100%; min-width:300px; max-width:700px;" controls muted></video>
+                                            </div>
+                                            <div id="replay"></div>
+                            
+                                        {% else %}
+                                            <div id='player'>
+                                                <img id='novideo' src='{{ STATIC_URL }}images/no-video-ngt.png'>
+                                                <!-- {{ gloss.get_video }} -->
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}                              
+                        </table>
                     </td>
                 </tr>
-               {% endfor %}
-
-           </table>
-
-
-                {% endif %}
+                {% endfor %}
+            </table>
         </div>
+            {% endif %}
         </div>
+
+        <!-- Other media -->
+        <div class="panel panel-default">
+            {% if other_media %}
+            <div class="panel-heading"><h3>{% trans "Other Media" %}</h3></div>
+            <div class="panel-body">
+            <table class='table table-condensed'>
+                {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
+                    {% if media_okay and file_type == 'video/mp4' %}
+                    {{path}}
+                    <tr >
+                        <td style="width:auto;" colspan="2">
+                            <div id="player_{{pk}}" style="width:auto;">
+                                <video id='videoplayer_{{pk}}' width="450" controls autoplay muted>
+                                    <source src="{{ PREFIX_URL }}{{ path }}" type="video/mp4">
+                                    <source src="{{ PREFIX_URL }}{{ path }}" type="video/quicktime"
+                                    codecs="avc1.42E01E mp4a.40.2">
+                                    {% trans "Your browser does not support this format." %}
+                                </video>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    <!-- {% if file_type == 'image/png' %}
+                    <tr >
+                        <td style="width:auto;" colspan="2">
+                            <img src="{{ PREFIX_URL }}{{ path }}" style="height:259px;width:auto;">
+                        </td>
+                    </tr>
+                    {% endif %} -->
+                    <tr>
+                        <th style='width:6em'>{% trans "Download" %}</th>
+                    </tr>
+                    <tr>
+                            <td>{% if not media_okay %}
+                                    <a disabled style="color:rgb(150,150,150);" onclick="return false;" style="color:rgb(150,150,150);"
+                                            download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">{{file_name}}</a>
+                                {% else %}
+                                <a download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">{{file_name}}</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                {% endfor %}
+            </table>
+            </div>
+            {% endif %}
+        </div>
+
     </div>
+</div>
 
 </div>
 
