@@ -61,14 +61,14 @@ def display_language(gloss,interface_language):
 def get_lemma_idgloss_translation(lemma, language):
     lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
     if lemmaidglosstranslations is not None and len(lemmaidglosstranslations) > 0:
-        return lemmaidglosstranslations[0].text
+        return lemmaidglosstranslations.first().text
     return ""
 
 @register.filter
 def get_lemma_idgloss_translation_no_default(lemma, language):
     lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
     if lemmaidglosstranslations is not None and len(lemmaidglosstranslations) > 0:
-        return lemmaidglosstranslations[0].text
+        return lemmaidglosstranslations.first().text
     if not lemma.dataset:
         return ""
     lemma_translation_languages = lemma.dataset.translation_languages.all()

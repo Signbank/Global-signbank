@@ -49,7 +49,7 @@
     {% endfor %}
 
     {% for dataset_lang in dataset_languages %}
-    {% with focus_gloss.lemma|get_lemma_idgloss_translation_no_default:dataset_lang as lemmaidglosstranslation %}
+    {% with focus_gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
       <td class="lemma_{{dataset_lang.language_code_2char}}">
           <div>{{ lemmaidglosstranslation }}</div>
       </td>
