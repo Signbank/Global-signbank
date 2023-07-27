@@ -155,12 +155,14 @@
 
         <!-- Example Sentences -->
         <div class="panel panel-default">
+            <!-- Only show if any example sentence videos exist -->
             {% if gloss.has_sense_with_examplesentence_with_video %}
                 {% if senses %}
                 <div class="panel-heading"><h3>{% trans "Example Sentences" %}</h3></div>
                 <div class="panel-body">
                 <table class='table table-condensed'>
                     {% for sense in senses %}
+                        <!-- Only show if the sense has any example sentences with videos -->
                         {% if sense.has_examplesentence_with_video %}
                             <tr>
                                 <th style="width:10px">
@@ -237,6 +239,7 @@
                         </td>
                     </tr>
                     {% endif %}
+                    <!-- ADD TO SHOW IMAGES -->
                     <!-- {% if file_type == 'image/png' %}
                     <tr >
                         <td style="width:auto;" colspan="2">
@@ -248,14 +251,14 @@
                         <th style='width:6em'>{% trans "Download" %}</th>
                     </tr>
                     <tr>
-                            <td>{% if not media_okay %}
-                                    <a disabled style="color:rgb(150,150,150);" onclick="return false;" style="color:rgb(150,150,150);"
-                                            download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">{{file_name}}</a>
-                                {% else %}
-                                <a download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">{{file_name}}</a>
-                                {% endif %}
-                            </td>
-                        </tr>
+                        <td>{% if not media_okay %}
+                                <a disabled style="color:rgb(150,150,150);" onclick="return false;" style="color:rgb(150,150,150);"
+                                        download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">{{file_name}}</a>
+                            {% else %}
+                            <a download="{{ file_name }}" href="{{ PREFIX_URL }}{{ path }}">{{file_name}}</a>
+                            {% endif %}
+                        </td>
+                    </tr>
                 {% endfor %}
             </table>
             </div>
