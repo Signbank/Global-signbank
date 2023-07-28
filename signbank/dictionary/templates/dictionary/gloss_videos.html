@@ -225,7 +225,6 @@
             <table class='table table-condensed'>
                 {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
                     {% if media_okay and file_type == 'video/mp4' %}
-                    {{path}}
                     <tr >
                         <td style="width:auto;" colspan="2">
                             <div id="player_{{pk}}" style="width:auto;">
