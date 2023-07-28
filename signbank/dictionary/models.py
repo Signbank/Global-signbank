@@ -695,6 +695,7 @@ class Sense(models.Model):
         return self.glosses.first().lemma.dataset
 
     def get_example_sentences(self):
+        "Return the example sentences for this sense for every language as one string"
         translations = []
         for dataset_translation_language in self.get_dataset().translation_languages.all():
             sentences = []
@@ -706,6 +707,7 @@ class Sense(models.Model):
         return (", ").join(translations)
 
     def get_sense_translations_dict_with(self):
+        "Return the translations for this sense for every dataset language as a dictionary of text separated by ', '"
         sense_translations = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
@@ -716,6 +718,7 @@ class Sense(models.Model):
         return sense_translations
     
     def get_sense_translations_dict_with_return(self):
+        "Return the translations for this sense for every dataset language as a dictionary of text separated by '\n'"
         sense_translations = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
@@ -726,6 +729,7 @@ class Sense(models.Model):
         return sense_translations
 
     def get_sense_translations_dict_with_list(self):
+        "Return the translations for this sense for every dataset language as a dictionary of lists of translations"
         sense_translations = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
@@ -736,17 +740,28 @@ class Sense(models.Model):
         return sense_translations
     
     def get_sense_translations_dict_without_return(self):
+        "Get a dict of the translations separated by '\n' for this sense ONLY for languages where they are present"
         return {k: v for k, v in self.get_sense_translations_dict_with_return().items() if v}
 
     def get_sense_translations_dict_without(self):
+        "Get a dict of the translations separated by ', ' for this sense ONLY for languages where they are present"
         return {k: v for k, v in self.get_sense_translations_dict_with().items() if v}
 
     def get_sense_translations_dict_without_list(self):
+        "Get a dict of the translations as list for this sense ONLY for languages where they are present"
         return {k: v for k, v in self.get_sense_translations_dict_with_list().items() if v}
 
     def get_sense_translations(self):
+        "Get a list of the translations for this sense ONLY for languages where they are present"
         return [k+": "+v for k,v in self.get_sense_translations_dict_without().items()]
     
+    def has_examplesentence_with_video(self):
+        "Return true if any of the example sentences has a video"
+        for examplesentence in self.exampleSentences.all():
+            if examplesentence.has_video():
+                return True
+        return False
+
     def __str__(self):
         str_sense = []
         for sensetranslation in self.senseTranslations.all():
@@ -954,6 +969,13 @@ class Gloss(models.Model):
         verbose_name    = _(u'Senses'),
         help_text           = _(u'Senses in this Gloss')
     )
+
+    def has_sense_with_examplesentence_with_video(self):
+        "Return true if the sense has any examplesentences that also have a video"
+        for sense in self.senses.all():
+            if sense.has_examplesentence_with_video():
+                return True
+        return False
 
     def ordered_senses(self):
         "Return a properly ordered set of senses"
