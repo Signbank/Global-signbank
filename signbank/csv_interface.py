@@ -50,6 +50,18 @@ def create_empty_sense(gloss, order, erase=False):
     return sense_for_gloss, sense_translations
 
 
+def sense_examplesentences_for_language(sense, language):
+
+    glosssenses = GlossSense.objects.filter(sense=sense).order_by('order')
+
+    if not glosssenses:
+        return ""
+    gloss_senses = dict()
+    for gs in glosssenses:
+        order = gs.order
+        gloss = gs.gloss
+
+
 def sense_translations_for_language(gloss, language):
     # This finds the sense translations for one language
     # It is used for export of CSV
