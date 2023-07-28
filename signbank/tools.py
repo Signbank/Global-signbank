@@ -379,6 +379,11 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                         'new_human_value': new_human_value})
                 continue
 
+            example_sentences_key_prefix = "Example Sentences ("
+            if human_key.startswith(example_sentences_key_prefix):
+                # ignore the sentences columns
+                continue
+
             elif human_key == 'SignLanguages':
 
                 if new_human_value == 'None' or new_human_value == '':

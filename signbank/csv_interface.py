@@ -1,6 +1,8 @@
 
 from signbank.dictionary.models import *
 from signbank.dictionary.consistency_senses import check_consistency_senses
+from django.utils.translation import override, gettext_lazy as _, activate
+from signbank.settings.server_specific import LANGUAGES
 
 
 def create_empty_sense(gloss, order, erase=False):
@@ -48,6 +50,51 @@ def create_empty_sense(gloss, order, erase=False):
         sense_for_gloss.senseTranslations.add(glosssenselanguage)
         sense_translations[dataset_language] = glosssenselanguage
     return sense_for_gloss, sense_translations
+
+
+def sense_examplesentences_for_language(gloss, language):
+    # by the time this method is called, the consistency check has already been done on the Senses
+    glosssenses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+
+    if not glosssenses:
+        return ""
+    gloss_senses = dict()
+    for gs in glosssenses:
+        order = gs.order
+        sense = gs.sense
+        if order in gloss_senses.keys():
+            if settings.DEBUG_CSV:
+                # if something is messed up with duplicate senses with the same number, just ignore
+                print('ERROR: sense_examplesentences_for_language duplicate order: ', order)
+                print(gloss, str(gloss.id), order, sense)
+                continue
+        gloss_senses[order] = sense
+
+    activate(LANGUAGES[0][0])
+    sentences_display_list = []
+    for order in gloss_senses.keys():
+        sense = gloss_senses[order]
+        example_sentences = sense.exampleSentences.all()
+        list_of_sentences = []
+        for examplesentence in example_sentences:
+            examplesentence_translations = examplesentence.examplesentencetranslation_set.filter(language=language)
+            for sentence in examplesentence_translations:
+                sentence_type_display = examplesentence.sentenceType.name if examplesentence.sentenceType else '-'
+                sentence_tuple = (sentence_type_display, str(examplesentence.negative), sentence.text)
+                list_of_sentences.append(sentence_tuple)
+        if not list_of_sentences:
+            continue
+        sentences_display = []
+        for (stype, negative, text) in list_of_sentences:
+            # does not use a comprehension because of possible nested parentheses in text fields
+            tuple_reordered = str(order) + ': (' + stype + ',' + negative + ', "' + text + '")'
+            sentences_display.append(tuple_reordered)
+        sorted_sentences_display = ', '.join(sentences_display)
+        sentences_display_list.append(sorted_sentences_display)
+    if not sentences_display_list:
+        return ""
+    sentences_display = ' | '.join(sentences_display_list)
+    return sentences_display
 
 
 def sense_translations_for_language(gloss, language):

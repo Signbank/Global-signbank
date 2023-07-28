@@ -57,7 +57,7 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
-from signbank.csv_interface import sense_translations_for_language
+from signbank.csv_interface import sense_translations_for_language, sense_examplesentences_for_language
 from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
@@ -649,12 +649,15 @@ class GlossListView(ListView):
 
         keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
                                                for language in dataset_languages]
+
+        sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
+                                               for language in dataset_languages]
         writer = csv.writer(response)
 
         # CSV should be the first language in the settings
         activate(LANGUAGES[0][0])
         header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
-                                                    + keyword_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
+                                + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
         for extra_column in ['SignLanguages','Dialects', 'Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
                              'Relations to other signs','Relations to foreign signs', 'Tags', 'Notes']:
             header.append(extra_column)
@@ -694,6 +697,11 @@ class GlossListView(ListView):
             for language in dataset_languages:
                 gloss_senses_of_language = sense_translations_for_language(gloss, language)
                 row.append(gloss_senses_of_language)
+
+            # Put example sentences per language in a cell
+            for language in dataset_languages:
+                gloss_example_sentences_of_language = sense_examplesentences_for_language(gloss, language)
+                row.append(gloss_example_sentences_of_language)
 
             for f in fields:
                 #Try the value of the choicelist
