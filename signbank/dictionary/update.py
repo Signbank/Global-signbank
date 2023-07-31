@@ -350,6 +350,9 @@ def add_sentence_video(request, glossid, examplesentenceid):
     }
     return render(request, template, context)
 
+def link_sense(request, senseid):
+    return HttpResponseForbidden("TEMPORARY: Sense Linking Not Allowed")
+
 def update_sense(request, senseid):
     """View to update a sense model from the editable modal"""
 

@@ -1003,6 +1003,69 @@ option:not(:checked) {
                                             </div>
                                         </div>
                                     </div>
+                                    {% if sense.get_senses_with_similar_sensetranslations_dict %}
+                                    <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
+                                    <div class="modal fade" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSense" aria-hidden="true">
+                                        <div class="modal-dialog modal-sm">
+                                            <div class="modal-content" style="width:calc(({{gloss.lemma.dataset.translation_languages.count}}+3)*200px);">
+                                                <div class='modal-header'>
+                                                    <h2 id='modalTitleSense'>{% trans "Similar senses" %}</h2>
+                                                </div><br>
+                                                <!-- <form name="update_sense_form" method="post" action="{% url 'dictionary:link_sense' sense.id %}" >
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
+                                                    <input type="hidden" name="glossid" value="{{ gloss.id }}"/> -->
+                                                    <table class='table table-condensed'>
+                                                        <tr>
+                                                            {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                                                                <th>{{ dataset_lang.name }}</th>
+                                                            {% endfor %}
+                                                            <th>In gloss</th>
+                                                            <th>Number of example sentences</th>
+                                                        </tr>
+                                                        
+                                                        {% for similar_sense in sense.get_senses_with_similar_sensetranslations_dict %}
+                                                        <tr>
+                                                            {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                                                                {% for key, value in similar_sense.items %}
+                                                                    {% if key|slugify == dataset_lang|slugify %}
+                                                                        <td>{{ value }}</td>
+                                                                    {% endif %}
+                                                                {% endfor %}  
+                                                            {% endfor %}
+
+                                                            {% for key, value in similar_sense.items %}
+                                                                {% if key|slugify == 'inglosses' %}
+                                                                    <td>
+                                                                    {% for found_gloss in value %}
+                                                                        <a href="{{ found_gloss.1 }}">{{ found_gloss.0 }}</a>
+                                                                    {% endfor %}
+                                                                    </td>
+                                                                {% endif %}
+                                                            {% endfor %}
+
+                                                            {% for key, value in similar_sense.items %}
+                                                                {% if key|slugify == 'sentence_count' %}
+                                                                    <td>{{ value }}</td>
+                                                                {% endif %}
+                                                            {% endfor %}
+
+                                                            <!-- <td>{{ similar_sense.count_example_sentences }}</td> -->
+                                                            <!-- <td><input class='btn btn-primary' value='{% trans "Adopt" %}' type='submit'></td> -->
+                                                        </tr>
+                                                        {% endfor %}
+
+                                                        
+                                                    </table>
+                                                    
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+                                                    </div>
+                                                <!-- </form> -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
                                 </td>
                                 <td style="width:50%">
                                     <table class='table table-condensed'>

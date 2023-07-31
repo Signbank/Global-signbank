@@ -46,6 +46,7 @@ urlpatterns = [
     re_path(r'^update/assign_lemma_dataset_to_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.assign_lemma_dataset_to_gloss,
             name='assign_lemma_dataset_to_gloss'),
     re_path(r'^update/sense/(?P<senseid>\d+)$', signbank.dictionary.update.update_sense, name='update_sense'),
+    re_path(r'^update/linksense/(?P<senseid>\d+)$', signbank.dictionary.update.link_sense, name='link_sense'),
     re_path(r'^update/addsense/(?P<glossid>\d+)$', signbank.dictionary.update.create_sense, name='create_sense'),
     re_path(r'^update/sortsense/(?P<glossid>\d+)/(?P<order>\d+)/(?P<direction>\w+)$', signbank.dictionary.update.sort_sense, name='sort_sense'),
     re_path(r'^update/deletesense/(?P<glossid>\d+)$', signbank.dictionary.update.delete_sense, name='delete_sense'),
