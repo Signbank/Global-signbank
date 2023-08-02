@@ -7448,7 +7448,7 @@ class KeywordListView(ListView):
 
     model = Gloss
     template_name = 'dictionary/admin_keyword_list.html'
-    paginate_by = 50
+    paginate_by = 25
     query_parameters = dict()
 
     def get(self, request, *args, **kwargs):
