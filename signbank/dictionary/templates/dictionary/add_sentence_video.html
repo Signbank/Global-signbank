@@ -34,7 +34,7 @@
         <label id="drop-container-video-status", class="hide">Status here</label>
         <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            <input type='hidden' name='redirect' value='/dictionary/gloss/{{gloss.id}}'>
+            <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}'>
             <input type='hidden' name='object_id' value='{{examplesentence.id}}'>
             <input type='hidden' name='object_type' value='s'>
             <table id="staffops">
@@ -96,7 +96,7 @@
                           <button class='btn' id='download' disabled>Download</button><br>
                           <form action='{{PREFIX_URL}}/video/upload/' method='post' enctype='multipart/form-data' onsubmit='return reloadVideo()'>
                               {% csrf_token %}
-                              <input type='hidden' name='redirect' value='/dictionary/gloss/{{gloss.id}}'>
+                              <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}'>
                               <input type='hidden' name='object_id' value='{{examplesentence.id}}'>
                               <input type='hidden' name='object_type' value='s'>
                               <input type='file' name='videofile' id='videofile'>
