@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from signbank.video.models import Video, GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
-from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence
+from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme
 from signbank.video.forms import VideoUploadForObjectForm
 # from django.contrib.auth.models import User
 # from datetime import datetime as DT
@@ -30,13 +30,20 @@ def addvideo(request):
             recorded = form.cleaned_data['recorded']
             # Get the object, either a gloss or an example sentences
             if object_type == 's':
-                object = get_object_or_404(ExampleSentence, id=object_id)
+                sentence = ExampleSentence.objects.filter(id=object_id).first()
+                if not sentence:
+                    redirect(redirect_url)
+                sentence.add_video(request.user, vfile, recorded)
             elif object_type == 'g':
-                object = get_object_or_404(Gloss, id=object_id)
-            else: 
-                return redirect(redirect_url)
-            
-            object.add_video(request.user, vfile, recorded)
+                gloss = Gloss.objects.filter(id=object_id).first()
+                if not gloss:
+                    redirect(redirect_url)
+                gloss.add_video(request.user, vfile, recorded)
+            elif object_type == 'm':
+                morpheme = Morpheme.objects.filter(id=object_id).first()
+                if not morpheme:
+                    redirect(redirect_url)
+                morpheme.add_video(request.user, vfile, recorded)
 
             return redirect(redirect_url)
 

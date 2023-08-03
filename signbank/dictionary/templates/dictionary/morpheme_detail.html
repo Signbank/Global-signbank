@@ -319,12 +319,13 @@ function checkKey(e)
             <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
+                <input type='hidden' name='object_type' value='m'>
             <table id="staffops">
               <tr>
                   <td>{{videoform.videofile}}</td>
               </tr>
               <tr>
-                  <td><input type='hidden' name='gloss_id' value='{{morpheme.pk}}'>
+                  <td><input type='hidden' name='object_id' value='{{morpheme.pk}}'>
                       <input class='btn btn-primary' type='submit' value='Upload Video'/></td>
               </tr>
             </table>
