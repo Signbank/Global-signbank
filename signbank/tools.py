@@ -18,7 +18,7 @@ from django.utils.translation import override, gettext_lazy as _, activate
 from django.http import HttpResponse, HttpResponseRedirect
 
 from signbank.csv_interface import sense_translations_for_language, update_senses_parse, \
-    update_sentences_parse, sense_examplesentences_for_language
+    update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from django.utils.dateformat import format
@@ -385,6 +385,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(example_sentences_key_prefix):-1]
                 language = Language.objects.filter(**{language_name_column:language_name}).first()
+                sense_numbers = get_sense_numbers(gloss)
                 if not language:
                     current_sentences_string = ""
                     error_string = 'ERROR: Non-existent language specified for Senses column: ' + human_key
@@ -393,7 +394,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     current_sentences_string = sense_examplesentences_for_language(gloss, language)
                     if current_sentences_string and settings.DEBUG_CSV:
                         print('Current sentences: ', current_sentences_string)
-                    okay = update_sentences_parse(new_human_value)
+                    okay = update_sentences_parse(sense_numbers, new_human_value)
                     if not okay:
                         print('current sentences: ', current_sentences_string)
                         print('not okay new sentences string: ', new_human_value)

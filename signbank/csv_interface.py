@@ -123,7 +123,28 @@ def map_values_to_sentence_type(values):
     return find_all, map_errors
 
 
-def update_sentences_parse(new_sentences_string):
+def get_sense_numbers(gloss):
+    # by the time this method is called, the consistency check has already been done on the Senses
+    glosssenses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+
+    if not glosssenses:
+        return []
+    gloss_senses = dict()
+    for gs in glosssenses:
+        order = gs.order
+        sense = gs.sense
+        if order in gloss_senses.keys():
+            if settings.DEBUG_CSV:
+                # if something is messed up with duplicate senses with the same number, just ignore
+                print('ERROR: get_sense_numbers duplicate order: ', str(gloss.id), str(order))
+                continue
+        gloss_senses[order] = sense
+
+    sense_numbers = [str(order) for order in gloss_senses.keys()]
+    return sense_numbers
+
+
+def update_sentences_parse(sense_numbers, new_sentences_string):
     """CSV Import Update check the parsing of the senses field"""
 
     if not new_sentences_string:
@@ -143,6 +164,9 @@ def update_sentences_parse(new_sentences_string):
     if settings.DEBUG_CSV:
         print('Parsed sentence tuples: ', new_sentence_tuples)
 
+    for order, sentence_type, negative, sentence_text in new_sentence_tuples:
+        if order not in sense_numbers:
+            return False
     return True
 
 
