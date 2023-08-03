@@ -880,8 +880,9 @@ class VideoTests(TestCase):
                 print('The test video is missing: ', settings.WRITABLE_FOLDER+'test_data/video.mp4')
 
             if test_video_file_exists:
-                response = client.post('/video/upload/', {'gloss_id': new_gloss.pk,
+                response = client.post('/video/upload/', {'object_id': new_gloss.pk,
                                                           'videofile': videofile,
+                                                          'object_type': 'g',
                                                           'redirect': '/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'},
                                        follow=True)
                 self.assertEqual(response.status_code, 200)
@@ -890,6 +891,7 @@ class VideoTests(TestCase):
             return
 
         # We expect a video now
+        print('Try to view the video: ', video_url)
         response = client.get(video_url, follow=True)
         self.assertEqual(response.status_code, 200)
 
@@ -975,9 +977,9 @@ class VideoTests(TestCase):
                 print('The test video is missing: ', settings.WRITABLE_FOLDER+'test_data/video.mp4')
 
             if test_video_file_exists:
-
-                response = client.post('/video/upload/', {'gloss_id': new_gloss.pk,
+                response = client.post('/video/upload/', {'object_id': new_gloss.pk,
                                                           'videofile': videofile,
+                                                          'object_type': 'g',
                                                           'redirect': '/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'},
                                        follow=True)
                 self.assertEqual(response.status_code, 200)
@@ -986,6 +988,7 @@ class VideoTests(TestCase):
             return
 
         # We expect a video now
+        print('Try to view the video: ', video_url)
         response = client.get(video_url, follow=True)
         print("Video url second test: {}".format(video_url))
         print("Video upload response second test: {}".format(response))
