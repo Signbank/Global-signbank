@@ -87,14 +87,63 @@ def sense_examplesentences_for_language(gloss, language):
         sentences_display = []
         for (stype, negative, text) in list_of_sentences:
             # does not use a comprehension because of possible nested parentheses in text fields
-            tuple_reordered = str(order) + ': (' + stype + ',' + negative + ', "' + text + '")'
+            tuple_reordered = '(' + str(order) + ', ' + stype + ', ' + negative + ', "' + text + '")'
             sentences_display.append(tuple_reordered)
-        sorted_sentences_display = ', '.join(sentences_display)
+        sorted_sentences_display = ' | '.join(sentences_display)
         sentences_display_list.append(sorted_sentences_display)
     if not sentences_display_list:
         return ""
     sentences_display = ' | '.join(sentences_display_list)
     return sentences_display
+
+
+def map_values_to_sentence_type(values):
+    map_errors = False
+    activate(LANGUAGES[0][0])
+    sentencetype_role_choices = [st.name for st in FieldChoice.objects.filter(field__iexact='SentenceType',
+                                                                              machine_value__gt=1)]
+    import re
+    pattern_mapped_sorted_note_names = []
+    for note_name in sentencetype_role_choices:
+        escaped_note_name = re.sub(r'([()])', r'\\\1', note_name)
+        pattern_mapped_sorted_note_names.append(escaped_note_name)
+
+    sentence_types = '|'.join(pattern_mapped_sorted_note_names)
+    if sentence_types:
+        pattern_sentence_types = '(\-|N\/A|' + sentence_types + ')'
+    else:
+        pattern_sentence_types = '(\-|N\/A)'
+    mapped_values = values
+
+    regex_string = r"\s?\(([1-9]), %s, (True|False), (\"[^\"]+\")\)\s?" % pattern_sentence_types
+
+    find_all = re.findall(regex_string, mapped_values)
+    if not find_all:
+        map_errors = True
+    return find_all, map_errors
+
+
+def update_sentences_parse(new_sentences_string):
+    """CSV Import Update check the parsing of the senses field"""
+
+    if not new_sentences_string:
+        # do nothing
+        return True
+
+    new_sentences = [k for k in new_sentences_string.split(' | ')]
+
+    new_sentence_tuples = []
+    for sentence_tuple in new_sentences:
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple)
+        if map_errors or not find_all:
+            # examine errors
+            continue
+        new_sentence_tuples.append(find_all[0])
+
+    if settings.DEBUG_CSV:
+        print('Parsed sentence tuples: ', new_sentence_tuples)
+
+    return True
 
 
 def sense_translations_for_language(gloss, language):
