@@ -107,9 +107,13 @@
                         {% endwith %}
                      {% endfor %}
                 </tr>
-            <input type="hidden" name="{{newgloss.gloss_pk}}.dataset"  value="{{ newgloss.dataset }}">
+            <input type="hidden" name="{{newgloss.row_nr}}.gloss_pk"  value="{{ newgloss.gloss_pk }}">
+            <input type="hidden" name="{{newgloss.row_nr}}.dataset"  value="{{ newgloss.dataset }}">
+            <input type="hidden" name="{{newgloss.row_nr}}.order"  value="{{ newgloss.order }}">
+            <input type="hidden" name="{{newgloss.row_nr}}.sentence_type"  value="{{ newgloss.sentence_type }}">
+            <input type="hidden" name="{{newgloss.row_nr}}.negative"  value="{{ newgloss.negative }}">
             {% for dataset_lang in dataset_languages %}
-             <input type="hidden" name="{{newgloss.gloss_pk}}"
+             <input type="hidden" name="{{newgloss.row_nr}}.sentence_text_{{ dataset_lang.language_code_2char }}"
                     value="{{newgloss.translations|keyvalue:dataset_lang}}">
              {% endfor %}
 

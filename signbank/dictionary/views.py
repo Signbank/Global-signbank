@@ -30,7 +30,7 @@ from signbank.tools import get_selected_datasets_for_user, get_default_annotatio
     split_csv_lines_sentences_header_body, create_sentence_from_valuedict
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
-from signbank.csv_interface import csv_create_senses, csv_update_sentences
+from signbank.csv_interface import csv_create_senses, csv_update_sentences, csv_create_sentence
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -3006,75 +3006,33 @@ def import_csv_create_sentences(request):
                     glosses_to_create[pk] = dict()
                 glosses_to_create[pk][fieldname] = new_value
 
-            #In case there's no dot, this is not a value we set at the previous page
             except ValueError:
                 # when the database token csrfmiddlewaretoken is passed, there is no dot
                 continue
 
         # these should be error free based on the django template import_csv_create_sentences.html
         for row in glosses_to_create.keys():
-            dataset = glosses_to_create[row]['dataset']
+            gloss_id = glosses_to_create[row]['gloss_pk']
 
             try:
-                dataset_id = Dataset.objects.get(acronym=dataset)
-            except:
+                gloss = Gloss.objects.get(id=int(gloss_id))
+            except ObjectDoesNotExist:
                 # this is an error, this should have already been caught
-                e1 = 'Dataset not found: ' + dataset
+                e1 = 'Gloss not found: ' + gloss_id
                 error.append(e1)
                 continue
 
-            lemmaidglosstranslations = {}
-            for language in dataset_id.translation_languages.all():
-                lemma_id_gloss = glosses_to_create[row]['lemma_id_gloss_' + language.language_code_2char]
-                if lemma_id_gloss:
-                    lemmaidglosstranslations[language] = lemma_id_gloss
-            # Check whether it is an existing one (correct, make a reference), ...
-            existing_lemmas = []
-            for language, term in lemmaidglosstranslations.items():
-                try:
-                    existing_lemmas.append(LemmaIdglossTranslation.objects.get(lemma__dataset=dataset_id,
-                                                                               language=language,
-                                                                               text=term).lemma)
-                except ObjectDoesNotExist as e:
-                    # New lemma will be created
-                    pass
-            existing_lemmas_set = set(existing_lemmas)
+            dataset_acronym = glosses_to_create[row]['dataset']
 
-            if len(existing_lemmas) == len(lemmaidglosstranslations) and len(existing_lemmas_set) == 1:
-                lemma_for_gloss = existing_lemmas[0]
-            elif len(existing_lemmas) == 0:
-                with atomic():
-                    lemma_for_gloss = LemmaIdgloss(dataset=dataset_id)
-                    lemma_for_gloss.save()
-                    for language, term in lemmaidglosstranslations.items():
-                        new_lemmaidglosstranslation = LemmaIdglossTranslation(lemma=lemma_for_gloss,
-                                                                              language=language, text=term)
-                        new_lemmaidglosstranslation.save()
-            else:
-                # This case should not happen, it should have been caught in stage 1
-                e1 = 'To create glosses in dataset ' + dataset_id.acronym + \
-                     ', the combination of Lemma ID Gloss translations should either refer ' \
-                     'to an existing Lemma ID Gloss or make up a completely new Lemma ID gloss.'
+            try:
+                dataset = Dataset.objects.get(acronym=dataset_acronym)
+            except ObjectDoesNotExist:
+                # this is an error, this should have already been caught
+                e1 = 'Dataset not found: ' + dataset_acronym
                 error.append(e1)
                 continue
 
-            new_gloss = Gloss()
-            new_gloss.lemma = lemma_for_gloss
-            # Save the new gloss before updating it
-            new_gloss.save()
-            new_gloss.creationDate = DT.datetime.now()
-            new_gloss.creator.add(request.user)
-            new_gloss.excludeFromEcv = False
-            new_gloss.save()
-
-            for language in dataset_languages:
-                annotation_id_gloss = glosses_to_create[row]['annotation_id_gloss_' + language.language_code_2char]
-                if annotation_id_gloss:
-                    annotationidglosstranslation = AnnotationIdglossTranslation()
-                    annotationidglosstranslation.language = language
-                    annotationidglosstranslation.gloss = new_gloss
-                    annotationidglosstranslation.text = annotation_id_gloss
-                    annotationidglosstranslation.save()
+            csv_create_sentence(gloss, dataset_languages, glosses_to_create[row], create=True)
 
         stage = 2
 

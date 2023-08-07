@@ -2315,10 +2315,10 @@ def create_sentence_from_valuedict(valuedict, dataset, row_nr, earlier_creation_
             # also stores empty values
             sentence_translations[language] = sentence_text
 
-        sentence_dict = {'gloss_pk': valuedict["Signbank ID"], 'dataset': valuedict["Dataset"],
+        sentence_dict = {'row_nr': str(row_nr + 1), 'gloss_pk': valuedict["Signbank ID"], 'dataset': valuedict["Dataset"],
                          'order': valuedict["Sense Number"], 'sentence_type': valuedict["Sentence Type"],
                          'negative': valuedict["Negative"], 'translations': sentence_translations}
-        errors_found = parse_sentence_row(str(row_nr), sentence_dict)
+        errors_found = parse_sentence_row(str(row_nr + 1), sentence_dict)
         new_sentence.append(sentence_dict)
     return new_sentence, already_exists, errors_found, earlier_creation_same_csv, earlier_creation_annotationidgloss, \
         earlier_creation_lemmaidgloss

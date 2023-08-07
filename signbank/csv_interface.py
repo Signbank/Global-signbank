@@ -272,6 +272,53 @@ def csv_update_sentences(gloss, language, new_sentences_string, create=False):
         sentence_translation.save()
 
 
+def csv_create_sentence(gloss, dataset_languages, sentence_to_create, create=False):
+    """CSV Import Update the senses field"""
+    if settings.DEBUG_CSV:
+        print('call to csv_create_sentence: ', gloss, str(gloss.id), sentence_to_create)
+
+    glosssenses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+
+    if not glosssenses:
+        return ""
+    gloss_senses = dict()
+    for gs in glosssenses:
+        order = gs.order
+        sense = gs.sense
+        if order in gloss_senses.keys():
+            print('ERROR: csv_update_sentences: duplicate order: ', order)
+            print(gloss, str(gloss.id), order, sense)
+        gloss_senses[order] = sense
+
+    activate(LANGUAGES[0][0])
+    sentencetype_roles_to_type = {st.name: st
+                                  for st in FieldChoice.objects.filter(field__iexact='SentenceType')}
+
+    new_sentence_dict = dict()
+    new_sentence_dict['order'] = int(sentence_to_create['order'])
+    new_sentence_dict['sentence_type'] = sentencetype_roles_to_type[sentence_to_create['sentence_type']]
+    new_sentence_dict['negative'] = sentence_to_create['negative'] == 'True'
+
+    if not create:
+        if settings.DEBUG_CSV:
+            print('New sentences to create: create set to False')
+        return
+
+    sense = gloss_senses[new_sentence_dict['order']]
+
+    examplesentence = ExampleSentence(negative=new_sentence_dict['negative'],
+                                      sentenceType=new_sentence_dict['sentence_type'])
+    examplesentence.save()
+    sense.exampleSentences.add(examplesentence)
+
+    for language in dataset_languages:
+        sentence_text = sentence_to_create['sentence_text_'+language.language_code_2char]
+        sentence_translation = ExampleSentenceTranslation(language=language,
+                                                          examplesentence=examplesentence,
+                                                          text=sentence_text)
+        sentence_translation.save()
+
+
 def sense_translations_for_language(gloss, language):
     # This finds the sense translations for one language
     # It is used for export of CSV
