@@ -1388,7 +1388,7 @@ def import_csv_update(request):
                 language_name = fieldname[len(example_sentences_key_prefix):-1]
                 language = Language.objects.filter(**{language_name_column: language_name}).first()
                 if language:
-                    csv_update_sentences(gloss, language, new_value, create=True)
+                    csv_update_sentences(gloss, language, new_value, create=False)
                 continue
 
             if fieldname == 'SignLanguages':
