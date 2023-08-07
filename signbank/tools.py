@@ -401,7 +401,17 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         error_string = 'ERROR Gloss ' + str(
                             gloss.id) + ': Error parsing value in Example Sentences column ' + human_key + ': ' + new_human_value
                         errors_found += [error_string]
-                # do not actually update anything yet
+
+                if new_human_value not in ['None', '']:
+                    differences.append({'pk': gloss_id,
+                                        'dataset': current_dataset,
+                                        'annotationidglosstranslation': default_annotationidglosstranslation,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': current_sentences_string,
+                                        'original_human_value': current_sentences_string,
+                                        'new_machine_value': new_human_value,
+                                        'new_human_value': new_human_value})
                 continue
 
             elif human_key == 'SignLanguages':

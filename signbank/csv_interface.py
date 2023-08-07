@@ -115,7 +115,7 @@ def map_values_to_sentence_type(values):
         pattern_sentence_types = '(\-|N\/A)'
     mapped_values = values
 
-    regex_string = r"\s?\(([1-9]), %s, (True|False), (\"[^\"]+\")\)\s?" % pattern_sentence_types
+    regex_string = r"\s?\(([1-9]), %s, (True|False), \"([^\"]+)\"\)\s?" % pattern_sentence_types
 
     find_all = re.findall(regex_string, mapped_values)
     if not find_all:
@@ -168,6 +168,80 @@ def update_sentences_parse(sense_numbers, new_sentences_string):
         if order not in sense_numbers:
             return False
     return True
+
+
+def csv_update_sentences(gloss, language, new_sentences_string, create=False):
+    """CSV Import Update the senses field"""
+    # this function assumes the new_senses_string is correctly parsed
+    # the function update_senses_parse tests this
+    # the sense numbers in the new_senses_string are unique numbers between 1 and 9
+    if settings.DEBUG_CSV:
+        print('call to csv_update_sentences: ', gloss, str(gloss.id), language, new_sentences_string)
+    if not new_sentences_string:
+        return
+
+    new_sentences = [k for k in new_sentences_string.split(' | ')]
+
+    glosssenses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+
+    if not glosssenses:
+        return ""
+    gloss_senses = dict()
+    for gs in glosssenses:
+        order = gs.order
+        sense = gs.sense
+        if order in gloss_senses.keys():
+            print('ERROR: csv_update_sentences: duplicate order: ', order)
+            print(gloss, str(gloss.id), order, sense)
+        gloss_senses[order] = sense
+
+    current_sentences_string = sense_examplesentences_for_language(gloss, language)
+    if settings.DEBUG_CSV:
+        print('Existing sentences: ', current_sentences_string)
+
+    new_sentence_tuples = []
+    for sentence_tuple in new_sentences:
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple)
+        if map_errors or not find_all:
+            # examine errors
+            if settings.DEBUG_CSV:
+                print('ERROR: Parsing error sentence tuple: ', sentence_tuple)
+            continue
+        new_sentence_tuples.append(find_all[0])
+
+    activate(LANGUAGES[0][0])
+    sentencetype_roles_to_type = {st.name: st
+                                  for st in FieldChoice.objects.filter(field__iexact='SentenceType')}
+
+    new_sentences_list = []
+    for order, sentence_type, negative, sentence_text in new_sentence_tuples:
+        new_sentence_dict = dict()
+        new_sentence_dict['order'] = int(order)
+        new_sentence_dict['sentence_type'] = sentencetype_roles_to_type[sentence_type]
+        new_sentence_dict['negative'] = negative == 'True'
+        new_sentence_dict['sentence_text'] = sentence_text
+        new_sentences_list.append(new_sentence_dict)
+
+    if settings.DEBUG_CSV:
+        print('New sentences to create: ', new_sentences_list)
+
+    if not create:
+        if settings.DEBUG_CSV:
+            print('New sentences to create: create set to False')
+        return
+
+    for sentence_dict in new_sentences_list:
+        sense = gloss_senses[sentence_dict['order']]
+
+        examplesentence = ExampleSentence(negative=sentence_dict['negative'],
+                                          sentenceType=sentence_dict['sentence_type'])
+        examplesentence.save()
+        sense.exampleSentences.add(examplesentence)
+
+        sentence_translation = ExampleSentenceTranslation(language=language,
+                                                          examplesentence=examplesentence,
+                                                          text=sentence_dict['sentence_text'])
+        sentence_translation.save()
 
 
 def sense_translations_for_language(gloss, language):
