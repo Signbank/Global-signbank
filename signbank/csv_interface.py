@@ -97,7 +97,7 @@ def sense_examplesentences_for_language(gloss, language):
     return sentences_display
 
 
-def map_values_to_sentence_type(values):
+def map_values_to_sentence_type(values, include_sentences=True):
     map_errors = False
     activate(LANGUAGES[0][0])
     sentencetype_role_choices = [st.name for st in FieldChoice.objects.filter(field__iexact='SentenceType',
@@ -115,8 +115,10 @@ def map_values_to_sentence_type(values):
         pattern_sentence_types = '(\-|N\/A)'
     mapped_values = values
 
-    regex_string = r"\s?\(([1-9]), %s, (True|False), \"([^\"]+)\"\)\s?" % pattern_sentence_types
-
+    if include_sentences:
+        regex_string = r"\s?\(([1-9]), %s, (True|False), \"([^\"]+)\"\)\s?" % pattern_sentence_types
+    else:
+        regex_string = r"\s?\(([1-9]), %s, (True|False)\)\s?" % pattern_sentence_types
     find_all = re.findall(regex_string, mapped_values)
     if not find_all:
         map_errors = True
@@ -142,6 +144,32 @@ def get_sense_numbers(gloss):
 
     sense_numbers = [str(order) for order in gloss_senses.keys()]
     return sense_numbers
+
+
+def parse_sentence_row(row_nr, sentence_dict):
+    errors = []
+    sentence_fields = '(' + sentence_dict['order'] + ', ' + sentence_dict['sentence_type'] + ', ' + sentence_dict['negative'] + ')'
+    find_all, map_errors = map_values_to_sentence_type(sentence_fields, include_sentences=False)
+    if map_errors:
+        errors += ['Row '+row_nr + ': Error parsing sentence columns Sense Number, Sentence Type, Negative: '+sentence_fields]
+    gloss_pk = sentence_dict['gloss_pk']
+    try:
+        dataset = Dataset.objects.get(acronym=sentence_dict['dataset'])
+    except ObjectDoesNotExist:
+        dataset = None
+        errors += ['Row '+row_nr + ': Dataset '+sentence_dict['dataset']+' does not exist']
+    try:
+        gloss = Gloss.objects.get(pk=int(gloss_pk))
+    except (ObjectDoesNotExist, ValueError, MultipleObjectsReturned):
+        gloss = None
+        errors += ['Row '+row_nr + ': Gloss ID '+gloss_pk+' does not exist.']
+    if gloss and dataset and gloss.lemma and gloss.lemma.dataset != dataset:
+        errors += ['Row '+row_nr + ': Gloss '+gloss_pk+' is not in dataset '+sentence_dict['dataset']+'.']
+    if gloss:
+        gloss_senses = get_sense_numbers(gloss)
+        if sentence_dict['order'] not in gloss_senses:
+            errors += ['Row '+row_nr + ': Gloss '+gloss_pk+' does not have a Sense Number '+sentence_dict['order']+'.']
+    return errors
 
 
 def update_sentences_parse(sense_numbers, new_sentences_string):
