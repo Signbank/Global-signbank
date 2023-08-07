@@ -1309,7 +1309,12 @@ class GlossDetailView(DetailView):
         senses_consistent = consistent_senses(self.object, include_translations=True,
                                               allow_empty_language=True)
         if not senses_consistent:
-            print('gloss senses are not consistent')
+            if settings.DEBUG_SENSES:
+                print('GlossDetailView get: gloss senses are not consistent: ', str(self.object.id))
+            check_consistency_senses(self.object, delete_empty=True)
+            # the senses and their translation objects are renumbered so orderIndex matches sense number
+            # somehow this gets mis-matched
+            reorder_senses(self.object)
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
 
@@ -7523,7 +7528,8 @@ class KeywordListView(ListView):
             consistent = consistent_senses(gloss, include_translations=True,
                                            allow_empty_language=True)
             if not consistent:
-                print('gloss senses are not consistent: ', gloss, str(gloss.id))
+                if settings.DEBUG_SENSES:
+                    print('gloss senses are not consistent: ', gloss, str(gloss.id))
                 # the following method prints whether duplicate senses with no translations have been found
                 check_consistency_senses(gloss, delete_empty=True)
                 # the senses and their translation objects are renumbered in case anything was deleted

@@ -265,3 +265,5 @@ FILESYSTEM_SIGNBANK_GROUPS = ['signbank', 'www-data', 'signbank-writable', 'wwws
 SHARE_SENSES = False
 
 DEBUG_CSV = False
+
+DEBUG_SENSES = False
