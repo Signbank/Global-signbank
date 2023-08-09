@@ -476,6 +476,7 @@ class MorphemeSearchForm(forms.ModelForm):
     definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_(u'Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
+    hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=YESNOCHOICES)
 
     createdBefore = forms.DateField(label=_(u'Created Before'),
                                     input_formats=[settings.DATE_FORMAT],
