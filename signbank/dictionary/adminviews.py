@@ -6507,8 +6507,7 @@ def homonyms_ajax_complete(request, gloss_id):
 def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
     if 'gloss_detail' in request.GET:
-        gloss_detail = request.GET['gloss_detail']
-
+        gloss_detail = request.GET['gloss_detail'] == 'true'
     language_code = request.LANGUAGE_CODE
 
     if language_code == "zh-hans":
