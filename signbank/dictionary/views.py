@@ -1916,15 +1916,6 @@ def proposed_new_signs(request):
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
-def add_params_to_url(url,params):
-    url_parts = list(urlparse.urlparse(url))
-    query = dict(urlparse.parse_qsl(url_parts[4]))
-    query.update(params)
-    url = urlparse.urlunparse(url_parts)
-
-    url_parts[4] = urlencode(query)
-    return urlparse.urlunparse(url_parts)
-
 def create_citation_image(request, pk):
     gloss = get_object_or_404(Gloss, pk=pk)
     try:
@@ -1960,13 +1951,18 @@ def add_image(request):
 
             if extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
 
-                params = {'warning':'File extension not supported! Please convert to png or jpg'}
-                return redirect(add_params_to_url(url,params))
+                feedback_message = _('File extension not supported! Please convert to png or jpg')
+
+                messages.add_message(request, messages.ERROR, feedback_message)
+
+                return redirect(url)
 
             elif imagefile.size > settings.MAXIMUM_UPLOAD_SIZE:
 
-                params = {'warning':'Uploaded file too large!'}
-                return redirect(add_params_to_url(url,params))
+                feedback_message = _('Uploaded file too large!')
+                messages.add_message(request, messages.ERROR, feedback_message)
+
+                return redirect(url)
 
             # construct a filename for the image, use sn
             # if present, otherwise use idgloss+gloss id
@@ -2056,6 +2052,7 @@ def delete_image(request, pk):
         url = '/'
     return redirect(url)
 
+
 def add_handshape_image(request):
 
     if 'HTTP_REFERER' in request.META:
@@ -2080,13 +2077,16 @@ def add_handshape_image(request):
 
             if extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
 
-                params = {'warning':'File extension not supported! Please convert to png or jpg'}
-                return redirect(add_params_to_url(url,params))
+                feedback_message = _('File extension not supported! Please convert to png or jpg')
+                messages.add_message(request, messages.ERROR, feedback_message)
+
+                return redirect(url)
 
             elif imagefile.size > settings.MAXIMUM_UPLOAD_SIZE:
 
-                params = {'warning':'Uploaded file too large!'}
-                return redirect(add_params_to_url(url,params))
+                feedback_message = _('Uploaded file too large!')
+                messages.add_message(request, messages.ERROR, feedback_message)
+                return redirect(url)
 
             # construct a filename for the image, use sn
             # if present, otherwise use idgloss+gloss id
@@ -2095,22 +2095,31 @@ def add_handshape_image(request):
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing image for this sign
-            goal_path =  settings.WRITABLE_FOLDER+settings.HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
+            goal_path = settings.WRITABLE_FOLDER+settings.HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
             goal_location = goal_path + 'handshape_' + str(handshape.machine_value) + extension
-
-            #First make the dir if needed
+            # First make the dir if needed
             try:
                 os.mkdir(goal_path)
             except OSError:
                 pass
 
-            #Remove previous video
+            # Remove previous video
             if handshape.get_image_path():
                 os.remove(settings.WRITABLE_FOLDER+handshape.get_image_path())
 
-            with open(goal_location, 'wb+') as destination:
-                for chunk in imagefile.chunks():
-                    destination.write(chunk)
+            # create the destination file
+            try:
+                f = open(goal_location, 'wb+')
+            except (UnicodeEncodeError, IOError, OSError):
+                feedback_message = _('Error uploading handshape image. Please consult the administrator.')
+                messages.add_message(request, messages.ERROR, feedback_message)
+                return redirect(redirect_url)
+
+            destination = File(f)
+            # Save the file
+            for chunk in request.FILES['imagefile'].chunks():
+                destination.write(chunk)
+            destination.close()
 
             return redirect(redirect_url)
 
