@@ -1411,7 +1411,7 @@ def import_csv_update(request):
 
             if fieldname == 'Dataset':
 
-                # this has already been checked for existance and permission in the previous step
+                # this has already been checked for existence and permission in the previous step
                 # get dataset identifier
                 if new_value == 'None':
                     # don't allow the user to erase the current dataset, this should have already been caught

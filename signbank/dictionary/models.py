@@ -396,7 +396,7 @@ class Handshape(models.Model):
         field = cls._meta.get_field(field)
         return field
 
-    def get_image_path(self, check_existance=True):
+    def get_image_path(self, check_existence=True):
         """Returns the path within the writable and static folder"""
 
         foldername = str(self.machine_value) + '/'
@@ -404,7 +404,7 @@ class Handshape(models.Model):
 
         dir_path = settings.WRITABLE_FOLDER + settings.HANDSHAPE_IMAGE_DIRECTORY + '/' + foldername
 
-        if check_existance:
+        if check_existence:
             try:
                 for filename in os.listdir(dir_path):
                     if not re.match(r'.*_\d+$', filename):
@@ -1995,7 +1995,7 @@ class Gloss(models.Model):
 
         return (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms)
 
-    def get_image_path(self, check_existance=True):
+    def get_image_path(self, check_existence=True):
         """Returns the path within the writable and static folder"""
         glossvideo = self.glossvideo_set.filter(version=0)
         if glossvideo:
@@ -2003,14 +2003,14 @@ class Gloss(models.Model):
             videofile_path = str(glossvideo.videofile)
             videofile_path_without_extension, extension = os.path.splitext(videofile_path)
 
-            if check_existance:
+            if check_existence:
                 for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
                     imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
                     try:
                         imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
                     except:
                         imagefile_path_exists = False
-                    if check_existance and imagefile_path_exists:
+                    if check_existence and imagefile_path_exists:
                         return imagefile_path
         else:
             # If there is no GlossVideo, see whether there is an image on disk anyway
@@ -2029,7 +2029,7 @@ class Gloss(models.Model):
                     imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
                 except:
                     imagefile_path_exists = False
-                if check_existance and imagefile_path_exists:
+                if check_existence and imagefile_path_exists:
                     return imagefile_path
         return ''
 
@@ -2730,13 +2730,13 @@ class Dataset(models.Model):
 
             return result[:CHARACTER_THRESHOLD]
 
-    def get_metadata_path(self, check_existance=True):
+    def get_metadata_path(self, check_existence=True):
         """Returns the path within the writable and static folder"""
         metafile_name = self.acronym + '_metadata.csv'
 
         goal_string = WRITABLE_FOLDER + DATASET_METADATA_DIRECTORY + '/' + metafile_name
 
-        if check_existance and os.path.exists(goal_string): #os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
+        if check_existence and os.path.exists(goal_string): #os.path.join(settings.WRITABLE_FOLDER, imagefile_path)):
             return goal_string
 
         return ''
