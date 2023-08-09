@@ -19,10 +19,10 @@
       <a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
 
         <div id='glossvideo_{{focus_gloss.id}}'>
-            <img class="thumbnail" src="{{protected_media_url}}{{focus_gloss.get_image_path}}">
+            <img class="thumbnail" src="{{protected_media_url}}{{focus_gloss.get_image_url}}">
 
             {% if focus_gloss.has_video %}
-            <video id="videoplayer" class="thumbnail-video" src="{{protected_media_url}}{{focus_gloss.get_video_path}}"  type="video/mp4" muted="muted"></video>
+            <video id="videoplayer" class="thumbnail-video" src="{{protected_media_url}}{{focus_gloss.get_video_url}}"  type="video/mp4" muted="muted"></video>
             {% endif %}
         </div>
 
