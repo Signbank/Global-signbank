@@ -21,7 +21,7 @@ from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.utils.dateformat import format
 from django.core.exceptions import ObjectDoesNotExist, EmptyResultSet
 from django.db import OperationalError, ProgrammingError
-from django.db.models import CharField, TextField, Value as V
+from django.db.models import Q, Count, CharField, TextField, Value as V
 from django.db.models.fields import BooleanField, BooleanField
 
 from django.urls import reverse
@@ -67,7 +67,7 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
             # these mappings match the choices in the Gloss Search Form
             NEUTRALBOOLEANCHOICES = {'None': '1', 'True': '2', 'False': '3'}
             query_parameters[field_key] = NEUTRALBOOLEANCHOICES[field_value]
-        elif field_key in ['defspublished']:
+        elif field_key in ['defspublished', 'hasmultiplesenses']:
             # these mappings match the choices in the Gloss Search Form and get_queryset
             # some of these are legacy mappings
             YESNOCHOICES = {'None': 'unspecified', 'True': 'yes', 'False': 'no'}
@@ -186,6 +186,16 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key == 'defspublished' and get_value != '':
             val = get_value == 'yes'
             query_list.append(Q(definition__published=val))
+
+        elif get_key == 'hasmultiplesenses' and get_value != '':
+            val = get_value == 'yes'
+            if val:
+                multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
+                    'gloss').annotate(Count('id')).filter(id__count__gt=1)]
+            else:
+                multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
+                    'gloss').annotate(Count('id')).filter(id__count=1)]
+            query_list.append(Q(id__in=multiple_senses))
 
         elif get_key in ['definitionContains']:
             definitions_with_this_text = Definition.objects.filter(text__icontains=get_value)
@@ -446,7 +456,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                 query_dict[key] = _('No')
         elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasothermedia']:
             query_dict[key] = NULLBOOLEANCHOICES[query_parameters[key]]
-        elif key in ['defspublished']:
+        elif key in ['defspublished', 'hasmultiplesenses']:
             query_dict[key] = YESNOCHOICES[query_parameters[key]]
         elif key in ['hasRelation']:
             query_dict[key] = RELATION_ROLE_CHOICES[query_parameters[key]]

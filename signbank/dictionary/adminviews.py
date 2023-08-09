@@ -1037,10 +1037,21 @@ class GlossListView(ListView):
             elif get['hasothermedia'] == '3': #We only want glosses without other media
                 qs = qs.exclude(pk__in=pks_for_glosses_with_othermedia)
 
-        if 'defspublished' in get and get['defspublished'] != 'unspecified':
+        if 'defspublished' in get and get['defspublished'] not in ['0', 'unspecified']:
             val = get['defspublished'] == 'yes'
             query_parameters['defspublished'] = get['defspublished']
             qs = qs.filter(definition__published=val)
+
+        if 'hasmultiplesenses' in get and get['hasmultiplesenses'] not in ['0', 'unspecified']:
+            val = get['hasmultiplesenses'] == 'yes'
+            query_parameters['hasmultiplesenses'] = get['hasmultiplesenses']
+            if val:
+                multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
+                    'gloss').annotate(Count('id')).filter(id__count__gt=1)]
+            else:
+                multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
+                    'gloss').annotate(Count('id')).filter(id__count=1)]
+            qs = qs.filter(id__in=multiple_senses)
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:

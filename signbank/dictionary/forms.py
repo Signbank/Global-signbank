@@ -240,9 +240,10 @@ def get_morpheme_role_choices():
 
 ATTRS_FOR_FORMS = {'class': 'form-control'}
 
+
 class GlossSearchForm(forms.ModelForm):
 
-    use_required_attribute = False #otherwise the html required attribute will show up on every form
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_('Search Gloss'))
     sortOrder = forms.CharField(label=_('Sort Order'))       # Used in glosslistview to store user-selection
@@ -251,8 +252,7 @@ class GlossSearchForm(forms.ModelForm):
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
-
-    # defsearch = forms.CharField(label=_(u'Search Definition/Notes')) # this field is a duplicate of definitionContains
+    hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=YESNOCHOICES)
 
     relation = forms.CharField(label=_(u'Gloss of Related Sign'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     relationToForeignSign = forms.CharField(label=_(u'Gloss of Foreign Sign'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))

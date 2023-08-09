@@ -3351,6 +3351,7 @@ class QueryParameterBoolean(QueryParameter):
         # GlossSearchForm fields
         ('hasRelationToForeignSign', 'hasRelationToForeignSign'),
         ('defspublished', 'defspublished'),
+        ('hasmultiplesenses', 'hasmultiplesenses'),
         ('hasvideo', 'hasvideo'),
         ('hasothermedia', 'hasothermedia')
     ]
@@ -3363,6 +3364,8 @@ class QueryParameterBoolean(QueryParameter):
             glossFieldName = Gloss.get_field(self.fieldName).verbose_name.encode('utf-8').decode()
         elif self.fieldName == 'defspublished':
             glossFieldName = _("All Definitions Published")
+        elif self.fieldName == 'hasmultiplesenses':
+            glossFieldName = _("Has Multiple Senses")
         elif self.fieldName == 'hasRelationToForeignSign':
             glossFieldName = _("Related to Foreign Sign")
         elif self.fieldName == 'hasvideo':
