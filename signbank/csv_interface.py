@@ -80,14 +80,14 @@ def sense_examplesentences_for_language(gloss, language):
             examplesentence_translations = examplesentence.examplesentencetranslation_set.filter(language=language)
             for sentence in examplesentence_translations:
                 sentence_type_display = examplesentence.sentenceType.name if examplesentence.sentenceType else '-'
-                sentence_tuple = (sentence_type_display, str(examplesentence.negative), sentence.text)
+                sentence_tuple = (str(examplesentence.id), sentence_type_display, str(examplesentence.negative), sentence.text)
                 list_of_sentences.append(sentence_tuple)
         if not list_of_sentences:
             continue
         sentences_display = []
-        for (stype, negative, text) in list_of_sentences:
+        for (sid, stype, negative, text) in list_of_sentences:
             # does not use a comprehension because of possible nested parentheses in text fields
-            tuple_reordered = '(' + str(order) + ', ' + stype + ', ' + negative + ', "' + text + '")'
+            tuple_reordered = '(' + str(order) + ', ' + sid + ', ' + stype + ', ' + negative + ', "' + text + '")'
             sentences_display.append(tuple_reordered)
         sorted_sentences_display = ' | '.join(sentences_display)
         sentences_display_list.append(sorted_sentences_display)
@@ -116,9 +116,9 @@ def map_values_to_sentence_type(values, include_sentences=True):
     mapped_values = values
 
     if include_sentences:
-        regex_string = r"\s?\(([1-9]), %s, (True|False), \"([^\"]+)\"\)\s?" % pattern_sentence_types
+        regex_string = r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False), \"([^\"]+)\"\)\s?" % pattern_sentence_types
     else:
-        regex_string = r"\s?\(([1-9]), %s, (True|False)\)\s?" % pattern_sentence_types
+        regex_string = r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False)\)\s?" % pattern_sentence_types
     find_all = re.findall(regex_string, mapped_values)
     if not find_all:
         map_errors = True
@@ -144,6 +144,29 @@ def get_sense_numbers(gloss):
 
     sense_numbers = [str(order) for order in gloss_senses.keys()]
     return sense_numbers
+
+
+def get_senses_to_sentences(gloss):
+    # by the time this method is called, the consistency check has already been done on the Senses
+    glosssenses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+
+    if not glosssenses:
+        return []
+    gloss_senses = dict()
+    gloss_senses_to_sentences_dict = dict()
+    for gs in glosssenses:
+        order = gs.order
+        sense = gs.sense
+        if order in gloss_senses.keys():
+            if settings.DEBUG_CSV:
+                # if something is messed up with duplicate senses with the same number, just ignore
+                print('ERROR: get_sense_numbers duplicate order: ', str(gloss.id), str(order))
+                continue
+        gloss_senses[order] = sense
+        sense_sentences = sense.exampleSentences.all()
+        gloss_senses_to_sentences_dict[str(order)] = [str(sentence.id) for sentence in sense_sentences]
+
+    return gloss_senses_to_sentences_dict
 
 
 def parse_sentence_row(row_nr, sentence_dict):
@@ -172,7 +195,7 @@ def parse_sentence_row(row_nr, sentence_dict):
     return errors
 
 
-def update_sentences_parse(sense_numbers, new_sentences_string):
+def update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_sentences_string):
     """CSV Import Update check the parsing of the senses field"""
 
     if not new_sentences_string:
@@ -192,13 +215,65 @@ def update_sentences_parse(sense_numbers, new_sentences_string):
     if settings.DEBUG_CSV:
         print('Parsed sentence tuples: ', new_sentence_tuples)
 
-    for order, sentence_type, negative, sentence_text in new_sentence_tuples:
+    sentence_ids = []
+    for order, sentence_id, sentence_type, negative, sentence_text in new_sentence_tuples:
         if order not in sense_numbers:
             return False
+        if order not in sense_numbers_to_sentences.keys():
+            return False
+        if sentence_id not in sense_numbers_to_sentences[order]:
+            return False
+        sentence_ids.append(sentence_id)
+    if len(sentence_ids) != len(list(set(sentence_ids))):
+        # updates to same sentence in two different tuples
+        return False
+
     return True
 
 
-def csv_update_sentences(gloss, language, new_sentences_string, create=False):
+def sentence_tuple_list_to_string(sentence_tuple_string):
+    tuple_list_of_strings = []
+
+    if not sentence_tuple_string:
+        return tuple_list_of_strings
+    print(sentence_tuple_string, type(sentence_tuple_string))
+    sentences = [k for k in sentence_tuple_string.split(' | ')]
+
+    for sentence_tuple in sentences:
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple)
+        if map_errors or not find_all:
+            # skip any non-parsing tuples, this was already checked so should not happen
+            continue
+        tuple_list_of_strings.append(find_all[0])
+
+    return tuple_list_of_strings
+
+
+def csv_sentence_tuples_list_compare(sentence_string_old, sentence_string_new):
+    # convert input to list of tuples (order, sentence_id, sentence_type, negative, sentence_text)
+    sentence_tuples_old = sentence_tuple_list_to_string(sentence_string_old)
+    sentence_tuples_new = sentence_tuple_list_to_string(sentence_string_new)
+
+    different_new = []
+    different_org = []
+    original_sentences_lookup = {sid: (so, styp, sn, stxt)
+                                 for (so, sid, styp, sn, stxt) in sentence_tuples_old}
+    for (order, sentence_id, sentence_type, negative, sentence_text) in sentence_tuples_new:
+        if (order, sentence_type, negative, sentence_text) != original_sentences_lookup[sentence_id]:
+            tuple_string_new = '(' + order + ', ' + sentence_id + ', ' + sentence_type \
+                               + ', ' + negative + ', "' + sentence_text + '")'
+
+            different_new.append(tuple_string_new)
+            (sord, styp, sneg, stxt) = original_sentences_lookup[sentence_id]
+            tuple_string_org = '(' + sord + ', ' + sentence_id + ', ' + styp \
+                               + ', ' + sneg + ', "' + stxt + '")'
+            different_org.append(tuple_string_org)
+    difference_new = ' | '.join(different_new)
+    difference_org = ' | '.join(different_org)
+    return difference_org, difference_new
+
+
+def csv_update_sentences(gloss, language, new_sentences_string, update=False):
     """CSV Import Update the senses field"""
     # this function assumes the new_senses_string is correctly parsed
     # the function update_senses_parse tests this
@@ -242,33 +317,43 @@ def csv_update_sentences(gloss, language, new_sentences_string, create=False):
                                   for st in FieldChoice.objects.filter(field__iexact='SentenceType')}
 
     new_sentences_list = []
-    for order, sentence_type, negative, sentence_text in new_sentence_tuples:
+    for order, sentence_id, sentence_type, negative, sentence_text in new_sentence_tuples:
         new_sentence_dict = dict()
         new_sentence_dict['order'] = int(order)
+        new_sentence_dict['sentence_id'] = int(sentence_id)
         new_sentence_dict['sentence_type'] = sentencetype_roles_to_type[sentence_type]
         new_sentence_dict['negative'] = negative == 'True'
         new_sentence_dict['sentence_text'] = sentence_text
         new_sentences_list.append(new_sentence_dict)
 
     if settings.DEBUG_CSV:
-        print('New sentences to create: ', new_sentences_list)
+        print('Sentences to update: ', new_sentences_list)
 
-    if not create:
+    if not update:
         if settings.DEBUG_CSV:
-            print('New sentences to create: create set to False')
+            print('Sentences to update: update set to False')
         return
 
     for sentence_dict in new_sentences_list:
         sense = gloss_senses[sentence_dict['order']]
 
-        examplesentence = ExampleSentence(negative=sentence_dict['negative'],
-                                          sentenceType=sentence_dict['sentence_type'])
-        examplesentence.save()
-        sense.exampleSentences.add(examplesentence)
+        sentence_id = sentence_dict['sentence_id']
+        try:
+            examplesentence = ExampleSentence.objects.get(id=sentence_id)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            continue
 
-        sentence_translation = ExampleSentenceTranslation(language=language,
-                                                          examplesentence=examplesentence,
-                                                          text=sentence_dict['sentence_text'])
+        examplesentence.negative = sentence_dict['negative']
+        examplesentence.sentenceType = sentence_dict['sentence_type']
+        examplesentence.save()
+
+        try:
+            sentence_translation = ExampleSentenceTranslation.objects.get(language=language,
+                                                                          examplesentence=examplesentence)
+        except ObjectDoesNotExist:
+            sentence_translation = ExampleSentenceTranslation(language=language,
+                                                              examplesentence=examplesentence)
+        sentence_translation.text = sentence_dict['sentence_text']
         sentence_translation.save()
 
 
