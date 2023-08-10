@@ -249,28 +249,36 @@ def sentence_tuple_list_to_string(sentence_tuple_string):
     return tuple_list_of_strings
 
 
-def csv_sentence_tuples_list_compare(sentence_string_old, sentence_string_new):
+def csv_sentence_tuples_list_compare(gloss_id, sentence_string_old, sentence_string_new, errors_found):
     # convert input to list of tuples (order, sentence_id, sentence_type, negative, sentence_text)
     sentence_tuples_old = sentence_tuple_list_to_string(sentence_string_old)
     sentence_tuples_new = sentence_tuple_list_to_string(sentence_string_new)
 
-    different_new = []
     different_org = []
+    different_new = []
+    errors = errors_found
     original_sentences_lookup = {sid: (so, styp, sn, stxt)
                                  for (so, sid, styp, sn, stxt) in sentence_tuples_old}
     for (order, sentence_id, sentence_type, negative, sentence_text) in sentence_tuples_new:
         if (order, sentence_type, negative, sentence_text) != original_sentences_lookup[sentence_id]:
+            (sord, styp, sneg, stxt) = original_sentences_lookup[sentence_id]
+            if sord != order:
+                errors += ['ERROR Gloss ' + gloss_id + ': The Sense Number cannot be modified in CSV Update.']
+            if styp != sentence_type:
+                errors += ['ERROR Gloss ' + gloss_id + ': The Sentence Type cannot be modified in CSV Update.']
+            if sneg != negative:
+                errors += ['ERROR Gloss ' + gloss_id + ': The Sentence Negative cannot be modified in CSV Update.']
+            if errors:
+                continue
             tuple_string_new = '(' + order + ', ' + sentence_id + ', ' + sentence_type \
                                + ', ' + negative + ', "' + sentence_text + '")'
-
             different_new.append(tuple_string_new)
-            (sord, styp, sneg, stxt) = original_sentences_lookup[sentence_id]
             tuple_string_org = '(' + sord + ', ' + sentence_id + ', ' + styp \
                                + ', ' + sneg + ', "' + stxt + '")'
             different_org.append(tuple_string_org)
     difference_new = ' | '.join(different_new)
     difference_org = ' | '.join(different_org)
-    return difference_org, difference_new
+    return difference_org, difference_new, errors
 
 
 def csv_update_sentences(gloss, language, new_sentences_string, update=False):

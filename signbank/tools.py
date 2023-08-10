@@ -403,7 +403,10 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         error_string = 'ERROR Gloss ' + str(
                             gloss.id) + ': Error parsing value in Example Sentences column ' + human_key + ': ' + new_human_value
                         errors_found += [error_string]
-                difference_org, difference = csv_sentence_tuples_list_compare(current_sentences_string, new_human_value)
+                difference_org, difference, errors_found = csv_sentence_tuples_list_compare(str(gloss_id),
+                                                                                            current_sentences_string,
+                                                                                            new_human_value,
+                                                                                            errors_found)
 
                 if difference:
                     differences.append({'pk': gloss_id,
