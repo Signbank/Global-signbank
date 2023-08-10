@@ -542,7 +542,7 @@ def create_sense(request, glossid):
         return HttpResponseForbidden("Sense Creation method must be POST")
     
     # Make a dict of new values
-    gloss = Gloss.objects.all().get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid)
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
     vals = {}
