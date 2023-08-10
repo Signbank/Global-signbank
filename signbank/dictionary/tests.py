@@ -466,7 +466,7 @@ class ECVsNonEmptyTests(TestCase):
 class ImportExportTests(TestCase):
 
     # Three test case scenario's for exporting ECV via the DatasetListView with DEFAULT_DATASET
-    #       /datasets/available/?dataset_name=DEFAULT_DATASET&export_ecv=ECV
+    #       /datasets/available/?dataset_acronym=DEFAULT_DATASET&export_ecv=ECV
     # 1. The user is logged in and has permission to change dataset
     # 2. The user is logged in but does not have permission to change dataset
     # 3. The user is not logged in
@@ -508,7 +508,7 @@ class ImportExportTests(TestCase):
 
         client.login(username='test-user', password='test-user')
 
-        url = '/datasets/available?dataset_name=' + self.test_dataset.acronym + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_acronym=' + self.test_dataset.acronym + '&export_ecv=ECV'
 
         response = client.get(url, follow=True)
         self.assertTrue("The dataset is empty, export ECV is not available." in str(response.content))
@@ -559,7 +559,7 @@ class ImportExportTests(TestCase):
             annotationIdgloss.text = 'thisisatemporarytestgloss'
             annotationIdgloss.save()
 
-        url = '/datasets/available?dataset_name=' + self.test_dataset.acronym + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_acronym=' + self.test_dataset.acronym + '&export_ecv=ECV'
 
         response = client.get(url, follow=True)
         self.assertTrue("ECV successfully updated." in str(response.content))
@@ -581,7 +581,7 @@ class ImportExportTests(TestCase):
 
         client.login(username='test-user', password='test-user')
 
-        url = '/datasets/available?dataset_name=' + self.test_dataset.acronym + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_acronym=' + self.test_dataset.acronym + '&export_ecv=ECV'
 
         response = client.get(url, follow=True)
         self.assertTrue("No permission to export dataset." in str(response.content))
@@ -595,7 +595,7 @@ class ImportExportTests(TestCase):
 
         client = Client()
 
-        url = '/datasets/available?dataset_name=' + self.test_dataset.acronym + '&export_ecv=ECV'
+        url = '/datasets/available?dataset_acronym=' + self.test_dataset.acronym + '&export_ecv=ECV'
 
         response = client.get(url, follow=True)
         self.assertTrue("Please login to use this functionality." in str(response.content))
@@ -1223,24 +1223,24 @@ class ManageDatasetTests(TestCase):
         settings.LOGIN_URL = settings.LOGIN_URL[len(settings.PREFIX_URL):]
 
         # Grant view permission
-        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Sign In'.format(self.user2.username))
 
         # Revoke view permission
-        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
                      'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Sign In'.format(self.user2.username))
 
         # Grant change permission
-        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
                      'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Sign In'.format(self.user2.username))
 
         # Revoke change permission
-        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
                      'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Sign In'.format(self.user2.username))
@@ -1257,27 +1257,27 @@ class ManageDatasetTests(TestCase):
         assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
 
         # Grant view permission
-        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
                             .format(self.user2.username))
 
         # Revoke view permission
-        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
                      'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
                             .format(self.user2.username))
 
         # Grant change permission
-        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
                      'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
                             .format(self.user2.username))
 
         # Revoke change permission
-        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
                      'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'You must be in group Dataset Manager to modify dataset permissions.'
@@ -1298,23 +1298,23 @@ class ManageDatasetTests(TestCase):
         dataset_manager_group.user_set.add(self.user)
 
         # Grant view permission
-        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        form_data ={'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
 
         # Revoke view permission
-        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+        form_data ={'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
                     'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
 
         # Grant change permission
-        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
+        form_data ={'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
 
         # Revoke change permission
-        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+        form_data ={'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
                     'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'No permission to modify dataset permissions.'.format(self.user2.username))
@@ -1335,36 +1335,36 @@ class ManageDatasetTests(TestCase):
         assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
 
         # Grant view permission
-        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        form_data ={'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'View permission for user successfully granted.'
                             .format(self.user2.username, self.user2.first_name, self.user2.last_name))
 
         # Revoke view permission
-        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+        form_data ={'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
                     'delete_view_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'View (and change) permission for user successfully revoked.'
                             .format(self.user2.username))
 
         # Grant change permission without view permission
-        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
+        form_data ={'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'User does not have view permission for this dataset. Please grant view permission first.'
                             .format(self.user2.username, self.user2.first_name, self.user2.last_name))
 
         # Grant change permission with view permission
         # Grant view permission first
-        form_data = {'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_view_perm': 'Grant'}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         # Grant change permission second
-        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username, 'add_change_perm': 'Grant'}
+        form_data ={'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_change_perm': 'Grant'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Change permission for user successfully granted.'
                             .format(self.user2.username))
 
         # Revoke change permission
-        form_data ={'dataset_name': self.test_dataset.name, 'username': self.user2.username,
+        form_data ={'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
                     'delete_change_perm': 'Revoke'}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Change permission for user successfully revoked.'
@@ -1380,7 +1380,7 @@ class ManageDatasetTests(TestCase):
         self.assertTrue(logged_in)
 
         language = self.test_dataset.translation_languages.first()
-        form_data = {'dataset_name': self.test_dataset.name, 'default_language': language.id}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'default_language': language.id}
 
         # Not a member of the group dataset managers
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
@@ -1396,7 +1396,7 @@ class ManageDatasetTests(TestCase):
         # Try to add a language that is not in the translation language set of the test dataset
         language = Language(name="nonexistingtestlanguage", language_code_2char="ts", language_code_3char='tst')
         language.save()
-        form_data = {'dataset_name': self.test_dataset.name, 'default_language': language.id}
+        form_data = {'dataset_acronym': self.test_dataset.acronym, 'default_language': language.id}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, '{} is not in the set of languages of dataset {}.'.format(
                                                             language.name, self.test_dataset.acronym))

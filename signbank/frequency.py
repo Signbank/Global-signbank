@@ -1081,24 +1081,24 @@ def update_document_counts(request, dataset_id, document_id):
     try:
         dataset = get_object_or_404(Dataset, pk=dataset_id)
     except ObjectDoesNotExist:
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available/')
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available/')
 
     if not request.user.is_authenticated:
         messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
     if not request.user.has_perm('dictionary.change_gloss'):
         messages.add_message(request, messages.ERROR, _('No permission to update corpus.'))
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
 
     if not request.method == "POST":
         print('update_document_counts: not POST')
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
 
     try:
         document = Document.objects.get(corpus__name=dataset.acronym, identifier=document_id)
     except ObjectDoesNotExist:
         messages.add_message(request, messages.ERROR, _('Document does not exist: ') + document_id)
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/frequency/' + dataset_id)
 
     try:
         updated_glosses = update_corpus_document_counts(dataset.acronym, document_id)

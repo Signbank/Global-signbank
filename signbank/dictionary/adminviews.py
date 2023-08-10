@@ -585,7 +585,7 @@ class GlossListView(ListView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
         # if the dataset is specified in the url parameters, set the dataset_name variable
         get = self.request.GET
@@ -593,13 +593,13 @@ class GlossListView(ListView):
             self.dataset_name = get['dataset_name']
         if self.dataset_name == '':
             messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
         try:
             dataset_object = Dataset.objects.get(name=self.dataset_name)
         except ObjectDoesNotExist:
             messages.add_message(self.request, messages.ERROR, _('No dataset with that name found.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
         # make sure the user can write to this dataset
         import guardian
@@ -609,7 +609,7 @@ class GlossListView(ListView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, _('No permission to export dataset.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
         # if we get to here, the user is authenticated and has permission to export the dataset
         success, ecv_file = write_ecv_file_for_dataset(self.dataset_name)
@@ -618,7 +618,7 @@ class GlossListView(ListView):
             messages.add_message(self.request, messages.INFO, _('ECV successfully updated.'))
         else:
             messages.add_message(self.request, messages.INFO, _('No ECV created for dataset.'))
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/signs/search/')
+        return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
     # noinspection PyInterpreter,PyInterpreter
     def render_to_csv_response(self, context):
@@ -4513,7 +4513,7 @@ class HandshapeListView(ListView):
 class DatasetListView(ListView):
     model = Dataset
     # set the default dataset, this should not be empty
-    dataset_name = settings.DEFAULT_DATASET_ACRONYM
+    dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
 
 
     def get_context_data(self, **kwargs):
@@ -4571,28 +4571,28 @@ class DatasetListView(ListView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
-        # if the dataset is specified in the url parameters, set the dataset_name variable
+        # if the dataset is specified in the url parameters, set the dataset_acronym variable
         get = self.request.GET
-        if 'dataset_name' in get:
-            self.dataset_name = get['dataset_name']
-        if self.dataset_name == '':
+        if 'dataset_acronym' in get:
+            self.dataset_acronym = get['dataset_acronym']
+        if self.dataset_acronym == '':
             messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         try:
-            dataset_object = Dataset.objects.get(name=self.dataset_name)
+            dataset_object = Dataset.objects.get(acronym=self.dataset_acronym)
         except ObjectDoesNotExist:
             translated_message = _('No dataset found with that name.')
             messages.add_message(self.request, messages.ERROR, translated_message)
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         # check that the dataset has an owner
         owners_of_dataset = dataset_object.owners.all()
         if len(owners_of_dataset) <1:
             messages.add_message(self.request, messages.ERROR, _('Dataset must have at least one owner.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         # make sure the user can write to this dataset
         from guardian.shortcuts import get_objects_for_user, assign_perm
@@ -4614,7 +4614,7 @@ class DatasetListView(ListView):
             # this should not happen from the html page. the check is made to catch a user adding a parameter to the url
             may_request_dataset = False
             messages.add_message(self.request, messages.INFO, _('You can already view this dataset.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         motivation = ''
         if 'motivation_for_use' in get:
@@ -4694,16 +4694,16 @@ class DatasetListView(ListView):
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
-        # if the dataset is specified in the url parameters, set the dataset_name variable
+        # if the dataset is specified in the url parameters, set the dataset_acronym variable
         get = self.request.GET
-        if 'dataset_name' in get:
-            self.dataset_name = get['dataset_name']
-        if self.dataset_name == '':
+        if 'dataset_acronym' in get:
+            self.dataset_acronym = get['dataset_acronym']
+        if self.dataset_acronym == '':
             messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         try:
-            dataset_object = Dataset.objects.get(acronym=self.dataset_name)
+            dataset_object = Dataset.objects.get(acronym=self.dataset_acronym)
         except ObjectDoesNotExist:
             translated_message = _('No dataset found with that acronym.')
             messages.add_message(self.request, messages.ERROR, translated_message)
@@ -4725,7 +4725,7 @@ class DatasetListView(ListView):
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
         # if we get to here, the user is authenticated and has permission to export the dataset
-        ecv_file = write_ecv_file_for_dataset(self.dataset_name)
+        ecv_file = write_ecv_file_for_dataset(self.dataset_acronym)
 
         if ecv_file:
             messages.add_message(self.request, messages.INFO, _('ECV successfully updated.'))
@@ -4741,12 +4741,12 @@ class DatasetListView(ListView):
         get = self.request.GET
 
         # Then check what kind of stuff we want
-        if 'dataset_name' in get:
-            self.dataset_name = get['dataset_name']
-        # otherwise the default dataset_name DEFAULT_DATASET_ACRONYM is used
+        if 'dataset_acronym' in get:
+            self.dataset_acronym = get['dataset_acronym']
+        # otherwise the default dataset_acronym DEFAULT_DATASET_ACRONYM is used
 
         # not sure what this accomplishes
-        # setattr(self.request, 'dataset_name', self.dataset_name)
+        # setattr(self.request, 'dataset_acronym', self.dataset_acronym)
 
         if user.is_authenticated:
             from django.db.models import Prefetch
@@ -4797,7 +4797,7 @@ class DatasetManagerView(ListView):
     template_name = 'dictionary/admin_dataset_manager.html'
 
     # set the default dataset, this should not be empty
-    dataset_name = settings.DEFAULT_DATASET_ACRONYM
+    dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
 
 
     def get_context_data(self, **kwargs):
@@ -4877,19 +4877,19 @@ class DatasetManagerView(ListView):
 
     def get_dataset_from_request(self):
         """
-        Use the 'dataset_name' GET query string parameter to find a dataset object 
+        Use the 'dataset_acronym' GET query string parameter to find a dataset object
         :return: tuple of a dataset object and HttpResponse in which either is None
         """
-        # if the dataset is specified in the url parameters, set the dataset_name variable
+        # if the dataset is specified in the url parameters, set the dataset_acronym variable
         get = self.request.GET
-        if 'dataset_name' in get:
-            self.dataset_name = get['dataset_name']
-        if self.dataset_name == '':
+        if 'dataset_acronym' in get:
+            self.dataset_acronym = get['dataset_acronym']
+        if self.dataset_acronym == '':
             messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return None, HttpResponseRedirect(reverse('admin_dataset_manager'))
 
         try:
-            return Dataset.objects.get(name=self.dataset_name), None
+            return Dataset.objects.get(acronym=self.dataset_acronym), None
         except ObjectDoesNotExist:
             translated_message = _('No dataset found with that name.')
             messages.add_message(self.request, messages.ERROR, translated_message)
@@ -5199,11 +5199,11 @@ class DatasetManagerView(ListView):
         get = self.request.GET
 
         # Then check what kind of stuff we want
-        if 'dataset_name' in get:
-            self.dataset_name = get['dataset_name']
-        # otherwise the default dataset_name DEFAULT_DATASET_ACRONYM is used
+        if 'dataset_acronym' in get:
+            self.dataset_acronym = get['dataset_acronym']
+        # otherwise the default dataset_acronym DEFAULT_DATASET_ACRONYM is used
 
-        setattr(self.request, 'dataset_name', self.dataset_name)
+        setattr(self.request, 'dataset_acronym', self.dataset_acronym)
 
         if user.is_authenticated:
 
@@ -5247,7 +5247,7 @@ class DatasetDetailView(DetailView):
     template_name = 'dictionary/dataset_detail.html'
 
     # set the default dataset, this should not be empty
-    dataset_name = settings.DEFAULT_DATASET_ACRONYM
+    dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
 
     #Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
@@ -5329,10 +5329,10 @@ class DatasetDetailView(DetailView):
         dataset = context['dataset']
         # check that the user is logged in
         if self.request.user.is_authenticated or not dataset.is_public:
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/' + dataset.acronym)
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/' + dataset.acronym)
         else:
             self.request.session['requested_datasets'] = [dataset.name]
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/accounts/register/')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/accounts/register/')
 
     def render_to_add_owner_response(self, context):
 
@@ -5341,7 +5341,7 @@ class DatasetDetailView(DetailView):
             pass
         else:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         # check if the user can manage this dataset
         from django.contrib.auth.models import Group, User
@@ -5350,41 +5350,41 @@ class DatasetDetailView(DetailView):
             group_manager = Group.objects.get(name='Dataset_Manager')
         except ObjectDoesNotExist:
             messages.add_message(self.request, messages.ERROR, _('No group Dataset_Manager found.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         groups_of_user = self.request.user.groups.all()
         if group_manager not in groups_of_user:
             messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset Manager to modify dataset permissions.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
-        # if the dataset is specified in the url parameters, set the dataset_name variable
+        # if the dataset is specified in the url parameters, set the dataset_acronym variable
         get = self.request.GET
-        if 'dataset_name' in get:
-            self.dataset_name = get['dataset_name']
-        if self.dataset_name == '':
+        if 'dataset_acronym' in get:
+            self.dataset_acronym = get['dataset_acronym']
+        if self.dataset_acronym == '':
             messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         try:
-            dataset_object = Dataset.objects.get(name=self.dataset_name)
+            dataset_object = Dataset.objects.get(acronym=self.dataset_acronym)
         except ObjectDoesNotExist:
             translated_message = _('No dataset with that name found.')
             messages.add_message(self.request, messages.ERROR, translated_message)
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         username = ''
         if 'username' in get:
             username = get['username']
         if username == '':
             messages.add_message(self.request, messages.ERROR, _('Username must be non-empty.'))
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         try:
             user_object = User.objects.get(username=username)
         except ObjectDoesNotExist:
             translated_message = _('No user with that username found.')
             messages.add_message(self.request, messages.ERROR, translated_message)
-            return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/available')
+            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         # if we get to here, we have a dataset object and a user object to add as an owner of the dataset
 
@@ -5394,7 +5394,7 @@ class DatasetDetailView(DetailView):
         messages.add_message(self.request, messages.INFO,
                      _('User successfully made (co-)owner of this dataset.'))
 
-        return HttpResponseRedirect(URL + settings.PREFIX_URL + '/datasets/' + dataset_object.acronym)
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/' + dataset_object.acronym)
 
 
 def dataset_detail_view_by_acronym(request, acronym):
@@ -5409,7 +5409,7 @@ class DatasetFieldChoiceView(ListView):
     template_name = 'dictionary/dataset_field_choices.html'
 
     # set the default dataset, this should not be empty
-    dataset_name = settings.DEFAULT_DATASET_ACRONYM
+    dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -5512,11 +5512,11 @@ class DatasetFieldChoiceView(ListView):
         get = self.request.GET
 
         # Then check what kind of stuff we want
-        if 'dataset_name' in get:
-            self.dataset_name = get['dataset_name']
-        # otherwise the default dataset_name DEFAULT_DATASET_ACRONYM is used
+        if 'dataset_acronym' in get:
+            self.dataset_acronym = get['dataset_acronym']
+        # otherwise the default dataset_acronym DEFAULT_DATASET_ACRONYM is used
 
-        setattr(self.request, 'dataset_name', self.dataset_name)
+        setattr(self.request, 'dataset_acronym', self.dataset_acronym)
 
         if user.is_authenticated:
 
@@ -5560,7 +5560,7 @@ class FieldChoiceView(ListView):
     template_name = 'dictionary/dataset_field_choice_colors.html'
 
     # set the default dataset, this should not be empty
-    dataset_name = settings.DEFAULT_DATASET_ACRONYM
+    dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context

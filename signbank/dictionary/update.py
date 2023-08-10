@@ -3446,7 +3446,7 @@ def update_expiry(request):
 
     # Check for request type
     if request.method != "POST":
-        return HttpResponseRedirect(settings.URL + settings.PREFIX_URL + '/')
+        return HttpResponseRedirect(settings.PREFIX_URL + '/')
 
     # Check if we have a username
     if 'username' in request.POST.keys():
