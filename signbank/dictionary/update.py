@@ -380,6 +380,10 @@ def update_sense(request, senseid):
     
     # Check if this sense changed at all
     sense = Sense.objects.get(id = senseid)
+
+    # save the old value for revision history, store it as a string before updating it
+    sense_old_value = str(sense)
+
     sensetranslation_dict = sense.get_sense_translations_dict_without_list()
 
     if sensetranslation_dict == vals:
@@ -513,6 +517,18 @@ def update_sense(request, senseid):
                                                                          orderIndex=gloss_senses_count)
                             sensetranslation.translations.add(translation)
 
+    # add update sense to revision history, indicated by both old and new values
+    # save the new value for revision history
+    sense_new_value = str(sense)
+    sense_label = 'Sense'
+    revision = GlossRevision(old_value=sense_old_value,
+                             new_value=sense_new_value,
+                             field_name=sense_label,
+                             gloss=gloss,
+                             user=request.user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+
     messages.add_message(request, messages.INFO, _('Given sense was added.'))
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
@@ -603,6 +619,17 @@ def create_sense(request, glossid):
                         translation.save()
                         sensetranslation.translations.add(translation)
 
+    # add create sense to revision history, indicated by empty old_value
+    sense_new_value = str(sense)
+    sense_label = 'Sense'
+    revision = GlossRevision(old_value="",
+                             new_value=sense_new_value,
+                             field_name=sense_label,
+                             gloss=gloss,
+                             user=request.user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
 def delete_sense(request, glossid):
@@ -618,6 +645,9 @@ def delete_sense(request, glossid):
     gloss = Gloss.objects.all().get(id = glossid)
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
+
+    # save the old value for revision history, store it as a string before deleting it
+    sense_old_value = str(sense)
 
     gloss.senses.remove(sense)
     gloss.reorder_senses()
@@ -646,6 +676,16 @@ def delete_sense(request, glossid):
             if Sense.objects.filter(exampleSentences=examplesentence).count() == 0:
                 examplesentence.delete()
         sense.delete()
+
+    # add delete sense to revision history, indicated by non-empty old_value
+    sense_label = 'Sense'
+    revision = GlossRevision(old_value=sense_old_value,
+                             new_value="",
+                             field_name=sense_label,
+                             gloss=gloss,
+                             user=request.user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
