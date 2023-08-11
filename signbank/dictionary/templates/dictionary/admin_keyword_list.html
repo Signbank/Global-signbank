@@ -329,8 +329,10 @@ input {
                     </tr>
                     </table>
                     <br>
-                    <p>{% trans "Leave Keywords Mapping View and switch instead to" %}
-                        <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{% trans "Gloss Detail View" %}</a>
+                    <p>{% trans "You are in Keywords Mapping View." %}</p>
+                    <p>{% trans "If you wish to edit the gloss or add example sentences, switch to" %}
+                        <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
+                            {% trans "Gloss Detail View" %}</a>
                         {% trans "for this gloss." %}
                     </p>
                     </div>
