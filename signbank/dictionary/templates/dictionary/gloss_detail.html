@@ -986,7 +986,6 @@ option:not(:checked) {
                                                                 {% for key, value in sense.get_sense_translations_dict_with_return.items %}
                                                                     {% if key|slugify == dataset_lang|slugify %}
                                                                         <td><textarea {% if settings.SHARE_SENSES %} class="sensetranslationtypeahead" {% endif %}
-                                                                                      id="{{ dataset_lang.name }}"
                                                                                       name="{{ key }}" rows="10" cols="20"
                                                                                       placeholder="keyword 1&#10;keyword 2&#10;...">{{ value }}</textarea></td>
                                                                     {% endif %}
@@ -1252,7 +1251,7 @@ option:not(:checked) {
                                                 </div><br>
                                                 <form name="create_sense_form" action='{% url "dictionary:create_sense" gloss.id %}' method='post'>
                                                     {% csrf_token %}
-                                                    <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}">
+                                                    <input type="hidden" name="dataset" value={{ gloss.lemma.dataset.id }}>
                                                     <table>
                                                         <tr>
                                                             {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
@@ -1262,7 +1261,6 @@ option:not(:checked) {
                                                         <tr>
                                                             {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                                                                 <td><textarea {% if settings.SHARE_SENSES %} class="sensetranslationtypeahead" {% endif %}
-                                                                              id="{{ dataset_lang.name }}"
                                                                               name="{{ dataset_lang.name }}" rows="10" cols="20"
                                                                               placeholder="keyword 1&#10;keyword 2&#10;..."></textarea></td>
                                                             {% endfor %}

@@ -109,20 +109,22 @@
                 {% with dataset.get_users_who_can_view_dataset as view_users %}
                 {% if view_users|length > 0 %}
                     {% with view_users|length as num_rows %}
+                    <list name="users_can_view"
                     {% if num_rows > 4 %}
-                    <list name="users_can_view" style="height:220px; overflow:auto;display:block;">
+                    style="height:220px; overflow:auto;display:block;"
                     {% else %}
                     {% widthratio num_rows 1 50 as row_height %}
                     {% blocktrans %}
-                    <list name="users_can_view" style="height:{{row_height}}px; overflow:auto;display:block;">
+                    style="height:{{row_height}}px; overflow:auto;display:block;"
                     {% endblocktrans %}
+                    />
                     {% endif %}
-                {% for user_v in view_users %}
-                        <ul name="{{user_v.username}}">
-                            <span id="user_v_{{user_v.username}}"
-                                  placement="top">{{user_v.first_name}} {{user_v.last_name}} ({{user_v.username}})</span>
-                        </ul>
-                {% endfor %}
+                    {% for user_v in view_users %}
+                            <ul name="{{user_v.username}}">
+                                <span id="user_v_{{user_v.username}}"
+                                      placement="top">{{user_v.first_name}} {{user_v.last_name}} ({{user_v.username}})</span>
+                            </ul>
+                    {% endfor %}
                     </list>
                     {% endwith %}
                 {% else %}
@@ -130,14 +132,14 @@
                 {% endif %}
                     <form name='dataset_{{dataset.name|cut:" "}}_view_perm_form' id='dataset_{{dataset.name|cut:" "}}_view_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                            <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
                             <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
-                            <input type="hidden" name="username" id="username" value=""/>
+                            <input type="hidden" name="username" value=""/>
                             </td>
                             <td>
                             <input class='btn btn-primary' id='add_view_perm' name='add_view_perm' type='submit' value='{% trans "Grant" %}'>
@@ -147,14 +149,14 @@
                     </form>
                     <form name='dataset_{{dataset.name|cut:" "}}_delete_view_perm_form' id='dataset_{{dataset.name|cut:" "}}_delete_view_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                            <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
                             <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
-                            <input type="hidden" name="username" id="username" value=""/>
+                            <input type="hidden" name="username" value=""/>
                             </td>
                             <td>
                             <input class='btn btn-primary' id='delete_view_perm' name='delete_view_perm' type='submit' value='{% trans "Revoke" %}'>
@@ -194,14 +196,14 @@
                 {% endif %}
                     <form name='dataset_{{dataset.name|cut:" "}}_change_perm_form' id='dataset_{{dataset.name|cut:" "}}_change_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                            <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
                             <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
-                            <input type="hidden" name="username" id="username" value=""/>
+                            <input type="hidden" name="username" value=""/>
                             </td>
                             <td>
                             <input class='btn btn-primary' id='add_change_perm' name='add_change_perm' type='submit' value='{% trans "Grant" %}'>
@@ -211,14 +213,14 @@
                     </form>
                     <form name='dataset_{{dataset.name|cut:" "}}_delete_change_perm_form' id='dataset_{{dataset.name|cut:" "}}_delete_change_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                            <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
                             <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
-                            <input type="hidden" name="username" id="username" value=""/>
+                            <input type="hidden" name="username" value=""/>
                             </td>
                             <td>
                             <input class='btn btn-primary' id='delete_change_perm' name='delete_change_perm' type='submit' value='{% trans "Revoke" %}'>
@@ -235,7 +237,7 @@
                 <form method="get">
                     {% csrf_token %}
                     <div class="hidden">
-                        <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
+                        <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
                     </div>
                     <select name='default_language' class="default-language-select" style="width:200px;">
                         <option value="">--------</option>
@@ -250,12 +252,10 @@
             </td>
             <td>
               <div >
-                  <form id="export_links_{{dataset.acronym}}" method="get" action='{{PREFIX_URL}}/datasets/manager' enctype="multipart/form-data">
+                  <form id="export_links_{{dataset.acronym}}" method="get" action='{{PREFIX_URL}}/datasets/manager'
+                        enctype="multipart/form-data">
                       {% csrf_token %}
-                    <div class="hidden">
-                        <input type='hidden' name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
-                    </div>
-<!--                        <input name='dataset_acronym' id='dataset_acronym' class='form-control' value='{{dataset.acronym}}' type="hidden">-->
+                        <input type='hidden' name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
                         <input class='btn btn-default' type='submit' name='format' id='format' value='CSV' >
                   </form>
               </div>

@@ -162,7 +162,7 @@ def get_query_parameters(query):
             NEUTRALBOOLEANCHOICES = {'None': '1', 'True': '2', 'False': '3'}
             YESNOCHOICES = {'None': 'unspecified', 'True': 'yes', 'False': 'no'}
             RELATIONCHOICES = {'None': '0', 'True': '1', 'False': '2'}
-            if field_name == 'defspublished':
+            if field_name in ['defspublished', 'hasmultiplesenses']:
                 field_value = YESNOCHOICES[str(nullbooleanfield.fieldValue)]
             elif field_name == 'hasRelationToForeignSign':
                 field_value = RELATIONCHOICES[str(nullbooleanfield.fieldValue)]
@@ -260,7 +260,7 @@ def save_query_parameters(request, query_name, query_parameters):
                     qp.save()
                     search_history.parameters.add(qp)
         elif key in ['weakdrop', 'weakprop', 'domhndsh_letter', 'domhndsh_number',
-                     'subhndsh_letter', 'subhndsh_number', 'repeat', 'altern', 'inWeb', 'isNew',
+                     'subhndsh_letter', 'subhndsh_number', 'repeat', 'altern', 'inWeb', 'isNew', 'hasmultiplesenses',
                      'excludeFromEcv', 'hasvideo', 'hasothermedia', 'defspublished', 'hasRelationToForeignSign']:
             NEUTRALBOOLEANCHOICES = {'0': None, '1': None, '2': True, '3': False}
             UNKNOWNBOOLEANCHOICES = {'0': False, '2': True, '3': False}
@@ -270,7 +270,7 @@ def save_query_parameters(request, query_name, query_parameters):
                 query_value = UNKNOWNBOOLEANCHOICES[query_parameters[key]]
             elif key in ['repeat', 'altern']:
                 query_value = UNKNOWNBOOLEANCHOICES[query_parameters[key]]
-            elif key in ['defspublished']:
+            elif key in ['defspublished', 'hasmultiplesenses']:
                 query_value = query_parameters[key] == 'yes'
             elif key in ['hasRelationToForeignSign']:
                 query_value = query_parameters[key] == '1'

@@ -17,7 +17,9 @@ from django.utils.translation import override, gettext_lazy as _, activate
 
 from django.http import HttpResponse, HttpResponseRedirect
 
-from signbank.csv_interface import sense_translations_for_language, update_senses_parse
+from signbank.csv_interface import sense_translations_for_language, update_senses_parse, \
+    update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers, parse_sentence_row, \
+    get_senses_to_sentences, csv_sentence_tuples_list_compare
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from django.utils.dateformat import format
@@ -381,7 +383,41 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             example_sentences_key_prefix = "Example Sentences ("
             if human_key.startswith(example_sentences_key_prefix):
-                # ignore the sentences columns
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name = human_key[len(example_sentences_key_prefix):-1]
+                language = Language.objects.filter(**{language_name_column:language_name}).first()
+                sense_numbers = get_sense_numbers(gloss)
+                sense_numbers_to_sentences = get_senses_to_sentences(gloss)
+                if not language:
+                    current_sentences_string = ""
+                    error_string = 'ERROR: Non-existent language specified for Senses column: ' + human_key
+                    errors_found += [error_string]
+                else:
+                    current_sentences_string = sense_examplesentences_for_language(gloss, language)
+                    if current_sentences_string and settings.DEBUG_CSV:
+                        print('Current sentences: ', current_sentences_string)
+                    okay = update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_human_value)
+                    if not okay:
+                        print('current sentences: ', current_sentences_string)
+                        print('not okay new sentences string: ', new_human_value)
+                        error_string = 'ERROR Gloss ' + str(
+                            gloss.id) + ': Error parsing value in Example Sentences column ' + human_key + ': ' + new_human_value
+                        errors_found += [error_string]
+                difference_org, difference, errors_found = csv_sentence_tuples_list_compare(str(gloss_id),
+                                                                                            current_sentences_string,
+                                                                                            new_human_value,
+                                                                                            errors_found)
+
+                if difference:
+                    differences.append({'pk': gloss_id,
+                                        'dataset': current_dataset,
+                                        'annotationidglosstranslation': default_annotationidglosstranslation,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': difference_org,
+                                        'original_human_value': difference_org,
+                                        'new_machine_value': difference,
+                                        'new_human_value': difference})
                 continue
 
             elif human_key == 'SignLanguages':
@@ -2143,6 +2179,7 @@ def minimalpairs_focusgloss(gloss_id, language_code):
         result.append(other_gloss_dict)
     return result
 
+
 def strip_control_characters(input):
 
     if input:
@@ -2154,12 +2191,14 @@ def strip_control_characters(input):
 
     return input
 
+
 def searchform_panels(searchform, searchfields) :
     search_by_fields = []
     for field in searchfields:
         form_field_parameters = (field,searchform.fields[field].label,searchform[field])
         search_by_fields.append(form_field_parameters)
     return search_by_fields
+
 
 def map_search_results_to_gloss_list(search_results):
 
@@ -2169,7 +2208,6 @@ def map_search_results_to_gloss_list(search_results):
     for search_result in search_results:
         gloss_ids.append(search_result['id'])
     return (gloss_ids, Gloss.objects.filter(id__in=gloss_ids))
-
 
 
 def get_interface_language_and_default_language_codes(request):
@@ -2221,3 +2259,75 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter):
             extra_keys = False
             csv_lines_buffer = rest_csv_lines
     return keys_found, extra_keys, csv_header, csv_body
+
+
+def split_csv_lines_sentences_header_body(dataset_languages, csv_lines, delimiter):
+
+    required_columns = ["Signbank ID", 'Dataset', "Sense Number", "Sentence Type", "Negative"]
+
+    for lang in dataset_languages:
+        language_name = getattr(lang, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+        column_name = "Example Sentences (%s)" % language_name
+        required_columns.append(column_name)
+
+    csv_lines_buffer = csv_lines
+
+    keys_found = False
+    extra_keys = False
+    csv_header = []
+    csv_body = []
+    while not keys_found and csv_lines_buffer:
+        # keep searching for the header row
+        # Apple Keynote stores an extra row above the header row when exported to CSV
+        first_csv_line, rest_csv_lines = csv_lines_buffer[0], csv_lines_buffer[1:]
+
+        row = first_csv_line.strip().split(delimiter)
+
+        all_keys_present = True
+        for key in required_columns:
+            if key not in row:
+                all_keys_present = False
+        for col in row:
+            if col not in required_columns:
+                extra_keys = True
+        if all_keys_present:
+            keys_found = True
+            csv_header = row
+            csv_body = rest_csv_lines
+        else:
+            # set up for next row
+            # only record extra keys if this is a header row
+            extra_keys = False
+            csv_lines_buffer = rest_csv_lines
+    return keys_found, extra_keys, csv_header, csv_body
+
+
+def create_sentence_from_valuedict(valuedict, dataset, row_nr, earlier_creation_same_csv,
+                                   earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss):
+
+    errors_found = []
+    new_sentence = []
+    already_exists = []
+
+    # Create an overview of all fields, sorted by their human name
+    with override(LANGUAGE_CODE):
+
+        translation_languages = dataset.translation_languages.all()
+
+        sentence_translations = dict()
+        # check sentence translations
+        for language in translation_languages:
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            column_name = "Example Sentences (%s)" % language_name
+            sentence_text = valuedict[column_name].strip()
+            # also stores empty values
+            sentence_translations[language] = sentence_text
+
+        sentence_dict = {'row_nr': str(row_nr + 1), 'gloss_pk': valuedict["Signbank ID"], 'dataset': valuedict["Dataset"],
+                         'order': valuedict["Sense Number"], 'sentence_type': valuedict["Sentence Type"],
+                         'negative': valuedict["Negative"], 'translations': sentence_translations}
+        errors_found = parse_sentence_row(str(row_nr + 1), sentence_dict)
+        new_sentence.append(sentence_dict)
+    return new_sentence, already_exists, errors_found, earlier_creation_same_csv, earlier_creation_annotationidgloss, \
+        earlier_creation_lemmaidgloss
+

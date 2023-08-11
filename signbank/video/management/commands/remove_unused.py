@@ -27,10 +27,10 @@ class Command(BaseCommand):
         file_names, chosen_path = find_file_names(self, path_type)
 
         # Make list of files that are not used in db
-        non_existant_file_names = find_unused_files(self, chosen_path, file_names)
+        non_existent_file_names = find_unused_files(self, chosen_path, file_names)
 
         # Delete files that are not used in db
-        delete_files(self, non_existant_file_names, chosen_path)
+        delete_files(self, non_existent_file_names, chosen_path)
 
 def find_file_names(self, path_type):
     """Return list of file_names that are not found in file list of db"""
@@ -51,27 +51,27 @@ def find_file_names(self, path_type):
 def find_unused_files(self, chosen_path, file_names):
     """Return list of file_names that are not found in file list of db"""
 
-    non_existant_file_names = []
+    non_existent_file_names = []
 
     for subdir, dirs, files in os.walk(chosen_path):
         for file in files:
             if file not in file_names:
-                non_existant_file_names.append(file)
+                non_existent_file_names.append(file)
 
-    return non_existant_file_names
+    return non_existent_file_names
 
-def delete_files(self, non_existant_file_names, chosen_path):
+def delete_files(self, non_existent_file_names, chosen_path):
     """Delete list of unused files, if user agrees"""
 
     # First condition: no unused files
-    if len(non_existant_file_names)<=0:
+    if len(non_existent_file_names)<=0:
         self.stdout.write('No unused files found')
         return
 
     # Show list of files to delete to users
     self.stdout.write("\nUnused files found are:\n")
-    for non_existant_file in non_existant_file_names:
-        self.stdout.write(non_existant_file)
+    for non_existent_file in non_existent_file_names:
+        self.stdout.write(non_existent_file)
 
     # First condition: ask user to agree
     if input("Delete files? [Y/N]").lower() != 'y':
@@ -81,7 +81,7 @@ def delete_files(self, non_existant_file_names, chosen_path):
     # Delete files
     for subdir, dirs, files in os.walk(chosen_path):
         for file in files:
-            if file in non_existant_file_names:
+            if file in non_existent_file_names:
                 os.remove(os.path.join(subdir, file))
 
     self.stdout.write('Files are deleted')

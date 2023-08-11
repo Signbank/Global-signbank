@@ -23,12 +23,14 @@ from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.tools import save_media
-from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, get_dataset_languages, \
+from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, \
+    get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
-    get_interface_language_and_default_language_codes, split_csv_lines_header_body
+    get_interface_language_and_default_language_codes, split_csv_lines_header_body, \
+    split_csv_lines_sentences_header_body, create_sentence_from_valuedict
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
-from signbank.csv_interface import csv_create_senses
+from signbank.csv_interface import csv_create_senses, csv_update_sentences, csv_create_sentence
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -1382,6 +1384,15 @@ def import_csv_update(request):
                     csv_create_senses(gloss, language, new_value, create=True)
                 continue
 
+            example_sentences_key_prefix = "Example Sentences ("
+            if fieldname.startswith(example_sentences_key_prefix):
+                language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
+                language_name = fieldname[len(example_sentences_key_prefix):-1]
+                language = Language.objects.filter(**{language_name_column: language_name}).first()
+                if language:
+                    csv_update_sentences(gloss, language, new_value, update=True)
+                continue
+
             if fieldname == 'SignLanguages':
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
@@ -1400,7 +1411,7 @@ def import_csv_update(request):
 
             if fieldname == 'Dataset':
 
-                # this has already been checked for existance and permission in the previous step
+                # this has already been checked for existence and permission in the previous step
                 # get dataset identifier
                 if new_value == 'None':
                     # don't allow the user to erase the current dataset, this should have already been caught
@@ -1905,15 +1916,6 @@ def proposed_new_signs(request):
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
-def add_params_to_url(url,params):
-    url_parts = list(urlparse.urlparse(url))
-    query = dict(urlparse.parse_qsl(url_parts[4]))
-    query.update(params)
-    url = urlparse.urlunparse(url_parts)
-
-    url_parts[4] = urlencode(query)
-    return urlparse.urlunparse(url_parts)
-
 def create_citation_image(request, pk):
     gloss = get_object_or_404(Gloss, pk=pk)
     try:
@@ -1949,13 +1951,18 @@ def add_image(request):
 
             if extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
 
-                params = {'warning':'File extension not supported! Please convert to png or jpg'}
-                return redirect(add_params_to_url(url,params))
+                feedback_message = _('File extension not supported! Please convert to png or jpg')
+
+                messages.add_message(request, messages.ERROR, feedback_message)
+
+                return redirect(url)
 
             elif imagefile.size > settings.MAXIMUM_UPLOAD_SIZE:
 
-                params = {'warning':'Uploaded file too large!'}
-                return redirect(add_params_to_url(url,params))
+                feedback_message = _('Uploaded file too large!')
+                messages.add_message(request, messages.ERROR, feedback_message)
+
+                return redirect(url)
 
             # construct a filename for the image, use sn
             # if present, otherwise use idgloss+gloss id
@@ -2045,6 +2052,7 @@ def delete_image(request, pk):
         url = '/'
     return redirect(url)
 
+
 def add_handshape_image(request):
 
     if 'HTTP_REFERER' in request.META:
@@ -2069,13 +2077,16 @@ def add_handshape_image(request):
 
             if extension not in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
 
-                params = {'warning':'File extension not supported! Please convert to png or jpg'}
-                return redirect(add_params_to_url(url,params))
+                feedback_message = _('File extension not supported! Please convert to png or jpg')
+                messages.add_message(request, messages.ERROR, feedback_message)
+
+                return redirect(url)
 
             elif imagefile.size > settings.MAXIMUM_UPLOAD_SIZE:
 
-                params = {'warning':'Uploaded file too large!'}
-                return redirect(add_params_to_url(url,params))
+                feedback_message = _('Uploaded file too large!')
+                messages.add_message(request, messages.ERROR, feedback_message)
+                return redirect(url)
 
             # construct a filename for the image, use sn
             # if present, otherwise use idgloss+gloss id
@@ -2084,22 +2095,31 @@ def add_handshape_image(request):
             redirect_url = form.cleaned_data['redirect']
 
             # deal with any existing image for this sign
-            goal_path =  settings.WRITABLE_FOLDER+settings.HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
+            goal_path = settings.WRITABLE_FOLDER+settings.HANDSHAPE_IMAGE_DIRECTORY + '/' + str(handshape.machine_value) + '/'
             goal_location = goal_path + 'handshape_' + str(handshape.machine_value) + extension
-
-            #First make the dir if needed
+            # First make the dir if needed
             try:
                 os.mkdir(goal_path)
             except OSError:
                 pass
 
-            #Remove previous video
+            # Remove previous video
             if handshape.get_image_path():
                 os.remove(settings.WRITABLE_FOLDER+handshape.get_image_path())
 
-            with open(goal_location, 'wb+') as destination:
-                for chunk in imagefile.chunks():
-                    destination.write(chunk)
+            # create the destination file
+            try:
+                f = open(goal_location, 'wb+')
+            except (UnicodeEncodeError, IOError, OSError):
+                feedback_message = _('Error uploading handshape image. Please consult the administrator.')
+                messages.add_message(request, messages.ERROR, feedback_message)
+                return redirect(redirect_url)
+
+            destination = File(f)
+            # Save the file
+            for chunk in request.FILES['imagefile'].chunks():
+                destination.write(chunk)
+            destination.close()
 
             return redirect(redirect_url)
 
@@ -2608,6 +2628,19 @@ def gloss_revision_history(request,gloss_pk):
             else:
                 # this shouldn't happen
                 field_name_qualification = ''
+        elif revision.field_name == 'Sense':
+            if revision.old_value and not revision.new_value:
+                # this translation exists in the interface of Gloss Edit View
+                delete_command = str(_('Delete'))
+                field_name_qualification = ' (' + delete_command + ')'
+            elif revision.new_value and not revision.old_value:
+                # this translation exists in the interface of Gloss Edit View
+                add_command = str(_('Create'))
+                field_name_qualification = ' (' + add_command + ')'
+            else:
+                # this translation exists in the interface of Gloss Edit View
+                add_command = str(_('Update'))
+                field_name_qualification = ' (' + add_command + ')'
         else:
             field_name_qualification = ' (' + revision.field_name + ')'
         revision_dict = {
@@ -2749,3 +2782,293 @@ def gloss_api_get_sign_name_and_media_info(request):
             for gloss in glosses if gloss.get_video_url()]
 
     return HttpResponse(json.dumps(response), content_type="application/json")
+
+
+def import_csv_create_sentences(request):
+    user = request.user
+    import guardian
+    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
+    user_datasets_names = [dataset.acronym for dataset in user_datasets]
+
+    selected_datasets = get_selected_datasets_for_user(user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+
+    translation_languages_dict = {}
+    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
+    for dataset_object in user_datasets:
+        translation_languages_dict[dataset_object] = []
+
+        for language in dataset_object.translation_languages.all():
+            language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            language_tuple = (language_name, language.language_code_2char)
+            translation_languages_dict[dataset_object].append(language_tuple)
+
+    seen_datasets = []
+    seen_dataset_names = []
+
+    encoding_error = False
+
+    uploadform = signbank.dictionary.forms.CSVUploadForm
+    changes = []
+    error = []
+    creation = []
+    gloss_already_exists = []
+    earlier_creation_same_csv = {}
+    earlier_creation_annotationidgloss = {}
+    earlier_creation_lemmaidgloss = {}
+
+    # Propose changes
+    if len(request.FILES) > 0:
+
+        new_file = request.FILES['file']
+
+        try:
+            # files that will fail here include those renamed to .csv which are not csv
+            # non UTF-8 encoded files also fail
+            csv_text = new_file.read().decode('UTF-8-sig')
+        except (UnicodeDecodeError, UnicodeError):
+            new_file.seek(0)
+            import magic
+            magic_file_type = magic.from_buffer(new_file.read(2048), mime=True)
+
+            if magic_file_type == 'text/plain':
+                feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
+            else:
+                feedback_message = _('Unrecognised format in selected CSV file.')
+
+            messages.add_message(request, messages.ERROR, feedback_message)
+
+            return render(request, 'dictionary/import_csv_create_sentences.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'creation': creation,
+                           'gloss_already_exists': gloss_already_exists,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+        fatal_error = False
+        csv_lines = re.compile('[\r\n]+').split(csv_text)  # split the csv text on any combination of newline characters
+
+        # the following code allows for specifying a column delimiter in the import_csv_create_sentences.html template
+        if 'delimiter' in request.POST:
+            delimiter_radio = request.POST['delimiter']
+            if delimiter_radio == 'tab':
+                delimiter = '\t'
+            elif delimiter_radio == 'comma':
+                delimiter = ','
+            elif delimiter_radio == 'semicolon':
+                delimiter = ';'
+            else:
+                # this should not occur
+                # perhaps only if the user is trying to fiddle without using the template
+                # set to template default, print message for Admin
+                print('Missing template default for delimiter_radio in import_csv_create_sentences.html')
+                delimiter = ','
+                delimiter_radio = 'comma'
+        else:
+            # this should not occur
+            # perhaps only if the user is trying to fiddle without using the template
+            # set to template default, print message for Admin
+            print('Missing template default for delimiter_radio in import_csv_create_sentences.html')
+            delimiter = ','
+            delimiter_radio = 'comma'
+
+        keys_found, extra_keys, csv_header, csv_body = split_csv_lines_sentences_header_body(dataset_languages, csv_lines,
+                                                                                   delimiter)
+
+        if not keys_found:
+            # this is intended to assist the user in the case that a wrong file was selected
+            feedback_message = _('The required column headers are missing.')
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return render(request, 'dictionary/import_csv_create_sentences.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+        if extra_keys:
+            # this is intended to assist the user in the case that a wrong file was selected
+            feedback_message = _('Extra columns were found.')
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return render(request, 'dictionary/import_csv_create_sentences.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+        # create a template for an empty row with the desired number of columns
+        empty_row = [''] * len(csv_header)
+        for nl, line in enumerate(csv_body):
+            if len(line) == 0:
+                # this happens at the end of the file
+                continue
+            values = csv.reader([line], delimiter=delimiter).__next__()
+            if values == empty_row:
+                continue
+
+            # construct value_dict for row
+            value_dict = {}
+            for nv, value in enumerate(values):
+                if nv >= len(csv_header):
+                    # this has already been checked above
+                    # it's here to avoid needing an exception on the subscript [nv]
+                    continue
+                value_dict[csv_header[nv]] = value
+
+            # 'Dataset' in value_dict keys, checked above
+            dataset_name = value_dict['Dataset'].strip()
+
+            # Check whether the user may change the dataset of the current row
+            if dataset_name not in seen_dataset_names:
+                if seen_datasets:
+                    # already seen a dataset
+                    # this is a different dataset
+                    e3 = 'Row '+str(nl + 1) + ': A different dataset is mentioned.'
+                    e4 = 'You can only create glosses for one dataset at a time.'
+                    e5 = 'To create glosses in multiple datasets, use a separate CSV file for each dataset.'
+                    error.append(e3)
+                    error.append(e4)
+                    error.append(e5)
+                    break
+
+                # only process a dataset_name once for the csv file being imported
+                # catch possible empty values for dataset, primarily for pretty printing error message
+                if dataset_name in ['', None, 0, 'NULL']:
+                    e_dataset_empty = 'Row '+str(nl + 1) + ': The Dataset is missing.'
+                    error.append(e_dataset_empty)
+                    break
+                try:
+                    dataset = Dataset.objects.get(acronym=dataset_name)
+                except ObjectDoesNotExist:
+                    # An error message should be returned here, the dataset does not exist
+                    e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
+                    error.append(e_dataset_not_found)
+                    break
+
+                if dataset_name not in user_datasets_names:
+                    e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                    error.append(e3)
+                    break
+                if dataset not in selected_datasets:
+                    e3 = 'Row '+str(nl + 1) + ': Please select the dataset %s.' % value_dict['Dataset'].strip()
+                    error.append(e3)
+                    break
+                if seen_datasets:
+                    # already seen a dataset
+                    if dataset in seen_datasets:
+                        pass
+                    else:
+                        # seen more than one dataset
+                        # e4 = 'You are attempting to modify two datasets.'
+
+                        e4 = 'You can only create sentences for one dataset at a time.'
+                        e5 = 'To create sentences in multiple datasets, use a separate CSV file for each dataset.'
+                        error.append(e4)
+                        error.append(e5)
+                        break
+
+                else:
+                    seen_datasets.append(dataset)
+                    seen_dataset_names.append(dataset_name)
+
+            translation_languages = dataset.translation_languages.all()
+
+            sentence_translations = dict()
+            # check sentence translations
+            for language in translation_languages:
+                language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+                column_name = "Example Sentences (%s)" % language_name
+                sentence_text = value_dict[column_name].strip()
+                # also stores empty values
+                sentence_translations[language] = sentence_text
+
+            # put creation of value_dict for the new gloss inside an exception to catch any unexpected errors
+            # errors are kept track of as user feedback, but the code needs to be safe
+            try:
+                (new_gloss, already_exists, error_create, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss) \
+                    = create_sentence_from_valuedict(value_dict,dataset,nl, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss)
+            except (KeyError, ValueError):
+                print('import csv create sentences: got this far in processing loop before exception in row ', str(nl+1))
+                break
+            if len(error_create):
+                errors_found_string = '\n'.join(error_create)
+                error.append(errors_found_string)
+            else:
+                creation += new_gloss
+            # whether or not glosses mentioned in the csv file already exist is accumulated in gloss_already_exists
+            # one version of the template also shows these with the errors, so the user might remove extra data
+            # from the csv to reduce its size
+            gloss_already_exists += already_exists
+            continue
+
+        stage = 1
+
+    # Do changes
+    elif len(request.POST) > 0:
+
+        glosses_to_create = dict()
+
+        for key, new_value in request.POST.items():
+
+            # obtain tuple values for each proposed gloss
+            # pk is the row number in the import file!
+            try:
+                pk, fieldname = key.split('.')
+
+                if pk not in glosses_to_create.keys():
+                    glosses_to_create[pk] = dict()
+                glosses_to_create[pk][fieldname] = new_value
+
+            except ValueError:
+                # when the database token csrfmiddlewaretoken is passed, there is no dot
+                continue
+
+        # these should be error free based on the django template import_csv_create_sentences.html
+        for row in glosses_to_create.keys():
+            gloss_id = glosses_to_create[row]['gloss_pk']
+
+            try:
+                gloss = Gloss.objects.get(id=int(gloss_id))
+            except ObjectDoesNotExist:
+                # this is an error, this should have already been caught
+                e1 = 'Gloss not found: ' + gloss_id
+                error.append(e1)
+                continue
+
+            dataset_acronym = glosses_to_create[row]['dataset']
+
+            try:
+                dataset = Dataset.objects.get(acronym=dataset_acronym)
+            except ObjectDoesNotExist:
+                # this is an error, this should have already been caught
+                e1 = 'Dataset not found: ' + dataset_acronym
+                error.append(e1)
+                continue
+
+            csv_create_sentence(gloss, dataset_languages, glosses_to_create[row], create=True)
+
+        stage = 2
+
+    # Show uploadform
+    else:
+
+        stage = 0
+
+    return render(request,'dictionary/import_csv_create_sentences.html',{'form':uploadform,'stage':stage,'changes':changes,
+                                                        'creation':creation,
+                                                        'gloss_already_exists':gloss_already_exists,
+                                                        'error':error,
+                                                        'dataset_languages':dataset_languages,
+                                                        'selected_datasets':selected_datasets,
+                                                        'translation_languages_dict': translation_languages_dict,
+                                                        'seen_datasets': seen_datasets,
+                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})

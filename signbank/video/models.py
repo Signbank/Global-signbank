@@ -256,8 +256,8 @@ def get_sentence_video_file_path(instance, filename, version=0):
     (base, ext) = os.path.splitext(filename)
     video_dir = settings.EXAMPLESENTENCE_VIDEO_DIRECTORY
     try:
-        dataset_dir = os.path.join(instance.examplesentence.dataset.acronym, str(instance.examplesentence.id))
-    except:
+        dataset_dir = os.path.join(instance.examplesentence.get_dataset().acronym, str(instance.examplesentence.id))
+    except ObjectDoesNotExist:
         dataset_dir = ""
     
     filename = str(instance.examplesentence.id) + ext + (version * ".bak")

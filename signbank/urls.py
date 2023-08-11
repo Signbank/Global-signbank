@@ -60,12 +60,14 @@ urlpatterns = [
     re_path(r'^spell/onehanded.html$', TemplateView.as_view(template_name='fingerspell/fingerspellingonehanded.html')),
     re_path(r'^numbersigns.html$', numbersigns_view),
 
-    #Hardcoding a number of special urls:
+    # Hardcoding a number of special urls:
     re_path(r'^signs/dictionary/$', signbank.dictionary.views.search),
     re_path(r'^signs/search/$', GlossListView.as_view(), {'show_all': False}, name='signs_search'),
     re_path(r'^signs/show_all/$', GlossListView.as_view(),{'show_all': True}),
     re_path(r'^signs/add/$', signbank.dictionary.views.add_new_sign),
     re_path(r'^signs/import_csv_create/$', signbank.dictionary.views.import_csv_create, name='import_csv_create'),
+    re_path(r'^signs/import_csv_create_sentences/$', signbank.dictionary.views.import_csv_create_sentences,
+            name='import_csv_create_sentences'),
     re_path(r'^signs/import_csv_update/$', signbank.dictionary.views.import_csv_update, name='import_csv_update'),
     re_path(r'^signs/import_csv_lemmas/$', signbank.dictionary.views.import_csv_lemmas, name='import_csv_lemmas'),
     re_path(r'^analysis/homonyms/$', HomonymListView.as_view(), name='admin_homonyms_list'),

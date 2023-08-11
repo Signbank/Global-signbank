@@ -1,0 +1,148 @@
+{% extends 'baselayout.html' %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load i18n %}
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Import CSV Create Sentences{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{PREFIX_URL}}/static/js/bootstrap-filestyle.min.js"> </script>
+    <script type='text/javascript'>
+
+     $(document).ready(function(){
+
+
+        $('.collapsetoggle').click(function() {
+            if ($(this).text() == 'Show') {
+                $(this).text('Hide');
+            } else {
+                $(this).text('Show');
+            }
+        });
+
+        $('[data-toggle="tooltip"]').tooltip();
+
+    });
+   </script>
+{% endblock %}
+
+
+{% block content %}
+<h3>{% trans "Import CSV Create Sentences" %}</h3>
+
+{% if stage == 0 %}
+
+    <div>{% blocktrans %}Upload your CSV here:{% endblocktrans %}</div>
+
+    <form action="" method="post" enctype="multipart/form-data" role="form">
+        {% csrf_token %}
+        <div class="form-group">
+            <div class="row">
+                <div class="col-sm-1">
+                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom"
+                          data-html="true"
+                          title="To import new sentences, CSV files should include the following columns:
+                          Signbank ID, Dataset, Sense Number, Sentence Type, Negative, and Example Sentences (Language) for the translation languages of the dataset. Only one dataset can be modified."></span>
+                </div>
+                <div class="col-sm-10">
+                    <input type="file" required="" name="file" class="filestyle" data-icon="false"
+                           accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv, application/vnd.ms-excel"
+                           data-buttonText='{% trans "Browse&hellip;"%}' data-buttonBefore="true">
+                </div>
+                <div class="col-sm-1">
+                    <input class="btn btn-primary" type="submit" value="{% blocktrans %}Submit{% endblocktrans %}" />
+                </div>
+            </div>
+            <div class="col-xs-offset-1 col-xs-10">
+                <input type="radio" name="delimiter" id="delimiter_comma" value="comma" checked>
+                <label for="delimiter_comma">{% trans "Comma" %}</label>
+                <input type="radio" name="delimiter" id="delimiter_tab" value="tab">
+                <label for="delimiter_tab">{% trans "Tab" %}</label>
+                <input type="radio" name="delimiter" id="delimiter_semicolon" value="semicolon">
+                <label for="delimiter_semicolon">{% trans "Semicolon" %}</label>
+            </div>
+        </div>
+    </form>
+
+{% elif stage == 1 %}
+
+    <form action="" method="post">
+        {% csrf_token %}
+
+        {% if error %}
+            <h4>{% trans "Errors" %}</h4>
+            <ul>
+            {% for e in error %}
+                <li>{{ e | linebreaks }}</li>
+            {% endfor %}
+            </ul>
+
+        {% elif creation %}
+            <h4>{% trans "Sentences to Create:" %}</h4>
+            <table class="table table-striped">
+                <tr>
+                    <th>{% trans "Signbank ID" %}</th>
+                    <th>{% trans "Dataset" %}</th>
+                    <th>{% trans "Sense Number" %}</th>
+                    <th>{% trans "Sentence Type" %}</th>
+                    <th>{% trans "Negative" %}</th>
+                     {% for dataset_trans_lang in dataset_languages %}
+                     <th >{% trans "Example Sentences" %} ({{dataset_trans_lang.name}})</th>
+                     {% endfor %}
+                </tr>
+            {% for newgloss in creation %}
+                <tr>
+                    <td>{{ newgloss.gloss_pk }}</td>
+                    <td>{{ newgloss.dataset }}</td>
+                    <td>{{ newgloss.order }}</td>
+                    <td>{{ newgloss.sentence_type }}</td>
+                    <td>{{ newgloss.negative }}</td>
+                     {% for dataset_trans_lang in dataset_languages %}
+                        {% with newgloss.translations as newglossdict %}
+                        <td>{{ newglossdict|keyvalue:dataset_trans_lang }}</td>
+                        {% endwith %}
+                     {% endfor %}
+                </tr>
+            <input type="hidden" name="{{newgloss.row_nr}}.gloss_pk"  value="{{ newgloss.gloss_pk }}">
+            <input type="hidden" name="{{newgloss.row_nr}}.dataset"  value="{{ newgloss.dataset }}">
+            <input type="hidden" name="{{newgloss.row_nr}}.order"  value="{{ newgloss.order }}">
+            <input type="hidden" name="{{newgloss.row_nr}}.sentence_type"  value="{{ newgloss.sentence_type }}">
+            <input type="hidden" name="{{newgloss.row_nr}}.negative"  value="{{ newgloss.negative }}">
+            {% for dataset_lang in dataset_languages %}
+             <input type="hidden" name="{{newgloss.row_nr}}.sentence_text_{{ dataset_lang.language_code_2char }}"
+                    value="{{newgloss.translations|keyvalue:dataset_lang}}">
+             {% endfor %}
+
+            <input type="hidden" name="update_or_create" value="create">
+            {% endfor %}
+            </table>
+            <input type="submit" value="{% blocktrans %}Create Sentences{% endblocktrans %}" />
+        {% else %}
+        <div>{% blocktrans %}No changes were found.{% endblocktrans %}</div>
+        {% endif %}
+
+    </form>
+
+{% elif stage == 2 %}
+
+    {% if error %}
+
+        <ul>
+        {% for e in error %}
+            <li>{{ e | linebreaks }}</li>
+        {% endfor %}
+        </ul>
+
+    {% else %}
+
+    <p>{% blocktrans %}Changes are live.{% endblocktrans %} {{ info }}</p>
+
+    {% endif %}
+
+{% endif %}
+
+{% endblock %}

@@ -35,8 +35,8 @@
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
-        $('#searchresults').css({'top': 10+Math.round($('#signbank-bar').height())});
-        $('#definitionblock').css({'padding-top': 10+Math.round($('#searchresults').height() + $('#signinfo').height())});
+        $('#searchresults').css({'padding-top': 10});
+        $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
     </script>
 
 {% endblock %}
