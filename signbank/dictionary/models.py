@@ -761,8 +761,41 @@ class Sense(models.Model):
             if examplesentence.has_video():
                 return True
         return False
+    
+    def get_senses_with_similar_sensetranslations_dict(self):
+        "Return a list of senses with sensetranslations that have the same string as this sense"
+        similar_senses = []
+        for sense in Sense.objects.all().filter(glosssense__gloss__lemma__dataset = self.get_dataset()):
+            sensetranslations = {}
+            if sense != self:
+                copy = False
+                # check if any of the the sensetranslations within the sense are the same
+                for sensetranslation in sense.senseTranslations.all():
+                    for sensetranslation_self in self.senseTranslations.all():
+                        for translation_self in sensetranslation_self.get_translations_list():
+                            if sensetranslation_self.language == sensetranslation.language \
+                            and translation_self in sensetranslation.get_translations_list() \
+                            and sensetranslation.get_translations_list() != []:
+                                copy = True
+                # if there is a similar sensetranslation, add the sensetranslations to the list
+                if copy:
+                    for sensetranslation in sense.senseTranslations.all():
+                        sensetranslations[str(sensetranslation.language)] = sensetranslation.get_translations()
+                    if sensetranslations != {}:
+                        # add empty translations for languages that are not present in the sense
+                        for language in self.get_dataset().translation_languages.all():
+                            if str(language) not in sensetranslations.keys():
+                                sensetranslations[str(language)] = ""
+                        # add glosses
+                        sensetranslations['inglosses'] = [[str(gloss), str(gloss.pk)] for gloss in sense.glosses.all()]
+                        # add number of examplesentences
+                        sensetranslations['sentence_count'] = sense.exampleSentences.count()
+                        # add sense
+                        similar_senses.append(sensetranslations)
+        return sorted(similar_senses, key=lambda d: d['inglosses']) 
 
     def __str__(self):
+        """Return the string representation of the sense, separated by | for every sensetranslation"""	
         str_sense = []
         for sensetranslation in self.senseTranslations.all():
             str_sense .append(str(sensetranslation))
