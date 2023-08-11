@@ -12,6 +12,43 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
 
+def add_sense_to_revision_history(request, gloss, sense_old_value, sense_new_value):
+    # add update sense to revision history, indicated by both old and new values
+    sense_label = 'Sense'
+    revision = GlossRevision(old_value=sense_old_value,
+                             new_value=sense_new_value,
+                             field_name=sense_label,
+                             gloss=gloss,
+                             user=request.user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+
+
+def get_state_of_gloss_senses(gloss):
+    gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+    gloss_sense_lookup = dict()
+    for gs in gloss_senses:
+        if str(gs.order) in gloss_sense_lookup.keys():
+            continue
+        gloss_sense_lookup[gs.order] = str(gs.sense)
+    return gloss_sense_lookup
+
+
+def gloss_senses_state_is_changed(request, gloss, original_senses_state_lookup, new_senses_state_lookup):
+    print('gloss_senses_state_is_changed original: ', original_senses_state_lookup)
+    print('gloss_senses_state_is_changed updated: ', new_senses_state_lookup)
+
+    for snum in new_senses_state_lookup.keys():
+        if snum not in original_senses_state_lookup.keys():
+            add_sense_to_revision_history(request, gloss, "", new_senses_state_lookup[snum])
+        elif new_senses_state_lookup[snum] != original_senses_state_lookup[snum]:
+            add_sense_to_revision_history(request, gloss, original_senses_state_lookup[snum], new_senses_state_lookup[snum])
+    for snum in original_senses_state_lookup.keys():
+        if snum not in new_senses_state_lookup.keys():
+            add_sense_to_revision_history(request, gloss, original_senses_state_lookup[snum], "")
+    return
+
+
 def create_empty_sense(gloss, order):
 
     # make a new sense and translations for it
@@ -67,6 +104,8 @@ def mapping_edit_keywords(request, glossid):
         return {}
 
     gloss = get_object_or_404(Gloss, id=glossid)
+
+    original_gloss_senses = get_state_of_gloss_senses(gloss)
 
     dataset_languages = [str(lang.id) for lang
                          in gloss.lemma.dataset.translation_languages.all().order_by('id')]
@@ -190,6 +229,10 @@ def mapping_edit_keywords(request, glossid):
         sense_language.translations.add(new_trans)
 
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language_obj)
+
+    updated_gloss_senses = get_state_of_gloss_senses(gloss)
+    gloss_senses_state_is_changed(request, gloss, original_gloss_senses, updated_gloss_senses)
+
     glossXsenses['regrouped_keywords'] = []
     glossXsenses['dataset_languages'] = dataset_languages
     glossXsenses['deleted_translations'] = deleted_translations
@@ -256,6 +299,8 @@ def mapping_group_keywords(request, glossid):
         return {}
 
     gloss = get_object_or_404(Gloss, id=glossid)
+
+    original_gloss_senses = get_state_of_gloss_senses(gloss)
 
     dataset_languages = [str(lang.id)
                          for lang in gloss.lemma.dataset.translation_languages.all().order_by('id')]
@@ -344,6 +389,10 @@ def mapping_group_keywords(request, glossid):
     deleted_translations = []
     new_translations = []
     glossXsenses = gloss_to_keywords_senses_groups(gloss, changed_language)
+
+    updated_gloss_senses = get_state_of_gloss_senses(gloss)
+    gloss_senses_state_is_changed(request, gloss, original_gloss_senses, updated_gloss_senses)
+
     glossXsenses['regrouped_keywords'] = regrouped_keywords
     glossXsenses['dataset_languages'] = dataset_languages
     glossXsenses['deleted_sense_numbers'] = deleted_sense_numbers
@@ -494,6 +543,12 @@ def mapping_add_keyword(request, glossid):
         sense_language.translations.add(new_trans)
 
     glossXsenses = gloss_to_keywords_senses_groups_matrix(gloss)
+
+    # the newly created sense is updated indirectly in the above code
+    # this retrieves its new translations as a string that includes both languages
+    new_sense_string = str(sense)
+    add_sense_to_revision_history(request, gloss, "", new_sense_string)
+
     # creating a new sense sends back extra info
     glossXsenses['new_translations'] = new_translations
     glossXsenses['translations_row'] = translations_row
@@ -512,6 +567,8 @@ def mapping_edit_senses_matrix(request, glossid):
         return {}
 
     gloss = get_object_or_404(Gloss, id=glossid)
+
+    original_gloss_senses = get_state_of_gloss_senses(gloss)
 
     # for some reason these assignments need to be done in the same way in all functions
     dataset_languages = [str(lang.id)
@@ -672,6 +729,10 @@ def mapping_edit_senses_matrix(request, glossid):
     deleted_sense_numbers = delete_empty_senses(gloss)
 
     glossXsenses = gloss_to_keywords_senses_groups_matrix(gloss)
+
+    updated_gloss_senses = get_state_of_gloss_senses(gloss)
+    gloss_senses_state_is_changed(request, gloss, original_gloss_senses, updated_gloss_senses)
+
     glossXsenses['new_translations'] = new_translations
     glossXsenses['updated_translations'] = updated_translations
     glossXsenses['deleted_translations'] = deleted_translations
