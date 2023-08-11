@@ -328,6 +328,11 @@ option:not(:checked) {
     color: rgb(66, 139, 202);
     background-color: lightgrey;
 }
+/* modal-dialog-centered does not work in bootstrap 3
+   use this instead, adjust value if necessary */
+.left-modal {
+    margin-left: 300px !important;
+}
 </style>
 
 {% endblock %}
@@ -940,11 +945,11 @@ option:not(:checked) {
                                     {% if "change_dataset" in dataset_perms %}
                                         <span class='sense-icon glyphicon glyphicon-trash sense_delete' style="color:red" data-toggle='modal' data-target='#delete_sense_modal_{{sense.id}}'></span>     
                                     {% endif %}                 
-                                    <div class="modal fade" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSense" aria-hidden="true">
-                                        <div class="modal-dialog modal-sm">
+                                    <div class="modal fade" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleDeleteSense" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
                                             <div class="modal-content">
                                                 <div class='modal-header'>
-                                                    <h2 id='modalTitleSense'>{% trans "Delete This Sense" %}</h2>
+                                                    <h2 id='modalTitleDeleteSense'>{% trans "Delete This Sense" %}</h2>
                                                 </div>
                                                 <div class='modal-body'>
                                                     <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
@@ -965,11 +970,11 @@ option:not(:checked) {
                                     {% if "change_dataset" in dataset_perms %}
                                         <span class='sense-icon glyphicon glyphicon-edit sense_edit' style="color:red" data-toggle='modal' data-target='#edit_sense_modal_{{sense.id}}'></span>
                                     {% endif %}
-                                    <div class="modal fade" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSense" aria-hidden="true">
-                                        <div class="modal-dialog modal-sm">
-                                            <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*200px);">
+                                    <div class="modal fade" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleEditSense" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
+                                            <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
                                                 <div class='modal-header'>
-                                                    <h2 id='modalTitleSense'>{% trans "Edit this sense" %}</h2>
+                                                    <h2 id='modalTitleEditSense'>{% trans "Edit this sense" %}</h2>
                                                 </div><br>
                                                 <form name="update_sense_form" method="post" action="{% url 'dictionary:update_sense' sense.id %}" >
                                                     {% csrf_token %}
@@ -1004,11 +1009,11 @@ option:not(:checked) {
                                     </div>
                                     {% if sense.get_senses_with_similar_sensetranslations_dict %}
                                     <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
-                                    <div class="modal fade" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSense" aria-hidden="true">
-                                        <div class="modal-dialog modal-sm">
+                                    <div class="modal fade" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
                                             <div class="modal-content" style="width:calc(({{gloss.lemma.dataset.translation_languages.count}}+3)*200px);">
                                                 <div class='modal-header'>
-                                                    <h2 id='modalTitleSense'>{% trans "Similar senses" %}</h2>
+                                                    <h2 id='modalTitleSimilarSense'>{% trans "Similar senses" %}</h2>
                                                 </div><br>
                                                 <!-- <form name="update_sense_form" method="post" action="{% url 'dictionary:link_sense' sense.id %}" >
                                                     {% csrf_token %}
@@ -1108,11 +1113,11 @@ option:not(:checked) {
                                                     {% endfor %}<br><br>
                                                     {% if "change_dataset" in dataset_perms %}
                                                         <span class='glyphicon glyphicon-trash examplestc_delete sense-icon' style="color:red"  data-toggle='modal' data-target='#delete_examplestc_modal_{{examplesentence.id}}'></span>
-                                                        <div class="modal fade" id="delete_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleExamplestc" aria-hidden="true">
-                                                            <div class="modal-dialog modal-sm">
+                                                        <div class="modal fade" id="delete_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteExamplestc" aria-hidden="true">
+                                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
                                                                 <div class="modal-content">
                                                                     <div class='modal-header'>
-                                                                        <h2 id='modalTitleExamplestc'>{% trans "Delete this Example Sentence" %}</h2>
+                                                                        <h2 id='modalTitleDeleteExamplestc'>{% trans "Delete this Example Sentence" %}</h2>
                                                                     </div><br>
                                                                     <div class='modal-body'>
                                                                         <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
@@ -1131,11 +1136,11 @@ option:not(:checked) {
                                                         </div>
 
                                                         <span class='glyphicon glyphicon-edit examplestc_edit sense-icon' style="color:red"  data-toggle='modal' data-target='#edit_examplestc_modal_{{examplesentence.id}}'></span>
-                                                        <div class="modal fade" id="edit_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleExamplestc" aria-hidden="true">
-                                                            <div class="modal-dialog modal-sm">
+                                                        <div class="modal fade" id="edit_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleEditExamplestc" aria-hidden="true">
+                                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
                                                                 <div class="modal-content">
                                                                     <div class='modal-header'>
-                                                                        <h2 id='modalTitleExamplestc'>{% trans "Edit an example sentence" %}</h2>
+                                                                        <h2 id='modalTitleEditExamplestc'>{% trans "Edit an example sentence" %}</h2>
                                                                     </div><br>
                                                                     <form name="update_examplesentence_form" action='{% url "dictionary:update_examplesentence" examplesentence.id %}' method='post'>
                                                                         {% csrf_token %}
@@ -1199,11 +1204,11 @@ option:not(:checked) {
                                             <tr class="sense-icon">
                                                 <td>
                                                     <button data-toggle='modal' data-target='#add_examplestc_modal_{{sense.id}}', class='sense-button btn btn-primary btn-space'>{% trans "Add an example sentence" %}</button>
-                                                    <div class="modal fade" id="add_examplestc_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleExamplestc" aria-hidden="true">
-                                                        <div class="modal-dialog modal-sm">
+                                                    <div class="modal fade" id="add_examplestc_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleAddExamplestc" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
                                                             <div class="modal-content">
                                                                 <div class='modal-header'>
-                                                                    <h2 id='modalTitleExamplestc'>{% trans "Add an example sentence" %}</h2>
+                                                                    <h2 id='modalTitleAddExamplestc'>{% trans "Add an example sentence" %}</h2>
                                                                 </div><br>
                                                                 <form name="create_examplesentence_form" action='{% url "dictionary:create_examplesentence" sense.id %}' method='post'>
                                                                     {% csrf_token %}
@@ -1244,8 +1249,8 @@ option:not(:checked) {
                                 <td>
                                     <button data-toggle='modal' data-target='#add_sense_modal_{{gloss.id}}', class='sense-button btn btn-primary btn-space sense-button sense_add'>{% trans "Add a sense" %}</button>
                                     <div class="modal fade" id="add_sense_modal_{{gloss.id}}" role="dialog" aria-labelledby="#modalTitleGloss" aria-hidden="true">
-                                        <div class="modal-dialog modal-sm">
-                                            <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*200px);">
+                                        <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
+                                            <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
                                                 <div class='modal-header'>
                                                     <h2 id='modalTitleGloss'>{% trans "Add a sense" %}</h2>
                                                 </div><br>
