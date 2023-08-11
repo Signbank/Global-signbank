@@ -202,12 +202,13 @@ input {
           <th style="width:300px;">{% trans "Senses" %}</th>
           <th>{% trans "Quick Tag Toggle" %}</th>
           <th style="width:255px;">{% trans "Tags" %}</th>
+          <th style="width:200px;">{% trans "Details" %}</th>
       </tr>
     </thead>
     <tbody>
     {% for gloss, keywords_per_language, senses_per_language, translated_senses, matrix_dimensions in page_obj %}
         <tr>
-            <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}">{{gloss|get_default_annotation_idgloss_translation}}</a></td>
+            <td>{{gloss|get_default_annotation_idgloss_translation}}</td>
             <td class="actions">
                 <button id='edit_sense_translations_btn_{{gloss.id}}' type="button" class="btn actionButton"
                         name='edit_translations_{{gloss.id}}' value='edit_translations_{{gloss.id}}'
@@ -289,10 +290,62 @@ input {
                 <div class="tags-cell"
                      id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
             </td>
+            <td class="actions">
+                <button id='details_btn_{{gloss.id}}' type="button" class="btn actionButton"
+                        name='details_{{gloss.id}}'
+                        data-toggle='modal' data-target='#details_{{gloss.id}}'>
+                    <a class="actionLabel">{% trans "Details" %}</a></button>
+            </td>
         </tr>
 
         <tr class="empty-row">
-            <td colspan=6>
+            <td colspan=7>
+             <div class="modal fade" id="details_{{gloss.id}}" tabindex="-1" role="dialog"
+                 aria-labelledby="#modalTitleEditTrans_{{gloss.id}}" aria-hidden="true">
+             <div class="modal-dialog modal-sm" id='modalTitleDetails_{{gloss.id}}' role="document">
+                <div class="col-md-4">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                    <h3>{% trans "Gloss Details" %}</h3>
+                    <br>
+                    <table class="table table-condensed">
+                    <tr><th>{% trans "Dataset" %}</th><td>{{gloss.lemma.dataset.name}}</td></tr>
+                    <tr><th>{% trans "Signbank ID" %}</th><td>{{gloss.id}}</td></tr>
+                    {% for dataset_lang in dataset_languages %}
+                    <tr>
+                    <th style='width:22em'>{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</th>
+                    {% with gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+                    <td>{{annotationidglosstranslation}}</td>
+                    {% endwith %}
+                    {% endfor %}
+                    </tr>
+                    {% for dataset_lang in dataset_languages %}
+                    <tr>
+                    <th>{% trans "Lemma ID Gloss" %} ({{dataset_lang.name}})</th>
+                    {% with gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
+                      <td>{{ lemmaidglosstranslation }}</td>
+                    {% endwith %}
+                    {% endfor %}
+                    </tr>
+                    </table>
+                    <br>
+                    <p>{% trans "Leave Keywords Mapping View and switch instead to" %}
+                        <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{% trans "Gloss Detail View" %}</a>
+                        {% trans "for this gloss." %}
+                    </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                    </div>
+                </div>
+                </div>
+             </div>
+             </div>
+            </td>
+        </tr>
+
+        <tr class="empty-row">
+            <td colspan=7>
              <div class="modal fade" id="edit_sense_translations_modal_{{gloss.id}}" tabindex="-1" role="dialog"
                  aria-labelledby="#modalTitleEditTrans_{{gloss.id}}" aria-hidden="true">
              <div class="modal-dialog modal-lg" id='modalTitleEditTrans_{{gloss.id}}' role="document">
@@ -425,7 +478,7 @@ input {
 
         {% for language in dataset_languages %}
         <tr class="empty-row">
-            <td colspan=6>
+            <td colspan=7>
              <div class="modal fade" id="edit_senses_modal_{{gloss.id}}_{{language.id}}" tabindex="-1" role="dialog"
                  aria-labelledby="#modalTitleEdit_{{gloss.id}}_{{language.id}}" aria-hidden="true">
              <div class="modal-dialog modal-lg" id='modalTitleEdit_{{gloss.id}}_{{language.id}}'>
