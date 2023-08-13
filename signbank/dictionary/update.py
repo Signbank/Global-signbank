@@ -151,6 +151,7 @@ def add_gloss(request):
     # new gloss created successfully, go to GlossDetailView
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
+
 def update_examplesentence(request, examplesentenceid):
     """View to update an examplesentence model from the editable modal"""
 
@@ -194,7 +195,7 @@ def update_examplesentence(request, examplesentenceid):
         # Check if input was not empty and if both sentences already existed together
         if len(vals) == 0 or vals == examplesentence.get_examplestc_translations_dict_without():
             messages.add_message(request, messages.INFO, _('This example sentence was not changed.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
         # Check if the examplesentences already exist
         existing_examplesentences = []
@@ -207,10 +208,10 @@ def update_examplesentence(request, examplesentenceid):
                 if existing_examplesentence not in sense.exampleSentences.all():
                     sense.exampleSentences.add(existing_examplesentence)
                     messages.add_message(request, messages.INFO, _('This example sentence already existed.'))
-                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
+                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
                 else:
                     messages.add_message(request, messages.INFO, _('This example sentence was already in sense.'))
-                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
+                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
         
         # Update the examplesentence with examplesentencetranslations
         for dataset_language in dataset_languages:
@@ -224,7 +225,8 @@ def update_examplesentence(request, examplesentenceid):
             elif str(dataset_language) in vals:
                 examplesentencetranslation = ExampleSentenceTranslation.objects.create(examplesentence=examplesentence, language=dataset_language, text=vals[str(dataset_language)])
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
+
 
 def create_examplesentence(request, senseid):
     """View to create an exampelsentence model from the editable modal"""
@@ -255,7 +257,7 @@ def create_examplesentence(request, senseid):
     # Check if input was not empty and if both sentences already existed together
     if len(vals) == 0:
         messages.add_message(request, messages.ERROR, _('No input sentence given.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
     with atomic():
         existing_examplesentences = []
@@ -267,7 +269,7 @@ def create_examplesentence(request, senseid):
             if vals == examplesentence.get_examplestc_translations_dict_without():
                 sense.exampleSentences.add(examplesentence)
                 messages.add_message(request, messages.INFO, _('This examplesentences already existed in this dataset.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
     
         stype = FieldChoice.objects.filter(field='SentenceType').get(machine_value = request.POST['sentenceType'])
         examplesentence = ExampleSentence.objects.create(negative=negative, sentenceType=stype)
@@ -276,7 +278,8 @@ def create_examplesentence(request, senseid):
             if str(dataset_language) in vals:
                 ExampleSentenceTranslation.objects.create(language=dataset_language, examplesentence=examplesentence, text=vals[str(dataset_language)])
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
+
 
 def delete_examplesentence(request, senseid):
     """View to delete an examplesentence model from the editable modal"""
@@ -288,13 +291,13 @@ def delete_examplesentence(request, senseid):
         return HttpResponseForbidden("Example sentence Deletion method must be POST")
     
     examplesentence = ExampleSentence.objects.all().get(id = request.POST['examplesentenceid'])
-    sense = Sense.objects.all().get(id = senseid)
+    sense = Sense.objects.all().get(id=senseid)
     sense.exampleSentences.remove(examplesentence)
 
     if Sense.objects.filter(exampleSentences = examplesentence).count() == 0:
         examplesentence.delete()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
 
 def sort_sense(request, glossid, order, direction):
@@ -304,7 +307,7 @@ def sort_sense(request, glossid, order, direction):
     if gloss_senses_matching_order != 1:
         print('sort_sense: multiple or no match for order: ', glossid, str(order))
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     glosssense = GlossSense.objects.get(gloss=gloss, order=order)
     try:
@@ -314,7 +317,7 @@ def sort_sense(request, glossid, order, direction):
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 print('sort_sense UP: multiple or no match for order: ', glossid, str(order-1))
                 messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
             glosssenseabove.order = order
             glosssense.order = order - 1
             glosssense.save()
@@ -327,7 +330,7 @@ def sort_sense(request, glossid, order, direction):
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 print('sort_sense DOWN: multiple or no match for order: ', glossid, str(order+1))
                 messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
             glosssensebeneath.order = order
             glosssense.order = order + 1 
             glosssense.save()
@@ -337,7 +340,8 @@ def sort_sense(request, glossid, order, direction):
     except (ObjectDoesNotExist, MultipleObjectsReturned, DatabaseError, TransactionManagementError):
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+
 
 def add_sentence_video(request, glossid, examplesentenceid):
     template = 'dictionary/add_sentence_video.html'
@@ -350,8 +354,10 @@ def add_sentence_video(request, glossid, examplesentenceid):
     }
     return render(request, template, context)
 
+
 def link_sense(request, senseid):
     return HttpResponseForbidden("TEMPORARY: Sense Linking Not Allowed")
+
 
 def update_sense(request, senseid):
     """View to update a sense model from the editable modal"""
@@ -379,7 +385,7 @@ def update_sense(request, senseid):
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, _('No keywords given for edited sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     
     # Check if this sense changed at all
     sense = Sense.objects.get(id = senseid)
@@ -391,16 +397,16 @@ def update_sense(request, senseid):
 
     if sensetranslation_dict == vals:
         messages.add_message(request, messages.ERROR, _('Sense did not change.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     gloss_senses = GlossSense.objects.filter(gloss_id=gloss.id, sense=sense)
 
     if not gloss_senses.count():
         messages.add_message(request, messages.ERROR, _('Sense not found for gloss.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     if gloss_senses.count() > 1:
         messages.add_message(request, messages.ERROR, _('Sense duplicate found for gloss.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     if settings.SHARE_SENSES:
         # Check if sense already existed in another gloss
@@ -430,7 +436,7 @@ def update_sense(request, senseid):
                     sense.delete()
 
                 messages.add_message(request, messages.INFO, _('Sense is already in (existing) gloss.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     # Update sensetranslations
     gloss_senses_count = gloss.senses.count()
@@ -532,8 +538,9 @@ def update_sense(request, senseid):
                              time=datetime.now(tz=get_current_timezone()))
     revision.save()
 
-    messages.add_message(request, messages.INFO, _('Given sense was added.'))
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
+    messages.add_message(request, messages.INFO, _('Given sense was updated.'))
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+
 
 def create_sense(request, glossid):
     """View to create a sense model from the editable modal"""
@@ -561,7 +568,7 @@ def create_sense(request, glossid):
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, _('No keywords given for new sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
     if settings.SHARE_SENSES:
         # Check if this sense already exists
@@ -572,10 +579,10 @@ def create_sense(request, glossid):
             if sense.get_sense_translations_dict_without_list() == vals:
                 if sense in gloss.senses.all():
                     messages.add_message(request, messages.ERROR, _('Sense is already in this gloss.'))
-                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
+                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
                 glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count()+1)
                 glosssense.save()
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
     
     # Make a new sense object
     sense = Sense()
@@ -633,7 +640,8 @@ def create_sense(request, glossid):
                              time=datetime.now(tz=get_current_timezone()))
     revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+
 
 def delete_sense(request, glossid):
     """View to delete a sense model from the editable modal"""
@@ -644,8 +652,8 @@ def delete_sense(request, glossid):
     if not request.method == "POST":
         return HttpResponseForbidden("Sense Deletion method must be POST")
     
-    sense = Sense.objects.all().get(id = request.POST['senseid'])
-    gloss = Gloss.objects.all().get(id = glossid)
+    sense = Sense.objects.get(id=request.POST['senseid'])
+    gloss = Gloss.objects.get(id=glossid)
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
 
@@ -690,7 +698,8 @@ def delete_sense(request, glossid):
                              time=datetime.now(tz=get_current_timezone()))
     revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+
 
 def update_gloss(request, glossid):
     """View to update a gloss model from the jeditable jquery form
@@ -1623,7 +1632,8 @@ def subst_relations(gloss, field, values):
 
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-## This function is called from the Gloss Details template when updating Relations to Other Signs
+
+# This function is called from the Gloss Details template when updating Relations to Other Signs
 def update_relation(gloss, field, value):
     """Update one of the relations for this gloss"""
     (what, relid) = field.split('_')

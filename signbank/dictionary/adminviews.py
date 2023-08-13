@@ -1389,10 +1389,8 @@ class GlossDetailView(DetailView):
         context['morphemeform'] = GlossMorphemeForm()
         context['blendform'] = GlossBlendForm()
         context['othermediaform'] = OtherMediaForm()
-        context['navigation'] = context['gloss'].navigation(True)
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
-        context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
         context['handedness'] = (int(self.object.handedness.machine_value) > 1) \
             if self.object.handedness and self.object.handedness.machine_value else 0  # minimal machine value is 2
         context['domhndsh'] = (int(self.object.domhndsh.machine_value) > 1) \
@@ -1675,6 +1673,13 @@ class GlossDetailView(DetailView):
         context['sentencetypes'] = sentencetype_choice_list
         context['senses'] = gl.senses.all().order_by('glosssense')
 
+        sense_to_similar_senses = dict()
+        for sns in context['senses']:
+            sense_to_similar_senses[sns] = sns.get_senses_with_similar_sensetranslations_dict()
+
+        context['sense_to_similar_senses'] = sense_to_similar_senses
+        if settings.DEBUG_SENSES:
+            print('Similar Senses: ', str(gl.id), sense_to_similar_senses)
         bad_dialect = False
         gloss_dialects = []
 
@@ -1856,7 +1861,7 @@ class GlossDetailView(DetailView):
         for annotation in annotationidglosstranslations:
             if "-duplicate" in annotation.text:
                 # go back to the same page, this is already a duplicate
-                return HttpResponseRedirect('/dictionary/gloss/' + str(gl.id))
+                return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(gl.id))
 
         new_gloss = Gloss()
         dataset_pk = self.request.GET.get('dataset')
@@ -1889,7 +1894,7 @@ class GlossDetailView(DetailView):
 
         self.request.session['last_used_dataset'] = dataset.acronym
 
-        return HttpResponseRedirect('/dictionary/gloss/'+str(new_gloss.id) + '?edit')
+        return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/'+str(new_gloss.id) + '?edit')
 
 
 class GlossVideosView(DetailView):

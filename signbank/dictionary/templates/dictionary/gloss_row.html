@@ -35,7 +35,7 @@
     {% for dataset_lang in dataset_languages %}
     {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
     <td class="annotation_{{dataset_lang.language_code_2char}}">
-      {% if annotationidglosstranslation != "" %}
+      {% if annotationidglosstranslation %}
         <div>
         {% if focus_gloss.is_morpheme %}
         <div><a href="{{PREFIX_URL}}/dictionary/morpheme/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
@@ -51,7 +51,7 @@
     {% for dataset_lang in dataset_languages %}
     {% with focus_gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
       <td class="lemma_{{dataset_lang.language_code_2char}}">
-          <div>{{ lemmaidglosstranslation }}</div>
+          <div>{{lemmaidglosstranslation}}</div>
       </td>
     {% endwith %}
     {% endfor %}
@@ -60,7 +60,7 @@
     <td class="translation_{{lang.language_code_2char}}">
         <div>
         {% for key, value in sensetranslations.items %}
-            {% if value != "" %}{{key}}. {% endif %}{{ value|safe }}{% if not forloop.last %}<br> {% endif %}
+            {% if value != "" %}{{key}}. {% endif %}{{value|safe}}{% if not forloop.last %}<br> {% endif %}
         {% endfor %}
         </div>
     </td>

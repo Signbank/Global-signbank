@@ -5,23 +5,22 @@
 {% load bootstrap3 %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Sign for {{ gloss }}{% endblocktrans %}
+{% blocktrans %}Sign for {{gloss}}{% endblocktrans %}
 {% endblock %}
 
 {% load guardian_tags %}
 
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
 
     <script type='text/javascript'>
-    var url = '{{ PREFIX_URL }}';
+    var url = '{{PREFIX_URL}}';
     var phonology_list_kinds = {{phonology_list_kinds|safe}};
     var gloss_phonology = {{gloss_phonology|safe}};
-
-    var language_code = '{{ LANGUAGE_CODE }}';
+    var language_code = '{{LANGUAGE_CODE}}';
 
     {% trans "Edit" as edit_mode_str %} 
     {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
@@ -86,7 +85,6 @@
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
     {% include "dictionary/search_result_bar.html" %}
-
     function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
         var target_object = document.forms[formId][targetObjectId].value;
         var this_gloss = document.forms[formId][thisGlossID].value;
@@ -174,7 +172,7 @@ function checkKey(e)
 
 </script>
 
-    <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_edit_color.js"></script>
+    <script type='text/javascript' src="{{STATIC_URL}}js/gloss_edit_color.js"></script>
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
@@ -229,10 +227,10 @@ function checkKey(e)
 {% endblock %}
 
 {% block extrahead %}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dropstyle.css">
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/recordstyle.css">
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/modalstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/tagmanager.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/dropstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/recordstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
     <style>
         #panel-expand-collapse-btn-group.affix {
             position:fixed;
@@ -468,36 +466,20 @@ option:not(:checked) {
      </div>
 {% endif %}
 {% if request.GET.warning %}
-<div class="alert alert-warning">{{ request.GET.warning }}</div>
+<div class="alert alert-warning">{{request.GET.warning}}</div>
 {% endif %}
 
 {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
 
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
 
-    <div class='btn-group'>
-        {% if SIGN_NAVIGATION %}
-        
-            {% if navigation.prev %}
-            <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_gloss_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %]
-            </a>
-            {% endif %}
-            
-            <button class='btn navbar-btn'>{% blocktrans %}"Sign {{glossposn}} of {{glosscount}} in the dictionary" {% endblocktrans %}</button>
-            
-            {% if navigation.next %}
-            <a class="btn navbar-btn btn-default"
-               href="{% url 'dictionary:admin_gloss_view' pk=navigation.next.id %}">{% trans "Next Sign &raquo;" %}</a>
-            {% endif %}
-         {% endif %}
-    </div>
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;">
     <ul class='nav nav-tabs'>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
         </li>
         <li class="nav-item">
-            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Details" %}</a>
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/">{% trans "Details" %}</a>
         </li>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations" %}</a>
@@ -561,7 +543,7 @@ option:not(:checked) {
                                  <input type="radio" name="dataset"
                                         id="dataset_{{s_dataset.id}}" value="{{s_dataset.id}}">
                                  {% endif %}
-                                <label for="dataset_{{s_dataset.id}}">{{ s_dataset.acronym }}</label>
+                                <label for="dataset_{{s_dataset.id}}">{{s_dataset.acronym}}</label>
                                  {% endif %}
                                  {% endfor %}
                             </span></td>
@@ -617,7 +599,7 @@ option:not(:checked) {
     <div id="videocontainer">
     {% if gloss.has_video %}
 
-     <!-- {{ gloss.get_video }} -->
+     <!-- {{gloss.get_video}} -->
 
         <div id="player">
           <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}" controls type="video/mp4" autoplay muted></video>
@@ -626,8 +608,8 @@ option:not(:checked) {
 
     {% else %}
     <div id='player'>
-     <img id='novideo' src='{{ STATIC_URL }}images/no-video-ngt.png'>
-     <!-- {{ gloss.get_video }} -->
+     <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png'>
+     <!-- {{gloss.get_video}} -->
     </div>
     {% endif %}
     
@@ -649,9 +631,9 @@ option:not(:checked) {
               <label id="drop-container-video-status", class="hide">Status here</label>
               <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
                 {% csrf_token %}
-                <input type='hidden' name='redirect' value='{{request.path}}?edit'>
+                <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                 <input type='hidden' name='object_type' value='g'>
-                <table id="staffops">
+                <table>
                   <tr>
                     <td>{{videoform.videofile}}</td>
                   </tr>
@@ -686,10 +668,10 @@ option:not(:checked) {
                                     <div class="wrap">
                                         <video src="" id="gum" playsinline autoplay muted></video>
                                         <div class="overlay">
-                                            <img id="img0" class="over" src='{{ STATIC_URL }}images/overlay0.png'>
-                                            <img id="img1" class="over invis" src='{{ STATIC_URL }}images/overlay1.png'>
-                                            <img id="img2" class="over invis" src='{{ STATIC_URL }}images/overlay2.png'>
-                                            <img id="img3" class="over invis" src='{{ STATIC_URL }}images/overlay3.png'>                       
+                                            <img id="img0" class="over" src='{{STATIC_URL}}images/overlay0.png'>
+                                            <img id="img1" class="over invis" src='{{STATIC_URL}}images/overlay1.png'>
+                                            <img id="img2" class="over invis" src='{{STATIC_URL}}images/overlay2.png'>
+                                            <img id="img3" class="over invis" src='{{STATIC_URL}}images/overlay3.png'>
                                         </div>
                                     </div>
                                 </th>
@@ -711,7 +693,7 @@ option:not(:checked) {
                                 <button class="btn" id="download" disabled>Download</button><br>
                                 <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
                                     {% csrf_token %}
-                                    <input type='hidden' name='redirect' value='{{request.path}}?edit'>
+                                    <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                                     <input type='hidden' name='object_type' value='g'>
                                     <input type='hidden' name='object_id' value='{{gloss.pk}}'>
                                     <input type='file' name="videofile" id="videofile">
@@ -738,14 +720,14 @@ option:not(:checked) {
     <div class='editform'>
         <fieldset>
             <legend>{% trans "Upload New Citation Form Image" %}</legend>
-            <label for="id_imagefile" class="drop-container" id="drop-container-image">
+            <label for='id_imagefile' class="drop-container" id="drop-container-image">
               <div id="imagegallery" class="gallery"></div>
               <span id = "drop-container-title-image"  class="drop-title">Drop image here<br>or...</span>
               <label id="drop-container-image-status", class="hide">Status here</label>
               <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                <input type='hidden' name='redirect' value='{{request.path}}?edit'>
-                <table id="staffops">
+                <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
+                <table>
                   <tr>
                     <td>{{imageform.imagefile}}</td>
                   </tr>
@@ -762,8 +744,8 @@ option:not(:checked) {
         </fieldset>
     </div>
     
-    <script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_files.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/recordscript.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
     {% endif %}
 
     {% if gloss.has_video and "change_dataset" in dataset_perms %}
@@ -813,7 +795,7 @@ option:not(:checked) {
             </tr>
             <tr>
                 <th>{% trans "Lemma ID Gloss" %}</th>
-                <td><span id="lemma">{{ gloss.lemma }}
+                <td><span id="lemma">{{gloss.lemma}}
                         {% if lemma_group %}
                             <a href='{{lemma_group_url}}' title='{% trans "Show Lemma Group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
                         {% endif %}
@@ -865,12 +847,12 @@ option:not(:checked) {
                 </form>
                 <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
                     {% csrf_token %}
-                    <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
-                    <input type="hidden" name="last_used_dataset" value="{{ last_used_dataset }}"/>
+                    <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
+                    <input type="hidden" name="last_used_dataset" value="{{last_used_dataset}}"/>
                     {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                    {{ dataset_lang.name }}:
-                    <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
-                            name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                    {{dataset_lang.name}}:
+                    <input id="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
+                            name="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
                             required="" maxlength="30" type="text"/>
 
                     {% endfor %}
@@ -884,9 +866,9 @@ option:not(:checked) {
             {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
             <tr>
                 <th>
-                    {% trans "Annotation ID Gloss" %} ({{ lang }})
+                    {% trans "Annotation ID Gloss" %} ({{lang}})
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{ lang.language_code_2char }}' colspan="2">{{ annotation_idgloss_translation }}</td>
+                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}' colspan="2">{{annotation_idgloss_translation}}</td>
                 <td>
                     {% if gloss.simultaneous_morphology.all.count > 0 %}
 
@@ -923,7 +905,7 @@ option:not(:checked) {
                         {% for sense in senses %}
                             <tr>
                                 <th style="width:10px">
-                                    {{ forloop.counter }}. <br>
+                                    {{forloop.counter}}. <br>
                                     {% if "change_dataset" in dataset_perms %}
                                         {% if not forloop.first %}  
                                         <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "up" %}' style="color:red;">&#x25B2;</a></span>
@@ -937,7 +919,7 @@ option:not(:checked) {
                                 <td style="width:50%">
                                     {% if sense.get_sense_translations_dict_without %}
                                         {% for key, value in sense.get_sense_translations_dict_without.items %}
-                                            {{key}}: {{ value }}
+                                            {{key}}: {{value}}
                                             {% if not forloop.last %}<br>{% endif %}
                                         {% endfor %}
                                     {% endif %}<br><br>
@@ -956,7 +938,7 @@ option:not(:checked) {
                                                 </div>
                                                 <form name="delete_sense_form" method="post" action="{% url 'dictionary:delete_sense' gloss.id %}" >
                                                     {% csrf_token %}
-                                                    <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
+                                                    <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
                                                     <input type='hidden' name='senseid' value='{{sense.id}}'>
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
@@ -978,12 +960,12 @@ option:not(:checked) {
                                                 </div><br>
                                                 <form name="update_sense_form" method="post" action="{% url 'dictionary:update_sense' sense.id %}" >
                                                     {% csrf_token %}
-                                                    <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
-                                                    <input type="hidden" name="glossid" value="{{ gloss.id }}"/>
+                                                    <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
+                                                    <input type="hidden" name="glossid" value="{{gloss.id}}"/>
                                                     <table>
                                                         <tr>
                                                             {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                                                <th>{{ dataset_lang.name }}</th>
+                                                                <th>{{dataset_lang.name}}</th>
                                                             {% endfor %}
                                                         </tr>
                                                         <tr>
@@ -991,8 +973,8 @@ option:not(:checked) {
                                                                 {% for key, value in sense.get_sense_translations_dict_with_return.items %}
                                                                     {% if key|slugify == dataset_lang|slugify %}
                                                                         <td><textarea {% if settings.SHARE_SENSES %} class="sensetranslationtypeahead" {% endif %}
-                                                                                      name="{{ key }}" rows="10" cols="20"
-                                                                                      placeholder="keyword 1&#10;keyword 2&#10;...">{{ value }}</textarea></td>
+                                                                                      name="{{key}}" rows="10" cols="20"
+                                                                                      placeholder="keyword 1&#10;keyword 2&#10;...">{{value}}</textarea></td>
                                                                     {% endif %}
                                                                 {% endfor %}
                                                             {% endfor %}
@@ -1017,23 +999,23 @@ option:not(:checked) {
                                                 </div><br>
                                                 <!-- <form name="update_sense_form" method="post" action="{% url 'dictionary:link_sense' sense.id %}" >
                                                     {% csrf_token %}
-                                                    <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
-                                                    <input type="hidden" name="glossid" value="{{ gloss.id }}"/> -->
+                                                    <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
+                                                    <input type="hidden" name="glossid" value="{{gloss.id}}"/> -->
                                                     <table class='table table-condensed'>
                                                         <tr>
                                                             {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                                                <th>{{ dataset_lang.name }}</th>
+                                                                <th>{{dataset_lang.name}}</th>
                                                             {% endfor %}
                                                             <th>In gloss</th>
                                                             <th>Number of example sentences</th>
                                                         </tr>
-                                                        
-                                                        {% for similar_sense in sense.get_senses_with_similar_sensetranslations_dict %}
+                                                        {% with sense_to_similar_senses|get_item:sense as similar_senses %}
+                                                        {% for similar_sense in similar_senses %}
                                                         <tr>
                                                             {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                                                                 {% for key, value in similar_sense.items %}
                                                                     {% if key|slugify == dataset_lang|slugify %}
-                                                                        <td>{{ value }}</td>
+                                                                        <td>{{value}}</td>
                                                                     {% endif %}
                                                                 {% endfor %}  
                                                             {% endfor %}
@@ -1042,7 +1024,7 @@ option:not(:checked) {
                                                                 {% if key|slugify == 'inglosses' %}
                                                                     <td>
                                                                     {% for found_gloss in value %}
-                                                                        <a href="{{ found_gloss.1 }}">{{ found_gloss.0 }}</a>
+                                                                        <a href="{{found_gloss.1}}">{{found_gloss.0}}</a>
                                                                     {% endfor %}
                                                                     </td>
                                                                 {% endif %}
@@ -1050,14 +1032,15 @@ option:not(:checked) {
 
                                                             {% for key, value in similar_sense.items %}
                                                                 {% if key|slugify == 'sentence_count' %}
-                                                                    <td>{{ value }}</td>
+                                                                    <td>{{value}}</td>
                                                                 {% endif %}
                                                             {% endfor %}
 
-                                                            <!-- <td>{{ similar_sense.count_example_sentences }}</td> -->
+                                                            <!-- <td>{{similar_sense.count_example_sentences}}</td> -->
                                                             <!-- <td><input class='btn btn-primary' value='{% trans "Adopt" %}' type='submit'></td> -->
                                                         </tr>
                                                         {% endfor %}
+                                                        {% endwith %}
 
                                                         
                                                     </table>
@@ -1077,7 +1060,7 @@ option:not(:checked) {
                                             <tr>
                                                 <td>
                                                     {% if examplesentence.sentenceType %}
-                                                    <i>{{ examplesentence.sentenceType.name }}</i>
+                                                    <i>{{examplesentence.sentenceType.name}}</i>
                                                     {% else %}
                                                     - 
                                                     {% endif %}
@@ -1086,19 +1069,19 @@ option:not(:checked) {
                                                     {% endif %}
                                                     {% if examplesentence.has_video %}
                                                     <div class="pull-right">
-                                                        <span id="camera-icon"><img id='camera' data-target="#exampleVidModal{{ examplesentence.id }}" data-toggle="modal" src='{{ STATIC_URL }}images/playvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
+                                                        <span id="camera-icon"><img id='camera' data-target="#exampleVidModal_{{examplesentence.id}}" data-toggle="modal" src='{{STATIC_URL}}images/playvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
                                                     </div>
                                                     {% endif %}
                                                     {% if "change_dataset" in dataset_perms %}
                                                     <div class="pull-right sense-icon">
-                                                        <span id="camera-icon"><a href='{% url "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id %}'><img id='camera' src='{{ STATIC_URL }}images/addvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></a></span>
+                                                        <span id="camera-icon"><a href='{% url "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id %}'><img id='camera' src='{{STATIC_URL}}images/addvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></a></span>
                                                     </div>
                                                     {% if examplesentence.has_video %}
                                                     <div class="pull-right sense-icon">
                                                         <span id="camera-icon">
                                                             <form class="formbutton" action="{{PREFIX_URL}}/video/deletesentencevideo/{{examplesentence.id}}" method='post'>
                                                             {% csrf_token %}
-                                                            <input type=image value="" src='{{ STATIC_URL }}images/deletevideo.png' alt = "submit" style='width: 25px; height: 25px; margin: 0px; cursor: pointer;'>
+                                                            <input type=image value="" src='{{STATIC_URL}}images/deletevideo.png' alt = "submit" style='width: 25px; height: 25px; margin: 0px; cursor: pointer;'>
                                                             </form>
                                                         </span>
                                                     </div>
@@ -1109,7 +1092,7 @@ option:not(:checked) {
                                             <tr>
                                                 <td style="border: none" colspan="100%">
                                                     {% for key, value in examplesentence.get_examplestc_translations_dict_without.items %}
-                                                        {{ key }}: {{ value }} {% if not forloop.last %}<br>{% endif %}
+                                                        {{key}}: {{value}} {% if not forloop.last %}<br>{% endif %}
                                                     {% endfor %}<br><br>
                                                     {% if "change_dataset" in dataset_perms %}
                                                         <span class='glyphicon glyphicon-trash examplestc_delete sense-icon' style="color:red"  data-toggle='modal' data-target='#delete_examplestc_modal_{{examplesentence.id}}'></span>
@@ -1144,9 +1127,9 @@ option:not(:checked) {
                                                                     </div><br>
                                                                     <form name="update_examplesentence_form" action='{% url "dictionary:update_examplesentence" examplesentence.id %}' method='post'>
                                                                         {% csrf_token %}
-                                                                        <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}">
-                                                                        <input type="hidden" name="senseid" value="{{ sense.id }}">
-                                                                        <input type="hidden" name="glossid" value="{{ gloss.id }}">
+                                                                        <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}">
+                                                                        <input type="hidden" name="senseid" value="{{sense.id}}">
+                                                                        <input type="hidden" name="glossid" value="{{gloss.id}}">
                                                                         <input type='hidden' name='value' value='confirmed'>
                                                                         Type: <select name="sentenceType">
                                                                             {% for stype in sentencetypes %}
@@ -1158,8 +1141,8 @@ option:not(:checked) {
                                                                         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                                                                             {% for key, value in examplesentence.get_examplestc_translations_dict_with.items %}
                                                                                 {% if key|slugify == dataset_lang|slugify %}
-                                                                                    {{ dataset_lang.name }}:
-                                                                                    <input style="width:100%" name="{{ key }}" value="{{ value }}" maxlength="200" type="text"/>
+                                                                                    {{dataset_lang.name}}:
+                                                                                    <input style="width:100%" name="{{key}}" value="{{value}}" maxlength="200" type="text"/>
                                                                                         <br><br>
                                                                                 {% endif %}
                                                                             {% endfor %}
@@ -1176,17 +1159,17 @@ option:not(:checked) {
                                                 </td>
                                             </tr>
 
-                                            <div class="modal" id="exampleVidModal{{ examplesentence.id }}">
+                                            <div class="modal" id="exampleVidModal_{{examplesentence.id}}">
                                                 <div class="modal-content" style="width:40%">
-                                                    <div id="videocontainer{{ examplesentence.id }}"  style="width:100%">
+                                                    <div id="videocontainer_{{examplesentence.id}}"  style="width:100%">
                                                         {% if examplesentence.has_video %}                                            
                                                             <div id="player">
-                                                                <video id='videoplayer' src="{{ protected_media_url }}/{{ examplesentence.get_video_path}}" controls type="video/mp4" muted></video>
+                                                                <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}" controls type="video/mp4" muted></video>
                                                             </div>
                                                             <div id="replay"></div>
                                                         {% else %}
                                                             <div id='player'>
-                                                                <img id='novideo' src='{{ STATIC_URL }}images/no-video-ngt.png'>
+                                                                <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png'>
                                                             </div>
                                                         {% endif %}
                                                     </div>
@@ -1200,7 +1183,7 @@ option:not(:checked) {
                                                 </div> 
                                             </div>
                                         {% endfor %}  
-                                        {% if "change_dataset" in dataset_perms %} 
+                                        {% if "change_dataset" in dataset_perms %}
                                             <tr class="sense-icon">
                                                 <td>
                                                     <button data-toggle='modal' data-target='#add_examplestc_modal_{{sense.id}}', class='sense-button btn btn-primary btn-space'>{% trans "Add an example sentence" %}</button>
@@ -1212,8 +1195,8 @@ option:not(:checked) {
                                                                 </div><br>
                                                                 <form name="create_examplesentence_form" action='{% url "dictionary:create_examplesentence" sense.id %}' method='post'>
                                                                     {% csrf_token %}
-                                                                    <input type="hidden" name="dataset" value="{{ gloss.lemma.dataset.id }}"/>
-                                                                    <input type="hidden" name="glossid" value="{{ gloss.id }}"/>
+                                                                    <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
+                                                                    <input type="hidden" name="glossid" value="{{gloss.id}}"/>
                                                                     <input type='hidden' name='value' value='confirmed'>
                                                                     Type: 
                                                                     <select name="sentenceType">
@@ -1224,8 +1207,8 @@ option:not(:checked) {
                                                                     <input type="hidden" name="negative" value=False>
                                                                     Negative: <input type="checkbox" name="negative" ><br><br>
                                                                     {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                                                        {{ dataset_lang.name }}:
-                                                                        <input style="width:100%" name="{{ dataset_lang.name }}" value="" maxlength="150" type="text"/>
+                                                                        {{dataset_lang.name}}:
+                                                                        <input style="width:100%" name="{{dataset_lang.name}}" value="" maxlength="150" type="text"/>
                                                                             <br><br>
                                                                     {% endfor %}
                                                                     <div class="modal-footer">
@@ -1256,17 +1239,17 @@ option:not(:checked) {
                                                 </div><br>
                                                 <form name="create_sense_form" action='{% url "dictionary:create_sense" gloss.id %}' method='post'>
                                                     {% csrf_token %}
-                                                    <input type="hidden" name="dataset" value={{ gloss.lemma.dataset.id }}>
+                                                    <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}">
                                                     <table>
                                                         <tr>
                                                             {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                                                <th>{{ dataset_lang.name }}</th>
+                                                                <th>{{dataset_lang.name}}</th>
                                                             {% endfor %}
                                                         </tr>
                                                         <tr>
                                                             {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                                                                 <td><textarea {% if settings.SHARE_SENSES %} class="sensetranslationtypeahead" {% endif %}
-                                                                              name="{{ dataset_lang.name }}" rows="10" cols="20"
+                                                                              name="{{dataset_lang.name}}" rows="10" cols="20"
                                                                               placeholder="keyword 1&#10;keyword 2&#10;..."></textarea></td>
                                                             {% endfor %}
                                                         </tr>
@@ -1583,7 +1566,7 @@ option:not(:checked) {
                 <a data-toggle='collapse' href='#phonology'>{% trans "Phonology" %}</a><span id='phonology_message'></span>
                 {% if handedness and domhndsh %}
                 <div class="pull-right">
-                <span id="hands-icon"><img id='phono-hands' src='{{ STATIC_URL }}images/raised_hand_with_fingers_splayed.png' style="width:18px; height:auto; margin: 0px;"></span>
+                <span id="hands-icon"><img id='phono-hands' src='{{STATIC_URL}}images/raised_hand_with_fingers_splayed.png' style="width:18px; height:auto; margin: 0px;"></span>
                 </div>
                 {% endif %}
             </div>
@@ -1743,7 +1726,7 @@ option:not(:checked) {
                    <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
                </tr>
                 {% for gl, homo_display in homonyms_but_not_saved %}
-                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ homo_display }}</a></td></tr>
+                <tr><td style="color:red;"><a style="color:red; padding-left: 20px;" href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{homo_display}}</a></td></tr>
                 {% endfor %}
             </table>
         </div>
@@ -1763,7 +1746,7 @@ option:not(:checked) {
                    <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
                </tr>
                 {% for gl, homo_display in homonyms_different_phonology %}
-                <tr><td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{ homo_display }}</a></td></tr>
+                <tr><td><a href='{% url "dictionary:admin_gloss_view" pk=gl.id %}'>{{homo_display}}</a></td></tr>
                 {% endfor %}
             </table>
         </div>
@@ -1797,7 +1780,7 @@ option:not(:checked) {
                 <a data-toggle='collapse' href='#semantics'>{% trans "Semantics" %}</a>
                 {% if SemanticFieldDefined %}
                 <div class="pull-right">
-                <span id="semantics-icon"><img id='ball' src='{{ STATIC_URL }}images/black_circle.png' style="width:25px; height:25px; margin: 0px;"></span>
+                <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png' style="width:25px; height:25px; margin: 0px;"></span>
                 </div>
                 {% endif %}
             </div>
@@ -1851,7 +1834,7 @@ option:not(:checked) {
                 <a data-toggle='collapse' href='#relations'>{% trans "Relations to Other Signs" %}</a>
                 {% if gloss.relations_count %}
                 <div class="pull-right">
-                <span id="relations-icon"><img id='relations-arrows' src='{{ STATIC_URL }}images/leftwards_arrow_over_rightwards_arrow.png' style="width:16px; height:auto; margin: 0px;"></span>
+                <span id="relations-icon"><img id='relations-arrows' src='{{STATIC_URL}}images/leftwards_arrow_over_rightwards_arrow.png' style="width:16px; height:auto; margin: 0px;"></span>
                 </div>
                 {% endif %}
             </div>
@@ -1938,7 +1921,7 @@ option:not(:checked) {
                 {% if gloss.relationtoforeignsign_set.all %}
                 <div class="pull-right">
                 <span id="forrelations-icon"><img id='forrelations-arrows'
-                                                  src='{{ STATIC_URL }}images/left_right_triangleheaded_arrow.png' style="width:30px; height:auto; margin: 0px;"></span>
+                                                  src='{{STATIC_URL}}images/left_right_triangleheaded_arrow.png' style="width:30px; height:auto; margin: 0px;"></span>
                 </div>
                 {% endif %}
             </div>
@@ -2040,7 +2023,7 @@ option:not(:checked) {
                 </tr>
 
                 {%if SHOW_DATASET_INTERFACE_OPTIONS %}
-                <tr><th>{% trans "Dataset" %}</th><td id='dataset' colspan="2">{{ gloss.lemma.dataset }}</td></tr>
+                <tr><th>{% trans "Dataset" %}</th><td id='dataset' colspan="2">{{gloss.lemma.dataset}}</td></tr>
                 {% endif %}
 
                 {% for value,name,label,kind in publication_fields %}
@@ -2062,7 +2045,7 @@ option:not(:checked) {
                 <a data-toggle='collapse' href='#definitions'>{% trans "Notes" %}</a>
                 {% if notes_groupedby_role.items %}
                 <div class="pull-right">
-                <span id="document-icon"><img id='document' src='{{ STATIC_URL }}images/document_with_text_and_picture.png' style="width:30px; height:auto; margin: 0px;"></span>
+                <span id="document-icon"><img id='document' src='{{STATIC_URL}}images/document_with_text_and_picture.png' style="width:30px; height:auto; margin: 0px;"></span>
                 </div>
                 {% endif %}
             </div>
@@ -2163,7 +2146,7 @@ option:not(:checked) {
                 <a data-toggle='collapse' href='#othermedia'>{% trans "Other Media" %}</a>
                 {% if other_media %}
                 <div class="pull-right">
-                <span id="camera-icon"><img id='camera' src='{{ STATIC_URL }}images/camera.png' style="width:25px; height:25px; margin: 0px;"></span>
+                <span id="camera-icon"><img id='camera' src='{{STATIC_URL}}images/camera.png' style="width:25px; height:25px; margin: 0px;"></span>
                 </div>
                 {% endif %}
             </div>
@@ -2216,11 +2199,11 @@ option:not(:checked) {
                     <td><a {% if not media_okay %}
 				            disabled onclick="return false;" style="color:rgb(150,150,150);"
 			                {% endif %}
-				            download="{{ file_name }}" href="{{ PREFIX_URL }}/{{ path }}">Download</a>
+				            download="{{file_name}}" href="{{PREFIX_URL}}/{{path}}">Download</a>
                     </td>
-                    <td id='other-media-file-type_{{ pk }}'>{{ file_type }}</td>
-                    <td id='other-media-type_{{ pk }}'>{{ type }}</td>
-                    <td class='edit edit_text' id='other-media-alternative-gloss_{{ pk }}'>{{ alternative_gloss }}</td>
+                    <td id='other-media-file-type_{{pk}}'>{{file_type}}</td>
+                    <td id='other-media-type_{{pk}}'>{{type}}</td>
+                    <td class='edit edit_text' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
                 </tr>
                {% endfor %}
 
