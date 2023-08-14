@@ -1412,16 +1412,6 @@ class GlossDetailView(DetailView):
 
         context['DerivationHistoryDefined'] = self.object.derivHist.all().count() > 0
 
-        next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
-        if next_gloss == None:
-            context['nextglossid'] = context['gloss'].pk #context['gloss']
-        else:
-            context['nextglossid'] = next_gloss.pk
-
-        if settings.SIGN_NAVIGATION:
-            context['glosscount'] = Gloss.objects.count()
-            context['glossposn'] =  Gloss.objects.filter(sn__lt=context['gloss'].sn).count()+1
-
         #Pass info about which fields we want to see
         gl = context['gloss']
         context['active_id'] = gl.id
@@ -1980,16 +1970,6 @@ class GlossVideosView(DetailView):
         # Call the base implementation first to get a context
         context = super(GlossVideosView, self).get_context_data(**kwargs)
 
-        next_gloss = Gloss.objects.get(pk=context['gloss'].pk).admin_next_gloss()
-        if next_gloss == None:
-            context['nextglossid'] = context['gloss'].pk #context['gloss']
-        else:
-            context['nextglossid'] = next_gloss.pk
-
-        if settings.SIGN_NAVIGATION:
-            context['glosscount'] = Gloss.objects.count()
-            context['glossposn'] =  Gloss.objects.filter(sn__lt=context['gloss'].sn).count()+1
-
         #Pass info about which fields we want to see
         gl = context['gloss']
         context['active_id'] = gl.id
@@ -2116,9 +2096,6 @@ class GlossRelationsDetailView(DetailView):
         context = super(GlossRelationsDetailView, self).get_context_data(**kwargs)
 
         context['language'] = interface_language
-
-        context['navigation'] = context['gloss'].navigation(True)
-        context['SIGN_NAVIGATION']  = settings.SIGN_NAVIGATION
 
         # Pass info about which fields we want to see
         gl = context['gloss']

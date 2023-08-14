@@ -20,11 +20,7 @@
     {% trans "Edit" as edit_mode_str %}
     {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
 
-
-
     var csrf_token = '{{csrf_token}}';
-    var next_gloss_id = {{nextglossid}};
-    var next_morpheme_id;
     var this_gloss_id = {{gloss.id}};
 
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
@@ -73,23 +69,6 @@
 
 
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
-
-    <div class='btn-group'>
-        {% if SIGN_NAVIGATION %}
-
-            {% if navigation.prev %}
-                <a class='btn navbar-btn btn-default' href="{% url 'dictionary:admin_gloss_view' pk=navigation.prev.id %}">&laquo;{% trans "Previous Sign" %]
-                </a>
-            {% endif %}
-
-            <button class='btn navbar-btn'>{% blocktrans %}"Sign {{glossposn}} of {{glosscount}} in the dictionary" {% endblocktrans %}</button>
-
-            {% if navigation.next %}
-                <a class="btn navbar-btn btn-default"
-                    href="{% url 'dictionary:admin_gloss_view' pk=navigation.next.id %}">{% trans "Next Sign &raquo;" %}</a>
-            {% endif %}
-         {% endif %}
-    </div>
 
     <ul class='nav nav-tabs'>
         <li class="nav-item">

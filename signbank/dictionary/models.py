@@ -1273,15 +1273,6 @@ class Gloss(models.Model):
 
         return fields
 
-    def navigation(self, is_staff):
-        """Return a gloss navigation structure that can be used to
-        generate next/previous links from within a template page"""
-
-        result = dict()
-        result['next'] = self.next_dictionary_gloss(is_staff)
-        result['prev'] = self.prev_dictionary_gloss(is_staff)
-        return result
-
     @staticmethod
     def none_morpheme_objects():
         """Get all the GLOSS objects, but excluding the MORPHEME ones"""
@@ -1290,50 +1281,6 @@ class Gloss(models.Model):
     def is_morpheme(self):
         """Test if this instance is a Morpheme or (just) a Gloss"""
         return hasattr(self, 'morpheme')
-
-    def admin_next_gloss(self):
-        """next gloss in the admin view, shortcut for next_dictionary_gloss with staff=True"""
-
-        return self.next_dictionary_gloss(True)
-
-    def admin_prev_gloss(self):
-        """previous gloss in the admin view, shortcut for prev_dictionary_gloss with staff=True"""
-
-        return self.prev_dictionary_gloss(True)
-
-    def next_dictionary_gloss(self, staff=False):
-        """Find the next gloss in dictionary order"""
-
-        if staff:
-            # Make sure we only include the none-Morpheme glosses
-            all_glosses_ordered = Gloss.none_morpheme_objects().order_by('lemma')
-        else:
-            all_glosses_ordered = Gloss.objects.filter(inWeb__exact=True).order_by('lemma')
-
-        all_glosses_ordered_pks = list(all_glosses_ordered.values_list('pk', flat=True))
-        try:
-            index_of_this_gloss = all_glosses_ordered_pks.index(self.pk)
-        except:
-            return None
-        if len(all_glosses_ordered_pks) - 1 > index_of_this_gloss:
-            next_gloss = all_glosses_ordered_pks[all_glosses_ordered_pks.index(self.pk) + 1]
-            return Gloss.objects.get(pk=next_gloss)
-        else:
-            return None
-
-    def prev_dictionary_gloss(self, staff=False):
-        """DEPRICATED!!!! Find the previous gloss in dictionary order"""
-
-        if self.sn == None:
-            return None
-        elif staff:
-            set = Gloss.objects.filter(sn__lt=self.sn).order_by('-lemma')
-        else:
-            set = Gloss.objects.filter(sn__lt=self.sn, inWeb__exact=True).order_by('-lemma')
-        if set:
-            return set[0]
-        else:
-            return None
 
     def get_absolute_url(self):
         return "/dictionary/gloss/%s.html" % self.idgloss
