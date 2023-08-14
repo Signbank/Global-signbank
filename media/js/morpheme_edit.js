@@ -50,11 +50,6 @@ var busy_editing = 0;
 		toggle_edit(false);
 	});
 
-     $('#save_and_next_btn').click(function()
-	{
-		toggle_edit(true);
-	});
-     
     $('#rewind').click(function()
 	{
 		rewind();
