@@ -985,7 +985,8 @@ option:not(:checked) {
                                             </div>
                                         </div>
                                     </div>
-                                    {% if sense.get_senses_with_similar_sensetranslations_dict %}
+                                    {% with sense_to_similar_senses|get_item:sense as similar_senses %}
+                                    {% if similar_senses %}
                                     <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
                                     <div class="modal fade" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
                                         <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
@@ -1005,7 +1006,6 @@ option:not(:checked) {
                                                             <th>In gloss</th>
                                                             <th>Number of example sentences</th>
                                                         </tr>
-                                                        {% with sense_to_similar_senses|get_item:sense as similar_senses %}
                                                         {% for similar_sense in similar_senses %}
                                                         <tr>
                                                             {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
@@ -1036,9 +1036,7 @@ option:not(:checked) {
                                                             <!-- <td><input class='btn btn-primary' value='{% trans "Adopt" %}' type='submit'></td> -->
                                                         </tr>
                                                         {% endfor %}
-                                                        {% endwith %}
 
-                                                        
                                                     </table>
                                                     
                                                     <div class="modal-footer">
@@ -1049,6 +1047,7 @@ option:not(:checked) {
                                         </div>
                                     </div>
                                     {% endif %}
+                                    {% endwith %}
                                 </td>
                                 <td style="width:50%">
                                     <table class='table table-condensed'>
