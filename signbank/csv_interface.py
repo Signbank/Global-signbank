@@ -3,6 +3,7 @@ from signbank.dictionary.models import *
 from signbank.dictionary.consistency_senses import check_consistency_senses
 from django.utils.translation import override, gettext_lazy as _, activate
 from signbank.settings.server_specific import LANGUAGES
+from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
 
 
 def create_empty_sense(gloss, order, erase=False):
@@ -549,140 +550,12 @@ def sense_translations_for_language_mapping(gloss, language):
     return sense_keywords_mapping
 
 
-def csv_update_senses(gloss, language, new_senses_string, update=False):
+def csv_create_senses(request, gloss, language, new_senses_string, create=False):
     """CSV Import Update the senses field"""
     # this function assumes the new_senses_string is correctly parsed
     # the function update_senses_parse tests this
     # the sense numbers in the new_senses_string are unique numbers between 1 and 9
-    if settings.DEBUG_CSV:
-        print('call to update_senses: ', gloss, str(gloss.id), language, new_senses_string)
-    if not new_senses_string:
-        return
-
-    new_senses = [k for k in new_senses_string.split(' | ')]
-
-    new_senses_dict = dict()
-    for ns in new_senses:
-        order_string, keywords_string = ns.split('. ')
-        keywords_list = keywords_string.split(', ')
-        new_senses_dict[int(order_string)] = keywords_list
-    print('new senses: ', new_senses_dict)
-
-    gloss_senses = GlossSense.objects.filter(gloss=gloss)
-
-    for gs in gloss_senses:
-        print('gloss sense: ', gs.gloss.id, gs.order, gs.gloss, gs.sense)
-    if not gloss_senses:
-        # there are currently no senses for this gloss, create an empty 1st one
-        # in case the user has started numbering at something other than 1, get this
-        new_senses_orders = sorted(ns for ns in new_senses_dict.keys())
-        print('new sense orders: ', new_senses_orders)
-        create_empty_sense(gloss, new_senses_orders[0], erase=True)
-
-    original_senses_dict = sense_translations_for_language_mapping(gloss, language)
-
-    updated_senses = dict()
-    new_senses = dict()
-    tentative_deleted_senses = dict()
-
-    for order in original_senses_dict.keys():
-        if order in new_senses_dict.keys():
-            if original_senses_dict[order] != new_senses_dict[order]:
-                updated_senses[order] = new_senses_dict[order]
-        else:
-            tentative_deleted_senses[order] = original_senses_dict[order]
-
-    for order in new_senses_dict.keys():
-        if order not in original_senses_dict.keys():
-            new_senses[order] = new_senses_dict[order]
-
-    print('updated: ', updated_senses)
-    print('new: ', new_senses)
-    print('tentative deleted: ', tentative_deleted_senses)
-
-    regrouped_keywords = dict()
-    deleted_senses = dict()
-    for deleted_order, deleted_keywords_list in tentative_deleted_senses.items():
-        regrouped_keywords[deleted_order] = dict()
-        tentative_deleted_keywords_list = []
-        for deleted_keyword in deleted_keywords_list:
-            for new_order, new_keywords_list in new_senses.items():
-                if deleted_keyword in new_keywords_list:
-                    regrouped_keywords[deleted_order][new_order] = deleted_keyword
-                else:
-                    tentative_deleted_keywords_list.append(deleted_keyword)
-        deleted_senses[deleted_order] = tentative_deleted_keywords_list
-
-    print('regrouped: ', regrouped_keywords)
-    print('deleted: ', deleted_senses)
-
-    if not update:
-        return
-
-    # the code below is in development
-    # hence the default update=False parameter to the function
-    for order, keywords in new_senses.items():
-        sense, sense_translations = create_empty_sense(gloss, order)
-        gloss_sense_translation = sense_translations[language]
-        for inx, keyword in enumerate(keywords, 1):
-            (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
-            translation = Translation.objects.create(gloss=gloss,
-                                                     language=language,
-                                                     orderIndex=order,
-                                                     translation=keyword_object,
-                                                     index=inx)
-            translation.save()
-            gloss_sense_translation.translations.add(translation)
-
-    for order, keywords in updated_senses.items():
-        sense, sense_translations = create_empty_sense(gloss, order)
-        gloss_sense_translation = sense_translations[language]
-        existing_translations = gloss_sense_translation.translations.all()
-        existing_keywords = [et.translation.text for et in existing_translations]
-        for translation in existing_translations:
-            if translation.translation.text in existing_keywords:
-                print('keep existing keyword')
-                # this keyword wasn't changed
-                continue
-            gloss_sense_translation.translations.remove(translation)
-            translation.delete()
-        for inx, keyword in enumerate(keywords, 1):
-            if keyword in existing_keywords:
-                # this keyword already exists
-                print('already existing keyword: ', keyword)
-                continue
-            (keyword_object, created) = Keyword.objects.get_or_create(text=keyword)
-            translation = Translation.objects.create(gloss=gloss,
-                                                     language=language,
-                                                     orderIndex=order,
-                                                     translation=keyword_object,
-                                                     index=inx)
-            translation.save()
-            gloss_sense_translation.translations.add(translation)
-
-    for order, keywords in deleted_senses.items():
-        gloss_sense = GlossSense.objects.filter(gloss=gloss, order=order).first()
-        if not gloss_sense:
-            continue
-        sense = gloss_sense.sense
-        gloss_sense_translation = sense.senseTranslations.filter(language=language).first()
-        if gloss_sense_translation:
-            existing_keywords = gloss_sense_translation.translations.all()
-            for translation in existing_keywords:
-                gloss_sense_translation.translations.remove(translation)
-                translation.delete()
-            sense.senseTranslations.remove(gloss_sense_translation)
-            gloss_sense_translation.delete()
-        if not sense.senseTranslations():
-            sense.delete()
-            gloss_sense.delete()
-
-
-def csv_create_senses(gloss, language, new_senses_string, create=False):
-    """CSV Import Update the senses field"""
-    # this function assumes the new_senses_string is correctly parsed
-    # the function update_senses_parse tests this
-    # the sense numbers in the new_senses_string are unique numbers between 1 and 9
+    # the request argument is needed to save the user sense creation in the Gloss Revision History
     if settings.DEBUG_CSV:
         print('call to csv_create_senses: ', gloss, str(gloss.id), language, '"', new_senses_string, '"')
     if not new_senses_string:
@@ -712,11 +585,16 @@ def csv_create_senses(gloss, language, new_senses_string, create=False):
         new_senses_orders = sorted(ns for ns in new_senses_dict.keys())
         if settings.DEBUG_CSV:
             print('new sense orders: ', new_senses_orders)
-        create_empty_sense(gloss, new_senses_orders[0], erase=True)
+        if create:
+            if settings.DEBUG_CSV:
+                print('csv_create_senses create: ', gloss, new_senses_string, new_senses_orders)
+            # there are currently no senses for this gloss
+            create_empty_sense(gloss, new_senses_orders[0], erase=True)
 
     if not create:
         return
 
+    revisions = []
     for order, keywords in new_senses_dict.items():
         sense, sense_translations = create_empty_sense(gloss, order, erase=False)
         gloss_sense_translation = sense_translations[language]
@@ -729,4 +607,8 @@ def csv_create_senses(gloss, language, new_senses_string, create=False):
                                                      index=inx)
             translation.save()
             gloss_sense_translation.translations.add(translation)
+        sense_new_value = str(sense)
+        revisions.append(('', sense_new_value))
 
+    for sense_old_value, sense_new_value in revisions:
+        add_sense_to_revision_history(request, gloss, sense_old_value, sense_new_value)
