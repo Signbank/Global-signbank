@@ -761,37 +761,25 @@ class Sense(models.Model):
             if examplesentence.has_video():
                 return True
         return False
-    
+
     def get_senses_with_similar_sensetranslations_dict(self):
         "Return a list of senses with sensetranslations that have the same string as this sense"
         similar_senses = []
-        for sense in Sense.objects.all().filter(glosssense__gloss__lemma__dataset = self.get_dataset()):
-            sensetranslations = {}
-            if sense != self:
-                copy = False
-                # check if any of the the sensetranslations within the sense are the same
-                for sensetranslation in sense.senseTranslations.all():
-                    for sensetranslation_self in self.senseTranslations.all():
-                        for translation_self in sensetranslation_self.get_translations_list():
-                            if sensetranslation_self.language == sensetranslation.language \
-                            and translation_self in sensetranslation.get_translations_list() \
-                            and sensetranslation.get_translations_list() != []:
-                                copy = True
-                # if there is a similar sensetranslation, add the sensetranslations to the list
-                if copy:
-                    for sensetranslation in sense.senseTranslations.all():
-                        sensetranslations[str(sensetranslation.language)] = sensetranslation.get_translations()
-                    if sensetranslations != {}:
-                        # add empty translations for languages that are not present in the sense
-                        for language in self.get_dataset().translation_languages.all():
-                            if str(language) not in sensetranslations.keys():
-                                sensetranslations[str(language)] = ""
-                        # add glosses
-                        sensetranslations['inglosses'] = [[str(gloss), str(gloss.pk)] for gloss in sense.glosses.all()]
-                        # add number of examplesentences
-                        sensetranslations['sentence_count'] = sense.exampleSentences.count()
-                        # add sense
-                        similar_senses.append(sensetranslations)
+        senses_done_pk = []
+        # Find the translations in current sense
+        for translation in Translation.objects.filter(sensetranslation__sense = self):
+            # check in which other senses the translation is present
+            for sense in Sense.objects.filter(senseTranslations__translations__translation = translation.translation, glosssense__gloss__lemma__dataset = self.get_dataset()).exclude(pk=self.pk).exclude(pk__in=senses_done_pk):
+                senses_done_pk.append(sense.pk)
+                sensedict = {}
+                for language in self.get_dataset().translation_languages.all():
+                    if sense.senseTranslations.filter(language = language).exists():
+                        sensedict[str(language)] = sense.senseTranslations.get(language = language).get_translations()
+                    else:
+                        sensedict[str(language)] = ""
+                sensedict['inglosses'] = [[str(gloss), str(gloss.pk)] for gloss in sense.glosses.all()]
+                sensedict['sentence_count'] = sense.exampleSentences.count()
+                similar_senses.append(sensedict)
         return sorted(similar_senses, key=lambda d: d['inglosses']) 
 
     def __str__(self):
