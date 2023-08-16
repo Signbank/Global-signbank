@@ -113,7 +113,7 @@ urlpatterns = [
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
 
     # Admin views
-    re_path(r'^try/$', signbank.dictionary.views.try_code), #A view for the developer to try out some things
+    re_path(r'^try/(?P<pk>\d+)$', signbank.dictionary.views.try_code),  # View for the developer to view senses for a gloss
     re_path(r'^gif_prototype/$', signbank.dictionary.views.gif_prototype),
 
     re_path(r'^list/$', permission_required('dictionary.search_gloss')(GlossListView.as_view()), name='admin_gloss_list'),

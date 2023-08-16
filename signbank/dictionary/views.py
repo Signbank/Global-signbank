@@ -44,6 +44,8 @@ import datetime as DT
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
 
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
+
 
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
@@ -429,42 +431,62 @@ def import_media(request,video):
                                                         'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
-def try_code(request):
+def try_code(request, pk):
+    """A view for the developer to try out senses for a particular gloss"""
+    context = {}
 
-    """A view for the developer to try out things"""
+    selected_datasets = get_selected_datasets_for_user(request.user)
 
-    from collections import Counter
+    dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    encountered_lemmata = []
-    lemmata_nr_of_glosses = {}
-    lemmata_frequency = {}
+    context['dataset_languages'] = dataset_languages
 
-    dataset = Dataset.objects.get(pk=5)
+    context['selected_datasets'] = selected_datasets
 
-    for gloss in Gloss.objects.filter(lemma__dataset=5):
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
-        if gloss.lemma == None:
-            continue
+    try:
+        gloss = get_object_or_404(Gloss, pk=pk)
+    except ObjectDoesNotExist:
+        gloss = None
 
-        translations = [translation.text for translation in LemmaIdglossTranslation.objects.filter(lemma = gloss.lemma)]
-        name = ','.join(translations)
+    if not gloss or not (request.user.is_staff or request.user.is_superuser):
+        translated_message = _('You do not have permission to use the try command.')
+        return render(request, 'dictionary/warning.html',
+                      {'warning': translated_message,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
-        if gloss.lemma not in encountered_lemmata:
-            encountered_lemmata.append(gloss.lemma)
-            lemmata_nr_of_glosses[name] = 0
-            lemmata_frequency[name] = 0
+    context['gloss'] = gloss
 
-        lemmata_nr_of_glosses[name] += 1
-
+    gloss_annotations = gloss.annotationidglosstranslation_set.all()
+    if gloss_annotations:
+        gloss_default_annotationidglosstranslation = gloss.annotationidglosstranslation_set.get(
+            language=gloss.lemma.dataset.default_language).text
+    else:
+        gloss_default_annotationidglosstranslation = str(gloss.id)
+    # Put annotation_idgloss per language in the context
+    context['annotation_idgloss'] = {}
+    for language in gloss.dataset.translation_languages.all():
         try:
-            lemmata_frequency[name] += gloss.tokNo
-        except TypeError:
-            pass
+            annotation_text = gloss.annotationidglosstranslation_set.get(language=language).text
+        except (ObjectDoesNotExist):
+            annotation_text = gloss_default_annotationidglosstranslation
+        context['annotation_idgloss'][language] = annotation_text
 
-    interesting_lemmata = [(name,lemmata_frequency[name]) for name, freq in lemmata_nr_of_glosses.items() if freq > 1]
-    interesting_lemmata.sort(key=lambda x: x[1], reverse=True)
+    senses = gloss.senses.all().order_by('glosssense')
+    context['senses'] = senses
 
-    return HttpResponse(str(interesting_lemmata))
+    sense_to_similar_senses = dict()
+    for sns in senses:
+        sense_to_similar_senses[sns] = sns.get_senses_with_similar_sensetranslations_dict()
+    context['sense_to_similar_senses'] = sense_to_similar_senses
+
+    return render(request, 'dictionary/try.html', context)
 
 
 # this method is called from the Signbank menu bar
