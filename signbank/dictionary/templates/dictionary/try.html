@@ -1,56 +1,246 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
 
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-    <script src='/static/js/jquery-3.6.2.min.js'></script>
-    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
-    <link rel="stylesheet" type="text/css" href="/static/css/global/main.css">
+{% block bootstrap3_title %}
+{% blocktrans %}Sign for {{gloss}}{% endblocktrans %}
+{% endblock %}
 
-    <style>
-    .hover-shows-video
-    {
-        width: 115px;
-    }
+{% load guardian_tags %}
 
-    .thumbnail-video
-    {
-        object-fit: cover;
-        max-width: 115px;
-        height: 115px;
-    }
-    </style>
-</head>
 
-<body>
+{% block extrajs %}
 
-    <script>
-        $(document).ready(function()
-        {
-            $('.hover-shows-video').find('video').hide();
+    <script type='text/javascript'>
+    var url = '{{PREFIX_URL}}';
+    var language_code = '{{LANGUAGE_CODE}}';
 
-            $('.hover-shows-video').mouseenter(function ()
-            {
-                $(this).find('img').hide();
-                $(this).find('video').show();
-                $(this).find('video').get(0).play();
-            });
+    var edit_post_url = '{% url 'dictionary:update_gloss' gloss.id %}';
 
-            $('.hover-shows-video').mouseleave(function ()
-            {
-                $(this).find('img').show();
-                $(this).find('video').hide();
+    var gloss_dataset_id = {{ gloss.lemma.dataset.id}};
+    var gloss_default_language_code = '{{gloss.lemma.dataset.default_language.language_code_2char}}';
 
-                $(this).find('video').get(0).pause();
-                $(this).find('video').get(0).currentTime = 0;
-            });
-        });
+    var csrf_token = '{{csrf_token}}';
+    var this_gloss_id = {{gloss.id}};
 
     </script>
-    <div class="hover-shows-video">
-        <img class="thumbnail" src="/dictionary/protected_media/glossimage/WE/WESP-680.png">
-        <video id="videoplayer" class="thumbnail-video" src="/dictionary/protected_media/glossvideo/WE/WESP-680.mp4"  type="video/mp4" muted="muted"></video>
+
+{% endblock %}
+
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/tagmanager.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/dropstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/recordstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
+    <style>
+        #panel-expand-collapse-btn-group.affix {
+            position:fixed;
+        }
+        #view_tabs.affix {
+            position:fixed;
+        }
+        #searchquery.affix {
+            position:fixed;
+        }
+    </style>
+<style>
+.preview {
+    background-color: white !important;
+    height: 40;
+    width: auto;
+    position: relative;
+    padding: 0 0 0 0 !important;
+}
+
+select option {
+    background-color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.bootstrap-select.btn-group .dropdown-menu li a:hover {
+    color: blue !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.dropdown-menu {
+    display: visible !important;
+    z-index: 5;
+    box-shadow: 0 10px 10px #333;
+}
+
+.dropdown-item:active{
+    color: blue;
+    background-color: darkviolet;
+}
+
+.bootstrap-select {
+    color: black !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.button-to-appear-in-edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.edit-mode {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.copy-button {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+.lemma-button {
+    font-size: 10px;
+    padding-left: 2px;
+    padding-right: 2px;
+    border-radius: 6px;
+}
+</style>
+<style>
+.form-group {
+    background-color: white;
+    color: black;
+}
+option:not(:checked) {
+    background-color: white !important;
+    color: #000;
+}
+/* This makes the popup Run Query button for the default parameters ressemble the style of the QP case.
+   The <a> surrounding the text of the default parameters button is to simulate the link of the QP button. */
+.btn-query {
+    background-color: transparent;
+    border: 1px solid;
+    color: rgb(66, 139, 202);
+    border-radius: 6px;
+    height: 28px;
+}
+.btn-query:hover .btn-query:focus {
+    color: rgb(66, 139, 202);
+    background-color: lightgrey;
+}
+/* modal-dialog-centered does not work in bootstrap 3
+   use this instead, adjust value if necessary */
+.left-modal {
+    margin-left: 300px !important;
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+    <div>
+    <table class='table table-condensed'>
+        {% csrf_token %}
+        {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
+        <tr>
+            <th>
+                {% trans "Annotation ID Gloss" %} ({{lang}})
+            </th>
+            <td>{{annotation_idgloss_translation}}</td>
+            <td></td>
+        </tr>
+        {% endfor %}
+        {% for sense in senses %}
+            <tr>
+            <th>{% trans "Senses" %}</th>
+            <th style="width:10px">
+                {{forloop.counter}}. <br>
+                {% if "change_dataset" in dataset_perms %}
+                    {% if not forloop.first %}
+                    <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "up" %}' style="color:red;">&#x25B2;</a></span>
+                    <br>
+                    {% endif %}
+                    {% if not forloop.last %}
+                    <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "down" %}' style="color:red;">&#x25BC;</a></span>
+                    {% endif %}
+                {% endif %}
+            </th>
+            <td>
+                {% if sense.get_sense_translations_dict_without %}
+                    {% for key, value in sense.get_sense_translations_dict_without.items %}
+                        {{key}}: {{value}}
+                        {% if not forloop.last %}<br>{% endif %}
+                    {% endfor %}
+                {% endif %}<br><br>
+
+            {% with sense_to_similar_senses|get_item:sense as similar_senses %}
+            {% if similar_senses %}
+            <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
+            <div class="modal fade" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
+                    <div class="modal-content" style="width:calc(({{gloss.lemma.dataset.translation_languages.count}}+3)*200px);">
+                        <div class='modal-header'>
+                            <h2 id='modalTitleSimilarSense'>{% trans "Similar senses" %}</h2>
+                        </div><br>
+                        <!-- <form name="update_sense_form" method="post" action="{% url 'dictionary:link_sense' sense.id %}" >
+                            {% csrf_token %}
+                            <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
+                            <input type="hidden" name="glossid" value="{{gloss.id}}"/> -->
+                            <table class='table table-condensed'>
+                                <tr>
+                                    {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                                        <th>{{dataset_lang.name}}</th>
+                                    {% endfor %}
+                                    <th>In gloss</th>
+                                    <th>Number of example sentences</th>
+                                </tr>
+                                {% for similar_sense in similar_senses %}
+                                <tr>
+                                    {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                                        {% for key, value in similar_sense.items %}
+                                            {% if key|slugify == dataset_lang|slugify %}
+                                                <td>{{value}}</td>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+
+                                    {% for key, value in similar_sense.items %}
+                                        {% if key|slugify == 'inglosses' %}
+                                            <td>
+                                            {% for found_gloss in value %}
+                                                <a href="{{found_gloss.1}}">{{found_gloss.0}}</a>
+                                            {% endfor %}
+                                            </td>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% for key, value in similar_sense.items %}
+                                        {% if key|slugify == 'sentence_count' %}
+                                            <td>{{value}}</td>
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    <!-- <td>{{similar_sense.count_example_sentences}}</td> -->
+                                    <!-- <td><input class='btn btn-primary' value='{% trans "Adopt" %}' type='submit'></td> -->
+                                </tr>
+                                {% endfor %}
+
+                            </table>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+                            </div>
+                        <!-- </form> -->
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+        </td>
+        </tr>
+        {% endfor %}
+    </table>
     </div>
-</body>
-</html>
+
+{% endblock %}
