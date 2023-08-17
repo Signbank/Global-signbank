@@ -161,8 +161,11 @@ def update_examplesentence(request, examplesentenceid):
     if not request.method == "POST":
         return HttpResponseForbidden("Example sentence Update method must be POST")
     
-    examplesentence = ExampleSentence.objects.all().get(id = examplesentenceid)
-    sense = Sense.objects.all().get(id = request.POST['senseid'])
+    examplesentence = ExampleSentence.objects.all().get(id=examplesentenceid)
+    old_example_sentence = str(examplesentence)
+    sense = Sense.objects.all().get(id=request.POST['senseid'])
+    glosses_for_sense = [gs.gloss for gs in GlossSense.objects.filter(sense=sense)]
+
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
 
@@ -223,7 +226,22 @@ def update_examplesentence(request, examplesentenceid):
                 else:
                     examplesentencetranslation.delete()
             elif str(dataset_language) in vals:
-                examplesentencetranslation = ExampleSentenceTranslation.objects.create(examplesentence=examplesentence, language=dataset_language, text=vals[str(dataset_language)])
+                examplesentencetranslation = ExampleSentenceTranslation(examplesentence=examplesentence,
+                                                                        language=dataset_language,
+                                                                        text=vals[str(dataset_language)])
+                examplesentencetranslation.save()
+
+        new_example_sentence = str(examplesentence)
+        for gloss in glosses_for_sense:
+            # add create sentence to revision history, indicated by empty old_value
+            sentence_label = 'Sentence'
+            revision = GlossRevision(old_value=old_example_sentence,
+                                     new_value=new_example_sentence,
+                                     field_name=sentence_label,
+                                     gloss=gloss,
+                                     user=request.user,
+                                     time=datetime.now(tz=get_current_timezone()))
+            revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
@@ -239,7 +257,8 @@ def create_examplesentence(request, senseid):
     
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
-    sense = Sense.objects.all().get(id = senseid)
+    sense = Sense.objects.all().get(id=senseid)
+    glosses_for_sense = [gs.gloss for gs in GlossSense.objects.filter(sense=sense)]
 
     # Use "on" given by checkbox value instead of True
     if request.POST['negative'] == 'on':
@@ -278,6 +297,18 @@ def create_examplesentence(request, senseid):
             if str(dataset_language) in vals:
                 ExampleSentenceTranslation.objects.create(language=dataset_language, examplesentence=examplesentence, text=vals[str(dataset_language)])
 
+        new_example_sentence = str(examplesentence)
+        for gloss in glosses_for_sense:
+            # add create sentence to revision history, indicated by empty old_value
+            sentence_label = 'Sentence'
+            revision = GlossRevision(old_value="",
+                                     new_value=new_example_sentence,
+                                     field_name=sentence_label,
+                                     gloss=gloss,
+                                     user=request.user,
+                                     time=datetime.now(tz=get_current_timezone()))
+            revision.save()
+
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
 
@@ -289,13 +320,26 @@ def delete_examplesentence(request, senseid):
 
     if not request.method == "POST":
         return HttpResponseForbidden("Example sentence Deletion method must be POST")
-    
-    examplesentence = ExampleSentence.objects.all().get(id = request.POST['examplesentenceid'])
+
+    examplesentence = ExampleSentence.objects.all().get(id=request.POST['examplesentenceid'])
+    old_example_sentence = str(examplesentence)
     sense = Sense.objects.all().get(id=senseid)
+    glosses_for_sense = [gs.gloss for gs in GlossSense.objects.filter(sense=sense)]
     sense.exampleSentences.remove(examplesentence)
 
-    if Sense.objects.filter(exampleSentences = examplesentence).count() == 0:
+    if Sense.objects.filter(exampleSentences=examplesentence).count() == 0:
         examplesentence.delete()
+
+    for gloss in glosses_for_sense:
+        # add delete sentence to revision history, indicated by non-empty old_value
+        sentence_label = 'Sentence'
+        revision = GlossRevision(old_value=old_example_sentence,
+                                 new_value="",
+                                 field_name=sentence_label,
+                                 gloss=gloss,
+                                 user=request.user,
+                                 time=datetime.now(tz=get_current_timezone()))
+        revision.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
