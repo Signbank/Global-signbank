@@ -1,9 +1,22 @@
 
 from signbank.dictionary.models import *
+from signbank.dictionary.forms import *
 from signbank.dictionary.consistency_senses import check_consistency_senses
 from django.utils.translation import override, gettext_lazy as _, activate
 from signbank.settings.server_specific import LANGUAGES
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
+
+
+def add_sentence_to_revision_history(request, gloss, old_value, new_value):
+    # add update sentence to revision history, indicated by both old and new values
+    sentence_label = 'Sentence'
+    revision = GlossRevision(old_value=old_value,
+                             new_value=new_value,
+                             field_name=sentence_label,
+                             gloss=gloss,
+                             user=request.user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
 
 
 def create_empty_sense(gloss, order, erase=False):
@@ -117,7 +130,7 @@ def map_values_to_sentence_type(values, include_sentences=True):
     mapped_values = values
 
     if include_sentences:
-        regex_string = r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False), \"([^\"]+)\"\)\s?" % pattern_sentence_types
+        regex_string = r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False), [\"\u201c]([^\"]+)[\"\u201d]\)\s?" % pattern_sentence_types
     else:
         regex_string = r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False)\)\s?" % pattern_sentence_types
     find_all = re.findall(regex_string, mapped_values)
@@ -207,7 +220,7 @@ def update_sentences_parse(sense_numbers, sense_numbers_to_sentences, new_senten
 
     new_sentence_tuples = []
     for sentence_tuple in new_sentences:
-        find_all, map_errors = map_values_to_sentence_type(sentence_tuple)
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
         if map_errors or not find_all:
             # examine errors
             continue
@@ -237,11 +250,9 @@ def sentence_tuple_list_to_string(sentence_tuple_string):
 
     if not sentence_tuple_string:
         return tuple_list_of_strings
-    print(sentence_tuple_string, type(sentence_tuple_string))
     sentences = [k for k in sentence_tuple_string.split(' | ')]
-
     for sentence_tuple in sentences:
-        find_all, map_errors = map_values_to_sentence_type(sentence_tuple)
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
         if map_errors or not find_all:
             # skip any non-parsing tuples, this was already checked so should not happen
             continue
@@ -282,7 +293,7 @@ def csv_sentence_tuples_list_compare(gloss_id, sentence_string_old, sentence_str
     return difference_org, difference_new, errors
 
 
-def csv_update_sentences(gloss, language, new_sentences_string, update=False):
+def csv_update_sentences(request, gloss, language, new_sentences_string, update=False):
     """CSV Import Update the senses field"""
     # this function assumes the new_senses_string is correctly parsed
     # the function update_senses_parse tests this
@@ -297,14 +308,15 @@ def csv_update_sentences(gloss, language, new_sentences_string, update=False):
     glosssenses = GlossSense.objects.filter(gloss=gloss).order_by('order')
 
     if not glosssenses:
-        return ""
+        return
     gloss_senses = dict()
     for gs in glosssenses:
         order = gs.order
         sense = gs.sense
         if order in gloss_senses.keys():
-            print('ERROR: csv_update_sentences: duplicate order: ', order)
-            print(gloss, str(gloss.id), order, sense)
+            if settings.DEBUG_CSV or settings.DEBUG_SENSES:
+                print('ERROR: csv_update_sentences: duplicate order: ', order)
+                print('ERROR: csv_update_sentences: ', gloss, str(gloss.id), order, sense)
         gloss_senses[order] = sense
 
     current_sentences_string = sense_examplesentences_for_language(gloss, language)
@@ -313,7 +325,7 @@ def csv_update_sentences(gloss, language, new_sentences_string, update=False):
 
     new_sentence_tuples = []
     for sentence_tuple in new_sentences:
-        find_all, map_errors = map_values_to_sentence_type(sentence_tuple)
+        find_all, map_errors = map_values_to_sentence_type(sentence_tuple, include_sentences=True)
         if map_errors or not find_all:
             # examine errors
             if settings.DEBUG_CSV:
@@ -344,17 +356,20 @@ def csv_update_sentences(gloss, language, new_sentences_string, update=False):
         return
 
     for sentence_dict in new_sentences_list:
-        sense = gloss_senses[sentence_dict['order']]
+        # do not allow to change the sense number since this could cause inconsistencies
+        # sense = gloss_senses[sentence_dict['order']]
 
         sentence_id = sentence_dict['sentence_id']
         try:
             examplesentence = ExampleSentence.objects.get(id=sentence_id)
+            old_example_sentence = str(examplesentence)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
             continue
 
-        examplesentence.negative = sentence_dict['negative']
-        examplesentence.sentenceType = sentence_dict['sentence_type']
-        examplesentence.save()
+        # do not change these since this could cause problems with language columns
+        # examplesentence.negative = sentence_dict['negative']
+        # examplesentence.sentenceType = sentence_dict['sentence_type']
+        # examplesentence.save()
 
         try:
             sentence_translation = ExampleSentenceTranslation.objects.get(language=language,
@@ -364,9 +379,11 @@ def csv_update_sentences(gloss, language, new_sentences_string, update=False):
                                                               examplesentence=examplesentence)
         sentence_translation.text = sentence_dict['sentence_text']
         sentence_translation.save()
+    new_example_sentence = str(examplesentence)
+    add_sentence_to_revision_history(request, gloss, old_example_sentence, new_example_sentence)
 
 
-def csv_create_sentence(gloss, dataset_languages, sentence_to_create, create=False):
+def csv_create_sentence(request, gloss, dataset_languages, sentence_to_create, create=False):
     """CSV Import Update the senses field"""
     if settings.DEBUG_CSV:
         print('call to csv_create_sentence: ', gloss, str(gloss.id), sentence_to_create)
@@ -411,6 +428,9 @@ def csv_create_sentence(gloss, dataset_languages, sentence_to_create, create=Fal
                                                           examplesentence=examplesentence,
                                                           text=sentence_text)
         sentence_translation.save()
+
+    new_example_sentence = str(examplesentence)
+    add_sentence_to_revision_history(request, gloss, "", new_example_sentence)
 
 
 def sense_translations_for_language(gloss, language):
