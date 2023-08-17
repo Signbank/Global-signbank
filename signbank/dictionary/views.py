@@ -2663,6 +2663,19 @@ def gloss_revision_history(request,gloss_pk):
                 # this translation exists in the interface of Gloss Edit View
                 add_command = str(_('Update'))
                 field_name_qualification = ' (' + add_command + ')'
+        elif revision.field_name == 'Sentence':
+            if revision.old_value and not revision.new_value:
+                # this translation exists in the interface of Gloss Edit View
+                delete_command = str(_('Delete'))
+                field_name_qualification = ' (' + delete_command + ')'
+            elif revision.new_value and not revision.old_value:
+                # this translation exists in the interface of Gloss Edit View
+                add_command = str(_('Create'))
+                field_name_qualification = ' (' + add_command + ')'
+            else:
+                # this translation exists in the interface of Gloss Edit View
+                add_command = str(_('Update'))
+                field_name_qualification = ' (' + add_command + ')'
         else:
             field_name_qualification = ' (' + revision.field_name + ')'
         revision_dict = {
