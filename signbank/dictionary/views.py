@@ -486,6 +486,11 @@ def try_code(request, pk):
         sense_to_similar_senses[sns] = sns.get_senses_with_similar_sensetranslations_dict()
     context['sense_to_similar_senses'] = sense_to_similar_senses
 
+    for sense in senses:
+        print('sense.get_example_sentences()  (original): ', sense.get_example_sentences())
+
+        print('sense.get_example_sentences_alternative(): ', sense.get_example_sentences_alternative())
+
     return render(request, 'dictionary/try.html', context)
 
 

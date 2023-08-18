@@ -706,6 +706,28 @@ class Sense(models.Model):
                 translations.append(str(dataset_translation_language) + ": " + (", ").join(sentences))
         return (", ").join(translations)
 
+    def get_example_sentences_alternative(self):
+        glosssense = GlossSense.objects.filter(sense=self).first()
+        if not glosssense:
+            return ""
+        example_sentences_per_language = dict()
+        for language in glosssense.gloss.lemma.dataset.translation_languages.all().order_by('name'):
+            example_sentences_per_language[language.name] = []
+        example_sentences = self.exampleSentences.all()
+        for es in example_sentences:
+            estrans = es.examplesentencetranslation_set.all()
+            for est in estrans:
+                example_sentences_per_language[est.language.name].append(est.text)
+        result_sentences = []
+        for language, sentences in example_sentences_per_language.items():
+            if not sentences:
+                continue
+            comma_separated_sentences = ', '.join(sentences)
+            language_plus_sentences = language + ': ' + comma_separated_sentences
+            result_sentences.append(language_plus_sentences)
+        result = ', '.join(result_sentences)
+        return result
+
     def get_sense_translations_dict_with(self):
         "Return the translations for this sense for every dataset language as a dictionary of text separated by ', '"
         sense_translations = {}
