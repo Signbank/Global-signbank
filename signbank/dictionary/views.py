@@ -1411,7 +1411,7 @@ def import_csv_update(request):
                 language_name = fieldname[len(example_sentences_key_prefix):-1]
                 language = Language.objects.filter(**{language_name_column: language_name}).first()
                 if language:
-                    csv_update_sentences(gloss, language, new_value, update=True)
+                    csv_update_sentences(request, gloss, language, new_value, update=True)
                 continue
 
             if fieldname == 'SignLanguages':
@@ -3089,7 +3089,7 @@ def import_csv_create_sentences(request):
                 error.append(e1)
                 continue
 
-            csv_create_sentence(gloss, dataset_languages, glosses_to_create[row], create=True)
+            csv_create_sentence(request, gloss, dataset_languages, glosses_to_create[row], create=True)
 
         stage = 2
 
