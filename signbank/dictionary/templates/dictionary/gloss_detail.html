@@ -966,13 +966,17 @@ option:not(:checked) {
                                                         </tr>
                                                         <tr>
                                                             {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                                                {% for key, value in sense.get_sense_translations_dict_with_return.items %}
+                                                            {% with sense|sense_translations_dict_with:'\n' as sense_translations_dict %}
+                                                                {% for key, value in sense_translations_dict.items %}
                                                                     {% if key|slugify == dataset_lang|slugify %}
+                                                                    {% with value|splitlines as value_lines %}
                                                                         <td><textarea {% if settings.SHARE_SENSES %} class="sensetranslationtypeahead" {% endif %}
                                                                                       name="{{key}}" rows="10" cols="20"
-                                                                                      placeholder="keyword 1&#10;keyword 2&#10;...">{{value}}</textarea></td>
+                                                                                      placeholder="keyword 1&#10;keyword 2&#10;...">{{value_lines|safe}}</textarea></td>
+                                                                    {% endwith %}
                                                                     {% endif %}
                                                                 {% endfor %}
+                                                            {% endwith %}
                                                             {% endfor %}
                                                         </tr>
                                                     </table>

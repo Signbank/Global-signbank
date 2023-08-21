@@ -684,7 +684,8 @@ class SenseTranslation(models.Model):
 
     def __str__(self):
         return self.get_translations()
-    
+
+
 class Sense(models.Model):
     """A sense belongs to a gloss and consists of a set of translation(s)"""
     
@@ -694,7 +695,7 @@ class Sense(models.Model):
     def get_dataset(self):
         return self.glosses.first().lemma.dataset
 
-    def get_example_sentences(self):
+    def get_example_sentences_orig(self):
         "Return the example sentences for this sense for every language as one string"
         translations = []
         for dataset_translation_language in self.get_dataset().translation_languages.all():
@@ -706,7 +707,9 @@ class Sense(models.Model):
                 translations.append(str(dataset_translation_language) + ": " + (", ").join(sentences))
         return (", ").join(translations)
 
-    def get_example_sentences_alternative(self):
+    def get_example_sentences(self):
+        """Return the example sentences for this sense for every language as one string
+           This is called by the admin"""
         glosssense = GlossSense.objects.filter(sense=self).first()
         if not glosssense:
             return ""
@@ -728,7 +731,7 @@ class Sense(models.Model):
         result = ', '.join(result_sentences)
         return result
 
-    def get_sense_translations_dict_with(self):
+    def get_sense_translations_dict_with_orig(self):
         "Return the translations for this sense for every dataset language as a dictionary of text separated by ', '"
         sense_translations = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
@@ -738,9 +741,26 @@ class Sense(models.Model):
             else:
                 sense_translations[str(dataset_translation_language)]= ""
         return sense_translations
-    
+
+    def get_sense_translations_dict_with(self, joinchar):
+        """Return the translations for this sense for every dataset language as a dictionary of text separated by
+           joinchar"""
+        glosssense = GlossSense.objects.filter(sense=self).first()
+        if not glosssense:
+            return ""
+        sense_translations = self.senseTranslations.all().values('language__name', 'translations__translation__text')
+        sense_translations_per_language = dict()
+        for language in glosssense.gloss.lemma.dataset.translation_languages.all().order_by('name'):
+            sense_translations_per_language[language.name] = []
+        sense_translations = self.senseTranslations.all()
+        for st in sense_translations:
+            trans = [tr.translation.text for tr in st.translations.all().order_by('index')]
+            sense_translations_per_language[st.language.name] = joinchar.join(trans)
+        return sense_translations_per_language
+
     def get_sense_translations_dict_with_return(self):
         "Return the translations for this sense for every dataset language as a dictionary of text separated by '\n'"
+        # subsumed by the above method with \n as a parameter
         sense_translations = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
             if self.senseTranslations.filter(language = dataset_translation_language).exists():
@@ -763,11 +783,11 @@ class Sense(models.Model):
     
     def get_sense_translations_dict_without_return(self):
         "Get a dict of the translations separated by '\n' for this sense ONLY for languages where they are present"
-        return {k: v for k, v in self.get_sense_translations_dict_with_return().items() if v}
+        return {k: v for k, v in self.get_sense_translations_dict_with('\n').items() if v}
 
     def get_sense_translations_dict_without(self):
         "Get a dict of the translations separated by ', ' for this sense ONLY for languages where they are present"
-        return {k: v for k, v in self.get_sense_translations_dict_with().items() if v}
+        return {k: v for k, v in self.get_sense_translations_dict_with(', ').items() if v}
 
     def get_sense_translations_dict_without_list(self):
         "Get a dict of the translations as list for this sense ONLY for languages where they are present"
