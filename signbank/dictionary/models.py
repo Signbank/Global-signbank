@@ -571,7 +571,7 @@ class ExampleSentence(models.Model):
         return field
 
     def get_dataset(self):
-        return self.sense_set.first().glosses.first().lemma.dataset
+        return self.senses.first().glosses.first().lemma.dataset
 
     def get_examplestc_translations_dict_with(self):
         translations = {}
@@ -684,12 +684,17 @@ class SenseTranslation(models.Model):
 
     def __str__(self):
         return self.get_translations()
-    
+
 class Sense(models.Model):
     """A sense belongs to a gloss and consists of a set of translation(s)"""
     
     senseTranslations = models.ManyToManyField(SenseTranslation)
-    exampleSentences = models.ManyToManyField(ExampleSentence)
+    exampleSentences = models.ManyToManyField(ExampleSentence, 
+        through = 'SenseExamplesentence',
+        related_name = 'senses',
+        verbose_name = _(u'Example sentences'),
+        help_text = _(u'Examplesentences in this Sense')
+    )
 
     def get_dataset(self):
         return self.glosses.first().lemma.dataset
@@ -788,6 +793,27 @@ class Sense(models.Model):
         for sensetranslation in self.senseTranslations.all():
             str_sense .append(str(sensetranslation))
         return " | ".join(str_sense)
+    
+class SenseExamplesentence(models.Model):
+    """An examplesentence belongs to one or multiple senses"""
+
+    sense = models.ForeignKey(Sense, on_delete=models.CASCADE)
+    examplesentence = models.ForeignKey(ExampleSentence, on_delete=models.CASCADE)
+    # order = models.IntegerField(
+    #     verbose_name    = _(u'Order'),
+    #     help_text           = _(u'What order to display this examplesentence within the sense.'),
+    #     default = 1
+    # )
+
+    class Meta:
+        db_table = 'dictionary_sense_exampleSentences'
+        unique_together = ['sense', 'examplesentence']
+        verbose_name = _(u"Sense exampleSentence")
+        verbose_name_plural = _(u"Sense exampleSentences")
+        # ordering = ['order',]
+
+    # def __unicode__(self):
+    #     return "Example sentence: " + str(self.examplesentence) + " is a member of " + str(self.sense) + (" in position %d" % self.order)
 
 
 class Gloss(models.Model):
