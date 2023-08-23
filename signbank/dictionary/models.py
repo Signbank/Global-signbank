@@ -695,18 +695,6 @@ class Sense(models.Model):
     def get_dataset(self):
         return self.glosses.first().lemma.dataset
 
-    def get_example_sentences_orig(self):
-        "Return the example sentences for this sense for every language as one string"
-        translations = []
-        for dataset_translation_language in self.get_dataset().translation_languages.all():
-            sentences = []
-            for exampleSentence in self.exampleSentences.all():
-                if exampleSentence.examplesentencetranslation_set.filter(language = dataset_translation_language).exists():
-                    sentences.append(exampleSentence.examplesentencetranslation_set.all().get(language = dataset_translation_language).text)
-            if len(sentences) > 0:
-                translations.append(str(dataset_translation_language) + ": " + (", ").join(sentences))
-        return (", ").join(translations)
-
     def get_example_sentences(self):
         """Return the example sentences for this sense for every language as one string
            This is called by the admin"""
@@ -731,72 +719,56 @@ class Sense(models.Model):
         result = ', '.join(result_sentences)
         return result
 
-    def get_sense_translations_dict_with_orig(self):
-        "Return the translations for this sense for every dataset language as a dictionary of text separated by ', '"
-        sense_translations = {}
-        for dataset_translation_language in self.get_dataset().translation_languages.all():
-            if self.senseTranslations.filter(language = dataset_translation_language).exists():
-                translation_list = [st.get_translations() for st in self.senseTranslations.filter(language = dataset_translation_language)][0]
-                sense_translations[str(dataset_translation_language)]= translation_list
-            else:
-                sense_translations[str(dataset_translation_language)]= ""
-        return sense_translations
-
-    def get_sense_translations_dict_with(self, joinchar):
-        """Return the translations for this sense for every dataset language as a dictionary of text separated by
-           joinchar"""
+    def get_sense_translations_dict_with(self, join_char='', exclude_empty=False):
+        """Return the translations for this sense for every dataset language as a
+           dictionary of text separated by join_char
+           if exclude_empty is True, languages with no translations are omitted from the dictionary"""
         glosssense = GlossSense.objects.filter(sense=self).first()
         if not glosssense:
             return ""
-        sense_translations = self.senseTranslations.all().values('language__name', 'translations__translation__text')
-        sense_translations_per_language = dict()
+        languages_lookup = dict()
         for language in glosssense.gloss.lemma.dataset.translation_languages.all().order_by('name'):
-            sense_translations_per_language[language.name] = []
-        sense_translations = self.senseTranslations.all()
-        for st in sense_translations:
-            trans = [tr.translation.text for tr in st.translations.all().order_by('index')]
-            sense_translations_per_language[st.language.name] = joinchar.join(trans)
+            languages_lookup[language.id] = language.name
+
+        if exclude_empty:
+            sense_translations = self.senseTranslations.all().exclude(
+                translations__translation__text__isnull=True).values('language', 'translations__translation__text')
+        else:
+            sense_translations = self.senseTranslations.all().values('language', 'translations__translation__text')
+
+        sense_translations_per_language = dict()
+        for values in sense_translations:
+            language = languages_lookup[values['language']]
+            trans = values['translations__translation__text']
+            if language not in sense_translations_per_language.keys():
+                sense_translations_per_language[language] = []
+            if not trans:
+                continue
+            sense_translations_per_language[language].append(trans)
+
+        if join_char:
+            for language in sense_translations_per_language.keys():
+                translations_list = sense_translations_per_language[language]
+                sense_translations_per_language[language] = join_char.join(translations_list)
+
         return sense_translations_per_language
 
-    def get_sense_translations_dict_with_return(self):
-        "Return the translations for this sense for every dataset language as a dictionary of text separated by '\n'"
-        # subsumed by the above method with \n as a parameter
-        sense_translations = {}
-        for dataset_translation_language in self.get_dataset().translation_languages.all():
-            if self.senseTranslations.filter(language = dataset_translation_language).exists():
-                translation_list = [st.get_translations_return() for st in self.senseTranslations.filter(language = dataset_translation_language)][0]
-                sense_translations[str(dataset_translation_language)]= translation_list
-            else:
-                sense_translations[str(dataset_translation_language)]= ""
-        return sense_translations
-
-    def get_sense_translations_dict_with_list(self):
-        "Return the translations for this sense for every dataset language as a dictionary of lists of translations"
-        sense_translations = {}
-        for dataset_translation_language in self.get_dataset().translation_languages.all():
-            if self.senseTranslations.filter(language = dataset_translation_language).exists():
-                translation_list = [st.get_translations_list() for st in self.senseTranslations.filter(language = dataset_translation_language)][0]
-                sense_translations[str(dataset_translation_language)]= translation_list
-            else:
-                sense_translations[str(dataset_translation_language)]= ""
-        return sense_translations
-    
     def get_sense_translations_dict_without_return(self):
-        "Get a dict of the translations separated by '\n' for this sense ONLY for languages where they are present"
-        return {k: v for k, v in self.get_sense_translations_dict_with('\n').items() if v}
+        """Get a dict of the translations separated by '\n' for this sense ONLY for languages where they are present"""
+        return self.get_sense_translations_dict_with('\n', exclude_empty=True)
 
     def get_sense_translations_dict_without(self):
-        "Get a dict of the translations separated by ', ' for this sense ONLY for languages where they are present"
-        return {k: v for k, v in self.get_sense_translations_dict_with(', ').items() if v}
+        """Get a dict of the translations separated by ', ' for this sense ONLY for languages where they are present"""
+        return self.get_sense_translations_dict_with(', ', exclude_empty=True)
 
     def get_sense_translations_dict_without_list(self):
-        "Get a dict of the translations as list for this sense ONLY for languages where they are present"
-        return {k: v for k, v in self.get_sense_translations_dict_with_list().items() if v}
+        """Get a dict of the translations as list for this sense ONLY for languages where they are present"""
+        return self.get_sense_translations_dict_with('', exclude_empty=True)
 
     def get_sense_translations(self):
-        "Get a list of the translations for this sense ONLY for languages where they are present"
-        return [k+": "+v for k,v in self.get_sense_translations_dict_without().items()]
-    
+        """Get a list of the translations for this sense ONLY for languages where they are present"""
+        return self.get_sense_translations_dict_with(', ', exclude_empty=True)
+
     def has_examplesentence_with_video(self):
         "Return true if any of the example sentences has a video"
         for examplesentence in self.exampleSentences.all():
