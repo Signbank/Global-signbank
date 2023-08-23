@@ -766,8 +766,10 @@ class Sense(models.Model):
         return self.get_sense_translations_dict_with('', exclude_empty=True)
 
     def get_sense_translations(self):
-        """Get a list of the translations for this sense ONLY for languages where they are present"""
-        return self.get_sense_translations_dict_with(', ', exclude_empty=True)
+        """Get a list of the translations for this sense ONLY for languages where they are present
+           This is called by the Admin and is formatted as such"""
+        sense_translations = self.get_sense_translations_dict_with(', ', exclude_empty=True)
+        return [k+": "+v for k, v in sense_translations.items()]
 
     def has_examplesentence_with_video(self):
         "Return true if any of the example sentences has a video"
