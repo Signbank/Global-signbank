@@ -811,21 +811,21 @@ class SenseExamplesentence(models.Model):
 
     sense = models.ForeignKey(Sense, on_delete=models.CASCADE)
     examplesentence = models.ForeignKey(ExampleSentence, on_delete=models.CASCADE)
-    # order = models.IntegerField(
-    #     verbose_name    = _(u'Order'),
-    #     help_text           = _(u'What order to display this examplesentence within the sense.'),
-    #     default = 1
-    # )
+    order = models.IntegerField(
+        verbose_name    = _(u'Order'),
+        help_text       = _(u'What order to display this examplesentence within the sense.'),
+        default = 1
+    )
 
     class Meta:
         db_table = 'dictionary_sense_exampleSentences'
         unique_together = ['sense', 'examplesentence']
         verbose_name = _(u"Sense exampleSentence")
         verbose_name_plural = _(u"Sense exampleSentences")
-        # ordering = ['order',]
+        ordering = ['order',]
 
-    # def __unicode__(self):
-    #     return "Example sentence: " + str(self.examplesentence) + " is a member of " + str(self.sense) + (" in position %d" % self.order)
+    def __unicode__(self):
+        return "Example sentence: " + str(self.examplesentence) + " is a member of " + str(self.sense) + (" in position %d" % self.order)
 
 
 class Gloss(models.Model):
