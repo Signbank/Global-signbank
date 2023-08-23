@@ -199,12 +199,6 @@ def update_examplesentence(request, examplesentenceid):
         if len(vals) == 0 or vals == examplesentence.get_examplestc_translations_dict_without():
             messages.add_message(request, messages.INFO, _('This example sentence was not changed.'))
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
-
-        # Check if the examplesentence already exists in this gloss
-        for existing_examplesentence in sense.exampleSentences.all():
-            if vals == existing_examplesentence.get_examplestc_translations_dict_without():
-                messages.add_message(request, messages.INFO, _('This example sentence was already in this sense.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
         
         # Update the examplesentence with examplesentencetranslations
         for dataset_language in dataset_languages:
@@ -216,10 +210,9 @@ def update_examplesentence(request, examplesentenceid):
                 else:
                     examplesentencetranslation.delete()
             elif str(dataset_language) in vals:
-                examplesentencetranslation = ExampleSentenceTranslation(examplesentence=examplesentence,
+                examplesentencetranslation = ExampleSentenceTranslation.objects.create(examplesentence=examplesentence,
                                                                         language=dataset_language,
                                                                         text=vals[str(dataset_language)])
-                examplesentencetranslation.save()
 
         new_example_sentence = str(examplesentence)
         for gloss in glosses_for_sense:
@@ -268,12 +261,6 @@ def create_examplesentence(request, senseid):
         messages.add_message(request, messages.ERROR, _('No input sentence given.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
     
-    # Check if the examplesentence already exists in this gloss
-    for existing_examplesentence in sense.exampleSentences.all():
-        if vals == existing_examplesentence.get_examplestc_translations_dict_without():
-            messages.add_message(request, messages.INFO, _('This example sentence was already in this sense.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
-
     with atomic():
         stype = FieldChoice.objects.filter(field='SentenceType').get(machine_value = request.POST['sentenceType'])
         examplesentence = ExampleSentence.objects.create(negative=negative, sentenceType=stype)
