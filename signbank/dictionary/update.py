@@ -200,21 +200,11 @@ def update_examplesentence(request, examplesentenceid):
             messages.add_message(request, messages.INFO, _('This example sentence was not changed.'))
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
-        # Check if the examplesentences already exist
-        existing_examplesentences = []
-        for existing_gloss in Gloss.objects.filter(lemma__dataset=dataset):
-            for existing_sense in existing_gloss.senses.all():
-                existing_examplesentences.extend(existing_sense.exampleSentences.all())
-        for existing_examplesentence in existing_examplesentences:
+        # Check if the examplesentence already exists in this gloss
+        for existing_examplesentence in sense.exampleSentences.all():
             if vals == existing_examplesentence.get_examplestc_translations_dict_without():
-                examplesentence.delete()
-                if existing_examplesentence not in sense.exampleSentences.all():
-                    sense.exampleSentences.add(existing_examplesentence)
-                    messages.add_message(request, messages.INFO, _('This example sentence already existed.'))
-                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
-                else:
-                    messages.add_message(request, messages.INFO, _('This example sentence was already in sense.'))
-                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
+                messages.add_message(request, messages.INFO, _('This example sentence was already in this sense.'))
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
         
         # Update the examplesentence with examplesentencetranslations
         for dataset_language in dataset_languages:
@@ -277,22 +267,17 @@ def create_examplesentence(request, senseid):
     if len(vals) == 0:
         messages.add_message(request, messages.ERROR, _('No input sentence given.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
+    
+    # Check if the examplesentence already exists in this gloss
+    for existing_examplesentence in sense.exampleSentences.all():
+        if vals == existing_examplesentence.get_examplestc_translations_dict_without():
+            messages.add_message(request, messages.INFO, _('This example sentence was already in this sense.'))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
 
     with atomic():
-        existing_examplesentences = []
-        for existing_gloss in Gloss.objects.filter(lemma__dataset=dataset):
-            for existing_sense in existing_gloss.senses.all():
-                existing_examplesentences.extend(existing_sense.exampleSentences.all())
-
-        for examplesentence in existing_examplesentences:
-            if vals == examplesentence.get_examplestc_translations_dict_without():
-                sense.exampleSentences.add(examplesentence)
-                messages.add_message(request, messages.INFO, _('This examplesentences already existed in this dataset.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
-    
         stype = FieldChoice.objects.filter(field='SentenceType').get(machine_value = request.POST['sentenceType'])
         examplesentence = ExampleSentence.objects.create(negative=negative, sentenceType=stype)
-        sense.exampleSentences.add(examplesentence)
+        sense.exampleSentences.add(examplesentence, through_defaults={'order':sense.exampleSentences.count()+1})
         for dataset_language in dataset_languages:
             if str(dataset_language) in vals:
                 ExampleSentenceTranslation.objects.create(language=dataset_language, examplesentence=examplesentence, text=vals[str(dataset_language)])
@@ -326,6 +311,7 @@ def delete_examplesentence(request, senseid):
     sense = Sense.objects.all().get(id=senseid)
     glosses_for_sense = [gs.gloss for gs in GlossSense.objects.filter(sense=sense)]
     sense.exampleSentences.remove(examplesentence)
+    sense.reorder_examplesentences()
 
     if Sense.objects.filter(exampleSentences=examplesentence).count() == 0:
         examplesentence.delete()
@@ -452,6 +438,12 @@ def update_sense(request, senseid):
         messages.add_message(request, messages.ERROR, _('Sense duplicate found for gloss.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
+    # Check if sense already exists in this gloss
+    for existing_sense in gloss.senses.all():
+        if vals == existing_sense.get_sense_translations_dict_without_list():
+            messages.add_message(request, messages.ERROR, _('This sense was already in this gloss.'))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+
     if settings.SHARE_SENSES:
         # Check if sense already existed in another gloss
         existing_senses = []
@@ -475,6 +467,7 @@ def update_sense(request, senseid):
 
                     for examplesentence in sense.exampleSentences.all():
                         sense.exampleSentences.remove(examplesentence)
+                        sense.reorder_examplesentences()
                         if Sense.objects.filter(exampleSentences = examplesentence).count() == 0:
                             examplesentence.delete()
                     sense.delete()
@@ -500,7 +493,6 @@ def update_sense(request, senseid):
                 sensetranslation = sense.senseTranslations.filter(language=dataset_language).first()
                 if not sensetranslation:
                     sensetranslation = SenseTranslation.objects.create(language=dataset_language)
-                    sensetranslation.save()
                     sense.senseTranslations.add(sensetranslation)
                 for tr_v in vals[str(dataset_language)]:
                     keyword = Keyword.objects.get_or_create(text =tr_v)[0]
@@ -614,6 +606,12 @@ def create_sense(request, glossid):
         messages.add_message(request, messages.ERROR, _('No keywords given for new sense.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
+    # Check if sense already exists in this gloss
+    for existing_sense in gloss.senses.all():
+        if vals == existing_sense.get_sense_translations_dict_without_list():
+            messages.add_message(request, messages.ERROR, _('This sense was already in this gloss.'))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+        
     if settings.SHARE_SENSES:
         # Check if this sense already exists
         existing_senses = []
@@ -629,10 +627,8 @@ def create_sense(request, glossid):
                 return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
     
     # Make a new sense object
-    sense = Sense()
-    sense.save()
-    glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count()+1)
-    glosssense.save()
+    sense = Sense.objects.create()
+    gloss.senses.add(sense, through_defaults={'order':gloss.senses.count()+1})
     # this is the order of the new sense
     gloss_senses_count = gloss.senses.count()
     # Add or remove keywords to the sense translations
@@ -656,8 +652,7 @@ def create_sense(request, glossid):
                         sensetranslation = sense.senseTranslations.get(language=dataset_language)
                     except ObjectDoesNotExist:
                         # there should only be one per language
-                        sensetranslation = SenseTranslation(language=dataset_language)
-                        sensetranslation.save()
+                        sensetranslation = SenseTranslation.objects.create(language=dataset_language)
                         sense.senseTranslations.add(sensetranslation)
                     sorted_list_keywords = list(dict.fromkeys(vals[str(sensetranslation.language)]))
                     for inx, kw in enumerate(sorted_list_keywords, 1):
@@ -728,6 +723,7 @@ def delete_sense(request, glossid):
         example_sentences = sense.exampleSentences.all()
         for examplesentence in example_sentences:
             sense.exampleSentences.remove(examplesentence)
+            sense.reorder_examplesentences()
             if Sense.objects.filter(exampleSentences=examplesentence).count() == 0:
                 examplesentence.delete()
         sense.delete()

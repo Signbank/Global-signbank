@@ -787,6 +787,18 @@ class Sense(models.Model):
                 similar_senses.append(sensedict)
         return sorted(similar_senses, key=lambda d: d['inglosses']) 
 
+    def ordered_examplesentences(self):
+        "Return a properly ordered set of examplesentences"
+        return self.exampleSentences.all().order_by('senseexamplesentence__order')
+
+    def reorder_examplesentences(self):
+        "when an examplesentence is deleted, they should be reordered"
+        for sentence_i, sentence in enumerate(self.ordered_examplesentences().all()):
+            print(sentence)
+            sensesentence = SenseExamplesentence.objects.all().get(sense=self, examplesentence=sentence)
+            sensesentence.order = sentence_i+1
+            sensesentence.save()
+
     def __str__(self):
         """Return the string representation of the sense, separated by | for every sensetranslation"""	
         str_sense = []
