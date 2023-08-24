@@ -700,9 +700,10 @@ class Sense(models.Model):
            This is called by the admin"""
         glosssense = GlossSense.objects.filter(sense=self).first()
         if not glosssense:
+            # this method returns a string
             return ""
         example_sentences_per_language = dict()
-        for language in glosssense.gloss.lemma.dataset.translation_languages.all().order_by('name'):
+        for language in glosssense.gloss.lemma.dataset.translation_languages.all():
             example_sentences_per_language[language.name] = []
         example_sentences = self.exampleSentences.all()
         for es in example_sentences:
@@ -723,11 +724,19 @@ class Sense(models.Model):
         """Return the translations for this sense for every dataset language as a
            dictionary of text separated by join_char
            if exclude_empty is True, languages with no translations are omitted from the dictionary"""
+        sense_translations_per_language = dict()
         glosssense = GlossSense.objects.filter(sense=self).first()
         if not glosssense:
-            return ""
+            # this method returns a dict
+            return sense_translations_per_language
+
+        # languages_lookup is used in a later step to retrieve the language name
+        # for efficiency to avoid creating lazy sql queries in the template,
+        # values are retrieved below, however for the language, the language id is retrieved
+        # as a value, this is then mapped back to language.name which is used in the template
+        # and retrieved dynamically to get the name of the language in the interface language
         languages_lookup = dict()
-        for language in glosssense.gloss.lemma.dataset.translation_languages.all().order_by('name'):
+        for language in glosssense.gloss.lemma.dataset.translation_languages.all():
             languages_lookup[language.id] = language.name
 
         if exclude_empty:
@@ -736,7 +745,6 @@ class Sense(models.Model):
         else:
             sense_translations = self.senseTranslations.all().values('language', 'translations__translation__text')
 
-        sense_translations_per_language = dict()
         for values in sense_translations:
             language = languages_lookup[values['language']]
             trans = values['translations__translation__text']
