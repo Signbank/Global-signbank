@@ -103,6 +103,12 @@ LANGUAGE_CODE_MAP = [
     {2:'zh-hans',3:'chi'}
 ]
 
+# Regex patterns for CSV double quote
+# These are needed to avoid Spreadsheet modification of double quotes to pretty double quotes
+# This may be dependent on local and spreadsheet software
+LEFT_DOUBLE_QUOTE_PATTERNS = '[\"\u201c]'
+RIGHT_DOUBLE_QUOTE_PATTERNS = '[\"\u201d]'
+
 #From all possible gloss fields available, display these
 FIELDS = {}
 

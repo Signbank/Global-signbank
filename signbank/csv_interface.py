@@ -3,7 +3,7 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.dictionary.consistency_senses import check_consistency_senses
 from django.utils.translation import override, gettext_lazy as _, activate
-from signbank.settings.server_specific import LANGUAGES
+from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
 
 
@@ -130,7 +130,8 @@ def map_values_to_sentence_type(values, include_sentences=True):
     mapped_values = values
 
     if include_sentences:
-        regex_string = r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False), [\"\u201c]([^\"]+)[\"\u201d]\)\s?" % pattern_sentence_types
+        regex_string = (r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False), %s([^\"]+)%s\)\s?"
+                        % (pattern_sentence_types, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS))
     else:
         regex_string = r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False)\)\s?" % pattern_sentence_types
     find_all = re.findall(regex_string, mapped_values)
