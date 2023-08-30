@@ -298,7 +298,6 @@ def delete_examplesentence(request, senseid):
     sense = Sense.objects.all().get(id=senseid)
     glosses_for_sense = [gs.gloss for gs in GlossSense.objects.filter(sense=sense)]
     sense.exampleSentences.remove(examplesentence)
-    sense.reorder_examplesentences()
 
     if Sense.objects.filter(exampleSentences=examplesentence).count() == 0:
         examplesentence.delete()
@@ -454,7 +453,6 @@ def update_sense(request, senseid):
 
                     for examplesentence in sense.exampleSentences.all():
                         sense.exampleSentences.remove(examplesentence)
-                        sense.reorder_examplesentences()
                         if Sense.objects.filter(exampleSentences = examplesentence).count() == 0:
                             examplesentence.delete()
                     sense.delete()
@@ -710,7 +708,6 @@ def delete_sense(request, glossid):
         example_sentences = sense.exampleSentences.all()
         for examplesentence in example_sentences:
             sense.exampleSentences.remove(examplesentence)
-            sense.reorder_examplesentences()
             if Sense.objects.filter(exampleSentences=examplesentence).count() == 0:
                 examplesentence.delete()
         sense.delete()

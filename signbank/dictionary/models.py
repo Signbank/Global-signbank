@@ -6,7 +6,7 @@ from django.http import Http404
 from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.utils.translation import gettext_noop, gettext_lazy as _, get_language
 from django.utils.timezone import now
 from django.forms.utils import ValidationError
@@ -794,7 +794,6 @@ class Sense(models.Model):
     def reorder_examplesentences(self):
         "when an examplesentence is deleted, they should be reordered"
         for sentence_i, sentence in enumerate(self.ordered_examplesentences().all()):
-            print(sentence)
             sensesentence = SenseExamplesentence.objects.all().get(sense=self, examplesentence=sentence)
             sensesentence.order = sentence_i+1
             sensesentence.save()
@@ -805,7 +804,7 @@ class Sense(models.Model):
         for sensetranslation in self.senseTranslations.all():
             str_sense .append(str(sensetranslation))
         return " | ".join(str_sense)
-    
+
 class SenseExamplesentence(models.Model):
     """An examplesentence belongs to one or multiple senses"""
 
@@ -827,6 +826,9 @@ class SenseExamplesentence(models.Model):
     def __unicode__(self):
         return "Example sentence: " + str(self.examplesentence) + " is a member of " + str(self.sense) + (" in position %d" % self.order)
 
+@receiver(m2m_changed, sender=SenseExamplesentence)
+def post_remove_examplesentence_reorder(sender, instance, **kwargs):
+    instance.reorder_examplesentences()
 
 class Gloss(models.Model):
     class Meta:
