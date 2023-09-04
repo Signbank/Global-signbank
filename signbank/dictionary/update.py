@@ -440,7 +440,6 @@ def update_sense(request, senseid):
 
                 # Replace this sense by the found sense object
                 gloss.senses.remove(sense)
-                gloss.reorder_senses()
                 if s not in gloss.senses.all():
                     glosssense = GlossSense(gloss=gloss, sense=s, order=gloss.senses.count()+1)
                     glosssense.save()
@@ -685,7 +684,6 @@ def delete_sense(request, glossid):
     sense_old_value = str(sense)
 
     gloss.senses.remove(sense)
-    gloss.reorder_senses()
 
     other_glosses_for_sense = GlossSense.objects.filter(sense=sense).exclude(gloss=gloss).count()
     if not settings.SHARE_SENSES and not other_glosses_for_sense:

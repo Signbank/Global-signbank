@@ -2375,6 +2375,11 @@ class GlossSense(models.Model):
         return "Sense: " + str(self.sense.sensetranslations) + " is a member of " + str(self.gloss) + (" in position %d" % self.order)
 
 
+@receiver(m2m_changed, sender=GlossSense)
+def post_remove_sense_reorder(sender, instance, **kwargs):
+    instance.reorder_senses()
+
+
 class Relation(models.Model):
     """A relation between two glosses"""
 

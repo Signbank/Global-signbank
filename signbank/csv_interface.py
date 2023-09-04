@@ -421,7 +421,7 @@ def csv_create_sentence(request, gloss, dataset_languages, sentence_to_create, c
     examplesentence = ExampleSentence(negative=new_sentence_dict['negative'],
                                       sentenceType=new_sentence_dict['sentence_type'])
     examplesentence.save()
-    sense.exampleSentences.add(examplesentence)
+    sense.exampleSentences.add(examplesentence, through_defaults={'order':sense.exampleSentences.count()+1})
 
     for language in dataset_languages:
         sentence_text = sentence_to_create['sentence_text_'+language.language_code_2char]
