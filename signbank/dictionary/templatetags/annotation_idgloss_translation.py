@@ -186,3 +186,15 @@ def get_senses_for_language(sensetranslations, language):
     if language not in sensetranslations.keys():
         return ""
     return sensetranslations[language]
+
+@register.filter
+def sense_translations_dict_with(sense, join_char):
+    sense_translations = sense.get_sense_translations_dict_with(join_char)
+    return sense_translations
+
+@register.filter
+# this replaces the newline character with the HTML variant for display in the textarea
+def splitlines(value):
+    split_value = value.split('\\n')
+    values = "&#10;".join(split_value)
+    return values

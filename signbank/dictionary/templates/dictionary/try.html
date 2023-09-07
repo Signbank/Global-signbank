@@ -167,12 +167,12 @@ option:not(:checked) {
                 {% endif %}
             </th>
             <td>
-                {% if sense.get_sense_translations_dict_without %}
-                    {% for key, value in sense.get_sense_translations_dict_without.items %}
+                {% with sense|sense_translations_dict_with:', ' as sense_translations_dict %}
+                    {% for key, value in sense_translations_dict.items %}
                         {{key}}: {{value}}
                         {% if not forloop.last %}<br>{% endif %}
                     {% endfor %}
-                {% endif %}<br><br>
+                {% endwith %}<br><br>
 
             {% with sense_to_similar_senses|get_item:sense as similar_senses %}
             {% if similar_senses %}
