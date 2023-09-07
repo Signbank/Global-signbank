@@ -897,12 +897,11 @@ option:not(:checked) {
                     Senses
                 </th>
                 <td>
-                    <table class='table table-condensed'>
+                    <table class='table table-condensed' style="table-layout: fixed">
                         {% for sense in senses %}
                             <tr>
-                                <th style="width:10px">
-                                    {{forloop.counter}}. <br>
-                                    {% if "change_dataset" in dataset_perms %}
+                                {% if "change_dataset" in dataset_perms %}
+                                <td style="width:20px">
                                         {% if not forloop.first %}  
                                         <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "up" %}' style="color:red;">&#x25B2;</a></span>
                                         <br>
@@ -910,81 +909,84 @@ option:not(:checked) {
                                         {% if not forloop.last %}  
                                         <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "down" %}' style="color:red;">&#x25BC;</a></span>
                                         {% endif %}
-                                    {% endif %}
-                                </th>
-                                <td style="width:50%">
+                                </td>
+                                {% endif %}
+                                <td style="width:20px">
+                                    {{forloop.counter}}.
+                                </td>
+                                <td>
                                     {% if sense.get_sense_translations_dict_without %}
                                         {% for key, value in sense.get_sense_translations_dict_without.items %}
                                             {{key}}: {{value}}
                                             {% if not forloop.last %}<br>{% endif %}
                                         {% endfor %}
                                     {% endif %}<br><br>
-
-                                    {% if "change_dataset" in dataset_perms %}
-                                        <span class='sense-icon glyphicon glyphicon-trash sense_delete' style="color:red" data-toggle='modal' data-target='#delete_sense_modal_{{sense.id}}'></span>     
-                                    {% endif %}                 
-                                    <div class="modal fade" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleDeleteSense" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                            <div class="modal-content">
-                                                <div class='modal-header'>
-                                                    <h2 id='modalTitleDeleteSense'>{% trans "Delete This Sense" %}</h2>
-                                                </div>
-                                                <div class='modal-body'>
-                                                    <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
-                                                </div>
-                                                <form name="delete_sense_form" method="post" action="{% url 'dictionary:delete_sense' gloss.id %}" >
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
-                                                    <input type='hidden' name='senseid' value='{{sense.id}}'>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-
+                                </td>
+                                <td style="width:50px">
                                     {% if "change_dataset" in dataset_perms %}
                                         <span class='sense-icon glyphicon glyphicon-edit sense_edit' style="color:red" data-toggle='modal' data-target='#edit_sense_modal_{{sense.id}}'></span>
-                                    {% endif %}
-                                    <div class="modal fade" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleEditSense" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
-                                            <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
-                                                <div class='modal-header'>
-                                                    <h2 id='modalTitleEditSense'>{% trans "Edit this sense" %}</h2>
-                                                </div><br>
-                                                <form name="update_sense_form" method="post" action="{% url 'dictionary:update_sense' sense.id %}" >
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
-                                                    <input type="hidden" name="glossid" value="{{gloss.id}}"/>
-                                                    <table>
-                                                        <tr>
-                                                            {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                                                <th>{{dataset_lang.name}}</th>
-                                                            {% endfor %}
-                                                        </tr>
-                                                        <tr>
-                                                            {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-                                                                {% for key, value in sense.get_sense_translations_dict_with_return.items %}
-                                                                    {% if key|slugify == dataset_lang|slugify %}
-                                                                        <td><textarea {% if settings.SHARE_SENSES %} class="sensetranslationtypeahead" {% endif %}
-                                                                                      name="{{key}}" rows="10" cols="20"
-                                                                                      placeholder="keyword 1&#10;keyword 2&#10;...">{{value}}</textarea></td>
-                                                                    {% endif %}
+                                        <div class="modal fade" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleEditSense" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
+                                                <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
+                                                    <div class='modal-header'>
+                                                        <h2 id='modalTitleEditSense'>{% trans "Edit this sense" %}</h2>
+                                                    </div><br>
+                                                    <form name="update_sense_form" method="post" action="{% url 'dictionary:update_sense' sense.id %}" >
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
+                                                        <input type="hidden" name="glossid" value="{{gloss.id}}"/>
+                                                        <table>
+                                                            <tr>
+                                                                {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                                                                    <th>{{dataset_lang.name}}</th>
                                                                 {% endfor %}
-                                                            {% endfor %}
-                                                        </tr>
-                                                    </table>
-                                                    
-                                                    <div class="modal-footer">
-                                                        <input class='btn btn-primary' value='{% trans "Update sense" %}' type='submit'>
-                                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                                    </div>
-                                                </form>
+                                                            </tr>
+                                                            <tr>
+                                                                {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                                                                    {% for key, value in sense.get_sense_translations_dict_with_return.items %}
+                                                                        {% if key|slugify == dataset_lang|slugify %}
+                                                                            <td><textarea {% if settings.SHARE_SENSES %} class="sensetranslationtypeahead" {% endif %}
+                                                                                        name="{{key}}" rows="10" cols="20"
+                                                                                        placeholder="keyword 1&#10;keyword 2&#10;...">{{value}}</textarea></td>
+                                                                        {% endif %}
+                                                                    {% endfor %}
+                                                                {% endfor %}
+                                                            </tr>
+                                                        </table>
+                                                        
+                                                        <div class="modal-footer">
+                                                            <input class='btn btn-primary' value='{% trans "Update sense" %}' type='submit'>
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+
+                                        <span class='sense-icon glyphicon glyphicon-trash sense_delete' style="color:red" data-toggle='modal' data-target='#delete_sense_modal_{{sense.id}}'></span>                     
+                                        <div class="modal fade" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleDeleteSense" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
+                                                <div class="modal-content">
+                                                    <div class='modal-header'>
+                                                        <h2 id='modalTitleDeleteSense'>{% trans "Delete This Sense" %}</h2>
+                                                    </div>
+                                                    <div class='modal-body'>
+                                                        <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                                    </div>
+                                                    <form name="delete_sense_form" method="post" action="{% url 'dictionary:delete_sense' gloss.id %}" >
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
+                                                        <input type='hidden' name='senseid' value='{{sense.id}}'>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+
                                     {% with sense_to_similar_senses|get_item:sense as similar_senses %}
                                     {% if similar_senses %}
                                     <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
@@ -1050,9 +1052,20 @@ option:not(:checked) {
                                     {% endwith %}
                                 </td>
                                 <td style="width:50%">
-                                    <table class='table table-condensed'>
-                                        {% for examplesentence in sense.exampleSentences.all %}
+                                    <table class='table table-condensed' style="table-layout: fixed">
+                                        {% for examplesentence in sense.ordered_examplesentences %}
                                             <tr>
+                                                {% if "change_dataset" in dataset_perms %}
+                                                <td style="width:20px">
+                                                    {% if not forloop.first %}  
+                                                    <span class='sense-icon'><a href='{% url "dictionary:sort_examplesentence" sense.id gloss.id forloop.counter "up" %}' style="color:red;">&#x25B2;</a></span>
+                                                    <br>
+                                                    {% endif %}
+                                                    {% if not forloop.last %}  
+                                                    <span class='sense-icon'><a href='{% url "dictionary:sort_examplesentence" sense.id gloss.id forloop.counter "down" %}' style="color:red;">&#x25BC;</a></span>
+                                                    {% endif %}
+                                                </td>
+                                                {% endif %}
                                                 <td>
                                                     {% if examplesentence.sentenceType %}
                                                     <i>{{examplesentence.sentenceType.name}}</i>
@@ -1061,36 +1074,28 @@ option:not(:checked) {
                                                     {% endif %}
                                                     {% if examplesentence.negative %}
                                                     <i>(neg)</i>
-                                                    {% endif %}
-                                                    {% if examplesentence.has_video %}
-                                                    <div class="pull-right">
-                                                        <span id="camera-icon"><img id='camera' data-target="#exampleVidModal_{{examplesentence.id}}" data-toggle="modal" src='{{STATIC_URL}}images/playvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
-                                                    </div>
-                                                    {% endif %}
-                                                    {% if "change_dataset" in dataset_perms %}
-                                                    <div class="pull-right sense-icon">
-                                                        <span id="camera-icon"><a href='{% url "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id %}'><img id='camera' src='{{STATIC_URL}}images/addvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></a></span>
-                                                    </div>
-                                                    {% if examplesentence.has_video %}
-                                                    <div class="pull-right sense-icon">
-                                                        <span id="camera-icon">
-                                                            <form class="formbutton" action="{{PREFIX_URL}}/video/deletesentencevideo/{{examplesentence.id}}" method='post'>
-                                                            {% csrf_token %}
-                                                            <input type=image value="" src='{{STATIC_URL}}images/deletevideo.png' alt = "submit" style='width: 25px; height: 25px; margin: 0px; cursor: pointer;'>
-                                                            </form>
-                                                        </span>
-                                                    </div>
-                                                    {% endif %}
-                                                    {% endif %}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style="border: none" colspan="100%">
+                                                    {% endif %}<br>
                                                     {% for key, value in examplesentence.get_examplestc_translations_dict_without.items %}
                                                         {{key}}: {{value}} {% if not forloop.last %}<br>{% endif %}
                                                     {% endfor %}<br><br>
+                                                </td>
+                                                <td style="width:90px">
+                                                    {% if examplesentence.has_video %}
+                                                        <span id="camera-icon" class="pull-right"><img id='camera' data-target="#exampleVidModal_{{examplesentence.id}}" data-toggle="modal" src='{{STATIC_URL}}images/playvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
+                                                    {% endif %}
                                                     {% if "change_dataset" in dataset_perms %}
-                                                        <span class='glyphicon glyphicon-trash examplestc_delete sense-icon' style="color:red"  data-toggle='modal' data-target='#delete_examplestc_modal_{{examplesentence.id}}'></span>
+                                                        <span id="camera-icon" class = "sense-icon pull-right"><a href='{% url "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id %}'><img id='camera' src='{{STATIC_URL}}images/addvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></a></span>
+                                                        {% if examplesentence.has_video %}
+                                                            <span id="camera-icon" class="sense-icon pull-right">
+                                                                <form class="formbutton" action="{{PREFIX_URL}}/video/deletesentencevideo/{{examplesentence.id}}" method='post'>
+                                                                {% csrf_token %}
+                                                                <input type=image value="" src='{{STATIC_URL}}images/deletevideo.png' alt = "submit" style='width: 25px; height: 25px; margin: 0px; cursor: pointer;'>
+                                                                </form>
+                                                            </span>
+                                                        {% endif %}
+
+                                                        <br><br>
+                                                        <span class='glyphicon glyphicon-trash examplestc_delete sense-icon pull-right' style="color:red"  data-toggle='modal' data-target='#delete_examplestc_modal_{{examplesentence.id}}'></span>
                                                         <div class="modal fade" id="delete_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteExamplestc" aria-hidden="true">
                                                             <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
                                                                 <div class="modal-content">
@@ -1113,7 +1118,7 @@ option:not(:checked) {
                                                             </div>
                                                         </div>
 
-                                                        <span class='glyphicon glyphicon-edit examplestc_edit sense-icon' style="color:red"  data-toggle='modal' data-target='#edit_examplestc_modal_{{examplesentence.id}}'></span>
+                                                        <span class='glyphicon glyphicon-edit examplestc_edit sense-icon pull-right' style="color:red"  data-toggle='modal' data-target='#edit_examplestc_modal_{{examplesentence.id}}'></span>
                                                         <div class="modal fade" id="edit_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleEditExamplestc" aria-hidden="true">
                                                             <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
                                                                 <div class="modal-content">

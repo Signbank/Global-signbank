@@ -49,6 +49,7 @@ urlpatterns = [
     re_path(r'^update/linksense/(?P<senseid>\d+)$', signbank.dictionary.update.link_sense, name='link_sense'),
     re_path(r'^update/addsense/(?P<glossid>\d+)$', signbank.dictionary.update.create_sense, name='create_sense'),
     re_path(r'^update/sortsense/(?P<glossid>\d+)/(?P<order>\d+)/(?P<direction>\w+)$', signbank.dictionary.update.sort_sense, name='sort_sense'),
+    re_path(r'^update/sortexamplesentence/(?P<senseid>\d+)/(?P<glossid>\d+)/(?P<order>\d+)/(?P<direction>\w+)$', signbank.dictionary.update.sort_examplesentence, name='sort_examplesentence'),
     re_path(r'^update/deletesense/(?P<glossid>\d+)$', signbank.dictionary.update.delete_sense, name='delete_sense'),
     re_path(r'^update/examplesentence/(?P<examplesentenceid>\d+)$', signbank.dictionary.update.update_examplesentence, name='update_examplesentence'),
     re_path(r'^update/addexamplesentence/(?P<senseid>\d+)$', signbank.dictionary.update.create_examplesentence, name='create_examplesentence'),

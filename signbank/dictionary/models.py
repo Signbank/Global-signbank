@@ -789,7 +789,7 @@ class Sense(models.Model):
 
     def ordered_examplesentences(self):
         "Return a properly ordered set of examplesentences"
-        return self.exampleSentences.all().order_by('senseexamplesentence__order')
+        return self.exampleSentences.order_by('senseexamplesentence')
 
     def reorder_examplesentences(self):
         "when an examplesentence is deleted, they should be reordered"

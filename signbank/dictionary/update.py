@@ -358,6 +358,45 @@ def sort_sense(request, glossid, order, direction):
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
+def sort_examplesentence(request, senseid, glossid, order, direction):
+    order = int(order)
+    sense = Sense.objects.get(id=senseid)
+    gloss = Gloss.objects.get(id=glossid)
+    sense_examplesentences_matching_order = SenseExamplesentence.objects.filter(sense=sense, order=order).count()
+    if sense_examplesentences_matching_order != 1:
+        print('sort_examplesentence: multiple or no match for order: ', senseid, str(order))
+        messages.add_message(request, messages.ERROR, _('Could not sort this examplesentence.'))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+
+    senseexamplesentence = SenseExamplesentence.objects.get(sense=sense, order=order)
+    try:
+        if direction == "up":
+            try:
+                senseexamplesentenceabove = SenseExamplesentence.objects.get(sense=sense, order=order-1)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('sort_examplesentence UP: multiple or no match for order: ', senseid, str(order-1))
+                messages.add_message(request, messages.ERROR, _('Could not sort this examplesentence.'))
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+            senseexamplesentenceabove.order = order
+            senseexamplesentence.order = order - 1
+            senseexamplesentence.save()
+            senseexamplesentenceabove.save()
+        elif direction == "down":
+            try:
+                senseexamplesentencebeneath = SenseExamplesentence.objects.get(sense=sense, order=order+1)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                print('sort_examplesentence DOWN: multiple or no match for order: ', senseid, str(order+1))
+                messages.add_message(request, messages.ERROR, _('Could not sort this examplesentence.'))
+                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+            senseexamplesentencebeneath.order = order
+            senseexamplesentence.order = order + 1 
+            senseexamplesentence.save()
+            senseexamplesentencebeneath.save()
+    except (ObjectDoesNotExist, MultipleObjectsReturned, DatabaseError, TransactionManagementError):
+        messages.add_message(request, messages.ERROR, _('Could not sort this examplesentence.'))
+
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+
 
 def add_sentence_video(request, glossid, examplesentenceid):
     template = 'dictionary/add_sentence_video.html'
