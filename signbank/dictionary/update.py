@@ -326,34 +326,24 @@ def sort_sense(request, glossid, order, direction):
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     glosssense = GlossSense.objects.get(gloss=gloss, order=order)
+    swaporder = 0
+    if direction == "up":
+        swaporder = order - 1
+    elif direction == "down":
+        swaporder = order + 1
+    else:
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+    
     try:
-        if direction == "up":
-            try:
-                glosssenseabove = GlossSense.objects.get(gloss=gloss, order=order-1)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('sort_sense UP: multiple or no match for order: ', glossid, str(order-1))
-                messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
-            glosssenseabove.order = order
-            glosssense.order = order - 1
-            glosssense.save()
-            glosssenseabove.save()
-            reorder_translations(glosssense, order-1)
-            reorder_translations(glosssenseabove, order)
-        elif direction == "down":
-            try:
-                glosssensebeneath = GlossSense.objects.get(gloss=gloss, order=order+1)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('sort_sense DOWN: multiple or no match for order: ', glossid, str(order+1))
-                messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
-            glosssensebeneath.order = order
-            glosssense.order = order + 1 
-            glosssense.save()
-            glosssensebeneath.save()
-            reorder_translations(glosssensebeneath, order)
-            reorder_translations(glosssense, order+1)
+        glosssensetoswap = GlossSense.objects.get(gloss=gloss, order=swaporder)
+        glosssensetoswap.order = order
+        glosssense.order = swaporder 
+        glosssense.save()
+        glosssensetoswap.save()
+        reorder_translations(glosssensetoswap, order)
+        reorder_translations(glosssense, swaporder)
     except (ObjectDoesNotExist, MultipleObjectsReturned, DatabaseError, TransactionManagementError):
+        print('sort_sense ', direction.upper(), ': multiple or no match for order: ', glossid, str(swaporder))
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
@@ -369,30 +359,22 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     senseexamplesentence = SenseExamplesentence.objects.get(sense=sense, order=order)
+    swaporder = 0
+    if direction == "up":
+        swaporder = order - 1
+    elif direction == "down":
+        swaporder = order + 1
+    else:
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+
     try:
-        if direction == "up":
-            try:
-                senseexamplesentenceabove = SenseExamplesentence.objects.get(sense=sense, order=order-1)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('sort_examplesentence UP: multiple or no match for order: ', senseid, str(order-1))
-                messages.add_message(request, messages.ERROR, _('Could not sort this examplesentence.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
-            senseexamplesentenceabove.order = order
-            senseexamplesentence.order = order - 1
-            senseexamplesentence.save()
-            senseexamplesentenceabove.save()
-        elif direction == "down":
-            try:
-                senseexamplesentencebeneath = SenseExamplesentence.objects.get(sense=sense, order=order+1)
-            except (ObjectDoesNotExist, MultipleObjectsReturned):
-                print('sort_examplesentence DOWN: multiple or no match for order: ', senseid, str(order+1))
-                messages.add_message(request, messages.ERROR, _('Could not sort this examplesentence.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
-            senseexamplesentencebeneath.order = order
-            senseexamplesentence.order = order + 1 
-            senseexamplesentence.save()
-            senseexamplesentencebeneath.save()
+        senseexamplesentencetoswap = SenseExamplesentence.objects.get(sense=sense, order=swaporder)
+        senseexamplesentencetoswap.order = order
+        senseexamplesentence.order = swaporder
+        senseexamplesentence.save()
+        senseexamplesentencetoswap.save()
     except (ObjectDoesNotExist, MultipleObjectsReturned, DatabaseError, TransactionManagementError):
+        print('sort_examplesentence ', direction.upper(), ': multiple or no match for order: ', senseid, str(swaporder))
         messages.add_message(request, messages.ERROR, _('Could not sort this examplesentence.'))
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
