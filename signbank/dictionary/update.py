@@ -232,7 +232,7 @@ def update_examplesentence(request, examplesentenceid):
 def create_examplesentence(request, senseid):
     """View to create an exampelsentence model from the editable modal"""
 
-    if not request.user.has_perm('dictionary.create_examplesentence'):
+    if not request.user.has_perm('dictionary.add_examplesentence'):
         return HttpResponseForbidden("Sense Creation Not Allowed")
 
     if not request.method == "POST":
@@ -586,7 +586,7 @@ def update_sense(request, senseid):
 def create_sense(request, glossid):
     """View to create a sense model from the editable modal"""
 
-    if not request.user.has_perm('dictionary.create_sense'):
+    if not request.user.has_perm('dictionary.add_sense'):
         return HttpResponseForbidden("Sense Creation Not Allowed")
 
     if not request.method == "POST":
