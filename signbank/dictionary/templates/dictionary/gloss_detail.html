@@ -924,7 +924,29 @@ option:not(:checked) {
                                 </td>
                                 <td style="width:50px">
                                     {% if "change_dataset" in dataset_perms %}
-                                        <span class='sense-icon glyphicon glyphicon-edit sense_edit' style="color:red" data-toggle='modal' data-target='#edit_sense_modal_{{sense.id}}'></span>
+                                        <span class='glyphicon glyphicon-trash sense_delete sense-icon pull-right' style="color:red"  data-toggle='modal' data-target='#delete_sense_modal_{{sense.id}}'></span>
+                                        <div class="modal fade" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleDeleteSense" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
+                                                <div class="modal-content">
+                                                    <div class='modal-header'>
+                                                        <h2 id='modalTitleDeleteSense'>{% trans "Delete this Sense" %}</h2>
+                                                    </div><br>
+                                                    <div class='modal-body'>
+                                                        <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                                    </div>     
+                                                    <form name="delete_sense_form" method="post" action="{% url 'dictionary:delete_sense' gloss.id %}" >
+                                                        {% csrf_token %}
+                                                        <input type='hidden' name='dataset' value='{{gloss.lemma.dataset.id}}'>
+                                                        <input type='hidden' name='senseid' value='{{sense.id}}'>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                                            <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span class='sense-icon glyphicon glyphicon-edit sense_edit pull-right' style="color:red" data-toggle='modal' data-target='#edit_sense_modal_{{sense.id}}'></span>
                                         <div class="modal fade" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleEditSense" aria-hidden="true">
                                             <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
                                                 <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
@@ -942,19 +964,25 @@ option:not(:checked) {
                                                                 {% endfor %}
                                                             </tr>
                                                             <tr>
-                                                                {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                                                                 {% with sense|sense_translations_dict_with:'\n' as sense_translations_dict %}
-                                                                    {% for key, value in sense_translations_dict.items %}
-                                                                        {% if key|slugify == dataset_lang|slugify %}
-                                                                        {% with value|splitlines as value_lines %}
-                                                                            <td><textarea {% if settings.SHARE_SENSES %} class="sensetranslationtypeahead" {% endif %}
-                                                                                        name="{{key}}" rows="10" cols="20"
-                                                                                        placeholder="keyword 1&#10;keyword 2&#10;...">{{value_lines|safe}}</textarea></td>
-                                                                        {% endwith %}
-                                                                        {% endif %}
-                                                                    {% endfor %}
-                                                                {% endwith %}
+                                                                {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                                                                    {% if not dataset_lang.name in sense_translations_dict %}
+                                                                    <td><textarea {% if settings.SHARE_SENSES %} class="sensetranslationtypeahead" {% endif %}
+                                                                        name="{{ dataset_lang.name }}" rows="10" cols="20"
+                                                                        placeholder="keyword 1&#10;keyword 2&#10;..."></textarea></td>
+                                                                    {% else %}
+                                                                        {% for key, value in sense_translations_dict.items %}
+                                                                            {% if key|slugify == dataset_lang|slugify %}
+                                                                            {% with value|splitlines as value_lines %}
+                                                                                <td><textarea {% if settings.SHARE_SENSES %} class="sensetranslationtypeahead" {% endif %}
+                                                                                    name="{{key}}" rows="10" cols="20"
+                                                                                    placeholder="keyword 1&#10;keyword 2&#10;...">{{value_lines|safe}}</textarea></td>
+                                                                            {% endwith %}
+                                                                            {% endif %}
+                                                                        {% endfor %}
+                                                                    {% endif %}
                                                                 {% endfor %}
+                                                                {% endwith %}
                                                             </tr>
                                                         </table>
                                                         
