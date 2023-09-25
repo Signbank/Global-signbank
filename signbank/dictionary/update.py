@@ -412,8 +412,9 @@ def update_sense(request, senseid):
     vals = {}
     for dataset_language in dataset_languages:
         if str(dataset_language) in request.POST:
-            values = request.POST[str(dataset_language)].split("\n")
-            if not values[0] == '':
+            input_values = request.POST[str(dataset_language)].splitlines()
+            values = [v for v in input_values if v != '']
+            if values:
                 for k, v in enumerate(values): 
                     values[k] = str(v.strip())
                 values = values
@@ -599,8 +600,9 @@ def create_sense(request, glossid):
     vals = {}
     for dataset_language in dataset_languages:
         if str(dataset_language) in request.POST:
-            values = request.POST[str(dataset_language)].split("\n")
-            if not values[0] == '':
+            input_values = request.POST[str(dataset_language)].splitlines()
+            values = [v for v in input_values if v != '']
+            if values:
                 for k, v in enumerate(values): 
                     values[k] = v.strip()
                 values = values
