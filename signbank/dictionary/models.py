@@ -1259,7 +1259,7 @@ class Gloss(models.Model):
         if language_code in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
             interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
         else:
-            # this assumes the default language (LANGUAGE_CODE) in included in the LANGUAGES_LANGUAGE_CODE_3CHAR setting
+            # this assumes the default language (settings.LANGUAGE_CODE) in included in the LANGUAGES_LANGUAGE_CODE_3CHAR setting
             interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[settings.LANGUAGE_CODE]
         interface_language = Language.objects.get(language_code_3char=interface_language_3char)
         default_language = Language.objects.get(id=get_default_language_id())

@@ -6318,7 +6318,11 @@ def gloss_ajax_complete(request, prefix):
     dataset = Dataset.objects.get(id=datasetid)
     default_language = dataset.default_language
 
-    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    if request.LANGUAGE_CODE in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    else:
+        # this assumes the default language (settings.LANGUAGE_CODE) in included in the LANGUAGES_LANGUAGE_CODE_3CHAR setting
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[settings.LANGUAGE_CODE]
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
 
     # language is not empty
@@ -6404,7 +6408,11 @@ def lemma_ajax_complete(request, dataset_id, language_code, q):
     # otherwise it thinks the q parameter is part of the dataset id
     # this may have something to do with dynamic construction of the url path in the javascript functions that call this routine
     # via the url
-    interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+    if language_code in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+    else:
+        # this assumes the default language (settings.LANGUAGE_CODE) in included in the LANGUAGES_LANGUAGE_CODE_3CHAR setting
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[settings.LANGUAGE_CODE]
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     interface_language_id = interface_language.id
 
