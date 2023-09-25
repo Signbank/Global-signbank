@@ -72,7 +72,7 @@ from signbank.frequency import import_corpus_speakers, configure_corpus_document
     eaf_file_from_paths, documents_paths_dictionary
 from signbank.dictionary.frequency_display import collect_speaker_age_data, collect_variants_data, collect_variants_age_range_data, \
                                                     collect_variants_age_sex_raw_percentage
-from signbank.dictionary.senses_display import senses_per_language
+from signbank.dictionary.senses_display import senses_per_language, senses_per_language_list
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
@@ -6631,16 +6631,7 @@ def glosslist_ajax_complete(request, gloss_id):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
 
-    # Put translations (keywords) per language in the context
-    sensetranslations_per_language = []
-    for language in dataset_languages:
-        sensetranslations_for_language = {}
-        for sensei, sense in enumerate(this_gloss.ordered_senses().all()):
-            if sense.senseTranslations.all().filter(language=language).exists():
-                sensetranslations_for_language[sensei+1] = str(sense.senseTranslations.all().get(language=language))
-            else:
-                sensetranslations_for_language[sensei+1] = ""
-        sensetranslations_per_language.append((language,sensetranslations_for_language))
+    sensetranslations_per_language = senses_per_language_list(this_gloss)
 
     column_values = []
     for fieldname in display_fields:
@@ -6812,16 +6803,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
 
-    # Put translations (keywords) per language in the context
-    sensetranslations_per_language = {}
-    for language in dataset_languages:
-        sensetranslations_for_language = {}
-        for sensei, sense in enumerate(this_gloss.ordered_senses().all()):
-            if sense.senseTranslations.all().filter(language=language).exists():
-                sensetranslations_for_language[sensei+1] = sense.senseTranslations.all().get(language=language)
-            else:
-                sensetranslations_for_language[sensei+1] = ""
-        sensetranslations_per_language[language] = sensetranslations_for_language
+    sensetranslations_per_language = senses_per_language_list(this_gloss)
 
     column_values = []
     gloss_list_display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
