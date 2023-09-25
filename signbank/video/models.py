@@ -165,7 +165,7 @@ class GlossVideoHistory(models.Model):
 
         # Basic feedback from one History item: gloss-action-date
         name = self.gloss.idgloss + ': ' + self.action + ', (' + str(self.datestamp) + ')'
-        return name.encode('ascii', errors='replace')
+        return str(name.encode('ascii', errors='replace'))
 
     class Meta:
         ordering = ['datestamp']
@@ -387,19 +387,18 @@ class ExampleVideo(models.Model):
                 self.delete_files()
                 self.delete()
                 return
-            else:
-                if self.version == 1:
-                    # remove .bak from filename and decrement the version
-                    (newname, bak) = os.path.splitext(self.videofile.name)
-                    if bak != '.bak' + str(self.id):
-                        # hmm, something bad happened
-                        raise Exception('Unknown suffix on stored video file. Expected .bak')
-                    if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
-                        os.rename(os.path.join(storage.location, self.videofile.name),
-                              os.path.join(storage.location, newname))
-                    self.videofile.name = newname
-                self.version -= 1
-                self.save()
+            if self.version == 1:
+                # remove .bak from filename and decrement the version
+                (newname, bak) = os.path.splitext(self.videofile.name)
+                if bak != '.bak' + str(self.id):
+                    # hmm, something bad happened
+                    raise Exception('Unknown suffix on stored video file. Expected .bak')
+                if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
+                    os.rename(os.path.join(storage.location, self.videofile.name),
+                            os.path.join(storage.location, newname))
+                self.videofile.name = newname
+            self.version -= 1
+            self.save()
         else:
             if self.version == 0:
                 # find a name for the backup, a filename that isn't used already
