@@ -1256,7 +1256,11 @@ class Gloss(models.Model):
         # this function is used in Relations View to dynamically get the Annotation of related glosses
         # it is called by a template tag on the gloss using the interface language code
 
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+        if language_code in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
+            interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+        else:
+            # this assumes the default language (LANGUAGE_CODE) in included in the LANGUAGES_LANGUAGE_CODE_3CHAR setting
+            interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[settings.LANGUAGE_CODE]
         interface_language = Language.objects.get(language_code_3char=interface_language_3char)
         default_language = Language.objects.get(id=get_default_language_id())
 
