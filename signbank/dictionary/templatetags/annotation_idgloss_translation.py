@@ -189,7 +189,7 @@ def get_senses_for_language(sensetranslations, language):
 
 @register.filter
 def sense_translations_dict_with(sense, join_char):
-    sense_translations = sense.get_sense_translations_dict_with(join_char)
+    sense_translations = sense.get_sense_translations_dict_with(join_char, True)
     return sense_translations
 
 @register.filter
@@ -198,3 +198,15 @@ def splitlines(value):
     split_value = value.split('\\n')
     values = "&#10;".join(split_value)
     return values
+
+@register.filter
+def to_all_keys(dictionary):
+    keys = list(dictionary.keys())
+    last_key = keys[-1]
+    new_dictionary = {}
+    for key in range(1, last_key + 1):
+        if key in dictionary:
+            new_dictionary[key] = dictionary[key]
+        else:
+            new_dictionary[key] = ""
+    return new_dictionary

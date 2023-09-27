@@ -70,9 +70,11 @@
     {% for lang, sensetranslations in sensetranslations_per_language %}
     <td class="translation_{{lang.language_code_2char}}">
       <div>
-      {% for key, value in sensetranslations.items %}
-          {% if value != "" %}{{key}}. {% endif %}{{ value|safe }}{% if not forloop.last %}<br> {% endif %}
-      {% endfor %}
+      {% with sensetranslations|to_all_keys as sensetranslations %}
+        {% for key, value in sensetranslations.items %}
+            {% if value != "" %}{{key}}. {% endif %}{{ value|safe }}{% if not forloop.last %}<br> {% endif %}
+        {% endfor %}
+      {% endwith %}
       </div>
     </td>
     {% endfor %}

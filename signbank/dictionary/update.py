@@ -412,13 +412,14 @@ def update_sense(request, senseid):
     vals = {}
     for dataset_language in dataset_languages:
         if str(dataset_language) in request.POST:
-            input_values = request.POST[str(dataset_language)].splitlines()
-            values = [v for v in input_values if v != '']
-            if values:
-                for k, v in enumerate(values): 
-                    values[k] = str(v.strip())
-                values = values
-                vals[str(dataset_language)]=values
+            values = request.POST[str(dataset_language)].splitlines()
+            if len(values) > 0:
+                processed_values = []
+                for _, v in enumerate(values): 
+                    processed_values.append(v.strip())
+                processed_values = list(dict.fromkeys(processed_values))
+                if len(processed_values) > 0:
+                    vals[str(dataset_language)] = processed_values
     
     # Check if input given is empty
     if vals == {}:
@@ -452,35 +453,6 @@ def update_sense(request, senseid):
             messages.add_message(request, messages.ERROR, _('This sense was already in this gloss.'))
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
-    if settings.SHARE_SENSES:
-        # Check if sense already existed in another gloss
-        existing_senses = []
-        for existing_gloss in Gloss.objects.filter(lemma__dataset=dataset):
-            existing_senses.extend(existing_gloss.senses.all())
-        for s in existing_senses:
-            if s.get_sense_translations_dict_without_list() == vals:
-
-                # Replace this sense by the found sense object
-                gloss.senses.remove(sense)
-                if s not in gloss.senses.all():
-                    glosssense = GlossSense(gloss=gloss, sense=s, order=gloss.senses.count()+1)
-                    glosssense.save()
-                # If the sense does not exist in any other gloss, delete it and its translations and examplesentences
-                if Gloss.objects.filter(lemma__dataset=dataset, senses = sense).count() == 0:
-                    for sensetranslation in sense.senseTranslations.all():
-                        sense.senseTranslations.remove(sensetranslation)
-                        if Sense.objects.filter(senseTranslations = sensetranslation).count() == 0:
-                            sensetranslation.delete()
-
-                    for examplesentence in sense.exampleSentences.all():
-                        sense.exampleSentences.remove(examplesentence)
-                        if Sense.objects.filter(exampleSentences = examplesentence).count() == 0:
-                            examplesentence.delete()
-                    sense.delete()
-
-                messages.add_message(request, messages.INFO, _('Sense is already in (existing) gloss.'))
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
-
     # Update sensetranslations
     gloss_senses_count = gloss.senses.count()
 
@@ -489,28 +461,25 @@ def update_sense(request, senseid):
         if str(dataset_language) not in sensetranslation_dict and str(dataset_language) not in vals:
             continue
         if str(dataset_language) not in sensetranslation_dict and str(dataset_language) in vals:
-            existed = False
-            if settings.SHARE_SENSES:
-                for st in SenseTranslation.objects.filter(language = dataset_language):
-                    if st.get_translations_list() == vals[str(dataset_language)]:
-                        sense.senseTranslations.add(st)
-                        existed = True
-            if not existed:
-                sensetranslation = sense.senseTranslations.filter(language=dataset_language).first()
-                if not sensetranslation:
-                    sensetranslation = SenseTranslation.objects.create(language=dataset_language)
-                    sense.senseTranslations.add(sensetranslation)
-                for tr_v in vals[str(dataset_language)]:
+            sensetranslation = sense.senseTranslations.filter(language=dataset_language).first()
+            if not sensetranslation:
+                sensetranslation = SenseTranslation.objects.create(language=dataset_language)
+                sense.senseTranslations.add(sensetranslation)
+            for tr_i, tr_v in enumerate(vals[str(dataset_language)]):
+                if tr_v != "":
                     keyword = Keyword.objects.get_or_create(text =tr_v)[0]
                     translation = Translation.objects.filter(translation=keyword,
                                                              language=dataset_language,
                                                              gloss=gloss,
+                                                             sensetranslation=sensetranslation,
                                                              orderIndex=gloss_senses_count).first()
                     if not translation:
                         translation = Translation.objects.create(translation=keyword,
                                                                  language=dataset_language,
                                                                  gloss=gloss,
                                                                  orderIndex=gloss_senses_count)
+                    translation.index = tr_i
+                    translation.save()
                     sensetranslation.translations.add(translation)
 
         else:
@@ -518,55 +487,41 @@ def update_sense(request, senseid):
 
             # remove the translations of sensetranslation from the sense
             if str(dataset_language) in sensetranslation_dict and str(dataset_language) not in vals:
+                
+                for translation in sensetranslation.translations.all():
+                    sensetranslation.translations.remove(translation)
+                    translation.delete()
 
-                if settings.SHARE_SENSES:
-                    sense.senseTranslations.remove(sensetranslation)
-                    # Delete the sensetranslation if it's not in any other sense
-                    if Sense.objects.filter(senseTranslations=sensetranslation).count() == 0:
-                        # also delete the translation (keyword) if it's the only sensetranslation it is in
-                        for translation in sensetranslation.translations.all():
-                            sensetranslation.translations.remove(translation)
-                            if SenseTranslation.objects.filter(translations = translation).count() == 0:
-                                translation.delete()
-                        sensetranslation.delete()
-                else:
-                    for translation in sensetranslation.translations.all():
-                        sensetranslation.translations.remove(translation)
-                        translation.delete()
             # Check if input field exists and is different from database
             elif sensetranslation_dict[str(dataset_language)] != vals[str(dataset_language)]:
-                existed = False
-                if settings.SHARE_SENSES:
-                    for st in SenseTranslation.objects.filter(language = dataset_language):
-                        if st.get_translations_list() == vals[str(dataset_language)]:
-                            sense.senseTranslations.add(st)
-                            sense.senseTranslations.remove(sensetranslation)
-                            if Sense.objects.filter(senseTranslations=sensetranslation).count() == 0:
-                                sensetranslation.delete()
-                            existed = True
-                if not existed:
-                    translation_st = sensetranslation.translations.all()
-                    trs, trv = [], []
-                    for tr_st in translation_st:
-                        trs.append(tr_st)
-                        trv.append(tr_st.translation.text)
-                    for tr_s in trs:
-                        if tr_s.translation.text not in vals[str(dataset_language)]:
-                            sensetranslation.translations.remove(tr_s)
-                            tr_s.delete()
-                    for tr_v in vals[str(dataset_language)]:
-                        if tr_v not in trv:
-                            keyword = Keyword.objects.get_or_create(text=tr_v)[0]
-                            translation = Translation.objects.filter(translation=keyword,
-                                                                     language=dataset_language,
-                                                                     gloss=gloss,
-                                                                     orderIndex=gloss_senses_count).first()
-                            if not translation:
-                                translation = Translation.objects.create(translation=keyword,
-                                                                         language=dataset_language,
-                                                                         gloss=gloss,
-                                                                         orderIndex=gloss_senses_count)
-                            sensetranslation.translations.add(translation)
+                translation_st = sensetranslation.translations.all()
+                trs, trv = [], []
+                for tr_st in translation_st:
+                    trs.append(tr_st)
+                    trv.append(tr_st.translation.text)
+                for tr_s in trs:
+                    if tr_s.translation.text not in vals[dataset_language.name]:
+                        sensetranslation.translations.remove(tr_s)
+                        tr_s.delete()
+                for tr_v in vals[dataset_language.name]:
+                    if tr_v not in trv and tr_v != "":
+                        keyword = Keyword.objects.get_or_create(text=tr_v)[0]
+                        translation = Translation.objects.filter(translation=keyword,
+                                                                    language=dataset_language,
+                                                                    gloss=gloss,
+                                                                    sensetranslation=sensetranslation,
+                                                                    orderIndex=gloss_senses_count).first()
+                        if not translation:
+                            translation = Translation.objects.create(translation=keyword,
+                                                                        language=dataset_language,
+                                                                        gloss=gloss,
+                                                                        orderIndex=gloss_senses_count)
+                        sensetranslation.translations.add(translation)
+
+                #Reorder the translation indexes
+                for translation in sensetranslation.translations.all():
+                    translation.index = vals[dataset_language.name].index(translation.translation.text)
+                    translation.save()
 
     # add update sense to revision history, indicated by both old and new values
     # save the new value for revision history
@@ -600,13 +555,14 @@ def create_sense(request, glossid):
     vals = {}
     for dataset_language in dataset_languages:
         if str(dataset_language) in request.POST:
-            input_values = request.POST[str(dataset_language)].splitlines()
-            values = [v for v in input_values if v != '']
-            if values:
-                for k, v in enumerate(values): 
-                    values[k] = v.strip()
-                values = values
-                vals[str(dataset_language)]=values
+            values = request.POST[str(dataset_language)].splitlines()
+            processed_values = []
+            if len(values) > 0:
+                for _, v in enumerate(values): 
+                    processed_values.append(v.strip())
+                processed_values = list(dict.fromkeys(processed_values))
+                if len(processed_values) > 0:
+                    vals[str(dataset_language)] = processed_values
 
     # Check if input given is empty
     if vals == {}:
@@ -619,53 +575,26 @@ def create_sense(request, glossid):
             messages.add_message(request, messages.ERROR, _('This sense was already in this gloss.'))
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
         
-    if settings.SHARE_SENSES:
-        # Check if this sense already exists
-        existing_senses = []
-        for gloss in Gloss.objects.filter(lemma__dataset=dataset):
-            existing_senses.extend(gloss.senses.all())
-        for sense in existing_senses:
-            if sense.get_sense_translations_dict_without_list() == vals:
-                if sense in gloss.senses.all():
-                    messages.add_message(request, messages.ERROR, _('Sense is already in this gloss.'))
-                    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
-                glosssense = GlossSense(gloss=gloss, sense=sense, order=gloss.senses.count()+1)
-                glosssense.save()
-                return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
-    
     # Make a new sense object
     sense = Sense.objects.create()
     gloss.senses.add(sense, through_defaults={'order':gloss.senses.count()+1})
     # this is the order of the new sense
     gloss_senses_count = gloss.senses.count()
-    # Add or remove keywords to the sense translations
-    existing_sensetranslations = []
-    if settings.SHARE_SENSES:
-        for gl in Gloss.objects.filter(lemma__dataset=dataset):
-            for s in gl.senses.all():
-                existing_sensetranslations.extend(s.senseTranslations.all())
+    
     with atomic():
         for dataset_language in dataset_languages:
             if str(dataset_language) in vals:
-                existed = False
-                if settings.SHARE_SENSES:
-                    for st in existing_sensetranslations:
-                        if st.language == dataset_language and st.get_translations_list() == vals[str(dataset_language)]:
-                            sense.senseTranslations.add(st)
-                            existed = True
-
-                if not existed:
-                    try:
-                        sensetranslation = sense.senseTranslations.get(language=dataset_language)
-                    except ObjectDoesNotExist:
-                        # there should only be one per language
-                        sensetranslation = SenseTranslation.objects.create(language=dataset_language)
-                        sense.senseTranslations.add(sensetranslation)
-                    sorted_list_keywords = list(dict.fromkeys(vals[str(sensetranslation.language)]))
-                    for inx, kw in enumerate(sorted_list_keywords, 1):
-                        # this is a new sense so it has no translations yet
-                        # the combination with gloss, language, orderIndex does not exist yet
-                        # the index is the order the keyword was entered by the user
+                try:
+                    sensetranslation = sense.senseTranslations.get(language=dataset_language)
+                except ObjectDoesNotExist:
+                    # there should only be one per language
+                    sensetranslation = SenseTranslation.objects.create(language=dataset_language)
+                    sense.senseTranslations.add(sensetranslation)
+                for inx, kw in enumerate(vals[str(sensetranslation.language)], 1):
+                    # this is a new sense so it has no translations yet
+                    # the combination with gloss, language, orderIndex does not exist yet
+                    # the index is the order the keyword was entered by the user
+                    if kw != '':
                         keyword = Keyword.objects.get_or_create(text=kw)[0]
                         translation = Translation(translation=keyword,
                                                   language=dataset_language,
@@ -709,7 +638,7 @@ def delete_sense(request, glossid):
     gloss.senses.remove(sense)
 
     other_glosses_for_sense = GlossSense.objects.filter(sense=sense).exclude(gloss=gloss).count()
-    if not settings.SHARE_SENSES and not other_glosses_for_sense:
+    if not other_glosses_for_sense:
         # If this is this only gloss this sense was in, delete the sense
         for dataset_language in dataset_languages:
             # number of senseTranslation objects for language should be 1 or none

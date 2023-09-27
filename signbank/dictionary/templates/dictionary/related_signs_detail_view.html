@@ -124,13 +124,17 @@
 			  {% endfor %}
 
 			  {% for lang in dataset_languages %}
-			  {% with sensetranslations_per_language|get_item:lang  as sensetranslations %}
+			  {% with sensetranslations_per_language_dict|get_item:lang as sensetranslations %}
 			  <td class="src_keywords_{{lang.language_code_2char}}">
                 <div>
-                {% for sense in sensetranslations %}
-					{{ sense|safe }}
-                    {% if not forloop.last %}<br> {% endif %}
-                {% endfor %}
+					{% with sensetranslations|to_all_keys as sensetranslations %}
+					{% for key, value in sensetranslations.items %}
+						{% if value %}
+							{{ key }}. {{ value|safe }}
+						{% endif %}
+						{% if not forloop.last %}<br> {% endif %}
+					{% endfor %}
+					{% endwith %}
                 </div>
 			  </td>
 			  {% endwith %}
