@@ -756,7 +756,7 @@ class Sense(models.Model):
                 continue
             if language not in sense_translations_per_language.keys():
                 sense_translations_per_language[language] = []
-                sense_translations_per_language[language].append(trans)
+            sense_translations_per_language[language].append(trans)
 
         if join_char:
             for language in sense_translations_per_language.keys():
