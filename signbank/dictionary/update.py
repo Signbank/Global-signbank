@@ -412,7 +412,7 @@ def update_sense(request, senseid):
     vals = {}
     for dataset_language in dataset_languages:
         if dataset_language.name in request.POST:
-            values = request.POST[dataset_language.name].split("\n")
+            values = request.POST[dataset_language.name].splitlines()
             if len(values) > 0:
                 processed_values = []
                 for _, v in enumerate(values): 
@@ -553,15 +553,13 @@ def create_sense(request, glossid):
     dataset_languages = dataset.translation_languages.all()
     vals = {}
     for dataset_language in dataset_languages:
-        if dataset_language.name in request.POST:
-            values = request.POST[dataset_language.name].splitlines()
-            processed_values = []
-            if len(values) > 0:
-                for _, v in enumerate(values): 
-                    processed_values.append(v.strip())
-                processed_values = list(dict.fromkeys(processed_values))
-                if len(processed_values) > 0:
-                    vals[dataset_language.name] = processed_values
+        if str(dataset_language) in request.POST:
+            values = request.POST[str(dataset_language)].split("\n")
+            if not values[0] == '':
+                for k, v in enumerate(values): 
+                    values[k] = v.strip()
+                values = values
+                vals[str(dataset_language)]=values
 
     # Check if input given is empty
     if vals == {}:
