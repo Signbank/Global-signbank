@@ -752,9 +752,10 @@ class Sense(models.Model):
         for values in sense_translations:
             language = languages_lookup[values['language']]
             trans = values['translations__translation__text']
-            if exclude_empty and trans != None:
-                if language not in sense_translations_per_language.keys():
-                    sense_translations_per_language[language] = []
+            if (not trans or trans == None) and exclude_empty:
+                continue
+            if language not in sense_translations_per_language.keys():
+                sense_translations_per_language[language] = []
                 sense_translations_per_language[language].append(trans)
 
         if join_char:
