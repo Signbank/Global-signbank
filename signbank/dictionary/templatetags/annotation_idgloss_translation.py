@@ -189,7 +189,7 @@ def get_senses_for_language(sensetranslations, language):
 
 @register.filter
 def sense_translations_dict_with(sense, join_char):
-    sense_translations = sense.get_sense_translations_dict_with(join_char)
+    sense_translations = sense.get_sense_translations_dict_with(join_char, True)
     return sense_translations
 
 @register.filter
