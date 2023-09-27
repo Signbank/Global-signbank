@@ -40,7 +40,7 @@ class Command(BaseCommand):
                         translations.append(translation.translation.text.strip())
                 translations = (', ').join(sorted(translations))
                 if translations != '':
-                    vals[str(dataset_language)] = translations
+                    vals[dataset_language.name] = translations
 
             # If no translations found, don't make a sense
             if vals == {}:
@@ -62,10 +62,10 @@ class Command(BaseCommand):
             # Add or remove keywords to the sense translations
             for dataset_language in dataset.translation_languages.all():
 
-                if str(dataset_language) in vals:
+                if dataset_language.name in vals:
 
                     for st in SenseTranslation.objects.filter(language = dataset_language):
-                        if st.get_translations() == vals[str(dataset_language)]:
+                        if st.get_translations() == vals[dataset_language.name]:
                             sense.senseTranslations.add(st)
                             break
 
