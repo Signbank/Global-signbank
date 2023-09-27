@@ -754,7 +754,7 @@ class Sense(models.Model):
             trans = values['translations__translation__text']
             if language not in sense_translations_per_language.keys():
                 sense_translations_per_language[language] = []
-            if not trans:
+            if not trans and exclude_empty:
                 continue
             sense_translations_per_language[language].append(trans)
 
