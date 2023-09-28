@@ -667,6 +667,7 @@ class ExampleSentenceTranslation(models.Model):
     def __str__(self):
         return self.text
 
+
 class SenseTranslation(models.Model):
     """A sense translation belongs to a sense"""
     
@@ -684,6 +685,7 @@ class SenseTranslation(models.Model):
 
     def __str__(self):
         return self.get_translations()
+
 
 class Sense(models.Model):
     """A sense belongs to a gloss and consists of a set of translation(s)"""
@@ -743,13 +745,16 @@ class Sense(models.Model):
         for language in glosssense.gloss.lemma.dataset.translation_languages.all():
             languages_lookup[language.id] = language.name
 
+        sense_translations = self.senseTranslations.all().order_by(
+                'translations__index')
+
         if exclude_empty:
-            sense_translations = self.senseTranslations.all().exclude(
+            sense_translations = sense_translations.exclude(
                 translations__translation__text__isnull=True).order_by(
-                'translations__translation__index').values('language', 'translations__translation__text')
+                'translations__index').values('language', 'translations__translation__text')
         else:
-            sense_translations = self.senseTranslations.all().order_by(
-                'translations__translation__index').values('language', 'translations__translation__text')
+            sense_translations = sense_translations.order_by(
+                'translations__index').values('language', 'translations__translation__text')
 
         for values in sense_translations:
             language = languages_lookup[values['language']]
@@ -826,9 +831,11 @@ class Sense(models.Model):
     def __str__(self):
         """Return the string representation of the sense, separated by | for every sensetranslation"""	
         str_sense = []
-        for sensetranslation in self.senseTranslations.all().order_by('translations__translation__index'):
-            str_sense .append(str(sensetranslation))
+        this_sense_translations = self.senseTranslations.all()
+        for sensetranslation in this_sense_translations:
+            str_sense.append(str(sensetranslation))
         return " | ".join(str_sense)
+
 
 class SenseExamplesentence(models.Model):
     """An examplesentence belongs to one or multiple senses"""
