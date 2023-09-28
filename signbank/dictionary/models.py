@@ -629,26 +629,26 @@ class ExampleSentence(models.Model):
         # Preventing circular import
         from signbank.video.models import ExampleVideo, ExampleVideoHistory, get_sentence_video_file_path
 
-        # Backup the existing video objects stored in the database
-        existing_videos = ExampleVideo.objects.filter(examplesentence=self)
-        for video_object in existing_videos:
-            video_object.reversion(revert=False)
-
         # Create a new ExampleVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = ExampleVideo(examplesentence=self)
+
+            # Backup the existing video objects stored in the database
+            existing_videos = ExampleVideo.objects.filter(examplesentence=self)
+            for video_object in existing_videos:
+                video_object.reversion(revert=False)
+
+            # Create a ExampleVideoHistory object
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, get_sentence_video_file_path(video, str(videofile)))
+            examplevideohistory = ExampleVideoHistory(action="upload", examplesentence=self, actor=user,
+                                                uploadfile=videofile, goal_location=video_file_full_path)
+            examplevideohistory.save()
             video.videofile.save(get_sentence_video_file_path(video, str(videofile)), videofile)
         else:
-            video = ExampleVideo(videofile=videofile, examplesentence=self)
+            return ExampleVideo(examplesentence=self)
         video.save()
         video.ch_own_mod_video()
         video.make_small_video()
-
-        # Create a ExampleVideoHistory object
-        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
-        examplevideohistory = ExampleVideoHistory(action="upload", examplesentence=self, actor=user,
-                                              uploadfile=videofile, goal_location=video_file_full_path)
-        examplevideohistory.save()
 
         return video
 
@@ -745,17 +745,19 @@ class Sense(models.Model):
 
         if exclude_empty:
             sense_translations = self.senseTranslations.all().exclude(
-                translations__translation__text__isnull=True).values('language', 'translations__translation__text')
+                translations__translation__text__isnull=True).order_by(
+                'translations__translation__index').values('language', 'translations__translation__text')
         else:
-            sense_translations = self.senseTranslations.all().values('language', 'translations__translation__text')
+            sense_translations = self.senseTranslations.all().order_by(
+                'translations__translation__index').values('language', 'translations__translation__text')
 
         for values in sense_translations:
             language = languages_lookup[values['language']]
             trans = values['translations__translation__text']
-            if not trans and exclude_empty:
-                continue
             if language not in sense_translations_per_language.keys():
                 sense_translations_per_language[language] = []
+            if not trans:
+                continue
             sense_translations_per_language[language].append(trans)
 
         if join_char:
@@ -824,7 +826,7 @@ class Sense(models.Model):
     def __str__(self):
         """Return the string representation of the sense, separated by | for every sensetranslation"""	
         str_sense = []
-        for sensetranslation in self.senseTranslations.all():
+        for sensetranslation in self.senseTranslations.all().order_by('translations__translation__index'):
             str_sense .append(str(sensetranslation))
         return " | ".join(str_sense)
 
@@ -2120,27 +2122,29 @@ class Gloss(models.Model):
         # Preventing circular import
         from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
 
-        # Backup the existing video objects stored in the database
-        existing_videos = GlossVideo.objects.filter(gloss=self)
-        for video_object in existing_videos:
-            video_object.reversion(revert=False)
-
         # Create a new GlossVideo object
-        if isinstance(videofile, File):
+        if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = GlossVideo(gloss=self)
+
+            # Backup the existing video objects stored in the database
+            existing_videos = GlossVideo.objects.filter(gloss=self)
+            for video_object in existing_videos:
+                video_object.reversion(revert=False)
+
+            # Create a GlossVideoHistory object
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, get_video_file_path(video, str(videofile)))
+            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+                                                uploadfile=videofile, goal_location=video_file_full_path)
+            glossvideohistory.save()
+
+            # Save the new videofile in the video object
             video.videofile.save(get_video_file_path(video, str(videofile)), videofile)
         else:
-            video = GlossVideo(videofile=videofile, gloss=self)
+            return GlossVideo(gloss=self)
         video.save()
         video.ch_own_mod_video()
         video.make_small_video()
         video.make_poster_image()
-
-        # Create a GlossVideoHistory object
-        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
-        glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
-                                              uploadfile=videofile, goal_location=video_file_full_path)
-        glossvideohistory.save()
 
         return video
 
