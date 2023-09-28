@@ -12,7 +12,7 @@ function preventDefaults(e) {
  * @param {label} inputArea normally "no file chosen"
  * @param {label} typeButtons the button to choose a file
  * @param {div} typeGallery the gallery that shows file previews
- * @param {string} fileType either "video/mp4" or "image/jpeg"
+ * @param {string} fileType either "video/mp4", "video/quicktime" or "image/jpeg"
  * @param {string} fileTypeT either "video" or "image"
  */
  function highlight(e, dropContainerStatus, dropContainerTitle, dropArea, inputArea, typeButtons, typeGallery, fileType, fileTypeT) {
@@ -56,7 +56,7 @@ function unhighlight(e, dropArea, inputArea, dropContainerTitle, dropContainerSt
  * Check if the input file is allowed to be uploaded
  * in this case: if it is 1 file and of the right type
  * @param {event} e event
- * @param {string} file_type either "video/mp4" or "image/jpeg"
+ * @param {string} file_type either "video/mp4", "video/quicktime" or "image/jpeg"
  * @param {string} file_placeholder either "video" or "image"
  * @returns {string} feedback string to view during hovering
  */
@@ -65,7 +65,7 @@ function checkinput(e, file_type, file_placeholder) {
     if (inputfiles.length != 1) {
         return "Only 1 file accepted";
     }
-    else if (inputfiles[0].type != file_type){
+    else if (!file_type.includes(inputfiles[0].type)){
         return "Only "+file_placeholder+" files accepted";
     }
     else{
@@ -77,7 +77,7 @@ function checkinput(e, file_type, file_placeholder) {
  * If upload through regular input button, also show previews in gallery
  * @param {event} files event
  * @param {string} dropContainerTitle normally "Drop here..."
- * @param {string} fileType either "video/mp4" or "image/jpeg"
+ * @param {string} fileType either "video/mp4", "video/quicktime" or "image/jpeg"
  * @param {string} fileTypeP either "video" or "img" for making gallery element
  * @param {label} inputArea normally "no file chosen"
  * @param {div} typeGallery the gallery that shows file previews
@@ -88,7 +88,7 @@ function handleByButton(files, dropContainerTitle, fileType, fileTypeP, inputAre
         inputArea.value = '';
         removeUploads(true, inputArea, dropContainerTitle, typeGallery)
     }
-    else if (files[0].type == fileType) {
+    else if (fileType.includes(files[0].type)) {
         dropContainerTitle.classList.add('hide');
         previewFile(files[0], fileTypeP, typeGallery)
     }
@@ -111,7 +111,7 @@ function handleByButton(files, dropContainerTitle, fileType, fileTypeP, inputAre
 /**
  * If upload through drag&drop, empty gallery and show new previews
  * @param {event} e event
- * @param {string} fileType either "video/mp4" or "image/jpeg"
+ * @param {string} fileType either "video/mp4", "video/quicktime" or "image/jpeg"
  * @param {string} fileTypeT either "video" or "image"
  * @param {string} fileTypeP either "video" or "img" for making gallery element
  * @param {label} inputArea normally "no file chosen"
@@ -206,7 +206,8 @@ let videoGallery = document.getElementById('videogallery')
 })
 
 function highlightvideo(e) {
-    highlight(e, dropContainerVideoStatus, dropContainerVideoTitle, dropVideoArea, inputVideoArea, videoButtons, videoGallery, 'video/mp4', 'video')
+    const allowed_file_types = ["video/mp4","video/quicktime"]
+    highlight(e, dropContainerVideoStatus, dropContainerVideoTitle, dropVideoArea, inputVideoArea, videoButtons, videoGallery, allowed_file_types, 'video')
 }
 
 function unhighlightvideo(e) {
@@ -215,12 +216,14 @@ function unhighlightvideo(e) {
 
 function handleVideoByButton(files) {
     removeVideoUploads(false)
-    handleByButton(files, dropContainerVideoTitle, 'video/mp4', 'video', inputVideoArea, videoGallery)
+    const allowed_file_types = ["video/mp4","video/quicktime"]
+    handleByButton(files, dropContainerVideoTitle, allowed_file_types, 'video', inputVideoArea, videoGallery)
 }
 
 dropVideoArea.addEventListener('drop', handleVideoDrop, false)
 function handleVideoDrop(e) {
-    handleDrop(e, 'video/mp4', 'video', 'video', inputVideoArea, videoGallery, dropContainerVideoTitle)
+    const allowed_file_types = ["video/mp4","video/quicktime"]
+    handleDrop(e, allowed_file_types, 'video', 'video', inputVideoArea, videoGallery, dropContainerVideoTitle)
 }
 
 function removeVideoUploads(remove_file_name){
@@ -257,7 +260,7 @@ if (image === true){
     })
 
     function highlightimage(e) {
-        highlight(e, dropContainerImageStatus, dropContainerImageTitle, dropImageArea, inputImageArea, imageButtons, imageGallery, 'image/jpeg', 'image')
+        highlight(e, dropContainerImageStatus, dropContainerImageTitle, dropImageArea, inputImageArea, imageButtons, imageGallery, ['image/jpeg'], 'image')
     }
 
     function unhighlightimage(e) {
@@ -266,12 +269,12 @@ if (image === true){
 
     function handleImageByButton(files) {
         removeImageUploads(false)
-        handleByButton(files, dropContainerImageTitle, 'image/jpeg', 'img', inputImageArea, imageGallery)
+        handleByButton(files, dropContainerImageTitle, ['image/jpeg'], 'img', inputImageArea, imageGallery)
     }
 
     dropImageArea.addEventListener('drop', handleImageDrop, false)
     function handleImageDrop(e) {
-        handleDrop(e, 'image/jpeg', 'image', 'img', inputImageArea, imageGallery, dropContainerImageTitle)
+        handleDrop(e, ['image/jpeg'], 'image', 'img', inputImageArea, imageGallery, dropContainerImageTitle)
     }
 
     function removeImageUploads(remove_file_name){
