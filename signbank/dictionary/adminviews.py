@@ -72,7 +72,7 @@ from signbank.frequency import import_corpus_speakers, configure_corpus_document
     eaf_file_from_paths, documents_paths_dictionary
 from signbank.dictionary.frequency_display import collect_speaker_age_data, collect_variants_data, collect_variants_age_range_data, \
                                                     collect_variants_age_sex_raw_percentage
-from signbank.dictionary.senses_display import senses_per_language, senses_per_language_list, senses_per_language_dict
+from signbank.dictionary.senses_display import sensetranslations_per_language, sensetranslations_per_language_list, sensetranslations_per_language_dict
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
@@ -2194,7 +2194,7 @@ class GlossRelationsDetailView(DetailView):
                     continue
                 # This display is set to the default language for the dataset of this gloss
                 target_display = oth_rel.target.annotation_idgloss(oth_rel.target.lemma.dataset.default_language.language_code_2char)
-                otherrelations.append((oth_rel, senses_per_language(oth_rel.target), target_display))
+                otherrelations.append((oth_rel, sensetranslations_per_language(oth_rel.target), target_display))
 
         context['otherrelations'] = otherrelations
 
@@ -2211,7 +2211,7 @@ class GlossRelationsDetailView(DetailView):
             for gl_var in has_variants:
                 # This display is set to the default language for the dataset of the variant
                 gl_var_display = gl_var.annotation_idgloss(gl_var.lemma.dataset.default_language.language_code_2char)
-                variants.append((gl_var, senses_per_language(gl_var), gl_var_display))
+                variants.append((gl_var, sensetranslations_per_language(gl_var), gl_var_display))
 
         context['variants'] = variants
 
@@ -2250,9 +2250,8 @@ class GlossRelationsDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
         context['dataset_languages'] = dataset_languages
 
-        context['sensetranslations_per_language'] = senses_per_language(gl)
-        context['sensetranslations_per_language_dict'] = senses_per_language_dict(gl)
-        context['sensetranslations_per_language'] = sensetranslations_per_language
+        context['sensetranslations_per_language'] = sensetranslations_per_language(gl)
+        context['sensetranslations_per_language_dict'] = sensetranslations_per_language_dict(gl)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -6632,7 +6631,7 @@ def glosslist_ajax_complete(request, gloss_id):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
 
-    sensetranslations_per_language = senses_per_language_list(this_gloss)
+    sensetranslations_per_language = sensetranslations_per_language_list(this_gloss)
 
     column_values = []
     for fieldname in display_fields:
@@ -6804,7 +6803,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
 
-    sensetranslations_per_language = senses_per_language_list(this_gloss)
+    sensetranslations_per_language = sensetranslations_per_language_list(this_gloss)
 
     column_values = []
     gloss_list_display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS

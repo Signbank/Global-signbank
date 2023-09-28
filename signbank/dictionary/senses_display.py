@@ -1,7 +1,7 @@
 from signbank.dictionary.models import *
 
 
-def senses_per_language(gloss):
+def sensetranslations_per_language(gloss):
     # Put senses per language in a dictionary that maps dataset languages to list of strings
     sensetranslations_per_language = dict()
     if not gloss:
@@ -23,7 +23,7 @@ def senses_per_language(gloss):
     return sensetranslations_per_language
 
 
-def senses_per_language_list(gloss):
+def sensetranslations_per_language_list(gloss):
     # Put senses per language in a list of pairs, language plus dictionary of sense number to list of strings
     sensetranslations_per_language = []
     if not gloss:
@@ -41,7 +41,7 @@ def senses_per_language_list(gloss):
     return sensetranslations_per_language
 
 
-def senses_per_language_dict(gloss):
+def sensetranslations_per_language_dict(gloss):
     # Put senses per language in a dict of dicts, language plus dictionary of sense number to list of strings
     sensetranslations_per_language = {}
     if not gloss:
