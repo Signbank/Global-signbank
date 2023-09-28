@@ -72,7 +72,7 @@
       <div>
       {% with sensetranslations|to_all_keys as sensetranslations %}
         {% for key, value in sensetranslations.items %}
-            {% if value != "" %}{{key}}. {% endif %}{{ value|safe }}{% if not forloop.last %}<br> {% endif %}
+            {% if value != "" %}{{key}}. {{ value|safe }}{% endif %}{% if not forloop.last %}<br> {% endif %}
         {% endfor %}
       {% endwith %}
       </div>

@@ -413,6 +413,7 @@ def update_sense(request, senseid):
     for dataset_language in dataset_languages:
         if str(dataset_language) in request.POST:
             values = request.POST[str(dataset_language)].splitlines()
+            values = [v for v in values if v != '']
             if len(values) > 0:
                 processed_values = []
                 for _, v in enumerate(values): 
@@ -478,7 +479,7 @@ def update_sense(request, senseid):
                                                                  language=dataset_language,
                                                                  gloss=gloss,
                                                                  orderIndex=gloss_senses_count)
-                    translation.index = tr_i
+                    translation.index = tr_i+1
                     translation.save()
                     sensetranslation.translations.add(translation)
 
@@ -520,7 +521,7 @@ def update_sense(request, senseid):
 
                 #Reorder the translation indexes
                 for translation in sensetranslation.translations.all():
-                    translation.index = vals[dataset_language.name].index(translation.translation.text)
+                    translation.index = vals[dataset_language.name].index(translation.translation.text)+1
                     translation.save()
 
     # add update sense to revision history, indicated by both old and new values
@@ -600,7 +601,7 @@ def create_sense(request, glossid):
                                                   language=dataset_language,
                                                   gloss=gloss,
                                                   orderIndex=gloss_senses_count,
-                                                  index=inx)
+                                                  index=inx+1)
                         translation.save()
                         sensetranslation.translations.add(translation)
 
