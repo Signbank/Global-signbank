@@ -745,16 +745,18 @@ class Sense(models.Model):
 
         if exclude_empty:
             sense_translations = self.senseTranslations.all().exclude(
-                translations__translation__text__isnull=True).values('language', 'translations__translation__text')
+                translations__translation__text__isnull=True).order_by(
+                'translations__translation__index').values('language', 'translations__translation__text')
         else:
-            sense_translations = self.senseTranslations.all().values('language', 'translations__translation__text')
+            sense_translations = self.senseTranslations.all().order_by(
+                'translations__translation__index').values('language', 'translations__translation__text')
 
         for values in sense_translations:
             language = languages_lookup[values['language']]
             trans = values['translations__translation__text']
             if language not in sense_translations_per_language.keys():
                 sense_translations_per_language[language] = []
-            if not trans and exclude_empty:
+            if not trans:
                 continue
             sense_translations_per_language[language].append(trans)
 
@@ -824,7 +826,7 @@ class Sense(models.Model):
     def __str__(self):
         """Return the string representation of the sense, separated by | for every sensetranslation"""	
         str_sense = []
-        for sensetranslation in self.senseTranslations.all():
+        for sensetranslation in self.senseTranslations.all().order_by('translations__translation__index'):
             str_sense .append(str(sensetranslation))
         return " | ".join(str_sense)
 
