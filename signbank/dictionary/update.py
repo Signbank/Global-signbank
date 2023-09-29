@@ -416,14 +416,14 @@ def update_sense(request, senseid):
             values = [v for v in input_values if v != '']
             if values:
                 vals[str(dataset_language)]=values
-    
+
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, _('No keywords given for edited sense.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     
     # Check if this sense changed at all
-    sense = Sense.objects.get(id = senseid)
+    sense = Sense.objects.get(id=senseid)
 
     # save the old value for revision history, store it as a string before updating it
     sense_old_value = str(sense)
@@ -437,20 +437,22 @@ def update_sense(request, senseid):
     gloss_senses = GlossSense.objects.filter(gloss_id=gloss.id, sense=sense)
 
     if not gloss_senses.count():
-        messages.add_message(request, messages.ERROR, _('Sense not found for gloss.'))
+        messages.add_message(request, messages.ERROR, _('GlossSense not found for gloss.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
     if gloss_senses.count() > 1:
-        messages.add_message(request, messages.ERROR, _('Sense duplicate found for gloss.'))
+        messages.add_message(request, messages.ERROR, _('GlossSense duplicate found for gloss.'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     # Check if sense already exists in this gloss
     for existing_sense in gloss.senses.all():
+        if existing_sense == sense:
+            continue
         if vals == existing_sense.get_sense_translations_dict_without_list():
             messages.add_message(request, messages.ERROR, _('This sense was already in this gloss.'))
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
 
     # Update sensetranslations
-    gloss_senses_count = gloss.senses.count()
+    this_sense_order = gloss_senses.first().order
 
     for dataset_language in dataset_languages:
         # sense translation is added, so create it if it doesn't already exist
@@ -468,7 +470,7 @@ def update_sense(request, senseid):
                 matching_translations = Translation.objects.filter(translation=keyword,
                                                          language=dataset_language,
                                                          gloss=gloss,
-                                                         orderIndex=gloss_senses_count)
+                                                         orderIndex=this_sense_order)
                 if matching_translations.count() > 1:
                     print('update_sense multiple Translation objects found for sense: ', matching_translations)
                 translation = matching_translations.first()
@@ -476,7 +478,7 @@ def update_sense(request, senseid):
                     translation = Translation(translation=keyword,
                                               language=dataset_language,
                                               gloss=gloss,
-                                              orderIndex=gloss_senses_count,
+                                              orderIndex=this_sense_order,
                                               index=inx)
                     translation.save()
                 else:
@@ -514,7 +516,7 @@ def update_sense(request, senseid):
                     matching_translations = Translation.objects.filter(translation=keyword,
                                                                        language=dataset_language,
                                                                        gloss=gloss,
-                                                                       orderIndex=gloss_senses_count)
+                                                                       orderIndex=this_sense_order)
                     if matching_translations.count() > 1:
                         print('update_sense multiple Translation objects found for sense: ', matching_translations)
                     translation = matching_translations.first()
@@ -523,7 +525,7 @@ def update_sense(request, senseid):
                         translation = Translation(translation=keyword,
                                                   language=dataset_language,
                                                   gloss=gloss,
-                                                  orderIndex=gloss_senses_count,
+                                                  orderIndex=this_sense_order,
                                                   index=inx)
                         translation.save()
                     else:
@@ -588,7 +590,7 @@ def create_sense(request, glossid):
     sense = Sense.objects.create()
     gloss.senses.add(sense, through_defaults={'order':gloss.senses.count()+1})
     # this is the order of the new sense
-    gloss_senses_count = gloss.senses.count()
+    new_order_gloss_senses = gloss.senses.count()
 
     with atomic():
         for dataset_language in dataset_languages:
@@ -609,7 +611,7 @@ def create_sense(request, glossid):
                     translation = Translation(translation=keyword,
                                               language=dataset_language,
                                               gloss=gloss,
-                                              orderIndex=gloss_senses_count,
+                                              orderIndex=new_order_gloss_senses,
                                               index=inx)
                     translation.save()
                     sensetranslation.translations.add(translation)
