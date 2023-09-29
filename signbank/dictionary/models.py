@@ -12,6 +12,8 @@ from django.utils.timezone import now
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.db import DatabaseError, IntegrityError
+from django.db.transaction import TransactionManagementError
 from django.core.files import File
 import tagging
 import re
@@ -833,7 +835,8 @@ class Sense(models.Model):
         str_sense = []
         this_sense_translations = self.senseTranslations.all()
         for sensetranslation in this_sense_translations:
-            str_sense.append(str(sensetranslation))
+            this_translation = str(sensetranslation)
+            str_sense.append(this_translation)
         return " | ".join(str_sense)
 
 
@@ -1248,18 +1251,26 @@ class Gloss(models.Model):
             return str(self.id)
 
     def reorder_senses(self):
-        "when a sense is deleted, the senses should be reordered"
-        for sense_i, sense in enumerate(self.ordered_senses().all()):
-            glossense = GlossSense.objects.all().get(gloss=self, sense=sense)
-            glossense.order = sense_i+1
-            glossense.save()
-        for glosssense in GlossSense.objects.filter(gloss=self).order_by('order'):
-            for sensetrans in glosssense.sense.senseTranslations.all():
-                translations = sensetrans.translations.all().order_by('index', 'translation__text')
+        """when a sense is deleted, the senses should be reordered"""
+        glosssenses_of_this_gloss = GlossSense.objects.filter(gloss=self).order_by('order')
+        for inx, glosssense in enumerate(glosssenses_of_this_gloss, 1):
+            glosssense.order = inx
+            glosssense.save()
+            sense_translations_this_sense = glosssense.sense.senseTranslations.all()
+            for sensetrans in sense_translations_this_sense:
+                translations = sensetrans.translations.all().order_by('orderIndex', 'index')
                 for index, trans in enumerate(translations, 1):
-                    trans.orderIndex = glosssense.order
-                    trans.index = index
-                    trans.save()
+                    try:
+                        trans.orderIndex = inx
+                        trans.save()
+                    except (DatabaseError, IntegrityError, TransactionManagementError):
+                        print('reorder_senses exception saving translation to other sense, removing offender')
+                        print("'gloss': ", str(self.id), ", 'sense': ", str(inx),
+                              ", 'orderIndex': ", str(trans.orderIndex), ", 'language': ", str(trans.language),
+                              ", 'index': ", str(trans.index), ", 'translation_id': ", str(trans.id),
+                              ", 'translation.text': ", trans.translation.text)
+                        sensetrans.translations.remove(trans)
+                        trans.delete()
 
     def annotation_idgloss(self, language_code):
         # this function is used in Relations View to dynamically get the Annotation of related glosses

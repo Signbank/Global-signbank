@@ -1668,8 +1668,7 @@ class GlossDetailView(DetailView):
             sense_to_similar_senses[sns] = sns.get_senses_with_similar_sensetranslations_dict()
 
         context['sense_to_similar_senses'] = sense_to_similar_senses
-        if settings.DEBUG_SENSES:
-            print('Similar Senses: ', str(gl.id), sense_to_similar_senses)
+
         bad_dialect = False
         gloss_dialects = []
 
