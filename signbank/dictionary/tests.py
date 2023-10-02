@@ -3723,6 +3723,9 @@ class SensesCRUDTests(TestCase):
         assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.add_gloss', self.user)
         assign_perm('dictionary.add_sense', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        assign_perm('dictionary.change_sense', self.user)
+        assign_perm('dictionary.delete_sense', self.user)
         assign_perm('can_view_dataset', self.user, test_dataset)
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
@@ -3789,3 +3792,47 @@ class SensesCRUDTests(TestCase):
         response = client.get('/signs/search/', {'hasmultiplesenses': 'yes'})
         self.assertEqual(len(response.context['object_list']), 1)
         print('New gloss with two senses found.')
+
+        # Try to update the first sense to the values of the second sense
+        print("Try to update the first sense to the values of the second sense.")
+        first_sense = new_gloss_senses.first()
+        update_sense_1_form_data = {'dataset': test_dataset.id, 'glossid': str(new_gloss.id)}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["sense_2_keyword_1_" + language.language_code_2char,
+                                           "sense_2_keyword_2_" + language.language_code_2char])
+            update_sense_1_form_data[str(language)] = language_keywords
+        response = client.post('/dictionary/update/sense/'+str(first_sense.id), update_sense_1_form_data, follow=True)
+        self.assertContains(response, "This sense was already in this gloss.")
+        print("This sense was already in this gloss.")
+
+        # Try to update without changing sense
+        print("Try to update without changing sense")
+        update_sense_1_form_data = {'dataset': test_dataset.id, 'glossid': str(new_gloss.id)}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["sense_1_keyword_1_" + language.language_code_2char,
+                                           "sense_1_keyword_2_" + language.language_code_2char])
+            update_sense_1_form_data[str(language)] = language_keywords
+        response = client.post('/dictionary/update/sense/'+str(first_sense.id), update_sense_1_form_data, follow=True)
+        self.assertContains(response, "Sense did not change.")
+        print("Sense did not change.")
+
+        # Try to update without changing sense
+        print("Try to update the first sense keywords")
+        update_sense_1_form_data = {'dataset': test_dataset.id, 'glossid': str(new_gloss.id)}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["sense_1_updated_keyword_1_" + language.language_code_2char,
+                                           "sense_1_keyword_2_" + language.language_code_2char,
+                                           "sense_1_new_keyword_3_" + language.language_code_2char])
+            update_sense_1_form_data[str(language)] = language_keywords
+        response = client.post('/dictionary/update/sense/'+str(first_sense.id), update_sense_1_form_data, follow=True)
+        self.assertContains(response, "Given sense was updated.")
+        print("Given sense was updated.")
+
+        # Try to update without changing sense
+        print("Try to delete the first sense.")
+        print("The gloss senses are reordered after deletion.")
+        delete_sense_1_form_data = {'dataset': test_dataset.id, 'senseid': str(first_sense.id)}
+        response = client.post('/dictionary/update/deletesense/'+str(new_gloss.id), delete_sense_1_form_data, follow=True)
+        new_gloss_senses = new_gloss.senses.all()
+        self.assertEqual(len(new_gloss_senses), 1)
+        print("The sense was successfully deleted.")
