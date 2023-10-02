@@ -3704,7 +3704,6 @@ class SensesCRUDTests(TestCase):
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
         self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
-        self.user.user_permissions.add(Permission.objects.get(name='Can change sense'))
         self.user.save()
         self.userprofile = UserProfile(user=self.user)
         self.userprofile.save()
@@ -3722,10 +3721,7 @@ class SensesCRUDTests(TestCase):
         test_dataset = Dataset.objects.get(name=dataset_name)
         assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.add_gloss', self.user)
-        assign_perm('dictionary.add_sense', self.user)
         assign_perm('dictionary.change_gloss', self.user)
-        assign_perm('dictionary.change_sense', self.user)
-        assign_perm('dictionary.delete_sense', self.user)
         assign_perm('can_view_dataset', self.user, test_dataset)
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
@@ -3762,7 +3758,7 @@ class SensesCRUDTests(TestCase):
         gloss_senses = new_gloss.senses.all()
 
         self.assertEqual(len(gloss_senses), 0)
-        print('New gloss has no senses yet.')
+        print('New gloss has no senses.')
 
         # Construct the Create Sense form data
         create_sense_form_data = {'dataset': test_dataset.id}
@@ -3770,7 +3766,16 @@ class SensesCRUDTests(TestCase):
             language_keywords = '\n'.join(["sense_1_keyword_1_" + language.language_code_2char,
                                            "sense_1_keyword_2_" + language.language_code_2char])
             create_sense_form_data[str(language)] = language_keywords
-        response = client.post('/dictionary/update/addsense/'+str(new_gloss.id), create_sense_form_data)
+
+        # User does not have permission to add a sense. Creating a sense should fail.
+        print('Test permission to create sense.')
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss.id), create_sense_form_data, follow=True)
+        self.assertContains(response, "Sense Creation Not Allowed")
+
+        # Give the test user permission to create a sense
+        print('Grant permission to create sense.')
+        assign_perm('dictionary.add_sense', self.user)
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss.id), create_sense_form_data, follow=True)
 
         new_gloss_senses = new_gloss.senses.all()
         self.assertEqual(len(new_gloss_senses), 1)
@@ -3794,13 +3799,24 @@ class SensesCRUDTests(TestCase):
         print('New gloss with two senses found.')
 
         # Try to update the first sense to the values of the second sense
-        print("Try to update the first sense to the values of the second sense.")
         first_sense = new_gloss_senses.first()
         update_sense_1_form_data = {'dataset': test_dataset.id, 'glossid': str(new_gloss.id)}
         for language in test_dataset.translation_languages.all():
             language_keywords = '\n'.join(["sense_2_keyword_1_" + language.language_code_2char,
                                            "sense_2_keyword_2_" + language.language_code_2char])
             update_sense_1_form_data[str(language)] = language_keywords
+
+        # Try without permission
+        print("Try to update the first sense without permission.")
+        response = client.post('/dictionary/update/sense/'+str(first_sense.id), update_sense_1_form_data, follow=True)
+        self.assertContains(response, "Sense Update Not Allowed")
+        print("Sense Update Not Allowed")
+
+        # Give the test user permission to update senses
+        print('Grant permission to update sense.')
+        assign_perm('dictionary.change_sense', self.user)
+
+        print("Try to update the first sense to the values of the second sense.")
         response = client.post('/dictionary/update/sense/'+str(first_sense.id), update_sense_1_form_data, follow=True)
         self.assertContains(response, "This sense was already in this gloss.")
         print("This sense was already in this gloss.")
@@ -3828,10 +3844,20 @@ class SensesCRUDTests(TestCase):
         self.assertContains(response, "Given sense was updated.")
         print("Given sense was updated.")
 
-        # Try to update without changing sense
+        # Try to delete a sense without permission
+        print("Try to delete the first sense without permission.")
+        delete_sense_1_form_data = {'dataset': test_dataset.id, 'senseid': str(first_sense.id)}
+        response = client.post('/dictionary/update/deletesense/'+str(new_gloss.id), delete_sense_1_form_data, follow=True)
+
+        self.assertContains(response, "Sense Deletion Not Allowed")
+        print("Sense Deletion Not Allowed")
+
+        # Give the test user permission to delete senses
+        print('Grant permission to delete sense.')
+        assign_perm('dictionary.delete_sense', self.user)
+
         print("Try to delete the first sense.")
         print("The gloss senses are reordered after deletion.")
-        delete_sense_1_form_data = {'dataset': test_dataset.id, 'senseid': str(first_sense.id)}
         response = client.post('/dictionary/update/deletesense/'+str(new_gloss.id), delete_sense_1_form_data, follow=True)
         new_gloss_senses = new_gloss.senses.all()
         self.assertEqual(len(new_gloss_senses), 1)

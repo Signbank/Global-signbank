@@ -399,15 +399,21 @@ def link_sense(request, senseid):
 def update_sense(request, senseid):
     """View to update a sense model from the editable modal"""
 
-    if not request.user.has_perm('dictionary.change_sense'):
-        return HttpResponseForbidden("Sense Update Not Allowed")
-
     if not request.method == "POST":
         return HttpResponseForbidden("Sense Update method must be POST")
-    
+
+    if 'glossid' not in request.POST:
+        return HttpResponseForbidden("Sense Update missing gloss id")
+
+    glossid = request.POST['glossid']
+
+    if not request.user.has_perm('dictionary.change_sense'):
+        messages.add_message(request, messages.ERROR, _('Sense Update Not Allowed'))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+
     # Make a dict of new values
-    gloss = Gloss.objects.all().get(id = request.POST['glossid'])
-    dataset = Dataset.objects.get(id = request.POST['dataset'])
+    gloss = Gloss.objects.all().get(id=glossid)
+    dataset = Dataset.objects.get(id=request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
     vals = {}
     for dataset_language in dataset_languages:
@@ -554,12 +560,13 @@ def update_sense(request, senseid):
 def create_sense(request, glossid):
     """View to create a sense model from the editable modal"""
 
-    if not request.user.has_perm('dictionary.add_sense'):
-        return HttpResponseForbidden("Sense Creation Not Allowed")
-
     if not request.method == "POST":
         return HttpResponseForbidden("Sense Creation method must be POST")
-    
+
+    if not request.user.has_perm('dictionary.add_sense'):
+        messages.add_message(request, messages.ERROR, _('Sense Creation Not Allowed'))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+
     # Make a dict of new values
     gloss = Gloss.objects.get(id=glossid)
     dataset = Dataset.objects.get(id = request.POST['dataset'])
@@ -633,11 +640,12 @@ def create_sense(request, glossid):
 def delete_sense(request, glossid):
     """View to delete a sense model from the editable modal"""
 
-    if not request.user.has_perm('dictionary.delete_sense'):
-        return HttpResponseForbidden("Sense Deletion Not Allowed")
-
     if not request.method == "POST":
         return HttpResponseForbidden("Sense Deletion method must be POST")
+
+    if not request.user.has_perm('dictionary.delete_sense'):
+        messages.add_message(request, messages.ERROR, _('Sense Deletion Not Allowed'))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
     
     sense = Sense.objects.get(id=request.POST['senseid'])
     gloss = Gloss.objects.get(id=glossid)
