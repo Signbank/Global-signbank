@@ -3749,7 +3749,7 @@ class SensesCRUDTests(TestCase):
                                      lemma__lemmaidglosstranslation__text__exact="lemmaidglosstranslation_test_"
                                                                                  + language.language_code_2char)
 
-        self.assertEqual(len(glosses), 1)
+        self.assertEqual(glosses.count(), 1)
         print('CRUD Tests Senses.')
         print('New gloss successfully created.')
 
@@ -3879,3 +3879,106 @@ class SensesCRUDTests(TestCase):
         response = client.get('/signs/search/', {'hasmultiplesenses': 'yes'})
         self.assertEqual(len(response.context['object_list']), 0)
         print('No glosses with multiple senses found.')
+
+    def test_Similar_Senses(self):
+        # Create Client and log in
+        client = Client()
+        logged_in = client.login(username='test-user', password='test-user')
+        # Get the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        assign_perm('dictionary.add_sense', self.user)
+
+        assign_perm('can_view_dataset', self.user, test_dataset)
+        assign_perm('dictionary.search_gloss', self.user)
+        self.user.save()
+
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
+
+        print('Similar Senses Tests.')
+
+        # Construct the Create Gloss form data
+        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
+        for language in test_dataset.translation_languages.all():
+            create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
+                "gloss_1_annotationidglosstranslation_test_" + language.language_code_2char
+            create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
+                "gloss_1_lemmaidglosstranslation_test_" + language.language_code_2char
+
+        response = client.post('/dictionary/update/gloss/', create_gloss_form_data, follow=True)
+
+        # Construct a second Create Gloss form data
+        create_gloss_2_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
+        for language in test_dataset.translation_languages.all():
+            create_gloss_2_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
+                "gloss_2_annotationidglosstranslation_test_" + language.language_code_2char
+            create_gloss_2_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
+                "gloss_2_lemmaidglosstranslation_test_" + language.language_code_2char
+
+        response = client.post('/dictionary/update/gloss/', create_gloss_2_form_data, follow=True)
+
+        glosses = Gloss.objects.filter(lemma__dataset=test_dataset).order_by('id')
+        self.assertEqual(glosses.count(), 2)
+        print('Two glosses successfully created.')
+
+        new_gloss_1 = glosses.first()
+        new_gloss_2 = glosses.last()
+        self.assertNotEqual(new_gloss_1.id, new_gloss_2.id)
+
+        gloss_1_senses = new_gloss_1.senses.all()
+        gloss_2_senses = new_gloss_2.senses.all()
+
+        self.assertEqual(len(gloss_1_senses), 0)
+        self.assertEqual(len(gloss_2_senses), 0)
+        print('New glosses have no senses.')
+
+        # Construct the Create Sense form data
+        gloss_1_create_sense_form_data = {'dataset': test_dataset.id}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["keyword_1_" + language.language_code_2char,
+                                           "keyword_2_" + language.language_code_2char])
+            gloss_1_create_sense_form_data[str(language)] = language_keywords
+
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss_1.id), gloss_1_create_sense_form_data, follow=True)
+
+        new_gloss_1_senses = new_gloss_1.senses.all()
+        self.assertEqual(len(new_gloss_1_senses), 1)
+        print('Sense for gloss 1 successfully created: ', new_gloss_1_senses.first())
+
+        # Construct a sense for gloss 2
+        gloss_2_create_sense_form_data = {'dataset': test_dataset.id}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["keyword_2_" + language.language_code_2char,
+                                           "keyword_3_" + language.language_code_2char])
+            gloss_2_create_sense_form_data[str(language)] = language_keywords
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss_2.id), gloss_2_create_sense_form_data, follow=True)
+
+        new_gloss_2_senses = new_gloss_2.senses.all()
+        self.assertEqual(len(new_gloss_2_senses), 1)
+        print('Sense for gloss 2 successfully created: ', new_gloss_2_senses.first())
+
+        print('Search for glosses with senses matching keyword_2')
+        # Search for the gloss
+        response = client.get('/signs/search/', {'translation': 'keyword_2'})
+        self.assertEqual(len(response.context['object_list']), 2)
+        print('Both glosses found.')
+
+        print('Check similar senses of gloss 1.')
+        gloss_1_similar_senses = new_gloss_1_senses.first().get_senses_with_similar_sensetranslations_dict(new_gloss_1)
+        for similar_senses in gloss_1_similar_senses:
+            sense_in_glosses = similar_senses['inglosses']
+            for annotation, glossid in sense_in_glosses:
+                self.assertEqual(glossid, str(new_gloss_2.id))
+                print('Gloss 2 included in similar glosses of gloss 1.')
+
+        print('Check similar senses of gloss 2.')
+        gloss_2_similar_senses = new_gloss_2_senses.first().get_senses_with_similar_sensetranslations_dict(new_gloss_2)
+        for similar_senses in gloss_2_similar_senses:
+            sense_in_glosses = similar_senses['inglosses']
+            for annotation, glossid in sense_in_glosses:
+                self.assertEqual(glossid, str(new_gloss_1.id))
+                print('Gloss 1 included in similar glosses of gloss 2.')
