@@ -3798,8 +3798,19 @@ class SensesCRUDTests(TestCase):
         self.assertEqual(len(response.context['object_list']), 1)
         print('New gloss with two senses found.')
 
-        # Try to update the first sense to the values of the second sense
+        print('Reorder senses via the down arrow.')
         first_sense = new_gloss_senses.first()
+        last_sense = new_gloss_senses.last()
+        self.assertNotEqual(first_sense, last_sense)
+        response = client.post('/dictionary/update/sortsense/'+str(new_gloss.id)+'/'+str(first_sense.id)+'/down',
+                               follow=True)
+        new_gloss_senses_reordered_senses = GlossSense.objects.filter(gloss=new_gloss).order_by('order')
+        self.assertEqual(new_gloss_senses_reordered_senses.first().sense, last_sense)
+        self.assertEqual(new_gloss_senses_reordered_senses.last().sense, first_sense)
+        print('The senses have successfully switched order.')
+
+        # Try to update the first sense (now in the last position) to the values of the second sense
+        first_sense = new_gloss_senses_reordered_senses.last().sense
         update_sense_1_form_data = {'dataset': test_dataset.id, 'glossid': str(new_gloss.id)}
         for language in test_dataset.translation_languages.all():
             language_keywords = '\n'.join(["sense_2_keyword_1_" + language.language_code_2char,
@@ -3862,3 +3873,9 @@ class SensesCRUDTests(TestCase):
         new_gloss_senses = new_gloss.senses.all()
         self.assertEqual(len(new_gloss_senses), 1)
         print("The sense was successfully deleted.")
+
+        print('Search for glosses with multiple senses.')
+        # Search for the gloss again
+        response = client.get('/signs/search/', {'hasmultiplesenses': 'yes'})
+        self.assertEqual(len(response.context['object_list']), 0)
+        print('No glosses with multiple senses found.')
