@@ -810,7 +810,7 @@ class Sense(models.Model):
         for translation in similar_translations:
             # check in which other senses the translation is present
             # use a separate variable since the senses_done_pk is being updated
-            other_senses = Sense.objects.filter(senseTranslations__translations__translation=translation.translation,
+            other_senses = Sense.objects.filter(senseTranslations__translations__translation__text=translation.translation.text,
                                                 glosssense__gloss__lemma__dataset=this_dataset).exclude(
                                                 pk=self.pk).exclude(pk__in=senses_done_pk).exclude(
                                                 glosssense__gloss=gloss_detail_view)
