@@ -995,7 +995,7 @@ option:not(:checked) {
                                             </div>
                                         </div>
                                     {% endif %}
-                                    {% with sense_to_similar_senses|get_item:sense as similar_senses %}
+                                    {% with sense_to_similar_senses|get_item:sense.id as similar_senses %}
                                     {% if similar_senses %}
                                         <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
                                         <div class="modal fade" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
@@ -1029,8 +1029,8 @@ option:not(:checked) {
                                                                 {% for key, value in similar_sense.items %}
                                                                     {% if key|slugify == 'inglosses' %}
                                                                         <td>
-                                                                        {% for found_gloss in value %}
-                                                                            <a href="{{found_gloss.1}}">{{found_gloss.0}}</a>
+                                                                        {% for found_gloss_ann, found_gloss_id in value %}
+                                                                            <a href="{{PREFIX_URL}}/dictionary/gloss/{{found_gloss_id}}">{{found_gloss_ann}} ({{found_gloss_id}})</a>
                                                                         {% endfor %}
                                                                         </td>
                                                                     {% endif %}

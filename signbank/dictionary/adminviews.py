@@ -1665,7 +1665,8 @@ class GlossDetailView(DetailView):
 
         sense_to_similar_senses = dict()
         for sns in context['senses']:
-            sense_to_similar_senses[sns] = sns.get_senses_with_similar_sensetranslations_dict()
+            # use the sns.id as the domain rather than a sense object since this is being used in the template
+            sense_to_similar_senses[sns.id] = sns.get_senses_with_similar_sensetranslations_dict(gl)
 
         context['sense_to_similar_senses'] = sense_to_similar_senses
 
