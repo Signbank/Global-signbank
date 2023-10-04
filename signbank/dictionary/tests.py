@@ -3982,3 +3982,66 @@ class SensesCRUDTests(TestCase):
             for annotation, glossid in sense_in_glosses:
                 self.assertEqual(glossid, str(new_gloss_1.id))
                 print('Gloss 1 included in similar glosses of gloss 2.')
+
+    def test_no_empty_translations_Senses(self):
+        # Create Client and log in
+        client = Client()
+        logged_in = client.login(username='test-user', password='test-user')
+        # Get the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        assign_perm('dictionary.add_sense', self.user)
+
+        assign_perm('can_view_dataset', self.user, test_dataset)
+        assign_perm('dictionary.search_gloss', self.user)
+        self.user.save()
+
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
+
+        print('Test No empty translations created for Senses.')
+
+        # Construct the Create Gloss form data
+        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
+        for language in test_dataset.translation_languages.all():
+            create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
+                "gloss_1_annotationidglosstranslation_test_" + language.language_code_2char
+            create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
+                "gloss_1_lemmaidglosstranslation_test_" + language.language_code_2char
+
+        response = client.post('/dictionary/update/gloss/', create_gloss_form_data, follow=True)
+
+        glosses = Gloss.objects.filter(lemma__dataset=test_dataset)
+        self.assertEqual(glosses.count(), 1)
+        print('New gloss successfully created.')
+
+        new_gloss = glosses.first()
+
+        gloss_senses = new_gloss.senses.all()
+
+        self.assertEqual(len(gloss_senses), 0)
+        print('New gloss has no senses.')
+
+        # Construct the Create Sense form data
+        print('Construct a Sense with empty strings "" and " " in the input.')
+        gloss_create_sense_form_data = {'dataset': test_dataset.id}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["keyword_1_" + language.language_code_2char, " ",
+                                           "keyword_2_" + language.language_code_2char, ""])
+            gloss_create_sense_form_data[str(language)] = language_keywords
+        print('Sense Form input: ', gloss_create_sense_form_data)
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss.id), gloss_create_sense_form_data, follow=True)
+
+        new_gloss_senses = new_gloss.senses.all()
+        self.assertEqual(len(new_gloss_senses), 1)
+        print('Sense for gloss successfully created: ', new_gloss_senses.first())
+
+        sense_translations = Translation.objects.filter(sensetranslation__sense=new_gloss_senses.first())
+        text_of_sense_translations = [trans.translation.text for trans in sense_translations]
+        self.assertTrue(" " not in text_of_sense_translations)
+        print('Empty string " " does not appear in the translations.')
+        self.assertTrue("" not in text_of_sense_translations)
+        print('Empty string "" does not appear in the translations.')
