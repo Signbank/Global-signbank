@@ -72,7 +72,8 @@ from signbank.frequency import import_corpus_speakers, configure_corpus_document
     eaf_file_from_paths, documents_paths_dictionary
 from signbank.dictionary.frequency_display import collect_speaker_age_data, collect_variants_data, collect_variants_age_range_data, \
                                                     collect_variants_age_sex_raw_percentage
-from signbank.dictionary.senses_display import senses_per_language, senses_per_language_list
+from signbank.dictionary.senses_display import (senses_per_language, senses_per_language_list,
+                                                senses_translations_per_language_list, senses_sentences_per_language_list)
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
@@ -1249,6 +1250,638 @@ class GlossListView(ListView):
 
         # Return the resulting filtered and sorted queryset
         return sorted_qs
+
+
+class SenseListView(ListView):
+
+    model = Sense
+    paginate_by = 25
+    search_type = 'sense'
+    view_type = 'sense_list'
+    web_search = False
+    show_all = False
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
+    last_used_dataset = None
+    queryset_language_codes = []
+    query_parameters = dict()
+    search_form_data = QueryDict(mutable=True)
+    template_name = 'dictionary/admin_senses_list.html'
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(SenseListView, self).get_context_data(**kwargs)
+
+        if 'show_all' in self.kwargs.keys():
+            context['show_all'] = self.kwargs['show_all']
+            self.show_all = self.kwargs['show_all']
+        else:
+            context['show_all'] = self.show_all
+
+        # Retrieve the search_type,so that we know whether the search should be restricted to Gloss or not
+        if 'search_type' in self.request.GET:
+            self.search_type = self.request.GET['search_type']
+
+        if 'search' in self.request.GET:
+            context['menu_bar_search'] = self.request.GET['search']
+
+        if 'search_type' not in self.request.session.keys():
+            self.request.session['search_type'] = self.search_type
+
+        if 'view_type' in self.request.GET:
+            # user is adjusting the view, leave the rest of the context alone
+            self.view_type = self.request.GET['view_type']
+            context['view_type'] = self.view_type
+
+        if 'inWeb' in self.request.GET:
+            # user is searching for signs / morphemes visible to anonymous uers
+            self.web_search = self.request.GET['inWeb'] == '2'
+        elif not self.request.user.is_authenticated:
+            self.web_search = True
+        context['web_search'] = self.web_search
+
+        if self.request.user.is_authenticated:
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
+        elif 'selected_datasets' in self.request.session.keys():
+            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
+        else:
+            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        # the following is needed by javascript in the case only one dataset is available
+        # in order not to compute dynamically in the template
+        dataset_languages_abbreviations = []
+        for ds in selected_datasets:
+            for sdl in ds.translation_languages.all():
+                if sdl.language_code_2char not in dataset_languages_abbreviations:
+                    dataset_languages_abbreviations.append(sdl.language_code_2char)
+        js_dataset_languages = ','.join(dataset_languages_abbreviations)
+        context['js_dataset_languages'] = js_dataset_languages
+
+        default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+        default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+
+        for lang in dataset_languages:
+            if lang.language_code_2char not in self.queryset_language_codes:
+                self.queryset_language_codes.append(lang.language_code_2char)
+        if self.queryset_language_codes is None:
+            self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
+        if len(selected_datasets) == 1:
+            self.last_used_dataset = selected_datasets.first().acronym
+        elif 'last_used_dataset' in self.request.session.keys():
+            self.last_used_dataset = self.request.session['last_used_dataset']
+
+        context['last_used_dataset'] = self.last_used_dataset
+
+        selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
+        sign_languages = []
+        for sl in selected_datasets_signlanguage:
+            if (str(sl.id),sl.name) not in sign_languages:
+                sign_languages.append((str(sl.id), sl.name))
+
+        selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage)\
+            .prefetch_related('signlanguage').distinct()
+        dialects = []
+        for dl in selected_datasets_dialects:
+            dialect_name = dl.signlanguage.name + "/" + dl.name
+            dialects.append((str(dl.id),dialect_name))
+
+        if not self.show_all and ('query_parameters' in self.request.session.keys()
+                                  and self.request.session['query_parameters'] not in ['', '{}']):
+            # if the query parameters are available, convert them to a dictionary
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
+
+        search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
+                                          dialects=dialects)
+
+        context['query_parameters'] = json.dumps(self.query_parameters)
+        query_parameters_keys = list(self.query_parameters.keys())
+        context['query_parameters_keys'] = json.dumps(query_parameters_keys)
+        # other parameters are in the GlossSearchForm in the template that are not initialised via multiselect or language fields
+        # plus semantics and phonology fields with text types
+        other_parameters = ['sortOrder'] + \
+                                settings.SEARCH_BY['publication'] + \
+                                settings.FIELDS['phonology'] + \
+                                settings.FIELDS['semantics']
+
+        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
+        fields_with_choices = fields_to_fieldcategory_dict()
+        multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
+        other_parameters_keys = [ key for key in other_parameters if key not in multiple_select_gloss_fields ]
+
+        context['other_parameters_keys'] = json.dumps(other_parameters_keys)
+
+        gloss_search_field_prefix = "glosssearch_"
+        keyword_search_field_prefix = "keyword_"
+        lemma_search_field_prefix = "lemma_"
+        language_query_keys = []
+        for language in dataset_languages:
+            glosssearch_field_name = gloss_search_field_prefix + language.language_code_2char
+            language_query_keys.append(glosssearch_field_name)
+            lemma_field_name = lemma_search_field_prefix + language.language_code_2char
+            language_query_keys.append(lemma_field_name)
+            keyword_field_name = keyword_search_field_prefix + language.language_code_2char
+            language_query_keys.append(keyword_field_name)
+        context['language_query_keys'] = json.dumps(language_query_keys)
+
+        context['searchform'] = search_form
+        context['search_type'] = self.search_type
+        context['view_type'] = self.view_type
+        context['web_search'] = self.web_search
+
+        # If the menu bar search form was used, populate the search form with the query string
+        gloss_fields_to_populate = dict()
+        if 'search' in self.request.GET and self.request.GET['search'] != '':
+            val = self.request.GET['search']
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(val)
+            gloss_fields_to_populate['search'] = escape(val)
+        if 'translation' in self.request.GET and self.request.GET['translation'] != '':
+            val = self.request.GET['translation']
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(val)
+            gloss_fields_to_populate['translation'] = escape(val)
+        gloss_fields_to_populate_keys = list(gloss_fields_to_populate.keys())
+        context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
+        context['gloss_fields_to_populate_keys'] = gloss_fields_to_populate_keys
+
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
+        context['add_gloss_form'] = GlossCreateForm(self.request.GET, languages=dataset_languages, user=self.request.user, last_used_dataset=self.last_used_dataset)
+
+        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+        else:
+            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+        if hasattr(settings, 'GLOSS_LIST_DISPLAY_HEADER') and self.request.user.is_authenticated:
+            context['GLOSS_LIST_DISPLAY_HEADER'] = settings.GLOSS_LIST_DISPLAY_HEADER
+        else:
+            context['GLOSS_LIST_DISPLAY_HEADER'] = []
+
+        if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated:
+            context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
+        else:
+            context['search_by_publication_fields'] = []
+
+        multiple_select_gloss_fields.append('definitionRole')
+        multiple_select_gloss_fields.append('hasComponentOfType')
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+
+        fields_with_choices['definitionRole'] = 'NoteType'
+        fields_with_choices['hasComponentOfType'] = 'MorphologyType'
+        choices_colors = {}
+        for (fieldname, field_category) in fields_with_choices.items():
+            if field_category in CATEGORY_MODELS_MAPPING.keys():
+                field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
+
+        context['field_colors'] = choices_colors
+
+        if hasattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'):
+            context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = settings.DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
+        else:
+            context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = 0
+
+        context['input_names_fields_and_labels'] = {}
+
+        for topic in ['main','phonology','semantics']:
+
+            context['input_names_fields_and_labels'][topic] = []
+
+            for fieldname in settings.FIELDS[topic]:
+
+                if fieldname == 'derivHist' and not settings.USE_DERIVATIONHISTORY:
+                    continue
+                # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand for purposes of nested dependencies in Search form
+                if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                    field = search_form[fieldname]
+                    label = field.label
+                    context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
+
+        context['input_names_fields_labels_handedness'] = []
+        field = search_form['weakdrop']
+        label = field.label
+        context['input_names_fields_labels_handedness'].append(('weakdrop', field, label))
+        field = search_form['weakprop']
+        label = field.label
+        context['input_names_fields_labels_handedness'].append(('weakprop',field,label))
+
+        context['input_names_fields_labels_domhndsh'] = []
+        field = search_form['domhndsh_letter']
+        label = field.label
+        context['input_names_fields_labels_domhndsh'].append(('domhndsh_letter',field,label))
+        field = search_form['domhndsh_number']
+        label = field.label
+        context['input_names_fields_labels_domhndsh'].append(('domhndsh_number',field,label))
+
+        context['input_names_fields_labels_subhndsh'] = []
+        field = search_form['subhndsh_letter']
+        label = field.label
+        context['input_names_fields_labels_subhndsh'].append(('subhndsh_letter',field,label))
+        field = search_form['subhndsh_number']
+        label = field.label
+        context['input_names_fields_labels_subhndsh'].append(('subhndsh_number',field,label))
+
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
+        context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+
+        context['sensecount'] = Sense.objects.filter(glosssense__gloss__lemma__dataset__in=selected_datasets).count()
+
+        context['page_number'] = context['page_obj'].number
+
+        context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
+
+        # this is needed to avoid crashing the browser if you go to the last page
+        # of an extremely long list and then go to Details on the objects
+
+        this_page_number = context['page_obj'].number
+        this_paginator = context['page_obj'].paginator
+        if len(self.object_list) > settings.MAX_SCROLL_BAR:
+            this_page = this_paginator.page(this_page_number)
+            if this_page.has_previous():
+                previous_objects = this_paginator.page(this_page_number - 1).object_list
+            else:
+                previous_objects = []
+            if this_page.has_next():
+                next_objects = this_paginator.page(this_page_number + 1).object_list
+            else:
+                next_objects = []
+            list_of_objects = previous_objects + list(context['page_obj'].object_list) + next_objects
+        else:
+            list_of_objects = self.object_list
+
+        # construct scroll bar
+        # the following retrieves language code for English (or DEFAULT LANGUAGE)
+        # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
+
+        if 'paginate_by' in self.request.GET:
+            context['paginate_by'] = int(self.request.GET.get('paginate_by'))
+            self.request.session['paginate_by'] = context['paginate_by']
+        else:
+            if 'paginate_by' in self.request.session.keys():
+                # restore any previous paginate setting for toggling between Lemma View and Gloss List View
+                # the session variable is needed when you return to the List View after looking at the Lemma View
+                context['paginate_by'] = self.request.session['paginate_by']
+            else:
+                context['paginate_by'] = self.paginate_by
+
+        column_headers = []
+        for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+            field_label = Gloss.get_field(fieldname).verbose_name
+            column_headers.append((fieldname, field_label))
+        context['column_headers'] = column_headers
+        return context
+
+    def get_paginate_by(self, queryset):
+        """
+        Paginate by specified value in querystring, or use default class property value.
+        """
+        # Toelichting (Information about coding):
+        # Django generates a new context when one toggles to Lemma View.
+        # Lemma View uses a regroup on the object list and also uses the default paginate_by in self.
+        # If the user resets the paginate_by in Gloss List, this setup (session variable
+        # that's only retrieved for Gloss View) handles returning to the previous paginate_by.
+        # Because the Lemma View is sparsely populated, if the default pagination isn't used,
+        # there are pages without contents, since only Lemma's with more than one gloss are shown.
+        # We're essentially remembering the previous paginate_by for when the user
+        # toggles back to Gloss View after List View
+
+        if 'paginate_by' in self.request.GET:
+            paginate_by = int(self.request.GET.get('paginate_by'))
+            self.request.session['paginate_by'] = paginate_by
+        else:
+            if 'paginate_by' in self.request.session.keys():
+                # restore any previous paginate setting
+                paginate_by = self.request.session['paginate_by']
+            else:
+                paginate_by = self.paginate_by
+
+        return paginate_by
+
+    def get_queryset(self):
+        get = self.request.GET
+
+        # First check whether we want to show everything or a subset
+        if 'show_all' in self.kwargs.keys():
+            show_all = self.kwargs['show_all']
+        else:
+            show_all = False
+
+        # Then check what kind of stuff we want
+        if 'search_type' in get:
+            self.search_type = get['search_type']
+        else:
+            self.search_type = 'sense'
+
+        setattr(self.request.session, 'search_type', self.search_type)
+
+        if 'view_type' in get:
+            self.view_type = get['view_type']
+            # don't change query, just change display
+        else:
+            # set to default
+            self.view_type = 'sense_list'
+
+        setattr(self.request, 'view_type', self.view_type)
+
+        if 'inWeb' in self.request.GET:
+            # user is searching for signs / morphemes visible to anonymous uers
+            self.web_search = self.request.GET['inWeb'] == '2'
+        elif not self.request.user.is_authenticated:
+            self.web_search = True
+
+        setattr(self.request, 'web_search', self.web_search)
+
+        self.query_parameters = dict()
+        # erase the previous query
+        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
+        self.request.session.modified = True
+
+        if self.request.user.is_authenticated:
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
+        elif 'selected_datasets' in self.request.session.keys():
+            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
+        else:
+            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        from signbank.dictionary.forms import check_language_fields
+        valid_regex, search_fields = check_language_fields(GlossSearchForm, get, dataset_languages)
+
+        if not valid_regex:
+            error_message_1 = _('Error in search field ')
+            error_message_2 = ', '.join(search_fields)
+            error_message_3 = _(': Please use a backslash before special characters.')
+            error_message = error_message_1 + error_message_2 + error_message_3
+            messages.add_message(self.request, messages.ERROR, error_message)
+            qs = Sense.objects.none()
+            return qs
+
+        # Get the initial selection
+        if show_all or (len(get) > 0 and 'query' not in self.request.GET):
+            qs = Sense.objects.filter(glosssense__gloss__lemma__dataset__in=selected_datasets)
+
+        elif self.query_parameters and 'query' in self.request.GET:
+            gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
+            gloss_query = apply_language_filters_to_results(gloss_query, self.query_parameters)
+            gloss_query = gloss_query.distinct()
+
+            query = convert_query_parameters_to_filter(self.query_parameters)
+            if query:
+                gloss_query = gloss_query.filter(query).distinct()
+            qs = Sense.objects.filter(glosssense__gloss__in=gloss_query)
+            return qs
+
+        # No filters or 'show_all' specified? show nothing
+        else:
+            qs = Sense.objects.none()
+
+        if self.request.user.is_authenticated and self.request.user.has_perm('dictionary.search_gloss'):
+            pass
+        else:
+            qs = qs.filter(glosssense__gloss__inWeb__exact=True)
+
+        # If we wanted to get everything, we're done now
+        if show_all:
+            return qs
+
+        # this is a temporary query_parameters variable
+        # it is saved to self.query_parameters after the parameters are processed
+        query_parameters = dict()
+
+        # If not, we will go trhough a long list of filters
+        if 'search' in get and get['search'] != '':
+            val = get['search']
+            query_parameters['search'] = val
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(val)
+            query = Q(annotationidglosstranslation__text__iregex=val)
+
+            if re.match('^\d+$', val):
+                query = query | Q(sn__exact=val)
+
+            qs = qs.filter(query)
+
+        if self.search_type != 'sign':
+            query_parameters['search_type'] = self.search_type
+
+        # Evaluate all gloss/language search fields
+        for get_key, get_value in get.items():
+            if get_key == 'csrfmiddlewaretoken':
+                continue
+            if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
+
+                query_parameters[get_key] = get_value
+                language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
+                qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
+                               annotationidglosstranslation__language=language)
+            elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
+                query_parameters[get_key] = get_value
+                language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
+                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
+                               lemma__lemmaidglosstranslation__language=language)
+            elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
+                query_parameters[get_key] = get_value
+                language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char)
+                qs = qs.filter(senseTranslations__translations__translation__text__iregex=get_value)
+                qs = qs.filter(senseTranslations__translations__language__in=language)
+
+        # if 'translation' in get and get['translation'] != '':
+        #     val = get['translation']
+        #     query_parameters['translation'] = get['translation']
+        #     qs = qs.filter(senseTranslations__translations__translation__text__iregex=val)
+
+        if 'inWeb' in get and get['inWeb'] != '0':
+            # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
+            val = get['inWeb'] == '2'
+            query_parameters['inWeb'] = get['inWeb']
+            qs = qs.filter(inWeb__exact=val)
+
+        if 'excludeFromEcv' in get and get['excludeFromEcv'] != '0':
+            # Don't apply 'excludeFromEcv' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
+            val = get['excludeFromEcv'] == '2'
+            query_parameters['excludeFromEcv'] = get['excludeFromEcv']
+            qs = qs.filter(excludeFromEcv__exact=val)
+
+        if 'hasvideo' in get and get['hasvideo'] not in ['unspecified', '0']:
+            val = get['hasvideo'] != '2'
+            query_parameters['hasvideo'] = get['hasvideo']
+            qs = qs.filter(glossvideo__isnull=val)
+
+        if 'hasothermedia' in get and get['hasothermedia'] not in ['unspecified', '0']:
+            query_parameters['hasothermedia'] = get['hasothermedia']
+
+            # Remember the pk of all glosses that have other media
+            pks_for_glosses_with_othermedia = [om.parent_gloss.pk for om in OtherMedia.objects.all()]
+
+            if get['hasothermedia'] == '2':  # We only want glosses with other media
+                qs = qs.filter(pk__in=pks_for_glosses_with_othermedia)
+            elif get['hasothermedia'] == '3':  # We only want glosses without other media
+                qs = qs.exclude(pk__in=pks_for_glosses_with_othermedia)
+
+        if 'defspublished' in get and get['defspublished'] not in ['0', 'unspecified']:
+            val = get['defspublished'] == 'yes'
+            query_parameters['defspublished'] = get['defspublished']
+            qs = qs.filter(definition__published=val)
+
+        if 'hasmultiplesenses' in get and get['hasmultiplesenses'] not in ['0', 'unspecified']:
+            val = get['hasmultiplesenses'] == 'yes'
+            query_parameters['hasmultiplesenses'] = get['hasmultiplesenses']
+            if val:
+                multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
+                    'gloss').annotate(Count('id')).filter(id__count__gt=1)]
+            else:
+                multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
+                    'gloss').annotate(Count('id')).filter(id__count=1)]
+            qs = qs.filter(id__in=multiple_senses)
+
+        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
+            fieldnames.remove('derivHist')
+
+        # SignLanguage and basic property filters
+        # allows for multiselect
+        vals = get.getlist('dialect[]')
+        if vals != []:
+            query_parameters['dialect[]'] = vals
+            qs = qs.filter(dialect__in=vals)
+
+        vals = get.getlist('tags[]')
+        if vals != []:
+            query_parameters['tags[]'] = vals
+            glosses_with_tag = list(
+                TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
+            qs = qs.filter(id__in=glosses_with_tag)
+
+        # allows for multiselect
+        vals = get.getlist('signlanguage[]')
+        if vals != []:
+            query_parameters['signlanguage[]'] = vals
+            qs = qs.filter(signlanguage__in=vals)
+
+        if 'useInstr' in get and get['useInstr'] != '':
+            query_parameters['useInstr'] = get['useInstr']
+            qs = qs.filter(useInstr__icontains=get['useInstr'])
+
+        fields_with_choices = fields_to_fieldcategory_dict()
+        for fieldnamemulti in fields_with_choices.keys():
+            fieldnamemultiVarname = fieldnamemulti + '[]'
+            fieldnameQuery = fieldnamemulti + '__machine_value__in'
+
+            vals = get.getlist(fieldnamemultiVarname)
+            if vals != []:
+                query_parameters[fieldnamemultiVarname] = vals
+                if fieldnamemulti == 'semField':
+                    qs = qs.filter(semField__in=vals)
+                elif fieldnamemulti == 'derivHist':
+                    qs = qs.filter(derivHist__in=vals)
+                else:
+                    qs = qs.filter(**{fieldnameQuery: vals})
+
+        ## phonology and semantics field filters
+        fieldnames = [f for f in fieldnames if f not in fields_with_choices.keys()]
+        for fieldname in fieldnames:
+
+            if fieldname in get and get[fieldname] != '':
+                field_obj = Gloss.get_field(fieldname)
+
+                if type(field_obj) in [CharField, TextField] and not hasattr(field_obj, 'field_choice_category'):
+                    key = fieldname + '__icontains'
+                else:
+                    key = fieldname + '__exact'
+
+                val = get[fieldname]
+
+                if isinstance(field_obj, BooleanField):
+                    val = {'0': '', '1': None, '2': True, '3': False}[val]
+
+                if val != '':
+                    query_parameters[fieldname] = get[fieldname]
+
+                    kwargs = {key: val}
+                    qs = qs.filter(**kwargs)
+
+        qs = qs.distinct()
+
+        if 'definitionRole[]' in get:
+
+            vals = get.getlist('definitionRole[]')
+            if vals != []:
+                query_parameters['definitionRole[]'] = vals
+                # Find all definitions with this role
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
+
+                # Remember the pk of all glosses that are referenced in the collection definitions
+                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in
+                                                          definitions_with_this_role]
+                qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+
+        if 'definitionContains' in get and get['definitionContains'] not in ['', '0']:
+            query_parameters['definitionContains'] = get['definitionContains']
+
+            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains'])
+
+            # Remember the pk of all glosses that are referenced in the collection definitions
+            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
+            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+
+        if 'createdBefore' in get and get['createdBefore'] != '':
+            query_parameters['createdBefore'] = get['createdBefore']
+
+            created_before_date = DT.datetime.strptime(get['createdBefore'], settings.DATE_FORMAT).date()
+            qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
+
+        if 'createdAfter' in get and get['createdAfter'] != '':
+            query_parameters['createdAfter'] = get['createdAfter']
+
+            created_after_date = DT.datetime.strptime(get['createdAfter'], settings.DATE_FORMAT).date()
+            qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
+
+        if 'createdBy' in get and get['createdBy'] != '':
+            query_parameters['createdBy'] = get['createdBy']
+
+            created_by_search_string = ' '.join(get['createdBy'].strip().split())  # remove redundant spaces
+            qs = qs.annotate(
+                created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
+                .filter(created_by__icontains=created_by_search_string)
+
+        # # save the query parameters to a session variable
+        # self.request.session['query_parameters'] = json.dumps(query_parameters)
+        # self.request.session.modified = True
+        # self.query_parameters = query_parameters
+        # qs = qs.select_related('lemma')
+        #
+        # # Sort the queryset by the parameters given
+        # sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+
+        self.request.session['search_type'] = self.search_type
+        self.request.session['web_search'] = self.web_search
+
+        if 'last_used_dataset' not in self.request.session.keys():
+            self.request.session['last_used_dataset'] = self.last_used_dataset
+
+        # Return the resulting filtered and sorted queryset
+        return qs
 
 
 class GlossDetailView(DetailView):
@@ -6786,6 +7419,152 @@ def glosslistheader_ajax(request):
                                                                     'sortOrder': str(sortOrder),
                                                                     'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
 
+def senselist_ajax_complete(request, sense_id):
+
+    user = request.user
+
+    display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
+        if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
+            display_fields = json.loads(request.GET['display_fields'])
+            query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
+
+    is_anonymous = user.is_authenticated
+
+    this_sense = Sense.objects.get(id=sense_id)
+    default_language = this_sense.get_dataset().default_language.language_code_2char
+    this_gloss = GlossSense.objects.filter(sense=this_sense).first().gloss
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        SHOW_DATASET_INTERFACE_OPTIONS = False
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+
+    sensetranslations_per_language = senses_translations_per_language_list(this_sense)
+
+    sentences_per_language = senses_sentences_per_language_list(this_sense)
+
+    column_values = []
+    for fieldname in display_fields:
+        if fieldname == 'semField':
+            semanticfields = ", ".join([str(sf.name) for sf in this_gloss.semField.all()])
+            column_values.append((fieldname, semanticfields))
+        elif fieldname == 'derivHist':
+            derivationhistories = ", ".join([str(dh.name) for dh in this_gloss.derivHist.all()])
+            column_values.append((fieldname, derivationhistories))
+        elif fieldname == 'dialect':
+            dialects = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in this_gloss.dialect.all()])
+            column_values.append((fieldname, dialects))
+        elif fieldname == 'signlanguage':
+            # this is a ManyToManyField field
+            signlanguages = ", ".join([str(sl.name) for sl in this_gloss.signlanguage.all()])
+            column_values.append((fieldname, signlanguages))
+        elif fieldname == 'definitionRole':
+            # this is a Note
+            definitions_this_gloss = ", ".join([str(df.role.name) for df in this_gloss.definition_set.all()])
+            column_values.append((fieldname, definitions_this_gloss))
+        elif fieldname == 'hasothermedia':
+            other_media_paths = []
+            for other_media in this_gloss.othermedia_set.all():
+                media_okay, path, other_media_filename = other_media.get_othermedia_path(this_gloss.id, check_existence=True)
+                if media_okay:
+                    other_media_paths.append(other_media_filename)
+            other_media = ", ".join(other_media_paths)
+            column_values.append((fieldname, other_media))
+        elif fieldname not in Gloss.get_field_names():
+            continue
+        else:
+            machine_value = getattr(this_gloss, fieldname)
+            gloss_field = Gloss.get_field(fieldname)
+            if machine_value and isinstance(machine_value, Handshape):
+                human_value = machine_value.name
+            elif machine_value and isinstance(machine_value, FieldChoice):
+                human_value = machine_value.name
+            else:
+                human_value = machine_value
+            if human_value:
+                column_values.append((fieldname,human_value))
+            else:
+                column_values.append((fieldname,'-'))
+    return render(request, 'dictionary/sense_row.html', { 'focus_sense': this_sense,
+                                                          'focus_gloss': this_gloss,
+                                                          'dataset_languages': dataset_languages,
+                                                          'width_senses_columns': len(dataset_languages)+1,
+                                                          'selected_datasets': selected_datasets,
+                                                          'sensetranslations_per_language': sensetranslations_per_language,
+                                                          'sentences_per_language': sentences_per_language,
+                                                          'column_values': column_values,
+                                                          'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
+
+def senselistheader_ajax(request):
+
+    user = request.user
+
+    display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+    query_fields_parameters = []
+
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
+        if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
+            display_fields = json.loads(request.GET['display_fields'])
+            query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
+
+    is_anonymous = user.is_authenticated
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        SHOW_DATASET_INTERFACE_OPTIONS = False
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+
+    fieldname_to_column_header = {'dialect': _("Dialect"),
+                                  'signlanguage': _("Sign Language"),
+                                  'definitionRole': _("Note Type"),
+                                  'hasothermedia': _("Other Media"),
+                                  'hasComponentOfType': _("Sequential Morphology"),
+                                  'morpheme': _("Simultaneous Morphology"),
+                                  'hasMorphemeOfType': _("Morpheme Type"),
+                                  'relation': _("Gloss of Related Sign"),
+                                  'hasRelationToForeignSign': _("Related to Foreign Sign"),
+                                  'relationToForeignSign': _("Gloss of Foreign Sign")
+                                  }
+
+    column_headers = []
+    for fieldname in display_fields:
+        if fieldname in fieldname_to_column_header.keys():
+            column_headers.append((fieldname, fieldname_to_column_header[fieldname]))
+        elif fieldname == 'hasRelation':
+            if query_fields_parameters:
+                # this is a singleton type of relation
+                relation_type = _("Type of Relation") + ':' + query_fields_parameters[0].capitalize()
+                column_headers.append((fieldname, relation_type))
+            else:
+                column_headers.append((fieldname, _("Type of Relation")))
+        elif fieldname not in Gloss.get_field_names():
+            continue
+        else:
+            field_label = Gloss.get_field(fieldname).verbose_name
+            column_headers.append((fieldname, field_label))
+
+    sortOrder = ''
+
+    if 'HTTP_REFERER' in request.META.keys():
+        sortOrderURL = request.META['HTTP_REFERER']
+        sortOrderParameters = sortOrderURL.split('&sortOrder=')
+        if len(sortOrderParameters) > 1:
+            sortOrder = sortOrderParameters[1].split('&')[0]
+
+    return render(request, 'dictionary/senselist_headerrow.html', { 'dataset_languages': dataset_languages,
+                                                                    'width_senses_columns': len(dataset_languages) + 1,
+                                                                    'selected_datasets': selected_datasets,
+                                                                    'column_headers': column_headers,
+                                                                    'sortOrder': str(sortOrder),
+                                                                    'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
 
 def lemmaglosslist_ajax_complete(request, gloss_id):
 
