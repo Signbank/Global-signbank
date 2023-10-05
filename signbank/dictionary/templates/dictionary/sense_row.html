@@ -11,27 +11,19 @@
         <td class="field_dataset" style="width:12em;">{{focus_gloss.lemma.dataset.acronym}}</td>
     {% endif %}
 
-
-    <td class="field_hasvideo">{%if focus_gloss.get_image_path %}
-    {% url 'dictionary:protected_media' '' as protected_media_url %}
-
-      <div class="thumbnail_container">
-      <a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
-
-        <div id='glossvideo_{{focus_gloss.id}}'>
-            <img class="thumbnail" src="{{protected_media_url}}{{focus_gloss.get_image_url}}">
-
-            {% if focus_gloss.has_video %}
-            <video id="videoplayer" class="thumbnail-video" src="{{protected_media_url}}{{focus_gloss.get_video_url}}"  type="video/mp4" muted="muted"></video>
-            {% endif %}
-        </div>
-
-      </a>
-      </div>
+    {% for dataset_lang in dataset_languages %}
+    {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+    <td class="annotation_{{dataset_lang.language_code_2char}}">
+      {% if annotationidglosstranslation %}
+        <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}">{{annotationidglosstranslation}}</a></div>
       {% endif %}
     </td>
+    {% endwith %}
+    {% endfor %}
 
-    <td class="sense_{{focus_sense.id}}">{{focus_sense.id}}</td>
+
+
+    <td class="senseorder_{{focus_gloss.id}}_{{focus_sense.id}}">{{sense_order}}.</td>
 
     {% for lang, sensetranslations in sensetranslations_per_language %}
     <td class="translation_{{lang.language_code_2char}}">
@@ -55,41 +47,5 @@
     </td>
     {% endfor %}
 
-    {% for dataset_lang in dataset_languages %}
-    {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
-    <td class="annotation_{{dataset_lang.language_code_2char}}">
-      {% if annotationidglosstranslation %}
-        <div>
-        {% if focus_gloss.is_morpheme %}
-        <div><a href="{{PREFIX_URL}}/dictionary/morpheme/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
-        {% else %}
-        <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
-        {% endif %}
-        </div>
-      {% endif %}
-    </td>
-    {% endwith %}
-    {% endfor %}
 
-
-    {% if not user.is_anonymous %}
-    {% load underscore_to_space %}
-    {% if focus_gloss.is_morpheme %}
-    {% with focus_gloss.morpheme as focus_morpheme %}
-    {% tags_for_object focus_morpheme as tag_list %}
-        <td class="field_tags" style="width:255px;">
-            <div class="tags-cell">{% for tag in tag_list %}
-                <span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}
-            </div>
-        </td>
-    {% endwith %}
-    {% else %}
-    {% tags_for_object focus_gloss as tag_list %}
-        <td class="field_tags" style="width:255px;">
-            <div class="tags-cell">{% for tag in tag_list %}
-                <span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}
-            </div>
-        </td>
-    {% endif %}
-    {% endif %}
 </tr>

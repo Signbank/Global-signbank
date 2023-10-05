@@ -8,7 +8,17 @@
 {% block bootstrap3_title %}
 {% blocktrans %}Signbank: Search Senses{% endblocktrans %}
 {% endblock %}
+
 {% block extrahead %}
+<style>
+.table-condensed {
+    border-collapse: separate;
+    box-sizing: content-box;
+}
+.table-condensed td {
+    height: auto;
+}
+</style>
 {% endblock %}
 
 {% load guardian_tags %}
@@ -261,7 +271,7 @@ $(document).ready(function() {
     // This script gets gloss list data and displays it as table rows
     // Each ajax call generates one row, it is appended to the table dynamically
 
-    lookup = "#glosslist_table";
+    lookup = "#senselist_table";
     $.ajax({
             url : url + "/dictionary/ajax/senselistheader/",
             datatype: "json",
@@ -269,7 +279,7 @@ $(document).ready(function() {
             success : function(result) {
                 var elem = $(result);
                 var parsed = $.parseHTML(result);
-                $(lookup).find('#glosslist_table_header').before(result);
+                $(lookup).find('#senselist_table_header').before(result);
             }
 
     });
@@ -286,13 +296,9 @@ $(document).ready(function() {
                     if (nodename == 'TR') {
                         id_of_row = $(el).attr('id');
                         res = id_of_row.split("_");
-                        id_of_gloss = res[1];
-                        focus_gloss_lookup = '#focusgloss_' + id_of_gloss;
-                        $(lookup).find(focus_gloss_lookup).first().before(result).end().remove();
-                        video_lookup = '#glossvideo_' + id_of_gloss;
-                        video_elt = $(lookup).find(video_lookup)
-                        video_elt.addClass("hover-shows-video");
-                        ready_videos(video_elt);
+                        id_of_sense = res[1];
+                        focus_sense_lookup = '#focussense_' + id_of_sense;
+                        $(lookup).find(focus_sense_lookup).first().before(result).end().remove();
                     };
                 });
             }
@@ -702,11 +708,11 @@ function do_toggle_annotation(el) {
 {% endif %}
 {% endif %}
 
-<table class='table table-condensed' id = 'glosslist_table'>
-    <thead id = 'glosslist_table_header'></thead>
+<table class='table table-condensed' id = 'senselist_table'>
+    <thead id = 'senselist_table_header'></thead>
     <tbody>
-    {% for gloss in object_list %}
-    <tr id = "focusgloss_{{gloss.id}}">
+    {% for glosssense in object_list %}
+    <tr id = "focussense_{{glosssense.sense.id}}">
         </tr>
     {% endfor %}
     </tbody>

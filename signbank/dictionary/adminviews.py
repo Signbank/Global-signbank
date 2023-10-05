@@ -1254,8 +1254,8 @@ class GlossListView(ListView):
 
 class SenseListView(ListView):
 
-    model = Sense
-    paginate_by = 25
+    model = GlossSense
+    paginate_by = 50
     search_type = 'sense'
     view_type = 'sense_list'
     web_search = False
@@ -1553,16 +1553,6 @@ class SenseListView(ListView):
         """
         Paginate by specified value in querystring, or use default class property value.
         """
-        # Toelichting (Information about coding):
-        # Django generates a new context when one toggles to Lemma View.
-        # Lemma View uses a regroup on the object list and also uses the default paginate_by in self.
-        # If the user resets the paginate_by in Gloss List, this setup (session variable
-        # that's only retrieved for Gloss View) handles returning to the previous paginate_by.
-        # Because the Lemma View is sparsely populated, if the default pagination isn't used,
-        # there are pages without contents, since only Lemma's with more than one gloss are shown.
-        # We're essentially remembering the previous paginate_by for when the user
-        # toggles back to Gloss View after List View
-
         if 'paginate_by' in self.request.GET:
             paginate_by = int(self.request.GET.get('paginate_by'))
             self.request.session['paginate_by'] = paginate_by
@@ -1631,12 +1621,13 @@ class SenseListView(ListView):
             error_message_3 = _(': Please use a backslash before special characters.')
             error_message = error_message_1 + error_message_2 + error_message_3
             messages.add_message(self.request, messages.ERROR, error_message)
-            qs = Sense.objects.none()
+            qs = GlossSense.objects.none()
             return qs
 
         # Get the initial selection
         if show_all or (len(get) > 0 and 'query' not in self.request.GET):
-            qs = Sense.objects.filter(glosssense__gloss__lemma__dataset__in=selected_datasets)
+            qs = GlossSense.objects.filter(gloss__lemma__dataset__in=selected_datasets)
+            qs = qs.order_by('gloss__id', 'order')
 
         elif self.query_parameters and 'query' in self.request.GET:
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
@@ -1646,17 +1637,18 @@ class SenseListView(ListView):
             query = convert_query_parameters_to_filter(self.query_parameters)
             if query:
                 gloss_query = gloss_query.filter(query).distinct()
-            qs = Sense.objects.filter(glosssense__gloss__in=gloss_query)
+            qs = GlossSense.objects.filter(gloss__in=gloss_query)
+            qs = qs.order_by('gloss__id', 'order')
             return qs
 
         # No filters or 'show_all' specified? show nothing
         else:
-            qs = Sense.objects.none()
+            qs = GlossSense.objects.none()
 
         if self.request.user.is_authenticated and self.request.user.has_perm('dictionary.search_gloss'):
             pass
         else:
-            qs = qs.filter(glosssense__gloss__inWeb__exact=True)
+            qs = qs.filter(gloss__inWeb__exact=True)
 
         # If we wanted to get everything, we're done now
         if show_all:
@@ -1703,8 +1695,8 @@ class SenseListView(ListView):
                 query_parameters[get_key] = get_value
                 language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char)
-                qs = qs.filter(senseTranslations__translations__translation__text__iregex=get_value)
-                qs = qs.filter(senseTranslations__translations__language__in=language)
+                qs = qs.filter(sense__senseTranslations__translations__translation__text__iregex=get_value)
+                qs = qs.filter(sense__senseTranslations__translations__language__in=language)
 
         # if 'translation' in get and get['translation'] != '':
         #     val = get['translation']
@@ -7435,6 +7427,7 @@ def senselist_ajax_complete(request, sense_id):
     this_sense = Sense.objects.get(id=sense_id)
     default_language = this_sense.get_dataset().default_language.language_code_2char
     this_gloss = GlossSense.objects.filter(sense=this_sense).first().gloss
+    sense_order = str(GlossSense.objects.filter(sense=this_sense).first().order)
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
         SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
@@ -7448,56 +7441,14 @@ def senselist_ajax_complete(request, sense_id):
 
     sentences_per_language = senses_sentences_per_language_list(this_sense)
 
-    column_values = []
-    for fieldname in display_fields:
-        if fieldname == 'semField':
-            semanticfields = ", ".join([str(sf.name) for sf in this_gloss.semField.all()])
-            column_values.append((fieldname, semanticfields))
-        elif fieldname == 'derivHist':
-            derivationhistories = ", ".join([str(dh.name) for dh in this_gloss.derivHist.all()])
-            column_values.append((fieldname, derivationhistories))
-        elif fieldname == 'dialect':
-            dialects = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in this_gloss.dialect.all()])
-            column_values.append((fieldname, dialects))
-        elif fieldname == 'signlanguage':
-            # this is a ManyToManyField field
-            signlanguages = ", ".join([str(sl.name) for sl in this_gloss.signlanguage.all()])
-            column_values.append((fieldname, signlanguages))
-        elif fieldname == 'definitionRole':
-            # this is a Note
-            definitions_this_gloss = ", ".join([str(df.role.name) for df in this_gloss.definition_set.all()])
-            column_values.append((fieldname, definitions_this_gloss))
-        elif fieldname == 'hasothermedia':
-            other_media_paths = []
-            for other_media in this_gloss.othermedia_set.all():
-                media_okay, path, other_media_filename = other_media.get_othermedia_path(this_gloss.id, check_existence=True)
-                if media_okay:
-                    other_media_paths.append(other_media_filename)
-            other_media = ", ".join(other_media_paths)
-            column_values.append((fieldname, other_media))
-        elif fieldname not in Gloss.get_field_names():
-            continue
-        else:
-            machine_value = getattr(this_gloss, fieldname)
-            gloss_field = Gloss.get_field(fieldname)
-            if machine_value and isinstance(machine_value, Handshape):
-                human_value = machine_value.name
-            elif machine_value and isinstance(machine_value, FieldChoice):
-                human_value = machine_value.name
-            else:
-                human_value = machine_value
-            if human_value:
-                column_values.append((fieldname,human_value))
-            else:
-                column_values.append((fieldname,'-'))
     return render(request, 'dictionary/sense_row.html', { 'focus_sense': this_sense,
                                                           'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
                                                           'width_senses_columns': len(dataset_languages)+1,
+                                                          'sense_order': sense_order,
                                                           'selected_datasets': selected_datasets,
                                                           'sensetranslations_per_language': sensetranslations_per_language,
                                                           'sentences_per_language': sentences_per_language,
-                                                          'column_values': column_values,
                                                           'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
 
 def senselistheader_ajax(request):
@@ -7560,7 +7511,7 @@ def senselistheader_ajax(request):
             sortOrder = sortOrderParameters[1].split('&')[0]
 
     return render(request, 'dictionary/senselist_headerrow.html', { 'dataset_languages': dataset_languages,
-                                                                    'width_senses_columns': len(dataset_languages) + 1,
+                                                                    'width_senses_columns': len(dataset_languages)+1,
                                                                     'selected_datasets': selected_datasets,
                                                                     'column_headers': column_headers,
                                                                     'sortOrder': str(sortOrder),
