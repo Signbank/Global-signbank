@@ -387,7 +387,7 @@ function do_adminsearch(el) {
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "sense":
-        $("#adminsearch").attr('action', ' {{PREFIX_URL}}/senses/search/');
+        $("#adminsearch").attr('action', ' {{PREFIX_URL}}/signs/senses/search/');
         break;
   }
   document.getElementById('adminsearch').submit();
@@ -446,17 +446,117 @@ function do_set_lemma_language(el) {
   }
 };
 
-// This function toggles the different language columns for Annotations, Lemmas, and Translations
-function do_toggle_annotation(el) {
-    var dataset_language_id = $(el).attr('value');
-    var annotation_column_id = '.annotation_' + dataset_language_id;
-    var lemma_column_id = '.lemma_' + dataset_language_id;
-    var translation_column_id = '.translation_' + dataset_language_id;
-    $(annotation_column_id).toggle();
-    $(lemma_column_id).toggle();
-    $(translation_column_id).toggle();
-};
 
+    // toggle the line-through on a button
+    function do_toggle_line_through(el,id) {
+        var button_value = $(el).attr('value');
+        var button_id = '#' + id;
+        var button_status = $(button_id).css('text-decoration');
+        if ($(button_id).css('text-decoration-line') == 'none') {
+            $(button_id).css('text-decoration', 'line-through');
+        } else {
+            $(button_id).css('text-decoration', 'none');
+        };
+    };
+
+    // This function toggles the different language columns for Annotations
+    function do_toggle_annotation(el) {
+        var dataset_language_id = $(el).attr('value');
+        var annotation_column_id = '.annotation_' + dataset_language_id;
+        var visible_columns_start = 0;
+        $('th[id^="annotation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        $(annotation_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="annotation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the annotation columns were not visible at the start, show the header and visible columns
+            $('.annotations_multicolumn').toggle();
+            $('.annotations_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.annotations_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.annotations_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+    };
+
+    // This function toggles the different language columns for Translations
+    function do_toggle_translations(el) {
+        var visible_columns_start = 1;
+        $('th[id^="translation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        var dataset_language_id = $(el).attr('value');
+        var translation_column_id = '.translation_' + dataset_language_id;
+        $(translation_column_id).toggle();
+        var visible_columns_finnish = 1;
+        $('th[id^="translation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 1) {
+            // the translation columns were not visible at the start, show the header and visible columns
+            $('.translations_multicolumn').toggle();
+            $('.translations_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 1) {
+            // all the columns are hidden now, hide the header
+            $('.translations_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.translations_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+    };
+
+    // This function toggles the different language columns for Sentence
+    function do_toggle_sentence(el) {
+        var visible_columns_start = 0;
+        $('th[id^="sentence_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        var dataset_language_id = $(el).attr('value');
+        var sentence_column_id = '.sentence_' + dataset_language_id;
+        $(sentence_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="sentence_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the sentence columns were not visible at the start, show the header and visible columns
+            $('.sentences_multicolumn').toggle();
+            $('.sentences_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.sentences_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.sentences_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+    };
+
+// This function toggles the different language columns for Annotations, Sentences, and Translations
+function do_toggle_language(el) {
+    do_toggle_annotation(el);
+    do_toggle_translations(el);
+    do_toggle_sentence(el);
+    var dataset_language_id = $(el).attr('value');
+    do_toggle_line_through(el,'button_language_'+dataset_language_id);
+};
 </script>
 
 <script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
@@ -474,7 +574,7 @@ function do_toggle_annotation(el) {
 {{ form.media.css }}
 {{ form.media.js }}
 
-<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/senses/search'>
+<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/senses/search'>
 {% csrf_token %}
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
@@ -698,9 +798,10 @@ function do_toggle_annotation(el) {
 
 {% if object_list %}
 {% if SHOW_DATASET_INTERFACE_OPTIONS %}
-{% if dataset_languages|length > 2 %}
+{% if dataset_languages|length > 1 %}
 {% for dataset_lang in dataset_languages %}
-<button name="button_annotation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_annotation(this);"
+<button name="button_language_{{dataset_lang.language_code_2char}}"
+        id="button_language_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_language(this);"
         value="{{dataset_lang.language_code_2char}}" >
     {{ dataset_lang.name }}
 </button>

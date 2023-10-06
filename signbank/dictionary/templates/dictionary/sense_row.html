@@ -11,32 +11,36 @@
         <td class="field_dataset" style="width:12em;">{{focus_gloss.lemma.dataset.acronym}}</td>
     {% endif %}
 
-    {% for dataset_lang in dataset_languages %}
-    {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
-    <td class="annotation_{{dataset_lang.language_code_2char}}">
-      {% if annotationidglosstranslation %}
-        <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}">{{annotationidglosstranslation}}</a></div>
+      {% if SHOW_DATASET_INTERFACE_OPTIONS and dataset_languages|length > 1 %}
+      {% for dataset_lang in dataset_languages %}
+      {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+      <td class="annotation_{{dataset_lang.language_code_2char}}">
+        {% if annotationidglosstranslation %}
+          <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}">{{annotationidglosstranslation}}</a></div>
+        {% endif %}
+      </td>
+      {% endwith %}
+      {% endfor %}
       {% endif %}
-    </td>
-    {% endwith %}
-    {% endfor %}
-
-
 
     <td class="senseorder_{{focus_gloss.id}}_{{focus_sense.id}}">{{sense_order}}.</td>
 
-    {% for lang, sensetranslations in sensetranslations_per_language %}
-    <td class="translation_{{lang.language_code_2char}}">
-        <div>
+    {% for lang in dataset_languages %}
+    <td class="translation_{{lang.language_code_2char}}" style="width:360px;">
+    {% if lang in sensetranslations_per_language.keys %}
+    {% with sensetranslations_per_language|get_item:lang as sensetranslations %}
         {% for key, value in sensetranslations.items %}
-            {{value|safe}}{% if not forloop.last %}<br> {% endif %}
+            {{value|safe}}
         {% endfor %}
-        </div>
+    {% endwith %}
+    {% endif %}
     </td>
     {% endfor %}
 
-    {% for lang, sentencetranslation in sentences_per_language %}
+    {% for lang in dataset_languages %}
     <td class="sentence_{{lang.language_code_2char}}">
+        {% if lang in sensetranslations_per_language.keys %}
+        {% with sentences_per_language|get_item:lang as sentencetranslation %}
         <div>
         {% for key, values in sentencetranslation.items %}
             {% for value in values %}
@@ -44,8 +48,9 @@
             {% endfor %}
         {% endfor %}
         </div>
+        {% endwith %}
+        {% endif %}
     </td>
     {% endfor %}
-
 
 </tr>

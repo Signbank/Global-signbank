@@ -1414,11 +1414,6 @@ class SenseListView(ListView):
         else:
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
 
-        if hasattr(settings, 'GLOSS_LIST_DISPLAY_HEADER') and self.request.user.is_authenticated:
-            context['GLOSS_LIST_DISPLAY_HEADER'] = settings.GLOSS_LIST_DISPLAY_HEADER
-        else:
-            context['GLOSS_LIST_DISPLAY_HEADER'] = []
-
         if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated:
             context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
         else:
@@ -1542,11 +1537,6 @@ class SenseListView(ListView):
             else:
                 context['paginate_by'] = self.paginate_by
 
-        column_headers = []
-        for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
-            field_label = Gloss.get_field(fieldname).verbose_name
-            column_headers.append((fieldname, field_label))
-        context['column_headers'] = column_headers
         return context
 
     def get_paginate_by(self, queryset):
@@ -1664,10 +1654,10 @@ class SenseListView(ListView):
             query_parameters['search'] = val
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
-            query = Q(annotationidglosstranslation__text__iregex=val)
+            query = Q(gloss__annotationidglosstranslation__text__iregex=val)
 
             if re.match('^\d+$', val):
-                query = query | Q(sn__exact=val)
+                query = query | Q(gloss__sn__exact=val)
 
             qs = qs.filter(query)
 
@@ -1683,14 +1673,14 @@ class SenseListView(ListView):
                 query_parameters[get_key] = get_value
                 language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
-                               annotationidglosstranslation__language=language)
+                qs = qs.filter(gloss__annotationidglosstranslation__text__iregex=get_value,
+                               gloss__annotationidglosstranslation__language=language)
             elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
                 query_parameters[get_key] = get_value
                 language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
-                               lemma__lemmaidglosstranslation__language=language)
+                qs = qs.filter(gloss__lemma__lemmaidglosstranslation__text__iregex=get_value,
+                               gloss__lemma__lemmaidglosstranslation__language=language)
             elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
                 query_parameters[get_key] = get_value
                 language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
@@ -1707,18 +1697,18 @@ class SenseListView(ListView):
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
             val = get['inWeb'] == '2'
             query_parameters['inWeb'] = get['inWeb']
-            qs = qs.filter(inWeb__exact=val)
+            qs = qs.filter(gloss__inWeb__exact=val)
 
         if 'excludeFromEcv' in get and get['excludeFromEcv'] != '0':
             # Don't apply 'excludeFromEcv' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
             val = get['excludeFromEcv'] == '2'
             query_parameters['excludeFromEcv'] = get['excludeFromEcv']
-            qs = qs.filter(excludeFromEcv__exact=val)
+            qs = qs.filter(gloss__excludeFromEcv__exact=val)
 
         if 'hasvideo' in get and get['hasvideo'] not in ['unspecified', '0']:
             val = get['hasvideo'] != '2'
             query_parameters['hasvideo'] = get['hasvideo']
-            qs = qs.filter(glossvideo__isnull=val)
+            qs = qs.filter(gloss__glossvideo__isnull=val)
 
         if 'hasothermedia' in get and get['hasothermedia'] not in ['unspecified', '0']:
             query_parameters['hasothermedia'] = get['hasothermedia']
@@ -1727,14 +1717,14 @@ class SenseListView(ListView):
             pks_for_glosses_with_othermedia = [om.parent_gloss.pk for om in OtherMedia.objects.all()]
 
             if get['hasothermedia'] == '2':  # We only want glosses with other media
-                qs = qs.filter(pk__in=pks_for_glosses_with_othermedia)
+                qs = qs.filter(gloss__pk__in=pks_for_glosses_with_othermedia)
             elif get['hasothermedia'] == '3':  # We only want glosses without other media
-                qs = qs.exclude(pk__in=pks_for_glosses_with_othermedia)
+                qs = qs.exclude(gloss__pk__in=pks_for_glosses_with_othermedia)
 
         if 'defspublished' in get and get['defspublished'] not in ['0', 'unspecified']:
             val = get['defspublished'] == 'yes'
             query_parameters['defspublished'] = get['defspublished']
-            qs = qs.filter(definition__published=val)
+            qs = qs.filter(gloss__definition__published=val)
 
         if 'hasmultiplesenses' in get and get['hasmultiplesenses'] not in ['0', 'unspecified']:
             val = get['hasmultiplesenses'] == 'yes'
@@ -1745,7 +1735,7 @@ class SenseListView(ListView):
             else:
                 multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
                     'gloss').annotate(Count('id')).filter(id__count=1)]
-            qs = qs.filter(id__in=multiple_senses)
+            qs = qs.filter(gloss__id__in=multiple_senses)
 
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
@@ -1756,37 +1746,37 @@ class SenseListView(ListView):
         vals = get.getlist('dialect[]')
         if vals != []:
             query_parameters['dialect[]'] = vals
-            qs = qs.filter(dialect__in=vals)
+            qs = qs.filter(gloss__dialect__in=vals)
 
         vals = get.getlist('tags[]')
         if vals != []:
             query_parameters['tags[]'] = vals
             glosses_with_tag = list(
                 TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
-            qs = qs.filter(id__in=glosses_with_tag)
+            qs = qs.filter(gloss__id__in=glosses_with_tag)
 
         # allows for multiselect
         vals = get.getlist('signlanguage[]')
         if vals != []:
             query_parameters['signlanguage[]'] = vals
-            qs = qs.filter(signlanguage__in=vals)
+            qs = qs.filter(gloss__signlanguage__in=vals)
 
         if 'useInstr' in get and get['useInstr'] != '':
             query_parameters['useInstr'] = get['useInstr']
-            qs = qs.filter(useInstr__icontains=get['useInstr'])
+            qs = qs.filter(gloss__useInstr__icontains=get['useInstr'])
 
         fields_with_choices = fields_to_fieldcategory_dict()
         for fieldnamemulti in fields_with_choices.keys():
             fieldnamemultiVarname = fieldnamemulti + '[]'
-            fieldnameQuery = fieldnamemulti + '__machine_value__in'
+            fieldnameQuery = 'gloss__' + fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
             if vals != []:
                 query_parameters[fieldnamemultiVarname] = vals
                 if fieldnamemulti == 'semField':
-                    qs = qs.filter(semField__in=vals)
+                    qs = qs.filter(gloss__semField__in=vals)
                 elif fieldnamemulti == 'derivHist':
-                    qs = qs.filter(derivHist__in=vals)
+                    qs = qs.filter(gloss__derivHist__in=vals)
                 else:
                     qs = qs.filter(**{fieldnameQuery: vals})
 
@@ -1798,9 +1788,9 @@ class SenseListView(ListView):
                 field_obj = Gloss.get_field(fieldname)
 
                 if type(field_obj) in [CharField, TextField] and not hasattr(field_obj, 'field_choice_category'):
-                    key = fieldname + '__icontains'
+                    key = 'gloss__' + fieldname + '__icontains'
                 else:
-                    key = fieldname + '__exact'
+                    key = 'gloss__' + fieldname + '__exact'
 
                 val = get[fieldname]
 
@@ -1811,6 +1801,7 @@ class SenseListView(ListView):
                     query_parameters[fieldname] = get[fieldname]
 
                     kwargs = {key: val}
+                    print(kwargs)
                     qs = qs.filter(**kwargs)
 
         qs = qs.distinct()
@@ -1826,7 +1817,7 @@ class SenseListView(ListView):
                 # Remember the pk of all glosses that are referenced in the collection definitions
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in
                                                           definitions_with_this_role]
-                qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+                qs = qs.filter(gloss__pk__in=pks_for_glosses_with_these_definitions)
 
         if 'definitionContains' in get and get['definitionContains'] not in ['', '0']:
             query_parameters['definitionContains'] = get['definitionContains']
@@ -1835,26 +1826,26 @@ class SenseListView(ListView):
 
             # Remember the pk of all glosses that are referenced in the collection definitions
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
-            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+            qs = qs.filter(gloss__pk__in=pks_for_glosses_with_these_definitions)
 
         if 'createdBefore' in get and get['createdBefore'] != '':
             query_parameters['createdBefore'] = get['createdBefore']
 
             created_before_date = DT.datetime.strptime(get['createdBefore'], settings.DATE_FORMAT).date()
-            qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
+            qs = qs.filter(gloss__creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
 
         if 'createdAfter' in get and get['createdAfter'] != '':
             query_parameters['createdAfter'] = get['createdAfter']
 
             created_after_date = DT.datetime.strptime(get['createdAfter'], settings.DATE_FORMAT).date()
-            qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
+            qs = qs.filter(gloss__creationDate__range=(created_after_date, DT.datetime.now()))
 
         if 'createdBy' in get and get['createdBy'] != '':
             query_parameters['createdBy'] = get['createdBy']
 
             created_by_search_string = ' '.join(get['createdBy'].strip().split())  # remove redundant spaces
             qs = qs.annotate(
-                created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
+                created_by=Concat('gloss__creator__first_name', V(' '), 'gloss__creator__last_name', output_field=CharField())) \
                 .filter(created_by__icontains=created_by_search_string)
 
         # # save the query parameters to a session variable
@@ -1872,7 +1863,7 @@ class SenseListView(ListView):
         if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        # Return the resulting filtered and sorted queryset
+        # Return the resulting filtered (not sorted) queryset
         return qs
 
 
@@ -7445,6 +7436,7 @@ def senselist_ajax_complete(request, sense_id):
                                                           'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
                                                           'width_senses_columns': len(dataset_languages)+1,
+                                                          'width_gloss_columns': len(dataset_languages),
                                                           'sense_order': sense_order,
                                                           'selected_datasets': selected_datasets,
                                                           'sensetranslations_per_language': sensetranslations_per_language,
@@ -7512,6 +7504,8 @@ def senselistheader_ajax(request):
 
     return render(request, 'dictionary/senselist_headerrow.html', { 'dataset_languages': dataset_languages,
                                                                     'width_senses_columns': len(dataset_languages)+1,
+                                                                    'width_gloss_columns': len(dataset_languages),
+                                                                    'width_sentences_columns': len(dataset_languages),
                                                                     'selected_datasets': selected_datasets,
                                                                     'column_headers': column_headers,
                                                                     'sortOrder': str(sortOrder),

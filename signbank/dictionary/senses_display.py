@@ -42,8 +42,8 @@ def senses_per_language_list(gloss):
 
 
 def senses_translations_per_language_list(sense):
-    # Put senses per language in a list of pairs, language plus dictionary of sense number to list of strings
-    sensetranslations_per_language = []
+    # Put senses per language in a dictionary mapping language to a dictionary of sense number to list of strings
+    sensetranslations_per_language = dict()
     if not sense:
         return sensetranslations_per_language
     sense_dataset = sense.get_dataset()
@@ -55,13 +55,13 @@ def senses_translations_per_language_list(sense):
             if translations:
                 keywords_list = [trans.translation.text for trans in translations if trans.translation.text != '']
                 sensetranslations_for_language[sense] = ', '.join(keywords_list)
-        sensetranslations_per_language.append((language, sensetranslations_for_language))
+        sensetranslations_per_language[language] = sensetranslations_for_language
     return sensetranslations_per_language
 
 
 def senses_sentences_per_language_list(sense):
-    # Put senses per language in a list of pairs, language plus dictionary of sense number to list of strings
-    sensetranslations_per_language = []
+    # Put senses per language in a dictionary mapping language to a list of sentence texts
+    sensetranslations_per_language = dict()
     if not sense:
         return sensetranslations_per_language
     sense_dataset = sense.get_dataset()
@@ -75,5 +75,5 @@ def senses_sentences_per_language_list(sense):
             if language not in sensetranslations_for_language.keys():
                 sensetranslations_for_language[language] = []
             sensetranslations_for_language[language].append(sentence_translations.first().text)
-        sensetranslations_per_language.append((language, sensetranslations_for_language))
+        sensetranslations_per_language[language] = sensetranslations_for_language
     return sensetranslations_per_language
