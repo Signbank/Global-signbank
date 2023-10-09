@@ -456,9 +456,7 @@ class MorphemeSearchForm(forms.ModelForm):
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     useInstr = forms.CharField(label=_("Annotation instructions"))
 
-
     phonOth = forms.CharField(label=_(u'Phonology Other'), widget=forms.TextInput())
-
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),
                                choices=NULLBOOLEANCHOICES)
@@ -1512,4 +1510,29 @@ class SearchHistoryForm(forms.ModelForm):
             self.fields['parameters'] = forms.ModelMultipleChoiceField(label=_('Parameters'),
                                                                        widget=forms.CheckboxSelectMultiple,
                                                                        queryset=query_parameters_of_instance)
+
+
+class SentenceForm(forms.ModelForm):
+
+    sentenceType = forms.ChoiceField(label=_("Type"), choices=[])
+    negative = forms.ChoiceField(label=_(u'Negative'), choices=YESNOCHOICES)
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = ExampleSentence
+
+        fields = ['sentenceType', 'negative']
+
+    def __init__(self, *args, **kwargs):
+        super(SentenceForm, self).__init__(*args, **kwargs)
+
+        field_choices = FieldChoice.objects.filter(field__iexact='sentenceType')
+
+        translated_choices = choicelist_queryset_to_translated_dict(field_choices, ordered=False, id_prefix='',
+                                                                    shortlist=True)
+        self.fields['sentenceType'] = forms.TypedMultipleChoiceField(label=_('Type'),
+                                                                     choices=translated_choices,
+                                                                     required=False, widget=Select2)
 

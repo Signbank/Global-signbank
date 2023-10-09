@@ -60,20 +60,25 @@ def senses_translations_per_language_list(sense):
 
 
 def senses_sentences_per_language_list(sense):
-    # Put senses per language in a dictionary mapping language to a list of sentence texts
-    sensetranslations_per_language = dict()
+    # Put sense sentences in a list of dictionaries for each sentences with translations
+    # per language in a dictionary mapping language to a list of sentence texts
+    sense_sentences = []
     if not sense:
-        return sensetranslations_per_language
+        return sense_sentences
     sense_dataset = sense.get_dataset()
-    for language in sense_dataset.translation_languages.all():
-        sensetranslations_for_language = dict()
-        all_sentences = sense.exampleSentences.all()
-        for sentence in all_sentences:
+    all_sentences = sense.exampleSentences.all()
+    for sentence in all_sentences:
+        sense_sentences_translations_per_language = dict()
+        sense_sentences_translations_per_language['sentencetype'] = sentence.sentenceType
+        sense_sentences_translations_per_language['negative'] = sentence.negative
+        sentence_translations_for_languages = dict()
+        for language in sense_dataset.translation_languages.all():
             sentence_translations = ExampleSentenceTranslation.objects.filter(examplesentence=sentence, language=language)
             if not sentence_translations:
                 continue
-            if language not in sensetranslations_for_language.keys():
-                sensetranslations_for_language[language] = []
-            sensetranslations_for_language[language].append(sentence_translations.first().text)
-        sensetranslations_per_language[language] = sensetranslations_for_language
-    return sensetranslations_per_language
+            if language not in sentence_translations_for_languages.keys():
+                sentence_translations_for_languages[language] = []
+            sentence_translations_for_languages[language].append(sentence_translations.first().text)
+        sense_sentences_translations_per_language['translations'] = sentence_translations_for_languages
+        sense_sentences.append(sense_sentences_translations_per_language)
+    return sense_sentences

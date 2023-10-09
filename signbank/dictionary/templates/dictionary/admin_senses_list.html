@@ -208,6 +208,16 @@ $(document).ready(function() {
          $('#id_tags').val(null).trigger('change');
      };
 
+     makeMultipleSelect('id_sentenceType', 'sentenceType[]');
+     $('#id_sentenceType').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve',
+        placeholder: ''
+     });
+
+     $('#id_sentenceType').val(null).trigger('change');
+
      // initialize query parameters in multiple select fields
      for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = '#id_' + multiple_select_fields[i];
@@ -521,7 +531,7 @@ function do_set_lemma_language(el) {
 
     // This function toggles the different language columns for Sentence
     function do_toggle_sentence(el) {
-        var visible_columns_start = 0;
+        var visible_columns_start = 2;
         $('th[id^="sentence_"]').each(function() {
             if ($(this).css('display') != 'none') {
                 visible_columns_start++;
@@ -530,17 +540,17 @@ function do_set_lemma_language(el) {
         var dataset_language_id = $(el).attr('value');
         var sentence_column_id = '.sentence_' + dataset_language_id;
         $(sentence_column_id).toggle();
-        var visible_columns_finnish = 0;
+        var visible_columns_finnish = 2;
         $('th[id^="sentence_"]').each(function() {
             if ($(this).css('display') != 'none') {
                 visible_columns_finnish++;
             };
         });
-        if (visible_columns_start == 0) {
+        if (visible_columns_start == 2) {
             // the sentence columns were not visible at the start, show the header and visible columns
             $('.sentences_multicolumn').toggle();
             $('.sentences_multicolumn').attr('colspan', visible_columns_finnish);
-        } else if (visible_columns_finnish == 0) {
+        } else if (visible_columns_finnish == 2) {
             // all the columns are hidden now, hide the header
             $('.sentences_multicolumn').toggle();
         } else {
@@ -639,23 +649,22 @@ function do_toggle_language(el) {
                         <div class="panel-heading" data-toggle="collapse" data-target="#searchbasic">{% trans "Search by Language and Basic Properties" %}</div>
 
                         <div id='searchbasic' class='collapse'>
-                        <table class='table'>
+                        <table class='table table-condensed' style="width:65%;">
                             <tr id='signlanguage_selection'>
-                                <td><label>{{searchform.signLanguage.label}}</label>
-                                        {{ searchform.signLanguage }}
-                                </td>
+                                <td style="padding-left:30px;"><label>{{searchform.signLanguage.label}}</label></td>
+                                <td style="width:600px;">{{searchform.signLanguage}}</td>
                             </tr>
                             <tr id='dialect_selection'>
-                                  <td><label>{{searchform.dialects.label}}</label>
-                                        {{ searchform.dialects }}
-                                </td>
+                                <td style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
+                                <td style="width:600px;">{{searchform.dialects}}</td>
                             </tr>
                         </table>
 
-                        <table class='table'>
+                        <table class='table table-condensed' style="width:65%;">
                             {% for fieldname,field,label in input_names_fields_and_labels.main %}
 
-                                <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+                                <tr><td style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                    <td style="width:600px;">{{field}}</td></tr>
 
                             {% endfor %}
 
@@ -672,11 +681,11 @@ function do_toggle_language(el) {
                         <tr>
 
                           <td>
-                            <table class='table table-condensed'>
+                            <table class='table table-condensed' style="width:65%;">
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
 
                                     <tr>
-                                        <td><label>{{label}}</label></td><td>{{field}}</td>
+                                        <td style="padding-left:30px;"><label>{{label}}</label></td><td>{{field}}</td>
                                         {% if fieldname == 'handedness' %}
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
                                                 <td><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td>{{handednessfield}}</td>
@@ -709,13 +718,37 @@ function do_toggle_language(el) {
                         <tr>
 
                           <td>
-                            <table class='table table-condensed'>
+                            <table class='table table-condensed' style="width:65%;">
                                 {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
 
-                                    <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+                                    <tr><td style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                        <td style="width:600px;">{{field}}</td></tr>
 
                                 {% endfor %}
 
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#sentence_search">{% trans "Search Sentences" %}</div>
+
+                      <div id='sentence_search' class='collapse'>
+                      <table class='table table-condensed'>
+                        <tr>
+
+                          <td>
+                            <table class='table table-condensed' style="width:65%;">
+                                    <tr><td style="padding-left:30px;"><label for='id_sentenceType'>{{sentenceform.sentenceType.label}}</label></td>
+                                        <td style="width:600px;">{{sentenceform.sentenceType}}</td>
+                                    </tr>
+                                    <tr><td style="padding-left:30px;"><label for='id_negative'>{{sentenceform.negative.label}}</label></td>
+                                        <td style="width:600px;">{{sentenceform.negative}}</td>
+                                    </tr>
                             </table>
 
                           </td>

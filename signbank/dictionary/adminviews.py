@@ -1355,6 +1355,9 @@ class SenseListView(ListView):
         search_form = GlossSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
                                           dialects=dialects)
 
+        sentence_form = SentenceForm(self.request.GET)
+        context['sentenceform'] = sentence_form
+
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())
         context['query_parameters_keys'] = json.dumps(query_parameters_keys)
@@ -7437,6 +7440,7 @@ def senselist_ajax_complete(request, sense_id):
                                                           'dataset_languages': dataset_languages,
                                                           'width_senses_columns': len(dataset_languages)+1,
                                                           'width_gloss_columns': len(dataset_languages),
+                                                          'width_sentences_columns': len(dataset_languages)+2,
                                                           'sense_order': sense_order,
                                                           'selected_datasets': selected_datasets,
                                                           'sensetranslations_per_language': sensetranslations_per_language,
@@ -7505,7 +7509,7 @@ def senselistheader_ajax(request):
     return render(request, 'dictionary/senselist_headerrow.html', { 'dataset_languages': dataset_languages,
                                                                     'width_senses_columns': len(dataset_languages)+1,
                                                                     'width_gloss_columns': len(dataset_languages),
-                                                                    'width_sentences_columns': len(dataset_languages),
+                                                                    'width_sentences_columns': len(dataset_languages)+2,
                                                                     'selected_datasets': selected_datasets,
                                                                     'column_headers': column_headers,
                                                                     'sortOrder': str(sortOrder),

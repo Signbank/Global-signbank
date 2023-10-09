@@ -49,6 +49,11 @@
           </th>
           {% endfor %}
 
+          <th class="sentenceType_{{focus_gloss.id}}_{{focus_sense.id}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% trans "Type" %}</th>
+          <th class="sentenceNegative_{{focus_gloss.id}}_{{focus_sense.id}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% trans "Negative" %}</th>
+
          {% for dataset_lang in dataset_languages %}
           <th class="sentence_{{dataset_lang.language_code_2char}}" id="sentence_{{dataset_lang.language_code_2char}}"
               style="vertical-align:top; border-bottom: 1px solid grey;">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
