@@ -66,9 +66,11 @@ def senses_sentences_per_language_list(sense):
     if not sense:
         return sense_sentences
     sense_dataset = sense.get_dataset()
-    all_sentences = sense.exampleSentences.all()
-    for sentence in all_sentences:
+    all_sentences = SenseExamplesentence.objects.filter(sense=sense).order_by('order')
+    for sentence_examplesentence in all_sentences:
+        sentence = sentence_examplesentence.examplesentence
         sense_sentences_translations_per_language = dict()
+        sense_sentences_translations_per_language['order'] = sentence_examplesentence.order
         sense_sentences_translations_per_language['sentencetype'] = sentence.sentenceType
         sense_sentences_translations_per_language['negative'] = sentence.negative
         sentence_translations_for_languages = dict()

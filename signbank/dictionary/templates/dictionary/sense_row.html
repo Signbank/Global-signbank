@@ -39,37 +39,38 @@
 
     <td colspan="{{width_sentences_columns}}">
         <table id = "sentences_rows_{{focus_gloss.id}}_{{focus_sense.id}}" style="table-layout:fixed;width:100%;">
-    {% for sentence in sentences_per_language %}
-            <tr>
-        {% with sentence|get_item:'sentencetype' as sentencetype %}
-        {% with sentence|get_item:'negative' as negative %}
-        {% with sentence|get_item:'translations' as translations_per_language %}
-        <td class="sentenceType_{{focus_gloss.id}}_{{focus_sense.id}}">
-        {% if sentencetype %}{{sentencetype.name}}{% endif %}
-        </td>
-        <td class="sentenceNegative_{{focus_gloss.id}}_{{focus_sense.id}}">
-        {{negative}}
-        </td>
+        {% for sentence in sentences_per_language %}
+        <tr>
+            {% with sentence|get_item:'order' as sentence_order %}
+            {% with sentence|get_item:'sentencetype' as sentencetype %}
+            {% with sentence|get_item:'negative' as negative %}
+            {% with sentence|get_item:'translations' as translations_per_language %}
+            <td class="sentenceType_{{focus_gloss.id}}_{{focus_sense.id}}">
+            {% if sentencetype %}{{sentencetype.name}}{% endif %}
+            </td>
+            <td class="sentenceNegative_{{focus_gloss.id}}_{{focus_sense.id}}">
+            {{negative}}
+            </td>
 
-        {% for lang in dataset_languages %}
-        <td class="sentence_{{lang.language_code_2char}}">
-            {% if lang in translations_per_language.keys %}
-            {% with translations_per_language|get_item:lang as sentencetranslation %}
-            <div>
-            {% for sentence in sentencetranslation %}
-                {{forloop.counter}}. {{sentence|safe}}
+            {% for lang in dataset_languages %}
+            <td class="sentence_{{lang.language_code_2char}}">
+                {% if lang in translations_per_language.keys %}
+                {% with translations_per_language|get_item:lang as sentencetranslation %}
+                <div>
+                {% for sentence in sentencetranslation %}
+                    {{sense_order}}.{{sentence_order}}. {{sentence|safe}}
+                {% endfor %}
+                </div>
+                {% endwith %}
+                {% endif %}
+            </td>
             {% endfor %}
-            </div>
             {% endwith %}
-            {% endif %}
-        </td>
+            {% endwith %}
+            {% endwith %}
+            {% endwith %}
+        </tr>
         {% endfor %}
-<!--        {% if not forloop.last %}<br> {% endif %}-->
-        {% endwith %}
-        {% endwith %}
-        {% endwith %}
-                </tr>
-    {% endfor %}
         </table>
     </td>
 </tr>

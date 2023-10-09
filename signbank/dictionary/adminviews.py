@@ -1851,6 +1851,18 @@ class SenseListView(ListView):
                 created_by=Concat('gloss__creator__first_name', V(' '), 'gloss__creator__last_name', output_field=CharField())) \
                 .filter(created_by__icontains=created_by_search_string)
 
+        if 'sentenceType[]' in get:
+            vals = get.getlist('sentenceType[]')
+            if vals != []:
+
+                query_parameters['sentenceType[]'] = vals
+
+                sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=vals)
+
+                # Remember the pk of all sentences that are referenced in the collection ExampleSentence
+                pks_for_sentences_with_this_type = [sentence.pk for sentence in sentences_with_this_type]
+                qs = qs.filter(sense__exampleSentences__pk__in=pks_for_sentences_with_this_type)
+
         # # save the query parameters to a session variable
         # self.request.session['query_parameters'] = json.dumps(query_parameters)
         # self.request.session.modified = True
