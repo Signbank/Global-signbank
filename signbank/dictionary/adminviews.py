@@ -72,7 +72,7 @@ from signbank.frequency import import_corpus_speakers, configure_corpus_document
     eaf_file_from_paths, documents_paths_dictionary
 from signbank.dictionary.frequency_display import collect_speaker_age_data, collect_variants_data, collect_variants_age_range_data, \
                                                     collect_variants_age_sex_raw_percentage
-from signbank.dictionary.senses_display import senses_per_language, senses_per_language_list
+from signbank.dictionary.senses_display import senses_per_language, senses_per_language_list, sensetranslations_per_language_dict
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
@@ -2250,8 +2250,8 @@ class GlossRelationsDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
         context['dataset_languages'] = dataset_languages
 
-        sensetranslations_per_language = senses_per_language(gl)
-        context['sensetranslations_per_language'] = sensetranslations_per_language
+        context['sensetranslations_per_language'] = senses_per_language(gl)
+        context['sensetranslations_per_language_dict'] = sensetranslations_per_language_dict(gl)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
