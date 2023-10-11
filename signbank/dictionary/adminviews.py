@@ -1592,10 +1592,15 @@ class SenseListView(ListView):
 
         setattr(self.request, 'web_search', self.web_search)
 
-        self.query_parameters = dict()
-        # erase the previous query
-        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
-        self.request.session.modified = True
+        if 'query' not in self.request.GET:
+            # erase the previous query
+            self.query_parameters = dict()
+            self.request.session['query_parameters'] = json.dumps(self.query_parameters)
+            self.request.session.modified = True
+        else:
+            # the 'query' needs to be handed off from SearchHistoryView to use the parameters in the Senses Search
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
 
         if self.request.user.is_authenticated:
             selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -4335,10 +4340,10 @@ class SearchHistoryView(ListView):
         else:
             search_results = []
         if search_results and len(search_results) > 0:
-            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'sense']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape', 'sense']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
