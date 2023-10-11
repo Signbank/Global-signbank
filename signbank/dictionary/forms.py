@@ -1516,6 +1516,8 @@ class SentenceForm(forms.ModelForm):
 
     sentenceType = forms.ChoiceField(label=_("Type"), choices=[])
     negative = forms.ChoiceField(label=_(u'Negative'), choices=YESNOCHOICES)
+    sentenceContains = forms.CharField(label=_(u'Sentence Contains'),
+                                       widget=forms.TextInput(attrs=ATTRS_FOR_FORMS), required=False)
 
     class Meta:
 

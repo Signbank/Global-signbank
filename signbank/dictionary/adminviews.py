@@ -1869,6 +1869,16 @@ class SenseListView(ListView):
             elif get['negative'] == 'no':  # We only want senses sentences that are not negative
                 qs = qs.filter(sense__exampleSentences__pk__in=pks_for_negative_sentences)
 
+        if 'sentenceContains' in get and get['sentenceContains'] not in ['', '0']:
+            query_parameters['sentenceContains'] = get['sentenceContains']
+
+            sentence_translations_with_this_text = ExampleSentenceTranslation.objects.filter(text__icontains=get['sentenceContains'])
+
+            # Remember the pk of all sentences that include this text
+            pks_for_sentences_with_this_text = [sentence_translation.examplesentence.pk
+                                                for sentence_translation in sentence_translations_with_this_text]
+            qs = qs.filter(sense__exampleSentences__pk__in=pks_for_sentences_with_this_text)
+
         # # save the query parameters to a session variable
         # self.request.session['query_parameters'] = json.dumps(query_parameters)
         # self.request.session.modified = True
