@@ -2,7 +2,6 @@ from django.template import Library
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.tools import get_default_annotationidglosstranslation
 import json
-from signbank.dictionary.senses_display import senses_per_language
 register = Library()
 
 
@@ -198,3 +197,15 @@ def splitlines(value):
     split_value = value.split('\\n')
     values = "&#10;".join(split_value)
     return values
+
+@register.filter
+def to_all_keys(dictionary):
+    keys = list(dictionary.keys())
+    last_key = keys[-1]
+    new_dictionary = {}
+    for key in range(1, last_key + 1):
+        if key in dictionary:
+            new_dictionary[key] = dictionary[key]
+        else:
+            new_dictionary[key] = ""
+    return new_dictionary
