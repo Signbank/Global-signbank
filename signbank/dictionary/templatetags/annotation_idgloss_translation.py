@@ -2,7 +2,6 @@ from django.template import Library
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.tools import get_default_annotationidglosstranslation
 import json
-from signbank.dictionary.senses_display import senses_per_language
 register = Library()
 
 
