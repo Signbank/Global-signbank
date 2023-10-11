@@ -1691,11 +1691,6 @@ class SenseListView(ListView):
                 qs = qs.filter(sense__senseTranslations__translations__translation__text__iregex=get_value)
                 qs = qs.filter(sense__senseTranslations__translations__language__in=language)
 
-        # if 'translation' in get and get['translation'] != '':
-        #     val = get['translation']
-        #     query_parameters['translation'] = get['translation']
-        #     qs = qs.filter(senseTranslations__translations__translation__text__iregex=val)
-
         if 'inWeb' in get and get['inWeb'] != '0':
             # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
             val = get['inWeb'] == '2'
@@ -1804,7 +1799,6 @@ class SenseListView(ListView):
                     query_parameters[fieldname] = get[fieldname]
 
                     kwargs = {key: val}
-                    print(kwargs)
                     qs = qs.filter(**kwargs)
 
         qs = qs.distinct()
@@ -1862,6 +1856,18 @@ class SenseListView(ListView):
                 # Remember the pk of all sentences that are referenced in the collection ExampleSentence
                 pks_for_sentences_with_this_type = [sentence.pk for sentence in sentences_with_this_type]
                 qs = qs.filter(sense__exampleSentences__pk__in=pks_for_sentences_with_this_type)
+
+        if 'negative' in get and get['negative'] not in ['unspecified', '0']:
+            query_parameters['negative'] = get['negative']
+            val = get['negative'] == 'yes'
+            # Remember the pk of all negative sentences
+            sentences_with_this_type = ExampleSentence.objects.filter(negative__exact=val)
+            pks_for_negative_sentences = [es.pk for es in sentences_with_this_type]
+
+            if get['negative'] == 'yes':  # We only want senses with negative sentences
+                qs = qs.filter(sense__exampleSentences__pk__in=pks_for_negative_sentences)
+            elif get['negative'] == 'no':  # We only want senses sentences that are not negative
+                qs = qs.filter(sense__exampleSentences__pk__in=pks_for_negative_sentences)
 
         # # save the query parameters to a session variable
         # self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -1966,10 +1972,10 @@ class GlossDetailView(DetailView):
         else:
             search_results = []
         if search_results and len(search_results) > 0:
-            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'sense']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            if self.request.session['search_type'] not in ['sign', 'sense', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
@@ -6917,7 +6923,7 @@ class MorphemeDetailView(DetailView):
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""
     if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
-            and request.session['search_type'] in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            and request.session['search_type'] in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape', 'sense']:
         return JsonResponse(request.session['search_results'], safe=False)
     else:
         return JsonResponse([], safe=False)

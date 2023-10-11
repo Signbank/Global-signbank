@@ -203,14 +203,14 @@ class TagUpdateForm(forms.Form):
                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
-YESNOCHOICES = (('unspecified', "---------" ), ('yes', 'Yes'), ('no', 'No'))
-NULLBOOLEANCHOICES = [(0,'---------'),(2,'True'),(3,'False')]
-NONEBOOLEANCHOICES = [(0,'---------'),(1,'None'),(2,'True'),(3,'False')]
-UNKNOWNBOOLEANCHOICES = [(0,'---------'),(2,'True'),(3,'False')]
-NEUTRALBOOLEANCHOICES = [(1,'Neutral'),(2,'Yes'),(3,'No')]
-NEUTRALQUERYCHOICES = [(0,'---------'),(1,'Neutral'),(2,'True'),(3,'False')]
+YESNOCHOICES = (('unspecified', "---------"), ('yes', 'Yes'), ('no', 'No'))
+NULLBOOLEANCHOICES = [(0, '---------'), (2, 'True'), (3, 'False')]
+NONEBOOLEANCHOICES = [(0, '---------'), (1, 'None'), (2, 'True'), (3, 'False')]
+UNKNOWNBOOLEANCHOICES = [(0, '---------'), (2, 'True'), (3, 'False')]
+NEUTRALBOOLEANCHOICES = [(1, 'Neutral'), (2, 'Yes'), (3, 'No')]
+NEUTRALQUERYCHOICES = [(0, '---------'), (1, 'Neutral'), (2, 'True'), (3, 'False')]
 
-RELATION_ROLE_CHOICES = (('','---------'),
+RELATION_ROLE_CHOICES = (('', '---------'),
                          ('all', 'All'),
                          ('homonym', 'Homonym'),
                          ('synonym', 'Synonym'),
