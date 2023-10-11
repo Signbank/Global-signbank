@@ -842,9 +842,20 @@ class Sense(models.Model):
         """Return the string representation of the sense, separated by | for every sensetranslation"""	
         str_sense = []
         this_sense_translations = self.senseTranslations.all()
+        if not this_sense_translations:
+            return ""
         for sensetranslation in this_sense_translations:
-            this_translation = str(sensetranslation)
-            str_sense.append(this_translation)
+            translations = sensetranslation.translations.all()
+            if not translations:
+                continue
+            str_translations = []
+            for translation in translations:
+                this_translation = translation.translation.text
+                if not this_translation:
+                    continue
+                str_translations.append(this_translation)
+            joined_translations = ', '.join(str_translations)
+            str_sense.append(joined_translations)
         return " | ".join(str_sense)
 
 

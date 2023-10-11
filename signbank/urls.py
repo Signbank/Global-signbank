@@ -20,11 +20,12 @@ import django.contrib.auth.views
 import django.contrib.admindocs.urls
 import django_summernote.urls
 
-from signbank.dictionary.adminviews import GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
+from signbank.dictionary.adminviews import (GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
                                             HomonymListView, MinimalPairsListView, DatasetManagerView, \
                                             DatasetDetailView, FrequencyListView, DatasetFieldChoiceView, \
                                             dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView, \
-                                            QueryListView, SemanticFieldListView, DerivationHistoryListView, SearchHistoryView
+                                            QueryListView, SemanticFieldListView, DerivationHistoryListView,
+                                            SearchHistoryView, SenseListView)
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -70,6 +71,7 @@ urlpatterns = [
             name='import_csv_create_sentences'),
     re_path(r'^signs/import_csv_update/$', signbank.dictionary.views.import_csv_update, name='import_csv_update'),
     re_path(r'^signs/import_csv_lemmas/$', signbank.dictionary.views.import_csv_lemmas, name='import_csv_lemmas'),
+    re_path(r'^signs/senses/search/$', SenseListView.as_view(), {'show_all': False}, name='senses_search'),
     re_path(r'^analysis/homonyms/$', HomonymListView.as_view(), name='admin_homonyms_list'),
     re_path(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete,
                       name='homonyms_complete'),

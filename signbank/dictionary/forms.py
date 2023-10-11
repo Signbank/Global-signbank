@@ -203,14 +203,14 @@ class TagUpdateForm(forms.Form):
                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
-YESNOCHOICES = (('unspecified', "---------" ), ('yes', 'Yes'), ('no', 'No'))
-NULLBOOLEANCHOICES = [(0,'---------'),(2,'True'),(3,'False')]
-NONEBOOLEANCHOICES = [(0,'---------'),(1,'None'),(2,'True'),(3,'False')]
-UNKNOWNBOOLEANCHOICES = [(0,'---------'),(2,'True'),(3,'False')]
-NEUTRALBOOLEANCHOICES = [(1,'Neutral'),(2,'Yes'),(3,'No')]
-NEUTRALQUERYCHOICES = [(0,'---------'),(1,'Neutral'),(2,'True'),(3,'False')]
+YESNOCHOICES = (('unspecified', "---------"), ('yes', 'Yes'), ('no', 'No'))
+NULLBOOLEANCHOICES = [(0, '---------'), (2, 'True'), (3, 'False')]
+NONEBOOLEANCHOICES = [(0, '---------'), (1, 'None'), (2, 'True'), (3, 'False')]
+UNKNOWNBOOLEANCHOICES = [(0, '---------'), (2, 'True'), (3, 'False')]
+NEUTRALBOOLEANCHOICES = [(1, 'Neutral'), (2, 'Yes'), (3, 'No')]
+NEUTRALQUERYCHOICES = [(0, '---------'), (1, 'Neutral'), (2, 'True'), (3, 'False')]
 
-RELATION_ROLE_CHOICES = (('','---------'),
+RELATION_ROLE_CHOICES = (('', '---------'),
                          ('all', 'All'),
                          ('homonym', 'Homonym'),
                          ('synonym', 'Synonym'),
@@ -456,9 +456,7 @@ class MorphemeSearchForm(forms.ModelForm):
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     useInstr = forms.CharField(label=_("Annotation instructions"))
 
-
     phonOth = forms.CharField(label=_(u'Phonology Other'), widget=forms.TextInput())
-
 
     repeat = forms.ChoiceField(label=_(u'Repeating Movement'),
                                choices=NULLBOOLEANCHOICES)
@@ -1512,4 +1510,31 @@ class SearchHistoryForm(forms.ModelForm):
             self.fields['parameters'] = forms.ModelMultipleChoiceField(label=_('Parameters'),
                                                                        widget=forms.CheckboxSelectMultiple,
                                                                        queryset=query_parameters_of_instance)
+
+
+class SentenceForm(forms.ModelForm):
+
+    sentenceType = forms.ChoiceField(label=_("Type"), choices=[])
+    negative = forms.ChoiceField(label=_(u'Negative'), choices=YESNOCHOICES)
+    sentenceContains = forms.CharField(label=_(u'Sentence Contains'),
+                                       widget=forms.TextInput(attrs=ATTRS_FOR_FORMS), required=False)
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = ExampleSentence
+
+        fields = ['sentenceType', 'negative']
+
+    def __init__(self, *args, **kwargs):
+        super(SentenceForm, self).__init__(*args, **kwargs)
+
+        field_choices = FieldChoice.objects.filter(field__iexact='sentenceType')
+
+        translated_choices = choicelist_queryset_to_translated_dict(field_choices, ordered=False, id_prefix='',
+                                                                    shortlist=True)
+        self.fields['sentenceType'] = forms.TypedMultipleChoiceField(label=_('Type'),
+                                                                     choices=translated_choices,
+                                                                     required=False, widget=Select2)
 
