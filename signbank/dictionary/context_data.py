@@ -70,6 +70,8 @@ def get_context_data_for_list_view(request, listview, kwargs, extra_context=None
             queryset_language_codes.append(lang.language_code_2char)
     if not queryset_language_codes:
         queryset_language_codes = [default_dataset.default_language.language_code_2char]
+    local_context['queryset_language_codes'] = queryset_language_codes
+
     if len(selected_datasets) == 1:
         last_used_dataset = selected_datasets.first().acronym
     elif 'last_used_dataset' in request.session.keys():

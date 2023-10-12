@@ -227,12 +227,11 @@ class GlossListView(ListView):
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(GlossListView, self).get_context_data(**kwargs)
-        # set GlossListView class variables
-        # context['search_type'] = 'sign'
-        # context['view_type'] = 'gloss_list'
-        context = get_context_data_for_list_view(self.request, self, kwargs, context)
 
-        if not self.show_all and ('query_parameters' in self.request.session.keys()
+        context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
+        self.queryset_language_codes = context['queryset_language_codes']
+
+        if not context['show_all'] and ('query_parameters' in self.request.session.keys()
                                   and self.request.session['query_parameters'] not in ['', '{}']):
             # if the query parameters are available, convert them to a dictionary
             session_query_parameters = self.request.session['query_parameters']
@@ -461,6 +460,7 @@ class GlossListView(ListView):
             field_label = Gloss.get_field(fieldname).verbose_name
             column_headers.append((fieldname, field_label))
         context['column_headers'] = column_headers
+
         return context
 
 
@@ -546,7 +546,6 @@ class GlossListView(ListView):
             messages.add_message(self.request, messages.INFO, _('No ECV created for dataset.'))
         return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
-    # noinspection PyInterpreter,PyInterpreter
     def render_to_csv_response(self, context):
 
         if not self.request.user.has_perm('dictionary.export_csv'):
@@ -773,13 +772,12 @@ class GlossListView(ListView):
     def get_queryset(self):
         get = self.request.GET
 
-        #First check whether we want to show everything or a subset
+        # First check whether we want to show everything or a subset
         if 'show_all' in self.kwargs.keys():
             show_all = self.kwargs['show_all']
         else:
             show_all = False
 
-        #Then check what kind of stuff we want
         if 'search_type' in get:
             self.search_type = get['search_type']
         else:
@@ -804,7 +802,7 @@ class GlossListView(ListView):
 
         setattr(self.request, 'web_search', self.web_search)
 
-        if self.show_all:
+        if show_all:
             self.query_parameters = dict()
             # erase the previous query
             self.request.session['query_parameters'] = json.dumps(self.query_parameters)
@@ -841,7 +839,7 @@ class GlossListView(ListView):
             qs = Gloss.objects.none()
             return qs
 
-        #Get the initial selection
+        # Get the initial selection
         if show_all or (len(get) > 0 and 'query' not in self.request.GET):
             # anonymous users can search signs, make sure no morphemes are in the results
             if self.search_type == 'sign' or not self.request.user.is_authenticated:
@@ -871,7 +869,7 @@ class GlossListView(ListView):
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
 
-        #No filters or 'show_all' specified? show nothing
+        # No filters or 'show_all' specified? show nothing
         else:
             qs = Gloss.objects.none()
 
@@ -1196,9 +1194,9 @@ class SenseListView(ListView):
         # Call the base implementation first to get a context
         context = super(SenseListView, self).get_context_data(**kwargs)
 
-        context = get_context_data_for_list_view(self.request, self, kwargs, context)
+        context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
 
-        if not self.show_all and ('query_parameters' in self.request.session.keys()
+        if not context['show_all'] and ('query_parameters' in self.request.session.keys()
                                   and self.request.session['query_parameters'] not in ['', '{}']):
             # if the query parameters are available, convert them to a dictionary
             session_query_parameters = self.request.session['query_parameters']
