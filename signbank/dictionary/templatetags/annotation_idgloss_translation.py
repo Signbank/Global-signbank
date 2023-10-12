@@ -200,9 +200,11 @@ def splitlines(value):
 
 @register.filter
 def to_all_keys(dictionary):
-    keys = list(dictionary.keys())
-    last_key = keys[-1]
     new_dictionary = {}
+    keys = list(dictionary.keys())
+    if not keys:
+        return new_dictionary
+    last_key = keys[-1]
     for key in range(1, last_key + 1):
         if key in dictionary:
             new_dictionary[key] = dictionary[key]
