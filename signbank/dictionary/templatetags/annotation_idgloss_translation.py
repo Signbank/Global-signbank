@@ -112,7 +112,9 @@ def keyvalue(dict, key):
     return ''
 
 @register.filter
-def get_item(dictionary,key):
+def get_item(dictionary, key):
+    if not dictionary:
+        return ""
     return dictionary.get(key)
 
 @register.filter
@@ -201,6 +203,8 @@ def splitlines(value):
 @register.filter
 def to_all_keys(dictionary):
     new_dictionary = {}
+    if not dictionary:
+        return new_dictionary
     keys = list(dictionary.keys())
     if not keys:
         return new_dictionary

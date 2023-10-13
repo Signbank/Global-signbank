@@ -27,9 +27,6 @@
 <script type="text/javascript">
     var url = '{{PREFIX_URL}}';
     var language_code = '{{ LANGUAGE_CODE }}';
-    var lemma_create_field_prefix = "{{ lemma_create_field_prefix }}";
-    var user_can_add_gloss = {{ perms.dictionary.add_gloss|yesno:"true,false" }};
-    var lookahead_initial_language = "{{default_dataset_lang}}";
     // this is a default setting for the case only one dataset is available
     var js_dataset_languages = '{{js_dataset_languages|safe}}';
 </script>
@@ -46,7 +43,6 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
 <script type='text/javascript'>
@@ -69,19 +65,6 @@ var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
 $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip();
-
-    if (show_dataset_interface_options && user_can_add_gloss) {
-
-        /**
-         * In the 'add gloss' form, toggle the annotation idgloss fields depending on the chosen dataset
-         */
-         set_annotationidglosslanguages();
-
-         $('#id_dataset').change(function() {
-            set_annotationidglosslanguages();
-         });
-         set_initial_language_lemma_lookahead(lookahead_initial_language);
-     }
 
     function selectColors(fieldId) {
         var target_pulldown = document.getElementById(fieldId);
@@ -289,7 +272,7 @@ $(document).ready(function() {
             success : function(result) {
                 var elem = $(result);
                 var parsed = $.parseHTML(result);
-                $(lookup).find('#senselist_table_header').before(result);
+                $(lookup).find('#senselist_table_header').append(result);
             }
 
     });
@@ -319,8 +302,6 @@ $(document).ready(function() {
 });
 
 </script>
-
-<script type='text/javascript' src="{{ STATIC_URL }}js/lemma_typeahead.js"></script>
 
 <script type='text/javascript'>
 
@@ -443,19 +424,6 @@ function ready_videos(el) {
         }
     });
 }
-
-/**
- * set the lemma language for the chosen dataset
- */
-function do_set_lemma_language(el) {
-  if (user_can_add_gloss) {
-      var dataset_language_id = $(el).attr('value');
-      $("#selected_lemma_language").attr('value',dataset_language_id);
-      language_code = dataset_language_id;
-      set_lemma_language();
-  }
-};
-
 
     // toggle the line-through on a button
     function do_toggle_line_through(el,id) {
@@ -790,15 +758,9 @@ function do_toggle_language(el) {
 
         <input class="btn btn-primary" type="submit" value='{% trans "Search Sense" %}'/>
 
-        {% if perms.dictionary.export_csv %}
-        <input class='btn btn-default' type='submit' name='format' value='CSV'>
-        <input type='hidden' name='show_all' value="{{show_all}}">
-        {% endif %}
-
         <input class='btn btn-default' type='reset' onclick="clearForm();"
                value='{% trans "Reset" %}'>
     </div>
-
 
 
     <div>
@@ -845,11 +807,11 @@ function do_toggle_language(el) {
 {% endif %}
 {% endif %}
 
-<table class='table table-condensed' id = 'senselist_table'>
-    <thead id = 'senselist_table_header'></thead>
+<table class='table table-condensed' id='senselist_table' style="table-layout:auto;width:100%;overflow-y:scroll;">
+    <thead id='senselist_table_header'></thead>
     <tbody>
     {% for glosssense in object_list %}
-    <tr id = "focussense_{{glosssense.sense.id}}">
+    <tr id="focussense_{{glosssense.sense.id}}">
         </tr>
     {% endfor %}
     </tbody>

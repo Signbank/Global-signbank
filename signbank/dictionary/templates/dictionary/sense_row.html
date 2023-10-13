@@ -26,7 +26,7 @@
     <td class="senseorder_{{focus_gloss.id}}_{{focus_sense.id}}">{{sense_order}}.</td>
 
     {% for lang in dataset_languages %}
-    <td class="translation_{{lang.language_code_2char}}" style="width:360px;">
+    <td class="translation_{{lang.language_code_2char}}" style="width:160px;">
     {% if lang in sensetranslations_per_language.keys %}
     {% with sensetranslations_per_language|get_item:lang as sensetranslations %}
         {% for key, value in sensetranslations.items %}
@@ -38,7 +38,8 @@
     {% endfor %}
 
     <td colspan="{{width_sentences_columns}}">
-        <table id = "sentences_rows_{{focus_gloss.id}}_{{focus_sense.id}}" style="table-layout:fixed;width:100%;">
+        <table class='table table-condensed' id="sentences_rows_{{focus_gloss.id}}_{{focus_sense.id}}"
+               style="table-layout:fixed;">
         {% for sentence in sentences_per_language %}
         <tr>
             {% with sentence|get_item:'order' as sentence_order %}
@@ -56,11 +57,12 @@
             <td class="sentence_{{lang.language_code_2char}}">
                 {% if lang in translations_per_language.keys %}
                 {% with translations_per_language|get_item:lang as sentencetranslation %}
-                <div>
+                <span>
                 {% for sentence in sentencetranslation %}
                     {{sense_order}}.{{sentence_order}}. {{sentence|safe}}
+                    {% if not forloop.last %}<br>{% endif %}
                 {% endfor %}
-                </div>
+                </span>
                 {% endwith %}
                 {% endif %}
             </td>

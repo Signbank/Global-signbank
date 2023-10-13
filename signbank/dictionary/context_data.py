@@ -1,0 +1,290 @@
+from signbank.dictionary.models import *
+from signbank.dictionary.forms import GlossSearchForm, SentenceForm, GlossCreateForm, LemmaCreateForm
+from signbank.tools import get_selected_datasets_for_user, get_dataset_languages, searchform_panels
+from django.http import QueryDict
+from django.utils.html import escape
+from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors
+
+
+def get_context_data_for_list_view(request, listview, kwargs, extra_context=None):
+    # This is called by GlossListView, SenseListView
+    search_type = listview.search_type
+    view_type = listview.view_type
+    web_search = False
+    queryset_language_codes = []
+    last_used_dataset = None
+
+    if extra_context is None:
+        extra_context = dict()
+
+    local_context = extra_context
+
+    if 'show_all' in kwargs.keys():
+        local_context['show_all'] = kwargs['show_all']
+    else:
+        local_context['show_all'] = False
+
+    if 'search_type' in request.GET and request.GET['search_type']:
+        # if this is provided it overwrites that of the list view self
+        search_type = request.GET['search_type']
+
+    if 'search' in request.GET:
+        local_context['menu_bar_search'] = request.GET['search']
+
+    if 'search_type' not in request.session.keys():
+        request.session['search_type'] = search_type
+
+    local_context['search_type'] = search_type
+
+    if 'view_type' in request.GET:
+        view_type = request.GET['view_type']
+    local_context['view_type'] = view_type
+
+    if 'inWeb' in request.GET:
+        web_search = request.GET['inWeb'] == '2'
+    elif not request.user.is_authenticated:
+        web_search = True
+    local_context['web_search'] = web_search
+
+    if request.user.is_authenticated:
+        selected_datasets = get_selected_datasets_for_user(request.user)
+    elif 'selected_datasets' in request.session.keys():
+        selected_datasets = Dataset.objects.filter(acronym__in=request.session['selected_datasets'])
+    else:
+        selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+    local_context['selected_datasets'] = selected_datasets
+    dataset_languages = get_dataset_languages(selected_datasets)
+    local_context['dataset_languages'] = dataset_languages
+
+    # the following is needed by javascript in the case only one dataset is available
+    # in order not to compute dynamically in the template
+    dataset_languages_abbreviations = []
+    for ds in selected_datasets:
+        for sdl in ds.translation_languages.all():
+            if sdl.language_code_2char not in dataset_languages_abbreviations:
+                dataset_languages_abbreviations.append(sdl.language_code_2char)
+    js_dataset_languages = ','.join(dataset_languages_abbreviations)
+    local_context['js_dataset_languages'] = js_dataset_languages
+
+    default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+    default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+
+    for lang in dataset_languages:
+        if lang.language_code_2char not in queryset_language_codes:
+            queryset_language_codes.append(lang.language_code_2char)
+    if not queryset_language_codes:
+        queryset_language_codes = [default_dataset.default_language.language_code_2char]
+    local_context['queryset_language_codes'] = queryset_language_codes
+
+    if len(selected_datasets) == 1:
+        last_used_dataset = selected_datasets.first().acronym
+    elif 'last_used_dataset' in request.session.keys():
+        last_used_dataset = request.session['last_used_dataset']
+
+    local_context['last_used_dataset'] = last_used_dataset
+
+    selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
+    sign_languages = []
+    for sl in selected_datasets_signlanguage:
+        if (str(sl.id), sl.name) not in sign_languages:
+            sign_languages.append((str(sl.id), sl.name))
+    local_context['sign_languages'] = sign_languages
+
+    selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage) \
+        .prefetch_related('signlanguage').distinct()
+    dialects = []
+    for dl in selected_datasets_dialects:
+        dialect_name = dl.signlanguage.name + "/" + dl.name
+        dialects.append((str(dl.id), dialect_name))
+    local_context['dialects'] = dialects
+
+    language_query_keys = []
+    for language in dataset_languages:
+        glosssearch_field_name = GlossSearchForm.gloss_search_field_prefix + language.language_code_2char
+        language_query_keys.append(glosssearch_field_name)
+        lemma_field_name = GlossSearchForm.lemma_search_field_prefix + language.language_code_2char
+        language_query_keys.append(lemma_field_name)
+        keyword_field_name = GlossSearchForm.keyword_search_field_prefix + language.language_code_2char
+        language_query_keys.append(keyword_field_name)
+    local_context['language_query_keys'] = json.dumps(language_query_keys)
+
+    return local_context
+
+
+def get_context_data_for_gloss_search_form(request, listview, kwargs, extra_context=None):
+    # This is called by GlossListView, SenseListView
+    query_parameters = listview.query_parameters
+
+    if extra_context is None:
+        extra_context = dict()
+
+    local_context = extra_context
+
+    if not local_context['show_all'] and ('query_parameters' in request.session.keys()
+                                          and request.session['query_parameters'] not in ['', '{}']):
+        # if the query parameters are available, convert them to a dictionary
+        session_query_parameters = request.session['query_parameters']
+        query_parameters = json.loads(session_query_parameters)
+
+    search_form = GlossSearchForm(request.GET,
+                                  languages=local_context['dataset_languages'],
+                                  sign_languages=local_context['sign_languages'],
+                                  dialects=local_context['dialects'])
+
+    sentence_form = SentenceForm(request.GET)
+    local_context['sentenceform'] = sentence_form
+
+    local_context['query_parameters'] = json.dumps(query_parameters)
+    query_parameters_keys = list(query_parameters.keys())
+    local_context['query_parameters_keys'] = json.dumps(query_parameters_keys)
+
+    # other parameters are in the GlossSearchForm in the template that are not initialised
+    # via multiselect or language fields
+    # plus semantics and phonology fields with text types
+    other_parameters = ['sortOrder'] + \
+                       settings.SEARCH_BY['publication'] + \
+                       settings.FIELDS['phonology'] + \
+                       settings.FIELDS['semantics']
+
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+    fields_with_choices = fields_to_fieldcategory_dict()
+    multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
+    other_parameters_keys = [key for key in other_parameters if key not in multiple_select_gloss_fields]
+
+    local_context['other_parameters_keys'] = json.dumps(other_parameters_keys)
+
+    local_context['searchform'] = search_form
+
+    # If the menu bar search form was used, populate the search form with the query string
+    gloss_fields_to_populate = dict()
+    if 'search' in request.GET and request.GET['search'] != '':
+        val = request.GET['search']
+        from signbank.tools import strip_control_characters
+        val = strip_control_characters(val)
+        gloss_fields_to_populate['search'] = escape(val)
+    if 'translation' in request.GET and request.GET['translation'] != '':
+        val = request.GET['translation']
+        from signbank.tools import strip_control_characters
+        val = strip_control_characters(val)
+        gloss_fields_to_populate['translation'] = escape(val)
+    gloss_fields_to_populate_keys = list(gloss_fields_to_populate.keys())
+    local_context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
+    local_context['gloss_fields_to_populate_keys'] = gloss_fields_to_populate_keys
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
+        local_context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+    else:
+        local_context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+
+    if hasattr(settings,
+               'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and request.user.is_authenticated:
+        local_context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
+    else:
+        local_context['search_by_publication_fields'] = []
+
+    multiple_select_gloss_fields.append('definitionRole')
+    multiple_select_gloss_fields.append('hasComponentOfType')
+    local_context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+
+    fields_with_choices['definitionRole'] = 'NoteType'
+    fields_with_choices['hasComponentOfType'] = 'MorphologyType'
+    choices_colors = {}
+    for (fieldname, field_category) in fields_with_choices.items():
+        if field_category in CATEGORY_MODELS_MAPPING.keys():
+            field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
+        else:
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+        choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
+
+    local_context['field_colors'] = choices_colors
+
+    if hasattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'):
+        local_context[
+            'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = settings.DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
+    else:
+        local_context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = 0
+
+    local_context['input_names_fields_and_labels'] = {}
+
+    for topic in ['main', 'phonology', 'semantics']:
+
+        local_context['input_names_fields_and_labels'][topic] = []
+
+        for fieldname in settings.FIELDS[topic]:
+
+            if fieldname == 'derivHist' and not settings.USE_DERIVATIONHISTORY:
+                continue
+            # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand
+            # for purposes of nested dependencies in Search form
+            if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                field = search_form[fieldname]
+                label = field.label
+                local_context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
+
+    local_context['input_names_fields_labels_handedness'] = []
+    field = search_form['weakdrop']
+    label = field.label
+    local_context['input_names_fields_labels_handedness'].append(('weakdrop', field, label))
+    field = search_form['weakprop']
+    label = field.label
+    local_context['input_names_fields_labels_handedness'].append(('weakprop', field, label))
+
+    local_context['input_names_fields_labels_domhndsh'] = []
+    field = search_form['domhndsh_letter']
+    label = field.label
+    local_context['input_names_fields_labels_domhndsh'].append(('domhndsh_letter', field, label))
+    field = search_form['domhndsh_number']
+    label = field.label
+    local_context['input_names_fields_labels_domhndsh'].append(('domhndsh_number', field, label))
+
+    local_context['input_names_fields_labels_subhndsh'] = []
+    field = search_form['subhndsh_letter']
+    label = field.label
+    local_context['input_names_fields_labels_subhndsh'].append(('subhndsh_letter', field, label))
+    field = search_form['subhndsh_number']
+    label = field.label
+    local_context['input_names_fields_labels_subhndsh'].append(('subhndsh_number', field, label))
+
+    if listview.model == Gloss:
+
+        if hasattr(settings, 'SHOW_MORPHEME_SEARCH') and request.user.is_authenticated:
+            local_context['SHOW_MORPHEME_SEARCH'] = settings.SHOW_MORPHEME_SEARCH
+        else:
+            local_context['SHOW_MORPHEME_SEARCH'] = False
+
+        if hasattr(settings, 'GLOSS_LIST_DISPLAY_HEADER') and request.user.is_authenticated:
+            local_context['GLOSS_LIST_DISPLAY_HEADER'] = settings.GLOSS_LIST_DISPLAY_HEADER
+        else:
+            local_context['GLOSS_LIST_DISPLAY_HEADER'] = []
+
+        if hasattr(settings, 'SEARCH_BY') and 'relations' in settings.SEARCH_BY.keys() and request.user.is_authenticated:
+            local_context['search_by_relation_fields'] = searchform_panels(search_form, settings.SEARCH_BY['relations'])
+        else:
+            local_context['search_by_relation_fields'] = []
+
+        # This is needed to display the idgloss of the morpheme in
+        # Search by Morphology: Search for gloss with this as morpheme
+        # The id of the morpheme selected in the GlossSearchForm is kept in a hidden input field
+        # after selection from the lookahead list
+        if 'morpheme' in query_parameters.keys():
+            try:
+                morpheme_idgloss = Morpheme.objects.get(pk=query_parameters['morpheme']).idgloss
+            except ObjectDoesNotExist:
+                morpheme_idgloss = ''
+        else:
+            morpheme_idgloss = ''
+        local_context['morpheme_idgloss'] = morpheme_idgloss
+
+        local_context['default_dataset_lang'] = local_context['dataset_languages'].first().language_code_2char \
+            if local_context['dataset_languages'] else LANGUAGE_CODE
+        local_context['add_gloss_form'] = GlossCreateForm(request.GET,
+                                                          languages=local_context['dataset_languages'],
+                                                          user=request.user,
+                                                          last_used_dataset=local_context['last_used_dataset'])
+
+        local_context['default_dataset_lang'] = local_context['dataset_languages'].first().language_code_2char \
+            if local_context['dataset_languages'] else LANGUAGE_CODE
+        local_context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
+
+    return local_context
