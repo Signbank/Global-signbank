@@ -272,7 +272,7 @@ $(document).ready(function() {
             success : function(result) {
                 var elem = $(result);
                 var parsed = $.parseHTML(result);
-                $(lookup).find('#senselist_table_header').before(result);
+                $(lookup).find('#senselist_table_header').append(result);
             }
 
     });
@@ -807,11 +807,11 @@ function do_toggle_language(el) {
 {% endif %}
 {% endif %}
 
-<table class='table table-condensed' id = 'senselist_table'>
-    <thead id = 'senselist_table_header'></thead>
+<table class='table table-condensed' id='senselist_table' style="table-layout:auto;width:100%;overflow-y:scroll;">
+    <thead id='senselist_table_header'></thead>
     <tbody>
     {% for glosssense in object_list %}
-    <tr id = "focussense_{{glosssense.sense.id}}">
+    <tr id="focussense_{{glosssense.sense.id}}">
         </tr>
     {% endfor %}
     </tbody>
