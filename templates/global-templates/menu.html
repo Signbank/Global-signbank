@@ -95,12 +95,12 @@
 
     </ul>
     <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search">
-            <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search Gloss" %}' type="Text" name="search" id="tooltip-search"
+            <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search Gloss" %}' type="text" name="search" id="tooltip-search"
                                                onfocus="focusFunction()" onblur="blurFunction()"
                                                value="{{ glossQuery }}" maxlength="60" size="36" />
 				{% include "tooltip.html" with include_tags=True %}
             </div>
-            <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search Sense" %}' type="Text" name="translation" id="tooltip-translation"
+            <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search Sense" %}' type="text" name="translation" id="tooltip-translation"
                                                onfocus="focusFunction2()" onblur="blurFunction2()"
                                                value="{{ query }}" maxlength="60" size="36" />
 				{% include "tooltip.html" with include_tags=True %}

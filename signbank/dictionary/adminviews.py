@@ -1441,13 +1441,13 @@ class SenseListView(ListView):
                                                 for sentence_translation in sentence_translations_with_this_text]
             qs = qs.filter(sense__exampleSentences__pk__in=pks_for_sentences_with_this_text)
 
-        # # save the query parameters to a session variable
-        # self.request.session['query_parameters'] = json.dumps(query_parameters)
-        # self.request.session.modified = True
-        # self.query_parameters = query_parameters
+        # save the query parameters to a session variable
+        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session.modified = True
+        self.query_parameters = query_parameters
         # qs = qs.select_related('lemma')
         #
-        # # Sort the queryset by the parameters given
+        # Sort the queryset by the parameters given
         # sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
         self.request.session['search_type'] = self.search_type

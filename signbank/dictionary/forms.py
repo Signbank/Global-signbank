@@ -299,15 +299,15 @@ class GlossSearchForm(forms.ModelForm):
                                        choices=get_definition_role_choices,
                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole.field_choice_category = 'NoteType'
-    definitionContains = forms.CharField(label=_(u'Note Contains'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    definitionContains = forms.CharField(label=_(u'Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     createdAfter = forms.DateField(label=_(u'Created After'),
-                                   input_formats=[settings.DATE_FORMAT],
-                                   widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
+                                   input_formats=[settings.DATE_FORMAT], required=False,
+                                   widget=forms.TextInput(attrs={'type': 'date'}))
     createdBefore = forms.DateField(label=_(u'Created Before'),
-                                    input_formats=[settings.DATE_FORMAT],
-                                    widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
+                                    input_formats=[settings.DATE_FORMAT], required=False,
+                                    widget=forms.TextInput(attrs={'type': 'date'}))
 
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"

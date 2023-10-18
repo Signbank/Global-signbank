@@ -305,41 +305,34 @@ $(document).ready(function() {
 
 <script type='text/javascript'>
 
-// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
 function clearForm() {
 
-      var inputElements = document.getElementById('query-area').querySelectorAll("input");
-      var selectElements = document.getElementById('searchpanels').querySelectorAll("select");
+      $('input').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden') { return; };
+        if (this_type == 'date') {
+            $(this).attr('value', "");
+        } else {
+            $(this).val('');
+        };
+      });
 
-      for(i=0; i<inputElements.length; i++) {
-          field_name = inputElements[i].name;
-          field_type = inputElements[i].type.toLowerCase();
-          switch(field_type) {
+      $('select').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden') { return; };
+        if (this_field.endsWith('[]')) {
+            return;
+        } else {
+            $(this).find('option').each(function () {
+                $(this).removeAttr("selected");
+            });;
+        };
+      });
 
-            case "text":
-            case "password":
-            case "textarea":
-            case "hidden":
-
-              inputElements[i].setAttribute('value','');
-              break;
-
-            case "radio":
-            case "checkbox":
-              if (inputElements[i].checked) {
-                  inputElements[i].checked = false;
-              }
-              break;
-
-            case "select-one":
-            case "select-multiple":
-              inputElements[i].selectedIndex = -1;
-              break;
-
-            default:
-              break;
-          }
-      };
      $('.js-example-basic-multiple').val(null).trigger('change');
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
@@ -569,8 +562,8 @@ function do_toggle_language(el) {
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
                         <!-- this is empty as an initial value because the view python code sets it -->
                 <div class="hidden">
-                    <input name='sortOrder' class='form-control' value='' >
-                    <input name='search_type' class='form-control' value='{{search_type}}'>
+                    <input name='sortOrder' class='form-control' value='' type='hidden'>
+                    <input name='search_type' class='form-control' value='{{search_type}}' type='hidden'>
                 </div>
                 <div>
                     <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{ menu_bar_search }}"/>
@@ -586,7 +579,9 @@ function do_toggle_language(el) {
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
                                     {{search_field.label}}
                                 </label>
-                                <input id='glosssearch_{{ dataset_lang.language_code_2char }}' name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                                <input id='glosssearch_{{ dataset_lang.language_code_2char }}'
+                                       type='text'
+                                       name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                                 </div>
                             </td>
                             {% endwith %}
@@ -597,14 +592,18 @@ function do_toggle_language(el) {
                                 <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
                                     {{lemma_field.label}}
                                 </label>
-                                <input name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
+                                <input name='lemma_{{ dataset_lang.language_code_2char }}'
+                                       type='text'
+                                       class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
                             </td>
                             {% endwith %}
 
                             {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
                             <td><div class='input-group'>
                                 <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
-                                <input name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
+                                <input name='keyword_{{dataset_lang.language_code_2char}}'
+                                       type='text'
+                                       class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
                             </td>
                             {% endwith %}
                         </tr>
