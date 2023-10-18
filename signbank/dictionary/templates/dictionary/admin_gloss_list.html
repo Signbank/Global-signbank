@@ -349,41 +349,34 @@ $(document).ready(function() {
 
 <script type='text/javascript'>
 
-// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
 function clearForm() {
 
-      var inputElements = document.getElementById('query-area').querySelectorAll("input");
-      var selectElements = document.getElementById('searchpanels').querySelectorAll("select");
+      $('input').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden') { return; };
+        if (this_type == 'date') {
+            $(this).attr('value', "");
+        } else {
+            $(this).val('');
+        };
+      });
 
-      for(i=0; i<inputElements.length; i++) {
-          field_name = inputElements[i].name;
-          field_type = inputElements[i].type.toLowerCase();
-          switch(field_type) {
+      $('select').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden') { return; };
+        if (this_field.endsWith('[]')) {
+            return;
+        } else {
+            $(this).find('option').each(function () {
+                $(this).removeAttr("selected");
+            });;
+        };
+      });
 
-            case "text":
-            case "password":
-            case "textarea":
-            case "hidden":
-
-              inputElements[i].setAttribute('value','');
-              break;
-
-            case "radio":
-            case "checkbox":
-              if (inputElements[i].checked) {
-                  inputElements[i].checked = false;
-              }
-              break;
-
-            case "select-one":
-            case "select-multiple":
-              inputElements[i].selectedIndex = -1;
-              break;
-
-            default:
-              break;
-          }
-      };
      $('.js-example-basic-multiple').val(null).trigger('change');
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
@@ -488,16 +481,117 @@ function do_set_lemma_language(el) {
   }
 };
 
-// This function toggles the different language columns for Annotations, Lemmas, and Translations
-function do_toggle_annotation(el) {
+    // toggle the line-through on a button
+    function do_toggle_line_through(el,id) {
+        var button_value = $(el).attr('value');
+        var button_id = '#' + id;
+        var button_status = $(button_id).css('text-decoration');
+        if ($(button_id).css('text-decoration-line') == 'none') {
+            $(button_id).css('text-decoration', 'line-through');
+        } else {
+            $(button_id).css('text-decoration', 'none');
+        };
+    };
+
+    // This function toggles the different language columns for Annotations
+    function do_toggle_annotation(el) {
+        var dataset_language_id = $(el).attr('value');
+        var annotation_column_id = '.annotation_' + dataset_language_id;
+        var visible_columns_start = 0;
+        $('th[id^="annotation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        $(annotation_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="annotation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the annotation columns were not visible at the start, show the header and visible columns
+            $('.annotations_multicolumn').toggle();
+            $('.annotations_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.annotations_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.annotations_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+    };
+
+    // This function toggles the different language columns for Translations
+    function do_toggle_translations(el) {
+        var visible_columns_start = 0;
+        $('th[id^="translation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        var dataset_language_id = $(el).attr('value');
+        var translation_column_id = '.translation_' + dataset_language_id;
+        $(translation_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="translation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the translation columns were not visible at the start, show the header and visible columns
+            $('.translations_multicolumn').toggle();
+            $('.translations_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 1) {
+            // all the columns are hidden now, hide the header
+            $('.translations_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.translations_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+    };
+
+    // This function toggles the different language columns for Lemmas
+    function do_toggle_lemmas(el) {
+        var visible_columns_start = 0;
+        $('th[id^="lemma_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        var dataset_language_id = $(el).attr('value');
+        var lemma_column_id = '.lemma_' + dataset_language_id;
+        $(lemma_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="lemma_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the sentence columns were not visible at the start, show the header and visible columns
+            $('.lemmas_multicolumn').toggle();
+            $('.lemmas_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.lemmas_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.lemmas_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+    };
+
+// This function toggles the different language columns for Annotations, Sentences, and Translations
+function do_toggle_language(el) {
+    do_toggle_annotation(el);
+    do_toggle_translations(el);
+    do_toggle_lemmas(el);
     var dataset_language_id = $(el).attr('value');
-    var annotation_column_id = '.annotation_' + dataset_language_id;
-    var lemma_column_id = '.lemma_' + dataset_language_id;
-    var translation_column_id = '.translation_' + dataset_language_id;
-    $(annotation_column_id).toggle();
-    $(lemma_column_id).toggle();
-    $(translation_column_id).toggle();
+    do_toggle_line_through(el,'button_language_'+dataset_language_id);
 };
+
 
 </script>
 
@@ -533,8 +627,8 @@ function do_toggle_annotation(el) {
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
                         <!-- this is empty as an initial value because the view python code sets it -->
                 <div class="hidden">
-                    <input name='sortOrder' class='form-control' value='' >
-                    <input name='search_type' class='form-control' value='{{search_type}}'>
+                    <input name='sortOrder' class='form-control' value='' type='hidden'>
+                    <input name='search_type' class='form-control' value='{{search_type}}' type='hidden'>
                 </div>
                 <div>
                     <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{ menu_bar_search }}"/>
@@ -550,7 +644,9 @@ function do_toggle_annotation(el) {
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
                                     {{search_field.label}}
                                 </label>
-                                <input id='glosssearch_{{ dataset_lang.language_code_2char }}' name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                                <input id='glosssearch_{{ dataset_lang.language_code_2char }}'
+                                       type='text'
+                                       name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
                                 </div>
                             </td>
                             {% endwith %}
@@ -561,14 +657,18 @@ function do_toggle_annotation(el) {
                                 <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
                                     {{lemma_field.label}}
                                 </label>
-                                <input name='lemma_{{ dataset_lang.language_code_2char }}' class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
+                                <input name='lemma_{{ dataset_lang.language_code_2char }}'
+                                       type='text'
+                                       class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
                             </td>
                             {% endwith %}
 
                             {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
                             <td><div class='input-group'>
                                 <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
-                                <input name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
+                                <input name='keyword_{{ dataset_lang.language_code_2char }}'
+                                       type='text'
+                                       class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
                             </td>
                             {% endwith %}
                         </tr>
@@ -581,23 +681,22 @@ function do_toggle_annotation(el) {
                         <div class="panel-heading" data-toggle="collapse" data-target="#searchbasic">{% trans "Search by Language and Basic Properties" %}</div>
 
                         <div id='searchbasic' class='collapse'>
-                        <table class='table'>
+                        <table class='table table-condensed' style="width:65%;">
                             <tr id='signlanguage_selection'>
-                                <td><label>{{searchform.signLanguage.label}}</label>
-                                        {{ searchform.signLanguage }}
-                                </td>
+                                <td style="padding-left:30px;"><label>{{searchform.signLanguage.label}}</label></td>
+                                <td style="width:600px;">{{ searchform.signLanguage }}</td>
                             </tr>
                             <tr id='dialect_selection'>
-                                  <td><label>{{searchform.dialects.label}}</label>
-                                        {{ searchform.dialects }}
-                                </td>
+                                <td style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
+                                <td style="width:600px;">{{ searchform.dialects }}</td>
                             </tr>
                         </table>
 
-                        <table class='table'>
+                        <table class='table table-condensed' style="width:65%;">
                             {% for fieldname,field,label in input_names_fields_and_labels.main %}
 
-                                <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+                                <tr><td style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                    <td style="width:600px;">{{field}}</td></tr>
 
                             {% endfor %}
 
@@ -610,19 +709,21 @@ function do_toggle_annotation(el) {
                       <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
 
                       <div id='morph_search' class='collapse'>
-                      <table class='table table-condensed'>
+                      <table class='table table-condensed' style="width:65%;">
                         <tr>
                           <td>
                             <table class='table table-condensed'>
                                 <tr>
-                                    <td><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
-                                    <td>
+                                    <td style="padding-left:30px;"><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
+                                    <td style="width:600px;">
                                         <input class='form-control morphtypeahead' id="id_morpheme" placeholder='{% trans "Morpheme Gloss" %}' value="{{searchform.morpheme.value|default:''}}"/>
                                         <input type="hidden" name='morpheme' value=""/>
                                     </td>
                                 </tr>
-                                <tr><td><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td><td>{{searchform.hasComponentOfType}}</td></tr>
-                                <tr><td><label for='id_hasMorphemeOfType'>{{searchform.hasMorphemeOfType.label}}</label></td><td>{{searchform.hasMorphemeOfType}}</td></tr>
+                                <tr><td style="padding-left:30px;"><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td>
+                                    <td style="width:600px;">{{searchform.hasComponentOfType}}</td></tr>
+                                <tr><td style="padding-left:30px;"><label for='id_hasMorphemeOfType'>{{searchform.hasMorphemeOfType.label}}</label></td>
+                                    <td style="width:600px;">{{searchform.hasMorphemeOfType}}</td></tr>
                             </table>
 
                           </td>
@@ -643,7 +744,7 @@ function do_toggle_annotation(el) {
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
 
                                     <tr>
-                                        <td><label>{{label}}</label></td><td>{{field}}</td>
+                                        <td style="padding-left:30px;"><label>{{label}}</label></td><td>{{field}}</td>
                                         {% if fieldname == 'handedness' %}
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
                                                 <td><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td>{{handednessfield}}</td>
@@ -676,10 +777,11 @@ function do_toggle_annotation(el) {
                         <tr>
 
                           <td>
-                            <table class='table table-condensed'>
+                            <table class='table table-condensed' style="width:65%;">
                                 {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
 
-                                    <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+                                    <tr><td style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                        <td style="width:600px;">{{field}}</td></tr>
 
                                 {% endfor %}
 
@@ -698,11 +800,11 @@ function do_toggle_annotation(el) {
                            data-target="#rel_search">{% trans "Search by Relation" %}</div>
 
                       <div id='rel_search' class='collapse'>
-                      <table class='table'>
+                      <table class='table table-condensed' style="width:65%;">
                       {% for relation_id, relation_label, relation_field in search_by_relation_fields %}
                       <tr>
                           <td style="padding-left:30px;"><label for='id_{{relation_id}}'>{{relation_label}}</label></td>
-                          <td>{{relation_field}}</td>
+                          <td style="width:600px;">{{relation_field}}</td>
                       </tr>
                       {% endfor %}
                       </table>
@@ -916,7 +1018,8 @@ function do_toggle_annotation(el) {
 {% if SHOW_DATASET_INTERFACE_OPTIONS %}
 {% if dataset_languages|length > 2 %}
 {% for dataset_lang in dataset_languages %}
-<button name="button_annotation_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_annotation(this);"
+<button name="button_language_{{dataset_lang.language_code_2char}}"
+        id="button_language_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_language(this);"
         value="{{dataset_lang.language_code_2char}}" >
     {{ dataset_lang.name }}
 </button>

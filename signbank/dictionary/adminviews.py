@@ -6924,6 +6924,9 @@ def glosslist_ajax_complete(request, gloss_id):
     return render(request, 'dictionary/gloss_row.html', { 'focus_gloss': this_gloss,
                                                           'dataset_languages': dataset_languages,
                                                           'selected_datasets': selected_datasets,
+                                                          'width_senses_columns': len(dataset_languages),
+                                                          'width_gloss_columns': len(dataset_languages),
+                                                          'width_lemma_columns': len(dataset_languages),
                                                           'sensetranslations_per_language': sensetranslations_per_language,
                                                           'column_values': column_values,
                                                           'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
@@ -6989,6 +6992,9 @@ def glosslistheader_ajax(request):
 
     return render(request, 'dictionary/glosslist_headerrow.html', { 'dataset_languages': dataset_languages,
                                                                     'selected_datasets': selected_datasets,
+                                                                    'width_senses_columns': len(dataset_languages),
+                                                                    'width_gloss_columns': len(dataset_languages),
+                                                                    'width_lemma_columns': len(dataset_languages),
                                                                     'column_headers': column_headers,
                                                                     'sortOrder': str(sortOrder),
                                                                     'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
