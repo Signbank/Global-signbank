@@ -354,9 +354,7 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
     gloss = Gloss.objects.get(id=glossid)
     sense_examplesentences_matching_order = SenseExamplesentence.objects.filter(sense=sense, order=order).count()
     if sense_examplesentences_matching_order != 1:
-        print('sort_examplesentence: multiple or no match for order: ', senseid, str(order))
-        messages.add_message(request, messages.ERROR, _('Could not sort this examplesentence.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        sense.reorder_examplesentences()
 
     senseexamplesentence = SenseExamplesentence.objects.get(sense=sense, order=order)
     swaporder = 0
