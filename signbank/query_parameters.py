@@ -402,6 +402,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                              'paradigm': _('Handshape Paradigm') }
     SEARCH_TYPE_CHOICES = {
         'sign': _("Search Sign"),
+        'sense': _("Search Senses"),
         'sign_or_morpheme': _("Search Sign or Morpheme"),
         'morpheme': _("Search Morpheme"),
         'sign_handshape': _("Search Sign by Handshape"),

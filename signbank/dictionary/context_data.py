@@ -153,7 +153,6 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, extra_cont
     other_parameters_keys = [key for key in other_parameters if key not in multiple_select_gloss_fields]
 
     local_context['other_parameters_keys'] = json.dumps(other_parameters_keys)
-
     local_context['searchform'] = search_form
 
     # If the menu bar search form was used, populate the search form with the query string
@@ -223,28 +222,29 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, extra_cont
                 local_context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
 
     local_context['input_names_fields_labels_handedness'] = []
-    field = search_form['weakdrop']
-    label = field.label
-    local_context['input_names_fields_labels_handedness'].append(('weakdrop', field, label))
-    field = search_form['weakprop']
-    label = field.label
-    local_context['input_names_fields_labels_handedness'].append(('weakprop', field, label))
+    local_context['input_names_fields_labels_handedness'].append(('weakdrop',
+                                                                  search_form['weakdrop'],
+                                                                  search_form['weakdrop'].label))
+    local_context['input_names_fields_labels_handedness'].append(('weakprop',
+                                                                  search_form['weakprop'],
+                                                                  search_form['weakprop'].label))
 
     local_context['input_names_fields_labels_domhndsh'] = []
-    field = search_form['domhndsh_letter']
-    label = field.label
-    local_context['input_names_fields_labels_domhndsh'].append(('domhndsh_letter', field, label))
-    field = search_form['domhndsh_number']
-    label = field.label
-    local_context['input_names_fields_labels_domhndsh'].append(('domhndsh_number', field, label))
+    local_context['input_names_fields_labels_domhndsh'].append(('domhndsh_letter',
+                                                                search_form['domhndsh_letter'],
+                                                                search_form['domhndsh_letter'].label))
+    local_context['input_names_fields_labels_domhndsh'].append(('domhndsh_number',
+                                                                search_form['domhndsh_number'],
+                                                                search_form['domhndsh_number'].label))
 
     local_context['input_names_fields_labels_subhndsh'] = []
-    field = search_form['subhndsh_letter']
-    label = field.label
-    local_context['input_names_fields_labels_subhndsh'].append(('subhndsh_letter', field, label))
-    field = search_form['subhndsh_number']
-    label = field.label
-    local_context['input_names_fields_labels_subhndsh'].append(('subhndsh_number', field, label))
+    local_context['input_names_fields_labels_subhndsh'].append(('subhndsh_letter',
+                                                                search_form['subhndsh_letter'],
+                                                                search_form['subhndsh_letter'].label))
+
+    local_context['input_names_fields_labels_subhndsh'].append(('subhndsh_number',
+                                                                search_form['subhndsh_number'],
+                                                                search_form['subhndsh_number'].label))
 
     if listview.model == Gloss:
 
