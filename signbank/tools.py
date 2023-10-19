@@ -2018,7 +2018,7 @@ def construct_scrollbar(qs, search_type, language_code):
                 language__language_code_2char__exact=language_code
             )
             if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
-                gloss_text = annotationidglosstranslations[0].text
+                gloss_text = annotationidglosstranslations.first().text
                 if not gloss_text:
                     gloss_text = item.idgloss
                 items.append(dict(id=str(item.id), data_label=gloss_text, href_type=item_is_morpheme))
@@ -2031,6 +2031,7 @@ def construct_scrollbar(qs, search_type, language_code):
         for item in qs:
             data_label = item.name
             items.append(dict(id=str(item.machine_value), data_label=data_label, href_type='handshape'))
+
     elif search_type in ['lemma']:
         # there is no lemma details, so the href goes to lemma/update
         for item in qs:
@@ -2038,7 +2039,7 @@ def construct_scrollbar(qs, search_type, language_code):
             if lemmaidglosstranslations:
                 if len(lemmaidglosstranslations) == 1:
                     # there are lemma's with only one translation, make sure they can be printed in the scroll bar
-                    lemma_text = lemmaidglosstranslations[0].text
+                    lemma_text = lemmaidglosstranslations.first().text
                 else:
                     lemma_text = str(item.id)
                     for tr in lemmaidglosstranslations:
@@ -2049,6 +2050,10 @@ def construct_scrollbar(qs, search_type, language_code):
                 # no translations found for lemma
                 items.append(dict(id=str(item.id), data_label=str(item.id), href_type='lemma/update'))
 
+    elif search_type in ['sense']:
+        for item in qs:
+            data_label = '(' + str(item.sense) + ')'
+            items.append(dict(id=str(item.gloss.id), data_label=data_label, href_type='gloss'))
     return items
 
 

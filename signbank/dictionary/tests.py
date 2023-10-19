@@ -2678,7 +2678,8 @@ class testSettings(TestCase):
                     comparison_table_first_not_in_second[first_file][second_file] = []
                     for setting_first_file in all_settings_strings[first_file]:
                         if setting_first_file in ['SECRET_KEY', 'SWITCH_TO_MYSQL', 'DEFAULT_FROM_EMAIL', 'EMAIL_HOST',
-                                                  'FILE_UPLOAD_MAX_MEMORY_SIZE', 'CSRF_TRUSTED_ORIGINS']:
+                                                  'FILE_UPLOAD_MAX_MEMORY_SIZE', 'CSRF_TRUSTED_ORIGINS',
+                                                  'INTERNAL_IPS', 'DEBUG']:
                             # skip these, since server specific
                             continue
                         if setting_first_file not in all_settings_strings[second_file]:
@@ -3694,3 +3695,353 @@ class GlossApiGetSignNameAndMediaInfoTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertJSONEqual(response.content, assert_json)
+
+
+class SensesCRUDTests(TestCase):
+
+    def setUp(self):
+
+        # a new test user is created for use during the tests
+        self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        self.user.user_permissions.add(Permission.objects.get(name='Can change gloss'))
+        self.user.save()
+        self.userprofile = UserProfile(user=self.user)
+        self.userprofile.save()
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        self.userprofile.selected_datasets.add(test_dataset)
+        self.userprofile.save()
+
+    def test_crud_Senses(self):
+        # Create Client and log in
+        client = Client()
+        logged_in = client.login(username='test-user', password='test-user')
+        # Get the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        assign_perm('can_view_dataset', self.user, test_dataset)
+        assign_perm('dictionary.search_gloss', self.user)
+        self.user.save()
+
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
+
+        # Construct the Create Gloss form data
+        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
+        for language in test_dataset.translation_languages.all():
+            create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
+                "annotationidglosstranslation_test_" + language.language_code_2char
+            create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
+                "lemmaidglosstranslation_test_" + language.language_code_2char
+
+        response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
+
+        glosses = Gloss.objects.filter(lemma__dataset=test_dataset)
+        new_gloss = glosses.first()
+        for language in test_dataset.translation_languages.all():
+            glosses = glosses.filter(annotationidglosstranslation__language=language,
+                                     annotationidglosstranslation__text__exact="annotationidglosstranslation_test_"
+                                                                               + language.language_code_2char)
+            glosses = glosses.filter(lemma__lemmaidglosstranslation__language=language,
+                                     lemma__lemmaidglosstranslation__text__exact="lemmaidglosstranslation_test_"
+                                                                                 + language.language_code_2char)
+
+        self.assertEqual(glosses.count(), 1)
+        print('CRUD Tests Senses.')
+        print('New gloss successfully created.')
+
+        self.assertRedirects(response, reverse('dictionary:admin_gloss_view', kwargs={'pk': new_gloss.id})+'?edit')
+
+        gloss_senses = new_gloss.senses.all()
+
+        self.assertEqual(len(gloss_senses), 0)
+        print('New gloss has no senses.')
+
+        # Construct the Create Sense form data
+        create_sense_form_data = {'dataset': test_dataset.id}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["sense_1_keyword_1_" + language.language_code_2char,
+                                           "sense_1_keyword_2_" + language.language_code_2char])
+            create_sense_form_data[str(language)] = language_keywords
+
+        # User does not have permission to add a sense. Creating a sense should fail.
+        print('Test permission to create sense.')
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss.id), create_sense_form_data, follow=True)
+        self.assertContains(response, "Sense Creation Not Allowed")
+
+        # Give the test user permission to create a sense
+        print('Grant permission to create sense.')
+        assign_perm('dictionary.add_sense', self.user)
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss.id), create_sense_form_data, follow=True)
+
+        new_gloss_senses = new_gloss.senses.all()
+        self.assertEqual(len(new_gloss_senses), 1)
+        print('New sense for gloss successfully created.')
+
+        # Construct a second sense
+        create_sense_2_form_data = {'dataset': test_dataset.id}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["sense_2_keyword_1_" + language.language_code_2char,
+                                           "sense_2_keyword_2_" + language.language_code_2char])
+            create_sense_2_form_data[str(language)] = language_keywords
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss.id), create_sense_2_form_data)
+
+        new_gloss_senses = new_gloss.senses.all()
+        self.assertEqual(len(new_gloss_senses), 2)
+        print('Second sense for gloss successfully created.')
+        print('Search for glosses with multiple senses.')
+        # Search for the gloss
+        response = client.get('/signs/search/', {'hasmultiplesenses': 'yes'})
+        self.assertEqual(len(response.context['object_list']), 1)
+        print('New gloss with two senses found.')
+
+        print('Reorder senses via the down arrow.')
+        first_sense = new_gloss_senses.first()
+        last_sense = new_gloss_senses.last()
+        self.assertNotEqual(first_sense, last_sense)
+        response = client.post('/dictionary/update/sortsense/'+str(new_gloss.id)+'/'+str(first_sense.id)+'/down',
+                               follow=True)
+        new_gloss_senses_reordered_senses = GlossSense.objects.filter(gloss=new_gloss).order_by('order')
+        self.assertEqual(new_gloss_senses_reordered_senses.first().sense, last_sense)
+        self.assertEqual(new_gloss_senses_reordered_senses.last().sense, first_sense)
+        print('The senses have successfully switched order.')
+
+        # Try to update the first sense (now in the last position) to the values of the second sense
+        first_sense = new_gloss_senses_reordered_senses.last().sense
+        update_sense_1_form_data = {'dataset': test_dataset.id, 'glossid': str(new_gloss.id)}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["sense_2_keyword_1_" + language.language_code_2char,
+                                           "sense_2_keyword_2_" + language.language_code_2char])
+            update_sense_1_form_data[str(language)] = language_keywords
+
+        # Try without permission
+        print("Try to update the first sense without permission.")
+        response = client.post('/dictionary/update/sense/'+str(first_sense.id), update_sense_1_form_data, follow=True)
+        self.assertContains(response, "Sense Update Not Allowed")
+        print("Sense Update Not Allowed")
+
+        # Give the test user permission to update senses
+        print('Grant permission to update sense.')
+        assign_perm('dictionary.change_sense', self.user)
+
+        print("Try to update the first sense to the values of the second sense.")
+        response = client.post('/dictionary/update/sense/'+str(first_sense.id), update_sense_1_form_data, follow=True)
+        self.assertContains(response, "This sense was already in this gloss.")
+        print("This sense was already in this gloss.")
+
+        # Try to update without changing sense
+        print("Try to update without changing sense")
+        update_sense_1_form_data = {'dataset': test_dataset.id, 'glossid': str(new_gloss.id)}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["sense_1_keyword_1_" + language.language_code_2char,
+                                           "sense_1_keyword_2_" + language.language_code_2char])
+            update_sense_1_form_data[str(language)] = language_keywords
+        response = client.post('/dictionary/update/sense/'+str(first_sense.id), update_sense_1_form_data, follow=True)
+        self.assertContains(response, "Sense did not change.")
+        print("Sense did not change.")
+
+        # Try to update without changing sense
+        print("Try to update the first sense keywords")
+        update_sense_1_form_data = {'dataset': test_dataset.id, 'glossid': str(new_gloss.id)}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["sense_1_updated_keyword_1_" + language.language_code_2char,
+                                           "sense_1_keyword_2_" + language.language_code_2char,
+                                           "sense_1_new_keyword_3_" + language.language_code_2char])
+            update_sense_1_form_data[str(language)] = language_keywords
+        response = client.post('/dictionary/update/sense/'+str(first_sense.id), update_sense_1_form_data, follow=True)
+        self.assertContains(response, "Given sense was updated.")
+        print("Given sense was updated.")
+
+        # Try to delete a sense without permission
+        print("Try to delete the first sense without permission.")
+        delete_sense_1_form_data = {'dataset': test_dataset.id, 'senseid': str(first_sense.id)}
+        response = client.post('/dictionary/update/deletesense/'+str(new_gloss.id), delete_sense_1_form_data, follow=True)
+
+        self.assertContains(response, "Sense Deletion Not Allowed")
+        print("Sense Deletion Not Allowed")
+
+        # Give the test user permission to delete senses
+        print('Grant permission to delete sense.')
+        assign_perm('dictionary.delete_sense', self.user)
+
+        print("Try to delete the first sense.")
+        print("The gloss senses are reordered after deletion.")
+        response = client.post('/dictionary/update/deletesense/'+str(new_gloss.id), delete_sense_1_form_data, follow=True)
+        new_gloss_senses = new_gloss.senses.all()
+        self.assertEqual(len(new_gloss_senses), 1)
+        print("The sense was successfully deleted.")
+
+        print('Search for glosses with multiple senses.')
+        # Search for the gloss again
+        response = client.get('/signs/search/', {'hasmultiplesenses': 'yes'})
+        self.assertEqual(len(response.context['object_list']), 0)
+        print('No glosses with multiple senses found.')
+
+    def test_Similar_Senses(self):
+        # Create Client and log in
+        client = Client()
+        logged_in = client.login(username='test-user', password='test-user')
+        # Get the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        assign_perm('dictionary.add_sense', self.user)
+
+        assign_perm('can_view_dataset', self.user, test_dataset)
+        assign_perm('dictionary.search_gloss', self.user)
+        self.user.save()
+
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
+
+        print('Similar Senses Tests.')
+
+        # Construct the Create Gloss form data
+        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
+        for language in test_dataset.translation_languages.all():
+            create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
+                "gloss_1_annotationidglosstranslation_test_" + language.language_code_2char
+            create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
+                "gloss_1_lemmaidglosstranslation_test_" + language.language_code_2char
+
+        response = client.post('/dictionary/update/gloss/', create_gloss_form_data, follow=True)
+
+        # Construct a second Create Gloss form data
+        create_gloss_2_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
+        for language in test_dataset.translation_languages.all():
+            create_gloss_2_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
+                "gloss_2_annotationidglosstranslation_test_" + language.language_code_2char
+            create_gloss_2_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
+                "gloss_2_lemmaidglosstranslation_test_" + language.language_code_2char
+
+        response = client.post('/dictionary/update/gloss/', create_gloss_2_form_data, follow=True)
+
+        glosses = Gloss.objects.filter(lemma__dataset=test_dataset).order_by('id')
+        self.assertEqual(glosses.count(), 2)
+        print('Two glosses successfully created.')
+
+        new_gloss_1 = glosses.first()
+        new_gloss_2 = glosses.last()
+        self.assertNotEqual(new_gloss_1.id, new_gloss_2.id)
+
+        gloss_1_senses = new_gloss_1.senses.all()
+        gloss_2_senses = new_gloss_2.senses.all()
+
+        self.assertEqual(len(gloss_1_senses), 0)
+        self.assertEqual(len(gloss_2_senses), 0)
+        print('New glosses have no senses.')
+
+        # Construct the Create Sense form data
+        gloss_1_create_sense_form_data = {'dataset': test_dataset.id}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["keyword_1_" + language.language_code_2char,
+                                           "keyword_2_" + language.language_code_2char])
+            gloss_1_create_sense_form_data[str(language)] = language_keywords
+
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss_1.id), gloss_1_create_sense_form_data, follow=True)
+
+        new_gloss_1_senses = new_gloss_1.senses.all()
+        self.assertEqual(len(new_gloss_1_senses), 1)
+        print('Sense for gloss 1 successfully created: ', new_gloss_1_senses.first())
+
+        # Construct a sense for gloss 2
+        gloss_2_create_sense_form_data = {'dataset': test_dataset.id}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["keyword_2_" + language.language_code_2char,
+                                           "keyword_3_" + language.language_code_2char])
+            gloss_2_create_sense_form_data[str(language)] = language_keywords
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss_2.id), gloss_2_create_sense_form_data, follow=True)
+
+        new_gloss_2_senses = new_gloss_2.senses.all()
+        self.assertEqual(len(new_gloss_2_senses), 1)
+        print('Sense for gloss 2 successfully created: ', new_gloss_2_senses.first())
+
+        print('Search for glosses with senses matching keyword_2')
+        # Search for the gloss
+        response = client.get('/signs/search/', {'translation': 'keyword_2'})
+        self.assertEqual(len(response.context['object_list']), 2)
+        print('Both glosses found.')
+
+        print('Check similar senses of gloss 1.')
+        gloss_1_similar_senses = new_gloss_1_senses.first().get_senses_with_similar_sensetranslations_dict(new_gloss_1)
+        for similar_senses in gloss_1_similar_senses:
+            sense_in_glosses = similar_senses['inglosses']
+            for annotation, glossid in sense_in_glosses:
+                self.assertEqual(glossid, str(new_gloss_2.id))
+                print('Gloss 2 included in similar glosses of gloss 1.')
+
+        print('Check similar senses of gloss 2.')
+        gloss_2_similar_senses = new_gloss_2_senses.first().get_senses_with_similar_sensetranslations_dict(new_gloss_2)
+        for similar_senses in gloss_2_similar_senses:
+            sense_in_glosses = similar_senses['inglosses']
+            for annotation, glossid in sense_in_glosses:
+                self.assertEqual(glossid, str(new_gloss_1.id))
+                print('Gloss 1 included in similar glosses of gloss 2.')
+
+    def test_no_empty_translations_Senses(self):
+        # Create Client and log in
+        client = Client()
+        logged_in = client.login(username='test-user', password='test-user')
+        # Get the test dataset
+        dataset_name = settings.DEFAULT_DATASET
+        test_dataset = Dataset.objects.get(name=dataset_name)
+        assign_perm('change_dataset', self.user, test_dataset)
+        assign_perm('dictionary.add_gloss', self.user)
+        assign_perm('dictionary.change_gloss', self.user)
+        assign_perm('dictionary.add_sense', self.user)
+
+        assign_perm('can_view_dataset', self.user, test_dataset)
+        assign_perm('dictionary.search_gloss', self.user)
+        self.user.save()
+
+        # Check whether the user is logged in
+        self.assertTrue(logged_in)
+
+        print('Test No empty translations created for Senses.')
+
+        # Construct the Create Gloss form data
+        create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
+        for language in test_dataset.translation_languages.all():
+            create_gloss_form_data[GlossCreateForm.gloss_create_field_prefix + language.language_code_2char] = \
+                "gloss_1_annotationidglosstranslation_test_" + language.language_code_2char
+            create_gloss_form_data[LemmaCreateForm.lemma_create_field_prefix + language.language_code_2char] = \
+                "gloss_1_lemmaidglosstranslation_test_" + language.language_code_2char
+
+        response = client.post('/dictionary/update/gloss/', create_gloss_form_data, follow=True)
+
+        glosses = Gloss.objects.filter(lemma__dataset=test_dataset)
+        self.assertEqual(glosses.count(), 1)
+        print('New gloss successfully created.')
+
+        new_gloss = glosses.first()
+
+        gloss_senses = new_gloss.senses.all()
+
+        self.assertEqual(len(gloss_senses), 0)
+        print('New gloss has no senses.')
+
+        # Construct the Create Sense form data
+        print('Construct a Sense with empty strings "" and " " in the input.')
+        gloss_create_sense_form_data = {'dataset': test_dataset.id}
+        for language in test_dataset.translation_languages.all():
+            language_keywords = '\n'.join(["keyword_1_" + language.language_code_2char, " ",
+                                           "keyword_2_" + language.language_code_2char, ""])
+            gloss_create_sense_form_data[str(language)] = language_keywords
+        print('Sense Form input: ', gloss_create_sense_form_data)
+        response = client.post('/dictionary/update/addsense/'+str(new_gloss.id), gloss_create_sense_form_data, follow=True)
+
+        new_gloss_senses = new_gloss.senses.all()
+        self.assertEqual(len(new_gloss_senses), 1)
+        print('Sense for gloss successfully created: ', new_gloss_senses.first())
+
+        sense_translations = Translation.objects.filter(sensetranslation__sense=new_gloss_senses.first())
+        text_of_sense_translations = [trans.translation.text for trans in sense_translations]
+        self.assertTrue(" " not in text_of_sense_translations)
+        print('Empty string " " does not appear in the translations.')
+        self.assertTrue("" not in text_of_sense_translations)
+        print('Empty string "" does not appear in the translations.')

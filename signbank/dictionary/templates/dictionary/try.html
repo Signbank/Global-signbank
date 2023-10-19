@@ -139,43 +139,32 @@ option:not(:checked) {
 {% endblock %}
 
 {% block content %}
-    <div>
+    <div style="width:800px;">
     <table class='table table-condensed'>
         {% csrf_token %}
         {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
         <tr>
-            <th>
+            <th style="width:300px;">
                 {% trans "Annotation ID Gloss" %} ({{lang}})
             </th>
-            <td>{{annotation_idgloss_translation}}</td>
-            <td></td>
+            <td colspan="3" style="width:500px;">{{annotation_idgloss_translation}}</td>
         </tr>
         {% endfor %}
         {% for sense in senses %}
             <tr>
             <th>{% trans "Senses" %}</th>
-            <th style="width:10px">
-                {{forloop.counter}}. <br>
-                {% if "change_dataset" in dataset_perms %}
-                    {% if not forloop.first %}
-                    <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "up" %}' style="color:red;">&#x25B2;</a></span>
-                    <br>
-                    {% endif %}
-                    {% if not forloop.last %}
-                    <span class='sense-icon'><a href='{% url "dictionary:sort_sense" gloss.id forloop.counter "down" %}' style="color:red;">&#x25BC;</a></span>
-                    {% endif %}
-                {% endif %}
-            </th>
-            <td>
+            <td colspan="1">{{forloop.counter}}.</td>
+            <td colspan="1">
                 {% with sense|sense_translations_dict_with:', ' as sense_translations_dict %}
                     {% for key, value in sense_translations_dict.items %}
                         {{key}}: {{value}}
                         {% if not forloop.last %}<br>{% endif %}
                     {% endfor %}
-                {% endwith %}<br><br>
-
+                {% endwith %}
+            </td>
             {% with sense_to_similar_senses|get_item:sense as similar_senses %}
             {% if similar_senses %}
+            <td colspan="1">
             <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
             <div class="modal fade" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
@@ -208,8 +197,8 @@ option:not(:checked) {
                                     {% for key, value in similar_sense.items %}
                                         {% if key|slugify == 'inglosses' %}
                                             <td>
-                                            {% for found_gloss in value %}
-                                                <a href="{{found_gloss.1}}">{{found_gloss.0}}</a>
+                                            {% for found_gloss_ann, found_gloss_id in value %}
+                                                <a href="{{PREFIX_URL}}/dictionary/try/{{found_gloss_id}}">{{found_gloss_ann}} ({{found_gloss_id}})</a>
                                             {% endfor %}
                                             </td>
                                         {% endif %}
@@ -235,9 +224,11 @@ option:not(:checked) {
                     </div>
                 </div>
             </div>
+            </td>
+            {% else %}
+            <td></td>
             {% endif %}
             {% endwith %}
-        </td>
         </tr>
         {% endfor %}
     </table>

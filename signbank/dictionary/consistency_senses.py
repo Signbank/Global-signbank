@@ -32,7 +32,14 @@ def consistent_senses(gloss, include_translations=False, allow_empty_language=Fa
                 continue
             if allow_empty_language and not sense_translation:
                 continue
-            translations = sense_translation.translations.all()
+            translations = sense_translation.translations.all().order_by('orderIndex', 'index')
+            if settings.DEBUG_SENSES:
+                for t in translations:
+                    print("'gloss': ", str(gloss.id), ", 'sense': ", str(order),
+                          ", 'orderIndex': ", str(t.orderIndex), ", 'language': ", str(t.language),
+                          ", 'index': ", str(t.index), ", 'translation_id': ", str(t.id),
+                          ", 'translation.text': ", t.translation.text)
+                print('-------')
             for trans in translations:
                 if trans.language != language:
                     print('translation object language does not match')

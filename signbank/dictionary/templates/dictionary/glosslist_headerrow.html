@@ -13,13 +13,13 @@
 
         <th class="field_hasvideo" style="border-bottom: 1px solid grey; white-space:nowrap;"></th>
         {% trans "Annotation ID Gloss" as annotation_header %}
-        <th class="annotations_multicolumn" colspan="{{dataset_languages|length}}"
+        <th class="annotations_multicolumn" colspan="{{width_gloss_columns}}"
             style="border-bottom: 1px solid grey; white-space:nowrap;">{{ annotation_header }}</th>
         {% trans "Lemma ID Gloss" as lemma_header %}
-        <th class="lemmas_multicolumn" colspan="{{dataset_languages|length}}"
+        <th class="lemmas_multicolumn" colspan="{{width_lemma_columns}}"
             style="border-bottom: 1px solid grey; white-space:nowrap;">{{ lemma_header }}</th>
         {% trans "Senses" as senses_header %}
-        <th class="translations_multicolumn" colspan="{{dataset_languages|length}}"
+        <th class="translations_multicolumn" colspan="{{width_senses_columns}}"
             style="border-bottom: 1px solid grey; white-space:nowrap;">{{ senses_header }}</th>
 
           {% for fieldname,column in column_headers %}

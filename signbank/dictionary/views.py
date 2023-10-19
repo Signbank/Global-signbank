@@ -483,7 +483,7 @@ def try_code(request, pk):
 
     sense_to_similar_senses = dict()
     for sns in senses:
-        sense_to_similar_senses[sns] = sns.get_senses_with_similar_sensetranslations_dict()
+        sense_to_similar_senses[sns] = sns.get_senses_with_similar_sensetranslations_dict(gloss)
     context['sense_to_similar_senses'] = sense_to_similar_senses
 
     return render(request, 'dictionary/try.html', context)

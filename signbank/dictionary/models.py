@@ -12,6 +12,8 @@ from django.utils.timezone import now
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.db import DatabaseError, IntegrityError
+from django.db.transaction import TransactionManagementError
 from django.core.files import File
 import tagging
 import re
@@ -629,26 +631,26 @@ class ExampleSentence(models.Model):
         # Preventing circular import
         from signbank.video.models import ExampleVideo, ExampleVideoHistory, get_sentence_video_file_path
 
-        # Backup the existing video objects stored in the database
-        existing_videos = ExampleVideo.objects.filter(examplesentence=self)
-        for video_object in existing_videos:
-            video_object.reversion(revert=False)
-
         # Create a new ExampleVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = ExampleVideo(examplesentence=self)
+
+            # Backup the existing video objects stored in the database
+            existing_videos = ExampleVideo.objects.filter(examplesentence=self)
+            for video_object in existing_videos:
+                video_object.reversion(revert=False)
+
+            # Create a ExampleVideoHistory object
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, get_sentence_video_file_path(video, str(videofile)))
+            examplevideohistory = ExampleVideoHistory(action="upload", examplesentence=self, actor=user,
+                                                uploadfile=videofile, goal_location=video_file_full_path)
+            examplevideohistory.save()
             video.videofile.save(get_sentence_video_file_path(video, str(videofile)), videofile)
         else:
-            video = ExampleVideo(videofile=videofile, examplesentence=self)
+            return ExampleVideo(examplesentence=self)
         video.save()
         video.ch_own_mod_video()
         video.make_small_video()
-
-        # Create a ExampleVideoHistory object
-        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
-        examplevideohistory = ExampleVideoHistory(action="upload", examplesentence=self, actor=user,
-                                              uploadfile=videofile, goal_location=video_file_full_path)
-        examplevideohistory.save()
 
         return video
 
@@ -667,6 +669,7 @@ class ExampleSentenceTranslation(models.Model):
     def __str__(self):
         return self.text
 
+
 class SenseTranslation(models.Model):
     """A sense translation belongs to a sense"""
     
@@ -684,6 +687,7 @@ class SenseTranslation(models.Model):
 
     def __str__(self):
         return self.get_translations()
+
 
 class Sense(models.Model):
     """A sense belongs to a gloss and consists of a set of translation(s)"""
@@ -743,11 +747,16 @@ class Sense(models.Model):
         for language in glosssense.gloss.lemma.dataset.translation_languages.all():
             languages_lookup[language.id] = language.name
 
+        sense_translations = self.senseTranslations.all().order_by(
+                'translations__index')
+
         if exclude_empty:
-            sense_translations = self.senseTranslations.all().exclude(
-                translations__translation__text__isnull=True).values('language', 'translations__translation__text')
+            sense_translations = sense_translations.exclude(
+                translations__translation__text__isnull=True).order_by(
+                'translations__index').values('language', 'translations__translation__text')
         else:
-            sense_translations = self.senseTranslations.all().values('language', 'translations__translation__text')
+            sense_translations = sense_translations.order_by(
+                'translations__index').values('language', 'translations__translation__text')
 
         for values in sense_translations:
             language = languages_lookup[values['language']]
@@ -790,22 +799,30 @@ class Sense(models.Model):
                 return True
         return False
 
-    def get_senses_with_similar_sensetranslations_dict(self):
-        "Return a list of senses with sensetranslations that have the same string as this sense"
+    def get_senses_with_similar_sensetranslations_dict(self, gloss_detail_view):
+        """Return a list of senses with sensetranslations that have the same string as this sense"""
+        this_dataset = self.get_dataset()
         similar_senses = []
         senses_done_pk = []
         # Find the translations in current sense
-        for translation in Translation.objects.filter(sensetranslation__sense = self):
+        similar_translations = Translation.objects.filter(sensetranslation__sense=self)
+
+        for translation in similar_translations:
             # check in which other senses the translation is present
-            for sense in Sense.objects.filter(senseTranslations__translations__translation = translation.translation, glosssense__gloss__lemma__dataset = self.get_dataset()).exclude(pk=self.pk).exclude(pk__in=senses_done_pk):
+            # use a separate variable since the senses_done_pk is being updated
+            other_senses = Sense.objects.filter(senseTranslations__translations__translation__text=translation.translation.text,
+                                                glosssense__gloss__lemma__dataset=this_dataset).exclude(
+                                                pk=self.pk).exclude(pk__in=senses_done_pk).exclude(
+                                                glosssense__gloss=gloss_detail_view)
+            for sense in other_senses:
                 senses_done_pk.append(sense.pk)
                 sensedict = {}
                 for language in self.get_dataset().translation_languages.all():
-                    if sense.senseTranslations.filter(language = language).exists():
-                        sensedict[str(language)] = sense.senseTranslations.get(language = language).get_translations()
+                    if sense.senseTranslations.filter(language=language).exists():
+                        sensedict[str(language)] = sense.senseTranslations.get(language=language).get_translations()
                     else:
                         sensedict[str(language)] = ""
-                sensedict['inglosses'] = [[str(gloss), str(gloss.pk)] for gloss in sense.glosses.all()]
+                sensedict['inglosses'] = [(str(gloss), str(gloss.pk)) for gloss in sense.glosses.all()]
                 sensedict['sentence_count'] = sense.exampleSentences.count()
                 similar_senses.append(sensedict)
         return sorted(similar_senses, key=lambda d: d['inglosses']) 
@@ -824,9 +841,23 @@ class Sense(models.Model):
     def __str__(self):
         """Return the string representation of the sense, separated by | for every sensetranslation"""	
         str_sense = []
-        for sensetranslation in self.senseTranslations.all():
-            str_sense .append(str(sensetranslation))
+        this_sense_translations = self.senseTranslations.all()
+        if not this_sense_translations:
+            return ""
+        for sensetranslation in this_sense_translations:
+            translations = sensetranslation.translations.all()
+            if not translations:
+                continue
+            str_translations = []
+            for translation in translations:
+                this_translation = translation.translation.text
+                if not this_translation:
+                    continue
+                str_translations.append(this_translation)
+            joined_translations = ', '.join(str_translations)
+            str_sense.append(joined_translations)
         return " | ".join(str_sense)
+
 
 class SenseExamplesentence(models.Model):
     """An examplesentence belongs to one or multiple senses"""
@@ -1239,24 +1270,36 @@ class Gloss(models.Model):
             return str(self.id)
 
     def reorder_senses(self):
-        "when a sense is deleted, the senses should be reordered"
-        for sense_i, sense in enumerate(self.ordered_senses().all()):
-            glossense = GlossSense.objects.all().get(gloss=self, sense=sense)
-            glossense.order = sense_i+1
-            glossense.save()
-        for glosssense in GlossSense.objects.filter(gloss=self).order_by('order'):
-            for sensetrans in glosssense.sense.senseTranslations.all():
-                translations = sensetrans.translations.all().order_by('index', 'translation__text')
+        """when a sense is deleted, the senses should be reordered"""
+        glosssenses_of_this_gloss = GlossSense.objects.filter(gloss=self).order_by('order')
+        for inx, glosssense in enumerate(glosssenses_of_this_gloss, 1):
+            glosssense.order = inx
+            glosssense.save()
+            sense_translations_this_sense = glosssense.sense.senseTranslations.all()
+            for sensetrans in sense_translations_this_sense:
+                translations = sensetrans.translations.all().order_by('orderIndex', 'index')
                 for index, trans in enumerate(translations, 1):
-                    trans.orderIndex = glosssense.order
-                    trans.index = index
-                    trans.save()
+                    try:
+                        trans.orderIndex = inx
+                        trans.save()
+                    except (DatabaseError, IntegrityError, TransactionManagementError):
+                        print('reorder_senses exception saving translation to other sense, removing offender')
+                        print("'gloss': ", str(self.id), ", 'sense': ", str(inx),
+                              ", 'orderIndex': ", str(trans.orderIndex), ", 'language': ", str(trans.language),
+                              ", 'index': ", str(trans.index), ", 'translation_id': ", str(trans.id),
+                              ", 'translation.text': ", trans.translation.text)
+                        sensetrans.translations.remove(trans)
+                        trans.delete()
 
     def annotation_idgloss(self, language_code):
         # this function is used in Relations View to dynamically get the Annotation of related glosses
         # it is called by a template tag on the gloss using the interface language code
 
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+        if language_code in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
+            interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
+        else:
+            # this assumes the default language (settings.LANGUAGE_CODE) in included in the LANGUAGES_LANGUAGE_CODE_3CHAR setting
+            interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[settings.LANGUAGE_CODE]
         interface_language = Language.objects.get(language_code_3char=interface_language_3char)
         default_language = Language.objects.get(id=get_default_language_id())
 
@@ -2116,27 +2159,29 @@ class Gloss(models.Model):
         # Preventing circular import
         from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
 
-        # Backup the existing video objects stored in the database
-        existing_videos = GlossVideo.objects.filter(gloss=self)
-        for video_object in existing_videos:
-            video_object.reversion(revert=False)
-
         # Create a new GlossVideo object
-        if isinstance(videofile, File):
+        if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = GlossVideo(gloss=self)
+
+            # Backup the existing video objects stored in the database
+            existing_videos = GlossVideo.objects.filter(gloss=self)
+            for video_object in existing_videos:
+                video_object.reversion(revert=False)
+
+            # Create a GlossVideoHistory object
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, get_video_file_path(video, str(videofile)))
+            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+                                                uploadfile=videofile, goal_location=video_file_full_path)
+            glossvideohistory.save()
+
+            # Save the new videofile in the video object
             video.videofile.save(get_video_file_path(video, str(videofile)), videofile)
         else:
-            video = GlossVideo(videofile=videofile, gloss=self)
+            return GlossVideo(gloss=self)
         video.save()
         video.ch_own_mod_video()
         video.make_small_video()
         video.make_poster_image()
-
-        # Create a GlossVideoHistory object
-        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video.videofile))
-        glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
-                                              uploadfile=videofile, goal_location=video_file_full_path)
-        glossvideohistory.save()
 
         return video
 

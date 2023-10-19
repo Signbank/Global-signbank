@@ -56,15 +56,21 @@
     {% endwith %}
     {% endfor %}
 
-    {% for lang, sensetranslations in sensetranslations_per_language %}
-    <td class="translation_{{lang.language_code_2char}}">
-        <div>
-        {% for key, value in sensetranslations.items %}
-            {% if value != "" %}{{key}}. {% endif %}{{value|safe}}{% if not forloop.last %}<br> {% endif %}
+    {% for lang in dataset_languages %}
+    <td class="translation_{{lang.language_code_2char}}" style="width:360px;">
+    {% if lang in sensetranslations_per_language.keys %}
+    {% with sensetranslations_per_language|get_item:lang as sensetranslations %}
+        {% if sensetranslations %}
+        {% for order in sensetranslations.keys %}
+            {{order}}. {{sensetranslations|get_item:order}}
+            {% if not forloop.last %}<br> {% endif %}
         {% endfor %}
-        </div>
+        {% endif %}
+    {% endwith %}
+    {% endif %}
     </td>
     {% endfor %}
+
 
     {% for field,value in column_values %}
     <td class="field_{{field}}">

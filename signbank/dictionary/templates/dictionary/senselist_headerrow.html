@@ -1,0 +1,66 @@
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+
+    <tr>
+        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
+        <th class="field_dataset" style="border-bottom: 1px solid grey; white-space:nowrap;"></th>
+        {% endif %}
+
+        {% trans "Gloss (Annotation ID Gloss)" as annotation_header %}
+        <th class="annotations_multicolumn" colspan="{{width_gloss_columns}}"
+            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ annotation_header }}</th>
+
+        {% trans "Sense" as senses_header %}
+        <th class="translations_multicolumn" colspan="{{width_senses_columns}}"
+            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ senses_header }}</th>
+
+        {% trans "Sentences" as sentences_header %}
+        <th class="sentences_multicolumn" colspan="{{width_sentences_columns}}"
+            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ sentences_header }}</th>
+
+      </tr>
+      <tr>
+          {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
+          <th class="field_dataset" style="vertical-align:top; border-bottom: 1px solid grey; white-space:nowrap;">{% trans "Dataset" %}</th>
+          {% endif %}
+
+          {% if SHOW_DATASET_INTERFACE_OPTIONS and dataset_languages|length > 1 %}
+          {% for dataset_lang in dataset_languages %}
+          <th class="annotation_{{dataset_lang.language_code_2char}}" id="annotation_{{dataset_lang.language_code_2char}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">
+              <div>{{ dataset_lang.name }}</div>
+          </th>
+          {% endfor %}
+          {% endif %}
+
+          <th class="senseorder_{{focus_gloss.id}}_{{focus_sense.id}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% trans "#" %}</th>
+
+          {% for dataset_lang in dataset_languages %}
+          <th class="translation_{{dataset_lang.language_code_2char}}" id="translation_{{dataset_lang.language_code_2char}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
+              <div>{{ dataset_lang.name }}</div>
+              {% endif %}
+          </th>
+          {% endfor %}
+
+          <th class="sentenceType_{{focus_gloss.id}}_{{focus_sense.id}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% trans "Type" %}</th>
+          <th class="sentenceNegative_{{focus_gloss.id}}_{{focus_sense.id}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% trans "Negative" %}</th>
+
+         {% for dataset_lang in dataset_languages %}
+          <th class="sentence_{{dataset_lang.language_code_2char}}" id="sentence_{{dataset_lang.language_code_2char}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
+              <div>{{ dataset_lang.name }}</div>
+              {% endif %}
+          </th>
+          {% endfor %}
+
+      </tr>
+
+
