@@ -615,7 +615,9 @@ option:not(:checked) {
 
     <div>
         {% if gloss.get_image_path %}
-            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}" style="height:259px;width:auto;">
+            {% with timestamp=now|date:"YmdHis" %}
+                <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={{ timestamp }}" style="height:259px;width:auto;">
+            {% endwith %}
         {% endif %}
     </div>
 
