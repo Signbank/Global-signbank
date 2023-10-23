@@ -598,7 +598,9 @@ option:not(:checked) {
      <!-- {{gloss.get_video}} -->
 
         <div id="player">
-          <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}" controls type="video/mp4" autoplay muted></video>
+            {% with timestamp=now|date:"YmdHis" %}
+                <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}?v={{ timestamp }}" controls type="video/mp4" autoplay muted></video>
+            {% endwith %}
         </div>
         <div id="replay"></div>
 
@@ -1172,8 +1174,10 @@ option:not(:checked) {
                                                     <div id="videocontainer_{{examplesentence.id}}"  style="width:100%">
                                                         {% if examplesentence.has_video %}                                            
                                                             <div id="player">
-                                                                <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}" controls type="video/mp4" muted></video>
-                                                            </div>
+                                                                {% with timestamp=now|date:"YmdHis" %}
+                                                                    <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}?v={{ timestamp }}" controls type="video/mp4" muted></video>
+                                                                {% endwith %}
+                                                                </div>
                                                             <div id="replay"></div>
                                                         {% else %}
                                                             <div id='player'>
