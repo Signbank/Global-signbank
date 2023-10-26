@@ -9,7 +9,6 @@ from signbank.dictionary.translate_choice_list import choicelist_queryset_to_fie
 
 def get_context_data_for_list_view(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
-    view_type = listview.view_type
     web_search = False
     queryset_language_codes = []
     last_used_dataset = None
@@ -24,9 +23,7 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
     if 'search' in request.GET:
         context['menu_bar_search'] = request.GET['search']
 
-    if 'view_type' in request.GET:
-        view_type = request.GET['view_type']
-    context['view_type'] = view_type
+    context['view_type'] = request.GET.get('view_type', listview.view_type)
 
     if 'inWeb' in request.GET:
         web_search = request.GET['inWeb'] == '2'
