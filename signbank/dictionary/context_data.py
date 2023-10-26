@@ -54,13 +54,9 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
 
     # the following is needed by javascript in the case only one dataset is available
     # in order not to compute dynamically in the template
-    dataset_languages_abbreviations = []
-    for ds in selected_datasets:
-        for sdl in ds.translation_languages.all():
-            if sdl.language_code_2char not in dataset_languages_abbreviations:
-                dataset_languages_abbreviations.append(sdl.language_code_2char)
-    js_dataset_languages = ','.join(dataset_languages_abbreviations)
-    context['js_dataset_languages'] = js_dataset_languages
+    dataset_languages_abbreviations = list({language.language_code_2char
+                                            for language in Language.objects.filter(dataset__in=selected_datasets)})
+    context['js_dataset_languages'] = ','.join(dataset_languages_abbreviations)
 
     default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
