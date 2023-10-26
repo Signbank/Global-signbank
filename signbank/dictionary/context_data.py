@@ -53,15 +53,13 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
 
     # the following is needed by javascript in the case only one dataset is available
     # in order not to compute dynamically in the template
-    dataset_languages_abbreviations = list({language.language_code_2char
-                                            for language in Language.objects.filter(dataset__in=selected_datasets)})
+    dataset_languages_abbreviations = [language.language_code_2char for language in dataset_languages]
     context['js_dataset_languages'] = ','.join(dataset_languages_abbreviations)
 
-    queryset_language_codes = list({language.language_code_2char for language in dataset_languages})
-    if not queryset_language_codes:
+    if not dataset_languages_abbreviations:
         default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
-        queryset_language_codes = [default_dataset.default_language.language_code_2char]
-    context['queryset_language_codes'] = queryset_language_codes
+        dataset_languages_abbreviations = [default_dataset.default_language.language_code_2char]
+    context['queryset_language_codes'] = dataset_languages_abbreviations
 
     if len(selected_datasets) == 1:
         last_used_dataset = selected_datasets.first().acronym
