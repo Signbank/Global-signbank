@@ -15,10 +15,7 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
     queryset_language_codes = []
     last_used_dataset = None
 
-    if 'show_all' in kwargs.keys():
-        context['show_all'] = kwargs['show_all']
-    else:
-        context['show_all'] = False
+    context['show_all'] = kwargs.get('show_all', False)
 
     if 'search_type' in request.GET and request.GET['search_type']:
         # if this is provided it overwrites that of the list view self
