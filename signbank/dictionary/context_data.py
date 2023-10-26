@@ -58,8 +58,7 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
                                             for language in Language.objects.filter(dataset__in=selected_datasets)})
     context['js_dataset_languages'] = ','.join(dataset_languages_abbreviations)
 
-    default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
-    default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+    default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
 
     for lang in dataset_languages:
         if lang.language_code_2char not in queryset_language_codes:
