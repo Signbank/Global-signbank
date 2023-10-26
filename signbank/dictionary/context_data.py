@@ -15,7 +15,7 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
 
     context['show_all'] = kwargs.get('show_all', False)
 
-    search_type = request.GET.get('search_type', listview.search_type)
+    search_type = request.GET.get('search_type')
     context['search_type'] = search_type if search_type else listview.search_type
     if 'search_type' not in request.session.keys():
         request.session['search_type'] = search_type
