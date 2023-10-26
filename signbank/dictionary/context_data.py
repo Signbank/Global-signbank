@@ -9,7 +9,6 @@ from signbank.dictionary.translate_choice_list import choicelist_queryset_to_fie
 
 def get_context_data_for_list_view(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
-    search_type = listview.search_type
     view_type = listview.view_type
     web_search = False
     queryset_language_codes = []
@@ -17,17 +16,13 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
 
     context['show_all'] = kwargs.get('show_all', False)
 
-    if 'search_type' in request.GET and request.GET['search_type']:
-        # if this is provided it overwrites that of the list view self
-        search_type = request.GET['search_type']
-
-    if 'search' in request.GET:
-        context['menu_bar_search'] = request.GET['search']
-
+    search_type = request.GET.get('search_type', listview.search_type)
+    context['search_type'] = search_type if search_type else listview.search_type
     if 'search_type' not in request.session.keys():
         request.session['search_type'] = search_type
 
-    context['search_type'] = search_type
+    if 'search' in request.GET:
+        context['menu_bar_search'] = request.GET['search']
 
     if 'view_type' in request.GET:
         view_type = request.GET['view_type']
