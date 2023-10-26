@@ -598,9 +598,7 @@ option:not(:checked) {
      <!-- {{gloss.get_video}} -->
 
         <div id="player">
-            {% with timestamp=now|date:"YmdHis" %}
-                <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}?v={{ timestamp }}" controls type="video/mp4" autoplay muted></video>
-            {% endwith %}
+            <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}" controls type="video/mp4" autoplay muted></video>
         </div>
         <div id="replay"></div>
 
@@ -615,9 +613,7 @@ option:not(:checked) {
 
     <div>
         {% if gloss.get_image_path %}
-            {% with timestamp=now|date:"YmdHis" %}
-                <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={{ timestamp }}" style="height:259px;width:auto;">
-            {% endwith %}
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={% now 'YmdHis' %}" style="height:259px;width:auto;">
         {% endif %}
     </div>
 
@@ -1176,9 +1172,7 @@ option:not(:checked) {
                                                     <div id="videocontainer_{{examplesentence.id}}"  style="width:100%">
                                                         {% if examplesentence.has_video %}                                            
                                                             <div id="player">
-                                                                {% with timestamp=now|date:"YmdHis" %}
-                                                                    <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}?v={{ timestamp }}" controls type="video/mp4" muted></video>
-                                                                {% endwith %}
+                                                                <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}?v={% now 'YmdHis' %}" controls type="video/mp4" muted></video>
                                                                 </div>
                                                             <div id="replay"></div>
                                                         {% else %}
