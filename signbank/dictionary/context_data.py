@@ -30,7 +30,6 @@ def get_selected_datasets(request):
 
 def get_context_data_for_list_view(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
-    queryset_language_codes = []
     last_used_dataset = None
 
     context['show_all'] = kwargs.get('show_all', False)
@@ -58,12 +57,9 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
                                             for language in Language.objects.filter(dataset__in=selected_datasets)})
     context['js_dataset_languages'] = ','.join(dataset_languages_abbreviations)
 
-    default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
-
-    for lang in dataset_languages:
-        if lang.language_code_2char not in queryset_language_codes:
-            queryset_language_codes.append(lang.language_code_2char)
+    queryset_language_codes = list({language.language_code_2char for language in dataset_languages})
     if not queryset_language_codes:
+        default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
         queryset_language_codes = [default_dataset.default_language.language_code_2char]
     context['queryset_language_codes'] = queryset_language_codes
 
