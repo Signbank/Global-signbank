@@ -30,7 +30,6 @@ def get_selected_datasets(request):
 
 def get_context_data_for_list_view(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
-    last_used_dataset = None
 
     context['show_all'] = kwargs.get('show_all', False)
 
@@ -61,11 +60,9 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
         dataset_languages_abbreviations = [default_dataset.default_language.language_code_2char]
     context['queryset_language_codes'] = dataset_languages_abbreviations
 
-    if len(selected_datasets) == 1:
+    last_used_dataset = request.session.get('last_used_dataset', None)
+    if not last_used_dataset and len(selected_datasets) == 1:
         last_used_dataset = selected_datasets.first().acronym
-    elif 'last_used_dataset' in request.session.keys():
-        last_used_dataset = request.session['last_used_dataset']
-
     context['last_used_dataset'] = last_used_dataset
 
     selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
