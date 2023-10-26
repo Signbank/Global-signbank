@@ -8,12 +8,25 @@ from signbank.dictionary.translate_choice_list import choicelist_queryset_to_fie
 
 
 def get_web_search(request):
+    """
+    Get the inWeb value
+    """
     if 'inWeb' in request.GET:
         return request.GET['inWeb'] == '2'
     elif not request.user.is_authenticated:
         return True
     else:
         return False
+
+
+def get_selected_datasets(request):
+    """
+    Get the selected datasets
+    """
+    if 'selected_datasets' in request.session.keys():
+        return Dataset.objects.filter(acronym__in=request.session['selected_datasets'])
+    return get_selected_datasets_for_user(request.user)
+
 
 def get_context_data_for_list_view(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
@@ -34,12 +47,7 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
 
     context['web_search'] = get_web_search(request)
 
-    if request.user.is_authenticated:
-        selected_datasets = get_selected_datasets_for_user(request.user)
-    elif 'selected_datasets' in request.session.keys():
-        selected_datasets = Dataset.objects.filter(acronym__in=request.session['selected_datasets'])
-    else:
-        selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+    selected_datasets = get_selected_datasets(request)
     context['selected_datasets'] = selected_datasets
     dataset_languages = get_dataset_languages(selected_datasets)
     context['dataset_languages'] = dataset_languages
