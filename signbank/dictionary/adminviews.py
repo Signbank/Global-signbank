@@ -4457,7 +4457,7 @@ class HandshapeListView(ListView):
         search_form = HandshapeSearchForm(self.request.GET)
 
         # Retrieve the search_type,so that we know whether the search should be Gloss or not
-        if 'search_type' in self.request.GET:
+        if 'search_type' in self.request.GET and self.request.GET['search_type']:
             self.search_type = self.request.GET['search_type']
         else:
             self.search_type = 'handshape'
@@ -4569,22 +4569,23 @@ class HandshapeListView(ListView):
         for fname in Handshape.get_field_names():
             handshape_fields[fname] = Handshape.get_field(fname)
 
-        # get query terms from self.request
         get = self.request.GET
 
-        #First check whether we want to show everything or a subset
         if 'show_all' in self.kwargs.keys():
             show_all = self.kwargs['show_all']
         else:
             show_all = False
 
-        #Then check what kind of stuff we want
         if 'search_type' in get:
             self.search_type = get['search_type']
         else:
             self.search_type = 'handshape'
 
         setattr(self.request.session, 'search_type', self.search_type)
+
+        if not show_all and not get or 'reset' in get:
+            qs = Handshape.objects.none()
+            return qs
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -4604,7 +4605,7 @@ class HandshapeListView(ListView):
         qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
         if show_all:
-            if ('sortOrder' in get and get['sortOrder'] != 'machine_value'):
+            if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
                 # User has toggled the sort order for the column
                 qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
             else:
@@ -4614,20 +4615,18 @@ class HandshapeListView(ListView):
 
         fieldnames = ['machine_value', 'name']+FIELDS['handshape']
 
-        ## phonology and semantics field filters
+        # phonology and semantics field filters
         for fieldname in fieldnames:
             field = handshape_fields[fieldname]
             if fieldname in get:
-                key = fieldname + '__exact'
                 val = get[fieldname]
-
                 if fieldname == 'hsNumSel' and val != '':
                     query_hsNumSel = field.name
                     with override('en'):
                         # the override is necessary in order to use the total fingers rather than each finger
                         try:
                             fieldlabel = FieldChoice.objects.get(field=field.field_choice_category,
-                                                                          machine_value=val).name
+                                                                 machine_value=val).name
                         except (ObjectDoesNotExist, KeyError):
                             fieldlabel = ''
 
@@ -4650,26 +4649,27 @@ class HandshapeListView(ListView):
                     elif fieldlabel == 'all':
                         qs = qs.annotate(
                             count_fs1=ExpressionWrapper(F('fsT') + F('fsI') + F('fsM') + F('fsR') + F('fsP'),
-                                                        output_field=IntegerField())).filter(Q(count_fs1__gt=4) | Q(**{query_hsNumSel:val}))
+                                                        output_field=IntegerField())).filter(Q(count_fs1__exact=5) | Q(**{query_hsNumSel:val}))
 
                 if isinstance(Handshape.get_field(fieldname), BooleanField):
-                    val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': '' }[val]
+                    val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': ''}[val]
 
                 if fieldname == 'name' and val != '':
                     query = Q(name__iregex=val)
                     qs = qs.filter(query)
 
-                if val not in ['', '0'] and fieldname not in ['hsNumSel', 'name']:
-
+                if val not in ['', '0', False] and fieldname not in ['hsNumSel', 'name']:
                     if isinstance(Handshape.get_field(fieldname), FieldChoiceForeignKey):
                         key = fieldname + '__machine_value'
                         kwargs = {key: int(val)}
                         qs = qs.filter(**kwargs)
                     else:
+                        # is boolean
+                        key = fieldname + '__exact'
                         kwargs = {key: val}
                         qs = qs.filter(**kwargs)
 
-        if ('sortOrder' in get and get['sortOrder'] != 'machine_value'):
+        if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
             # User has toggled the sort order for the column
             qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
         else:
