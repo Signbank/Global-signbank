@@ -7,9 +7,16 @@ from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors
 
 
+def get_web_search(request):
+    if 'inWeb' in request.GET:
+        return request.GET['inWeb'] == '2'
+    elif not request.user.is_authenticated:
+        return True
+    else:
+        return False
+
 def get_context_data_for_list_view(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
-    web_search = False
     queryset_language_codes = []
     last_used_dataset = None
 
@@ -25,11 +32,7 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
 
     context['view_type'] = request.GET.get('view_type', listview.view_type)
 
-    if 'inWeb' in request.GET:
-        web_search = request.GET['inWeb'] == '2'
-    elif not request.user.is_authenticated:
-        web_search = True
-    context['web_search'] = web_search
+    context['web_search'] = get_web_search(request)
 
     if request.user.is_authenticated:
         selected_datasets = get_selected_datasets_for_user(request.user)
