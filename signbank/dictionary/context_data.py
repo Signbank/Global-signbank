@@ -65,14 +65,10 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
         last_used_dataset = selected_datasets.first().acronym
     context['last_used_dataset'] = last_used_dataset
 
-    selected_datasets_signlanguage = list(SignLanguage.objects.filter(dataset__in=selected_datasets))
-    sign_languages = []
-    for sl in selected_datasets_signlanguage:
-        if (str(sl.id), sl.name) not in sign_languages:
-            sign_languages.append((str(sl.id), sl.name))
-    context['sign_languages'] = sign_languages
+    context['sign_languages'] = [(sign_language.id, sign_language.name) for sign_language
+                                 in SignLanguage.objects.filter(dataset__in=selected_datasets).distinct()]
 
-    selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage) \
+    selected_datasets_dialects = Dialect.objects.filter(signlanguage__dataset__in=selected_datasets) \
         .prefetch_related('signlanguage').distinct()
     dialects = []
     for dl in selected_datasets_dialects:
