@@ -248,24 +248,6 @@ def morpheme(request, glossid):
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 
-@login_required_config
-def search(request):
-    """Handle keyword search form submission"""
-
-    form = UserSignSearchForm(request.GET.copy())
-
-    if form.is_valid():
-
-        glossQuery = form.cleaned_data['glossQuery']
-        # Issue #153: make sure + and - signs are translated correctly into the search URL
-        glossQuery = quote(glossQuery)
-        term = form.cleaned_data['query']
-        # Issue #153: do the same with the Translation, encoded by 'query'
-        term = quote(term)
-
-        return HttpResponseRedirect('../../signs/search/?search='+glossQuery+'&keyword='+term)
-
-
 def missing_video_list():
     """A list of signs that don't have an
     associated video file"""
@@ -521,23 +503,6 @@ def add_new_sign(request):
 
     return render(request,'dictionary/add_gloss.html',context)
 
-
-@login_required_config
-def search_morpheme(request):
-    """Handle morpheme search form submission"""
-
-    form = UserMorphemeSearchForm(request.GET.copy())
-
-    if form.is_valid():
-
-        morphQuery = form.cleaned_data['morphQuery']
-        # Issue #153: make sure + and - signs are translated correctly into the search URL
-        morphQuery = quote(morphQuery)
-        term = form.cleaned_data['query']
-        # Issue #153: do the same with the Translation, encoded by 'query'
-        term = quote(term)
-
-        return HttpResponseRedirect('../../morphemes/search/?search='+morphQuery+'&keyword='+term)
 
 def add_new_morpheme(request):
 

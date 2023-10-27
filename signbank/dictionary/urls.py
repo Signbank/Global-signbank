@@ -20,17 +20,12 @@ import signbank.dictionary.adminviews
 app_name = 'dictionary'
 urlpatterns = [
 
-    # index page is just the search page
-    re_path(r'^$', signbank.dictionary.views.search),
-
     re_path(r'^tag/(?P<tag>[^/]*)/?$', signbank.dictionary.tagviews.taglist),
 
     # an alternate view for direct display of a gloss
     re_path(r'gloss/(?P<glossid>\d+).html$', signbank.dictionary.views.gloss, name='public_gloss'),
     re_path(r'morpheme/(?P<glossid>\d+).html$', signbank.dictionary.views.morpheme, name='public_morpheme'),
 
-    re_path(r'^search/$', signbank.dictionary.views.search, name="search"),
-    re_path(r'^search_morpheme/$', signbank.dictionary.views.search_morpheme, name="search_morpheme"),
     re_path(r'^update/gloss/(?P<glossid>\d+)$', signbank.dictionary.update.update_gloss, name='update_gloss'),
     re_path(r'^update/handshape/(?P<handshapeid>\d+)$', signbank.dictionary.update.update_handshape, name='update_handshape'),
     re_path(r'^update/morpheme/(?P<morphemeid>\d+)$', signbank.dictionary.update.update_morpheme, name='update_morpheme'),

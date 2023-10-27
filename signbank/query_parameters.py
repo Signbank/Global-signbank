@@ -14,6 +14,7 @@ from django.http import QueryDict
 from django.utils.translation import override, gettext_lazy as _
 
 from django.http import HttpResponse, HttpResponseRedirect
+from django.utils.html import escape
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
@@ -493,3 +494,32 @@ def pretty_print_query_values(dataset_languages,query_parameters):
             query_dict[keyword_field_name] = query_parameters[keyword_field_name]
 
     return query_dict
+
+
+def search_fields_from_get(searchform, GET):
+    # collect non-empty search fields from GET into dictionary
+    search_fields_to_populate = dict()
+    search_keys = []
+    search_form_fields = searchform.fields.keys()
+    for get_key, get_value in GET.items():
+        if get_value in ['', '0']:
+            continue
+        if get_key in ['defspublished', 'hasmultiplesenses', 'negative'] and get_value in ['unspecified']:
+            continue
+        if get_key.endswith('[]'):
+            vals = GET.getlist(get_key)
+            search_fields_to_populate[get_key] = vals
+            search_keys.append(get_key)
+        elif get_key not in search_form_fields:
+            # skip csrf_token and page
+            continue
+        elif get_key in ['search', 'translation']:
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(get_value)
+            search_fields_to_populate[get_key] = escape(val)
+            search_keys.append(get_key)
+        else:
+            search_fields_to_populate[get_key] = get_value
+            search_keys.append(get_key)
+
+    return search_keys, search_fields_to_populate

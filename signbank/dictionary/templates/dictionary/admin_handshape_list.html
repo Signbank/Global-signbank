@@ -483,7 +483,7 @@ function do_adminsearch(el) {
     {% for handshape in object_list %}
     <tr>
 
-      <td>{%if handshape.get_image_path != None %}
+      <td>{% if handshape.get_image_path %}
           <div class="thumbnail_container">
               <img class="thumbnail_handshape" src="{{protected_media_url}}{{handshape.get_image_path}}">
           </div>
@@ -534,7 +534,7 @@ function do_adminsearch(el) {
     {% for gloss in object_list %}
 
     <tr>
-      <td>{%if gloss.get_image_path != None %}
+      <td>{% if gloss.get_image_path %}
           <div class="thumbnail_container">
           <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></a>
           </div>

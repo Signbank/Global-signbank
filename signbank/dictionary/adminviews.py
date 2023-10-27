@@ -62,7 +62,7 @@ from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, apply_language_filters_to_results
+    query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -2484,7 +2484,7 @@ class MorphemeListView(ListView):
     dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
     template_name = 'dictionary/admin_morpheme_list.html'
-    paginate_by = 100
+    paginate_by = 25
     queryset_language_codes = []
 
     def get_context_data(self, **kwargs):
@@ -2514,7 +2514,7 @@ class MorphemeListView(ListView):
         selected_datasets_signlanguage = [ ds.signlanguage for ds in selected_datasets ]
         sign_languages = []
         for sl in selected_datasets_signlanguage:
-            if ((str(sl.id), sl.name) not in sign_languages):
+            if (str(sl.id), sl.name) not in sign_languages:
                 sign_languages.append((str(sl.id), sl.name))
 
         selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage).distinct()
@@ -2528,10 +2528,17 @@ class MorphemeListView(ListView):
         else:
             context['show_all'] = False
 
-        search_form = MorphemeSearchForm(self.request.GET, languages=dataset_languages, sign_languages=sign_languages,
+        search_form = MorphemeSearchForm(self.request.GET,
+                                         languages=dataset_languages,
+                                         sign_languages=sign_languages,
                                          dialects=dialects)
 
         context['searchform'] = search_form
+
+        # use these to fill the form fields of a just done query
+        populate_keys, populate_fields = search_fields_from_get(search_form, self.request.GET)
+        context['populate_fields'] = json.dumps(populate_fields)
+        context['populate_fields_keys'] = json.dumps(populate_keys)
 
         context['glosscount'] = Morpheme.objects.filter(lemma__dataset__in=selected_datasets).count()
 
@@ -2543,25 +2550,13 @@ class MorphemeListView(ListView):
         context['input_names_fields_and_labels'] = {}
 
         for topic in ['main', 'phonology', 'semantics']:
-
             context['input_names_fields_and_labels'][topic] = []
-
             for fieldname in settings.FIELDS[topic]:
-
-                if fieldname == 'derivHist' and not settings.USE_DERIVATIONHISTORY:
+                if fieldname not in search_form.fields:
                     continue
-
-                if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-
-                    if topic == 'phonology':
-                        if fieldname not in settings.MORPHEME_DISPLAY_FIELDS:
-                            continue
-
-                    field = search_form[fieldname]
-                    label = field.label
-
-                    context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
-
+                context['input_names_fields_and_labels'][topic].append((fieldname,
+                                                                        search_form[fieldname],
+                                                                        search_form[fieldname].label))
         context['page_number'] = context['page_obj'].number
 
         # this is needed to avoid crashing the browser if you go to the last page
@@ -2637,13 +2632,11 @@ class MorphemeListView(ListView):
 
         return context
 
-
     def get_paginate_by(self, queryset):
         """
         Paginate by specified value in querystring, or use default class property value.
         """
         return self.request.GET.get('paginate_by', self.paginate_by)
-
 
     def get_queryset(self):
         # get query terms from self.request
@@ -2672,19 +2665,14 @@ class MorphemeListView(ListView):
 
         if len(get) > 0 or show_all:
             qs = Morpheme.objects.filter(lemma__dataset__in=selected_datasets)
-
-        #Don't show anything when we're not searching yet
         else:
             qs = Morpheme.objects.none()
 
         if not self.request.user.has_perm('dictionary.search_gloss'):
             qs = qs.filter(inWeb__exact=True)
 
-        #If we wanted to get everything, we're done now
         if show_all:
-
             qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
-
             return qs
 
         # Evaluate all morpheme/language search fields
@@ -2721,11 +2709,11 @@ class MorphemeListView(ListView):
         if 'definitionRole[]' in get:
 
             vals = get.getlist('definitionRole[]')
-            if vals != []:
-                #Find all definitions with this role
+            if vals:
+                # Find all definitions with this role
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
 
-                #Remember the pk of all glosses that are referenced in the collection definitions
+                # Remember the pk of all glosses that are referenced in the collection definitions
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
 
@@ -2737,17 +2725,17 @@ class MorphemeListView(ListView):
         # SignLanguage and basic property filters
         # allows for multiselect
         vals = get.getlist('dialect[]')
-        if vals != []:
+        if vals:
             qs = qs.filter(dialect__in=vals)
 
         # allows for multiselect
         vals = get.getlist('signlanguage[]')
-        if vals != []:
+        if vals:
             qs = qs.filter(signlanguage__in=vals)
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
-            if vals != []:
+            if vals:
                 morphemes_with_tag = list(
                     TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
                 qs = qs.filter(id__in=morphemes_with_tag)
@@ -2769,7 +2757,7 @@ class MorphemeListView(ListView):
             fieldnameQuery = fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
-            if vals != []:
+            if vals:
                 if fieldnamemulti == 'semField':
                     qs = qs.filter(semField__in=vals)
                 elif fieldnamemulti == 'derivHist':
@@ -2777,7 +2765,7 @@ class MorphemeListView(ListView):
                 else:
                     qs = qs.filter(**{ fieldnameQuery: vals })
 
-        ## phonology and semantics field filters
+        # phonology and semantics field filters
         fieldnames = [ f for f in fieldnames if f not in multiple_select_morpheme_fields ]
         for fieldname in fieldnames:
 
@@ -2792,35 +2780,16 @@ class MorphemeListView(ListView):
                     kwargs = {key: val}
                     qs = qs.filter(**kwargs)
 
-
         # these fields are for ASL searching
-        if 'initial_relative_orientation' in get and get['initial_relative_orientation'] != '':
-            val = get['initial_relative_orientation']
-            qs = qs.filter(initial_relative_orientation__exact=val)
-
-        if 'final_relative_orientation' in get and get['final_relative_orientation'] != '':
-            val = get['final_relative_orientation']
-            qs = qs.filter(final_relative_orientation__exact=val)
-
-        if 'initial_palm_orientation' in get and get['initial_palm_orientation'] != '':
-            val = get['initial_palm_orientation']
-            qs = qs.filter(initial_palm_orientation__exact=val)
-
-        if 'final_palm_orientation' in get and get['final_palm_orientation'] != '':
-            val = get['final_palm_orientation']
-            qs = qs.filter(final_palm_orientation__exact=val)
-
-        if 'initial_secondary_loc' in get and get['initial_secondary_loc'] != '':
-            val = get['initial_secondary_loc']
-            qs = qs.filter(initial_secondary_loc__exact=val)
-
-        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
-            val = get['final_secondary_loc']
-            qs = qs.filter(final_secondary_loc__exact=val)
-
-        if 'final_secondary_loc' in get and get['final_secondary_loc'] != '':
-            val = get['final_secondary_loc']
-            qs = qs.filter(final_secondary_loc__exact=val)
+        ASL_fields = ['initial_relative_orientation', 'final_relative_orientation',
+                      'initial_palm_orientation', 'final_palm_orientation',
+                      'initial_secondary_loc', 'final_secondary_loc']
+        for field in ASL_fields:
+            if field in get and get[field] != '':
+                val = get[field]
+                key = field + '__exact'
+                kwargs = {key: val}
+                qs = qs.filter(**kwargs)
 
         qs = qs.distinct()
 
@@ -2857,8 +2826,6 @@ class MorphemeListView(ListView):
                 created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
                 .filter(created_by__icontains=created_by_search_string)
 
-
-
         # Sort the queryset by the parameters given
         qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
@@ -2869,7 +2836,6 @@ class MorphemeListView(ListView):
 
         # Return the resulting filtered and sorted queryset
         return qs
-
 
     def render_to_response(self, context):
         # Look for a 'format=json' GET argument
@@ -2929,7 +2895,7 @@ class MorphemeListView(ListView):
                     row.append("")
 
             for f in fields:
-                #Try the value of the choicelist
+                # Try the value of the choicelist
                 if hasattr(f, 'field_choice_category'):
                     if hasattr(gloss, 'get_' + f.name + '_display'):
                         value = getattr(gloss, 'get_' + f.name + '_display')()
@@ -2988,6 +2954,7 @@ class MorphemeListView(ListView):
             writer.writerow(safe_row)
 
         return response
+
 
 class HandshapeDetailView(DetailView):
     model = Handshape

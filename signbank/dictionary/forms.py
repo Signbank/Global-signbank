@@ -41,19 +41,6 @@ def tag_choices():
     return tag_choices_list
 
 
-class UserSignSearchForm(forms.Form):
-
-    glossQuery = forms.CharField(label=_(u'Glosses Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    query = forms.CharField(label=_(u'Senses Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    category = forms.ChoiceField(label=_(u'Search'), choices=CATEGORY_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-control'}))
-        
-
-class GlossModelForm(forms.ModelForm):
-    class Meta:
-        model = Gloss
-        # fields are defined in settings.py
-        fields = settings.QUICK_UPDATE_GLOSS_FIELDS
-
 class GlossCreateForm(forms.ModelForm):
     """Form for creating a new gloss from scratch"""
 
@@ -110,22 +97,6 @@ class GlossCreateForm(forms.ModelForm):
         gloss.save()
 
         return gloss
-
-
-class UserMorphemeSearchForm(forms.Form):
-    """Facilitate searching for morphemes"""
-
-    morphQuery = forms.CharField(label=_(u'Morphemes Containing'), max_length=100, required=False,
-                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
-    query = forms.CharField(label=_(u'Translations Containing'), max_length=100, required=False,
-                            widget=forms.TextInput(attrs={'class': 'form-control'}))
-
-
-class MorphemeModelForm(forms.ModelForm):
-    class Meta:
-        model = Morpheme
-        # fields are defined in settings.py
-        fields = settings.QUICK_UPDATE_GLOSS_FIELDS
 
 
 class MorphemeCreateForm(forms.ModelForm):
@@ -251,8 +222,10 @@ class GlossSearchForm(forms.ModelForm):
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
     hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
-    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
-    hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=YESNOCHOICES)
+    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES,
+                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=YESNOCHOICES,
+                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     relation = forms.CharField(label=_(u'Gloss of Related Sign'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     relationToForeignSign = forms.CharField(label=_(u'Gloss of Foreign Sign'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
@@ -473,8 +446,10 @@ class MorphemeSearchForm(forms.ModelForm):
                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_(u'Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
-    hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=YESNOCHOICES)
+    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES,
+                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=YESNOCHOICES,
+                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     createdBefore = forms.DateField(label=_(u'Created Before'),
                                     input_formats=[settings.DATE_FORMAT],
@@ -506,7 +481,7 @@ class MorphemeSearchForm(forms.ModelForm):
 
         for language in languages:
             morphemesearch_field_name = self.gloss_search_field_prefix + language.language_code_2char
-            setattr(self, morphemesearch_field_name, forms.CharField(label=_("Gloss") + (" (%s)" % language.name)))
+            setattr(self, morphemesearch_field_name, forms.CharField(label=_("Annotation") + (" (%s)" % language.name)))
             if morphemesearch_field_name in queryDict:
                 getattr(self, morphemesearch_field_name).value = queryDict[morphemesearch_field_name]
 
@@ -578,6 +553,7 @@ class DefinitionForm(forms.ModelForm):
                                                 ),
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
+
 class RelationForm(forms.ModelForm):
     
     sourceid = forms.CharField(label=_(u'Source Gloss'))
@@ -590,6 +566,7 @@ class RelationForm(forms.ModelForm):
                    'role': forms.Select(attrs={'class': 'form-control'}),
                    }
 
+
 class VariantsForm(forms.Form):
     sourceid = forms.CharField(label=_(u'Source Gloss'))
     targetid = forms.CharField(label=_(u'Target Gloss'))
@@ -597,6 +574,7 @@ class VariantsForm(forms.Form):
     class Meta:
         model = Relation
         
+
 class RelationToForeignSignForm(forms.ModelForm):
 
     sourceid = forms.CharField(label=_(u'Source Gloss'))
@@ -627,12 +605,14 @@ class GlossMorphologyForm(forms.Form):
         self.fields['role'].choices = list(FieldChoice.objects.filter(field='MorphologyType').order_by('machine_value')
                                            .values_list('pk', 'name'))
 
+
 class GlossMorphemeForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
 
     host_gloss_id = forms.CharField(label=_(u'Host Gloss'))
     description = forms.CharField(label=_(u'Meaning'), required=False)
     morph_id = forms.CharField(label=_(u'Morpheme'))
+
 
 class GlossBlendForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
@@ -646,11 +626,12 @@ def get_other_media_type_choices():
     choices = [('','---------')]
     return choices
 
+
 class OtherMediaForm(forms.ModelForm):
 
     gloss = forms.CharField()
-    file = forms.FileField(widget=forms.FileInput(attrs={'accept':'video/*, image/*, application/pdf'}), required=True)
-    # type = forms.ChoiceField(choices=get_other_media_type_choices,widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    file = forms.FileField(widget=forms.FileInput(attrs={'accept':'video/*, image/*, application/pdf'}),
+                           required=True)
     alternative_gloss = forms.TextInput()
 
     class Meta:
