@@ -29,7 +29,9 @@ def get_selected_datasets(request):
 
 
 def get_context_data_for_list_view(request, listview, kwargs, context={}):
-    # This is called by GlossListView, SenseListView
+    """
+    Creates basic context data for several ListViews (e.g. GlossListView, SenseListView)
+    """
     context['show_all'] = kwargs.get('show_all', False)
     context['view_type'] = request.GET.get('view_type', listview.view_type)
     context['menu_bar_search'] = request.GET['search'] if 'search' in request.GET else ''
