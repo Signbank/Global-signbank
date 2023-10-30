@@ -89,6 +89,15 @@ def get_other_parameter_keys():
     return other_parameters_keys, multiple_select_gloss_fields, fields_with_choices
 
 
+def get_gloss_fields_to_populate(request):
+    # If the menu bar search form was used, populate the search form with the query string
+    from signbank.tools import strip_control_characters  # TODO Why is this import here?
+
+    return {field: escape(strip_control_characters(request.GET[field]))
+            for field in ['search', 'translation']
+            if field in request.GET and request.GET[field] != ''}
+
+
 def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
     query_parameters_in_session = request.session.get('query_parameters', '')
@@ -106,21 +115,9 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     other_parameter_keys, multiple_select_gloss_fields, fields_with_choices = get_other_parameter_keys()
     context['other_parameters_keys'] = json.dumps(other_parameter_keys)
 
-    # If the menu bar search form was used, populate the search form with the query string
-    gloss_fields_to_populate = dict()
-    if 'search' in request.GET and request.GET['search'] != '':
-        val = request.GET['search']
-        from signbank.tools import strip_control_characters
-        val = strip_control_characters(val)
-        gloss_fields_to_populate['search'] = escape(val)
-    if 'translation' in request.GET and request.GET['translation'] != '':
-        val = request.GET['translation']
-        from signbank.tools import strip_control_characters
-        val = strip_control_characters(val)
-        gloss_fields_to_populate['translation'] = escape(val)
-    gloss_fields_to_populate_keys = list(gloss_fields_to_populate.keys())
+    gloss_fields_to_populate = get_gloss_fields_to_populate(request)
     context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
-    context['gloss_fields_to_populate_keys'] = gloss_fields_to_populate_keys
+    context['gloss_fields_to_populate_keys'] = list(gloss_fields_to_populate.keys())
 
     if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
