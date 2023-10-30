@@ -142,11 +142,8 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     else:
         context['search_by_publication_fields'] = []
 
-    if hasattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'):
-        context[
-            'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = settings.DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES
-    else:
-        context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = 0
+    context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = \
+        getattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES', 0)
 
     context['input_names_fields_and_labels'] = {}
 
