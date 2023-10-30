@@ -68,13 +68,9 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
     context['sign_languages'] = [(sign_language.id, sign_language.name) for sign_language
                                  in SignLanguage.objects.filter(dataset__in=selected_datasets).distinct()]
 
-    selected_datasets_dialects = Dialect.objects.filter(signlanguage__dataset__in=selected_datasets) \
-        .prefetch_related('signlanguage').distinct()
-    dialects = []
-    for dl in selected_datasets_dialects:
-        dialect_name = dl.signlanguage.name + "/" + dl.name
-        dialects.append((str(dl.id), dialect_name))
-    context['dialects'] = dialects
+    context['dialects'] = [(str(dialect.id), dialect.signlanguage.name + "/" + dialect.name) for dialect in
+                           Dialect.objects.filter(signlanguage__dataset__in=selected_datasets)
+                           .prefetch_related('signlanguage').distinct()]
 
     language_query_keys = []
     for language in dataset_languages:
