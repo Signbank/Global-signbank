@@ -86,10 +86,9 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     context['query_parameters'] = json.dumps(query_parameters)
     context['query_parameters_keys'] = json.dumps(list(query_parameters.keys()))
 
-    search_form = GlossSearchForm(request.GET,
-                                  languages=context['dataset_languages'],
-                                  sign_languages=context['sign_languages'],
-                                  dialects=context['dialects'])
+    search_form = GlossSearchForm(request.GET, languages=context['dataset_languages'],
+                                  sign_languages=context['sign_languages'], dialects=context['dialects'])
+    context['searchform'] = search_form
 
     sentence_form = SentenceForm(request.GET)
     context['sentenceform'] = sentence_form
@@ -108,7 +107,6 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     other_parameters_keys = [key for key in other_parameters if key not in multiple_select_gloss_fields]
 
     context['other_parameters_keys'] = json.dumps(other_parameters_keys)
-    context['searchform'] = search_form
 
     # If the menu bar search form was used, populate the search form with the query string
     gloss_fields_to_populate = dict()
