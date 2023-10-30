@@ -135,10 +135,7 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
     context['gloss_fields_to_populate_keys'] = list(gloss_fields_to_populate.keys())
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+    context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
     if hasattr(settings,
                'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and request.user.is_authenticated:
