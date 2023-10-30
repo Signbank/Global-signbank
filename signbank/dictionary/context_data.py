@@ -79,13 +79,12 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
 
 def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
-    query_parameters = listview.query_parameters
-
-    if not context['show_all'] and ('query_parameters' in request.session.keys()
-                                          and request.session['query_parameters'] not in ['', '{}']):
-        # if the query parameters are available, convert them to a dictionary
-        session_query_parameters = request.session['query_parameters']
-        query_parameters = json.loads(session_query_parameters)
+    query_parameters_in_session = request.session.get('query_parameters', '')
+    query_parameters = json.loads(query_parameters_in_session) \
+        if not context['show_all'] and query_parameters_in_session not in ['', '{}'] \
+        else listview.query_parameters
+    context['query_parameters'] = json.dumps(query_parameters)
+    context['query_parameters_keys'] = json.dumps(list(query_parameters.keys()))
 
     search_form = GlossSearchForm(request.GET,
                                   languages=context['dataset_languages'],
@@ -94,10 +93,6 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
 
     sentence_form = SentenceForm(request.GET)
     context['sentenceform'] = sentence_form
-
-    context['query_parameters'] = json.dumps(query_parameters)
-    query_parameters_keys = list(query_parameters.keys())
-    context['query_parameters_keys'] = json.dumps(query_parameters_keys)
 
     # other parameters are in the GlossSearchForm in the template that are not initialised
     # via multiselect or language fields
