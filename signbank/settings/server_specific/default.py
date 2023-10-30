@@ -139,6 +139,10 @@ FIELDS['properties'] = ['hasvideo', 'hasothermedia', 'hasmultiplesenses',
                                 'useInstr', 'tags', 'excludeFromEcv']
 FIELDS['relations'] = ['relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign']
 FIELDS['morpheme'] = ['morpheme', 'hasComponentOfType', 'hasMorphemeOfType']
+FIELDS['morpheme_properties'] = ['hasvideo',
+                                 'definitionRole', 'definitionContains', 'defspublished',
+                                 'createdBy', 'createdAfter', 'createdBefore',
+                                 'useInstr', 'tags']
 
 # Use these fields in the server specific settings to specify frequency fields, if available
 FREQUENCY_CATEGORIES = []
@@ -163,6 +167,7 @@ GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']
 SEARCH_BY = {}
 # the ordering of the list of publication fields is important for the Gloss Search template
 SEARCH_BY['publication'] = FIELDS['publication'] + FIELDS['properties']
+SEARCH_BY['morpheme_publication'] = FIELDS['publication'] + FIELDS['morpheme_properties']
 SEARCH_BY['relations'] = FIELDS['relations']
 SEARCH_BY['morpheme'] = FIELDS['morpheme']
 

@@ -176,7 +176,6 @@ class TagUpdateForm(forms.Form):
 
 YESNOCHOICES = (('unspecified', "---------"), ('yes', 'Yes'), ('no', 'No'))
 NULLBOOLEANCHOICES = [(0, '---------'), (2, 'True'), (3, 'False')]
-NONEBOOLEANCHOICES = [(0, '---------'), (1, 'None'), (2, 'True'), (3, 'False')]
 UNKNOWNBOOLEANCHOICES = [(0, '---------'), (2, 'True'), (3, 'False')]
 NEUTRALBOOLEANCHOICES = [(1, 'Neutral'), (2, 'Yes'), (3, 'No')]
 NEUTRALQUERYCHOICES = [(0, '---------'), (1, 'Neutral'), (2, 'True'), (3, 'False')]
@@ -426,7 +425,6 @@ class MorphemeSearchForm(forms.ModelForm):
     tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
-    hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
     useInstr = forms.CharField(label=_("Annotation instructions"))
 
     phonOth = forms.CharField(label=_(u'Phonology Other'), widget=forms.TextInput())
@@ -448,8 +446,6 @@ class MorphemeSearchForm(forms.ModelForm):
     definitionContains = forms.CharField(label=_(u'Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES,
                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=YESNOCHOICES,
-                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     createdBefore = forms.DateField(label=_(u'Created Before'),
                                     input_formats=[settings.DATE_FORMAT],

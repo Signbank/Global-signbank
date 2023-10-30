@@ -17,6 +17,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.html import escape
 
 from signbank.dictionary.models import *
+from django.db.models.functions import Concat
 from signbank.dictionary.forms import *
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.utils.dateformat import format
@@ -523,3 +524,85 @@ def search_fields_from_get(searchform, GET):
             search_keys.append(get_key)
 
     return search_keys, search_fields_to_populate
+
+
+def queryset_from_get(GET, qs):
+
+    for get_key, get_value in GET.items():
+        if get_key.endswith('[]'):
+            # multiple select
+            vals = GET.getlist(get_key)
+            field = get_key[:-2]
+            if not vals:
+                continue
+            if field in ['dialect', 'signlanguage']:
+                query_filter = field + '__in'
+                qs = qs.filter(**{query_filter: get_value})
+                continue
+            if field in ['definitionRole']:
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
+                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
+                qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+                continue
+            if field in ['tags']:
+                morphemes_with_tag = list(
+                    TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
+                qs = qs.filter(id__in=morphemes_with_tag)
+                continue
+            if field == 'semField':
+                qs = qs.filter(semField__in=vals)
+            elif field == 'derivHist':
+                qs = qs.filter(derivHist__in=vals)
+            else:
+                query_filter = field + '__machine_value__in'
+                qs = qs.filter(**{query_filter: vals})
+        elif get_key not in MorphemeSearchForm.base_fields.keys() \
+                or get_value in ['', '0', 'unspecified']:
+            continue
+        elif MorphemeSearchForm.base_fields[get_key].widget.input_type in ['text']:
+            if get_key in ['search', 'translation', 'sortOrder']:
+                continue
+            elif get_key in ['definitionContains']:
+                definitions_with_this_text = Definition.objects.filter(text__icontains=get_value)
+                # Remember the pk of all glosses that are referenced in the collection definitions
+                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in
+                                                          definitions_with_this_text]
+                qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
+            elif get_key in ['createdBy']:
+                created_by_search_string = ' '.join(get_key.strip().split())  # remove redundant spaces
+                qs = qs.annotate(
+                    created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
+                    .filter(created_by__icontains=created_by_search_string)
+            else:
+                query_filter = field + '__icontains'
+                qs = qs.filter(**{query_filter: get_value})
+
+        elif MorphemeSearchForm.base_fields[get_key].widget.input_type in ['date']:
+            if get_key == 'createdBefore':
+                created_before_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
+                qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
+            elif get_key == 'createdAfter':
+                created_after_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
+                qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
+        elif MorphemeSearchForm.base_fields[get_key].widget.input_type in ['select']:
+            if get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
+                val = get_value == '2'
+                key = get_key + '__exact'
+            elif get_key in ['hasvideo']:
+                val = get_value != '2'
+                key = 'glossvideo__isnull'
+            elif get_key in ['defspublished']:
+                val = get_value == 'yes'
+                key = 'definition__published'
+            else:
+                print('Morpheme Search input type select: ', get_key, get_value)
+                continue
+
+            kwargs = {key: val}
+            qs = qs.filter(**kwargs)
+        else:
+            # everything should already be taken care of
+            print(MorphemeSearchForm.base_fields[get_key].widget.input_type)
+
+    return qs
+

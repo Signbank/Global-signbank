@@ -62,7 +62,7 @@ from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get
+    query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -2626,7 +2626,8 @@ class MorphemeListView(ListView):
         context['field_colors'] = choices_colors
 
         if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated:
-            context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
+            context['search_by_publication_fields'] = searchform_panels(search_form,
+                                                                        settings.SEARCH_BY['morpheme_publication'])
         else:
             context['search_by_publication_fields'] = []
 
@@ -2693,138 +2694,9 @@ class MorphemeListView(ListView):
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
 
-        if 'translation' in get and get['translation'] != '':
-            val = get['translation']
-            qs = qs.filter(translation__translation__text__iregex=val)
-
-        if 'inWeb' in get and get['inWeb'] != '0':
-            # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
-            val = get['inWeb'] == '2'
-            qs = qs.filter(inWeb__exact=val)
-
-        if 'hasvideo' in get and get['hasvideo'] not in ['unspecified', '0']:
-            val = get['hasvideo'] != '2'
-            qs = qs.filter(glossvideo__isnull=val)
-
-        if 'definitionRole[]' in get:
-
-            vals = get.getlist('definitionRole[]')
-            if vals:
-                # Find all definitions with this role
-                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
-
-                # Remember the pk of all glosses that are referenced in the collection definitions
-                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
-                qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
-
-        if 'defspublished' in get and get['defspublished'] != 'unspecified':
-            val = get['defspublished'] == 'yes'
-
-            qs = qs.filter(definition__published=val)
-
-        # SignLanguage and basic property filters
-        # allows for multiselect
-        vals = get.getlist('dialect[]')
-        if vals:
-            qs = qs.filter(dialect__in=vals)
-
-        # allows for multiselect
-        vals = get.getlist('signlanguage[]')
-        if vals:
-            qs = qs.filter(signlanguage__in=vals)
-
-        if 'tags[]' in get:
-            vals = get.getlist('tags[]')
-            if vals:
-                morphemes_with_tag = list(
-                    TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
-                qs = qs.filter(id__in=morphemes_with_tag)
-
-        if 'useInstr' in get and get['useInstr'] != '':
-            qs = qs.filter(useInstr__icontains=get['useInstr'])
-
-        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
-            fieldnames.remove('derivHist')
-
-        multiple_select_morpheme_categories = fields_to_fieldcategory_dict(fieldnames)
-        # multiple_select_morpheme_categories['definitionRole'] = 'NoteType'
-
-        multiple_select_morpheme_fields = [ fieldname for (fieldname, category) in multiple_select_morpheme_categories.items() ]
-
-        for fieldnamemulti in multiple_select_morpheme_fields:
-            fieldnamemultiVarname = fieldnamemulti + '[]'
-            fieldnameQuery = fieldnamemulti + '__machine_value__in'
-
-            vals = get.getlist(fieldnamemultiVarname)
-            if vals:
-                if fieldnamemulti == 'semField':
-                    qs = qs.filter(semField__in=vals)
-                elif fieldnamemulti == 'derivHist':
-                    qs = qs.filter(derivHist__in=vals)
-                else:
-                    qs = qs.filter(**{ fieldnameQuery: vals })
-
-        # phonology and semantics field filters
-        fieldnames = [ f for f in fieldnames if f not in multiple_select_morpheme_fields ]
-        for fieldname in fieldnames:
-
-            if fieldname in get:
-                key = fieldname + '__exact'
-                val = get[fieldname]
-
-                if isinstance(Gloss.get_field(fieldname), BooleanField):
-                    val = {'0': '', '1': None, '2': True, '3': False}[val]
-
-                if val != '':
-                    kwargs = {key: val}
-                    qs = qs.filter(**kwargs)
-
-        # these fields are for ASL searching
-        ASL_fields = ['initial_relative_orientation', 'final_relative_orientation',
-                      'initial_palm_orientation', 'final_palm_orientation',
-                      'initial_secondary_loc', 'final_secondary_loc']
-        for field in ASL_fields:
-            if field in get and get[field] != '':
-                val = get[field]
-                key = field + '__exact'
-                kwargs = {key: val}
-                qs = qs.filter(**kwargs)
+        qs = queryset_from_get(get, qs)
 
         qs = qs.distinct()
-
-        if 'definitionRole' in get and get['definitionRole'] != '':
-
-            # Find all definitions with this role
-            if get['definitionRole'] == 'all':
-                definitions_with_this_role = Definition.objects.all()
-            else:
-                definitions_with_this_role = Definition.objects.filter(role__exact=get['definitionRole'])
-
-            # Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
-            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
-
-        if 'definitionContains' in get and get['definitionContains'] != '':
-            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains'])
-
-            # Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
-            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
-
-        if 'createdBefore' in get and get['createdBefore'] != '':
-            created_before_date = DT.datetime.strptime(get['createdBefore'], settings.DATE_FORMAT).date()
-            qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
-
-        if 'createdAfter' in get and get['createdAfter'] != '':
-            created_after_date = DT.datetime.strptime(get['createdAfter'], settings.DATE_FORMAT).date()
-            qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
-
-        if 'createdBy' in get and get['createdBy'] != '':
-            created_by_search_string = ' '.join(get['createdBy'].strip().split())  # remove redundant spaces
-            qs = qs.annotate(
-                created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
-                .filter(created_by__icontains=created_by_search_string)
 
         # Sort the queryset by the parameters given
         qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
@@ -2878,8 +2750,7 @@ class MorphemeListView(ListView):
         with override(LANGUAGE_CODE):
             header = ['Signbank ID'] + annotationidglosstranslation_fields + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
 
-        for extra_column in ['SignLanguages', 'Dialects', 'Keywords', 'Morphology', 'Relations to other signs',
-                             'Relations to foreign signs', 'Appears in signs', ]:
+        for extra_column in ['SignLanguages', 'Dialects', 'Keywords', 'Morphology', 'Appears in signs']:
             header.append(extra_column)
 
         writer.writerow(header)
@@ -2930,14 +2801,6 @@ class MorphemeListView(ListView):
             # get compound's component type
             morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
             row.append(", ".join(morphemes))
-
-            # get relations to other signs
-            relations = [relation.target.idgloss for relation in Relation.objects.filter(source=gloss)]
-            row.append(", ".join(relations))
-
-            # get relations to foreign signs
-            relations = [relation.other_lang_gloss for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
-            row.append(", ".join(relations))
 
             # Got all the glosses (=signs) this morpheme appears in
             appearsin = [appears.idgloss for appears in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
