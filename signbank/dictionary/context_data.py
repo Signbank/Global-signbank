@@ -30,19 +30,15 @@ def get_selected_datasets(request):
 
 def get_context_data_for_list_view(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
-
     context['show_all'] = kwargs.get('show_all', False)
+    context['view_type'] = request.GET.get('view_type', listview.view_type)
+    context['menu_bar_search'] = request.GET['search'] if 'search' in request.GET else ''
+    context['web_search'] = get_web_search(request)
 
     search_type = request.GET.get('search_type')
     context['search_type'] = search_type if search_type else listview.search_type
     if 'search_type' not in request.session.keys():
         request.session['search_type'] = search_type
-
-    context['menu_bar_search'] = request.GET['search'] if 'search' in request.GET else ''
-
-    context['view_type'] = request.GET.get('view_type', listview.view_type)
-
-    context['web_search'] = get_web_search(request)
 
     selected_datasets = get_selected_datasets(request)
     context['selected_datasets'] = selected_datasets
