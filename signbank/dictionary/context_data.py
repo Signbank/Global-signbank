@@ -90,8 +90,7 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
                                   sign_languages=context['sign_languages'], dialects=context['dialects'])
     context['searchform'] = search_form
 
-    sentence_form = SentenceForm(request.GET)
-    context['sentenceform'] = sentence_form
+    context['sentenceform'] = SentenceForm(request.GET)
 
     # other parameters are in the GlossSearchForm in the template that are not initialised
     # via multiselect or language fields
