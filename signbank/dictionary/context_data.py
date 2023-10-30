@@ -77,6 +77,18 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
     return context
 
 
+def get_other_parameter_keys():
+    # other parameters are in the GlossSearchForm in the template that are not initialised
+    # via multiselect or language fields, plus semantics and phonology fields with text types
+    other_parameters = ['sortOrder'] + settings.SEARCH_BY['publication'] + settings.FIELDS['phonology'] + \
+                       settings.FIELDS['semantics']
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+    fields_with_choices = fields_to_fieldcategory_dict()
+    multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
+    other_parameters_keys = [key for key in other_parameters if key not in multiple_select_gloss_fields]
+    return other_parameters_keys
+
+
 def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
     query_parameters_in_session = request.session.get('query_parameters', '')
@@ -91,21 +103,7 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     context['searchform'] = search_form
 
     context['sentenceform'] = SentenceForm(request.GET)
-
-    # other parameters are in the GlossSearchForm in the template that are not initialised
-    # via multiselect or language fields
-    # plus semantics and phonology fields with text types
-    other_parameters = ['sortOrder'] + \
-                       settings.SEARCH_BY['publication'] + \
-                       settings.FIELDS['phonology'] + \
-                       settings.FIELDS['semantics']
-
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-    fields_with_choices = fields_to_fieldcategory_dict()
-    multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
-    other_parameters_keys = [key for key in other_parameters if key not in multiple_select_gloss_fields]
-
-    context['other_parameters_keys'] = json.dumps(other_parameters_keys)
+    context['other_parameters_keys'] = json.dumps(get_other_parameter_keys())
 
     # If the menu bar search form was used, populate the search form with the query string
     gloss_fields_to_populate = dict()
