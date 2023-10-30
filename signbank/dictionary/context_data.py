@@ -137,8 +137,7 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
 
     context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
-    if hasattr(settings,
-               'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and request.user.is_authenticated:
+    if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and request.user.is_authenticated:
         context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
     else:
         context['search_by_publication_fields'] = []
