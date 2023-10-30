@@ -72,15 +72,10 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
                            Dialect.objects.filter(signlanguage__dataset__in=selected_datasets)
                            .prefetch_related('signlanguage').distinct()]
 
-    language_query_keys = []
-    for language in dataset_languages:
-        glosssearch_field_name = GlossSearchForm.gloss_search_field_prefix + language.language_code_2char
-        language_query_keys.append(glosssearch_field_name)
-        lemma_field_name = GlossSearchForm.lemma_search_field_prefix + language.language_code_2char
-        language_query_keys.append(lemma_field_name)
-        keyword_field_name = GlossSearchForm.keyword_search_field_prefix + language.language_code_2char
-        language_query_keys.append(keyword_field_name)
-    context['language_query_keys'] = json.dumps(language_query_keys)
+    prefixes = [GlossSearchForm.gloss_search_field_prefix, GlossSearchForm.lemma_search_field_prefix,
+                GlossSearchForm.keyword_search_field_prefix]
+    context['language_query_keys'] = json.dumps([prefix + language.language_code_2char
+                                                 for language in dataset_languages for prefix in prefixes])
 
     return context
 
