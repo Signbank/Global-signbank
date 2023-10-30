@@ -98,6 +98,17 @@ def get_gloss_fields_to_populate(request):
             if field in request.GET and request.GET[field] != ''}
 
 
+def get_choices_colors(fields_with_choices):
+    fields_with_choices['definitionRole'] = 'NoteType'
+    fields_with_choices['hasComponentOfType'] = 'MorphologyType'
+    choices_colors = {}
+    for (fieldname, field_category) in fields_with_choices.items():
+        if field_category in CATEGORY_MODELS_MAPPING.keys():
+            field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
+        else:
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+        choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
+    return choices_colors
 
 def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
@@ -118,6 +129,7 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     context['other_parameters_keys'] = json.dumps(other_parameter_keys)
     multiple_select_gloss_fields.extend(['definitionRole', 'hasComponentOfType'])
     context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+    context['field_colors'] = get_choices_colors(fields_with_choices)
 
     gloss_fields_to_populate = get_gloss_fields_to_populate(request)
     context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
@@ -133,18 +145,6 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
         context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
     else:
         context['search_by_publication_fields'] = []
-
-    fields_with_choices['definitionRole'] = 'NoteType'
-    fields_with_choices['hasComponentOfType'] = 'MorphologyType'
-    choices_colors = {}
-    for (fieldname, field_category) in fields_with_choices.items():
-        if field_category in CATEGORY_MODELS_MAPPING.keys():
-            field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
-        else:
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-        choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
-
-    context['field_colors'] = choices_colors
 
     if hasattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'):
         context[
