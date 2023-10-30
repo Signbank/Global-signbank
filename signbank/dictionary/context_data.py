@@ -110,6 +110,23 @@ def get_choices_colors(fields_with_choices):
         choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
     return choices_colors
 
+
+def get_input_names_fields_and_labels(search_form):
+    input_names_fields_and_labels = {}
+    for topic in ['main', 'phonology', 'semantics']:
+        input_names_fields_and_labels[topic] = []
+        for fieldname in settings.FIELDS[topic]:
+            if fieldname == 'derivHist' and not settings.USE_DERIVATIONHISTORY:
+                continue
+            # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand
+            # for purposes of nested dependencies in Search form
+            if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
+                field = search_form[fieldname]
+                label = field.label
+                input_names_fields_and_labels[topic].append((fieldname, field, label))
+    return input_names_fields_and_labels
+
+
 def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
     query_parameters_in_session = request.session.get('query_parameters', '')
@@ -145,22 +162,7 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     context['DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES'] = \
         getattr(settings, 'DISABLE_MOVING_THUMBNAILS_ABOVE_NR_OF_GLOSSES', 0)
 
-    context['input_names_fields_and_labels'] = {}
-
-    for topic in ['main', 'phonology', 'semantics']:
-
-        context['input_names_fields_and_labels'][topic] = []
-
-        for fieldname in settings.FIELDS[topic]:
-
-            if fieldname == 'derivHist' and not settings.USE_DERIVATIONHISTORY:
-                continue
-            # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand
-            # for purposes of nested dependencies in Search form
-            if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                field = search_form[fieldname]
-                label = field.label
-                context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
+    context['input_names_fields_and_labels'] = get_input_names_fields_and_labels(search_form)
 
     context['input_names_fields_labels_handedness'] = [
         ('weakdrop', search_form['weakdrop'], search_form['weakdrop'].label),
