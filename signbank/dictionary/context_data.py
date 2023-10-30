@@ -181,30 +181,20 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
                 label = field.label
                 context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
 
-    context['input_names_fields_labels_handedness'] = []
-    context['input_names_fields_labels_handedness'].append(('weakdrop',
-                                                                  search_form['weakdrop'],
-                                                                  search_form['weakdrop'].label))
-    context['input_names_fields_labels_handedness'].append(('weakprop',
-                                                                  search_form['weakprop'],
-                                                                  search_form['weakprop'].label))
+    context['input_names_fields_labels_handedness'] = [
+        ('weakdrop', search_form['weakdrop'], search_form['weakdrop'].label),
+        ('weakprop', search_form['weakprop'], search_form['weakprop'].label)
+    ]
 
-    context['input_names_fields_labels_domhndsh'] = []
-    context['input_names_fields_labels_domhndsh'].append(('domhndsh_letter',
-                                                                search_form['domhndsh_letter'],
-                                                                search_form['domhndsh_letter'].label))
-    context['input_names_fields_labels_domhndsh'].append(('domhndsh_number',
-                                                                search_form['domhndsh_number'],
-                                                                search_form['domhndsh_number'].label))
+    context['input_names_fields_labels_domhndsh'] = [
+        ('domhndsh_letter', search_form['domhndsh_letter'], search_form['domhndsh_letter'].label),
+        ('domhndsh_number', search_form['domhndsh_number'], search_form['domhndsh_number'].label)
+    ]
 
-    context['input_names_fields_labels_subhndsh'] = []
-    context['input_names_fields_labels_subhndsh'].append(('subhndsh_letter',
-                                                                search_form['subhndsh_letter'],
-                                                                search_form['subhndsh_letter'].label))
-
-    context['input_names_fields_labels_subhndsh'].append(('subhndsh_number',
-                                                                search_form['subhndsh_number'],
-                                                                search_form['subhndsh_number'].label))
+    context['input_names_fields_labels_subhndsh'] = [
+        ('subhndsh_letter', search_form['subhndsh_letter'], search_form['subhndsh_letter'].label),
+        ('subhndsh_number', search_form['subhndsh_number'], search_form['subhndsh_number'].label)
+    ]
 
     if listview.model == Gloss:
 
