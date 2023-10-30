@@ -98,6 +98,7 @@ def get_gloss_fields_to_populate(request):
             if field in request.GET and request.GET[field] != ''}
 
 
+
 def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}):
     # This is called by GlossListView, SenseListView
     query_parameters_in_session = request.session.get('query_parameters', '')
@@ -112,8 +113,11 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     context['searchform'] = search_form
 
     context['sentenceform'] = SentenceForm(request.GET)
+
     other_parameter_keys, multiple_select_gloss_fields, fields_with_choices = get_other_parameter_keys()
     context['other_parameters_keys'] = json.dumps(other_parameter_keys)
+    multiple_select_gloss_fields.extend(['definitionRole', 'hasComponentOfType'])
+    context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
     gloss_fields_to_populate = get_gloss_fields_to_populate(request)
     context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
@@ -129,10 +133,6 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
         context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])
     else:
         context['search_by_publication_fields'] = []
-
-    multiple_select_gloss_fields.append('definitionRole')
-    multiple_select_gloss_fields.append('hasComponentOfType')
-    context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
     fields_with_choices['definitionRole'] = 'NoteType'
     fields_with_choices['hasComponentOfType'] = 'MorphologyType'
