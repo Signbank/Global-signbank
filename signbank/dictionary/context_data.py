@@ -86,7 +86,7 @@ def get_other_parameter_keys():
     fields_with_choices = fields_to_fieldcategory_dict()
     multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]
     other_parameters_keys = [key for key in other_parameters if key not in multiple_select_gloss_fields]
-    return other_parameters_keys
+    return other_parameters_keys, multiple_select_gloss_fields, fields_with_choices
 
 
 def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}):
@@ -103,7 +103,8 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     context['searchform'] = search_form
 
     context['sentenceform'] = SentenceForm(request.GET)
-    context['other_parameters_keys'] = json.dumps(get_other_parameter_keys())
+    other_parameter_keys, multiple_select_gloss_fields, fields_with_choices = get_other_parameter_keys()
+    context['other_parameters_keys'] = json.dumps(other_parameter_keys)
 
     # If the menu bar search form was used, populate the search form with the query string
     gloss_fields_to_populate = dict()
