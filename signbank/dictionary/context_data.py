@@ -138,7 +138,6 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     search_form = GlossSearchForm(request.GET, languages=context['dataset_languages'],
                                   sign_languages=context['sign_languages'], dialects=context['dialects'])
     context['searchform'] = search_form
-
     context['sentenceform'] = SentenceForm(request.GET)
 
     other_parameter_keys, multiple_select_gloss_fields, fields_with_choices = get_other_parameter_keys()
@@ -167,12 +166,10 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
         ('weakdrop', search_form['weakdrop'], search_form['weakdrop'].label),
         ('weakprop', search_form['weakprop'], search_form['weakprop'].label)
     ]
-
     context['input_names_fields_labels_domhndsh'] = [
         ('domhndsh_letter', search_form['domhndsh_letter'], search_form['domhndsh_letter'].label),
         ('domhndsh_number', search_form['domhndsh_number'], search_form['domhndsh_number'].label)
     ]
-
     context['input_names_fields_labels_subhndsh'] = [
         ('subhndsh_letter', search_form['subhndsh_letter'], search_form['subhndsh_letter'].label),
         ('subhndsh_number', search_form['subhndsh_number'], search_form['subhndsh_number'].label)
