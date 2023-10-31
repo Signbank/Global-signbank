@@ -119,38 +119,6 @@ $(document).ready(function(){
 
      $('.js-example-basic-multiple').val(null).trigger('change');
 
-     <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
-     <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
-
-     <!--Alert: the id for sign language is SIGNLANG, not the same as the model field!-->
-     <!--Django was messing up the template generation otherwise -->
-     <!--The value field is signlanguage[] matches the model)-->
-
-     makeMultipleSelect('id_SIGNLANG', 'signlanguage[]');
-     $('#id_SIGNLANG').select2({
-        allowClear: true,
-        dropdownAutoWidth: true,
-        width: 'resolve',
-        placeholder: ''
-     });
-     $('#id_SIGNLANG').val(null).trigger('change');
-
-     $('#id_SIGNLANG').change(function() {
-        set_signlanguages_dialects();
-     });
-
-     <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
-     <!--Django was messing up the template generation otherwise (without the s at the end)-->
-
-     makeMultipleSelect('id_dialects', 'dialect[]');
-     $('#id_dialects').select2({
-        allowClear: true,
-        dropdownAutoWidth: true,
-        width: 'resolve',
-        placeholder: ''
-     });
-     $('#id_dialects').val(null).trigger('change');
-
      makeMultipleSelect('id_tags', 'tags[]');
      $('#id_tags').select2({
         allowClear: true,
@@ -262,55 +230,6 @@ function do_sort_column(field_name, action, frmName) {
   $("#" + frmName).submit();
 }
 
-function set_signlanguages_dialects() {
-    this_selection_elt = $('#signlanguage_selection');
-    var signlanguage_str = '';
-    this_selection_elt.find(".select2-selection__choice").each(function(){
-        if (signlanguage_str) {
-            signlanguage_str+=','+$(this).attr('title');
-        }
-        else {
-            signlanguage_str = $(this).attr('title');
-        }
-    });
-
-    optionValues = [];
-
-    if (signlanguage_str) {
-        var signlanguages = signlanguage_str.split(",");
-        this_selection_choices = $('#signlanguage_selection');
-
-        for(i = 0; i < signlanguages.length; i++) {
-            $('#id_SIGNLANG option').each(function(){
-                if ($(this).html() == signlanguages[i]) {
-                    optionValues.push($(this).html());
-                };
-            });
-        };
-    }
-
-    $('#id_dialects').val(null).trigger('change');
-
-    this_selection_dialect_elt = $('#dialect_selection');
-    $('#id_dialects option').each(function(){
-        $(this).attr('disabled','disabled');
-    });
-    $('#id_dialects option').each(function(){
-        var this_node_str = $(this).html();
-        for(k = 0; k < optionValues.length; k++) {
-            if (this_node_str.startsWith(optionValues[k])) {
-                $(this).removeAttr('disabled');
-            }
-        };
-    });
-    $('#id_dialects').select2({
-        allowClear: true,
-        dropdownAutoWidth: true,
-        width: 'resolve'
-     });
-    $('#id_dialects').val(null).trigger('change');
-}
-
 /**
  * set the lemma language for the chosen dataset
  */
@@ -388,12 +307,12 @@ function do_set_lemma_language(el) {
                         <input id='morphemesearch_{{dataset_lang.language_code_2char}}'
                                name='morphemesearch_{{dataset_lang.language_code_2char}}'
                                type='text'
-                               class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                               class='form-control'>
                         </div>
                     </td>
                     {% endwith %}
 
-                    {% with searchform|get_lemma_field_for_language:dataset_lang as lemma_field %}
+                    {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
                     <td><div class='input-group'>
 
                         <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
@@ -401,16 +320,18 @@ function do_set_lemma_language(el) {
                         </label>
                         <input name='lemma_{{dataset_lang.language_code_2char}}'
                                type='text'
-                               class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
+                               class='form-control'></div>
                     </td>
                     {% endwith %}
 
-                    {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
+                    {% with searchform|get_keyword_form_field_for_language:dataset_lang as keyword_field %}
                     <td><div class='input-group'>
-                        <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>{{keyword_field.label}}</label>
+                        <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>
+                            {{keyword_field.label}}
+                        </label>
                         <input name='keyword_{{dataset_lang.language_code_2char}}'
                                type='text'
-                               class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
+                               class='form-control'></div>
                     </td>
                     {% endwith %}
                 </tr>
@@ -419,23 +340,9 @@ function do_set_lemma_language(el) {
         </div>
 
             <div class="panel panel-default">
-                <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Language and Basic Properties" %}</div>
+                <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Basic Properties" %}</div>
 
                 <div id='searchpanels' class='collapse'>
-                <table class='table'>
-                    {% csrf_token %}
-                    <tr id='signlanguage_selection'>
-                        <td><label>{{searchform.SIGNLANG.label}}</label>
-                                {{searchform.SIGNLANG}}
-                        </td>
-                      </tr>
-                    <tr id='dialect_selection'>
-                        <td><label>{{searchform.dialects.label}}</label>
-                                {{searchform.dialects}}
-                        </td>
-                    </tr>
-
-                </table>
 
                 <table class='table'>
                     {% for fieldname,field,label in input_names_fields_and_labels.main %}
@@ -554,7 +461,7 @@ function do_set_lemma_language(el) {
     <option {% if paginate_by == 10 %}selected{% endif %}>10</option>
 </select>
 {% csrf_token %}
-<input type="submit" value = '{% trans "Refresh" %}' />
+<input type="submit" value='{% trans "Refresh" %}' />
 </div>
 </form>
 

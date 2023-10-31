@@ -87,18 +87,26 @@ def get_search_field_for_language(form, language):
 
 @register.filter
 def get_morpheme_search_field_for_language(form, language):
-    return getattr(form, MorphemeSearchForm.gloss_search_field_prefix + language.language_code_2char)
-
+    field = MorphemeSearchForm.gloss_search_field_prefix + language.language_code_2char
+    return form.fields[field]
 
 @register.filter
 def get_keyword_field_for_language(form, language):
     return getattr(form, GlossSearchForm.keyword_search_field_prefix + language.language_code_2char)
 
+@register.filter
+def get_keyword_form_field_for_language(form, language):
+    field = MorphemeSearchForm.keyword_search_field_prefix + language.language_code_2char
+    return form.fields[field]
 
 @register.filter
 def get_lemma_field_for_language(form, language):
     return getattr(form, GlossSearchForm.lemma_search_field_prefix + language.language_code_2char)
 
+@register.filter
+def get_lemma_form_field_for_language(form, language):
+    field = MorphemeSearchForm.lemma_search_field_prefix + language.language_code_2char
+    return form.fields[field]
 
 @register.filter
 def get_type(obj):

@@ -2486,6 +2486,7 @@ class MorphemeListView(ListView):
     template_name = 'dictionary/admin_morpheme_list.html'
     paginate_by = 25
     queryset_language_codes = []
+    search_form = MorphemeSearchForm()
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -2511,32 +2512,15 @@ class MorphemeListView(ListView):
 
         context['last_used_dataset'] = self.last_used_dataset
 
-        selected_datasets_signlanguage = [ ds.signlanguage for ds in selected_datasets ]
-        sign_languages = []
-        for sl in selected_datasets_signlanguage:
-            if (str(sl.id), sl.name) not in sign_languages:
-                sign_languages.append((str(sl.id), sl.name))
-
-        selected_datasets_dialects = Dialect.objects.filter(signlanguage__in=selected_datasets_signlanguage).distinct()
-        dialects = []
-        for dl in selected_datasets_dialects:
-            dialect_name = dl.signlanguage.name + "/" + dl.name
-            dialects.append((str(dl.id),dialect_name))
-
         if 'show_all' in self.kwargs.keys():
             context['show_all'] = self.kwargs['show_all']
         else:
             context['show_all'] = False
 
-        search_form = MorphemeSearchForm(self.request.GET,
-                                         languages=dataset_languages,
-                                         sign_languages=sign_languages,
-                                         dialects=dialects)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
 
         # use these to fill the form fields of a just done query
-        populate_keys, populate_fields = search_fields_from_get(search_form, self.request.GET)
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
         context['populate_fields'] = json.dumps(populate_fields)
         context['populate_fields_keys'] = json.dumps(populate_keys)
 
@@ -2552,11 +2536,11 @@ class MorphemeListView(ListView):
         for topic in ['main', 'phonology', 'semantics']:
             context['input_names_fields_and_labels'][topic] = []
             for fieldname in settings.FIELDS[topic]:
-                if fieldname not in search_form.fields:
+                if fieldname not in self.search_form.fields:
                     continue
                 context['input_names_fields_and_labels'][topic].append((fieldname,
-                                                                        search_form[fieldname],
-                                                                        search_form[fieldname].label))
+                                                                        self.search_form[fieldname],
+                                                                        self.search_form[fieldname].label))
         context['page_number'] = context['page_obj'].number
 
         # this is needed to avoid crashing the browser if you go to the last page
@@ -2626,7 +2610,7 @@ class MorphemeListView(ListView):
         context['field_colors'] = choices_colors
 
         if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and self.request.user.is_authenticated:
-            context['search_by_publication_fields'] = searchform_panels(search_form,
+            context['search_by_publication_fields'] = searchform_panels(self.search_form,
                                                                         settings.SEARCH_BY['morpheme_publication'])
         else:
             context['search_by_publication_fields'] = []
@@ -2646,7 +2630,7 @@ class MorphemeListView(ListView):
         try:
             if self.kwargs['show_all']:
                 show_all = True
-        except (KeyError,TypeError):
+        except (KeyError, TypeError):
             show_all = False
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -2676,25 +2660,7 @@ class MorphemeListView(ListView):
             qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return qs
 
-        # Evaluate all morpheme/language search fields
-        for get_key, get_value in get.items():
-            if get_key.startswith(MorphemeSearchForm.gloss_search_field_prefix) and get_value != '':
-                language_code_2char = get_key[len(MorphemeSearchForm.gloss_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
-                               annotationidglosstranslation__language=language)
-            elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
-                language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
-                               lemma__lemmaidglosstranslation__language=language)
-            elif get_key.startswith(MorphemeSearchForm.keyword_search_field_prefix) and get_value != '':
-                language_code_2char = get_key[len(MorphemeSearchForm.keyword_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(translation__translation__text__iregex=get_value,
-                               translation__language=language)
-
-        qs = queryset_from_get(get, qs)
+        qs = queryset_from_get(MorphemeSearchForm, self.search_form, get, qs)
 
         qs = qs.distinct()
 

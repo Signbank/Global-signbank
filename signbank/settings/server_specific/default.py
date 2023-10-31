@@ -134,15 +134,15 @@ FIELDS['handshape'] = ['hsNumSel','hsFingSel','hsFingSel2','hsFingConf','hsFingC
 FIELDS['publication'] = ['inWeb', 'isNew']
 
 FIELDS['properties'] = ['hasvideo', 'hasothermedia', 'hasmultiplesenses',
-                                'definitionRole', 'definitionContains', 'defspublished',
-                                'createdBy', 'createdAfter', 'createdBefore',
-                                'useInstr', 'tags', 'excludeFromEcv']
+                        'definitionRole', 'definitionContains', 'defspublished',
+                        'createdBy', 'createdAfter', 'createdBefore',
+                        'tags', 'excludeFromEcv']
 FIELDS['relations'] = ['relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign']
 FIELDS['morpheme'] = ['morpheme', 'hasComponentOfType', 'hasMorphemeOfType']
 FIELDS['morpheme_properties'] = ['hasvideo',
                                  'definitionRole', 'definitionContains', 'defspublished',
                                  'createdBy', 'createdAfter', 'createdBefore',
-                                 'useInstr', 'tags']
+                                 'tags']
 
 # Use these fields in the server specific settings to specify frequency fields, if available
 FREQUENCY_CATEGORIES = []

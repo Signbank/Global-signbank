@@ -499,8 +499,10 @@ def pretty_print_query_values(dataset_languages,query_parameters):
 
 def search_fields_from_get(searchform, GET):
     # collect non-empty search fields from GET into dictionary
-    search_fields_to_populate = dict()
     search_keys = []
+    search_fields_to_populate = dict()
+    if not searchform:
+        return search_keys, search_fields_to_populate
     search_form_fields = searchform.fields.keys()
     for get_key, get_value in GET.items():
         if get_value in ['', '0']:
@@ -526,7 +528,7 @@ def search_fields_from_get(searchform, GET):
     return search_keys, search_fields_to_populate
 
 
-def queryset_from_get(GET, qs):
+def queryset_from_get(formclass, searchform, GET, qs):
 
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
@@ -556,10 +558,10 @@ def queryset_from_get(GET, qs):
             else:
                 query_filter = field + '__machine_value__in'
                 qs = qs.filter(**{query_filter: vals})
-        elif get_key not in MorphemeSearchForm.base_fields.keys() \
+        elif get_key not in searchform.fields.keys() \
                 or get_value in ['', '0', 'unspecified']:
             continue
-        elif MorphemeSearchForm.base_fields[get_key].widget.input_type in ['text']:
+        elif searchform.fields[get_key].widget.input_type in ['text']:
             if get_key in ['search', 'translation', 'sortOrder']:
                 continue
             elif get_key in ['definitionContains']:
@@ -573,18 +575,33 @@ def queryset_from_get(GET, qs):
                 qs = qs.annotate(
                     created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
                     .filter(created_by__icontains=created_by_search_string)
+            elif get_key.startswith(formclass.gloss_search_field_prefix):
+                language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
+                qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
+                               annotationidglosstranslation__language=language)
+            elif get_key.startswith(formclass.lemma_search_field_prefix):
+                language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
+                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
+                               lemma__lemmaidglosstranslation__language=language)
+            elif get_key.startswith(formclass.keyword_search_field_prefix):
+                language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
+                qs = qs.filter(translation__translation__text__iregex=get_value,
+                               translation__language=language)
             else:
-                query_filter = field + '__icontains'
-                qs = qs.filter(**{query_filter: get_value})
+                print('Morpheme Search input type text fall through: ', get_key, get_value)
+                continue
 
-        elif MorphemeSearchForm.base_fields[get_key].widget.input_type in ['date']:
+        elif searchform.fields[get_key].widget.input_type in ['date']:
             if get_key == 'createdBefore':
                 created_before_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
                 qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
             elif get_key == 'createdAfter':
                 created_after_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
                 qs = qs.filter(creationDate__range=(created_after_date, DT.datetime.now()))
-        elif MorphemeSearchForm.base_fields[get_key].widget.input_type in ['select']:
+        elif searchform.fields[get_key].widget.input_type in ['select']:
             if get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
                 val = get_value == '2'
                 key = get_key + '__exact'
@@ -595,14 +612,15 @@ def queryset_from_get(GET, qs):
                 val = get_value == 'yes'
                 key = 'definition__published'
             else:
-                print('Morpheme Search input type select: ', get_key, get_value)
+                print('Morpheme Search input type select fall through: ', get_key, get_value)
                 continue
 
             kwargs = {key: val}
             qs = qs.filter(**kwargs)
         else:
             # everything should already be taken care of
-            print(MorphemeSearchForm.base_fields[get_key].widget.input_type)
+            print('Morpheme Search input type fall through: ', get_key, get_value,
+                  searchform.fields[get_key].widget.input_type)
 
     return qs
 

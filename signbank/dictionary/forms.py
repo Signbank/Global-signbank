@@ -421,7 +421,7 @@ class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
+    sortOrder = forms.CharField(label=_("Sort Order"))
     tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
@@ -438,7 +438,6 @@ class MorphemeSearchForm(forms.ModelForm):
                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     inWeb = forms.ChoiceField(label=_(u'Is in Web Dictionary'), choices=NULLBOOLEANCHOICES,
                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    excludeFromEcv = forms.ChoiceField(label=_(u'Exclude from ECV'),choices=NULLBOOLEANCHOICES)
 
     definitionRole = forms.ChoiceField(label=_(u'Note Type'), choices=get_definition_role_choices,
                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -469,38 +468,25 @@ class MorphemeSearchForm(forms.ModelForm):
 
         fields = settings.MORPHEME_DISPLAY_FIELDS + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew']
 
-    def __init__(self, queryDict, *args, **kwargs):
-        languages = kwargs.pop('languages')
-        sign_languages = kwargs.pop('sign_languages')
-        dialects = kwargs.pop('dialects')
-        super(MorphemeSearchForm, self).__init__(queryDict, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(MorphemeSearchForm, self).__init__(*args, **kwargs)
 
-        for language in languages:
+        for language in Language.objects.all():
             morphemesearch_field_name = self.gloss_search_field_prefix + language.language_code_2char
-            setattr(self, morphemesearch_field_name, forms.CharField(label=_("Annotation") + (" (%s)" % language.name)))
-            if morphemesearch_field_name in queryDict:
-                getattr(self, morphemesearch_field_name).value = queryDict[morphemesearch_field_name]
+            morphemesearch_field_label = _("Annotation") + (" (%s)" % language.name)
+            self.fields[morphemesearch_field_name] = forms.CharField(label=morphemesearch_field_label)
 
             # do the same for Translations
             # Morphemes have translations not senses
             keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
-            setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
-            if keyword_field_name in queryDict:
-                getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
+            keyword_field_label = _("Translations")+(" (%s)" % language.name)
+            self.fields[keyword_field_name] = forms.CharField(label=keyword_field_label)
+            self.fields[keyword_field_name].widget.label = keyword_field_label
 
             # and for LemmaIdgloss
             lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
-            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
-            if lemma_field_name in queryDict:
-                getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
-
-        field_label_signlanguage = gettext("Sign Language")
-        field_label_dialects = gettext("Dialect")
-        self.fields['SIGNLANG'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage, widget=Select2,
-                    queryset=SignLanguage.objects.filter(id__in=[signlanguage[0] for signlanguage in sign_languages]))
-
-        self.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects, widget=Select2,
-                    queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
+            lemma_field_label = _("Lemma")+(" (%s)" % language.name)
+            self.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
 
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
         fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
