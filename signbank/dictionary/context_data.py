@@ -189,19 +189,7 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
         else:
             context['search_by_relation_fields'] = []
 
-        # This is needed to display the idgloss of the morpheme in
-        # Search by Morphology: Search for gloss with this as morpheme
-        # The id of the morpheme selected in the GlossSearchForm is kept in a hidden input field
-        # after selection from the lookahead list
-        if 'morpheme' in query_parameters.keys():
-            try:
-                morpheme_idgloss = Morpheme.objects.get(pk=query_parameters['morpheme']).idgloss
-            except ObjectDoesNotExist:
-                morpheme_idgloss = ''
-        else:
-            morpheme_idgloss = ''
-        context['morpheme_idgloss'] = morpheme_idgloss
-
+        context['morpheme_idgloss'] = get_morpheme_idgloss(query_parameters)
         context['default_dataset_lang'] = context['dataset_languages'].first().language_code_2char \
             if context['dataset_languages'] else LANGUAGE_CODE
         context['add_gloss_form'] = GlossCreateForm(request.GET, languages=context['dataset_languages'],
@@ -209,3 +197,16 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
     return context
+
+
+def get_morpheme_idgloss(query_parameters):
+    # This is needed to display the idgloss of the morpheme in
+    # Search by Morphology: Search for gloss with this as morpheme
+    # The id of the morpheme selected in the GlossSearchForm is kept in a hidden input field
+    # after selection from the lookahead list
+    if 'morpheme' in query_parameters.keys():
+        try:
+            return Morpheme.objects.get(pk=query_parameters['morpheme']).idgloss
+        except ObjectDoesNotExist:
+            return ''
+    return ''
