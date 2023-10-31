@@ -204,10 +204,8 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
 
         context['default_dataset_lang'] = context['dataset_languages'].first().language_code_2char \
             if context['dataset_languages'] else LANGUAGE_CODE
-        context['add_gloss_form'] = GlossCreateForm(request.GET,
-                                                          languages=context['dataset_languages'],
-                                                          user=request.user,
-                                                          last_used_dataset=context['last_used_dataset'])
+        context['add_gloss_form'] = GlossCreateForm(request.GET, languages=context['dataset_languages'],
+                                                    user=request.user, last_used_dataset=context['last_used_dataset'])
 
         context['default_dataset_lang'] = context['dataset_languages'].first().language_code_2char \
             if context['dataset_languages'] else LANGUAGE_CODE
