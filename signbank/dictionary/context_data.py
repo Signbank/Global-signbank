@@ -127,7 +127,9 @@ def get_input_names_fields_and_labels(search_form):
 
 
 def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}):
-    # This is called by GlossListView, SenseListView
+    """
+    Creates context data for gloss search form (e.g. in GlossListView, SenseListView)
+    """
     query_parameters_in_session = request.session.get('query_parameters', '')
     query_parameters = json.loads(query_parameters_in_session) \
         if not context['show_all'] and query_parameters_in_session not in ['', '{}'] \
