@@ -172,6 +172,15 @@ $(document).ready(function(){
         };
      }
 
+     // tags are multi-select but not included in multiple_select_fields because
+     // they don't have colours and are created differently
+     if (populate_fields_keys.includes('tags[]')) {
+         var query_initial = populate_fields['tags[]'];
+         var this_id = '#id_tags';
+         $(this_id).val(query_initial);
+         $(this_id).trigger('change');
+     };
+
      // initialize non-multiple select, not language-based query fields
      for (var i = 0; i < populate_fields_keys.length; i++) {
         var this_var = populate_fields_keys[i];
