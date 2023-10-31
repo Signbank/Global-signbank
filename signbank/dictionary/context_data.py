@@ -122,8 +122,7 @@ def get_input_names_fields_and_labels(search_form):
             # for purposes of nested dependencies in Search form
             if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                 field = search_form[fieldname]
-                label = field.label
-                input_names_fields_and_labels[topic].append((fieldname, field, label))
+                input_names_fields_and_labels[topic].append((fieldname, field, field.label))
     return input_names_fields_and_labels
 
 
