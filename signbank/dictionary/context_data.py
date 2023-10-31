@@ -179,16 +179,10 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     ]
 
     if listview.model == Gloss:
-
-        if hasattr(settings, 'SHOW_MORPHEME_SEARCH') and request.user.is_authenticated:
-            context['SHOW_MORPHEME_SEARCH'] = settings.SHOW_MORPHEME_SEARCH
-        else:
-            context['SHOW_MORPHEME_SEARCH'] = False
-
-        if hasattr(settings, 'GLOSS_LIST_DISPLAY_HEADER') and request.user.is_authenticated:
-            context['GLOSS_LIST_DISPLAY_HEADER'] = settings.GLOSS_LIST_DISPLAY_HEADER
-        else:
-            context['GLOSS_LIST_DISPLAY_HEADER'] = []
+        context['SHOW_MORPHEME_SEARCH'] = getattr(settings, 'SHOW_MORPHEME_SEARCH', False) \
+            if request.user.is_authenticated else False
+        context['GLOSS_LIST_DISPLAY_HEADER'] = getattr(settings, 'GLOSS_LIST_DISPLAY_HEADER', []) \
+            if request.user.is_authenticated else []
 
         if hasattr(settings, 'SEARCH_BY') and 'relations' in settings.SEARCH_BY.keys() and request.user.is_authenticated:
             context['search_by_relation_fields'] = searchform_panels(search_form, settings.SEARCH_BY['relations'])
