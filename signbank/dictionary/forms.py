@@ -799,6 +799,7 @@ class HandshapeSearchForm(forms.ModelForm):
                        'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
                        'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
             self.fields[finger].inital = False
+            self.fields[finger].widget.choices = [(True, _('Yes')), (False, _('No'))]
 
 
 def check_multilingual_fields(ClassModel, queryDict, languages):
