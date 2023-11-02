@@ -299,21 +299,34 @@ class GlossSearchForm(forms.ModelForm):
         dialects = kwargs.pop('dialects')
         super(GlossSearchForm, self).__init__(queryDict, *args, **kwargs)
 
+        count_languages = len(languages)
         for language in languages:
             glosssearch_field_name = self.gloss_search_field_prefix + language.language_code_2char
-            setattr(self, glosssearch_field_name, forms.CharField(label=_("Gloss")+(" (%s)" % language.name)))
+            if count_languages > 1:
+                annotation_label = _("Gloss")+(" (%s)" % language.name)
+            else:
+                annotation_label = _("Gloss")
+            setattr(self, glosssearch_field_name, forms.CharField(label=annotation_label))
             if glosssearch_field_name in queryDict:
                 getattr(self, glosssearch_field_name).value = queryDict[glosssearch_field_name]
 
             # do the same for Translations
             keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
-            setattr(self, keyword_field_name, forms.CharField(label=_("Senses")+(" (%s)" % language.name)))
+            if count_languages > 1:
+                keyword_label = _("Senses")+(" (%s)" % language.name)
+            else:
+                keyword_label = _("Senses")
+            setattr(self, keyword_field_name, forms.CharField(label=keyword_label))
             if keyword_field_name in queryDict:
                 getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
 
             # and for LemmaIdgloss
             lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
-            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
+            if count_languages > 1:
+                lemma_label = _("Lemma")+(" (%s)" % language.name)
+            else:
+                lemma_label = _("Lemma")
+            setattr(self, lemma_field_name, forms.CharField(label=lemma_label))
             if lemma_field_name in queryDict:
                 getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
 
@@ -868,12 +881,19 @@ class LemmaSearchForm(forms.ModelForm):
         languages = kwargs.pop('languages')
         super(LemmaSearchForm, self).__init__(queryDict, *args, **kwargs)
 
+        count_languages = len(languages)
         for language in languages:
             # and for LemmaIdgloss
             lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
-            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
+            if count_languages > 1:
+                lemma_label = _("Lemma")+(" (%s)" % language.name)
+            else:
+                lemma_label = _("Lemma")
+            setattr(self, lemma_field_name, forms.CharField(label=lemma_label))
             if lemma_field_name in queryDict:
                 getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
+        for boolean_field in ['no_glosses', 'has_glosses']:
+            self.fields[boolean_field].choices = [(0, _('No')), (1, _('Yes'))]
 
 
 class LemmaCreateForm(forms.ModelForm):
