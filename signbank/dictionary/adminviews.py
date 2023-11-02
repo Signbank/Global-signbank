@@ -7036,7 +7036,7 @@ class LemmaListView(ListView):
             num_gloss_zero_matches = 0
         else:
             num_gloss_zero_matches = results.filter(num_gloss=0).count()
-        return (results,num_gloss_zero_matches)
+        return results,num_gloss_zero_matches
 
     def get_context_data(self, **kwargs):
         context = super(LemmaListView, self).get_context_data(**kwargs)
@@ -7057,6 +7057,10 @@ class LemmaListView(ListView):
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
         (results, num_gloss_zero_matches) = self.get_annotated_queryset()
+
+        # this is set to avoid showing page numbers for non-existent pages after annotation filtering
+        context['is_paginated'] = results.count() > self.paginate_by
+
         context['search_results'] = results
         context['num_gloss_zero_matches'] = num_gloss_zero_matches
         context['lemma_count'] = LemmaIdgloss.objects.filter(dataset__in=selected_datasets).count()
