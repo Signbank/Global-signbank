@@ -62,7 +62,7 @@ from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get
+    query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get, set_up_model_translations
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -2492,6 +2492,10 @@ class MorphemeListView(ListView):
         # Call the base implementation first to get a context
         context = super(MorphemeListView, self).get_context_data(**kwargs)
 
+        # this is needed because the MorphemeSearchForm is initialized without the request and
+        # the model translation language is unknown
+        set_up_model_translations(self.search_form)
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -2661,7 +2665,6 @@ class MorphemeListView(ListView):
             return qs
 
         qs = queryset_from_get(MorphemeSearchForm, self.search_form, get, qs)
-
         qs = qs.distinct()
 
         # Sort the queryset by the parameters given

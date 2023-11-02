@@ -507,8 +507,6 @@ def search_fields_from_get(searchform, GET):
     for get_key, get_value in GET.items():
         if get_value in ['', '0']:
             continue
-        if get_key in ['defspublished', 'hasmultiplesenses', 'negative'] and get_value in ['unspecified']:
-            continue
         if get_key.endswith('[]'):
             vals = GET.getlist(get_key)
             search_fields_to_populate[get_key] = vals
@@ -532,6 +530,8 @@ def queryset_from_get(formclass, searchform, GET, qs):
 
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
+            if not get_value:
+                continue
             # multiple select
             vals = GET.getlist(get_key)
             field = get_key[:-2]
@@ -559,7 +559,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
                 query_filter = field + '__machine_value__in'
                 qs = qs.filter(**{query_filter: vals})
         elif get_key not in searchform.fields.keys() \
-                or get_value in ['', '0', 'unspecified']:
+                or get_value in ['', '0']:
             continue
         elif searchform.fields[get_key].widget.input_type in ['text']:
             if get_key in ['search', 'translation', 'sortOrder']:
@@ -609,7 +609,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
                 val = get_value != '2'
                 key = 'glossvideo__isnull'
             elif get_key in ['defspublished']:
-                val = get_value == 'yes'
+                val = get_value == '2'
                 key = 'definition__published'
             else:
                 print('Morpheme Search input type select fall through: ', get_key, get_value)
@@ -624,3 +624,24 @@ def queryset_from_get(formclass, searchform, GET, qs):
 
     return qs
 
+
+def set_up_model_translations(form):
+    # make the choices language dependent
+    fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
+    fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
+    fields_with_choices['definitionRole'] = 'NoteType'
+
+    for (fieldname, field_category) in fields_with_choices.items():
+        if fieldname == 'definitionRole':
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
+        elif fieldname.startswith('mrpType'):
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
+        elif fieldname.startswith('semField'):
+            field_choices = SemanticField.objects.all().order_by('name')
+        elif fieldname.startswith('derivHist'):
+            field_choices = DerivationHistory.objects.all().order_by('name')
+        else:
+            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
+        translated_choices = choicelist_queryset_to_translated_dict(field_choices, ordered=False, id_prefix='',
+                                                                    shortlist=True)
+        form.fields[fieldname].choices = translated_choices

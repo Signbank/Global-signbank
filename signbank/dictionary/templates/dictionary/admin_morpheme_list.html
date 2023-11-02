@@ -156,9 +156,10 @@ $(document).ready(function(){
         var this_id = '#id_' + populate_fields_keys[i];
         var $language_search = $("input[name='"+this_var+"']");
         var query_initial = populate_fields[this_var];
-        if ($language_search) {
+        if ($language_search.length > 0) {
             $language_search.val(query_initial);
         } else {
+            // $select_search = $("select[name='"+this_var+"']");
             $(this_id).val(query_initial);
         }
      }
