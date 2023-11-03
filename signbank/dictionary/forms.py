@@ -441,7 +441,7 @@ class MorphemeSearchForm(forms.ModelForm):
                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
     definitionRole = forms.ChoiceField(label=_('Note Type'), choices=[(0, '-')],
-                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                       required=False, widget=Select2)
     definitionContains = forms.CharField(label=_('Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=[(0, '-')],
                                       widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
@@ -471,40 +471,26 @@ class MorphemeSearchForm(forms.ModelForm):
         super(MorphemeSearchForm, self).__init__(*args, **kwargs)
 
         # language fields will be set up elsewhere
-
-        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['mrpType']
-        fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
-        fields_with_choices['definitionRole'] = 'NoteType'
-
-        for (fieldname, field_category) in fields_with_choices.items():
+        # field choice choices will be set up elsewhere
+        # these are the multiselect field choice fields for morphemes
+        fieldnames = ['handedness', 'handCh', 'relatArtic', 'locprim', 'relOriMov',
+                      'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'mrpType', 'wordClass',
+                      'semField', 'derivHist', 'namEnt', 'valence']
+        for fieldname in fieldnames:
             # morphemes do not have Handshape fields, these are hidden, see issue #638
-            if fieldname == 'definitionRole':
-                field_label = _('Note Type')
-                field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
-            elif fieldname.startswith('mrpType'):
+            if fieldname.startswith('mrpType'):
                 field_label = Morpheme.get_field(fieldname).verbose_name
-                field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
-            elif fieldname.startswith('semField'):
-                field_label = Gloss.get_field(fieldname).verbose_name
-                field_choices = SemanticField.objects.all().order_by('name')
-            elif fieldname.startswith('derivHist'):
-                field_label = Gloss.get_field(fieldname).verbose_name
-                field_choices = DerivationHistory.objects.all().order_by('name')
             else:
                 field_label = Gloss.get_field(fieldname).verbose_name
-                field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
-            translated_choices = choicelist_queryset_to_translated_dict(field_choices, ordered=False, id_prefix='',
-                                                                        shortlist=True)
             self.fields[fieldname] = forms.ChoiceField(label=field_label,
-                                                                    choices=translated_choices,
-                                                                    required=False, widget=Select2)
+                                                       choices=[(0, '-')],
+                                                       required=False, widget=Select2)
         self.fields['tags'] = forms.ChoiceField(label=_('Tags'),
                                                 choices=[(tag.name, tag.name.replace('_', ' '))
                                                          for tag in Tag.objects.all()],
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         for boolean_field in ['hasvideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished']:
-            boolean_choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
-            self.fields[boolean_field].choices = boolean_choices
+            self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
 
 class DefinitionForm(forms.ModelForm):
