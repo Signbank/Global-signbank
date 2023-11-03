@@ -62,7 +62,8 @@ from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get, set_up_model_translations
+    query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get, \
+    set_up_model_translations, set_up_languages
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -2488,17 +2489,21 @@ class MorphemeListView(ListView):
     queryset_language_codes = []
     search_form = MorphemeSearchForm()
 
-    def get_context_data(self, **kwargs):
-        # Call the base implementation first to get a context
-        context = super(MorphemeListView, self).get_context_data(**kwargs)
-
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         # this is needed because the MorphemeSearchForm is initialized without the request and
         # the model translation language is unknown
         set_up_model_translations(self.search_form)
 
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(MorphemeListView, self).get_context_data(**kwargs)
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
+
+        set_up_languages(self, self.search_form)
 
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
@@ -2685,7 +2690,6 @@ class MorphemeListView(ListView):
         else:
             return super(MorphemeListView, self).render_to_response(context)
 
-    # noinspection PyInterpreter,PyInterpreter
     def render_to_csv_response(self, context):
         """Convert all Morphemes into a CSV
 
@@ -2719,7 +2723,7 @@ class MorphemeListView(ListView):
         with override(LANGUAGE_CODE):
             header = ['Signbank ID'] + annotationidglosstranslation_fields + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
 
-        for extra_column in ['SignLanguages', 'Dialects', 'Keywords', 'Morphology', 'Appears in signs']:
+        for extra_column in ['Keywords', 'Morphology', 'Appears in signs']:
             header.append(extra_column)
 
         writer.writerow(header)
@@ -2754,14 +2758,6 @@ class MorphemeListView(ListView):
                     value = str(value)
 
                 row.append(value)
-
-            # get languages
-            signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
-            row.append(", ".join(signlanguages))
-
-            # get dialects
-            dialects = [dialect.name for dialect in gloss.dialect.all()]
-            row.append(", ".join(dialects))
 
             # get translations
             trans = [t.translation.text for t in gloss.translation_set.all().order_by('translation__index')]

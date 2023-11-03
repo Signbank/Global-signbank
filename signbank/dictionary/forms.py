@@ -193,21 +193,6 @@ RELATION_ROLE_CHOICES = (('', '---------'),
                          )
 
 
-def get_definition_role_choices():
-    choices = [('','---------'),('all','All')]
-    return choices
-
-
-def get_component_role_choice():
-    choices = [('','---------')]
-    return choices
-
-
-def get_morpheme_role_choices():
-    choices = [('','---------')]
-    return choices
-
-
 ATTRS_FOR_FORMS = {'class': 'form-control'}
 ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:80px'}
 
@@ -242,11 +227,11 @@ class GlossSearchForm(forms.ModelForm):
     # these field's choices are set dynamically in the __init__ method below
     # that they appear here is used statically by the query parameters method which looks at the gloss search form fields
     hasComponentOfType = forms.ChoiceField(label=_('Has Compound Component Type'),
-                                           choices=get_component_role_choice,
+                                           choices=[(0, '-')],
                                            widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hasComponentOfType.field_choice_category = 'MorphologyType'
     hasMorphemeOfType = forms.ChoiceField(label=_('Has Morpheme Type'),
-                                          choices=get_morpheme_role_choices,
+                                          choices=[(0, '-')],
                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     hasMorphemeOfType.field_choice_category = 'MorphemeType'
 
@@ -269,7 +254,7 @@ class GlossSearchForm(forms.ModelForm):
     # this field's choices are set dynamically in the __init__ method below
     # It's presence here is used statically by the query parameters method which looks at the gloss search form fields
     definitionRole = forms.ChoiceField(label=_('Note Type'),
-                                       choices=get_definition_role_choices,
+                                       choices=[(0, '-')],
                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_('Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
@@ -455,9 +440,8 @@ class MorphemeSearchForm(forms.ModelForm):
     inWeb = forms.ChoiceField(label=_('Is in Web Dictionary'), choices=[(0, '-')],
                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
-    definitionRole = forms.ChoiceField(label=_('Note Type'), choices=get_definition_role_choices,
+    definitionRole = forms.ChoiceField(label=_('Note Type'), choices=[(0, '-')],
                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    definitionRole.field_choice_category = 'NoteType'
     definitionContains = forms.CharField(label=_('Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=[(0, '-')],
                                       widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
@@ -486,22 +470,9 @@ class MorphemeSearchForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(MorphemeSearchForm, self).__init__(*args, **kwargs)
 
-        for language in Language.objects.all():
-            morphemesearch_field_name = self.gloss_search_field_prefix + language.language_code_2char
-            morphemesearch_field_label = _("Annotation") + (" (%s)" % language.name)
-            self.fields[morphemesearch_field_name] = forms.CharField(label=morphemesearch_field_label)
+        # language fields will be set up elsewhere
 
-            # Morphemes have translations not senses
-            keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
-            keyword_field_label = _("Translations")+(" (%s)" % language.name)
-            self.fields[keyword_field_name] = forms.CharField(label=keyword_field_label)
-            self.fields[keyword_field_name].widget.label = keyword_field_label
-
-            lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
-            lemma_field_label = _("Lemma")+(" (%s)" % language.name)
-            self.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
-
-        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['mrpType']
         fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
         fields_with_choices['definitionRole'] = 'NoteType'
 

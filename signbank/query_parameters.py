@@ -30,6 +30,7 @@ from django.urls import reverse
 from tagging.models import TaggedItem, Tag
 from django.shortcuts import render, get_object_or_404, redirect
 from guardian.shortcuts import get_objects_for_user
+from signbank.tools import get_selected_datasets_for_user, get_dataset_languages
 
 
 def list_to_query(query_list):
@@ -627,7 +628,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
 
 def set_up_model_translations(form):
     # make the choices language dependent
-    fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['inWeb', 'isNew', 'mrpType']
+    fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['mrpType']
     fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
     fields_with_choices['definitionRole'] = 'NoteType'
 
@@ -645,3 +646,36 @@ def set_up_model_translations(form):
         translated_choices = choicelist_queryset_to_translated_dict(field_choices, ordered=False, id_prefix='',
                                                                     shortlist=True)
         form.fields[fieldname].choices = translated_choices
+
+
+def set_up_languages(view, form):
+
+    selected_datasets = get_selected_datasets_for_user(view.request.user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+
+    count_languages = len(dataset_languages)
+    for language in dataset_languages:
+        morphemesearch_field_name = form.gloss_search_field_prefix + language.language_code_2char
+        if count_languages > 1:
+            morphemesearch_field_label = _("Annotation") + (" (%s)" % language.name)
+        else:
+            morphemesearch_field_label = _("Annotation")
+
+        form.fields[morphemesearch_field_name] = forms.CharField(label=morphemesearch_field_label)
+
+        # Morphemes have translations not senses
+        keyword_field_name = form.keyword_search_field_prefix + language.language_code_2char
+        if count_languages > 1:
+            keyword_field_label = _("Translations") + (" (%s)" % language.name)
+        else:
+            keyword_field_label = _("Translations")
+        form.fields[keyword_field_name] = forms.CharField(label=keyword_field_label)
+        form.fields[keyword_field_name].widget.label = keyword_field_label
+
+        lemma_field_name = form.lemma_search_field_prefix + language.language_code_2char
+        if count_languages > 1:
+            lemma_field_label = _("Lemma") + (" (%s)" % language.name)
+        else:
+            lemma_field_label = _("Lemma")
+        form.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
+
