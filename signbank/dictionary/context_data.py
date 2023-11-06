@@ -203,9 +203,10 @@ def get_morpheme_idgloss(query_parameters):
     # Search by Morphology: Search for gloss with this as morpheme
     # The id of the morpheme selected in the GlossSearchForm is kept in a hidden input field
     # after selection from the lookahead list
-    if 'morpheme' in query_parameters.keys():
-        try:
-            return Morpheme.objects.get(pk=query_parameters['morpheme']).idgloss
-        except ObjectDoesNotExist:
-            return ''
-    return ''
+    if 'morpheme' not in query_parameters.keys():
+        return ''
+
+    try:
+        return Morpheme.objects.get(pk=query_parameters['morpheme']).idgloss
+    except ObjectDoesNotExist:
+        return ''
