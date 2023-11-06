@@ -538,24 +538,17 @@ def queryset_from_get(formclass, searchform, GET, qs):
             field = get_key[:-2]
             if not vals:
                 continue
-            if field in ['dialect', 'signlanguage']:
+            if field in ['dialect', 'signlanguage', 'semField', 'derivHist']:
                 query_filter = field + '__in'
                 qs = qs.filter(**{query_filter: get_value})
-                continue
-            if field in ['definitionRole']:
+            elif field in ['definitionRole']:
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
-                continue
-            if field in ['tags']:
+            elif field in ['tags']:
                 morphemes_with_tag = list(
                     TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
                 qs = qs.filter(id__in=morphemes_with_tag)
-                continue
-            if field == 'semField':
-                qs = qs.filter(semField__in=vals)
-            elif field == 'derivHist':
-                qs = qs.filter(derivHist__in=vals)
             else:
                 query_filter = field + '__machine_value__in'
                 qs = qs.filter(**{query_filter: vals})
@@ -567,7 +560,6 @@ def queryset_from_get(formclass, searchform, GET, qs):
                 continue
             elif get_key in ['definitionContains']:
                 definitions_with_this_text = Definition.objects.filter(text__icontains=get_value)
-                # Remember the pk of all glosses that are referenced in the collection definitions
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in
                                                           definitions_with_this_text]
                 qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
@@ -576,23 +568,28 @@ def queryset_from_get(formclass, searchform, GET, qs):
                 qs = qs.annotate(
                     created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
                     .filter(created_by__icontains=created_by_search_string)
-            elif get_key.startswith(formclass.gloss_search_field_prefix):
+            elif hasattr(searchform, 'gloss_search_field_prefix') and \
+                    get_key.startswith(formclass.gloss_search_field_prefix):
                 language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
                                annotationidglosstranslation__language=language)
-            elif get_key.startswith(formclass.lemma_search_field_prefix):
+            elif hasattr(searchform, 'lemma_search_field_prefix') and \
+                    get_key.startswith(formclass.lemma_search_field_prefix):
                 language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
                                lemma__lemmaidglosstranslation__language=language)
-            elif get_key.startswith(formclass.keyword_search_field_prefix):
+            elif hasattr(searchform, 'keyword_search_field_prefix') and \
+                    get_key.startswith(formclass.keyword_search_field_prefix):
                 language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 qs = qs.filter(translation__translation__text__iregex=get_value,
                                translation__language=language)
             else:
-                print('Morpheme Search input type text fall through: ', get_key, get_value)
+                # normal text field
+                query_filter = get_key + '__icontains'
+                qs = qs.filter(**{query_filter: get_value})
                 continue
 
         elif searchform.fields[get_key].widget.input_type in ['date']:
@@ -626,56 +623,145 @@ def queryset_from_get(formclass, searchform, GET, qs):
     return qs
 
 
-def set_up_model_translations(form):
-    # make the choices language dependent
-    fieldnames = FIELDS['main'] + settings.MORPHEME_DISPLAY_FIELDS + FIELDS['semantics'] + ['mrpType']
-    fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
-    fields_with_choices['definitionRole'] = 'NoteType'
-
+def set_up_fieldchoice_translations(form, fields_with_choices):
+    # make the choices language dependent (model translations)
     for (fieldname, field_category) in fields_with_choices.items():
-        if fieldname == 'definitionRole':
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
-        elif fieldname.startswith('mrpType'):
-            field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
-        elif fieldname.startswith('semField'):
+        if fieldname.startswith('semField'):
             field_choices = SemanticField.objects.all().order_by('name')
         elif fieldname.startswith('derivHist'):
             field_choices = DerivationHistory.objects.all().order_by('name')
         else:
             field_choices = FieldChoice.objects.filter(field__iexact=field_category).order_by('name')
-        translated_choices = choicelist_queryset_to_translated_dict(field_choices, ordered=False, id_prefix='',
+        translated_choices = choicelist_queryset_to_translated_dict(field_choices, ordered=False,
+                                                                    id_prefix='',
                                                                     shortlist=True)
         form.fields[fieldname].choices = translated_choices
 
 
-def set_up_languages(view, form):
+def set_up_language_fields(model, view, form):
 
     selected_datasets = get_selected_datasets_for_user(view.request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     count_languages = len(dataset_languages)
     for language in dataset_languages:
-        morphemesearch_field_name = form.gloss_search_field_prefix + language.language_code_2char
-        if count_languages > 1:
-            morphemesearch_field_label = _("Annotation") + (" (%s)" % language.name)
+        annotation_field_name = form.gloss_search_field_prefix + language.language_code_2char
+        if model in [Morpheme]:
+            annotation_field_label = _("Annotation")
         else:
-            morphemesearch_field_label = _("Annotation")
+            annotation_field_label = _("Gloss")
+        if count_languages > 1:
+            annotation_field_label += (" (%s)" % language.name)
+        form.fields[annotation_field_name] = forms.CharField(label=annotation_field_label)
 
-        form.fields[morphemesearch_field_name] = forms.CharField(label=morphemesearch_field_label)
-
-        # Morphemes have translations not senses
         keyword_field_name = form.keyword_search_field_prefix + language.language_code_2char
-        if count_languages > 1:
-            keyword_field_label = _("Translations") + (" (%s)" % language.name)
-        else:
+        if model in [Morpheme]:
+            # Morphemes have translations not senses
             keyword_field_label = _("Translations")
+        else:
+            keyword_field_label = _("Senses")
+        if count_languages > 1:
+            keyword_field_label += (" (%s)" % language.name)
         form.fields[keyword_field_name] = forms.CharField(label=keyword_field_label)
-        form.fields[keyword_field_name].widget.label = keyword_field_label
 
         lemma_field_name = form.lemma_search_field_prefix + language.language_code_2char
+        lemma_field_label = _("Lemma")
         if count_languages > 1:
-            lemma_field_label = _("Lemma") + (" (%s)" % language.name)
-        else:
-            lemma_field_label = _("Lemma")
+            lemma_field_label += (" (%s)" % language.name)
         form.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
 
+
+def queryset_glosssense_from_get(formclass, searchform, GET, qs):
+    # this function isn't used yet, it is intended for SenseListView get_queryset
+    for get_key, get_value in GET.items():
+        if get_key.endswith('[]'):
+            if not get_value:
+                continue
+            # multiple select
+            vals = GET.getlist(get_key)
+            field = get_key[:-2]
+            if not vals:
+                continue
+            if field in ['dialect', 'signlanguage', 'semField', 'derivHist']:
+                query_filter = 'gloss__' + field + '__in'
+                qs = qs.filter(**{query_filter: get_value})
+            elif field in ['definitionRole']:
+                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
+                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
+                qs = qs.filter(gloss__pk__in=pks_for_glosses_with_these_definitions)
+            elif field in ['tags']:
+                morphemes_with_tag = list(
+                    TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
+                qs = qs.filter(gloss__id__in=morphemes_with_tag)
+            else:
+                query_filter = 'gloss__' + field + '__machine_value__in'
+                qs = qs.filter(**{query_filter: vals})
+        elif get_key not in searchform.fields.keys() \
+                or get_value in ['', '0']:
+            continue
+        elif searchform.fields[get_key].widget.input_type in ['text']:
+            if get_key in ['search', 'translation', 'sortOrder']:
+                continue
+            elif get_key in ['definitionContains']:
+                definitions_with_this_text = Definition.objects.filter(text__icontains=get_value)
+                # Remember the pk of all glosses that are referenced in the collection definitions
+                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in
+                                                          definitions_with_this_text]
+                qs = qs.filter(gloss__pk__in=pks_for_glosses_with_these_definitions)
+            elif get_key in ['createdBy']:
+                created_by_search_string = ' '.join(get_key.strip().split())  # remove redundant spaces
+                qs = qs.annotate(
+                    created_by=Concat('gloss__creator__first_name', V(' '), 'gloss__creator__last_name', output_field=CharField())) \
+                    .filter(created_by__icontains=created_by_search_string)
+
+            elif get_key.startswith(formclass.gloss_search_field_prefix):
+                language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
+                qs = qs.filter(gloss__annotationidglosstranslation__text__iregex=get_value,
+                               gloss__annotationidglosstranslation__language=language)
+            elif get_key.startswith(formclass.lemma_search_field_prefix):
+                language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
+                qs = qs.filter(gloss__lemma__lemmaidglosstranslation__text__iregex=get_value,
+                               gloss__lemma__lemmaidglosstranslation__language=language)
+            elif get_key.startswith(formclass.keyword_search_field_prefix):
+                language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
+                language = Language.objects.filter(language_code_2char=language_code_2char)
+                qs = qs.filter(sense__senseTranslations__translations__translation__text__iregex=get_value)
+                qs = qs.filter(sense__senseTranslations__translations__language__in=language)
+
+            else:
+                # normal text field
+                query_filter = 'gloss__' + get_key + '__icontains'
+                qs = qs.filter(**{query_filter: get_value})
+                continue
+
+        elif searchform.fields[get_key].widget.input_type in ['date']:
+            if get_key == 'createdBefore':
+                created_before_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
+                qs = qs.filter(gloss__creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
+            elif get_key == 'createdAfter':
+                created_after_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
+                qs = qs.filter(gloss__creationDate__range=(created_after_date, DT.datetime.now()))
+        elif searchform.fields[get_key].widget.input_type in ['select']:
+            if get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
+                val = get_value == '2'
+                key = get_key + '__exact'
+            elif get_key in ['hasvideo']:
+                val = get_value != '2'
+                key = 'glossvideo__isnull'
+            elif get_key in ['defspublished']:
+                val = get_value == '2'
+                key = 'definition__published'
+            else:
+                print('GlossSense Search input type select fall through: ', get_key, get_value)
+                continue
+
+            kwargs = {key: val}
+            qs = qs.filter(**kwargs)
+        else:
+            # everything should already be taken care of
+            print('GlossSense Search input type fall through: ', get_key, get_value,
+                  searchform.fields[get_key].widget.input_type)
+
+    return qs

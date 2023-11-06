@@ -58,7 +58,10 @@ def fields_to_fieldcategory_dict(fieldnames=[]):
         elif field in ['derivHist']:
             choice_categories[field] = 'derivHist'
             continue
-
+        elif field in ['definitionRole']:
+            # this is a search form field for Definition role
+            choice_categories[field] = 'NoteType'
+            continue
         if field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
             continue
         if field in Gloss.get_field_names():

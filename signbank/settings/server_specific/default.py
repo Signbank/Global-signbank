@@ -144,6 +144,12 @@ FIELDS['morpheme_properties'] = ['hasvideo',
                                  'createdBy', 'createdAfter', 'createdBefore',
                                  'tags']
 
+# these are the multiple select fields for Morpheme Search, the field definitionRole is a search form field,
+# the field mrpType appears in Morpheme, the rest are also in Gloss
+MORPHEME_CHOICE_FIELDS = ['handedness', 'handCh', 'relatArtic', 'locprim', 'relOriMov',
+                          'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'mrpType', 'wordClass',
+                          'semField', 'derivHist', 'namEnt', 'valence', 'definitionRole']
+
 # Use these fields in the server specific settings to specify frequency fields, if available
 FREQUENCY_CATEGORIES = []
 FREQUENCY_REGIONS = []

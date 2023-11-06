@@ -473,12 +473,11 @@ class MorphemeSearchForm(forms.ModelForm):
         # language fields will be set up elsewhere
         # field choice choices will be set up elsewhere
         # these are the multiselect field choice fields for morphemes
-        fieldnames = ['handedness', 'handCh', 'relatArtic', 'locprim', 'relOriMov',
-                      'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'mrpType', 'wordClass',
-                      'semField', 'derivHist', 'namEnt', 'valence']
-        for fieldname in fieldnames:
-            # morphemes do not have Handshape fields, these are hidden, see issue #638
-            if fieldname.startswith('mrpType'):
+        for fieldname in settings.MORPHEME_CHOICE_FIELDS:
+            if fieldname in ['definitionRole']:
+                # this is a search form field name
+                continue
+            elif fieldname.startswith('mrpType'):
                 field_label = Morpheme.get_field(fieldname).verbose_name
             else:
                 field_label = Gloss.get_field(fieldname).verbose_name

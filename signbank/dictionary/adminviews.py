@@ -9,6 +9,7 @@ from django.db.models import OuterRef, Subquery
 from django.db.models.query import QuerySet
 from django.db.models.functions import Concat
 from django.db.models.fields import BooleanField, BooleanField
+from django.utils.functional import cached_property
 from django.db.models.sql.where import NothingNode, WhereNode
 from django.http import HttpResponse, HttpResponseRedirect, QueryDict, JsonResponse
 from django.template import RequestContext
@@ -63,7 +64,7 @@ from signbank.dictionary.consistency_senses import consistent_senses, check_cons
     reorder_sensetranslations, reorder_senses
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get, \
-    set_up_model_translations, set_up_languages
+    set_up_fieldchoice_translations, set_up_language_fields
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -1215,7 +1216,7 @@ class SenseListView(ListView):
         query_parameters = dict()
 
         # If not, we will go trhough a long list of filters
-        if 'search' in get and get['search'] != '':
+        if 'search' in get and get['search']:
             val = get['search']
             query_parameters['search'] = val
             from signbank.tools import strip_control_characters
@@ -1305,12 +1306,12 @@ class SenseListView(ListView):
         # SignLanguage and basic property filters
         # allows for multiselect
         vals = get.getlist('dialect[]')
-        if vals != []:
+        if vals:
             query_parameters['dialect[]'] = vals
             qs = qs.filter(gloss__dialect__in=vals)
 
         vals = get.getlist('tags[]')
-        if vals != []:
+        if vals:
             query_parameters['tags[]'] = vals
             glosses_with_tag = list(
                 TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
@@ -1318,11 +1319,11 @@ class SenseListView(ListView):
 
         # allows for multiselect
         vals = get.getlist('signlanguage[]')
-        if vals != []:
+        if vals:
             query_parameters['signlanguage[]'] = vals
             qs = qs.filter(gloss__signlanguage__in=vals)
 
-        if 'useInstr' in get and get['useInstr'] != '':
+        if 'useInstr' in get and get['useInstr']:
             query_parameters['useInstr'] = get['useInstr']
             qs = qs.filter(gloss__useInstr__icontains=get['useInstr'])
 
@@ -1332,7 +1333,7 @@ class SenseListView(ListView):
             fieldnameQuery = 'gloss__' + fieldnamemulti + '__machine_value__in'
 
             vals = get.getlist(fieldnamemultiVarname)
-            if vals != []:
+            if vals:
                 query_parameters[fieldnamemultiVarname] = vals
                 if fieldnamemulti == 'semField':
                     qs = qs.filter(gloss__semField__in=vals)
@@ -1341,11 +1342,11 @@ class SenseListView(ListView):
                 else:
                     qs = qs.filter(**{fieldnameQuery: vals})
 
-        ## phonology and semantics field filters
+        # phonology and semantics field filters
         fieldnames = [f for f in fieldnames if f not in fields_with_choices.keys()]
         for fieldname in fieldnames:
 
-            if fieldname in get and get[fieldname] != '':
+            if fieldname in get and get[fieldname]:
                 field_obj = Gloss.get_field(fieldname)
 
                 if type(field_obj) in [CharField, TextField] and not hasattr(field_obj, 'field_choice_category'):
@@ -1369,7 +1370,7 @@ class SenseListView(ListView):
         if 'definitionRole[]' in get:
 
             vals = get.getlist('definitionRole[]')
-            if vals != []:
+            if vals:
                 query_parameters['definitionRole[]'] = vals
                 # Find all definitions with this role
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
@@ -1388,19 +1389,19 @@ class SenseListView(ListView):
             pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
             qs = qs.filter(gloss__pk__in=pks_for_glosses_with_these_definitions)
 
-        if 'createdBefore' in get and get['createdBefore'] != '':
+        if 'createdBefore' in get and get['createdBefore']:
             query_parameters['createdBefore'] = get['createdBefore']
 
             created_before_date = DT.datetime.strptime(get['createdBefore'], settings.DATE_FORMAT).date()
             qs = qs.filter(gloss__creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
 
-        if 'createdAfter' in get and get['createdAfter'] != '':
+        if 'createdAfter' in get and get['createdAfter']:
             query_parameters['createdAfter'] = get['createdAfter']
 
             created_after_date = DT.datetime.strptime(get['createdAfter'], settings.DATE_FORMAT).date()
             qs = qs.filter(gloss__creationDate__range=(created_after_date, DT.datetime.now()))
 
-        if 'createdBy' in get and get['createdBy'] != '':
+        if 'createdBy' in get and get['createdBy']:
             query_parameters['createdBy'] = get['createdBy']
 
             created_by_search_string = ' '.join(get['createdBy'].strip().split())  # remove redundant spaces
@@ -1410,7 +1411,7 @@ class SenseListView(ListView):
 
         if 'sentenceType[]' in get:
             vals = get.getlist('sentenceType[]')
-            if vals != []:
+            if vals:
 
                 query_parameters['sentenceType[]'] = vals
 
@@ -2487,13 +2488,17 @@ class MorphemeListView(ListView):
     template_name = 'dictionary/admin_morpheme_list.html'
     paginate_by = 25
     queryset_language_codes = []
-    search_form = MorphemeSearchForm()
+
+    @cached_property
+    def search_form(self):
+        return MorphemeSearchForm()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # this is needed because the MorphemeSearchForm is initialized without the request and
         # the model translation language is unknown
-        set_up_model_translations(self.search_form)
+        fields_with_choices = fields_to_fieldcategory_dict(settings.MORPHEME_CHOICE_FIELDS)
+        set_up_fieldchoice_translations(self.search_form, fields_with_choices)
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -2503,7 +2508,7 @@ class MorphemeListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        set_up_languages(self, self.search_form)
+        set_up_language_fields(Morpheme, self, self.search_form)
 
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
