@@ -164,18 +164,12 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
 
     context['input_names_fields_and_labels'] = get_input_names_fields_and_labels(search_form)
 
-    context['input_names_fields_labels_handedness'] = [
-        ('weakdrop', search_form['weakdrop'], search_form['weakdrop'].label),
-        ('weakprop', search_form['weakprop'], search_form['weakprop'].label)
-    ]
-    context['input_names_fields_labels_domhndsh'] = [
-        ('domhndsh_letter', search_form['domhndsh_letter'], search_form['domhndsh_letter'].label),
-        ('domhndsh_number', search_form['domhndsh_number'], search_form['domhndsh_number'].label)
-    ]
-    context['input_names_fields_labels_subhndsh'] = [
-        ('subhndsh_letter', search_form['subhndsh_letter'], search_form['subhndsh_letter'].label),
-        ('subhndsh_number', search_form['subhndsh_number'], search_form['subhndsh_number'].label)
-    ]
+    context['input_names_fields_labels_handedness'] = get_input_names_field_labels(['weakdrop', 'weakprop'],
+                                                                                   search_form)
+    context['input_names_fields_labels_domhndsh'] = get_input_names_field_labels(['domhndsh_letter', 'domhndsh_number'],
+                                                                                 search_form)
+    context['input_names_fields_labels_subhndsh'] = get_input_names_field_labels(['subhndsh_letter', 'subhndsh_number'],
+                                                                                 search_form)
 
     if listview.model == Gloss:
         context['SHOW_MORPHEME_SEARCH'] = getattr(settings, 'SHOW_MORPHEME_SEARCH', False) \
@@ -210,3 +204,7 @@ def get_morpheme_idgloss(query_parameters):
         return Morpheme.objects.get(pk=query_parameters['morpheme']).idgloss
     except ObjectDoesNotExist:
         return ''
+
+
+def get_input_names_field_labels(fields, search_form):
+   return [(field, search_form[field], search_form[field].label) for field in fields]
