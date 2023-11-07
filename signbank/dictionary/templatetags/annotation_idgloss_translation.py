@@ -84,6 +84,10 @@ def get_lemma_idgloss_translation_no_default(lemma, language):
 def get_search_field_for_language(form, language):
     return getattr(form, GlossSearchForm.gloss_search_field_prefix + language.language_code_2char)
 
+@register.filter
+def get_annotation_search_field_for_language(form, language):
+    field = GlossSearchForm.gloss_search_field_prefix + language.language_code_2char
+    return form.fields[field]
 
 @register.filter
 def get_morpheme_search_field_for_language(form, language):
@@ -93,6 +97,11 @@ def get_morpheme_search_field_for_language(form, language):
 @register.filter
 def get_keyword_field_for_language(form, language):
     return getattr(form, GlossSearchForm.keyword_search_field_prefix + language.language_code_2char)
+
+@register.filter
+def get_senses_form_field_for_language(form, language):
+    field = GlossSearchForm.keyword_search_field_prefix + language.language_code_2char
+    return form.fields[field]
 
 @register.filter
 def get_keyword_form_field_for_language(form, language):

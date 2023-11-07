@@ -64,7 +64,8 @@ from signbank.dictionary.consistency_senses import consistent_senses, check_cons
     reorder_sensetranslations, reorder_senses
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get, \
-    set_up_fieldchoice_translations, set_up_language_fields
+    set_up_fieldchoice_translations, set_up_language_fields, set_up_signlanguage_dialects_fields, \
+    queryset_glosssense_from_get, query_parameters_from_get
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -222,18 +223,27 @@ class GlossListView(ListView):
     queryset_language_codes = []
     query_parameters = dict()
     search_form_data = QueryDict(mutable=True)
+    search_form = GlossSearchForm()
 
     def get_template_names(self):
         return ['dictionary/admin_gloss_list.html']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        fields_with_choices = fields_to_fieldcategory_dict(settings.GLOSS_CHOICE_FIELDS)
+        set_up_fieldchoice_translations(self.search_form, fields_with_choices)
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(GlossListView, self).get_context_data(**kwargs)
 
+        set_up_language_fields(Gloss, self, self.search_form)
+        set_up_signlanguage_dialects_fields(Gloss, self, self.search_form)
+
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
         self.queryset_language_codes = context['queryset_language_codes']
 
-        context = get_context_data_for_gloss_search_form(self.request, self, self.kwargs, context)
+        context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs, context)
 
         # it is necessary to sort the object list by lemma_id in order for all glosses with the same lemma to be grouped
         # correctly in the template
@@ -615,7 +625,6 @@ class GlossListView(ListView):
 
         return response
 
-
     def get_queryset(self):
         get = self.request.GET
 
@@ -751,257 +760,39 @@ class GlossListView(ListView):
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
 
-        # Evaluate all gloss/language search fields
-        for get_key, get_value in get.items():
-            if get_key == 'csrfmiddlewaretoken':
-                continue
-            if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
+        qs = queryset_glosssense_from_get(Gloss, GlossSearchForm, self.search_form, get, qs)
+        query_parameters = query_parameters_from_get(Gloss, GlossSearchForm, self.search_form, get)
 
-                query_parameters[get_key] = get_value
-                language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
-                               annotationidglosstranslation__language=language)
-            elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
-                query_parameters[get_key] = get_value
-                language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
-                               lemma__lemmaidglosstranslation__language=language)
-            elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
-                query_parameters[get_key] = get_value
-                language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(translation__translation__text__iregex=get_value,
-                               translation__language=language)
-                
-        if 'translation' in get and get['translation'] != '':
-            val = get['translation']
-            query_parameters['translation'] = get['translation']
-            qs = qs.filter(senses__senseTranslations__translations__translation__text__iregex=val)
+        # # Evaluate all gloss/language search fields
+        # for get_key, get_value in get.items():
 
-        if 'inWeb' in get and get['inWeb'] != '0':
-            # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
-            val = get['inWeb'] == '2'
-            query_parameters['inWeb'] = get['inWeb']
-            qs = qs.filter(inWeb__exact=val)
+        #     elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
+        #         query_parameters[get_key] = get_value
+        #         language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
+        #         language = Language.objects.filter(language_code_2char=language_code_2char).first()
+        #         qs = qs.filter(translation__translation__text__iregex=get_value,
+        #                        translation__language=language)
+        #
+        # if 'translation' in get and get['translation'] != '':
+        #     val = get['translation']
+        #     query_parameters['translation'] = get['translation']
+        #     qs = qs.filter(senses__senseTranslations__translations__translation__text__iregex=val)
+        #
 
-        if 'excludeFromEcv' in get and get['excludeFromEcv'] != '0':
-            # Don't apply 'excludeFromEcv' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
-            val = get['excludeFromEcv'] == '2'
-            query_parameters['excludeFromEcv'] = get['excludeFromEcv']
-            qs = qs.filter(excludeFromEcv__exact=val)
-
-        if 'hasvideo' in get and get['hasvideo'] not in ['unspecified', '0']:
-            val = get['hasvideo'] != '2'
-            query_parameters['hasvideo'] = get['hasvideo']
-            qs = qs.filter(glossvideo__isnull=val)
-
-        if 'hasothermedia' in get and get['hasothermedia'] not in ['unspecified', '0']:
-            query_parameters['hasothermedia'] = get['hasothermedia']
-
-            # Remember the pk of all glosses that have other media
-            pks_for_glosses_with_othermedia = [ om.parent_gloss.pk for om in OtherMedia.objects.all() ]
-
-            if get['hasothermedia'] == '2': #We only want glosses with other media
-                qs = qs.filter(pk__in=pks_for_glosses_with_othermedia)
-            elif get['hasothermedia'] == '3': #We only want glosses without other media
-                qs = qs.exclude(pk__in=pks_for_glosses_with_othermedia)
-
-        if 'defspublished' in get and get['defspublished'] not in ['0', 'unspecified']:
-            val = get['defspublished'] == 'yes'
-            query_parameters['defspublished'] = get['defspublished']
-            qs = qs.filter(definition__published=val)
-
-        if 'hasmultiplesenses' in get and get['hasmultiplesenses'] not in ['0', 'unspecified']:
-            val = get['hasmultiplesenses'] == 'yes'
-            query_parameters['hasmultiplesenses'] = get['hasmultiplesenses']
-            if val:
-                multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
-                    'gloss').annotate(Count('id')).filter(id__count__gt=1)]
-            else:
-                multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
-                    'gloss').annotate(Count('id')).filter(id__count=1)]
-            qs = qs.filter(id__in=multiple_senses)
-
-        fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+['inWeb', 'isNew']
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
-            fieldnames.remove('derivHist')
-
-        # SignLanguage and basic property filters
-        # allows for multiselect
-        vals = get.getlist('dialect[]')
-        if vals != []:
-            query_parameters['dialect[]'] = vals
-            qs = qs.filter(dialect__in=vals)
-
-        vals = get.getlist('tags[]')
-        if vals != []:
-            query_parameters['tags[]'] = vals
-            glosses_with_tag = list(
-                TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
-            qs = qs.filter(id__in=glosses_with_tag)
-
-        # allows for multiselect
-        vals = get.getlist('signlanguage[]')
-        if vals != []:
-            query_parameters['signlanguage[]'] = vals
-            qs = qs.filter(signlanguage__in=vals)
-
-        if 'useInstr' in get and get['useInstr'] != '':
-            query_parameters['useInstr'] = get['useInstr']
-            qs = qs.filter(useInstr__icontains=get['useInstr'])
-
-        fields_with_choices = fields_to_fieldcategory_dict()
-        for fieldnamemulti in fields_with_choices.keys():
-            fieldnamemultiVarname = fieldnamemulti + '[]'
-            fieldnameQuery = fieldnamemulti + '__machine_value__in'
-
-            vals = get.getlist(fieldnamemultiVarname)
-            if vals != []:
-                query_parameters[fieldnamemultiVarname] = vals
-                if fieldnamemulti == 'semField':
-                    qs = qs.filter(semField__in=vals)
-                elif fieldnamemulti == 'derivHist':
-                    qs = qs.filter(derivHist__in=vals)
-                else:
-                    qs = qs.filter(**{ fieldnameQuery: vals })
-
-        ## phonology and semantics field filters
-        fieldnames = [ f for f in fieldnames if f not in fields_with_choices.keys() ]
-        for fieldname in fieldnames:
-
-            if fieldname in get and get[fieldname] != '':
-                field_obj = Gloss.get_field(fieldname)
-
-                if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
-                    key = fieldname + '__icontains'
-                else:
-                    key = fieldname + '__exact'
-
-                val = get[fieldname]
-
-                if isinstance(field_obj,BooleanField):
-                    val = {'0':'','1': None, '2': True, '3': False}[val]
-
-                if val != '':
-                    query_parameters[fieldname] = get[fieldname]
-
-                    kwargs = {key:val}
-                    qs = qs.filter(**kwargs)
-
-        qs = qs.distinct()
-
-        if 'relationToForeignSign' in get and get['relationToForeignSign'] != '':
-            query_parameters['relationToForeignSign'] = get['relationToForeignSign']
-
-            relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get['relationToForeignSign'])
-            potential_pks = [relation.gloss.pk for relation in relations]
-            qs = qs.filter(pk__in=potential_pks)
-
-        if 'hasRelationToForeignSign' in get and get['hasRelationToForeignSign'] != '0':
-            query_parameters['hasRelationToForeignSign'] = get['hasRelationToForeignSign']
-
-            pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
-
-            if get['hasRelationToForeignSign'] == '1': #We only want glosses with a relation to a foreign sign
-                qs = qs.filter(pk__in=pks_for_glosses_with_relations)
-            elif get['hasRelationToForeignSign'] == '2': #We only want glosses without a relation to a foreign sign
-                qs = qs.exclude(pk__in=pks_for_glosses_with_relations)
-
-        if 'relation' in get and get['relation'] != '':
-            query_parameters['relation'] = get['relation']
-
-            potential_targets = Gloss.objects.filter(annotationidglosstranslation__text__iregex=get['relation'])
-            relations = Relation.objects.filter(target__in=potential_targets)
-            potential_pks = [relation.source.pk for relation in relations]
-            qs = qs.filter(pk__in=potential_pks)
-
-        if 'hasRelation' in get and get['hasRelation'] != '':
-            query_parameters['hasRelation'] = get['hasRelation']
-
-            #Find all relations with this role
-            if get['hasRelation'] == 'all':
-                relations_with_this_role = Relation.objects.all()
-            else:
-                relations_with_this_role = Relation.objects.filter(role__exact=get['hasRelation'])
-
-            #Remember the pk of all glosses that take part in the collected relations
-            pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
-            qs = qs.filter(pk__in=pks_for_glosses_with_correct_relation)
-
-        if 'morpheme' in get and get['morpheme'] != '':
-            query_parameters['morpheme'] = get['morpheme']
-
-            # morpheme is an integer
-            input_morpheme = get['morpheme']
-            # Filter all glosses that contain this morpheme in their simultaneous morphology
-            try:
-                selected_morpheme = Morpheme.objects.get(pk=get['morpheme'])
-                potential_pks = [appears.parent_gloss.pk for appears in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
-                qs = qs.filter(pk__in=potential_pks)
-            except ObjectDoesNotExist:
-                # This error should not occur, the input search form requires the selection of a morpheme from a list
-                # If the user attempts to input a string, it is ignored by the gloss list search form
-                print("Morpheme not found: ", str(input_morpheme))
-
-        if 'hasComponentOfType[]' in get:
-            vals = get.getlist('hasComponentOfType[]')
-            if vals != []:
-                query_parameters['hasComponentOfType[]'] = vals
-
-                morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=vals)
-                pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
-                qs = qs.filter(pk__in=pks_for_glosses_with_morphdefs_with_correct_role)
-
-        if 'hasMorphemeOfType' in get and get['hasMorphemeOfType'] not in ['', '0']:
-            query_parameters['hasMorphemeOfType'] = get['hasMorphemeOfType']
-
-            morpheme_type = get['hasMorphemeOfType']
-            # Get all Morphemes of the indicated mrpType
-            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType__machine_value=morpheme_type) ]
-            qs = qs.filter(id__in=target_morphemes)
-
-        if 'definitionRole[]' in get:
-
-            vals = get.getlist('definitionRole[]')
-            if vals != []:
-                query_parameters['definitionRole[]'] = vals
-                #Find all definitions with this role
-                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
-
-                #Remember the pk of all glosses that are referenced in the collection definitions
-                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
-                qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
-
-        if 'definitionContains' in get and get['definitionContains'] not in ['', '0']:
-            query_parameters['definitionContains'] = get['definitionContains']
-
-            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains'])
-
-            #Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
-            qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
-
-        if 'createdBefore' in get and get['createdBefore'] != '':
-            query_parameters['createdBefore'] = get['createdBefore']
-
-            created_before_date = DT.datetime.strptime(get['createdBefore'], settings.DATE_FORMAT).date()
-            qs = qs.filter(creationDate__range=(EARLIEST_GLOSS_CREATION_DATE,created_before_date))
-
-        if 'createdAfter' in get and get['createdAfter'] != '':
-            query_parameters['createdAfter'] = get['createdAfter']
-
-            created_after_date = DT.datetime.strptime(get['createdAfter'], settings.DATE_FORMAT).date()
-            qs = qs.filter(creationDate__range=(created_after_date,DT.datetime.now()))
-
-        if 'createdBy' in get and get['createdBy'] != '':
-            query_parameters['createdBy'] = get['createdBy']
-
-            created_by_search_string = ' '.join(get['createdBy'].strip().split()) # remove redundant spaces
-            qs = qs.annotate(
-                created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
-                .filter(created_by__icontains=created_by_search_string)
+# if 'morpheme' in get and get['morpheme'] != '':
+#     query_parameters['morpheme'] = get['morpheme']
+#
+#     # morpheme is an integer
+#     input_morpheme = get['morpheme']
+#     # Filter all glosses that contain this morpheme in their simultaneous morphology
+#     try:
+#         selected_morpheme = Morpheme.objects.get(pk=get['morpheme'])
+# potential_pks = [appears.parent_gloss.pk for appears in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
+#         qs = qs.filter(pk__in=potential_pks)
+#     except ObjectDoesNotExist:
+#         # This error should not occur, the input search form requires the selection of a morpheme from a list
+#         # If the user attempts to input a string, it is ignored by the gloss list search form
+#         print("Morpheme not found: ", str(input_morpheme))
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -1036,14 +827,23 @@ class SenseListView(ListView):
     query_parameters = dict()
     search_form_data = QueryDict(mutable=True)
     template_name = 'dictionary/admin_senses_list.html'
+    search_form = GlossSearchForm()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        fields_with_choices = fields_to_fieldcategory_dict(settings.GLOSSSENSE_CHOICE_FIELDS)
+        set_up_fieldchoice_translations(self.search_form, fields_with_choices)
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(SenseListView, self).get_context_data(**kwargs)
 
+        set_up_language_fields(GlossSense, self, self.search_form)
+        set_up_signlanguage_dialects_fields(GlossSense, self, self.search_form)
+
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
 
-        context = get_context_data_for_gloss_search_form(self.request, self, self.kwargs, context)
+        context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs, context)
 
         context['sensecount'] = Sense.objects.filter(glosssense__gloss__lemma__dataset__in=context['selected_datasets']).count()
 
@@ -1231,226 +1031,33 @@ class SenseListView(ListView):
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
 
-        # Evaluate all gloss/language search fields
-        for get_key, get_value in get.items():
-            if get_key == 'csrfmiddlewaretoken':
-                continue
-            if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
-
-                query_parameters[get_key] = get_value
-                language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(gloss__annotationidglosstranslation__text__iregex=get_value,
-                               gloss__annotationidglosstranslation__language=language)
-            elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
-                query_parameters[get_key] = get_value
-                language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(gloss__lemma__lemmaidglosstranslation__text__iregex=get_value,
-                               gloss__lemma__lemmaidglosstranslation__language=language)
-            elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
-                query_parameters[get_key] = get_value
-                language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char)
-                qs = qs.filter(sense__senseTranslations__translations__translation__text__iregex=get_value)
-                qs = qs.filter(sense__senseTranslations__translations__language__in=language)
-
-        if 'inWeb' in get and get['inWeb'] != '0':
-            # Don't apply 'inWeb' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
-            val = get['inWeb'] == '2'
-            query_parameters['inWeb'] = get['inWeb']
-            qs = qs.filter(gloss__inWeb__exact=val)
-
-        if 'excludeFromEcv' in get and get['excludeFromEcv'] != '0':
-            # Don't apply 'excludeFromEcv' filter, if it is unspecified ('0' according to the NULLBOOLEANCHOICES)
-            val = get['excludeFromEcv'] == '2'
-            query_parameters['excludeFromEcv'] = get['excludeFromEcv']
-            qs = qs.filter(gloss__excludeFromEcv__exact=val)
-
-        if 'hasvideo' in get and get['hasvideo'] not in ['unspecified', '0']:
-            val = get['hasvideo'] != '2'
-            query_parameters['hasvideo'] = get['hasvideo']
-            qs = qs.filter(gloss__glossvideo__isnull=val)
-
-        if 'hasothermedia' in get and get['hasothermedia'] not in ['unspecified', '0']:
-            query_parameters['hasothermedia'] = get['hasothermedia']
-
-            # Remember the pk of all glosses that have other media
-            pks_for_glosses_with_othermedia = [om.parent_gloss.pk for om in OtherMedia.objects.all()]
-
-            if get['hasothermedia'] == '2':  # We only want glosses with other media
-                qs = qs.filter(gloss__pk__in=pks_for_glosses_with_othermedia)
-            elif get['hasothermedia'] == '3':  # We only want glosses without other media
-                qs = qs.exclude(gloss__pk__in=pks_for_glosses_with_othermedia)
-
-        if 'defspublished' in get and get['defspublished'] not in ['0', 'unspecified']:
-            val = get['defspublished'] == 'yes'
-            query_parameters['defspublished'] = get['defspublished']
-            qs = qs.filter(gloss__definition__published=val)
-
-        if 'hasmultiplesenses' in get and get['hasmultiplesenses'] not in ['0', 'unspecified']:
-            val = get['hasmultiplesenses'] == 'yes'
-            query_parameters['hasmultiplesenses'] = get['hasmultiplesenses']
-            if val:
-                multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
-                    'gloss').annotate(Count('id')).filter(id__count__gt=1)]
-            else:
-                multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
-                    'gloss').annotate(Count('id')).filter(id__count=1)]
-            qs = qs.filter(gloss__id__in=multiple_senses)
-
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-        if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
-            fieldnames.remove('derivHist')
-
-        # SignLanguage and basic property filters
-        # allows for multiselect
-        vals = get.getlist('dialect[]')
-        if vals:
-            query_parameters['dialect[]'] = vals
-            qs = qs.filter(gloss__dialect__in=vals)
-
-        vals = get.getlist('tags[]')
-        if vals:
-            query_parameters['tags[]'] = vals
-            glosses_with_tag = list(
-                TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
-            qs = qs.filter(gloss__id__in=glosses_with_tag)
-
-        # allows for multiselect
-        vals = get.getlist('signlanguage[]')
-        if vals:
-            query_parameters['signlanguage[]'] = vals
-            qs = qs.filter(gloss__signlanguage__in=vals)
-
-        if 'useInstr' in get and get['useInstr']:
-            query_parameters['useInstr'] = get['useInstr']
-            qs = qs.filter(gloss__useInstr__icontains=get['useInstr'])
-
-        fields_with_choices = fields_to_fieldcategory_dict()
-        for fieldnamemulti in fields_with_choices.keys():
-            fieldnamemultiVarname = fieldnamemulti + '[]'
-            fieldnameQuery = 'gloss__' + fieldnamemulti + '__machine_value__in'
-
-            vals = get.getlist(fieldnamemultiVarname)
-            if vals:
-                query_parameters[fieldnamemultiVarname] = vals
-                if fieldnamemulti == 'semField':
-                    qs = qs.filter(gloss__semField__in=vals)
-                elif fieldnamemulti == 'derivHist':
-                    qs = qs.filter(gloss__derivHist__in=vals)
-                else:
-                    qs = qs.filter(**{fieldnameQuery: vals})
-
-        # phonology and semantics field filters
-        fieldnames = [f for f in fieldnames if f not in fields_with_choices.keys()]
-        for fieldname in fieldnames:
-
-            if fieldname in get and get[fieldname]:
-                field_obj = Gloss.get_field(fieldname)
-
-                if type(field_obj) in [CharField, TextField] and not hasattr(field_obj, 'field_choice_category'):
-                    key = 'gloss__' + fieldname + '__icontains'
-                else:
-                    key = 'gloss__' + fieldname + '__exact'
-
-                val = get[fieldname]
-
-                if isinstance(field_obj, BooleanField):
-                    val = {'0': '', '1': None, '2': True, '3': False}[val]
-
-                if val != '':
-                    query_parameters[fieldname] = get[fieldname]
-
-                    kwargs = {key: val}
-                    qs = qs.filter(**kwargs)
-
-        qs = qs.distinct()
-
-        if 'definitionRole[]' in get:
-
-            vals = get.getlist('definitionRole[]')
-            if vals:
-                query_parameters['definitionRole[]'] = vals
-                # Find all definitions with this role
-                definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
-
-                # Remember the pk of all glosses that are referenced in the collection definitions
-                pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in
-                                                          definitions_with_this_role]
-                qs = qs.filter(gloss__pk__in=pks_for_glosses_with_these_definitions)
-
-        if 'definitionContains' in get and get['definitionContains'] not in ['', '0']:
-            query_parameters['definitionContains'] = get['definitionContains']
-
-            definitions_with_this_text = Definition.objects.filter(text__icontains=get['definitionContains'])
-
-            # Remember the pk of all glosses that are referenced in the collection definitions
-            pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_text]
-            qs = qs.filter(gloss__pk__in=pks_for_glosses_with_these_definitions)
-
-        if 'createdBefore' in get and get['createdBefore']:
-            query_parameters['createdBefore'] = get['createdBefore']
-
-            created_before_date = DT.datetime.strptime(get['createdBefore'], settings.DATE_FORMAT).date()
-            qs = qs.filter(gloss__creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
-
-        if 'createdAfter' in get and get['createdAfter']:
-            query_parameters['createdAfter'] = get['createdAfter']
-
-            created_after_date = DT.datetime.strptime(get['createdAfter'], settings.DATE_FORMAT).date()
-            qs = qs.filter(gloss__creationDate__range=(created_after_date, DT.datetime.now()))
-
-        if 'createdBy' in get and get['createdBy']:
-            query_parameters['createdBy'] = get['createdBy']
-
-            created_by_search_string = ' '.join(get['createdBy'].strip().split())  # remove redundant spaces
-            qs = qs.annotate(
-                created_by=Concat('gloss__creator__first_name', V(' '), 'gloss__creator__last_name', output_field=CharField())) \
-                .filter(created_by__icontains=created_by_search_string)
+        qs = queryset_glosssense_from_get(GlossSense, GlossSearchForm, self.search_form, get, qs)
 
         if 'sentenceType[]' in get:
             vals = get.getlist('sentenceType[]')
             if vals:
-
                 query_parameters['sentenceType[]'] = vals
-
                 sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=vals)
+                qs = qs.filter(sense__exampleSentences__in=sentences_with_this_type)
 
-                # Remember the pk of all sentences that are referenced in the collection ExampleSentence
-                pks_for_sentences_with_this_type = [sentence.pk for sentence in sentences_with_this_type]
-                qs = qs.filter(sense__exampleSentences__pk__in=pks_for_sentences_with_this_type)
-
-        if 'negative' in get and get['negative'] not in ['unspecified', '0']:
+        if 'negative' in get and get['negative'] not in ['0']:
             query_parameters['negative'] = get['negative']
-            val = get['negative'] == 'yes'
-            # Remember the pk of all negative sentences
-            sentences_with_this_type = ExampleSentence.objects.filter(negative__exact=val)
-            pks_for_negative_sentences = [es.pk for es in sentences_with_this_type]
-
-            if get['negative'] == 'yes':  # We only want senses with negative sentences
-                qs = qs.filter(sense__exampleSentences__pk__in=pks_for_negative_sentences)
-            elif get['negative'] == 'no':  # We only want senses sentences that are not negative
-                qs = qs.filter(sense__exampleSentences__pk__in=pks_for_negative_sentences)
+            sentences_with_negative_type = ExampleSentence.objects.filter(negative__exact=True)
+            sentences_with_other_type = ExampleSentence.objects.filter(negative__exact=False)
+            if get['negative'] == 'yes':  # only senses with negative sentences
+                qs = qs.filter(sense__exampleSentences__in=sentences_with_negative_type)
+            else:  # only senses sentences that are not negative
+                qs = qs.filter(sense__exampleSentences__in=sentences_with_other_type)
 
         if 'sentenceContains' in get and get['sentenceContains'] not in ['', '0']:
             query_parameters['sentenceContains'] = get['sentenceContains']
-
             sentence_translations_with_this_text = ExampleSentenceTranslation.objects.filter(text__icontains=get['sentenceContains'])
-
-            # Remember the pk of all sentences that include this text
-            pks_for_sentences_with_this_text = [sentence_translation.examplesentence.pk
-                                                for sentence_translation in sentence_translations_with_this_text]
-            qs = qs.filter(sense__exampleSentences__pk__in=pks_for_sentences_with_this_text)
+            qs = qs.filter(sense__exampleSentences__in=sentence_translations_with_this_text)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
         self.request.session.modified = True
         self.query_parameters = query_parameters
-        # qs = qs.select_related('lemma')
-        #
-        # Sort the queryset by the parameters given
-        # sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
         self.request.session['search_type'] = self.search_type
         self.request.session['web_search'] = self.web_search
@@ -2488,10 +2095,7 @@ class MorphemeListView(ListView):
     template_name = 'dictionary/admin_morpheme_list.html'
     paginate_by = 25
     queryset_language_codes = []
-
-    @cached_property
-    def search_form(self):
-        return MorphemeSearchForm()
+    search_form = MorphemeSearchForm()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2504,11 +2108,11 @@ class MorphemeListView(ListView):
         # Call the base implementation first to get a context
         context = super(MorphemeListView, self).get_context_data(**kwargs)
 
+        set_up_language_fields(Morpheme, self, self.search_form)
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
-
-        set_up_language_fields(Morpheme, self, self.search_form)
 
         default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
         default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
@@ -3568,7 +3172,7 @@ class QueryListView(ListView):
                 toggle_query_parameter = (query_field, _("Dialect"))
             elif query_field == 'hasComponentOfType':
                 toggle_query_parameter = (query_field, _("Sequential Morphology"))
-            elif query_field == 'hasMorphemeOfType':
+            elif query_field == 'mrpType':
                 toggle_query_parameter = (query_field, _("Morpheme Type"))
             elif query_field == 'morpheme':
                 toggle_query_parameter = (query_field, _("Simultaneous Morphology"))
@@ -6669,7 +6273,7 @@ def glosslist_ajax_complete(request, gloss_id):
         elif fieldname == 'hasComponentOfType':
             morphemes = " + ".join([x.__str__() for x in this_gloss.parent_glosses.all()])
             column_values.append((fieldname, morphemes))
-        elif fieldname == 'hasMorphemeOfType':
+        elif fieldname == 'mrpType':
             # the inheritance only works this way in this version of Django/Python
             # the morphemes are filtered on this glosses id, then the morpheme is used
             target_morphemes = Morpheme.objects.filter(id=this_gloss.id)
@@ -6759,7 +6363,7 @@ def glosslistheader_ajax(request):
                                   'hasothermedia': _("Other Media"),
                                   'hasComponentOfType': _("Sequential Morphology"),
                                   'morpheme': _("Simultaneous Morphology"),
-                                  'hasMorphemeOfType': _("Morpheme Type"),
+                                  'mrpType': _("Morpheme Type"),
                                   'relation': _("Gloss of Related Sign"),
                                   'hasRelationToForeignSign': _("Related to Foreign Sign"),
                                   'relationToForeignSign': _("Gloss of Foreign Sign")
@@ -6869,7 +6473,7 @@ def senselistheader_ajax(request):
                                   'hasothermedia': _("Other Media"),
                                   'hasComponentOfType': _("Sequential Morphology"),
                                   'morpheme': _("Simultaneous Morphology"),
-                                  'hasMorphemeOfType': _("Morpheme Type"),
+                                  'mrpType': _("Morpheme Type"),
                                   'relation': _("Gloss of Related Sign"),
                                   'hasRelationToForeignSign': _("Related to Foreign Sign"),
                                   'relationToForeignSign': _("Gloss of Foreign Sign")

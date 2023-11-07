@@ -138,11 +138,23 @@ FIELDS['properties'] = ['hasvideo', 'hasothermedia', 'hasmultiplesenses',
                         'createdBy', 'createdAfter', 'createdBefore',
                         'tags', 'excludeFromEcv']
 FIELDS['relations'] = ['relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign']
-FIELDS['morpheme'] = ['morpheme', 'hasComponentOfType', 'hasMorphemeOfType']
+FIELDS['morpheme'] = ['morpheme', 'hasComponentOfType', 'mrpType']
 FIELDS['morpheme_properties'] = ['hasvideo',
                                  'definitionRole', 'definitionContains', 'defspublished',
                                  'createdBy', 'createdAfter', 'createdBefore',
                                  'tags']
+
+GLOSS_CHOICE_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                       'relOriMov',
+                       'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'wordClass',
+                       'semField', 'derivHist', 'namEnt', 'valence',
+                       'definitionRole', 'hasComponentOfType', 'mrpType', 'hasRelation']
+
+GLOSSSENSE_CHOICE_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                            'relOriMov',
+                            'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'wordClass',
+                            'semField', 'derivHist', 'namEnt', 'valence',
+                            'definitionRole', 'hasComponentOfType']
 
 # these are the multiple select fields for Morpheme Search, the field definitionRole is a search form field,
 # the field mrpType appears in Morpheme, the rest are also in Gloss

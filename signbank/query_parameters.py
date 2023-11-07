@@ -279,12 +279,12 @@ def convert_query_parameters_to_filter(query_parameters):
                 continue
         elif get_key in ['hasComponentOfType']:
             # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
-            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value=get_value)
+            morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=get_value)
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_morphdefs_with_correct_role))
-        elif get_key in ['hasMorphemeOfType']:
+        elif get_key in ['mrpType']:
             # Get all Morphemes of the indicated mrpType
-            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType__machine_value=get_value) ]
+            target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=get_value) ]
             # this only works in the query is Sign or Morpheme
             query_list.append(Q(id__in=target_morphemes))
 
@@ -465,10 +465,10 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         elif key in ['hasRelation']:
             query_dict[key] = RELATION_ROLE_CHOICES[query_parameters[key]]
         elif key in ['hasComponentOfType']:
-            choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', machine_value=query_parameters[key])
+            choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', machine_value__in=query_parameters[key])
             query_dict[key] = [choice.name for choice in choices_for_category][0]
-        elif key in ['hasMorphemeOfType']:
-            choices_for_category = FieldChoice.objects.filter(field__iexact='MorphemeType', machine_value=query_parameters[key])
+        elif key in ['mrpType']:
+            choices_for_category = FieldChoice.objects.filter(field__iexact='MorphemeType', machine_value__in=query_parameters[key])
             query_dict[key] = [choice.name for choice in choices_for_category][0]
         elif key in ['morpheme']:
             try:
@@ -528,7 +528,7 @@ def search_fields_from_get(searchform, GET):
 
 
 def queryset_from_get(formclass, searchform, GET, qs):
-
+    # this is used by Morpheme Search
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
             if not get_value:
@@ -626,7 +626,19 @@ def queryset_from_get(formclass, searchform, GET, qs):
 def set_up_fieldchoice_translations(form, fields_with_choices):
     # make the choices language dependent (model translations)
     for (fieldname, field_category) in fields_with_choices.items():
-        if fieldname.startswith('semField'):
+        if fieldname == 'hasRelation':
+            # non-fieldchoice field, allow translations
+            relations = [('homonym', _('Homonym')),
+                         ('synonym', _('Synonym')),
+                         ('variant', _('Variant')),
+                         ('antonym', _('Antonym')),
+                         ('hyponym', _('Hyponym')),
+                         ('hypernym', _('Hypernym')),
+                         ('seealso', _('See Also')),
+                         ('paradigm', _('Handshape Paradigm'))]
+            form.fields[fieldname].choices = relations
+            continue
+        elif fieldname.startswith('semField'):
             field_choices = SemanticField.objects.all().order_by('name')
         elif fieldname.startswith('derivHist'):
             field_choices = DerivationHistory.objects.all().order_by('name')
@@ -671,30 +683,69 @@ def set_up_language_fields(model, view, form):
         form.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
 
 
-def queryset_glosssense_from_get(formclass, searchform, GET, qs):
-    # this function isn't used yet, it is intended for SenseListView get_queryset
+def set_up_signlanguage_dialects_fields(model, view, form):
+
+    selected_datasets = get_selected_datasets_for_user(view.request.user)
+    field_label_signlanguage = gettext("Sign Language")
+    field_label_dialects = gettext("Dialect")
+    form.fields['signLanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage,
+                                                                 widget=Select2,
+                                                                 queryset=SignLanguage.objects.filter(
+                                                                     dataset__in=selected_datasets).distinct())
+
+    form.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects,
+                                                             widget=Select2,
+                                                             queryset=Dialect.objects.filter(
+                                                                 signlanguage__dataset__in=selected_datasets))
+
+
+def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
+    if not searchform:
+        return qs
+    gloss_prefix = 'gloss__' if model in ['GlossSense'] else ''
+    sense_prefix = 'sense__' if model in ['GlossSense'] else ''
+    # this function is used by both GlossListView and SenseListView get_queryset
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
             if not get_value:
                 continue
             # multiple select
             vals = GET.getlist(get_key)
-            field = get_key[:-2]
             if not vals:
                 continue
+            field = get_key[:-2]
+            if field in ['sentenceType']:
+                continue
             if field in ['dialect', 'signlanguage', 'semField', 'derivHist']:
-                query_filter = 'gloss__' + field + '__in'
+                query_filter = gloss_prefix + field + '__in'
                 qs = qs.filter(**{query_filter: get_value})
             elif field in ['definitionRole']:
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
-                qs = qs.filter(gloss__pk__in=pks_for_glosses_with_these_definitions)
+                query_filter = gloss_prefix + 'pk__in'
+                qs = qs.filter(**{query_filter: pks_for_glosses_with_these_definitions})
+            elif field in ['hasComponentOfType']:
+                morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=vals)
+                pks_for_glosses_with_morphdefs = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
+                query_filter = gloss_prefix + 'pk__in'
+                qs = qs.filter(**{query_filter: pks_for_glosses_with_morphdefs})
+            elif field in ['mrpType']:
+                # Get all Morphemes of the indicated mrpType
+                target_morphemes = [m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=get_value)]
+                query_filter = gloss_prefix + 'id__in'
+                qs = qs.filter(**{query_filter: target_morphemes})
+            elif field in ['hasRelation']:
+                relations_with_this_role = Relation.objects.filter(role__in=get_value)
+                pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
+                query_filter = gloss_prefix + 'pk__in'
+                qs = qs.filter(**{query_filter: pks_for_glosses_with_correct_relation})
             elif field in ['tags']:
                 morphemes_with_tag = list(
                     TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
-                qs = qs.filter(gloss__id__in=morphemes_with_tag)
+                query_filter = gloss_prefix + 'id__in'
+                qs = qs.filter(**{query_filter: morphemes_with_tag})
             else:
-                query_filter = 'gloss__' + field + '__machine_value__in'
+                query_filter = gloss_prefix + field + '__machine_value__in'
                 qs = qs.filter(**{query_filter: vals})
         elif get_key not in searchform.fields.keys() \
                 or get_value in ['', '0']:
@@ -707,61 +758,136 @@ def queryset_glosssense_from_get(formclass, searchform, GET, qs):
                 # Remember the pk of all glosses that are referenced in the collection definitions
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in
                                                           definitions_with_this_text]
-                qs = qs.filter(gloss__pk__in=pks_for_glosses_with_these_definitions)
+                query_filter = gloss_prefix + 'pk__in'
+                qs = qs.filter(**{query_filter: pks_for_glosses_with_these_definitions})
+            elif get_key in ['relation']:
+                potential_targets = Gloss.objects.filter(annotationidglosstranslation__text__iregex=get_value)
+                relations = Relation.objects.filter(target__in=potential_targets)
+                potential_pks = [relation.source.pk for relation in relations]
+                query_filter = gloss_prefix + 'pk__in'
+                qs = qs.filter(**{query_filter: potential_pks})
+            elif get_key in ['relationToForeignSign']:
+                relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get_value)
+                potential_pks = [relation.gloss.pk for relation in relations]
+                qs = qs.filter(pk__in=potential_pks)
+                query_filter = gloss_prefix + 'pk__in'
+                qs = qs.filter(**{query_filter: potential_pks})
             elif get_key in ['createdBy']:
+                first_name = gloss_prefix + 'creator__first_name'
+                last_name = gloss_prefix + 'creator__last_name'
                 created_by_search_string = ' '.join(get_key.strip().split())  # remove redundant spaces
                 qs = qs.annotate(
-                    created_by=Concat('gloss__creator__first_name', V(' '), 'gloss__creator__last_name', output_field=CharField())) \
+                    created_by=Concat(first_name, V(' '), last_name, output_field=CharField())) \
                     .filter(created_by__icontains=created_by_search_string)
 
             elif get_key.startswith(formclass.gloss_search_field_prefix):
                 language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(gloss__annotationidglosstranslation__text__iregex=get_value,
-                               gloss__annotationidglosstranslation__language=language)
+                query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__iregex'
+                query_filter_language = gloss_prefix + 'annotationidglosstranslation__language'
+                qs = qs.filter(**{query_filter_annotation_text: get_value,
+                                  query_filter_language: language})
             elif get_key.startswith(formclass.lemma_search_field_prefix):
                 language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(gloss__lemma__lemmaidglosstranslation__text__iregex=get_value,
-                               gloss__lemma__lemmaidglosstranslation__language=language)
+                query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__iregex'
+                query_filter_language = gloss_prefix + 'lemma__lemmaidglosstranslation__language'
+                qs = qs.filter(**{query_filter_lemma_text: get_value,
+                                  query_filter_language: language})
             elif get_key.startswith(formclass.keyword_search_field_prefix):
                 language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char)
-                qs = qs.filter(sense__senseTranslations__translations__translation__text__iregex=get_value)
-                qs = qs.filter(sense__senseTranslations__translations__language__in=language)
-
+                query_filter_sense_text = sense_prefix + 'senseTranslations__translations__translation__text__iregex'
+                query_filter_language = sense_prefix + 'senseTranslations__translations__language__in'
+                qs = qs.filter(**{query_filter_sense_text: get_value})
+                qs = qs.filter(**{query_filter_language: language})
             else:
                 # normal text field
-                query_filter = 'gloss__' + get_key + '__icontains'
+                query_filter = gloss_prefix + get_key + '__icontains'
                 qs = qs.filter(**{query_filter: get_value})
                 continue
 
         elif searchform.fields[get_key].widget.input_type in ['date']:
+            query_filter = gloss_prefix + 'creationDate__range'
             if get_key == 'createdBefore':
                 created_before_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
-                qs = qs.filter(gloss__creationDate__range=(EARLIEST_GLOSS_CREATION_DATE, created_before_date))
+                qs = qs.filter(**{query_filter: (EARLIEST_GLOSS_CREATION_DATE, created_before_date)})
             elif get_key == 'createdAfter':
                 created_after_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
-                qs = qs.filter(gloss__creationDate__range=(created_after_date, DT.datetime.now()))
+                qs = qs.filter(**{query_filter: (created_after_date, DT.datetime.now())})
         elif searchform.fields[get_key].widget.input_type in ['select']:
-            if get_key in ['inWeb', 'repeat', 'altern', 'isNew']:
+            if get_key in ['hasmultiplesenses']:
+                if get_value == '2':
+                    multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
+                        'gloss').annotate(Count('id')).filter(id__count__gt=1)]
+                else:
+                    multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
+                        'gloss').annotate(Count('id')).filter(id__count=1)]
+                query_filter = gloss_prefix + 'id__in'
+                qs = qs.filter(**{query_filter: multiple_senses})
+                continue
+            elif get_key in ['hasothermedia']:
+                pks_for_glosses_with_othermedia = [om.parent_gloss.pk for om in OtherMedia.objects.all()]
+                query_filter = gloss_prefix + 'pk__in'
+                if get_value == '2':  # We only want glosses with other media
+                    qs = qs.filter(**{query_filter: pks_for_glosses_with_othermedia})
+                else:  # We only want glosses without other media
+                    qs = qs.exclude(**{query_filter: pks_for_glosses_with_othermedia})
+                continue
+            elif get_key in ['hasRelationToForeignSign']:
+                pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
+                query_filter = gloss_prefix + 'pk__in'
+                if get_value == '2':  # glosses with a relation to a foreign sign
+                    qs = qs.filter(**{query_filter: pks_for_glosses_with_relations})
+                else:  # glosses without a relation to a foreign sign
+                    qs = qs.exclude(**{query_filter: pks_for_glosses_with_relations})
+                continue
+            elif get_key in ['inWeb', 'repeat', 'altern', 'isNew', 'excludeFromEcv']:
                 val = get_value == '2'
-                key = get_key + '__exact'
+                key = gloss_prefix + get_key + '__exact'
             elif get_key in ['hasvideo']:
                 val = get_value != '2'
-                key = 'glossvideo__isnull'
+                key = gloss_prefix + 'glossvideo__isnull'
             elif get_key in ['defspublished']:
                 val = get_value == '2'
-                key = 'definition__published'
+                key = gloss_prefix + 'definition__published'
             else:
-                print('GlossSense Search input type select fall through: ', get_key, get_value)
+                print('Gloss/GlossSense Search input type select fall through: ', get_key, get_value)
                 continue
 
             kwargs = {key: val}
             qs = qs.filter(**kwargs)
         else:
             # everything should already be taken care of
-            print('GlossSense Search input type fall through: ', get_key, get_value,
+            print('Gloss/GlossSense Search input type fall through: ', get_key, get_value,
                   searchform.fields[get_key].widget.input_type)
 
     return qs
+
+
+def query_parameters_from_get(model, formclass, searchform, GET):
+    query_parameters = dict()
+    # collect non-empty search fields from GET
+    if not searchform:
+        return query_parameters
+    search_form_fields = searchform.fields.keys()
+    for get_key, get_value in GET.items():
+        if get_value in ['', '0']:
+            continue
+        if get_key.endswith('[]'):
+            vals = GET.getlist(get_key)
+            if not vals:
+                continue
+            query_parameters[get_key] = vals
+        elif get_key not in search_form_fields:
+            # skip csrf_token and page
+            continue
+        elif get_key in ['search', 'translation']:
+            from signbank.tools import strip_control_characters
+            val = strip_control_characters(get_value)
+            query_parameters[get_key] = escape(val)
+        else:
+            query_parameters[get_key] = get_value
+
+    return query_parameters
+
