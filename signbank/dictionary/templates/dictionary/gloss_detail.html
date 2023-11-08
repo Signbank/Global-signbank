@@ -1310,7 +1310,7 @@ option:not(:checked) {
    <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#morphologydefinition' href='#morphology'>{% trans "Morphology" %}</a>
+                <a class="btn-block" data-toggle='collapse' data-parent='#morphologydefinition' href='#morphology'>{% trans "Morphology" %}</a>
             </div>
         </div>
         <div id='morphology' class='collapse'>
@@ -1571,12 +1571,13 @@ option:not(:checked) {
 	<div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title' id='phonology_heading'>
-                <a data-toggle='collapse' href='#phonology'>{% trans "Phonology" %}</a><span id='phonology_message'></span>
-                {% if handedness and domhndsh %}
-                <div class="pull-right">
-                <span id="hands-icon"><img id='phono-hands' src='{{STATIC_URL}}images/raised_hand_with_fingers_splayed.png' style="width:18px; height:auto; margin: 0px;"></span>
-                </div>
-                {% endif %}
+                <a class="btn-block" data-toggle='collapse' href='#phonology'>{% trans "Phonology" %}
+                    {% if handedness and domhndsh %}
+                    <div class="pull-right">
+                    <span id="hands-icon"><img id='phono-hands' src='{{STATIC_URL}}images/raised_hand_with_fingers_splayed.png' style="width:18px; height:auto; margin: 0px;"></span>
+                    </div>
+                    {% endif %}
+                </a><span id='phonology_message'></span>
             </div>
         </div>
         <div id='phonology' class='panel-collapse collapse'>
@@ -1725,7 +1726,7 @@ option:not(:checked) {
 
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' style="color:red" href='#identicalphonology'>{% trans "Identical phonology but not marked as homonym" %}</a>
+                <a class="btn-block" data-toggle='collapse' style="color:red" href='#identicalphonology'>{% trans "Identical phonology but not marked as homonym" %}</a>
             </div>
         </div>
         <div id='identicalphonology' class='panel-collapse collapse'>
@@ -1745,7 +1746,7 @@ option:not(:checked) {
 
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' style="color:red" href='#differentphonology'>{% trans "Marked as homonym but different phonology" %}</a>
+                <a class="btn-block" data-toggle='collapse' style="color:red" href='#differentphonology'>{% trans "Marked as homonym but different phonology" %}</a>
             </div>
         </div>
         <div id='differentphonology' class='panel-collapse collapse'>
@@ -1763,7 +1764,7 @@ option:not(:checked) {
 <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' href='#minimalpairs'>{% trans "Minimal Pairs" %}</a>
+                <a class="btn-block" data-toggle='collapse' href='#minimalpairs'>{% trans "Minimal Pairs" %}</a>
             </div>
         </div>
         <div id='minimalpairs' class='panel-collapse collapse'>
@@ -1785,12 +1786,13 @@ option:not(:checked) {
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' href='#semantics'>{% trans "Semantics" %}</a>
-                {% if SemanticFieldDefined %}
-                <div class="pull-right">
-                <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png' style="width:25px; height:25px; margin: 0px;"></span>
-                </div>
-                {% endif %}
+                <a class="btn-block" data-toggle='collapse' href='#semantics'>{% trans "Semantics" %}
+                    {% if SemanticFieldDefined %}
+                    <div class="pull-right">
+                    <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png' style="width:25px; height:25px; margin: 0px;"></span>
+                    </div>
+                    {% endif %}
+                </a>
             </div>
         </div>
         <div id='semantics' class='panel-collapse collapse'>
@@ -1839,12 +1841,13 @@ option:not(:checked) {
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' href='#relations'>{% trans "Relations to Other Signs" %}</a>
-                {% if gloss.relations_count %}
-                <div class="pull-right">
-                <span id="relations-icon"><img id='relations-arrows' src='{{STATIC_URL}}images/leftwards_arrow_over_rightwards_arrow.png' style="width:16px; height:auto; margin: 0px;"></span>
-                </div>
-                {% endif %}
+                <a class="btn-block" data-toggle='collapse' href='#relations'>{% trans "Relations to Other Signs" %}
+                    {% if gloss.relations_count %}
+                    <div class="pull-right">
+                    <span id="relations-icon"><img id='relations-arrows' src='{{STATIC_URL}}images/leftwards_arrow_over_rightwards_arrow.png' style="width:16px; height:auto; margin: 0px;"></span>
+                    </div>
+                    {% endif %}
+                </a>
             </div>
         </div>
         <div id='relations' class='collapse'>
@@ -1925,13 +1928,14 @@ option:not(:checked) {
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' href='#relationsforeign'>{% trans "Relations to Foreign Signs" %}</a>
-                {% if gloss.relationtoforeignsign_set.all %}
-                <div class="pull-right">
-                <span id="forrelations-icon"><img id='forrelations-arrows'
-                                                  src='{{STATIC_URL}}images/left_right_triangleheaded_arrow.png' style="width:30px; height:auto; margin: 0px;"></span>
-                </div>
-                {% endif %}
+                <a class="btn-block" data-toggle='collapse' href='#relationsforeign'>{% trans "Relations to Foreign Signs" %}
+                    {% if gloss.relationtoforeignsign_set.all %}
+                    <div class="pull-right">
+                    <span id="forrelations-icon"><img id='forrelations-arrows'
+                                                      src='{{STATIC_URL}}images/left_right_triangleheaded_arrow.png' style="width:30px; height:auto; margin: 0px;"></span>
+                    </div>
+                    {% endif %}
+                </a>
             </div>
         </div>
         <div id='relationsforeign' class='collapse'>
@@ -2012,7 +2016,7 @@ option:not(:checked) {
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' href='#pubStatus'>{% trans "Publication Status" %}</a>
+                <a class="btn-block" data-toggle='collapse' href='#pubStatus'>{% trans "Publication Status" %}</a>
             </div>
         </div>
 
@@ -2050,12 +2054,13 @@ option:not(:checked) {
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' href='#definitions'>{% trans "Notes" %}</a>
-                {% if notes_groupedby_role.items %}
-                <div class="pull-right">
-                <span id="document-icon"><img id='document' src='{{STATIC_URL}}images/document_with_text_and_picture.png' style="width:30px; height:auto; margin: 0px;"></span>
-                </div>
-                {% endif %}
+                <a class="btn-block" data-toggle='collapse' href='#definitions'>{% trans "Notes" %}
+                    {% if notes_groupedby_role.items %}
+                    <div class="pull-right">
+                    <span id="document-icon"><img id='document' src='{{STATIC_URL}}images/document_with_text_and_picture.png' style="width:30px; height:auto; margin: 0px;"></span>
+                    </div>
+                    {% endif %}
+                </a>
             </div>
         </div>
         <div id='definitions' class='collapse'>
@@ -2151,12 +2156,13 @@ option:not(:checked) {
     <div class="panel panel-default">
         <div class='panel-heading'>
             <div class='panel-title'>
-                <a data-toggle='collapse' href='#othermedia'>{% trans "Other Media" %}</a>
-                {% if other_media %}
-                <div class="pull-right">
-                <span id="camera-icon"><img id='camera' src='{{STATIC_URL}}images/camera.png' style="width:25px; height:25px; margin: 0px;"></span>
-                </div>
-                {% endif %}
+                <a class="btn-block" data-toggle='collapse' href='#othermedia'>{% trans "Other Media" %}
+                    {% if other_media %}
+                    <div class="pull-right">
+                    <span id="camera-icon"><img id='camera' src='{{STATIC_URL}}images/camera.png' style="width:25px; height:25px; margin: 0px;"></span>
+                    </div>
+                    {% endif %}
+                </a>
             </div>
         </div>
         <div id='othermedia' class='collapse'>
