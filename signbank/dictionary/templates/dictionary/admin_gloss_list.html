@@ -210,21 +210,24 @@ $(document).ready(function() {
         };
      }
 
+     if (query_parameters_keys.includes('morpheme')) {
+        var query_initial = query_parameters_dict['morpheme'];
+        console.log('morpheme '+query_initial+' '+morpheme_idgloss);
+        // special case for morpheme, the query parameter is its ID, stored in a hidden field
+        var morpheme_id = '#morpheme_id';
+        $(morpheme_id).attr('value', query_initial);
+        // the context variable morpheme_idgloss is shown to the user
+        var this_id = '#morphemeidgloss';
+        $(this_id).val(morpheme_idgloss);
+     }
+
      // initialize non-multiple select, not language-based query fields
      for (var i = 0; i < other_parameters_keys.length; i++) {
         var this_var = other_parameters_keys[i];
         if (query_parameters_keys.includes(this_var)) {
             var this_id = '#id_' + other_parameters_keys[i];
             var query_initial = query_parameters_dict[this_var];
-            if (this_var == 'morpheme') {
-                // special case for morpheme, the query parameter is its ID, stored in a hidden field
-                var $hiddeninput = $("input[name='morpheme']");
-                $hiddeninput.val(query_initial);
-                // the context variable morpheme_idgloss is shown to the user
-                $(this_id).attr('value', morpheme_idgloss);
-            } else {
-                $(this_id).val(query_initial);
-            };
+            $(this_id).val(query_initial);
         };
     }
 
@@ -354,6 +357,7 @@ function clearForm() {
       $('input').each(function() {
         var this_field = $(this).attr('name');
         if (this_field == undefined) { return; };
+        if (this_field == 'morpheme') { $(this).attr('value', ""); return; };
         var this_type = $(this).attr('type');
         if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio') { return; };
         if (this_type == 'date') {
@@ -362,7 +366,7 @@ function clearForm() {
             $(this).val('');
         };
       });
-
+      $('#morphemeidgloss').val('');
       $('select').each(function() {
         var this_field = $(this).attr('name');
         if (this_field == undefined) { return; };
@@ -717,8 +721,11 @@ function do_toggle_language(el) {
                                 <tr>
                                     <td style="padding-left:30px;"><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
                                     <td style="width:600px;">
-                                        <input class='form-control morphtypeahead' id="id_morpheme" placeholder='{% trans "Morpheme Gloss" %}' value="{{searchform.morpheme.value|default:''}}"/>
-                                        <input type="hidden" name='morpheme' value=""/>
+                                        <input class='form-control morphtypeahead'
+                                               id="morphemeidgloss"
+                                               placeholder='{% trans "Morpheme Gloss" %}'
+                                               value=""/>
+                                        <input type="hidden" name='morpheme' id='morpheme_id' value=""/>
                                     </td>
                                 </tr>
                                 <tr><td style="padding-left:30px;"><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td>

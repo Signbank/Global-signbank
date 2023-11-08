@@ -206,8 +206,8 @@ def get_morpheme_idgloss(query_parameters):
         return ''
 
     try:
-        return Morpheme.objects.get(pk=query_parameters['morpheme']).idgloss
-    except ObjectDoesNotExist:
+        return Morpheme.objects.get(pk=int(query_parameters['morpheme'])).idgloss
+    except (ObjectDoesNotExist, ValueError):
         return ''
 
 

@@ -579,9 +579,9 @@ function do_toggle_language(el) {
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
                                     {{search_field.label}}
                                 </label>
-                                <input id='glosssearch_{{ dataset_lang.language_code_2char }}'
+                                <input id='glosssearch_{{dataset_lang.language_code_2char}}'
                                        type='text'
-                                       name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control'>
+                                       name='glosssearch_{{dataset_lang.language_code_2char}}' class='form-control'>
                                 </div>
                             </td>
                             {% endwith %}
@@ -592,7 +592,8 @@ function do_toggle_language(el) {
                                 <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
                                     {{lemma_field.label}}
                                 </label>
-                                <input name='lemma_{{ dataset_lang.language_code_2char }}'
+                                <input name='lemma_{{dataset_lang.language_code_2char}}'
+                                       id='lemma_{{dataset_lang.language_code_2char}}'
                                        type='text'
                                        class='form-control'></div>
                             </td>
@@ -603,6 +604,7 @@ function do_toggle_language(el) {
                                 <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>
                                     {{keyword_field.label}}</label>
                                 <input name='keyword_{{dataset_lang.language_code_2char}}'
+                                       id='keyword_{{dataset_lang.language_code_2char}}'
                                        type='text'
                                        class='form-control'></div>
                             </td>

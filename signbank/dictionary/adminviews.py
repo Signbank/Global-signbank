@@ -965,7 +965,6 @@ class SenseListView(ListView):
             qs = qs.order_by('gloss__id', 'order')
             return qs
 
-        # No filters or 'show_all' specified? show nothing
         else:
             qs = GlossSense.objects.none()
 
@@ -974,18 +973,11 @@ class SenseListView(ListView):
         else:
             qs = qs.filter(gloss__inWeb__exact=True)
 
-        # If we wanted to get everything, we're done now
         if show_all:
             return qs
 
-        # this is a temporary query_parameters variable
-        # it is saved to self.query_parameters after the parameters are processed
-        query_parameters = dict()
-
-        # If not, we will go trhough a long list of filters
         if 'search' in get and get['search']:
             val = get['search']
-            query_parameters['search'] = val
             from signbank.tools import strip_control_characters
             val = strip_control_characters(val)
             query = Q(gloss__annotationidglosstranslation__text__iregex=val)
@@ -995,10 +987,14 @@ class SenseListView(ListView):
 
             qs = qs.filter(query)
 
+        qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
+        query_parameters = query_parameters_from_get('GlossSense', GlossSearchForm, self.search_form, get)
+
+        # this is a temporary query_parameters variable
+        # it is saved to self.query_parameters after the parameters are processed
+
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
-
-        qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
 
         if 'sentenceType[]' in get:
             vals = get.getlist('sentenceType[]')

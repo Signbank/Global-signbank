@@ -251,14 +251,8 @@ def convert_query_parameters_to_filter(query_parameters):
             mapped_key = get_key[:-2]
             q_filter = mapped_key + '__machine_value__in'
             query_list.append(Q(** {q_filter: get_value}))
-        elif get_key in ['hasRelation']:
-            #Find all relations with this role
-            if get_value == 'all':
-                relations_with_this_role = Relation.objects.all()
-            else:
-                relations_with_this_role = Relation.objects.filter(role__exact=get_value)
-
-            #Remember the pk of all glosses that take part in the collected relations
+        elif get_key in ['hasRelation[]']:
+            relations_with_this_role = Relation.objects.filter(role__in=get_value)
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_correct_relation))
         elif get_key in ['relation']:
@@ -390,19 +384,18 @@ def pretty_print_query_values(dataset_languages,query_parameters):
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
-    NEUTRALBOOLEANCHOICES = { '0': _('Neutral'), '1': _('Neutral'), '2': _('Yes'), '3': _('No') }
-    UNKNOWNBOOLEANCHOICES = { '0': _('---------'), '2': _('True'), '3': _('False') }
-    NULLBOOLEANCHOICES = { '0': _('---------'), '2': _('True'), '3': _('False') }
-    YESNOCHOICES = { 'unspecified': '---------', 'yes': _('Yes'), 'no': _('No'), '2': _('Yes'), '3': _('No') }
-    RELATION_ROLE_CHOICES = {'all': _('All'),
-                             'homonym': _('Homonym'),
+    NEUTRALBOOLEANCHOICES = {'0': _('Neutral'), '1': _('Neutral'), '2': _('Yes'), '3': _('No')}
+    UNKNOWNBOOLEANCHOICES = {'0': _('-'), '2': _('True'), '3': _('False')}
+    NULLBOOLEANCHOICES = {'0': _('-'), '2': _('True'), '3': _('False')}
+    YESNOCHOICES = {'0': '-', 'yes': _('Yes'), 'no': _('No'), '2': _('Yes'), '3': _('No')}
+    RELATION_ROLE_CHOICES = {'homonym': _('Homonym'),
                              'synonym': _('Synonym'),
                              'variant': _('Variant'),
                              'antonym': _('Antonym'),
                              'hyponym': _('Hyponym'),
                              'hypernym': _('Hypernym'),
                              'seealso': _('See Also'),
-                             'paradigm': _('Handshape Paradigm') }
+                             'paradigm': _('Handshape Paradigm')}
     SEARCH_TYPE_CHOICES = {
         'sign': _("Search Sign"),
         'sense': _("Search Senses"),
@@ -432,6 +425,10 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         elif key == 'tags[]':
             query_dict[key] = query_parameters[key]
         elif key[-2:] == '[]':
+            if key in ['hasRelation[]']:
+                choices_for_category = [RELATION_ROLE_CHOICES[val] for val in query_parameters[key]]
+                query_dict[key] = choices_for_category
+                continue
             # in the Gloss Search Form, multiple choice fields have a list of values
             # these are all displayed in the Query Parameters display (as non-selectable buttons in the template)
             if key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
@@ -444,7 +441,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                 field = key[:-2]
                 field_category = Gloss.get_field(field).field_choice_category
                 choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
-            query_dict[key] = [ choice.name for choice in choices_for_category ]
+            query_dict[key] = [choice.name for choice in choices_for_category]
         elif key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):
             continue
         elif key in ['weakdrop', 'weakprop']:
@@ -730,11 +727,11 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_morphdefs})
             elif field in ['mrpType']:
-                target_morphemes = [m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=get_value)]
+                target_morphemes = [m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=vals)]
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: target_morphemes})
             elif field in ['hasRelation']:
-                relations_with_this_role = Relation.objects.filter(role__in=get_value)
+                relations_with_this_role = Relation.objects.filter(role__in=vals)
                 pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_correct_relation})
