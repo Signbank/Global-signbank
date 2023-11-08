@@ -700,11 +700,11 @@ def set_up_signlanguage_dialects_fields(model, view, form):
 
 
 def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
+    # this function is used by both GlossListView and SenseListView get_queryset
+    # the gloss_prefix is used because SenseListView queries over GlossSense
     if not searchform:
         return qs
     gloss_prefix = 'gloss__' if model in ['GlossSense'] else ''
-    sense_prefix = 'sense__' if model in ['GlossSense'] else ''
-    # this function is used by both GlossListView and SenseListView get_queryset
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
             if not get_value:
@@ -730,7 +730,6 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_morphdefs})
             elif field in ['mrpType']:
-                # Get all Morphemes of the indicated mrpType
                 target_morphemes = [m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=get_value)]
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: target_morphemes})
@@ -751,11 +750,24 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 or get_value in ['', '0']:
             continue
         elif searchform.fields[get_key].widget.input_type in ['text']:
-            if get_key in ['search', 'translation', 'sortOrder']:
+            if get_key in ['search', 'sortOrder']:
                 continue
+            elif get_key in ['translation']:
+                query_filter = gloss_prefix + 'senses__senseTranslations__translations__translation__text__iregex'
+                # this one needs the distinct for some reason
+                qs = qs.filter(**{query_filter: get_value}).distinct()
+            elif get_key in ['morpheme']:
+                # Filter all glosses that contain this morpheme in their simultaneous morphology
+                try:
+                    selected_morpheme = Morpheme.objects.get(pk=int(get_value))
+                except (ObjectDoesNotExist, ValueError):
+                    continue
+                potential_pks = [appears.parent_gloss.pk for appears
+                                 in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
+                query_filter = gloss_prefix + 'pk__in'
+                qs = qs.filter(**{query_filter: potential_pks})
             elif get_key in ['definitionContains']:
                 definitions_with_this_text = Definition.objects.filter(text__icontains=get_value)
-                # Remember the pk of all glosses that are referenced in the collection definitions
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in
                                                           definitions_with_this_text]
                 query_filter = gloss_prefix + 'pk__in'
@@ -779,7 +791,6 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 qs = qs.annotate(
                     created_by=Concat(first_name, V(' '), last_name, output_field=CharField())) \
                     .filter(created_by__icontains=created_by_search_string)
-
             elif get_key.startswith(formclass.gloss_search_field_prefix):
                 language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
@@ -796,11 +807,12 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                                   query_filter_language: language})
             elif get_key.startswith(formclass.keyword_search_field_prefix):
                 language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char)
-                query_filter_sense_text = sense_prefix + 'senseTranslations__translations__translation__text__iregex'
-                query_filter_language = sense_prefix + 'senseTranslations__translations__language__in'
-                qs = qs.filter(**{query_filter_sense_text: get_value})
-                qs = qs.filter(**{query_filter_language: language})
+                language = Language.objects.filter(language_code_2char=language_code_2char).first()
+                query_filter_sense_text = gloss_prefix + 'translation__translation__text__iregex'
+                query_filter_language = gloss_prefix + 'translation__language'
+                # for some reason, distinct is needed here
+                qs = qs.filter(**{query_filter_sense_text: get_value,
+                                  query_filter_language: language}).distinct()
             else:
                 # normal text field
                 query_filter = gloss_prefix + get_key + '__icontains'
@@ -851,6 +863,10 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
             elif get_key in ['defspublished']:
                 val = get_value == '2'
                 key = gloss_prefix + 'definition__published'
+            elif get_key in ['weakdrop', 'weakprop',
+                             'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+                key = gloss_prefix + get_key + '__exact'
+                val = {'0': '', '1': None, '2': True, '3': False}[get_value]
             else:
                 print('Gloss/GlossSense Search input type select fall through: ', get_key, get_value)
                 continue

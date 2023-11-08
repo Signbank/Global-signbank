@@ -213,7 +213,7 @@ class GlossListView(ListView):
 
     model = Gloss
     paginate_by = 100
-    only_export_ecv = False #Used to call the 'export ecv' functionality of this view without the need for an extra GET parameter
+    only_export_ecv = False
     search_type = 'sign'
     view_type = 'gloss_list'
     web_search = False
@@ -320,7 +320,6 @@ class GlossListView(ListView):
 
         return context
 
-
     def get_paginate_by(self, queryset):
         """
         Paginate by specified value in querystring, or use default class property value.
@@ -349,7 +348,6 @@ class GlossListView(ListView):
                 paginate_by = self.paginate_by
 
         return paginate_by
-
 
     def render_to_response(self, context):
         # Look for a 'format=json' GET argument
@@ -760,39 +758,8 @@ class GlossListView(ListView):
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
 
-        qs = queryset_glosssense_from_get(Gloss, GlossSearchForm, self.search_form, get, qs)
-        query_parameters = query_parameters_from_get(Gloss, GlossSearchForm, self.search_form, get)
-
-        # # Evaluate all gloss/language search fields
-        # for get_key, get_value in get.items():
-
-        #     elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
-        #         query_parameters[get_key] = get_value
-        #         language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
-        #         language = Language.objects.filter(language_code_2char=language_code_2char).first()
-        #         qs = qs.filter(translation__translation__text__iregex=get_value,
-        #                        translation__language=language)
-        #
-        # if 'translation' in get and get['translation'] != '':
-        #     val = get['translation']
-        #     query_parameters['translation'] = get['translation']
-        #     qs = qs.filter(senses__senseTranslations__translations__translation__text__iregex=val)
-        #
-
-# if 'morpheme' in get and get['morpheme'] != '':
-#     query_parameters['morpheme'] = get['morpheme']
-#
-#     # morpheme is an integer
-#     input_morpheme = get['morpheme']
-#     # Filter all glosses that contain this morpheme in their simultaneous morphology
-#     try:
-#         selected_morpheme = Morpheme.objects.get(pk=get['morpheme'])
-# potential_pks = [appears.parent_gloss.pk for appears in SimultaneousMorphologyDefinition.objects.filter(morpheme=selected_morpheme)]
-#         qs = qs.filter(pk__in=potential_pks)
-#     except ObjectDoesNotExist:
-#         # This error should not occur, the input search form requires the selection of a morpheme from a list
-#         # If the user attempts to input a string, it is ignored by the gloss list search form
-#         print("Morpheme not found: ", str(input_morpheme))
+        qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
+        query_parameters = query_parameters_from_get('Gloss', GlossSearchForm, self.search_form, get)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -1031,7 +998,7 @@ class SenseListView(ListView):
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
 
-        qs = queryset_glosssense_from_get(GlossSense, GlossSearchForm, self.search_form, get, qs)
+        qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
 
         if 'sentenceType[]' in get:
             vals = get.getlist('sentenceType[]')
