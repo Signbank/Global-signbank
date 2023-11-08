@@ -201,6 +201,14 @@ $(document).ready(function() {
 
      $('#id_sentenceType').val(null).trigger('change');
 
+     if (query_parameters_keys.includes('sentenceType[]')) {
+         var query_initial = query_parameters_dict['sentenceType[]'];
+         $('#id_sentenceType').val(query_initial);
+         $('#id_sentenceType').trigger('change');
+     } else {
+         $('#id_sentenceType').val(null).trigger('change');
+     };
+
      // initialize query parameters in multiple select fields
      for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = '#id_' + multiple_select_fields[i];
@@ -311,8 +319,8 @@ function clearForm() {
         var this_field = $(this).attr('name');
         if (this_field == undefined) { return; };
         var this_type = $(this).attr('type');
-        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio') { return; };
-        if (this_type == 'date') {
+        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'reset') { return; };
+        if (this_type == 'date' || this_type == 'text') {
             $(this).attr('value', "");
         } else {
             $(this).val('');
@@ -763,6 +771,7 @@ function do_toggle_language(el) {
         <input class='btn btn-default' type='reset' onclick="clearForm();"
                value='{% trans "Reset" %}'>
     </div>
+</form>
 
 
     <div>
@@ -775,7 +784,6 @@ function do_toggle_language(el) {
         {% endfor %}
         {% endif %}
     </div>
-</form>
 
     <div></div>
 

@@ -1015,7 +1015,8 @@ class SenseListView(ListView):
         if 'sentenceContains' in get and get['sentenceContains'] not in ['', '0']:
             query_parameters['sentenceContains'] = get['sentenceContains']
             sentence_translations_with_this_text = ExampleSentenceTranslation.objects.filter(text__icontains=get['sentenceContains'])
-            qs = qs.filter(sense__exampleSentences__in=sentence_translations_with_this_text)
+            sentences_with_this_text = [est.examplesentence for est in sentence_translations_with_this_text]
+            qs = qs.filter(sense__exampleSentences__in=sentences_with_this_text).distinct()
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
