@@ -497,7 +497,13 @@ def pretty_print_query_values(dataset_languages,query_parameters):
 
 
 def search_fields_from_get(searchform, GET):
-    # collect non-empty search fields from GET into dictionary
+    """
+    Collect non-empty search fields from GET into dictionary
+    Called from get_context_data
+    :form: MorphemeSearchForm
+    :view: MorphemeListView
+    :model: Morpheme
+    """
     search_keys = []
     search_fields_to_populate = dict()
     if not searchform:
@@ -526,7 +532,13 @@ def search_fields_from_get(searchform, GET):
 
 
 def queryset_from_get(formclass, searchform, GET, qs):
-    # this is used by Morpheme Search
+    """
+    Function used by MorphemeListView
+    Called from get_queryset
+    :form: MorphemeSearchForm
+    :view: MorphemeListView
+    :model: Morpheme
+    """
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
             if not get_value:
@@ -622,7 +634,13 @@ def queryset_from_get(formclass, searchform, GET, qs):
 
 
 def set_up_fieldchoice_translations(form, fields_with_choices):
-    # make the choices language dependent (model translations)
+    """
+    Set up field choice choices in the form.
+    This is done dynamically to make the choices language dependent (model translations).
+    Called from __init__ method of the view
+    :form: GlossSearchForm, MorphemeSearchForm, SentenceForm
+    :view: GlossListView, MorphemeListView, SenseListView
+    """
     for (fieldname, field_category) in fields_with_choices.items():
         if fieldname not in form.fields.keys():
             continue
@@ -651,7 +669,15 @@ def set_up_fieldchoice_translations(form, fields_with_choices):
 
 
 def set_up_language_fields(model, view, form):
-
+    """
+    Set up the language fields of the form.
+    This is done dynamically since they depend on the selected datasets.
+    Called from get_context_data method of the view
+    If only one translation language is used, the name of the language is omitted from the field label.
+    :model: Gloss, Morpheme, GlossSense
+    :form: GlossSearchForm, MorphemeSearchForm
+    :view: GlossListView, MorphemeListView, SenseListView
+    """
     selected_datasets = get_selected_datasets_for_user(view.request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
 
@@ -683,8 +709,14 @@ def set_up_language_fields(model, view, form):
         form.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
 
 
-def set_up_signlanguage_dialects_fields(model, view, form):
-
+def set_up_signlanguage_dialects_fields(view, form):
+    """
+    Set up the sign language and dialect fields of the form.
+    This is done dynamically since they depend on the selected datasets.
+    Called from get_context_data method of the view
+    :form: GlossSearchForm
+    :view: GlossListView, SenseListView
+    """
     selected_datasets = get_selected_datasets_for_user(view.request.user)
     field_label_signlanguage = gettext("Sign Language")
     field_label_dialects = gettext("Dialect")
@@ -700,8 +732,14 @@ def set_up_signlanguage_dialects_fields(model, view, form):
 
 
 def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
-    # this function is used by both GlossListView and SenseListView get_queryset
-    # the gloss_prefix is used because SenseListView queries over GlossSense
+    """
+    Function used by both GlossListView and SenseListView
+    Called from get_queryset
+    The gloss_prefix is used for SenseListView to access the gloss since it queries over GlossSense
+    :form: GlossSearchForm
+    :view: GlossListView, SenseListView
+    :model: Gloss, GlossSense
+    """
     if not searchform:
         return qs
     gloss_prefix = 'gloss__' if model in ['GlossSense'] else ''
@@ -791,21 +829,24 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 qs = qs.annotate(
                     created_by=Concat(first_name, V(' '), last_name, output_field=CharField())) \
                     .filter(created_by__icontains=created_by_search_string)
-            elif get_key.startswith(formclass.gloss_search_field_prefix):
+            elif hasattr(searchform, 'gloss_search_field_prefix') and \
+                    get_key.startswith(formclass.gloss_search_field_prefix):
                 language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__iregex'
                 query_filter_language = gloss_prefix + 'annotationidglosstranslation__language'
                 qs = qs.filter(**{query_filter_annotation_text: get_value,
                                   query_filter_language: language})
-            elif get_key.startswith(formclass.lemma_search_field_prefix):
+            elif hasattr(searchform, 'lemma_search_field_prefix') and \
+                    get_key.startswith(formclass.lemma_search_field_prefix):
                 language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__iregex'
                 query_filter_language = gloss_prefix + 'lemma__lemmaidglosstranslation__language'
                 qs = qs.filter(**{query_filter_lemma_text: get_value,
                                   query_filter_language: language})
-            elif get_key.startswith(formclass.keyword_search_field_prefix):
+            elif hasattr(searchform, 'keyword_search_field_prefix') and \
+                    get_key.startswith(formclass.keyword_search_field_prefix):
                 language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
                 query_filter_sense_text = gloss_prefix + 'translation__translation__text__iregex'
@@ -883,6 +924,13 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
 
 def queryset_sentences_from_get(searchform, GET, qs):
     # this function is used by SenseListView get_queryset
+    """
+    Function used by SenseListView
+    Called from get_queryset
+    :form: SentenceForm
+    :view: SenseListView
+    :model: GlossSense
+    """
     if not searchform:
         return qs
     for get_key, get_value in GET.items():
@@ -917,7 +965,13 @@ def queryset_sentences_from_get(searchform, GET, qs):
 
 
 def query_parameters_from_get(searchform, GET, query_parameters):
-    # collect non-empty search fields from GET
+    """
+    Function to collect non-empty search fields from GET
+    Called from get_queryset
+    :form: GlossSearchForm, SentenceForm
+    :view: GlossListView, SenseListView
+    :model: Gloss, GlossSense
+    """
     if not searchform:
         return query_parameters
     search_form_fields = searchform.fields.keys()

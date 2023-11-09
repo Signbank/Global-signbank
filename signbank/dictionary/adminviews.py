@@ -238,7 +238,7 @@ class GlossListView(ListView):
         context = super(GlossListView, self).get_context_data(**kwargs)
 
         set_up_language_fields(Gloss, self, self.search_form)
-        set_up_signlanguage_dialects_fields(Gloss, self, self.search_form)
+        set_up_signlanguage_dialects_fields(self, self.search_form)
 
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
         self.queryset_language_codes = context['queryset_language_codes']
@@ -809,7 +809,7 @@ class SenseListView(ListView):
         context = super(SenseListView, self).get_context_data(**kwargs)
 
         set_up_language_fields(GlossSense, self, self.search_form)
-        set_up_signlanguage_dialects_fields(GlossSense, self, self.search_form)
+        set_up_signlanguage_dialects_fields(self, self.search_form)
 
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
 
