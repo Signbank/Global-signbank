@@ -1353,7 +1353,8 @@ class SearchHistoryForm(forms.ModelForm):
 
 class SentenceForm(forms.ModelForm):
 
-    sentenceType = forms.ChoiceField(label=_("Type"), choices=[('0', '-')])
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
     negative = forms.ChoiceField(label=_('Negative'), choices=[('0', '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     sentenceContains = forms.CharField(label=_('Sentence Contains'),
@@ -1370,12 +1371,7 @@ class SentenceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(SentenceForm, self).__init__(*args, **kwargs)
 
-        field_choices = FieldChoice.objects.filter(field__iexact='sentenceType')
-
-        translated_choices = choicelist_queryset_to_translated_dict(field_choices,
-                                                                    ordered=False, id_prefix='',
-                                                                    shortlist=True)
-        self.fields['sentenceType'] = forms.TypedMultipleChoiceField(label=_('Type'),
-                                                                     choices=translated_choices,
-                                                                     required=False, widget=Select2)
+        self.fields['sentenceType'] = forms.ChoiceField(label=_('Type'),
+                                                        choices=[(0, '-')],
+                                                        required=False, widget=Select2)
         self.fields['negative'].choices = [('0', '-'), ('yes', _('Yes')), ('no', _('No'))]

@@ -65,7 +65,7 @@ from signbank.dictionary.consistency_senses import consistent_senses, check_cons
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get, \
     set_up_fieldchoice_translations, set_up_language_fields, set_up_signlanguage_dialects_fields, \
-    queryset_glosssense_from_get, query_parameters_from_get
+    queryset_glosssense_from_get, query_parameters_from_get, queryset_sentences_from_get
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -611,7 +611,7 @@ class GlossListView(ListView):
             notes_display = ", ".join(notes_list)
             row.append(notes_display)
 
-            #Make it safe for weird chars
+            # Make it safe for weird chars
             safe_row = []
             for column in row:
                 try:
@@ -732,7 +732,7 @@ class GlossListView(ListView):
         else:
             qs = qs.filter(inWeb__exact=True)
 
-        #If we wanted to get everything, we're done now
+        # If we wanted to get everything, we're done now
         if show_all:
             # sort the results
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
@@ -742,7 +742,7 @@ class GlossListView(ListView):
         # it is saved to self.query_parameters after the parameters are processed
         query_parameters = dict()
 
-        #If not, we will go trhough a long list of filters
+        # If not, we will go trhough a long list of filters
         if 'search' in get and get['search'] != '':
             val = get['search']
             query_parameters['search'] = val
@@ -759,7 +759,7 @@ class GlossListView(ListView):
             query_parameters['search_type'] = self.search_type
 
         qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
-        query_parameters = query_parameters_from_get('Gloss', GlossSearchForm, self.search_form, get)
+        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -795,11 +795,14 @@ class SenseListView(ListView):
     search_form_data = QueryDict(mutable=True)
     template_name = 'dictionary/admin_senses_list.html'
     search_form = GlossSearchForm()
+    sentence_search_form = SentenceForm()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         fields_with_choices = fields_to_fieldcategory_dict(settings.GLOSSSENSE_CHOICE_FIELDS)
         set_up_fieldchoice_translations(self.search_form, fields_with_choices)
+        sentence_fields_with_choices = {'sentenceType': 'SentenceType'}
+        set_up_fieldchoice_translations(self.sentence_search_form, sentence_fields_with_choices)
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -810,7 +813,8 @@ class SenseListView(ListView):
 
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
 
-        context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs, context)
+        context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs,
+                                                         context, self.sentence_search_form)
 
         context['sensecount'] = Sense.objects.filter(glosssense__gloss__lemma__dataset__in=context['selected_datasets']).count()
 
@@ -988,35 +992,16 @@ class SenseListView(ListView):
             qs = qs.filter(query)
 
         qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
-        query_parameters = query_parameters_from_get('GlossSense', GlossSearchForm, self.search_form, get)
-
         # this is a temporary query_parameters variable
+        query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
+        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
 
-        if 'sentenceType[]' in get:
-            vals = get.getlist('sentenceType[]')
-            if vals:
-                query_parameters['sentenceType[]'] = vals
-                sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=vals)
-                qs = qs.filter(sense__exampleSentences__in=sentences_with_this_type)
-
-        if 'negative' in get and get['negative'] not in ['0']:
-            query_parameters['negative'] = get['negative']
-            sentences_with_negative_type = ExampleSentence.objects.filter(negative__exact=True)
-            sentences_with_other_type = ExampleSentence.objects.filter(negative__exact=False)
-            if get['negative'] == 'yes':  # only senses with negative sentences
-                qs = qs.filter(sense__exampleSentences__in=sentences_with_negative_type)
-            else:  # only senses sentences that are not negative
-                qs = qs.filter(sense__exampleSentences__in=sentences_with_other_type)
-
-        if 'sentenceContains' in get and get['sentenceContains'] not in ['', '0']:
-            query_parameters['sentenceContains'] = get['sentenceContains']
-            sentence_translations_with_this_text = ExampleSentenceTranslation.objects.filter(text__icontains=get['sentenceContains'])
-            sentences_with_this_text = [est.examplesentence for est in sentence_translations_with_this_text]
-            qs = qs.filter(sense__exampleSentences__in=sentences_with_this_text).distinct()
+        qs = queryset_sentences_from_get(self.sentence_search_form, get, qs)
+        query_parameters = query_parameters_from_get(self.sentence_search_form, get, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)

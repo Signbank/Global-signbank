@@ -111,6 +111,7 @@ def apply_language_filters_to_results(qs, query_parameters):
                            translation__language=language)
     return qs
 
+
 def convert_query_parameters_to_filter(query_parameters):
     # this function maps the query parameters to a giant Q expression
     # the code follows that of get_queryset of GlossListView
@@ -623,6 +624,8 @@ def queryset_from_get(formclass, searchform, GET, qs):
 def set_up_fieldchoice_translations(form, fields_with_choices):
     # make the choices language dependent (model translations)
     for (fieldname, field_category) in fields_with_choices.items():
+        if fieldname not in form.fields.keys():
+            continue
         if fieldname == 'hasRelation':
             # non-fieldchoice field, allow translations
             relations = [('homonym', _('Homonym')),
@@ -878,8 +881,42 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     return qs
 
 
-def query_parameters_from_get(model, formclass, searchform, GET):
-    query_parameters = dict()
+def queryset_sentences_from_get(searchform, GET, qs):
+    # this function is used by SenseListView get_queryset
+    if not searchform:
+        return qs
+    for get_key, get_value in GET.items():
+        if get_key.endswith('[]'):
+            if not get_value:
+                continue
+            # multiple select
+            vals = GET.getlist(get_key)
+            if not vals:
+                continue
+            if get_key in ['sentenceType[]']:
+                sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=vals)
+                qs = qs.filter(sense__exampleSentences__in=sentences_with_this_type)
+        elif get_key not in searchform.fields.keys() \
+                or get_value in ['', '0']:
+            continue
+        elif searchform.fields[get_key].widget.input_type in ['text']:
+            if get_key in ['sentenceContains']:
+                sentence_translations_with_this_text = ExampleSentenceTranslation.objects.filter(
+                    text__icontains=get_value)
+                sentences_with_this_text = [est.examplesentence for est in sentence_translations_with_this_text]
+                qs = qs.filter(sense__exampleSentences__in=sentences_with_this_text).distinct()
+        elif searchform.fields[get_key].widget.input_type in ['select']:
+            if get_key in ['negative']:
+                sentences_with_negative_type = ExampleSentence.objects.filter(negative__exact=True)
+                sentences_with_other_type = ExampleSentence.objects.filter(negative__exact=False)
+                if get_value == 'yes':  # only senses with negative sentences
+                    qs = qs.filter(sense__exampleSentences__in=sentences_with_negative_type)
+                else:  # only senses sentences that are not negative
+                    qs = qs.filter(sense__exampleSentences__in=sentences_with_other_type)
+    return qs
+
+
+def query_parameters_from_get(searchform, GET, query_parameters):
     # collect non-empty search fields from GET
     if not searchform:
         return query_parameters
@@ -901,6 +938,5 @@ def query_parameters_from_get(model, formclass, searchform, GET):
             query_parameters[get_key] = escape(val)
         else:
             query_parameters[get_key] = get_value
-
     return query_parameters
 

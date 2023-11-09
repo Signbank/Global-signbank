@@ -133,7 +133,7 @@ def get_input_names_fields_and_labels(search_form):
     return input_names_fields_and_labels
 
 
-def get_context_data_for_gloss_search_form(request, listview, search_form, kwargs, context={}):
+def get_context_data_for_gloss_search_form(request, listview, search_form, kwargs, context={}, sentence_search_form=None):
     """
     Creates context data for gloss search form (e.g. in GlossListView, SenseListView)
     """
@@ -145,7 +145,8 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     context['query_parameters_keys'] = json.dumps(list(query_parameters.keys()))
 
     context['searchform'] = search_form
-    context['sentenceform'] = SentenceForm(request.GET)
+    if sentence_search_form:
+        context['sentenceform'] = sentence_search_form
 
     other_parameter_keys, multiple_select_gloss_fields, fields_with_choices = get_other_parameter_keys()
     context['other_parameters_keys'] = json.dumps(other_parameter_keys)
