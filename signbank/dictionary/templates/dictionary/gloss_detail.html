@@ -171,6 +171,8 @@ function checkKey(e)
 </script>
 
     <script type='text/javascript' src="{{STATIC_URL}}js/gloss_edit_color.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
+    <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
@@ -340,13 +342,13 @@ option:not(:checked) {
     <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'
             style="z-index: 50;">{% trans "QUERY" %}</span></button>
     {% endif %}
-<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
-    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+    <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+        {% if request.session.search_results %}{# See if search_results in sessions is empty #}
 
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
-</div>
     </div>
 
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
@@ -739,9 +741,6 @@ option:not(:checked) {
             </label>
         </fieldset>
     </div>
-    
-    <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
     {% endif %}
 
     {% if gloss.has_video and "change_dataset" in dataset_perms %}
@@ -1089,12 +1088,12 @@ option:not(:checked) {
                                                 </td>
                                                 <td style="width:90px">
                                                     {% if examplesentence.has_video %}
-                                                        <span id="camera-icon" class="pull-right"><img id='camera' data-target="#exampleVidModal_{{examplesentence.id}}" data-toggle="modal" src='{{STATIC_URL}}images/playvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
+                                                        <span class="pull-right"><img data-target="#exampleVidModal_{{examplesentence.id}}" data-toggle="modal" src='{{STATIC_URL}}images/playvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></span>
                                                     {% endif %}
                                                     {% if "change_dataset" in dataset_perms %}
-                                                        <span id="camera-icon" class = "sense-icon pull-right"><a href='{% url "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id %}'><img id='camera' src='{{STATIC_URL}}images/addvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></a></span>
+                                                        <span class = "sense-icon pull-right"><a href='{% url "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id %}'><img src='{{STATIC_URL}}images/addvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></a></span>
                                                         {% if examplesentence.has_video %}
-                                                            <span id="camera-icon" class="sense-icon pull-right">
+                                                            <span class="sense-icon pull-right">
                                                                 <form class="formbutton" action="{{PREFIX_URL}}/video/deletesentencevideo/{{examplesentence.id}}" method='post'>
                                                                 {% csrf_token %}
                                                                 <input type=image value="" src='{{STATIC_URL}}images/deletevideo.png' alt = "submit" style='width: 25px; height: 25px; margin: 0px; cursor: pointer;'>
@@ -1288,10 +1287,6 @@ option:not(:checked) {
 
         </table>
 
-        
-
-   {% if perms.dictionary.view_advanced_properties %}
-
         <!-- Expand and collapse all panels -->
         <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
             <div class="pull-right">
@@ -1308,15 +1303,10 @@ option:not(:checked) {
 
    <!-- Morphology -->
    <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a class="btn-block" data-toggle='collapse' data-parent='#morphologydefinition' href='#morphology'>{% trans "Morphology" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse'
+             data-target='#morphology'>{% trans "Morphology" %}
         </div>
         <div id='morphology' class='collapse'>
-
-            <!-- List the glosses that serve as compound parts of 'me', and allow Adding/Deleting these parts -->
-
                <table class='table table-condensed'>
                    <tr>
                        <th colspan="3">{% trans "Sequential Morphology" %}</th>
@@ -1569,18 +1559,16 @@ option:not(:checked) {
 
     <!-- Phonology -->
 	<div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title' id='phonology_heading'>
-                <a class="btn-block" data-toggle='collapse' href='#phonology'>{% trans "Phonology" %}
+        <div class='panel-heading' id='phonology_heading'
+             data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
                     {% if handedness and domhndsh %}
                     <div class="pull-right">
                     <span id="hands-icon"><img id='phono-hands' src='{{STATIC_URL}}images/raised_hand_with_fingers_splayed.png' style="width:18px; height:auto; margin: 0px;"></span>
                     </div>
                     {% endif %}
-                </a><span id='phonology_message'></span>
-            </div>
+                <span id='phonology_message'></span>
         </div>
-        <div id='phonology' class='panel-collapse collapse'>
+        <div id='phonology' class='collapse'>
             <table class='table table-condensed'>
 		    {% for value,name,label,kind in phonology_fields %}
                 {% if name == 'handedness' %}
@@ -1723,13 +1711,10 @@ option:not(:checked) {
     <!-- Minimal Pairs -->
  {% if homonyms_but_not_saved %}
   <div class="panel panel-default">
-
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a class="btn-block" data-toggle='collapse' style="color:red" href='#identicalphonology'>{% trans "Identical phonology but not marked as homonym" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse'
+             style="color:red" data-target='#identicalphonology'>{% trans "Identical phonology but not marked as homonym" %}
         </div>
-        <div id='identicalphonology' class='panel-collapse collapse'>
+        <div id='identicalphonology' class='collapse'>
             <table class='table table-condensed' style="padding-left: 20px;">
                <tr>
                    <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
@@ -1743,13 +1728,10 @@ option:not(:checked) {
  {% endif %}
  {% if homonyms_different_phonology %}
  <div class="panel panel-default">
-
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a class="btn-block" data-toggle='collapse' style="color:red" href='#differentphonology'>{% trans "Marked as homonym but different phonology" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse'
+             style="color:red" data-target='#differentphonology'>{% trans "Marked as homonym but different phonology" %}
         </div>
-        <div id='differentphonology' class='panel-collapse collapse'>
+        <div id='differentphonology' class='collapse'>
             <table class='table table-condensed' style="padding-left: 20px;">
                <tr>
                    <th style="width:auto; padding-left: 25px;">{% trans "Annotation ID Gloss" %}</th>
@@ -1762,12 +1744,10 @@ option:not(:checked) {
   </div>
 {% endif %}
 <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a class="btn-block" data-toggle='collapse' href='#minimalpairs'>{% trans "Minimal Pairs" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse'
+             data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
         </div>
-        <div id='minimalpairs' class='panel-collapse collapse'>
+        <div id='minimalpairs' class='collapse'>
             <table class='table table-condensed' id = "header_mp_rows">
 
             {% if minimalpairs %}
@@ -1784,18 +1764,15 @@ option:not(:checked) {
 
     <!-- Semantics -->
     <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a class="btn-block" data-toggle='collapse' href='#semantics'>{% trans "Semantics" %}
+        <div class='panel-heading' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
                     {% if SemanticFieldDefined %}
                     <div class="pull-right">
-                    <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png' style="width:25px; height:25px; margin: 0px;"></span>
+                    <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png'
+                                                   style="width:15px; height:15px; margin: 0px;"></span>
                     </div>
                     {% endif %}
-                </a>
-            </div>
         </div>
-        <div id='semantics' class='panel-collapse collapse'>
+        <div id='semantics' class='collapse'>
             <table class='table table-condensed'>
                 <tr {%if not gloss_semanticfields %} class="empty_row"{% endif %}>
                     <th>{% trans "Semantic Field" %}</th>
@@ -1836,19 +1813,16 @@ option:not(:checked) {
         </div>
     </div>
 
-
     <!-- Relations to other signs -->
     <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a class="btn-block" data-toggle='collapse' href='#relations'>{% trans "Relations to Other Signs" %}
+        <div class='panel-heading' data-toggle='collapse'
+             data-target='#relations'>{% trans "Relations to Other Signs" %}
                     {% if gloss.relations_count %}
                     <div class="pull-right">
-                    <span id="relations-icon"><img id='relations-arrows' src='{{STATIC_URL}}images/leftwards_arrow_over_rightwards_arrow.png' style="width:16px; height:auto; margin: 0px;"></span>
+                    <span id="relations-icon"><img id='relations-arrows' src='{{STATIC_URL}}images/leftwards_arrow_over_rightwards_arrow.png'
+                                                   style="width:15px; height:15px; margin: 0px;"></span>
                     </div>
                     {% endif %}
-                </a>
-            </div>
         </div>
         <div id='relations' class='collapse'>
 
@@ -1923,20 +1897,17 @@ option:not(:checked) {
         </div>
     </div>
 
-
     <!-- Relations to foreign signs -->
     <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a class="btn-block" data-toggle='collapse' href='#relationsforeign'>{% trans "Relations to Foreign Signs" %}
+        <div class='panel-heading' data-toggle='collapse'
+             data-target='#relationsforeign'>{% trans "Relations to Foreign Signs" %}
                     {% if gloss.relationtoforeignsign_set.all %}
                     <div class="pull-right">
                     <span id="forrelations-icon"><img id='forrelations-arrows'
-                                                      src='{{STATIC_URL}}images/left_right_triangleheaded_arrow.png' style="width:30px; height:auto; margin: 0px;"></span>
+                                                      src='{{STATIC_URL}}images/left_right_triangleheaded_arrow.png'
+                                                      style="width:15px; height:15px; margin: 0px;"></span>
                     </div>
                     {% endif %}
-                </a>
-            </div>
         </div>
         <div id='relationsforeign' class='collapse'>
                <table class='table table-condensed'>
@@ -2006,21 +1977,16 @@ option:not(:checked) {
                    <div style='height: 10em'></div>
                </form>
                {% endif %}
-
         </div>
     </div>
-    {% endif %}
-
 
     <!-- Publication status -->
     <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a class="btn-block" data-toggle='collapse' href='#pubStatus'>{% trans "Publication Status" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse'
+             data-target='#pubStatus'>{% trans "Publication Status" %}
         </div>
 
-        <div id="pubStatus" class="panel-collapse collapse">
+        <div id="pubStatus" class="collapse">
             <table class='table table-condensed'>
                 <tr><th>{% trans "Creation Date" %}</th><td>{{gloss.creationDate}}</td></tr>
                 <tr><th>{% trans "Creator" %}</th>
@@ -2052,16 +2018,13 @@ option:not(:checked) {
    
     <!-- Notes -->
     <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a class="btn-block" data-toggle='collapse' href='#definitions'>{% trans "Notes" %}
+        <div class='panel-heading' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
                     {% if notes_groupedby_role.items %}
                     <div class="pull-right">
-                    <span id="document-icon"><img id='document' src='{{STATIC_URL}}images/document_with_text_and_picture.png' style="width:30px; height:auto; margin: 0px;"></span>
+                    <span id="document-icon"><img id='document' src='{{STATIC_URL}}images/document_with_text_and_picture.png'
+                                                  style="width:15px; height:15px; margin: 0px;"></span>
                     </div>
                     {% endif %}
-                </a>
-            </div>
         </div>
         <div id='definitions' class='collapse'>
             
@@ -2117,8 +2080,6 @@ option:not(:checked) {
                 <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
               </tr>
               {% endfor %}
-
-
             {% endfor %}
             </table>
 
@@ -2147,23 +2108,20 @@ option:not(:checked) {
             </form>
             {% endif %}
 
-
         </div>
     
     </div>
 
      <!-- Other media -->
     <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a class="btn-block" data-toggle='collapse' href='#othermedia'>{% trans "Other Media" %}
+        <div class='panel-heading' data-toggle='collapse'
+             data-target='#othermedia'>{% trans "Other Media" %}
                     {% if other_media %}
                     <div class="pull-right">
-                    <span id="camera-icon"><img id='camera' src='{{STATIC_URL}}images/camera.png' style="width:25px; height:25px; margin: 0px;"></span>
+                    <span><img src='{{STATIC_URL}}images/camera.png'
+                               style="width:15px; height:15px; margin: 0px;"></span>
                     </div>
                     {% endif %}
-                </a>
-            </div>
         </div>
         <div id='othermedia' class='collapse'>
 
