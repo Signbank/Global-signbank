@@ -3,7 +3,11 @@ from django.utils.translation import override, gettext_lazy as _, activate
 
 
 def gloss_is_related_to(gloss, interface_language_code, default_language_code):
-
+    """
+    This function is used in the Delete Sign modal of the GlossDetailView template
+    It yields a dictionary of different kinds of related objects to the gloss.
+    Because it is used in the template, it computes display appropriate data
+    """
     related_objects = dict()
     related_glosses = [(relation.role, relation.target)
                        for relation in Relation.objects.filter(source=gloss).exclude(target=gloss)]
@@ -73,4 +77,24 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
         related_objects[_('Blend Morphology')] = blends
 
     return related_objects
+
+
+def gloss_related_objects(gloss):
+
+    related_glosses = [relation.target
+                       for relation in Relation.objects.filter(source=gloss).exclude(target=gloss)]
+
+    # the morpheme field of MorphologyDefinition is a ForeignKey to Gloss
+    morphemes = [morpheme.morpheme
+                 for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+
+    # the morpheme field of SimultaneousMorphologyDefinition is a ForeignKey to Morpheme
+    simultaneous = [simdef.morpheme
+                    for simdef in SimultaneousMorphologyDefinition.objects.filter(parent_gloss=gloss)]
+
+    # the glosses field of SimultaneousMorphologyDefinition is a ForeignKey to Gloss
+    blends = [blendmorph.glosses
+              for blendmorph in BlendMorphology.objects.filter(parent_gloss=gloss)]
+
+    return related_glosses + morphemes + simultaneous + blends
 

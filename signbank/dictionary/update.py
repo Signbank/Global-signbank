@@ -34,6 +34,7 @@ from django.shortcuts import redirect
 from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, mapping_group_keywords, mapping_add_keyword, \
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
 from signbank.dictionary.consistency_senses import reorder_translations
+from signbank.dictionary.related_objects import gloss_related_objects
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -741,7 +742,9 @@ def update_gloss(request, glossid):
         if value == 'confirmed':
             # delete the gloss and redirect back to gloss list
 
-            # gloss.delete()
+            related_objects = gloss_related_objects(gloss)
+            if not related_objects:
+                gloss.delete()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
