@@ -18,7 +18,8 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
                 sign_display = morph_texts[default_language_code]
         relglosses.append(relrole.upper() + ': ' + sign_display)
     related_glosses = ', '.join(relglosses)
-    related_objects[_('Relations')] = related_glosses
+    if related_glosses:
+        related_objects[_('Relations')] = related_glosses
 
     # the morpheme field of MorphologyDefinition is a ForeignKey to Gloss
     morphdefs = []
@@ -34,7 +35,8 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
         morphdefs.append((translated_role, sign_display))
     morphdefs = sorted(morphdefs, key=lambda tup: tup[0])  # sort by translated_role
     morphemes = ' + '.join([sign_display for (translated_role, sign_display) in morphdefs])
-    related_objects[_('Sequential Morphology')] = morphemes
+    if morphemes:
+        related_objects[_('Sequential Morphology')] = morphemes
 
     # the morpheme field of SimultaneousMorphologyDefinition is a ForeignKey to Morpheme
     simultaneous = [simdef.morpheme
@@ -50,7 +52,8 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
                 sign_display = morph_texts[default_language_code]
         simglosses.append(sign_display)
     simultaneous = ', '.join(simglosses)
-    related_objects[_('Simultaneous Morphology')] = simultaneous
+    if simultaneous:
+        related_objects[_('Simultaneous Morphology')] = simultaneous
 
     # the glosses field of SimultaneousMorphologyDefinition is a ForeignKey to Gloss
     blends = [blendmorph.glosses
@@ -66,7 +69,8 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
                 sign_display = morph_texts[default_language_code]
         blendglosses.append(sign_display)
     blends = ', '.join(blendglosses)
-    related_objects[_('Blend Morphology')] = blends
+    if blends:
+        related_objects[_('Blend Morphology')] = blends
 
     return related_objects
 

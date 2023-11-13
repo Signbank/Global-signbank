@@ -566,7 +566,7 @@ option:not(:checked) {
 
         {% if "change_dataset" in dataset_perms %}
         <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDelete" aria-hidden="true">
-             <div class="modal-dialog modal-sm">
+             <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h2 id='modalTitleDelete'>{% trans "Delete This Sign" %}</h2>
@@ -577,12 +577,10 @@ option:not(:checked) {
                         <br><br>
                         <table>
                             {% for key, glosses in related_objects.items %}
-                            {% if glosses %}
                             <tr>
-                                <td>{{key}}:</td><td>&nbsp;</td>
+                                <td style="width:240px">{{key}}</td>
                                 <td>{{glosses}}</td>
                             </tr>
-                            {% endif %}
                             {% endfor %}
                         </table>
                         {% else %}
