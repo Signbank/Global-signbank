@@ -572,7 +572,22 @@ option:not(:checked) {
                         <h2 id='modalTitleDelete'>{% trans "Delete This Sign" %}</h2>
                     </div>
                     <div class='modal-body'>
+                        {% if related_objects.keys %}
+                        <p>{% trans "WARNING: This sign is related to other signs!" %}</p>
+                        <br><br>
+                        <table>
+                            {% for key, glosses in related_objects.items %}
+                            {% if glosses %}
+                            <tr>
+                                <td>{{key}}:</td><td>&nbsp;</td>
+                                <td>{{glosses}}</td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </table>
+                        {% else %}
                         <p>{% trans "This action will delete this sign and all associated records. It cannot be undone." %}</p>
+                        {% endif %}
                      </div>
                   <form action="{% url 'dictionary:update_gloss' gloss.id %}" method='post'>
                       {% csrf_token %}
@@ -580,7 +595,9 @@ option:not(:checked) {
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
                         <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        {% if not related_objects %}
                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                        {% endif %}
                       </div>
                   </form>
 

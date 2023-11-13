@@ -35,6 +35,7 @@ from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, map
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
 from signbank.dictionary.consistency_senses import reorder_translations
 
+
 def show_error(request, translated_message, form, dataset_languages):
     # this function is used by the add_gloss function below
     messages.add_message(request, messages.ERROR, translated_message)
@@ -740,9 +741,7 @@ def update_gloss(request, glossid):
         if value == 'confirmed':
             # delete the gloss and redirect back to gloss list
 
-            pk = gloss.pk
-            gloss.delete()
-            gloss.pk = pk
+            # gloss.delete()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
