@@ -4,7 +4,7 @@ from signbank.tools import get_selected_datasets_for_user, get_dataset_languages
 from django.http import QueryDict
 from django.utils.html import escape
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
-from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors
+from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors, choicelist_choicelist_to_field_colors
 
 
 def get_web_search(request):
@@ -101,9 +101,16 @@ def get_gloss_fields_to_populate(request):
 def get_choices_colors(fields_with_choices):
     fields_with_choices['definitionRole'] = 'NoteType'
     fields_with_choices['hasComponentOfType'] = 'MorphologyType'
+    fields_with_choices['mrpType'] = 'MorphemeType'
+    fields_with_choices['hasRelation'] = 'Relation'
     choices_colors = {}
     for (fieldname, field_category) in fields_with_choices.items():
-        if field_category in CATEGORY_MODELS_MAPPING.keys():
+        if fieldname == 'hasRelation':
+            relations = ['homonym', 'synonym', 'variant', 'antonym', 'hyponym',
+                         'hypernym', 'seealso', 'paradigm']
+            choices_colors[fieldname] = json.dumps(choicelist_choicelist_to_field_colors(relations))
+            continue
+        elif field_category in CATEGORY_MODELS_MAPPING.keys():
             field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
         else:
             field_choices = FieldChoice.objects.filter(field__iexact=field_category)
@@ -126,7 +133,7 @@ def get_input_names_fields_and_labels(search_form):
     return input_names_fields_and_labels
 
 
-def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}):
+def get_context_data_for_gloss_search_form(request, listview, search_form, kwargs, context={}, sentence_search_form=None):
     """
     Creates context data for gloss search form (e.g. in GlossListView, SenseListView)
     """
@@ -137,14 +144,13 @@ def get_context_data_for_gloss_search_form(request, listview, kwargs, context={}
     context['query_parameters'] = json.dumps(query_parameters)
     context['query_parameters_keys'] = json.dumps(list(query_parameters.keys()))
 
-    search_form = GlossSearchForm(request.GET, languages=context['dataset_languages'],
-                                  sign_languages=context['sign_languages'], dialects=context['dialects'])
     context['searchform'] = search_form
-    context['sentenceform'] = SentenceForm(request.GET)
+    if sentence_search_form:
+        context['sentenceform'] = sentence_search_form
 
     other_parameter_keys, multiple_select_gloss_fields, fields_with_choices = get_other_parameter_keys()
     context['other_parameters_keys'] = json.dumps(other_parameter_keys)
-    multiple_select_gloss_fields.extend(['definitionRole', 'hasComponentOfType'])
+    multiple_select_gloss_fields.extend(['definitionRole', 'hasComponentOfType', 'mrpType', 'hasRelation'])
     context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
     context['field_colors'] = get_choices_colors(fields_with_choices)
 
@@ -201,10 +207,10 @@ def get_morpheme_idgloss(query_parameters):
         return ''
 
     try:
-        return Morpheme.objects.get(pk=query_parameters['morpheme']).idgloss
-    except ObjectDoesNotExist:
+        return Morpheme.objects.get(pk=int(query_parameters['morpheme'])).idgloss
+    except (ObjectDoesNotExist, ValueError):
         return ''
 
 
 def get_input_names_field_labels(fields, search_form):
-   return [(field, search_form[field], search_form[field].label) for field in fields]
+    return [(field, search_form[field], search_form[field].label) for field in fields]

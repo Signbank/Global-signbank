@@ -201,6 +201,14 @@ $(document).ready(function() {
 
      $('#id_sentenceType').val(null).trigger('change');
 
+     if (query_parameters_keys.includes('sentenceType[]')) {
+         var query_initial = query_parameters_dict['sentenceType[]'];
+         $('#id_sentenceType').val(query_initial);
+         $('#id_sentenceType').trigger('change');
+     } else {
+         $('#id_sentenceType').val(null).trigger('change');
+     };
+
      // initialize query parameters in multiple select fields
      for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = '#id_' + multiple_select_fields[i];
@@ -311,8 +319,8 @@ function clearForm() {
         var this_field = $(this).attr('name');
         if (this_field == undefined) { return; };
         var this_type = $(this).attr('type');
-        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio') { return; };
-        if (this_type == 'date') {
+        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'reset') { return; };
+        if (this_type == 'date' || this_type == 'text') {
             $(this).attr('value', "");
         } else {
             $(this).val('');
@@ -573,37 +581,40 @@ function do_toggle_language(el) {
                         {% for dataset_lang in dataset_languages %}
 
                         <tr>
-                            {% with searchform|get_search_field_for_language:dataset_lang as search_field %}
+                            {% with searchform|get_annotation_search_field_for_language:dataset_lang as search_field %}
                             <td>
                                 <div class='input-group'>
-                                <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
+                                <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
                                     {{search_field.label}}
                                 </label>
-                                <input id='glosssearch_{{ dataset_lang.language_code_2char }}'
+                                <input id='glosssearch_{{dataset_lang.language_code_2char}}'
                                        type='text'
-                                       name='glosssearch_{{ dataset_lang.language_code_2char }}' class='form-control' {% if search_field.value %}value='{{search_field.value}}'{% endif %}>
+                                       name='glosssearch_{{dataset_lang.language_code_2char}}' class='form-control'>
                                 </div>
                             </td>
                             {% endwith %}
 
-                            {% with searchform|get_lemma_field_for_language:dataset_lang as lemma_field %}
+                            {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
                             <td><div class='input-group'>
 
-                                <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
+                                <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
                                     {{lemma_field.label}}
                                 </label>
-                                <input name='lemma_{{ dataset_lang.language_code_2char }}'
+                                <input name='lemma_{{dataset_lang.language_code_2char}}'
+                                       id='lemma_{{dataset_lang.language_code_2char}}'
                                        type='text'
-                                       class='form-control' {% if lemma_field.value %}value='{{lemma_field.value}}'{% endif %}></div>
+                                       class='form-control'></div>
                             </td>
                             {% endwith %}
 
-                            {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
+                            {% with searchform|get_senses_form_field_for_language:dataset_lang as keyword_field %}
                             <td><div class='input-group'>
-                                <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
+                                <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>
+                                    {{keyword_field.label}}</label>
                                 <input name='keyword_{{dataset_lang.language_code_2char}}'
+                                       id='keyword_{{dataset_lang.language_code_2char}}'
                                        type='text'
-                                       class='form-control' {% if keyword_field.value %}value='{{keyword_field.value}}'{% endif %}></div>
+                                       class='form-control'></div>
                             </td>
                             {% endwith %}
                         </tr>
@@ -760,6 +771,7 @@ function do_toggle_language(el) {
         <input class='btn btn-default' type='reset' onclick="clearForm();"
                value='{% trans "Reset" %}'>
     </div>
+</form>
 
 
     <div>
@@ -772,7 +784,6 @@ function do_toggle_language(el) {
         {% endfor %}
         {% endif %}
     </div>
-</form>
 
     <div></div>
 

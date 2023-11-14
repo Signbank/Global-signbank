@@ -62,7 +62,6 @@ urlpatterns = [
     re_path(r'^numbersigns.html$', numbersigns_view),
 
     # Hardcoding a number of special urls:
-    re_path(r'^signs/dictionary/$', signbank.dictionary.views.search),
     re_path(r'^signs/search/$', GlossListView.as_view(), {'show_all': False}, name='signs_search'),
     re_path(r'^signs/show_all/$', GlossListView.as_view(),{'show_all': True}),
     re_path(r'^signs/add/$', signbank.dictionary.views.add_new_sign),
@@ -88,7 +87,6 @@ urlpatterns = [
     re_path(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
     re_path(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()),
                 name='admin_handshape_list'),
-    re_path(r'^morphemes/dictionary/$', signbank.dictionary.views.search_morpheme),
     re_path(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view())),
     re_path(r'^morphemes/show_all/$', login_required(MorphemeListView.as_view()), {'show_all': True}),
     re_path(r'^morphemes/add/$', login_required(signbank.dictionary.views.add_new_morpheme)),
