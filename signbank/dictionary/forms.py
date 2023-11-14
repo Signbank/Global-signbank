@@ -767,10 +767,7 @@ class LemmaSearchForm(forms.ModelForm):
         for language in languages:
             # and for LemmaIdgloss
             lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
-            if count_languages > 1:
-                lemma_label = _("Lemma")+(" (%s)" % language.name)
-            else:
-                lemma_label = _("Lemma")
+            lemma_label = _("Lemma")+(" (%s)" % language.name) if count_languages > 1 else _("Lemma")
             setattr(self, lemma_field_name, forms.CharField(label=lemma_label))
             if lemma_field_name in queryDict:
                 getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
