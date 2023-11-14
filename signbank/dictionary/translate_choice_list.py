@@ -95,6 +95,14 @@ def choicelist_queryset_to_field_colors(queryset):
         temp_mapping_dict[choice.machine_value] = getattr(choice, 'field_color')
     return temp_mapping_dict
 
+
+def choicelist_choicelist_to_field_colors(choices):
+    temp_mapping_dict = {}
+    mapping_default = 'ffffff'
+    for key in choices:
+        temp_mapping_dict[key] = mapping_default
+    return temp_mapping_dict
+
 def machine_value_to_translated_human_value(machine_value,choice_list):
 
     if not choice_list or len(choice_list) == 0:

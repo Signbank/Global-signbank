@@ -2243,12 +2243,6 @@ class Gloss(models.Model):
 
         return self.options_to_json(RELATION_ROLE_CHOICES)
 
-    def handedness_weak_choices_json(self):
-        """Return JSON for the etymology choice list"""
-        from signbank.dictionary.forms import NEUTRALBOOLEANCHOICES
-
-        return self.options_to_json(NEUTRALBOOLEANCHOICES)
-
     def handedness_weak_drop_prop_json(self):
         """Return JSON for the etymology choice list"""
 

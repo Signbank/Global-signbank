@@ -25,52 +25,35 @@
     <script type='text/javascript'>
 
 
-// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
-function clearForm(myFormElement) {
+function clearForm() {
 
-  var elements = myFormElement.elements;
+      $('input').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden' || this_type == 'submit') { return; };
+        if (this_type == 'radio') {
+            $(this).prop('checked', false);
+        } else {
+            $(this).val('');
+        };
+      });
 
-  myFormElement.reset();
-
-  for(i=0; i<elements.length; i++) {
-
-      field_type = elements[i].type.toLowerCase();
-      field_name = elements[i].name;
-
-      if (field_name == 'search_type') {
-        elements[i].value = "handshape";
-      }
-      else if (field_name == 'sortOrder') {
-        elements[i].value = "machine_value";
-      }
-      else {
-          switch(field_type) {
-
-            case "text":
-            case "textarea":
-
-              elements[i].value = "";
-              break;
-
-            case "radio":
-            case "checkbox":
-              if (elements[i].checked) {
-                  elements[i].checked = false;
-              }
-              break;
-
-            case "select-one":
-            case "select-multiple":
-              elements[i].selectedIndex = -1;
-              break;
-
-            default:
-              break;
-          }
-      }
-  }
-  return(false);
-  <!--document.getElementById('adminsearch').submit();-->
+      $('select').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden') { return; };
+        if (this_field.endsWith('[]')) {
+            return;
+        } else {
+            $(this).find('option').each(function () {
+                $(this).removeAttr("selected");
+            });;
+        };
+      });
+     $("input[name='translation']").val('');
+     $("input[name='search']").val('');
 }
 
 /**
@@ -98,27 +81,23 @@ function do_sort_column(field_name, action, frmName) {
   $("#" + frmName).submit();
 }
 
-
-/**
- * @returns {void}
- */
 function do_adminsearch(el) {
  var sSearchType = $(el).attr('value');
  $(el).selected = true;
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "sign_handshape":
-        $("#adminsearch").attr('action', '{{PREFIX_URL}}/dictionary/handshapes/');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search_handshape/');
         break;
     case "handshape":
-        $("#adminsearch").attr('action', '{{PREFIX_URL}}/dictionary/handshapes/');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search_handshape/');
         break;
   }
   document.getElementById('adminsearch').submit();
 }
    </script>
 
-    <script type='text/javascript' src="{{ STATIC_URL }}js/handshape_search.js"></script>
+    <script type='text/javascript' src="{{STATIC_URL}}js/handshape_search.js"></script>
 
     <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
@@ -140,7 +119,7 @@ function do_adminsearch(el) {
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 </div>
 <div id='searchformwell' class='well'>
-<form name='adminsearch' id='adminsearch'>
+<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/search_handshape/'>
 <div class="panel panel-default">
 {% if not user.is_anonymous %}
 <div class="panel-heading" data-toggle="collapse" data-target="#queryarea">{% trans "Form Your Query" %}</div>
@@ -154,7 +133,9 @@ function do_adminsearch(el) {
                     <table class='table'>
                         <tr id='handshape_name_field'>
                             <td><label for='id_name'>{% trans "Handshape Name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead' placeholder='{% trans "Handshape Name" %}' name='name' type='text'
+                            <td><input class='form-control handshapetypeahead'
+                                       placeholder='{% trans "Handshape Name" %}'
+                                       name='name' type='text'
                                        value="{{searchform.name.value|default:'' }}"/></td>
                         </tr>
                     </table>
@@ -349,7 +330,8 @@ function do_adminsearch(el) {
     <input class='btn btn-default' type='submit' name='format' value='CSV'>
     {% endif %}
 
-    <input class='btn btn-default' type='submit' onclick="clearForm(document.adminsearch);" value='{% trans "Reset" %}'>
+    <input class='btn btn-default' type='submit' name='reset'
+           onclick="clearForm();" value='{% trans "Reset" %}'>
 </div>
 {% endif %}
 </div>
@@ -501,7 +483,7 @@ function do_adminsearch(el) {
     {% for handshape in object_list %}
     <tr>
 
-      <td>{%if handshape.get_image_path != None %}
+      <td>{% if handshape.get_image_path %}
           <div class="thumbnail_container">
               <img class="thumbnail_handshape" src="{{protected_media_url}}{{handshape.get_image_path}}">
           </div>
@@ -552,7 +534,7 @@ function do_adminsearch(el) {
     {% for gloss in object_list %}
 
     <tr>
-      <td>{%if gloss.get_image_path != None %}
+      <td>{% if gloss.get_image_path %}
           <div class="thumbnail_container">
           <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/"><img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_path}}"></a>
           </div>

@@ -41,19 +41,6 @@ def tag_choices():
     return tag_choices_list
 
 
-class UserSignSearchForm(forms.Form):
-
-    glossQuery = forms.CharField(label=_(u'Glosses Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    query = forms.CharField(label=_(u'Senses Containing'), max_length=100, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    category = forms.ChoiceField(label=_(u'Search'), choices=CATEGORY_CHOICES, required=False, widget=forms.Select(attrs={'class': 'form-control'}))
-        
-
-class GlossModelForm(forms.ModelForm):
-    class Meta:
-        model = Gloss
-        # fields are defined in settings.py
-        fields = settings.QUICK_UPDATE_GLOSS_FIELDS
-
 class GlossCreateForm(forms.ModelForm):
     """Form for creating a new gloss from scratch"""
 
@@ -110,22 +97,6 @@ class GlossCreateForm(forms.ModelForm):
         gloss.save()
 
         return gloss
-
-
-class UserMorphemeSearchForm(forms.Form):
-    """Facilitate searching for morphemes"""
-
-    morphQuery = forms.CharField(label=_(u'Morphemes Containing'), max_length=100, required=False,
-                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
-    query = forms.CharField(label=_(u'Translations Containing'), max_length=100, required=False,
-                            widget=forms.TextInput(attrs={'class': 'form-control'}))
-
-
-class MorphemeModelForm(forms.ModelForm):
-    class Meta:
-        model = Morpheme
-        # fields are defined in settings.py
-        fields = settings.QUICK_UPDATE_GLOSS_FIELDS
 
 
 class MorphemeCreateForm(forms.ModelForm):
@@ -203,42 +174,8 @@ class TagUpdateForm(forms.Form):
                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
-YESNOCHOICES = (('unspecified', "---------"), ('yes', 'Yes'), ('no', 'No'))
-NULLBOOLEANCHOICES = [(0, '---------'), (2, 'True'), (3, 'False')]
-NONEBOOLEANCHOICES = [(0, '---------'), (1, 'None'), (2, 'True'), (3, 'False')]
-UNKNOWNBOOLEANCHOICES = [(0, '---------'), (2, 'True'), (3, 'False')]
-NEUTRALBOOLEANCHOICES = [(1, 'Neutral'), (2, 'Yes'), (3, 'No')]
-NEUTRALQUERYCHOICES = [(0, '---------'), (1, 'Neutral'), (2, 'True'), (3, 'False')]
-
-RELATION_ROLE_CHOICES = (('', '---------'),
-                         ('all', 'All'),
-                         ('homonym', 'Homonym'),
-                         ('synonym', 'Synonym'),
-                         ('variant', 'Variant'),
-                         ('antonym', 'Antonym'),
-                         ('hyponym', 'Hyponym'),
-                         ('hypernym', 'Hypernym'),
-                         ('seealso', 'See Also'),
-                         ('paradigm', 'Handshape Paradigm')
-                         )
-
-
-def get_definition_role_choices():
-    choices = [('','---------'),('all','All')]
-    return choices
-
-
-def get_component_role_choice():
-    choices = [('','---------')]
-    return choices
-
-
-def get_morpheme_role_choices():
-    choices = [('','---------')]
-    return choices
-
-
 ATTRS_FOR_FORMS = {'class': 'form-control'}
+ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:80px'}
 
 
 class GlossSearchForm(forms.ModelForm):
@@ -246,66 +183,77 @@ class GlossSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_('Search Gloss'))
-    sortOrder = forms.CharField(label=_('Sort Order'))       # Used in glosslistview to store user-selection
-    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
+    sortOrder = forms.CharField(label=_('Sort Order'))
+    tags = forms.ChoiceField(label=_('Tags'), choices=[(0, '-')])
     translation = forms.CharField(label=_('Search Senses'))
-    hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
-    hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
-    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
-    hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=YESNOCHOICES)
-
-    relation = forms.CharField(label=_(u'Gloss of Related Sign'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    relationToForeignSign = forms.CharField(label=_(u'Gloss of Foreign Sign'),widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    morpheme = forms.CharField(label=_(u'Search for gloss with this as morpheme'))
-
-    oriChAbd = forms.ChoiceField(label=_(u'Abduction Change'),choices=NULLBOOLEANCHOICES)
-    oriChFlex = forms.ChoiceField(label=_(u'Flexion Change'),choices=NULLBOOLEANCHOICES)
-
-    phonOth = forms.CharField(label=_(u'Phonology Other'),widget=forms.TextInput())
-
-    hasRelationToForeignSign = forms.ChoiceField(label=_(u'Related to Foreign Sign'),choices=[(0,'---------'),(1,'Yes'),(2,'No')],widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hasRelation = forms.ChoiceField(label=_(u'Type of Relation'),choices=RELATION_ROLE_CHOICES,widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-
-    # these field's choices are set dynamically in the __init__ method below
-    # that they appear here is used statically by the query parameters method which looks at the gloss search form fields
-    hasComponentOfType = forms.ChoiceField(label=_(u'Has Compound Component Type'),
-                                           choices=get_component_role_choice,
-                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hasComponentOfType.field_choice_category = 'MorphologyType'
-    hasMorphemeOfType = forms.ChoiceField(label=_(u'Has Morpheme Type'),
-                                          choices=get_morpheme_role_choices,
+    hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')])
+    hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=[(0, '-')])
+    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=[(0, '-')],
+                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=[(0, '-')],
                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hasMorphemeOfType.field_choice_category = 'MorphemeType'
 
-    repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
-    altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)
+    relation = forms.CharField(label=_('Gloss of Related Sign'),
+                               widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    relationToForeignSign = forms.CharField(label=_('Gloss of Foreign Sign'),
+                                            widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    morpheme = forms.CharField(label=_('Search for gloss with this as morpheme'))
 
-    weakprop = forms.ChoiceField(label=_(u'Weak Prop'),choices=NEUTRALQUERYCHOICES)
-    weakdrop = forms.ChoiceField(label=_(u'Weak Drop'),choices=NEUTRALQUERYCHOICES)
+    phonOth = forms.CharField(label=_('Phonology Other'), widget=forms.TextInput())
 
-    domhndsh_letter = forms.ChoiceField(label=_(u'letter'),choices=UNKNOWNBOOLEANCHOICES)
-    domhndsh_number = forms.ChoiceField(label=_(u'number'),choices=UNKNOWNBOOLEANCHOICES)
+    hasRelationToForeignSign = forms.ChoiceField(label=_('Related to Foreign Sign'),
+                                                 choices=[(0, '-')],
+                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+    hasRelation = forms.ChoiceField(label=_('Type of Relation'),
+                                    choices=[(0, '-')],
+                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
-    subhndsh_letter = forms.ChoiceField(label=_(u'letter'),choices=UNKNOWNBOOLEANCHOICES)
-    subhndsh_number = forms.ChoiceField(label=_(u'number'),choices=UNKNOWNBOOLEANCHOICES)
+    hasComponentOfType = forms.ChoiceField(label=_('Has Compound Component Type'),
+                                           choices=[(0, '-')],
+                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
-    isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'),choices=NULLBOOLEANCHOICES)
-    inWeb = forms.ChoiceField(label=_(u'Is in Web Dictionary'),choices=NULLBOOLEANCHOICES)
-    excludeFromEcv = forms.ChoiceField(label=_(u'Exclude from ECV'),choices=NULLBOOLEANCHOICES)
+    repeat = forms.ChoiceField(label=_('Repeating Movement'), choices=[(0, '-')],
+                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    altern = forms.ChoiceField(label=_('Alternating Movement'), choices=[(0, '-')],
+                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
-    # this field's choices are set dynamically in the __init__ method below
-    # It's presence here is used statically by the query parameters method which looks at the gloss search form fields
-    definitionRole = forms.ChoiceField(label=_(u'Note Type'),
-                                       choices=get_definition_role_choices,
+    weakprop = forms.ChoiceField(label=_('Weak Prop'), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    weakdrop = forms.ChoiceField(label=_('Weak Drop'), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    domhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')],
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    domhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')],
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    subhndsh_letter = forms.ChoiceField(label=_('letter'), choices=[(0, '-')],
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    subhndsh_number = forms.ChoiceField(label=_('number'), choices=[(0, '-')],
+                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    isNew = forms.ChoiceField(label=_('Is a proposed new sign'), choices=[(0, '-')],
+                              widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    inWeb = forms.ChoiceField(label=_('Is in Web Dictionary'), choices=[(0, '-')],
+                              widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    excludeFromEcv = forms.ChoiceField(label=_('Exclude from ECV'), choices=[(0, '-')],
+                                       widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    definitionRole = forms.ChoiceField(label=_('Note Type'),
+                                       choices=[(0, '-')],
                                        widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    definitionRole.field_choice_category = 'NoteType'
-    definitionContains = forms.CharField(label=_(u'Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    definitionContains = forms.CharField(label=_('Note Contains'),
+                                         widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
-    createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    createdAfter = forms.DateField(label=_(u'Created After'),
+    mrpType = forms.ChoiceField(label=_('Has Morpheme Type'),
+                                choices=[(0, '-')],
+                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+    createdBy = forms.CharField(label=_('Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    createdAfter = forms.DateField(label=_('Created After'),
                                    input_formats=[settings.DATE_FORMAT], required=False,
                                    widget=forms.TextInput(attrs={'type': 'date'}))
-    createdBefore = forms.DateField(label=_(u'Created Before'),
+    createdBefore = forms.DateField(label=_('Created Before'),
                                     input_formats=[settings.DATE_FORMAT], required=False,
                                     widget=forms.TextInput(attrs={'type': 'date'}))
 
@@ -317,82 +265,38 @@ class GlossSearchForm(forms.ModelForm):
 
     class Meta:
 
-        ATTRS_FOR_FORMS = {'class':'form-control'}
-
         model = Gloss
-        fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew', 'excludeFromEcv']
+        fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + \
+                 ['inWeb', 'isNew', 'excludeFromEcv']
 
-    def __init__(self, queryDict, *args, **kwargs):
-        languages = kwargs.pop('languages')
-        sign_languages = kwargs.pop('sign_languages')
-        dialects = kwargs.pop('dialects')
-        super(GlossSearchForm, self).__init__(queryDict, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
 
-        for language in languages:
-            glosssearch_field_name = self.gloss_search_field_prefix + language.language_code_2char
-            setattr(self, glosssearch_field_name, forms.CharField(label=_("Gloss")+(" (%s)" % language.name)))
-            if glosssearch_field_name in queryDict:
-                getattr(self, glosssearch_field_name).value = queryDict[glosssearch_field_name]
+        super(GlossSearchForm, self).__init__(*args, **kwargs)
 
-            # do the same for Translations
-            keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
-            setattr(self, keyword_field_name, forms.CharField(label=_("Senses")+(" (%s)" % language.name)))
-            if keyword_field_name in queryDict:
-                getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
-
-            # and for LemmaIdgloss
-            lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
-            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
-            if lemma_field_name in queryDict:
-                getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
-
-        field_label_signlanguage = gettext("Sign Language")
-        field_label_dialects = gettext("Dialect")
-        self.fields['signLanguage'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage, widget=Select2,
-                    queryset=SignLanguage.objects.filter(id__in=[signlanguage[0] for signlanguage in sign_languages]))
-
-        self.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects, widget=Select2,
-                    queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
-
-        fields_with_choices = fields_to_fieldcategory_dict()
-        fields_with_choices['definitionRole'] = 'NoteType'
-        for (fieldname, field_category) in fields_with_choices.items():
-            if fieldname == 'definitionRole':
-                field_label = _(u'Note Type')
+        # language fields will be set up elsewhere
+        # field choice choices will be set up elsewhere
+        # these are the multiselect field choice fields for morphemes
+        for fieldname in settings.GLOSS_CHOICE_FIELDS:
+            if fieldname in ['definitionRole', 'hasComponentOfType', 'mrpType', 'hasRelation']:
+                # this is a search form field name
+                continue
             else:
                 field_label = Gloss.get_field(fieldname).verbose_name
-            if fieldname.startswith('semField'):
-                field_choices = SemanticField.objects.all()
-            elif fieldname.startswith('derivHist'):
-                field_choices = DerivationHistory.objects.all()
-            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                field_choices = Handshape.objects.all()
-            else:
-                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False,id_prefix='',shortlist=True)
-            self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
-                                                        choices=translated_choices,
-                                                        required=False, widget=Select2)
-        self.fields['hasComponentOfType'] = forms.ChoiceField(label=_(u'Has Compound Component Type'),
-                                                          choices=choicelist_queryset_to_translated_dict(
-                                                              list(
-                                                                  FieldChoice.objects.filter(field='MorphologyType').order_by(
-                                                                      'machine_value')),
-                                                              ordered=False, id_prefix='', shortlist=False
-                                                          ),
-                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        self.fields['hasMorphemeOfType'] = forms.ChoiceField(label=_(u'Has Morpheme Type'),
-                                                             choices=choicelist_queryset_to_translated_dict(
-                                                              list(
-                                                                  FieldChoice.objects.filter(field='MorphemeType').order_by(
-                                                                      'machine_value')),
-                                                              ordered=False, id_prefix='', shortlist=False
-                                                          ),
-                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+            self.fields[fieldname] = forms.ChoiceField(label=field_label,
+                                                       choices=[(0, '-')],
+                                                       required=False, widget=Select2)
         self.fields['tags'] = forms.ChoiceField(label=_('Tags'),
                                                 choices=[(tag.name, tag.name.replace('_', ' '))
                                                          for tag in Tag.objects.all()],
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        for boolean_field in ['hasvideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
+                              'excludeFromEcv', 'hasRelationToForeignSign', 'hasmultiplesenses',
+                              'hasothermedia']:
+            self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
+        for boolean_field in ['weakdrop', 'weakprop']:
+            self.fields[boolean_field].choices = [(0, '-'), (1, _('Neutral')), (2, _('True')), (3, _('False'))]
+        for boolean_field in ['domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number']:
+            self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
 
 
 def check_language_fields(SearchForm, queryDict, languages):
@@ -449,41 +353,43 @@ class MorphemeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"))  # Used in morphemelistview to store user-selection
-    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
+    sortOrder = forms.CharField(label=_("Sort Order"))
+    tags = forms.ChoiceField(label=_('Tags'), choices=[(0, '-')],
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     translation = forms.CharField(label=_('Search Senses'))
-    hasvideo = forms.ChoiceField(label=_('Has Video'), choices=NULLBOOLEANCHOICES)
-    hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=NULLBOOLEANCHOICES)
+    hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     useInstr = forms.CharField(label=_("Annotation instructions"))
 
-    phonOth = forms.CharField(label=_(u'Phonology Other'), widget=forms.TextInput())
+    phonOth = forms.CharField(label=_('Phonology Other'), widget=forms.TextInput())
 
-    repeat = forms.ChoiceField(label=_(u'Repeating Movement'),
-                               choices=NULLBOOLEANCHOICES)
-    altern = forms.ChoiceField(label=_(u'Alternating Movement'),
-                               choices=NULLBOOLEANCHOICES)
+    repeat = forms.ChoiceField(label=_('Repeating Movement'),
+                               choices=[(0, '-')],
+                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    altern = forms.ChoiceField(label=_('Alternating Movement'),
+                               choices=[(0, '-')],
+                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
-    isNew = forms.ChoiceField(label=_(u'Is a proposed new sign'), choices=NULLBOOLEANCHOICES,
-                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    inWeb = forms.ChoiceField(label=_(u'Is in Web Dictionary'), choices=NULLBOOLEANCHOICES,
-                              widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    excludeFromEcv = forms.ChoiceField(label=_(u'Exclude from ECV'),choices=NULLBOOLEANCHOICES)
+    isNew = forms.ChoiceField(label=_('Is a proposed new sign'), choices=[(0, '-')],
+                              widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    inWeb = forms.ChoiceField(label=_('Is in Web Dictionary'), choices=[(0, '-')],
+                              widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
-    definitionRole = forms.ChoiceField(label=_(u'Note Type'), choices=get_definition_role_choices,
-                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    definitionRole.field_choice_category = 'NoteType'
-    definitionContains = forms.CharField(label=_(u'Note Contains'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=YESNOCHOICES)
-    hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=YESNOCHOICES)
+    definitionRole = forms.ChoiceField(label=_('Note Type'), choices=[(0, '-')],
+                                       required=False, widget=Select2)
+    definitionContains = forms.CharField(label=_('Note Contains'),
+                                         widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=[(0, '-')],
+                                      widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
-    createdBefore = forms.DateField(label=_(u'Created Before'),
+    createdBefore = forms.DateField(label=_('Created Before'),
                                     input_formats=[settings.DATE_FORMAT],
                                     widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
-    createdAfter = forms.DateField(label=_(u'Created After'),
+    createdAfter = forms.DateField(label=_('Created After'),
                                    input_formats=[settings.DATE_FORMAT],
                                    widget=forms.TextInput(attrs={'class': 'form-control', 'type': 'date'}))
 
-    createdBy = forms.CharField(label=_(u'Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+    createdBy = forms.CharField(label=_('Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     gloss_search_field_prefix = "morphemesearch_"
     keyword_search_field_prefix = "keyword_"
@@ -492,75 +398,34 @@ class MorphemeSearchForm(forms.ModelForm):
     menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
-        ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = Morpheme
 
-        fields = settings.MORPHEME_DISPLAY_FIELDS + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew']
+        fields = settings.MORPHEME_DISPLAY_FIELDS + settings.FIELDS['semantics'] + settings.FIELDS['main'] + ['inWeb', 'isNew', 'mrpType']
 
-    def __init__(self, queryDict, *args, **kwargs):
-        languages = kwargs.pop('languages')
-        sign_languages = kwargs.pop('sign_languages')
-        dialects = kwargs.pop('dialects')
-        super(MorphemeSearchForm, self).__init__(queryDict, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(MorphemeSearchForm, self).__init__(*args, **kwargs)
 
-        for language in languages:
-            morphemesearch_field_name = self.gloss_search_field_prefix + language.language_code_2char
-            setattr(self, morphemesearch_field_name, forms.CharField(label=_("Gloss") + (" (%s)" % language.name)))
-            if morphemesearch_field_name in queryDict:
-                getattr(self, morphemesearch_field_name).value = queryDict[morphemesearch_field_name]
-
-            # do the same for Translations
-            # Morphemes have translations not senses
-            keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
-            setattr(self, keyword_field_name, forms.CharField(label=_("Translations")+(" (%s)" % language.name)))
-            if keyword_field_name in queryDict:
-                getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
-
-            # and for LemmaIdgloss
-            lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
-            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
-            if lemma_field_name in queryDict:
-                getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
-
-        field_label_signlanguage = gettext("Sign Language")
-        field_label_dialects = gettext("Dialect")
-        self.fields['SIGNLANG'] = forms.ModelMultipleChoiceField(label=field_label_signlanguage, widget=Select2,
-                    queryset=SignLanguage.objects.filter(id__in=[signlanguage[0] for signlanguage in sign_languages]))
-
-        self.fields['dialects'] = forms.ModelMultipleChoiceField(label=field_label_dialects, widget=Select2,
-                    queryset=Dialect.objects.filter(id__in=[dia[0] for dia in dialects]))
-
-        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
-        fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
-        fields_with_choices['definitionRole'] = 'NoteType'
-
-        for (fieldname, field_category) in fields_with_choices.items():
-            # morphemes do not have Handshape fields, these are hidden, see issue #638
-            if fieldname == 'definitionRole':
-                field_label = _(u'Note Type')
-                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+        # language fields will be set up elsewhere
+        # field choice choices will be set up elsewhere
+        # these are the multiselect field choice fields for morphemes
+        for fieldname in settings.MORPHEME_CHOICE_FIELDS:
+            if fieldname in ['definitionRole']:
+                # this is a search form field name
+                continue
             elif fieldname.startswith('mrpType'):
                 field_label = Morpheme.get_field(fieldname).verbose_name
-                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            elif fieldname.startswith('semField'):
-                field_label = Gloss.get_field(fieldname).verbose_name
-                field_choices = SemanticField.objects.all()
-            elif fieldname.startswith('derivHist'):
-                field_label = Gloss.get_field(fieldname).verbose_name
-                field_choices = DerivationHistory.objects.all()
             else:
                 field_label = Gloss.get_field(fieldname).verbose_name
-                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            translated_choices = choicelist_queryset_to_translated_dict(field_choices,ordered=False, id_prefix='',
-                                                                        shortlist=True)
-            self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
-                                                                    choices=translated_choices,
-                                                                    required=False, widget=Select2)
+            self.fields[fieldname] = forms.ChoiceField(label=field_label,
+                                                       choices=[(0, '-')],
+                                                       required=False, widget=Select2)
         self.fields['tags'] = forms.ChoiceField(label=_('Tags'),
                                                 choices=[(tag.name, tag.name.replace('_', ' '))
                                                          for tag in Tag.objects.all()],
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        for boolean_field in ['hasvideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished']:
+            self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
 
 class DefinitionForm(forms.ModelForm):
@@ -570,7 +435,7 @@ class DefinitionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['note'] = forms.ChoiceField(label=_(u'Type'),
+        self.fields['note'] = forms.ChoiceField(label=_('Type'),
                                                 choices=choicelist_queryset_to_translated_dict(
                                                      list(FieldChoice.objects.filter(field='NoteType').order_by(
                                                          'machine_value')),
@@ -578,10 +443,11 @@ class DefinitionForm(forms.ModelForm):
                                                 ),
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
+
 class RelationForm(forms.ModelForm):
     
-    sourceid = forms.CharField(label=_(u'Source Gloss'))
-    targetid = forms.CharField(label=_(u'Target Gloss'))
+    sourceid = forms.CharField(label=_('Source Gloss'))
+    targetid = forms.CharField(label=_('Target Gloss'))
     
     class Meta:
         model = Relation
@@ -590,18 +456,20 @@ class RelationForm(forms.ModelForm):
                    'role': forms.Select(attrs={'class': 'form-control'}),
                    }
 
+
 class VariantsForm(forms.Form):
-    sourceid = forms.CharField(label=_(u'Source Gloss'))
-    targetid = forms.CharField(label=_(u'Target Gloss'))
+    sourceid = forms.CharField(label=_('Source Gloss'))
+    targetid = forms.CharField(label=_('Target Gloss'))
 
     class Meta:
         model = Relation
         
+
 class RelationToForeignSignForm(forms.ModelForm):
 
-    sourceid = forms.CharField(label=_(u'Source Gloss'))
-    other_lang = forms.CharField(label=_(u'Related Language'))
-    other_lang_gloss = forms.CharField(label=_(u'Gloss in Related Language'), required=False)
+    sourceid = forms.CharField(label=_('Source Gloss'))
+    other_lang = forms.CharField(label=_('Related Language'))
+    other_lang_gloss = forms.CharField(label=_('Gloss in Related Language'), required=False)
     
     class Meta:
         model = RelationToForeignSign
@@ -609,48 +477,41 @@ class RelationToForeignSignForm(forms.ModelForm):
         widgets = {}
 
 
-def get_morphology_type_choices():
-    choices = [('','---------')]
-    return choices
-
-
 class GlossMorphologyForm(forms.Form):
     """Morphology specification of a Gloss"""
 
-    parent_gloss_id = forms.CharField(label=_(u'Parent Gloss'))
-    role = forms.ChoiceField(label=_(u'Type'),choices=[],
+    parent_gloss_id = forms.CharField(label=_('Parent Gloss'))
+    role = forms.ChoiceField(label=_('Type'),choices=[],
                              widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
-    morpheme_id = forms.CharField(label=_(u'Morpheme'))
+    morpheme_id = forms.CharField(label=_('Morpheme'))
 
     def __init__(self, *args, **kwargs):
         super(GlossMorphologyForm, self).__init__(*args, **kwargs)
         self.fields['role'].choices = list(FieldChoice.objects.filter(field='MorphologyType').order_by('machine_value')
                                            .values_list('pk', 'name'))
 
+
 class GlossMorphemeForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
 
-    host_gloss_id = forms.CharField(label=_(u'Host Gloss'))
-    description = forms.CharField(label=_(u'Meaning'), required=False)
-    morph_id = forms.CharField(label=_(u'Morpheme'))
+    host_gloss_id = forms.CharField(label=_('Host Gloss'))
+    description = forms.CharField(label=_('Meaning'), required=False)
+    morph_id = forms.CharField(label=_('Morpheme'))
+
 
 class GlossBlendForm(forms.Form):
     """Specify simultaneous morphology components belonging to a Gloss"""
 
-    host_gloss_id = forms.CharField(label=_(u'Host Gloss'))
-    role = forms.CharField(label=_(u'Role'))
-    blend_id = forms.CharField(label=_(u'Blend'))
+    host_gloss_id = forms.CharField(label=_('Host Gloss'))
+    role = forms.CharField(label=_('Role'))
+    blend_id = forms.CharField(label=_('Blend'))
 
-
-def get_other_media_type_choices():
-    choices = [('','---------')]
-    return choices
 
 class OtherMediaForm(forms.ModelForm):
 
     gloss = forms.CharField()
-    file = forms.FileField(widget=forms.FileInput(attrs={'accept':'video/*, image/*, application/pdf'}), required=True)
-    # type = forms.ChoiceField(choices=get_other_media_type_choices,widget=forms.Select(attrs=ATTRS_FOR_FORMS), required=True)
+    file = forms.FileField(widget=forms.FileInput(attrs={'accept':'video/*, image/*, application/pdf'}),
+                           required=True)
     alternative_gloss = forms.TextInput()
 
     class Meta:
@@ -659,7 +520,7 @@ class OtherMediaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(OtherMediaForm, self).__init__(*args, **kwargs)
-        self.fields['type'] = forms.ChoiceField(label=_(u'Type'),
+        self.fields['type'] = forms.ChoiceField(label=_('Type'),
                                                 choices= choicelist_queryset_to_translated_dict(
                                                     list(FieldChoice.objects.filter(field='OtherMediaType').order_by(
                                                         'machine_value')),
@@ -723,49 +584,16 @@ class DatasetUpdateForm(forms.ModelForm):
         super(DatasetUpdateForm, self).__init__(*args, **kwargs)
         self.fields['default_language'] = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), choices=languages)
 
-def get_finger_selection_choices():
-    choices = [('','---------')]
-    return choices
-
-def get_quantity_choices():
-    choices = [('','---------')]
-    return choices
-
-def get_joint_configuration_choices():
-    choices = [('','---------')]
-    return choices
-
-def get_spreading_choices():
-    choices = [('','---------')]
-    return choices
-
-def get_aperture_choices():
-    choices = [('','---------')]
-    return choices
 
 attrs_default = {'class': 'form-control'}
-FINGER_SELECTION = ((True, 'True'), (False, 'False'), (None, 'Either'))
+FINGER_SELECTION = ((True, 'True'), (False, 'False'))
+
 
 class HandshapeSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     sortOrder = forms.CharField(label=_("Sort Order"),
                                 initial="machine_value")  # Used in Handshapelistview to store user-selection
-
-    # this is used to pass the label to the handshapes list view, the choices aren't displayed, there are radio buttons
-    unselectedFingers = forms.ChoiceField(label=_(u'Unselected Fingers Extended'), choices=get_finger_selection_choices,
-                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-
-    hsFingConf = forms.ChoiceField(label=_(u'Finger configuration'), choices=get_joint_configuration_choices,
-                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hsFingConf2 = forms.ChoiceField(label=_(u'Finger configuration 2'), choices=get_joint_configuration_choices,
-                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hsNumSel = forms.ChoiceField(label=_(u'Quantity'), choices=get_quantity_choices,
-                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hsSpread = forms.ChoiceField(label=_(u'Spreading'), choices=get_spreading_choices,
-                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-    hsAperture = forms.ChoiceField(label=_(u'Aperture'), choices=get_aperture_choices,
-                                   widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     fsT = forms.NullBooleanSelect()
     fsI = forms.NullBooleanSelect()
@@ -814,7 +642,7 @@ class HandshapeSearchForm(forms.ModelForm):
     def __init__(self, queryDict=None, *args, **kwargs):
         super(HandshapeSearchForm, self).__init__(queryDict, *args, **kwargs)
 
-        self.fields['unselectedFingers'] = forms.ChoiceField(label=_(u'Unselected Fingers Extended'),
+        self.fields['unselectedFingers'] = forms.ChoiceField(label=_('Unselected Fingers Extended'),
                                                     choices=choicelist_queryset_to_translated_dict(
                                                         list(
                                                             FieldChoice.objects.filter(field='FingerSelection').order_by(
@@ -822,46 +650,51 @@ class HandshapeSearchForm(forms.ModelForm):
                                                         ordered=False, id_prefix='', shortlist=False
                                                     ),
                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        self.fields['hsNumSel'] = forms.ChoiceField(label=_(u'Quantity'),
-                                                          choices=choicelist_queryset_to_translated_dict(
-                                                              list(
-                                                                  FieldChoice.objects.filter(field='Quantity').order_by(
-                                                                      'machine_value')),
-                                                              ordered=False, id_prefix='', shortlist=False
-                                                          ),
-                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        self.fields['hsFingConf'] = forms.ChoiceField(label=_(u'Finger configuration'),
-                                                          choices=choicelist_queryset_to_translated_dict(
-                                                              list(
-                                                                  FieldChoice.objects.filter(field='JointConfiguration').order_by(
-                                                                      'machine_value')),
-                                                              ordered=False, id_prefix='', shortlist=False
-                                                          ),
-                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        self.fields['hsFingConf2'] = forms.ChoiceField(label=_(u'Finger configuration 2'),
-                                                          choices=choicelist_queryset_to_translated_dict(
+        self.fields['hsNumSel'] = forms.ChoiceField(label=_('Quantity'),
+                                                    choices=choicelist_queryset_to_translated_dict(
+                                                          list(
+                                                              FieldChoice.objects.filter(field='Quantity').order_by(
+                                                                  'machine_value')),
+                                                          ordered=False, id_prefix='', shortlist=False
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsFingConf'] = forms.ChoiceField(label=_('Finger configuration'),
+                                                      choices=choicelist_queryset_to_translated_dict(
                                                               list(
                                                                   FieldChoice.objects.filter(field='JointConfiguration').order_by(
                                                                       'machine_value')),
                                                               ordered=False, id_prefix='', shortlist=False
-                                                          ),
-                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        self.fields['hsSpread'] = forms.ChoiceField(label=_(u'Spreading'),
-                                                          choices=choicelist_queryset_to_translated_dict(
+                                                      ),
+                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsFingConf2'] = forms.ChoiceField(label=_('Finger configuration 2'),
+                                                       choices=choicelist_queryset_to_translated_dict(
+                                                          list(
+                                                              FieldChoice.objects.filter(field='JointConfiguration').order_by(
+                                                                  'machine_value')),
+                                                          ordered=False, id_prefix='', shortlist=False
+                                                       ),
+                                                       widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsSpread'] = forms.ChoiceField(label=_('Spreading'),
+                                                    choices=choicelist_queryset_to_translated_dict(
                                                               list(
                                                                   FieldChoice.objects.filter(field='Spreading').order_by(
                                                                       'machine_value')),
                                                               ordered=False, id_prefix='', shortlist=False
-                                                          ),
-                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-        self.fields['hsAperture'] = forms.ChoiceField(label=_(u'Aperture'),
-                                                          choices=choicelist_queryset_to_translated_dict(
+                                                    ),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['hsAperture'] = forms.ChoiceField(label=_('Aperture'),
+                                                      choices=choicelist_queryset_to_translated_dict(
                                                               list(
                                                                   FieldChoice.objects.filter(field='Aperture').order_by(
                                                                       'machine_value')),
                                                               ordered=False, id_prefix='', shortlist=False
-                                                          ),
-                                           widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                                      ),
+                                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        for finger in ['fsT', 'fsI', 'fsM', 'fsR', 'fsP',
+                       'fs2T', 'fs2I', 'fs2M', 'fs2R', 'fs2P',
+                       'ufT', 'ufI', 'ufM', 'ufR', 'ufP']:
+            self.fields[finger].inital = False
+            self.fields[finger].widget.choices = [(True, _('Yes')), (False, _('No'))]
 
 
 def check_multilingual_fields(ClassModel, queryDict, languages):
@@ -906,16 +739,16 @@ class ImageUploadForHandshapeForm(forms.Form):
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
 
 
-NO_GLOSS_SELECTION = [(0,'False'),(1,'True')]
-
 class LemmaSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Lemma"))
     sortOrder = forms.CharField(label=_("Sort Order"))
     lemma_search_field_prefix = "lemma_"
-    no_glosses = forms.ChoiceField(label=_(u'Only show results without glosses'),choices=NO_GLOSS_SELECTION)
-    has_glosses = forms.ChoiceField(label=_(u'Only show results with glosses'),choices=NO_GLOSS_SELECTION)
+    no_glosses = forms.ChoiceField(label=_('Only show results without glosses'), choices=[],
+                                   widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
+                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     menu_bar_search = "Menu Bar Search Gloss"
     menu_bar_translation = "Menu Bar Search Translation"
 
@@ -930,12 +763,16 @@ class LemmaSearchForm(forms.ModelForm):
         languages = kwargs.pop('languages')
         super(LemmaSearchForm, self).__init__(queryDict, *args, **kwargs)
 
+        count_languages = len(languages)
         for language in languages:
             # and for LemmaIdgloss
             lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
-            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
+            lemma_label = _("Lemma")+(" (%s)" % language.name) if count_languages > 1 else _("Lemma")
+            setattr(self, lemma_field_name, forms.CharField(label=lemma_label))
             if lemma_field_name in queryDict:
                 getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
+        for boolean_field in ['no_glosses', 'has_glosses']:
+            self.fields[boolean_field].choices = [(0, _('No')), (1, _('Yes'))]
 
 
 class LemmaCreateForm(forms.ModelForm):
@@ -1088,17 +925,14 @@ class KeyMappingSearchForm(forms.ModelForm):
 
 class FocusGlossSearchForm(forms.ModelForm):
 
-    use_required_attribute = False #otherwise the html required attribute will show up on every form
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
     translation = forms.CharField(label=_('Search Senses'))
 
-    oriChAbd = forms.ChoiceField(label=_(u'Abduction Change'),choices=NULLBOOLEANCHOICES)
-    oriChFlex = forms.ChoiceField(label=_(u'Flexion Change'),choices=NULLBOOLEANCHOICES)
-
-    repeat = forms.ChoiceField(label=_(u'Repeating Movement'),choices=NULLBOOLEANCHOICES)
-    altern = forms.ChoiceField(label=_(u'Alternating Movement'),choices=NULLBOOLEANCHOICES)
+    repeat = forms.ChoiceField(label=_('Repeating Movement'), choices=[('0', '-')])
+    altern = forms.ChoiceField(label=_('Alternating Movement'), choices=[('0', '-')])
 
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
@@ -1152,6 +986,8 @@ class FocusGlossSearchForm(forms.ModelForm):
             self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
                                                                     choices=translated_choices,
                                                                     required=False, widget=Select2)
+        for boolean_field in ['repeat', 'altern']:
+            self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
 
 class FieldChoiceColorForm(forms.Form):
@@ -1514,9 +1350,11 @@ class SearchHistoryForm(forms.ModelForm):
 
 class SentenceForm(forms.ModelForm):
 
-    sentenceType = forms.ChoiceField(label=_("Type"), choices=[])
-    negative = forms.ChoiceField(label=_(u'Negative'), choices=YESNOCHOICES)
-    sentenceContains = forms.CharField(label=_(u'Sentence Contains'),
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    negative = forms.ChoiceField(label=_('Negative'), choices=[('0', '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    sentenceContains = forms.CharField(label=_('Sentence Contains'),
                                        widget=forms.TextInput(attrs=ATTRS_FOR_FORMS), required=False)
 
     class Meta:
@@ -1530,11 +1368,7 @@ class SentenceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(SentenceForm, self).__init__(*args, **kwargs)
 
-        field_choices = FieldChoice.objects.filter(field__iexact='sentenceType')
-
-        translated_choices = choicelist_queryset_to_translated_dict(field_choices, ordered=False, id_prefix='',
-                                                                    shortlist=True)
-        self.fields['sentenceType'] = forms.TypedMultipleChoiceField(label=_('Type'),
-                                                                     choices=translated_choices,
-                                                                     required=False, widget=Select2)
-
+        self.fields['sentenceType'] = forms.ChoiceField(label=_('Type'),
+                                                        choices=[(0, '-')],
+                                                        required=False, widget=Select2)
+        self.fields['negative'].choices = [('0', '-'), ('yes', _('Yes')), ('no', _('No'))]
