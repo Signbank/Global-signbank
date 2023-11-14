@@ -69,6 +69,9 @@ option:not(:checked) {
 .panel-heading {
     padding: 0;
 }
+.panel-heading:hover {
+    background-color: #D2D2D2;
+}
 </style>
 
 {% endblock %}
@@ -505,10 +508,7 @@ function checkKey(e)
 
    <!-- Morphology -->
    <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#morphologydefinition' href='#morphology'>{% trans "Appears in" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse' data-target='#morphology'>{% trans "Appears in" %}
         </div>
         <div id='morphology' class='collapse'>
             <!-- Show a read-only list of glosses in which this gloss occurs as compound part(ERK, issue #177) -->
@@ -535,12 +535,9 @@ function checkKey(e)
 
     <!-- Phonology -->
 	<div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title' id='phonology_heading'>
-                <a data-toggle='collapse' data-parent='#definition' href='#phonology'>{% trans "Phonology" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
         </div>
-        <div id='phonology' class='panel-collapse collapse'>
+        <div id='phonology' class='collapse'>
             <table class='table table-condensed'>
 		{% for value,name,label,kind in phonology_fields %}
                 {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %}
@@ -567,12 +564,9 @@ function checkKey(e)
 
     <!-- Semantics -->
     <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#semantics'>{% trans "Semantics" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
         </div>
-        <div id='semantics' class='panel-collapse collapse'>
+        <div id='semantics' class='collapse'>
             <table class='table table-condensed'>
                 <tr {%if not gloss_semanticfields %} class="empty_row"{% endif %}>
                     <th>{% trans "Semantic Field" %}</th>
@@ -604,14 +598,10 @@ function checkKey(e)
 
     <!-- Publication status -->
     <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#pubStatus'>{% trans "Publication Status" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse' data-target='#pubStatus'>{% trans "Publication Status" %}
         </div>
-        
-            
-        <div id="pubStatus" class="panel-collapse collapse">
+
+        <div id="pubStatus" class="collapse">
         
             <table class='table table-condensed'>
                 <tr><th>{% trans "Creation Date" %}</th><td>{{morpheme.creationDate}}</td></tr>
@@ -646,10 +636,7 @@ function checkKey(e)
    
     <!-- Notes -->
     <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#definition' href='#definitions'>{% trans "Notes" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
         </div>
         <div id='definitions' class='collapse'>
 
@@ -706,10 +693,8 @@ function checkKey(e)
               </tr>
               {% endfor %}
 
-
             {% endfor %}
             </table>
-
 
             {% if perms.dictionary.change_morpheme %}
             <form id='add_definition' action='{% url "dictionary:add_definition" morpheme.id %}' method="POST">
@@ -736,17 +721,13 @@ function checkKey(e)
             </form>
             {% endif %}
 
-
         </div>
     
     </div>
 
      <!-- Other media -->
     <div class="panel panel-default">
-        <div class='panel-heading'>
-            <div class='panel-title'>
-                <a data-toggle='collapse' data-parent='#othermedia' href='#othermedia'>{% trans "Other Media" %}</a>
-            </div>
+        <div class='panel-heading' data-toggle='collapse' data-target='#othermedia'>{% trans "Other Media" %}
         </div>
         <div id='othermedia' class='collapse'>
 
