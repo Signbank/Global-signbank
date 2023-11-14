@@ -107,9 +107,6 @@
         video_player.load();
     }
 
-    $('[data-toggle="tooltip"]').tooltip({
-        placement : 'bottom'
-    });
 
     //Fill choice_lists without frequencies now
     $.ajax("{{PREFIX_URL}}/dictionary/ajax/choice_lists/?dataset={{gloss.lemma.dataset}}").done( function (data)
@@ -330,6 +327,9 @@ option:not(:checked) {
    use this instead, adjust value if necessary */
 .left-modal {
     margin-left: 300px !important;
+}
+.panel-heading:hover {
+    background-color: #D2D2D2;
 }
 </style>
 
