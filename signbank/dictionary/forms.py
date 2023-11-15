@@ -203,7 +203,7 @@ class GlossSearchForm(forms.ModelForm):
 
     hasRelationToForeignSign = forms.ChoiceField(label=_('Related to Foreign Sign'),
                                                  choices=[(0, '-')],
-                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     hasRelation = forms.ChoiceField(label=_('Type of Relation'),
                                     choices=[(0, '-')],
                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))

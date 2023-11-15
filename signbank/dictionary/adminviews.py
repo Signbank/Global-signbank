@@ -3076,28 +3076,27 @@ class QueryListView(ListView):
         query_parameters_mapping = pretty_print_query_fields(dataset_languages, query_parameters.keys())
 
         query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters)
-
         query_fields_focus = []
         query_fields_parameters = []
         for qp_key in query_parameters.keys():
             if qp_key == 'search_type':
                 continue
-            elif qp_key[-2:] == '[]':
-                qp_key = qp_key[:-2]
             if qp_key.startswith(GlossSearchForm.gloss_search_field_prefix) or \
                     qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
                         qp_key.startswith(GlossSearchForm.keyword_search_field_prefix):
                 continue
             if qp_key in settings.GLOSS_LIST_DISPLAY_FIELDS:
                 continue
-            query_fields_focus.append(qp_key)
-            if qp_key == 'hasRelation':
-                # save type of relation
+            if qp_key == 'hasRelation[]':
                 query_fields_parameters.append(query_parameters[qp_key])
+            if qp_key[-2:] == '[]':
+                query_fields_focus.append(qp_key[:-2])
+            else:
+                query_fields_focus.append(qp_key)
 
         if 'hasRelationToForeignSign' in query_fields_focus and 'relationToForeignSign' not in query_fields_focus:
-            if query_parameters['hasRelationToForeignSign'] == '1':
-                # if this is a query with hasRelationToForeignSign True, then also show the relations in the result table
+            if query_parameters['hasRelationToForeignSign'] == '2':
+                # If hasRelationToForeignSign is True, show the relations in the result table
                 query_fields_focus.append('relationToForeignSign')
 
         phonology_focus = settings.GLOSS_LIST_DISPLAY_FIELDS + query_fields_focus
@@ -3140,7 +3139,6 @@ class QueryListView(ListView):
                                                 GlossSearchForm.__dict__['base_fields'][publication_field].label.encode(
                                                     'utf-8').decode())
                 toggle_publication_fields.append(publication_field_parameters)
-
         context['objects_on_page'] = objects_on_page
         context['object_list'] = object_list
         context['display_fields'] = phonology_focus
@@ -6241,14 +6239,12 @@ def glosslist_ajax_complete(request, gloss_id):
             morphemes = " + ".join([x.morpheme.__str__() for x in this_gloss.simultaneous_morphology.all()])
             column_values.append((fieldname, morphemes))
         elif fieldname == 'hasRelation':
-            if query_fields_parameters and query_fields_parameters[0] != 'all':
-                relations_of_type = [ r for r in this_gloss.relation_sources.all() if r.role in query_fields_parameters ]
+            if query_fields_parameters:
+                # query_fields_parameters ends up being a list of list for this field
+                field_paramters = query_fields_parameters[0]
+                relations_of_type = [r for r in this_gloss.relation_sources.all() if r.role in field_paramters]
                 relations = ", ".join([r.target.annotation_idgloss(default_language) for r in relations_of_type])
-            else:
-                relations = ", ".join([r.role + ':' + r.target.annotation_idgloss(default_language)
-                                       for r in this_gloss.relation_sources.all()])
-            # has_relation = _('Yes') if (this_gloss.relation_sources.count() > 0) else _('No')
-            column_values.append((fieldname, relations))
+                column_values.append((fieldname, relations))
         elif fieldname == 'relation':
             relations_to_signs = Relation.objects.filter(source=this_gloss)
             relations = ", ".join([x.role + ':' + x.target.annotation_idgloss(default_language)
@@ -6326,12 +6322,12 @@ def glosslistheader_ajax(request):
         if fieldname in fieldname_to_column_header.keys():
             column_headers.append((fieldname, fieldname_to_column_header[fieldname]))
         elif fieldname == 'hasRelation':
-            if query_fields_parameters:
-                # this is a singleton type of relation
-                relation_type = _("Type of Relation") + ':' + query_fields_parameters[0].capitalize()
-                column_headers.append((fieldname, relation_type))
+            fields_parameters = query_fields_parameters[0]
+            field_parameters = ', '.join([field_param.capitalize() for field_param in fields_parameters])
+            if len(fields_parameters) == 1:
+                column_headers.append((fieldname, field_parameters))
             else:
-                column_headers.append((fieldname, _("Type of Relation")))
+                column_headers.append((fieldname, _("Relation: ") + field_parameters))
         elif fieldname not in Gloss.get_field_names():
             continue
         else:
