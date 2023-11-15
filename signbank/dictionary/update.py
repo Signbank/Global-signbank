@@ -743,8 +743,14 @@ def update_gloss(request, glossid):
             # delete the gloss and redirect back to gloss list
 
             related_objects = gloss_related_objects(gloss)
-            if not related_objects:
-                gloss.delete()
+
+            if settings.GUARDED_GLOSS_DELETE and related_objects:
+                reverse_url = 'dictionary:admin_gloss_view'
+                messages.add_message(request, messages.INFO,
+                                     _("GUARDED_GLOSS_DELETE is set to True. The gloss has relations to other glosses and was not deleted."))
+                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss.id}))
+
+            gloss.delete()
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 

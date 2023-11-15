@@ -596,10 +596,8 @@ option:not(:checked) {
                       <input type='hidden' name='id' value='deletegloss'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                        {% if not related_objects %}
-                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
-                        {% endif %}
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
                       </div>
                   </form>
 
