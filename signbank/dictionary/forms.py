@@ -299,7 +299,7 @@ class GlossSearchForm(forms.ModelForm):
             self.fields[boolean_field].choices = [(0, '-'), (2, _('True')), (3, _('False'))]
 
 
-def check_language_fields(SearchForm, queryDict, languages):
+def check_language_fields(searchform, formclass, queryDict, languages):
     # this function inspects the search parameters from GlossSearchForm looking for occurrences of + at the start
     language_fields_okay = True
     search_fields = []
@@ -310,32 +310,32 @@ def check_language_fields(SearchForm, queryDict, languages):
     language_field_labels = dict()
     language_field_values = dict()
     for language in languages:
-        if hasattr(SearchForm, 'gloss_search_field_prefix'):
-            glosssearch_field_name = SearchForm.gloss_search_field_prefix + language.language_code_2char
+        if hasattr(searchform, 'gloss_search_field_prefix'):
+            glosssearch_field_name = formclass.gloss_search_field_prefix + language.language_code_2char
             if glosssearch_field_name in queryDict.keys():
                 language_field_values[glosssearch_field_name] = queryDict[glosssearch_field_name]
                 language_field_labels[glosssearch_field_name] = _("Gloss")+(" (%s)" % language.name)
 
         # do the same for Translations
-        if hasattr(SearchForm, 'keyword_search_field_prefix'):
-            keyword_field_name = SearchForm.keyword_search_field_prefix + language.language_code_2char
+        if hasattr(searchform, 'keyword_search_field_prefix'):
+            keyword_field_name = formclass.keyword_search_field_prefix + language.language_code_2char
             if keyword_field_name in queryDict.keys():
                 language_field_values[keyword_field_name] = queryDict[keyword_field_name]
                 language_field_labels[keyword_field_name] = _("Senses")+(" (%s)" % language.name)
 
         # and for LemmaIdgloss
-        if hasattr(SearchForm, 'lemma_search_field_prefix'):
-            lemma_field_name = SearchForm.lemma_search_field_prefix + language.language_code_2char
+        if hasattr(searchform, 'lemma_search_field_prefix'):
+            lemma_field_name = formclass.lemma_search_field_prefix + language.language_code_2char
             if lemma_field_name in queryDict.keys():
                 language_field_values[lemma_field_name] = queryDict[lemma_field_name]
                 language_field_labels[lemma_field_name] = _("Lemma")+(" (%s)" % language.name)
 
     for menu_bar_field in menu_bar_fields:
         if menu_bar_field in queryDict.keys():
-            if not hasattr(SearchForm, menu_bar_field):
+            if not hasattr(searchform, menu_bar_field):
                 continue
             language_field_values[menu_bar_field] = queryDict[menu_bar_field]
-            menu_bar_field_label = getattr(SearchForm, menu_bar_field)
+            menu_bar_field_label = getattr(searchform, menu_bar_field)
             language_field_labels[menu_bar_field] = gettext(menu_bar_field_label)
 
     import re
@@ -744,33 +744,22 @@ class LemmaSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_("Lemma"))
     sortOrder = forms.CharField(label=_("Sort Order"))
-    lemma_search_field_prefix = "lemma_"
     no_glosses = forms.ChoiceField(label=_('Only show results without glosses'), choices=[],
                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
                                     widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     menu_bar_search = "Menu Bar Search Gloss"
     menu_bar_translation = "Menu Bar Search Translation"
+    lemma_search_field_prefix = "lemma_"
 
     class Meta:
-
-        ATTRS_FOR_FORMS = {'class': 'form-control'}
 
         model = LemmaIdgloss
         fields = ['dataset']
 
-    def __init__(self, queryDict, *args, **kwargs):
-        languages = kwargs.pop('languages')
-        super(LemmaSearchForm, self).__init__(queryDict, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(LemmaSearchForm, self).__init__(*args, **kwargs)
 
-        count_languages = len(languages)
-        for language in languages:
-            # and for LemmaIdgloss
-            lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
-            lemma_label = _("Lemma")+(" (%s)" % language.name) if count_languages > 1 else _("Lemma")
-            setattr(self, lemma_field_name, forms.CharField(label=lemma_label))
-            if lemma_field_name in queryDict:
-                getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
         for boolean_field in ['no_glosses', 'has_glosses']:
             self.fields[boolean_field].choices = [(0, _('No')), (1, _('Yes'))]
 
@@ -928,11 +917,13 @@ class FocusGlossSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
 
     search = forms.CharField(label=_("Search Gloss"))
-    sortOrder = forms.CharField(label=_("Sort Order"))       # Used in glosslistview to store user-selection
+    sortOrder = forms.CharField(label=_("Sort Order"))
     translation = forms.CharField(label=_('Search Senses'))
 
-    repeat = forms.ChoiceField(label=_('Repeating Movement'), choices=[('0', '-')])
-    altern = forms.ChoiceField(label=_('Alternating Movement'), choices=[('0', '-')])
+    repeat = forms.ChoiceField(label=_('Repeating Movement'), choices=[('0', '-')],
+                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    altern = forms.ChoiceField(label=_('Alternating Movement'), choices=[('0', '-')],
+                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
@@ -942,50 +933,20 @@ class FocusGlossSearchForm(forms.ModelForm):
 
     class Meta:
 
-        ATTRS_FOR_FORMS = {'class': 'form-control'}
-
         model = Gloss
         fields = settings.MINIMAL_PAIRS_SEARCH_FIELDS
 
-    def __init__(self, queryDict, *args, **kwargs):
-        languages = kwargs.pop('languages')
-        super(FocusGlossSearchForm, self).__init__(queryDict, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(FocusGlossSearchForm, self).__init__(*args, **kwargs)
 
-        for language in languages:
-            glosssearch_field_name = self.gloss_search_field_prefix + language.language_code_2char
-            setattr(self, glosssearch_field_name, forms.CharField(label=_("Gloss")+(" (%s)" % language.name)))
-            if glosssearch_field_name in queryDict:
-                getattr(self, glosssearch_field_name).value = queryDict[glosssearch_field_name]
+        # language fields will be set up elsewhere
+        # field choice choices will be set up elsewhere
 
-            # do the same for Translations
-            keyword_field_name = self.keyword_search_field_prefix + language.language_code_2char
-            setattr(self, keyword_field_name, forms.CharField(label=_("Senses")+(" (%s)" % language.name)))
-            if keyword_field_name in queryDict:
-                getattr(self, keyword_field_name).value = queryDict[keyword_field_name]
-
-            # and for LemmaIdgloss
-            lemma_field_name = self.lemma_search_field_prefix + language.language_code_2char
-            setattr(self, lemma_field_name, forms.CharField(label=_("Lemma")+(" (%s)" % language.name)))
-            if lemma_field_name in queryDict:
-                getattr(self, lemma_field_name).value = queryDict[lemma_field_name]
-
-        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
-        fields_with_choices = fields_to_fieldcategory_dict(fieldnames)
-
-        for (fieldname, field_category) in fields_with_choices.items():
+        for fieldname in settings.MINIMAL_PAIRS_CHOICE_FIELDS:
             field_label = Gloss.get_field(fieldname).verbose_name
-            if fieldname.startswith('semField'):
-                field_choices = SemanticField.objects.all()
-            elif fieldname.startswith('derivHist'):
-                field_choices = DerivationHistory.objects.all()
-            elif fieldname in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
-                field_choices = Handshape.objects.all()
-            else:
-                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
-            translated_choices = choicelist_queryset_to_translated_dict(field_choices, ordered=False, id_prefix='', shortlist=True)
-            self.fields[fieldname] = forms.TypedMultipleChoiceField(label=field_label,
-                                                                    choices=translated_choices,
-                                                                    required=False, widget=Select2)
+            self.fields[fieldname] = forms.ChoiceField(label=field_label,
+                                                       choices=[(0, '-')],
+                                                       required=False, widget=Select2)
         for boolean_field in ['repeat', 'altern']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 

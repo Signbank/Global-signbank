@@ -69,7 +69,7 @@ var paginate_by = '{{paginate_by}}';
                         {% for dataset_lang in dataset_languages %}
 
                         <tr>
-                            {% with searchform|get_lemma_field_for_language:dataset_lang as lemma_field %}
+                            {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
                             <td><div class='input-group'>
 
                                 <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>

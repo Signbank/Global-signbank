@@ -682,7 +682,7 @@ class GlossListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         from signbank.dictionary.forms import check_language_fields
-        valid_regex, search_fields = check_language_fields(GlossSearchForm, get, dataset_languages)
+        valid_regex, search_fields = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if not valid_regex:
             error_message_1 = _('Error in search field ')
@@ -746,8 +746,7 @@ class GlossListView(ListView):
         if 'search' in get and get['search'] != '':
             val = get['search']
             query_parameters['search'] = val
-            from signbank.tools import strip_control_characters
-            val = strip_control_characters(val)
+            val = re.escape(val)
             query = Q(annotationidglosstranslation__text__iregex=val)
 
             if re.match('^\d+$', val):
@@ -941,7 +940,7 @@ class SenseListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         from signbank.dictionary.forms import check_language_fields
-        valid_regex, search_fields = check_language_fields(GlossSearchForm, get, dataset_languages)
+        valid_regex, search_fields = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if not valid_regex:
             error_message_1 = _('Error in search field ')
@@ -982,8 +981,7 @@ class SenseListView(ListView):
 
         if 'search' in get and get['search']:
             val = get['search']
-            from signbank.tools import strip_control_characters
-            val = strip_control_characters(val)
+            val = re.escape(val)
             query = Q(gloss__annotationidglosstranslation__text__iregex=val)
 
             if re.match('^\d+$', val):
@@ -2204,7 +2202,7 @@ class MorphemeListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         from signbank.dictionary.forms import check_language_fields
-        valid_regex, search_fields = check_language_fields(MorphemeSearchForm, get, dataset_languages)
+        valid_regex, search_fields = check_language_fields(self.search_form, MorphemeSearchForm, get, dataset_languages)
 
         if not valid_regex:
             error_message_1 = _('Error in search field ')
@@ -2766,9 +2764,17 @@ class MinimalPairsListView(ListView):
     template_name = 'dictionary/admin_minimalpairs_list.html'
     paginate_by = 10
     filter = False
+    search_form = FocusGlossSearchForm()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        fields_with_choices = fields_to_fieldcategory_dict(settings.MINIMAL_PAIRS_CHOICE_FIELDS)
+        set_up_fieldchoice_translations(self.search_form, fields_with_choices)
 
     def get_context_data(self, **kwargs):
         context = super(MinimalPairsListView, self).get_context_data(**kwargs)
+
+        set_up_language_fields(Gloss, self, self.search_form)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -2810,9 +2816,7 @@ class MinimalPairsListView(ListView):
 
         context['field_labels'] = field_labels
 
-        search_form = FocusGlossSearchForm(self.request.GET, languages=dataset_languages)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
 
         context['input_names_fields_and_labels'] = {}
 
@@ -2827,7 +2831,7 @@ class MinimalPairsListView(ListView):
                 if fieldname in settings.MINIMAL_PAIRS_SEARCH_FIELDS:
                     # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand for purposes of nested dependencies in Search form
                     if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                        field = search_form[fieldname]
+                        field = self.search_form[fieldname]
                         label = field.label
                         context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
@@ -2918,7 +2922,7 @@ class MinimalPairsListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         from signbank.dictionary.forms import check_language_fields
-        valid_regex, search_fields = check_language_fields(FocusGlossSearchForm, get, dataset_languages)
+        valid_regex, search_fields = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
 
         if not valid_regex:
             error_message_1 = _('Error in search field ')
@@ -6506,6 +6510,10 @@ class LemmaListView(ListView):
     paginate_by = 50
     show_all = False
     search_type = 'lemma'
+    search_form = LemmaSearchForm()
+
+    def __int__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def get_paginate_by(self, queryset):
         """
@@ -6523,7 +6531,7 @@ class LemmaListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         from signbank.dictionary.forms import check_language_fields
-        valid_regex, search_fields = check_language_fields(LemmaSearchForm, get, dataset_languages)
+        valid_regex, search_fields = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
 
         if not valid_regex:
             error_message_1 = _('Error in search field ')
@@ -6590,6 +6598,9 @@ class LemmaListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(LemmaListView, self).get_context_data(**kwargs)
+
+        set_up_language_fields(LemmaIdgloss, self, self.search_form)
+
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
             context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
         else:
@@ -6617,9 +6628,7 @@ class LemmaListView(ListView):
 
         context['search_matches'] = context['search_results'].count()
 
-        search_form = LemmaSearchForm(self.request.GET, languages=dataset_languages)
-
-        context['searchform'] = search_form
+        context['searchform'] = self.search_form
         context['search_type'] = 'lemma'
 
         list_of_objects = self.object_list

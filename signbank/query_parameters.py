@@ -684,30 +684,33 @@ def set_up_language_fields(model, view, form):
 
     count_languages = len(dataset_languages)
     for language in dataset_languages:
-        annotation_field_name = form.gloss_search_field_prefix + language.language_code_2char
-        if model in [Morpheme]:
-            annotation_field_label = _("Annotation")
-        else:
-            annotation_field_label = _("Gloss")
-        if count_languages > 1:
-            annotation_field_label += (" (%s)" % language.name)
-        form.fields[annotation_field_name] = forms.CharField(label=annotation_field_label)
+        if hasattr(form, 'gloss_search_field_prefix'):
+            annotation_field_name = form.gloss_search_field_prefix + language.language_code_2char
+            if model in [Morpheme]:
+                annotation_field_label = _("Annotation")
+            else:
+                annotation_field_label = _("Gloss")
+            if count_languages > 1:
+                annotation_field_label += (" (%s)" % language.name)
+            form.fields[annotation_field_name] = forms.CharField(label=annotation_field_label)
 
-        keyword_field_name = form.keyword_search_field_prefix + language.language_code_2char
-        if model in [Morpheme]:
-            # Morphemes have translations not senses
-            keyword_field_label = _("Translations")
-        else:
-            keyword_field_label = _("Senses")
-        if count_languages > 1:
-            keyword_field_label += (" (%s)" % language.name)
-        form.fields[keyword_field_name] = forms.CharField(label=keyword_field_label)
+        if hasattr(form, 'keyword_search_field_prefix'):
+            keyword_field_name = form.keyword_search_field_prefix + language.language_code_2char
+            if model in [Morpheme]:
+                # Morphemes have translations not senses
+                keyword_field_label = _("Translations")
+            else:
+                keyword_field_label = _("Senses")
+            if count_languages > 1:
+                keyword_field_label += (" (%s)" % language.name)
+            form.fields[keyword_field_name] = forms.CharField(label=keyword_field_label)
 
-        lemma_field_name = form.lemma_search_field_prefix + language.language_code_2char
-        lemma_field_label = _("Lemma")
-        if count_languages > 1:
-            lemma_field_label += (" (%s)" % language.name)
-        form.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
+        if hasattr(form, 'lemma_search_field_prefix'):
+            lemma_field_name = form.lemma_search_field_prefix + language.language_code_2char
+            lemma_field_label = _("Lemma")
+            if count_languages > 1:
+                lemma_field_label += (" (%s)" % language.name)
+            form.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
 
 
 def set_up_signlanguage_dialects_fields(view, form):

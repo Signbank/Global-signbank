@@ -93,7 +93,7 @@ def get_gloss_fields_to_populate(request):
     # If the menu bar search form was used, populate the search form with the query string
     from signbank.tools import strip_control_characters  # TODO Why is this import here?
 
-    return {field: escape(strip_control_characters(request.GET[field]))
+    return {field: re.escape(strip_control_characters(request.GET[field]))
             for field in ['search', 'translation']
             if field in request.GET and request.GET[field] != ''}
 
