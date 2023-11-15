@@ -175,10 +175,10 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key == 'hasRelationToForeignSign':
             pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
 
-            if get_value == '1':
+            if get_value == '2':
                 # value '1' filters glosses with a relation to a foreign sign
                 query_list.append(Q(pk__in=pks_for_glosses_with_relations))
-            elif get_value == '2':
+            elif get_value == '3':
                 # the code for "No" excludes the above glosses from the results
                 query_list.append(~Q(pk__in=pks_for_glosses_with_relations))
 
@@ -452,16 +452,17 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         elif key in ['repeat', 'altern']:
             query_dict[key] = UNKNOWNBOOLEANCHOICES[query_parameters[key]]
         elif key in ['hasRelationToForeignSign']:
-            if query_parameters[key] in ['1', 'yes']:
+            if query_parameters[key] in ['2']:
                 query_dict[key] = _('Yes')
-            elif query_parameters[key] in ['2', 'no']:
+            elif query_parameters[key] in ['3']:
                 query_dict[key] = _('No')
         elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasothermedia']:
             query_dict[key] = NULLBOOLEANCHOICES[query_parameters[key]]
         elif key in ['defspublished', 'hasmultiplesenses']:
             query_dict[key] = YESNOCHOICES[query_parameters[key]]
         elif key in ['hasRelation']:
-            query_dict[key] = RELATION_ROLE_CHOICES[query_parameters[key]]
+            choices_for_category = [RELATION_ROLE_CHOICES[val] for val in query_parameters[key]]
+            query_dict[key] = choices_for_category
         elif key in ['hasComponentOfType']:
             choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', machine_value__in=query_parameters[key])
             query_dict[key] = [choice.name for choice in choices_for_category][0]
