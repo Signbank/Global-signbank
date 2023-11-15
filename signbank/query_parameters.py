@@ -73,7 +73,7 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
         elif field_key in ['defspublished', 'hasmultiplesenses']:
             # these mappings match the choices in the Gloss Search Form and get_queryset
             # some of these are legacy mappings
-            YESNOCHOICES = {'None': 'unspecified', 'True': 'yes', 'False': 'no'}
+            YESNOCHOICES = {'None': '-', 'True': _('Yes'), 'False': _('No')}
             query_parameters[field_key] = YESNOCHOICES[field_value]
         else:
             query_parameters[field_key] = field_value
@@ -187,11 +187,11 @@ def convert_query_parameters_to_filter(query_parameters):
             potential_pks = [relation.gloss.pk for relation in relations]
             query_list.append(Q(pk__in=potential_pks))
 
-        elif get_key == 'defspublished' and get_value != '':
+        elif get_key == 'defspublished' and get_value:
             val = get_value == 'yes'
             query_list.append(Q(definition__published=val))
 
-        elif get_key == 'hasmultiplesenses' and get_value != '':
+        elif get_key == 'hasmultiplesenses' and get_value:
             val = get_value == 'yes'
             if val:
                 multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
@@ -757,7 +757,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 continue
             if field in ['dialect', 'signlanguage', 'semField', 'derivHist']:
                 query_filter = gloss_prefix + field + '__in'
-                qs = qs.filter(**{query_filter: get_value})
+                qs = qs.filter(**{query_filter: vals}).distinct()
             elif field in ['definitionRole']:
                 definitions_with_this_role = Definition.objects.filter(role__machine_value__in=vals)
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
