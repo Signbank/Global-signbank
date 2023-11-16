@@ -743,7 +743,7 @@ class GlossListView(ListView):
         query_parameters = dict()
 
         # If not, we will go trhough a long list of filters
-        if 'search' in get and get['search'] != '':
+        if 'search' in get and get['search']:
             val = get['search']
             query_parameters['search'] = val
             val = re.escape(val)
@@ -752,7 +752,7 @@ class GlossListView(ListView):
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
 
-            qs = qs.filter(query)
+            qs = qs.filter(query).distinct()
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
@@ -987,7 +987,7 @@ class SenseListView(ListView):
             if re.match('^\d+$', val):
                 query = query | Q(gloss__sn__exact=val)
 
-            qs = qs.filter(query)
+            qs = qs.filter(query).distinct()
 
         qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
