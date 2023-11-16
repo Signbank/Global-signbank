@@ -307,27 +307,33 @@ def check_language_fields(searchform, formclass, queryDict, languages):
         return language_fields_okay, search_fields
     menu_bar_fields = ['search', 'translation']
 
+    import re
+    from signbank.tools import strip_control_characters
+
     language_field_labels = dict()
     language_field_values = dict()
     for language in languages:
         if hasattr(searchform, 'gloss_search_field_prefix'):
             glosssearch_field_name = formclass.gloss_search_field_prefix + language.language_code_2char
             if glosssearch_field_name in queryDict.keys():
-                language_field_values[glosssearch_field_name] = queryDict[glosssearch_field_name]
+                language_field_value = re.escape(strip_control_characters(queryDict[glosssearch_field_name]))
+                language_field_values[glosssearch_field_name] = language_field_value
                 language_field_labels[glosssearch_field_name] = _("Gloss")+(" (%s)" % language.name)
 
         # do the same for Translations
         if hasattr(searchform, 'keyword_search_field_prefix'):
             keyword_field_name = formclass.keyword_search_field_prefix + language.language_code_2char
             if keyword_field_name in queryDict.keys():
-                language_field_values[keyword_field_name] = queryDict[keyword_field_name]
+                language_field_value = re.escape(strip_control_characters(queryDict[keyword_field_name]))
+                language_field_values[keyword_field_name] = language_field_value
                 language_field_labels[keyword_field_name] = _("Senses")+(" (%s)" % language.name)
 
         # and for LemmaIdgloss
         if hasattr(searchform, 'lemma_search_field_prefix'):
             lemma_field_name = formclass.lemma_search_field_prefix + language.language_code_2char
             if lemma_field_name in queryDict.keys():
-                language_field_values[lemma_field_name] = queryDict[lemma_field_name]
+                language_field_value = re.escape(strip_control_characters(queryDict[lemma_field_name]))
+                language_field_values[lemma_field_name] = language_field_value
                 language_field_labels[lemma_field_name] = _("Lemma")+(" (%s)" % language.name)
 
     for menu_bar_field in menu_bar_fields:
@@ -339,9 +345,8 @@ def check_language_fields(searchform, formclass, queryDict, languages):
             language_field_labels[menu_bar_field] = gettext(menu_bar_field_label)
 
     import re
-    # check for matches starting with: + * [ ( ) ?
-    # or ending with a +
-    regexp = re.compile('^[+*\[()?]|([^+]+\+$)')
+    # check for matches starting with: * [ ( ) ?
+    regexp = re.compile('^[*\[()?]')
     for language_field in language_field_values.keys():
         if regexp.search(language_field_values[language_field]):
             language_fields_okay = False
