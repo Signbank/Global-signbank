@@ -186,12 +186,14 @@ class GlossSearchForm(forms.ModelForm):
     sortOrder = forms.CharField(label=_('Sort Order'))
     tags = forms.ChoiceField(label=_('Tags'), choices=[(0, '-')])
     translation = forms.CharField(label=_('Search Senses'))
-    hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')])
-    hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=[(0, '-')])
+    hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=[(0, '-')],
+                                      widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=[(0, '-')],
-                                      widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                      widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     hasmultiplesenses = forms.ChoiceField(label=_("Has Multiple Senses"), choices=[(0, '-')],
-                                          widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+                                          widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
 
     relation = forms.CharField(label=_('Gloss of Related Sign'),
                                widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
