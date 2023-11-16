@@ -6611,6 +6611,11 @@ class LemmaListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
+        # use these to fill the form fields of a just done query
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
+        context['populate_fields'] = json.dumps(populate_fields)
+        context['populate_fields_keys'] = json.dumps(populate_keys)
+
         context['page_number'] = context['page_obj'].number
 
         context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]

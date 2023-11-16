@@ -10,7 +10,8 @@
 
 {% load annotation_idgloss_translation %}
 
-<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+{% block extrajs %}
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini.js"></script>
 
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
@@ -18,9 +19,56 @@ var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};
 var objects_on_this_page = {{objects_on_page|safe}};
 var paginate_by = '{{paginate_by}}';
+var populate_fields_keys = {{populate_fields_keys|safe}};
+var populate_fields = {{populate_fields|safe}};
 
+$(document).ready(function(){
+        $('.delete-entry').on('click', function() {
+            var url = $(this).attr('modal_url');
+            $('#delete-form').attr('action', url);
+            $('#delete-link').attr('href', url);
+        });
+
+        $('[data-toggle="tooltip"]').tooltip({
+            placement : 'bottom'
+        });
+
+     // initialize query fields
+     for (var i = 0; i < populate_fields_keys.length; i++) {
+        var this_var = populate_fields_keys[i];
+        var this_id = '#id_' + populate_fields_keys[i];
+        var $language_search = $("input[name='"+this_var+"']");
+        var query_initial = populate_fields[this_var];
+        if ($language_search.length > 0) {
+            $language_search.val(query_initial);
+        } else {
+            // $select_search = $("select[name='"+this_var+"']");
+            $(this_id).val(query_initial);
+        }
+     }
+});
+
+function clearForm() {
+
+      $('input').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden' || this_type == 'submit') { return; };
+        $(this).val('');
+      });
+      $('select').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden') { return; };
+        $(this).val('0');
+      });
+     $("input[name='translation']").val('');
+     $("input[name='search']").val('');
+}
 </script>
-
+{% endblock %}
 
 {% block content %}
 
@@ -302,40 +350,3 @@ var paginate_by = '{{paginate_by}}';
 
 </div>
 {% endblock content %}
-
-{% block extrajs %}
-<script>
-$(document).ready(function(){
-        $('.delete-entry').on('click', function() {
-            var url = $(this).attr('modal_url');
-            $('#delete-form').attr('action', url);
-            $('#delete-link').attr('href', url);
-        });
-
-        $('[data-toggle="tooltip"]').tooltip({
-            placement : 'bottom'
-        });
-});
-
-function clearForm() {
-
-      $('input').each(function() {
-        var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
-        var this_type = $(this).attr('type');
-        if (this_type == 'hidden' || this_type == 'submit') { return; };
-        $(this).val('');
-      });
-      $('select').each(function() {
-        var this_field = $(this).attr('name');
-        if (this_field == undefined) { return; };
-        var this_type = $(this).attr('type');
-        if (this_type == 'hidden') { return; };
-        $(this).val('0');
-      });
-     $("input[name='translation']").val('');
-     $("input[name='search']").val('');
-}
-
-</script>
-{% endblock %}
