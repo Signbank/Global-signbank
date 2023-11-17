@@ -144,9 +144,6 @@ def convert_query_parameters_to_filter(query_parameters):
             # and directly applied to the query results (see previous function)
             continue
         elif get_key == 'search' and get_value:
-            # from signbank.tools import strip_control_characters
-            # val = strip_control_characters(get_value)
-            print('search query: ', get_value)
             query_filter_annotation_text = 'annotationidglosstranslation__text__' + text_filter
             query = Q(**{query_filter_annotation_text: get_value})
             if re.match('^\d+$', get_value):
