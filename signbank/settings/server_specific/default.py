@@ -108,6 +108,8 @@ LANGUAGE_CODE_MAP = [
 # This may be dependent on local and spreadsheet software
 LEFT_DOUBLE_QUOTE_PATTERNS = '[\"\u201c]'
 RIGHT_DOUBLE_QUOTE_PATTERNS = '[\"\u201d]'
+REGEX_SPECIAL_CHARACTERS = '[+]'
+USE_REGULAR_EXPRESSIONS = False
 
 #From all possible gloss fields available, display these
 FIELDS = {}

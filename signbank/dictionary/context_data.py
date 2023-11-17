@@ -5,6 +5,7 @@ from django.http import QueryDict
 from django.utils.html import escape
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors, choicelist_choicelist_to_field_colors
+from signbank.query_parameters import search_fields_from_get
 
 
 def get_web_search(request):
@@ -89,15 +90,6 @@ def get_other_parameter_keys():
     return other_parameters_keys, multiple_select_gloss_fields, fields_with_choices
 
 
-def get_gloss_fields_to_populate(request):
-    # If the menu bar search form was used, populate the search form with the query string
-    from signbank.tools import strip_control_characters  # TODO Why is this import here?
-
-    return {field: re.escape(strip_control_characters(request.GET[field]))
-            for field in ['search', 'translation']
-            if field in request.GET and request.GET[field] != ''}
-
-
 def get_choices_colors(fields_with_choices):
     fields_with_choices['definitionRole'] = 'NoteType'
     fields_with_choices['hasComponentOfType'] = 'MorphologyType'
@@ -154,9 +146,9 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
     context['field_colors'] = get_choices_colors(fields_with_choices)
 
-    gloss_fields_to_populate = get_gloss_fields_to_populate(request)
-    context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
-    context['gloss_fields_to_populate_keys'] = list(gloss_fields_to_populate.keys())
+    populate_keys, populate_fields = search_fields_from_get(search_form, request.GET)
+    context['gloss_fields_to_populate'] = json.dumps(populate_fields)
+    context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
 
     context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 

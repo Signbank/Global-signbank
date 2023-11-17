@@ -557,11 +557,13 @@ function do_toggle_language(el) {
 {% csrf_token %}
 <div class="panel panel-default">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
+            {% if USE_REGULAR_EXPRESSIONS %}
             <span class="hasTooltip">
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
                   title=""></span>
 				{% include "tooltip.html" with include_tags=True %}
             </span>
+            {% endif %}
     </div>
 
     <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>

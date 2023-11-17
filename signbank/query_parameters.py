@@ -92,23 +92,27 @@ def apply_language_filters_to_results(qs, query_parameters):
     len_keyword_search_field_prefix = len(keyword_search_field_prefix)
     lemma_search_field_prefix = "lemma_"
     len_lemma_search_field_prefix = len(lemma_search_field_prefix)
+    text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
 
     for get_key, get_value in query_parameters.items():
         if get_key.startswith(gloss_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_gloss_search_field_prefix:]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
-            qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
-                           annotationidglosstranslation__language=language)
+            query_filter_annotation_text = 'annotationidglosstranslation__text__' + text_filter
+            qs = qs.filter(**{query_filter_annotation_text: get_value,
+                              'annotationidglosstranslation__language': language})
         elif get_key.startswith(lemma_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_lemma_search_field_prefix:]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
-            qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
-                           lemma__lemmaidglosstranslation__language=language)
+            query_filter_lemma_text = 'lemma__lemmaidglosstranslation__text__' + text_filter
+            qs = qs.filter(**{query_filter_lemma_text: get_value,
+                              'lemma__lemmaidglosstranslation__language': language})
         elif get_key.startswith(keyword_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_keyword_search_field_prefix:]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
-            qs = qs.filter(translation__translation__text__iregex=get_value,
-                           translation__language=language)
+            query_filter_sense_text = 'translation__translation__text__' + text_filter
+            qs = qs.filter(**{query_filter_sense_text: get_value,
+                              'translation__language': language})
     return qs
 
 
@@ -120,6 +124,7 @@ def convert_query_parameters_to_filter(query_parameters):
     glosssearch = "glosssearch_"
     lemmasearch = "lemma_"
     keywordsearch = "keyword_"
+    text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
 
     gloss_fields = {}
     for fname in Gloss.get_field_names():
@@ -138,16 +143,19 @@ def convert_query_parameters_to_filter(query_parameters):
             # because of joining tables, these are done in a separate function
             # and directly applied to the query results (see previous function)
             continue
-        elif get_key == 'search' and get_value != '':
-            from signbank.tools import strip_control_characters
-            val = strip_control_characters(get_value)
-            query = Q(annotationidglosstranslation__text__iregex=val)
-            if re.match('^\d+$', val):
-                query = query | Q(sn__exact=val)
+        elif get_key == 'search' and get_value:
+            # from signbank.tools import strip_control_characters
+            # val = strip_control_characters(get_value)
+            print('search query: ', get_value)
+            query_filter_annotation_text = 'annotationidglosstranslation__text__' + text_filter
+            query = Q(**{query_filter_annotation_text: get_value})
+            if re.match('^\d+$', get_value):
+                query = query | Q(sn__exact=get_value)
             query_list.append(query)
 
-        elif get_key == 'translation' and get_value != '':
-            query_list.append(Q(translation__translation__text__iregex=get_value))
+        elif get_key == 'translation' and get_value:
+            query_filter_sense_text = 'translation__translation__text__' + text_filter
+            query_list.append(Q(**{query_filter_sense_text: get_value}))
 
         elif get_key == 'inWeb' and get_value != '':
             val = get_value == '2'
@@ -257,7 +265,7 @@ def convert_query_parameters_to_filter(query_parameters):
             pks_for_glosses_with_correct_relation = [relation.source.pk for relation in relations_with_this_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_correct_relation))
         elif get_key in ['relation']:
-            potential_targets = Gloss.objects.filter(annotationidglosstranslation__text__iregex=get_value)
+            potential_targets = Gloss.objects.filter(annotationidglosstranslation__text__icontains=get_value)
             relations = Relation.objects.filter(target__in=potential_targets)
             potential_pks = [relation.source.pk for relation in relations]
             query_list.append(Q(pk__in=potential_pks))
@@ -511,6 +519,8 @@ def search_fields_from_get(searchform, GET):
         return search_keys, search_fields_to_populate
     search_form_fields = searchform.fields.keys()
     for get_key, get_value in GET.items():
+        if get_key in ['filter']:
+            continue
         if get_value in ['', '0']:
             continue
         if get_key.endswith('[]'):
@@ -520,11 +530,6 @@ def search_fields_from_get(searchform, GET):
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
-        elif get_key in ['search', 'translation']:
-            from signbank.tools import strip_control_characters
-            val = strip_control_characters(get_value)
-            search_fields_to_populate[get_key] = escape(val)
-            search_keys.append(get_key)
         else:
             search_fields_to_populate[get_key] = get_value
             search_keys.append(get_key)
@@ -540,6 +545,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
     :view: MorphemeListView
     :model: Morpheme
     """
+    text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
             if not get_value:
@@ -583,20 +589,23 @@ def queryset_from_get(formclass, searchform, GET, qs):
                     get_key.startswith(formclass.gloss_search_field_prefix):
                 language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
-                               annotationidglosstranslation__language=language)
+                query_filter_annotation_text = 'annotationidglosstranslation__text__' + text_filter
+                qs = qs.filter(**{query_filter_annotation_text: get_value,
+                                  'annotationidglosstranslation__language': language})
             elif hasattr(searchform, 'lemma_search_field_prefix') and \
                     get_key.startswith(formclass.lemma_search_field_prefix):
                 language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
-                               lemma__lemmaidglosstranslation__language=language)
+                query_filter_lemma_text = 'lemma__lemmaidglosstranslation__text__' + text_filter
+                qs = qs.filter(**{query_filter_lemma_text: get_value,
+                                  'lemma__lemmaidglosstranslation__language': language})
             elif hasattr(searchform, 'keyword_search_field_prefix') and \
                     get_key.startswith(formclass.keyword_search_field_prefix):
                 language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(translation__translation__text__iregex=get_value,
-                               translation__language=language)
+                query_filter_sense_text = 'translation__translation__text__' + text_filter
+                qs = qs.filter(**{query_filter_sense_text: get_value,
+                                  'translation__language': language})
             else:
                 # normal text field
                 query_filter = get_key + '__icontains'
@@ -747,6 +756,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     if not searchform:
         return qs
     gloss_prefix = 'gloss__' if model in ['GlossSense'] else ''
+    text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
             if not get_value:
@@ -792,12 +802,8 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 or get_value in ['', '0']:
             continue
         elif searchform.fields[get_key].widget.input_type in ['text']:
-            if get_key in ['search', 'sortOrder']:
+            if get_key in ['search', 'sortOrder', 'translation']:
                 continue
-            elif get_key in ['translation']:
-                query_filter = gloss_prefix + 'senses__senseTranslations__translations__translation__text__iregex'
-                # this one needs the distinct for some reason
-                qs = qs.filter(**{query_filter: get_value}).distinct()
             elif get_key in ['morpheme']:
                 # Filter all glosses that contain this morpheme in their simultaneous morphology
                 try:
@@ -815,7 +821,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_these_definitions})
             elif get_key in ['relation']:
-                potential_targets = Gloss.objects.filter(annotationidglosstranslation__text__iregex=get_value)
+                potential_targets = Gloss.objects.filter(annotationidglosstranslation__text__icontains=get_value)
                 relations = Relation.objects.filter(target__in=potential_targets)
                 potential_pks = [relation.source.pk for relation in relations]
                 query_filter = gloss_prefix + 'pk__in'
@@ -837,7 +843,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                     get_key.startswith(formclass.gloss_search_field_prefix):
                 language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__iregex'
+                query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__' + text_filter
                 query_filter_language = gloss_prefix + 'annotationidglosstranslation__language'
                 qs = qs.filter(**{query_filter_annotation_text: get_value,
                                   query_filter_language: language})
@@ -845,7 +851,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                     get_key.startswith(formclass.lemma_search_field_prefix):
                 language_code_2char = get_key[len(formclass.lemma_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__iregex'
+                query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__' + text_filter
                 query_filter_language = gloss_prefix + 'lemma__lemmaidglosstranslation__language'
                 qs = qs.filter(**{query_filter_lemma_text: get_value,
                                   query_filter_language: language})
@@ -853,7 +859,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                     get_key.startswith(formclass.keyword_search_field_prefix):
                 language_code_2char = get_key[len(formclass.keyword_search_field_prefix):]
                 language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                query_filter_sense_text = gloss_prefix + 'translation__translation__text__iregex'
+                query_filter_sense_text = gloss_prefix + 'translation__translation__text__' + text_filter
                 query_filter_language = gloss_prefix + 'translation__language'
                 # for some reason, distinct is needed here
                 qs = qs.filter(**{query_filter_sense_text: get_value,
@@ -990,10 +996,6 @@ def query_parameters_from_get(searchform, GET, query_parameters):
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
-        elif get_key in ['search', 'translation']:
-            from signbank.tools import strip_control_characters
-            val = strip_control_characters(get_value)
-            query_parameters[get_key] = escape(val)
         else:
             query_parameters[get_key] = get_value
     return query_parameters

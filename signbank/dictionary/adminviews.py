@@ -685,7 +685,7 @@ class GlossListView(ListView):
         from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
-        if not valid_regex:
+        if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
             error_message_3 = _(': Please use a backslash before special characters.')
@@ -743,17 +743,45 @@ class GlossListView(ListView):
         # it is saved to self.query_parameters after the parameters are processed
         query_parameters = dict()
 
-        # If not, we will go trhough a long list of filters
         if 'search' in get and get['search']:
+            # menu bar gloss search, return the results
             val = get['search']
             query_parameters['search'] = val
-            val = re.escape(val)
-            query = Q(annotationidglosstranslation__text__iregex=val)
+            if USE_REGULAR_EXPRESSIONS:
+                val = re.escape(val)
+                query = Q(annotationidglosstranslation__text__iregex=val)
+            else:
+                query = Q(annotationidglosstranslation__text__icontains=val)
 
             if re.match('^\d+$', val):
                 query = query | Q(sn__exact=val)
 
             qs = qs.filter(query).distinct()
+
+            self.request.session['query_parameters'] = json.dumps(query_parameters)
+            self.request.session.modified = True
+            self.query_parameters = query_parameters
+
+            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            return sorted_qs
+
+        if 'translation' in get and get['translation']:
+            # menu bar senses search, return the results
+            val = get['translation']
+            query_parameters['translation'] = val
+            if USE_REGULAR_EXPRESSIONS:
+                val = re.escape(val)
+                query = Q(senses__senseTranslations__translations__translation__text__iregex=val)
+            else:
+                query = Q(senses__senseTranslations__translations__translation__text__icontains=val)
+            qs = qs.filter(query).distinct()
+
+            self.request.session['query_parameters'] = json.dumps(query_parameters)
+            self.request.session.modified = True
+            self.query_parameters = query_parameters
+
+            sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+            return sorted_qs
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
@@ -943,7 +971,7 @@ class SenseListView(ListView):
         from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
-        if not valid_regex:
+        if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
             error_message_3 = _(': Please use a backslash before special characters.')
@@ -982,8 +1010,11 @@ class SenseListView(ListView):
 
         if 'search' in get and get['search']:
             val = get['search']
-            val = re.escape(val)
-            query = Q(gloss__annotationidglosstranslation__text__iregex=val)
+            if USE_REGULAR_EXPRESSIONS:
+                val = re.escape(val)
+                query = Q(gloss__annotationidglosstranslation__text__iregex=val)
+            else:
+                query = Q(gloss__annotationidglosstranslation__text__icontains=val)
 
             if re.match('^\d+$', val):
                 query = query | Q(gloss__sn__exact=val)
@@ -2207,7 +2238,7 @@ class MorphemeListView(ListView):
         from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(self.search_form, MorphemeSearchForm, get, dataset_languages)
 
-        if not valid_regex:
+        if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
             error_message_3 = _(': Please use a backslash before special characters.')
@@ -2762,6 +2793,7 @@ class HomonymListView(ListView):
 
         return glosses_with_phonology
 
+
 class MinimalPairsListView(ListView):
     model = Gloss
     template_name = 'dictionary/admin_minimalpairs_list.html'
@@ -2839,22 +2871,10 @@ class MinimalPairsListView(ListView):
                         context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
 
         # pass these to the template to populate the search form with the search parameters
-        gloss_fields_to_populate = dict()
-        for veld in self.request.GET.keys():
-            if veld in ['search_type', 'filter']:
-                continue
-            veld_value = self.request.GET[veld]
-            if veld_value == '' or veld_value == '0':
-                continue
-            if veld[-2:] == '[]' :
-                veld_list = self.request.GET.getlist(veld)
-                if not veld_list:
-                    continue
-                veld_value = veld_list
-            gloss_fields_to_populate[veld] = veld_value
-        gloss_fields_to_populate_keys = list(gloss_fields_to_populate.keys())
-        context['gloss_fields_to_populate'] = json.dumps(gloss_fields_to_populate)
-        context['gloss_fields_to_populate_keys'] = gloss_fields_to_populate_keys
+        # use these to fill the form fields of a just done query
+        populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
+        context['gloss_fields_to_populate'] = json.dumps(populate_fields)
+        context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
 
         context['page_number'] = context['page_obj'].number
 
@@ -2927,7 +2947,7 @@ class MinimalPairsListView(ListView):
         from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
 
-        if not valid_regex:
+        if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
             error_message_3 = _(': Please use a backslash before special characters.')
@@ -2950,7 +2970,7 @@ class MinimalPairsListView(ListView):
         handedness_null = 'handedness__isnull'
         strong_hand_filter = 'domhndsh__name__in'
         strong_hand_null = 'domhndsh__isnull'
-        empty_value = ['-','N/A']
+        empty_value = ['-', 'N/A']
 
         glosses_with_phonology = Gloss.none_morpheme_objects().select_related('lemma').filter(
                                         lemma__dataset__in=selected_datasets).exclude(
@@ -2966,65 +2986,12 @@ class MinimalPairsListView(ListView):
             return glosses_with_phonology
 
         qs = glosses_with_phonology
-        # Evaluate all gloss/language search fields
-        for get_key, get_value in get.items():
-            if get_key.startswith(GlossSearchForm.gloss_search_field_prefix) and get_value != '':
-                language_code_2char = get_key[len(GlossSearchForm.gloss_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(annotationidglosstranslation__text__iregex=get_value,
-                               annotationidglosstranslation__language=language)
-            elif get_key.startswith(GlossSearchForm.lemma_search_field_prefix) and get_value != '':
-                language_code_2char = get_key[len(GlossSearchForm.lemma_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(lemma__lemmaidglosstranslation__text__iregex=get_value,
-                               lemma__lemmaidglosstranslation__language=language)
-            elif get_key.startswith(GlossSearchForm.keyword_search_field_prefix) and get_value != '':
-                language_code_2char = get_key[len(GlossSearchForm.keyword_search_field_prefix):]
-                language = Language.objects.filter(language_code_2char=language_code_2char).first()
-                qs = qs.filter(translation__translation__text__iregex=get_value,
-                               translation__language=language)
+        qs = queryset_glosssense_from_get('Gloss', FocusGlossSearchForm, self.search_form, get, qs)
 
-        fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
-        fields_with_choices = fields_to_fieldcategory_dict()
-        multiple_select_gloss_fields = [fname for fname in Gloss.get_field_names()
-                                                    if fname in fieldnames
-                                                    and fname in fields_with_choices.keys()]
-
-        for fieldnamemulti in multiple_select_gloss_fields:
-            fieldnamemultiVarname = fieldnamemulti + '[]'
-            if fieldnamemulti == 'semField':
-                fieldnameQuery = 'semField' + '__machine_value__in'
-            else:
-                fieldnameQuery = fieldnamemulti + '__machine_value__in'
-
-            vals = get.getlist(fieldnamemultiVarname)
-            if vals != []:
-                qs = qs.filter(**{ fieldnameQuery: vals })
-
-        # phonology and semantics field filters
-        fieldnames = [ f for f in fieldnames if f not in multiple_select_gloss_fields ]
-
-        for fieldname in fieldnames:
-
-            if fieldname in get and get[fieldname] != '':
-                field_obj = Gloss.get_field(fieldname)
-
-                if type(field_obj) in [CharField,TextField] and not hasattr(field_obj, 'field_choice_category'):
-                    key = fieldname + '__icontains'
-                else:
-                    key = fieldname + '__exact'
-
-                val = get[fieldname]
-
-                if isinstance(field_obj,BooleanField):
-                    val = {'0':'','1': None, '2': True, '3': False}[val]
-
-                if val != '':
-                    kwargs = {key:val}
-                    qs = qs.filter(**kwargs)
         qs = qs.select_related('lemma')
 
         return qs
+
 
 class QueryListView(ListView):
     # not sure what model should be used here, it applies to all the glosses in a dataset
@@ -3951,7 +3918,7 @@ class HandshapeListView(ListView):
         from signbank.dictionary.forms import check_multilingual_fields
         valid_regex, search_fields = check_multilingual_fields(Handshape, get, dataset_languages)
 
-        if not valid_regex:
+        if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
             error_message_3 = _(': Please use a backslash before special characters.')
@@ -6536,7 +6503,7 @@ class LemmaListView(ListView):
         from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
 
-        if not valid_regex:
+        if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
             error_message_3 = _(': Please use a backslash before special characters.')
@@ -6556,7 +6523,7 @@ class LemmaListView(ListView):
             if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value != '':
                 language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
                 language = Language.objects.get(language_code_2char=language_code_2char)
-                qs = qs.filter(lemmaidglosstranslation__text__iregex=get_value,
+                qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
                                lemmaidglosstranslation__language=language)
         return qs
 
