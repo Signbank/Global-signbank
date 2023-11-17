@@ -1825,7 +1825,7 @@ class MultipleSelectTests(TestCase):
         print('New gloss ', new_gloss.idgloss, ' created with semantic field ', new_semanticfield.name)
         #Search on the new field
         #It is multi-select so the semField parameter has [] after it
-        response = client.get('/signs/search/', {'semField[]':new_semanticfield.machine_value}, follow=True)
+        response = client.get('/signs/search/', {'semField[]': [new_semanticfield.machine_value]}, follow=True)
 
         # check that the new gloss is found when searching on the new semantic field
         print('Search for the gloss on semantic field.')
@@ -1840,7 +1840,8 @@ class MultipleSelectTests(TestCase):
 
         #Search on the new field
         #It is multi-select so the semField parameter has [] after it
-        response = client.get('/signs/search/', {'semField[]':[ new_semanticfield.machine_value, new_semanticfield_2.machine_value] }, follow=True)
+        response = client.get('/signs/search/', {'semField[]': [new_semanticfield.machine_value,
+                                                                          new_semanticfield_2.machine_value]}, follow=True)
 
         # check that the new gloss is found when searching on the new semantic field
         print('Search for the gloss on both semantic fields.')
@@ -3794,7 +3795,7 @@ class SensesCRUDTests(TestCase):
         print('Second sense for gloss successfully created.')
         print('Search for glosses with multiple senses.')
         # Search for the gloss
-        response = client.get('/signs/search/', {'hasmultiplesenses': 'yes'})
+        response = client.get('/signs/search/', {'hasmultiplesenses': '2'})
         self.assertEqual(len(response.context['object_list']), 1)
         print('New gloss with two senses found.')
 
@@ -3876,7 +3877,7 @@ class SensesCRUDTests(TestCase):
 
         print('Search for glosses with multiple senses.')
         # Search for the gloss again
-        response = client.get('/signs/search/', {'hasmultiplesenses': 'yes'})
+        response = client.get('/signs/search/', {'hasmultiplesenses': '2'})
         self.assertEqual(len(response.context['object_list']), 0)
         print('No glosses with multiple senses found.')
 
