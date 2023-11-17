@@ -691,6 +691,19 @@ class GlossRevisionAdmin(VersionAdmin):
         return self.list_display_links
 
 
+class DeletedGlossOrMediaAdmin(admin.ModelAdmin):
+    model = DeletedGlossOrMedia
+
+    list_display = ['item_type', 'idgloss', 'annotation_idgloss', 'old_pk', 'filename', 'deletion_date']
+    readonly_fields = ['item_type', 'idgloss', 'annotation_idgloss', 'old_pk', 'filename', 'deletion_date']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 class RegistrationProfileAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'activation_key_expired', )
     search_fields = ('user__username', 'user__first_name', )
@@ -1362,6 +1375,7 @@ admin.site.register(SemanticFieldTranslation, SemanticFieldTranslationAdmin)
 admin.site.register(DerivationHistory, DerivationHistoryAdmin)
 admin.site.register(DerivationHistoryTranslation, DerivationHistoryTranslationAdmin)
 admin.site.register(GlossRevision,GlossRevisionAdmin)
+admin.site.register(DeletedGlossOrMedia, DeletedGlossOrMediaAdmin)
 
 admin.site.register(UserProfile)
 admin.site.register(Language, LanguageAdmin)

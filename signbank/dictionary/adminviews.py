@@ -79,6 +79,7 @@ from signbank.dictionary.senses_display import (senses_per_language, senses_per_
                                                 sensetranslations_per_language_dict,
                                                 senses_translations_per_language_list, senses_sentences_per_language_list)
 from signbank.dictionary.context_data import get_context_data_for_list_view, get_context_data_for_gloss_search_form
+from signbank.dictionary.related_objects import gloss_is_related_to
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1555,6 +1556,8 @@ class GlossDetailView(DetailView):
                 otherrelations.append((oth_rel,target_display))
 
         context['otherrelations'] = otherrelations
+
+        context['related_objects'] = gloss_is_related_to(gl, interface_language_code, default_language_code)
 
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}

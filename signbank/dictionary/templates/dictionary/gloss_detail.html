@@ -22,7 +22,7 @@
     var gloss_phonology = {{gloss_phonology|safe}};
     var language_code = '{{LANGUAGE_CODE}}';
 
-    {% trans "Edit" as edit_mode_str %} 
+    {% trans "Edit" as edit_mode_str %}
     {% trans "Turn Off Edit Mode" as turn_off_edit_mode_str %}
     {% trans "Delete This Gloss" as delete_this_gloss_str %}
     {% trans "Saving..." as saving_str %} 
@@ -503,7 +503,9 @@ option:not(:checked) {
 
          <span id='edit_message' style="padding-right: 1.8em;"></span>
 
-         <button id='enable_edit' class='btn btn-default navbar-btn edit-mode'>{% trans "Edit" %}</button>
+         <button id='enable_edit'
+                 class='btn btn-primary navbar-btn edit-mode'
+                 style="width:auto;padding:3px 12px;">{% trans "Edit" %}</button>
 
          {% if perms.dictionary.add_gloss %}
          <button id='copy_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
@@ -568,12 +570,31 @@ option:not(:checked) {
 
         {% if "change_dataset" in dataset_perms %}
         <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDelete" aria-hidden="true">
-             <div class="modal-dialog modal-sm">
+             <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h2 id='modalTitleDelete'>{% trans "Delete This Sign" %}</h2>
+                        <br>
+                        {% with gloss.lemma.dataset.default_language as target_default_language %}
+			            {% with annotation_idgloss|get_item:target_default_language as annotation %}
+                        <h4>{% trans "Sign" %}: {{annotation}}</h4>
+                        {% endwith %}
+                        {% endwith %}
                     </div>
                     <div class='modal-body'>
+                        {% if related_objects.keys %}
+                        <p>{% trans "This sign is related to other signs:" %}</p>
+                        <br>
+                        <table class="table table-condensed table-bordered">
+                            {% for key, glosses in related_objects.items %}
+                            <tr>
+                                <td style="width:240px">{{key}}</td>
+                                <td>{{glosses}}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                        <br><br>
+                        {% endif %}
                         <p>{% trans "This action will delete this sign and all associated records. It cannot be undone." %}</p>
                      </div>
                   <form action="{% url 'dictionary:update_gloss' gloss.id %}" method='post'>
@@ -581,8 +602,8 @@ option:not(:checked) {
                       <input type='hidden' name='id' value='deletegloss'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
                       </div>
                   </form>
 
@@ -773,7 +794,9 @@ option:not(:checked) {
     <div class="editform">
         <fieldset>
          <legend>{% trans "Delete Sign" %}</legend>
-         <button id='delete_gloss_btn' class='btn btn-danger' data-toggle='modal' data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
+         <button id='delete_gloss_btn' class='btn btn-danger' style="width:auto;"
+                 data-toggle='modal'
+                 data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
         </fieldset>
     </div>
     {% endif %}
@@ -801,6 +824,7 @@ option:not(:checked) {
                 <td>
                     <div id="lemma_buttons" name="lemma_buttons">
                         <button id='show_edit_lemma_form' name='show_edit_lemma_form'
+                                style="width:auto;"
                                 class='btn btn-primary btn-space lemma-button'>{% trans "Edit Lemma" %}</button>
                         <button id='show_set_lemma_form' name='show_set_lemma_form'
                                 class='btn btn-primary btn-space lemma-button'>{% trans "Choose Other" %}</button>
