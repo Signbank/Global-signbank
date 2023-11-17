@@ -20,7 +20,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
-var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+var multiple_select_fields = {{MINIMAL_PAIRS_CHOICE_FIELDS|safe}};
 var csrf_token = '{{csrf_token}}';
 var url = '{{PREFIX_URL}}';
 var page_number = {{ page_number }};
@@ -72,6 +72,19 @@ $(document).ready(function() {
         };
      }
 
+     // initialize non-multiple select, not language-based query fields
+     for (var i = 0; i < gloss_fields_to_populate_keys.length; i++) {
+        var this_var = gloss_fields_to_populate_keys[i];
+        if (this_var.endsWith('[]')) { continue; }
+        var this_id = '#id_' + gloss_fields_to_populate_keys[i];
+        var $language_search = $("input[name='"+this_var+"']");
+        var query_initial = gloss_fields_to_populate[this_var];
+        if ($language_search.length > 0) {
+            $language_search.val(query_initial);
+        } else {
+            $(this_id).val(query_initial);
+        }
+     }
 
     lookup = "#minimalpairs_table";
     for (var i = 0; i < objects_on_this_page.length; i++) {

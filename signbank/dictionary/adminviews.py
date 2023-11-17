@@ -2830,55 +2830,28 @@ class MinimalPairsListView(ListView):
         self.request.session['last_used_dataset'] = dataset.acronym
         self.request.session.modified = True
 
-        fieldnames = settings.MINIMAL_PAIRS_SEARCH_FIELDS
-        fields_with_choices = fields_to_fieldcategory_dict()
-        multiple_select_gloss_fields = [fieldname for fieldname in fieldnames
-                                                  if fieldname in fields_with_choices.keys()]
-        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
-
-        field_names = []
-        for field in FIELDS['phonology']:
-            field_object = Gloss.get_field(field)
-            # don't consider text fields that are not choice lists
-            if isinstance(field_object, models.CharField) or isinstance(field_object, models.TextField):
-                continue
-            field_names.append(field)
-
-        field_labels = dict()
-        for field in field_names:
-            field_label = Gloss.get_field(field).verbose_name
-            field_labels[field] = field_label.encode('utf-8').decode()
-
-        context['field_labels'] = field_labels
+        context['MINIMAL_PAIRS_CHOICE_FIELDS'] = MINIMAL_PAIRS_CHOICE_FIELDS
 
         context['searchform'] = self.search_form
 
         context['input_names_fields_and_labels'] = {}
-
-        for topic in ['main','phonology','semantics']:
-
+        for topic in ['main', 'phonology', 'semantics']:
             context['input_names_fields_and_labels'][topic] = []
-
             for fieldname in settings.FIELDS[topic]:
-
-                if fieldname == 'derivHist' and not settings.USE_DERIVATIONHISTORY:
-                    continue
                 if fieldname in settings.MINIMAL_PAIRS_SEARCH_FIELDS:
-                    # exclude the dependent fields for Handedness, Strong Hand, and Weak Hand for purposes of nested dependencies in Search form
-                    if fieldname not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-                        field = self.search_form[fieldname]
-                        label = field.label
-                        context['input_names_fields_and_labels'][topic].append((fieldname,field,label))
+                    field = self.search_form[fieldname]
+                    label = field.label
+                    context['input_names_fields_and_labels'][topic].append((fieldname, field, label))
 
         # pass these to the template to populate the search form with the search parameters
-        # use these to fill the form fields of a just done query
+        # of a just done query
         populate_keys, populate_fields = search_fields_from_get(self.search_form, self.request.GET)
         context['gloss_fields_to_populate'] = json.dumps(populate_fields)
         context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
 
         context['page_number'] = context['page_obj'].number
 
-        context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
+        context['objects_on_page'] = [g.id for g in context['page_obj'].object_list]
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
