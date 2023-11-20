@@ -411,7 +411,7 @@ class BasicQueryTests(TestCase):
 
         #Search
         search_handedness_value = str(self.handedness_fieldchoice_1.machine_value)
-        response = client.get('/signs/search/?handedness='+search_handedness_value+'&'+glosssearch_field_name+'=test', follow=True)
+        response = client.get('/signs/search/?handedness[]='+search_handedness_value+'&'+glosssearch_field_name+'=test', follow=True)
         self.assertEqual(len(response.context['object_list']), 1)
 
 
