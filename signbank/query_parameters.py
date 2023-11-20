@@ -506,9 +506,9 @@ def search_fields_from_get(searchform, GET):
     """
     Collect non-empty search fields from GET into dictionary
     Called from get_context_data
-    :form: MorphemeSearchForm
-    :view: MorphemeListView
-    :model: Morpheme
+    :form: MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm
+    :view: MorphemeListView, MinimalPairsListView, LemmaListView
+    :model: Morpheme, Gloss, LemmaIdgloss
     """
     search_keys = []
     search_fields_to_populate = dict()
@@ -645,8 +645,8 @@ def set_up_fieldchoice_translations(form, fields_with_choices):
     Set up field choice choices in the form.
     This is done dynamically to make the choices language dependent (model translations).
     Called from __init__ method of the view
-    :form: GlossSearchForm, MorphemeSearchForm, SentenceForm
-    :view: GlossListView, MorphemeListView, SenseListView
+    :form: GlossSearchForm, MorphemeSearchForm, SentenceForm, FocusGlossSearchForm
+    :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView
     """
     for (fieldname, field_category) in fields_with_choices.items():
         if fieldname not in form.fields.keys():
@@ -681,9 +681,9 @@ def set_up_language_fields(model, view, form):
     This is done dynamically since they depend on the selected datasets.
     Called from get_context_data method of the view
     If only one translation language is used, the name of the language is omitted from the field label.
-    :model: Gloss, Morpheme, GlossSense
-    :form: GlossSearchForm, MorphemeSearchForm
-    :view: GlossListView, MorphemeListView, SenseListView
+    :model: Gloss, Morpheme, GlossSense, LemmaIdgloss
+    :form: GlossSearchForm, MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm
+    :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView, LemmaListView
     """
     selected_datasets = get_selected_datasets_for_user(view.request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -746,8 +746,8 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     Function used by both GlossListView and SenseListView
     Called from get_queryset
     The gloss_prefix is used for SenseListView to access the gloss since it queries over GlossSense
-    :form: GlossSearchForm
-    :view: GlossListView, SenseListView
+    :form: GlossSearchForm, FocusGlossSearchForm
+    :view: GlossListView, SenseListView, MinimalPairsListView
     :model: Gloss, GlossSense
     """
     if not searchform:
