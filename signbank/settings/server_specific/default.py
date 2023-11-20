@@ -108,6 +108,8 @@ LANGUAGE_CODE_MAP = [
 # This may be dependent on local and spreadsheet software
 LEFT_DOUBLE_QUOTE_PATTERNS = '[\"\u201c]'
 RIGHT_DOUBLE_QUOTE_PATTERNS = '[\"\u201d]'
+REGEX_SPECIAL_CHARACTERS = '[+]'
+USE_REGULAR_EXPRESSIONS = False
 
 #From all possible gloss fields available, display these
 FIELDS = {}
@@ -177,6 +179,8 @@ HANDEDNESS_ARTICULATION_FIELDS = ['weakdrop','weakprop']
 MINIMAL_PAIRS_FIELDS = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','relOriMov','relOriLoc',
                         'oriCh','contType','movSh','movDir','repeat','altern']
 MINIMAL_PAIRS_SEARCH_FIELDS = MINIMAL_PAIRS_FIELDS + ['namEnt','semField','valence']
+MINIMAL_PAIRS_CHOICE_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim', 'relOriMov',
+                               'relOriLoc', 'oriCh', 'contType', 'movSh', 'movDir', 'namEnt', 'semField', 'valence']
 
 #Display these fields as columns in the list view
 GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locprim']

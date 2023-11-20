@@ -20,7 +20,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
-var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+var multiple_select_fields = {{MINIMAL_PAIRS_CHOICE_FIELDS|safe}};
 var csrf_token = '{{csrf_token}}';
 var url = '{{PREFIX_URL}}';
 var page_number = {{ page_number }};
@@ -72,6 +72,19 @@ $(document).ready(function() {
         };
      }
 
+     // initialize non-multiple select, not language-based query fields
+     for (var i = 0; i < gloss_fields_to_populate_keys.length; i++) {
+        var this_var = gloss_fields_to_populate_keys[i];
+        if (this_var.endsWith('[]')) { continue; }
+        var this_id = '#id_' + gloss_fields_to_populate_keys[i];
+        var $language_search = $("input[name='"+this_var+"']");
+        var query_initial = gloss_fields_to_populate[this_var];
+        if ($language_search.length > 0) {
+            $language_search.val(query_initial);
+        } else {
+            $(this_id).val(query_initial);
+        }
+     }
 
     lookup = "#minimalpairs_table";
     for (var i = 0; i < objects_on_this_page.length; i++) {
@@ -179,17 +192,19 @@ function clearForm() {
 
         <div class="panel panel-default">
               <div class="panel-heading" data-toggle="collapse" data-target="#ann_search">{% trans "Filter Focus Gloss by Annotation" %}
+                {% if USE_REGULAR_EXPRESSIONS %}
                 <span class="hasTooltip">
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
                   title=""></span>
 				{% include "tooltip.html" with include_tags=True %}
                 </span>
+                {% endif %}
               </div>
         <div id='ann_search' class='collapse'>
         <table class='table' id='searchfields'>
             {% for dataset_lang in dataset_languages %}
             <tr>
-                {% with searchform|get_search_field_for_language:dataset_lang as search_field %}
+                {% with searchform|get_annotation_search_field_for_language:dataset_lang as search_field %}
                 <td>
                     <div class='input-group'>
                     <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
@@ -201,7 +216,7 @@ function clearForm() {
                 </td>
                 {% endwith %}
 
-                {% with searchform|get_lemma_field_for_language:dataset_lang as lemma_field %}
+                {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
                 <td><div class='input-group'>
                     <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
                         {{lemma_field.label}}
@@ -211,7 +226,7 @@ function clearForm() {
                 </td>
                 {% endwith %}
 
-                {% with searchform|get_keyword_field_for_language:dataset_lang as keyword_field %}
+                {% with searchform|get_senses_form_field_for_language:dataset_lang as keyword_field %}
                 <td><div class='input-group'>
                     <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
                     <input id='keyword_{{ dataset_lang.language_code_2char }}' type='text'
