@@ -221,13 +221,13 @@ $(document).ready(function() {
      }
 
      // initialize non-multiple select, not language-based query fields
-     for (var i = 0; i < other_parameters_keys.length; i++) {
-        var this_var = other_parameters_keys[i];
-        if (query_parameters_keys.includes(this_var)) {
-            var this_id = '#id_' + other_parameters_keys[i];
-            var query_initial = query_parameters_dict[this_var];
-            $(this_id).val(query_initial);
-        };
+     for (var i = 0; i < query_parameters_keys.length; i++) {
+        var this_var = query_parameters_keys[i];
+        if (this_var.endsWith('[]')) { continue; }
+        if (language_query_keys.includes(this_var)) { continue; }
+        var this_id = '#id_' + query_parameters_keys[i];
+        var query_initial = query_parameters_dict[this_var];
+        $(this_id).val(query_initial);
      }
 
      // initialize language-based query fields
