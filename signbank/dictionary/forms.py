@@ -28,12 +28,6 @@ from easy_select2.widgets import Select2, Select2Multiple
 from signbank.settings.server_specific import LANGUAGES, REGEX_SPECIAL_CHARACTERS, USE_REGULAR_EXPRESSIONS
 
 
-# category choices are tag values that we'll restrict search to
-CATEGORY_CHOICES = (('all', 'All Signs'),
-                    ('semantic:health', 'Only Health Related Signs'),
-                    ('semantic:education', 'Only Education Related Signs'))
-
-
 # See if there are any tags there, but don't crash if there isn't even a table
 def tag_choices():
     try:
@@ -310,9 +304,6 @@ def check_language_fields(searchform, formclass, queryDict, languages):
     if not queryDict or not USE_REGULAR_EXPRESSIONS:
         return language_fields_okay, search_fields
     menu_bar_fields = ['search', 'translation']
-
-    import re
-    # from signbank.tools import strip_control_characters
 
     language_field_labels = dict()
     language_field_values = dict()
