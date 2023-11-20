@@ -1008,19 +1008,6 @@ class SenseListView(ListView):
         if show_all:
             return qs
 
-        if 'search' in get and get['search']:
-            val = get['search']
-            if USE_REGULAR_EXPRESSIONS:
-                val = re.escape(val)
-                query = Q(gloss__annotationidglosstranslation__text__iregex=val)
-            else:
-                query = Q(gloss__annotationidglosstranslation__text__icontains=val)
-
-            if re.match('^\d+$', val):
-                query = query | Q(gloss__sn__exact=val)
-
-            qs = qs.filter(query).distinct()
-
         qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
         query_parameters = dict()
