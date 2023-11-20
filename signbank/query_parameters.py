@@ -687,7 +687,7 @@ def set_up_language_fields(model, view, form):
     """
     selected_datasets = get_selected_datasets_for_user(view.request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
-
+    interface_language = [view.request.LANGUAGE_CODE]
     count_languages = len(dataset_languages)
     for language in dataset_languages:
         if hasattr(form, 'gloss_search_field_prefix'):
@@ -696,7 +696,7 @@ def set_up_language_fields(model, view, form):
                 annotation_field_label = _("Annotation")
             else:
                 annotation_field_label = _("Gloss")
-            if count_languages > 1:
+            if count_languages > 1 or language.language_code_2char not in interface_language:
                 annotation_field_label += (" (%s)" % language.name)
             form.fields[annotation_field_name] = forms.CharField(label=annotation_field_label)
 
@@ -707,14 +707,14 @@ def set_up_language_fields(model, view, form):
                 keyword_field_label = _("Translations")
             else:
                 keyword_field_label = _("Senses")
-            if count_languages > 1:
+            if count_languages > 1 or language.language_code_2char not in interface_language:
                 keyword_field_label += (" (%s)" % language.name)
             form.fields[keyword_field_name] = forms.CharField(label=keyword_field_label)
 
         if hasattr(form, 'lemma_search_field_prefix'):
             lemma_field_name = form.lemma_search_field_prefix + language.language_code_2char
             lemma_field_label = _("Lemma")
-            if count_languages > 1:
+            if count_languages > 1 or language.language_code_2char not in interface_language:
                 lemma_field_label += (" (%s)" % language.name)
             form.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
 
