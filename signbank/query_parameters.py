@@ -332,7 +332,7 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
     # it is expected that as the functionality of Query Parameters is extended that the descriptions will evolve
     # depending on what the user wants to be able to do
     gloss_fields = Gloss.get_field_names()
-    form_fields = GlossSearchForm.__dict__['base_fields']
+    form_fields = GlossSearchForm.get_field_names()
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
@@ -354,13 +354,13 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
             if key[:-2] in gloss_fields:
                 query_dict[key] = Gloss.get_field(key[:-2]).verbose_name.encode('utf-8').decode()
             elif key[:-2] in form_fields:
-                query_dict[key] = GlossSearchForm.__dict__['base_fields'][key[:-2]].label.encode('utf-8').decode()
+                query_dict[key] = GlossSearchForm.get_field(key[:-2]).label.encode('utf-8').decode()
             else:
                 print('pretty_print_query_fields: multiple select field not found in Gloss or GlossSearchForm: ', key)
                 query_dict[key] = key
         elif key not in gloss_fields:
             if key in form_fields:
-                query_dict[key] = GlossSearchForm.__dict__['base_fields'][key].label.encode('utf-8').decode()
+                query_dict[key] = GlossSearchForm.get_field(key).label.encode('utf-8').decode()
             else:
                 print('pretty_print_query_fields: key not in gloss_fields, not in form_fields:', key)
                 query_dict[key] = key

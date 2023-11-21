@@ -3014,7 +3014,7 @@ class QueryListView(ListView):
                 continue
             if qp_key.startswith(GlossSearchForm.gloss_search_field_prefix) or \
                     qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
-                        qp_key.startswith(GlossSearchForm.keyword_search_field_prefix):
+                    qp_key.startswith(GlossSearchForm.keyword_search_field_prefix):
                 continue
             if qp_key in settings.GLOSS_LIST_DISPLAY_FIELDS:
                 continue
@@ -3034,11 +3034,10 @@ class QueryListView(ListView):
 
         toggle_gloss_list_display_fields = []
         if hasattr(settings, 'GLOSS_LIST_DISPLAY_FIELDS'):
-
             for gloss_list_field in settings.GLOSS_LIST_DISPLAY_FIELDS:
                 gloss_list_field_parameters = (gloss_list_field,
-                                                GlossSearchForm.__dict__['base_fields'][gloss_list_field].label.encode(
-                                                    'utf-8').decode())
+                                               GlossSearchForm.get_field(gloss_list_field).label.encode(
+                                                   'utf-8').decode())
                 toggle_gloss_list_display_fields.append(gloss_list_field_parameters)
 
         toggle_query_parameter_fields = []
@@ -3048,8 +3047,9 @@ class QueryListView(ListView):
                 continue
             elif query_field == 'hasothermedia':
                 toggle_query_parameter = (query_field, _("Other Media"))
-            elif query_field in GlossSearchForm.__dict__['base_fields']:
-                toggle_query_parameter = (query_field,GlossSearchForm.__dict__['base_fields'][query_field].label.encode('utf-8').decode())
+            elif query_field in GlossSearchForm.get_field_names():
+                toggle_query_parameter = (query_field,
+                                          GlossSearchForm.get_field(query_field).label.encode('utf-8').decode())
             elif query_field == 'dialect':
                 toggle_query_parameter = (query_field, _("Dialect"))
             elif query_field == 'hasComponentOfType':
@@ -3067,7 +3067,7 @@ class QueryListView(ListView):
 
             for publication_field in settings.SEARCH_BY['publication']:
                 publication_field_parameters = (publication_field,
-                                                GlossSearchForm.__dict__['base_fields'][publication_field].label.encode(
+                                                GlossSearchForm.get_field(publication_field).label.encode(
                                                     'utf-8').decode())
                 toggle_publication_fields.append(publication_field_parameters)
         context['objects_on_page'] = objects_on_page

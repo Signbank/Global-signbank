@@ -267,6 +267,16 @@ class GlossSearchForm(forms.ModelForm):
         fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + \
                  ['inWeb', 'isNew', 'excludeFromEcv']
 
+    @classmethod
+    def get_field_names(cls):
+        fields = cls.__dict__['base_fields']
+        return fields
+
+    @classmethod
+    def get_field(cls, fieldname):
+        field = cls.__dict__['base_fields'][fieldname]
+        return field
+
     def __init__(self, *args, **kwargs):
 
         super(GlossSearchForm, self).__init__(*args, **kwargs)
