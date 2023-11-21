@@ -65,7 +65,7 @@ from signbank.dictionary.consistency_senses import consistent_senses, check_cons
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
     query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get, \
     set_up_fieldchoice_translations, set_up_language_fields, set_up_signlanguage_dialects_fields, \
-    queryset_glosssense_from_get, query_parameters_from_get, queryset_sentences_from_get
+    queryset_glosssense_from_get, query_parameters_from_get, queryset_sentences_from_get, query_parameters_toggle_fields
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -3007,72 +3007,14 @@ class QueryListView(ListView):
         query_parameters_mapping = pretty_print_query_fields(dataset_languages, query_parameters.keys())
 
         query_parameters_values_mapping = pretty_print_query_values(dataset_languages, query_parameters)
-        query_fields_focus = []
-        query_fields_parameters = []
-        for qp_key in query_parameters.keys():
-            if qp_key == 'search_type':
-                continue
-            if qp_key.startswith(GlossSearchForm.gloss_search_field_prefix) or \
-                    qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
-                    qp_key.startswith(GlossSearchForm.keyword_search_field_prefix):
-                continue
-            if qp_key in settings.GLOSS_LIST_DISPLAY_FIELDS:
-                continue
-            if qp_key == 'hasRelation[]':
-                query_fields_parameters.append(query_parameters[qp_key])
-            if qp_key[-2:] == '[]':
-                query_fields_focus.append(qp_key[:-2])
-            else:
-                query_fields_focus.append(qp_key)
 
-        if 'hasRelationToForeignSign' in query_fields_focus and 'relationToForeignSign' not in query_fields_focus:
-            if query_parameters['hasRelationToForeignSign'] == '2':
-                # If hasRelationToForeignSign is True, show the relations in the result table
-                query_fields_focus.append('relationToForeignSign')
+        query_fields_focus, query_fields_parameters, \
+            toggle_gloss_list_display_fields, toggle_query_parameter_fields, toggle_publication_fields = \
+            query_parameters_toggle_fields(query_parameters)
 
-        phonology_focus = settings.GLOSS_LIST_DISPLAY_FIELDS + query_fields_focus
-
-        toggle_gloss_list_display_fields = []
-        if hasattr(settings, 'GLOSS_LIST_DISPLAY_FIELDS'):
-            for gloss_list_field in settings.GLOSS_LIST_DISPLAY_FIELDS:
-                gloss_list_field_parameters = (gloss_list_field,
-                                               GlossSearchForm.get_field(gloss_list_field).label.encode(
-                                                   'utf-8').decode())
-                toggle_gloss_list_display_fields.append(gloss_list_field_parameters)
-
-        toggle_query_parameter_fields = []
-        for query_field in query_fields_focus:
-            if query_field == 'search_type':
-                # don't show a button for this
-                continue
-            elif query_field == 'hasothermedia':
-                toggle_query_parameter = (query_field, _("Other Media"))
-            elif query_field in GlossSearchForm.get_field_names():
-                toggle_query_parameter = (query_field,
-                                          GlossSearchForm.get_field(query_field).label.encode('utf-8').decode())
-            elif query_field == 'dialect':
-                toggle_query_parameter = (query_field, _("Dialect"))
-            elif query_field == 'hasComponentOfType':
-                toggle_query_parameter = (query_field, _("Sequential Morphology"))
-            elif query_field == 'mrpType':
-                toggle_query_parameter = (query_field, _("Morpheme Type"))
-            elif query_field == 'morpheme':
-                toggle_query_parameter = (query_field, _("Simultaneous Morphology"))
-            else:
-                toggle_query_parameter = (query_field,query_field.capitalize())
-            toggle_query_parameter_fields.append(toggle_query_parameter)
-
-        toggle_publication_fields = []
-        if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys():
-
-            for publication_field in settings.SEARCH_BY['publication']:
-                publication_field_parameters = (publication_field,
-                                                GlossSearchForm.get_field(publication_field).label.encode(
-                                                    'utf-8').decode())
-                toggle_publication_fields.append(publication_field_parameters)
         context['objects_on_page'] = objects_on_page
         context['object_list'] = object_list
-        context['display_fields'] = phonology_focus
+        context['display_fields'] = settings.GLOSS_LIST_DISPLAY_FIELDS + query_fields_focus
         context['query_fields_parameters'] = query_fields_parameters
         context['TOGGLE_QUERY_PARAMETER_FIELDS'] = toggle_query_parameter_fields
         context['TOGGLE_PUBLICATION_FIELDS'] = toggle_publication_fields
@@ -3080,18 +3022,18 @@ class QueryListView(ListView):
         context['query_parameters'] = query_parameters
         context['query_parameters_mapping'] = query_parameters_mapping
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
-        available_parameters_to_save = available_query_parameters_in_search_history()
-        context['available_query_parameters_in_search_history'] = available_parameters_to_save
-        query_parameter_keys = query_parameters.keys()
         context['query_parameter_keys'] = query_parameters.keys()
 
+        available_parameters_to_save = available_query_parameters_in_search_history()
+        context['available_query_parameters_in_search_history'] = available_parameters_to_save
         all_parameters_available_to_save = True
-        for param in query_parameter_keys:
+        for param in query_parameters.keys():
             if param not in available_parameters_to_save:
                 all_parameters_available_to_save = False
         context['all_parameters_available_to_save'] = all_parameters_available_to_save
 
         return context
+
     def get_queryset(self):
 
         if 'search_results' in self.request.session.keys():

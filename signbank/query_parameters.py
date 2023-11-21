@@ -502,6 +502,69 @@ def pretty_print_query_values(dataset_languages,query_parameters):
     return query_dict
 
 
+def query_parameters_toggle_fields(query_parameters):
+    query_fields_focus = []
+    query_fields_parameters = []
+    for qp_key in query_parameters.keys():
+        if qp_key == 'search_type':
+            continue
+        if qp_key.startswith(GlossSearchForm.gloss_search_field_prefix) or \
+                qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
+                qp_key.startswith(GlossSearchForm.keyword_search_field_prefix):
+            continue
+        if qp_key in settings.GLOSS_LIST_DISPLAY_FIELDS:
+            continue
+        if qp_key == 'hasRelation[]':
+            query_fields_parameters.append(query_parameters[qp_key])
+        if qp_key[-2:] == '[]':
+            query_fields_focus.append(qp_key[:-2])
+        else:
+            query_fields_focus.append(qp_key)
+
+    if 'hasRelationToForeignSign' in query_fields_focus and 'relationToForeignSign' not in query_fields_focus:
+        if query_parameters['hasRelationToForeignSign'] == '2':
+            # If hasRelationToForeignSign is True, show the relations in the result table
+            query_fields_focus.append('relationToForeignSign')
+
+    gloss_list_display_fields = getattr(settings, 'GLOSS_LIST_DISPLAY_FIELDS', [])
+    toggle_gloss_list_display_fields = [(gloss_list_field,
+                                         GlossSearchForm.get_field(gloss_list_field).label.encode(
+                                             'utf-8').decode()) for gloss_list_field in gloss_list_display_fields]
+
+    toggle_query_parameter_fields = []
+    for query_field in query_fields_focus:
+        if query_field == 'search_type':
+            # don't show a button for this
+            continue
+        elif query_field == 'hasothermedia':
+            toggle_query_parameter = (query_field, _("Other Media"))
+        elif query_field in GlossSearchForm.get_field_names():
+            toggle_query_parameter = (query_field,
+                                      GlossSearchForm.get_field(query_field).label.encode('utf-8').decode())
+        elif query_field == 'dialect':
+            toggle_query_parameter = (query_field, _("Dialect"))
+        elif query_field == 'hasComponentOfType':
+            toggle_query_parameter = (query_field, _("Sequential Morphology"))
+        elif query_field == 'mrpType':
+            toggle_query_parameter = (query_field, _("Morpheme Type"))
+        elif query_field == 'morpheme':
+            toggle_query_parameter = (query_field, _("Simultaneous Morphology"))
+        else:
+            toggle_query_parameter = (query_field, query_field.capitalize())
+        toggle_query_parameter_fields.append(toggle_query_parameter)
+
+    toggle_publication_fields = []
+    if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys():
+        for publication_field in settings.SEARCH_BY['publication']:
+            publication_field_parameters = (publication_field,
+                                            GlossSearchForm.get_field(publication_field).label.encode(
+                                                'utf-8').decode())
+            toggle_publication_fields.append(publication_field_parameters)
+
+    return query_fields_focus, query_fields_parameters, \
+        toggle_gloss_list_display_fields, toggle_query_parameter_fields, toggle_publication_fields
+
+
 def search_fields_from_get(searchform, GET):
     """
     Collect non-empty search fields from GET into dictionary
