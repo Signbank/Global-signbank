@@ -1051,10 +1051,7 @@ class GlossDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         try:
             self.object = super().get_object()
@@ -1585,25 +1582,10 @@ class GlossDetailView(DetailView):
                     dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
-        if hasattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY'):
-            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = settings.SHOW_LETTER_NUMBER_PHONOLOGY
-        else:
-            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
-
-        if hasattr(settings, 'USE_DERIVATIONHISTORY') and settings.USE_DERIVATIONHISTORY:
-            context['USE_DERIVATIONHISTORY'] = settings.USE_DERIVATIONHISTORY
-        else:
-            context['USE_DERIVATIONHISTORY'] = False
-
-        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
-            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
-        else:
-            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['SHOW_LETTER_NUMBER_PHONOLOGY'] = getattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY', False)
+        context['USE_DERIVATIONHISTORY'] = getattr(settings, 'USE_DERIVATIONHISTORY', False)
+        context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
 
         gloss_is_duplicate = False
         annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
@@ -1685,10 +1667,7 @@ class GlossVideosView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         try:
             self.object = super().get_object()
@@ -1802,10 +1781,8 @@ class GlossVideosView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+
         return context
 
 
@@ -1820,10 +1797,7 @@ class GlossRelationsDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         try:
             self.object = super().get_object()
@@ -2039,15 +2013,8 @@ class GlossRelationsDetailView(DetailView):
         context['sensetranslations_per_language'] = senses_per_language(gl)
         context['sensetranslations_per_language_dict'] = sensetranslations_per_language_dict(gl)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
-        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
-            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
-        else:
-            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
 
         return context
 
@@ -2165,10 +2132,7 @@ class MorphemeListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
@@ -2377,10 +2341,7 @@ class HandshapeDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         match_machine_value = int(kwargs['pk'])
         try:
@@ -2505,10 +2466,8 @@ class HandshapeDetailView(DetailView):
             items = construct_scrollbar(qs, self.search_type, lang_attr_name)
             self.request.session['search_results'] = items
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+
         return context
 
 
@@ -2526,10 +2485,7 @@ class SemanticFieldDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         # Get the machine value in the URL
         match_machine_value = int(kwargs['pk'])
@@ -2582,10 +2538,8 @@ class SemanticFieldDetailView(DetailView):
 
         context['translation_mapping'] = translation_mapping
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+
         return context
 
 
@@ -2613,10 +2567,7 @@ class SemanticFieldListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         return context
 
@@ -2644,10 +2595,7 @@ class DerivationHistoryDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         # Get the machine value in the URL
         match_machine_value = int(kwargs['pk'])
@@ -2681,10 +2629,8 @@ class DerivationHistoryDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+
         return context
 
 
@@ -2712,10 +2658,7 @@ class DerivationHistoryListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         return context
 
@@ -2750,10 +2693,7 @@ class HomonymListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         handedness_filter = 'handedness__name__in'
         strong_hand_filter = 'domhndsh__name__in'
@@ -2802,10 +2742,7 @@ class MinimalPairsListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view minimal pairs.')
@@ -2968,15 +2905,8 @@ class QueryListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
-        if hasattr(settings, 'GLOSS_LIST_DISPLAY_FIELDS'):
-            context['GLOSS_LIST_DISPLAY_FIELDS'] = settings.GLOSS_LIST_DISPLAY_FIELDS
-        else:
-            context['GLOSS_LIST_DISPLAY_FIELDS'] = []
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['GLOSS_LIST_DISPLAY_FIELDS'] = getattr(settings, 'GLOSS_LIST_DISPLAY_FIELDS', [])
 
         if 'search_results' in self.request.session.keys():
             search_results = self.request.session['search_results']
@@ -3086,10 +3016,7 @@ class SearchHistoryView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         # this gets the query parameters fields currently being stored by the code
         # see if we need to do anything with this qua feedback
@@ -3176,10 +3103,7 @@ class FrequencyListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         context['dataset_ids'] = [ ds.id for ds in selected_datasets]
 
@@ -3262,14 +3186,12 @@ class FrequencyListView(ListView):
         context['field_labels_semantics_choices'] = field_labels_semantics_choices
 
         # for ease of implementation in the template, the results of the two kinds of frequencies
-        # (phonology fields, semantics fields) are displayed in the same table, the lookup tables are merged so only one loop is needed
+        # (phonology fields, semantics fields) are displayed in the same table,
+        # the lookup tables are merged so only one loop is needed
 
         context['all_field_labels'] = dict(field_labels, **field_labels_semantics)
 
-        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
-            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
-        else:
-            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
+        context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
 
         return context
 
@@ -3316,10 +3238,7 @@ class GlossFrequencyView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         try:
             self.object = super().get_object()
@@ -3330,7 +3249,7 @@ class GlossFrequencyView(DetailView):
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-        if self.object.lemma == None or self.object.lemma.dataset == None:
+        if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested gloss has no lemma or dataset.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
@@ -3498,20 +3417,9 @@ class GlossFrequencyView(DetailView):
         context['variants_age_distribution_data'] = variants_age_distribution_data_raw
         context['variants_age_distribution_data_percentage'] = variants_age_distribution_data_percentage
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
-        if hasattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY'):
-            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = settings.SHOW_LETTER_NUMBER_PHONOLOGY
-        else:
-            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
-
-        if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
-            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
-        else:
-            context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['SHOW_LETTER_NUMBER_PHONOLOGY'] = getattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY', False)
+        context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
 
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
@@ -3587,15 +3495,8 @@ class LemmaFrequencyView(DetailView):
                     dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
-        if hasattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY'):
-            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = settings.SHOW_LETTER_NUMBER_PHONOLOGY
-        else:
-            context['SHOW_LETTER_NUMBER_PHONOLOGY'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['SHOW_LETTER_NUMBER_PHONOLOGY'] = getattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY', False)
 
         # Put annotation_idgloss per language in the context
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
@@ -3742,10 +3643,7 @@ class HandshapeListView(ListView):
         items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         # this is a shorthand for use in the template
         handshape_to_fields = dict()
@@ -3958,10 +3856,7 @@ class DatasetListView(ListView):
         context['nr_of_public_glosses'] = nr_of_public_glosses
         context['nr_of_glosses'] = nr_of_glosses
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         context['messages'] = messages.get_messages(self.request)
         return context
@@ -4230,10 +4125,7 @@ class DatasetManagerView(ListView):
             default_language_choice_dict[language.name] = language.name
         context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         context['messages'] = messages.get_messages(self.request)
 
@@ -4670,10 +4562,7 @@ class DatasetDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         try:
             self.object = super().get_object()
@@ -4708,10 +4597,7 @@ class DatasetDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         nr_of_glosses = 0
         nr_of_public_glosses = 0
@@ -4844,15 +4730,8 @@ class DatasetFieldChoiceView(ListView):
 
         context['datasets'] = managed_datasets
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
-        if hasattr(settings, 'SHOW_FIELD_CHOICE_COLORS'):
-            context['SHOW_FIELD_CHOICE_COLORS'] = settings.SHOW_FIELD_CHOICE_COLORS
-        else:
-            context['SHOW_FIELD_CHOICE_COLORS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['SHOW_FIELD_CHOICE_COLORS'] = getattr(settings, 'SHOW_FIELD_CHOICE_COLORS', False)
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
 
@@ -4984,15 +4863,8 @@ class FieldChoiceView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         user_object = self.request.user
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
-        if hasattr(settings, 'SHOW_FIELD_CHOICE_COLORS'):
-            context['SHOW_FIELD_CHOICE_COLORS'] = settings.SHOW_FIELD_CHOICE_COLORS
-        else:
-            context['SHOW_FIELD_CHOICE_COLORS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['SHOW_FIELD_CHOICE_COLORS'] = getattr(settings, 'SHOW_FIELD_CHOICE_COLORS', False)
 
         choice_categories = fields_to_categories()
         fields_for_category_table = category_to_fields()
@@ -5055,10 +4927,7 @@ class DatasetFrequencyView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         try:
             self.object = super().get_object()
@@ -5115,10 +4984,7 @@ class DatasetFrequencyView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         corpus_name = dataset.acronym
         # create a Corpus object if it does not exist
@@ -5413,10 +5279,7 @@ class MorphemeDetailView(DetailView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         try:
             self.object = super().get_object()
@@ -5427,7 +5290,7 @@ class MorphemeDetailView(DetailView):
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-        if self.object.lemma == None or self.object.lemma.dataset == None:
+        if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested morpheme has no lemma or dataset.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
@@ -5681,7 +5544,6 @@ class MorphemeDetailView(DetailView):
             for d in morpheme_dialects:
                 gl.dialect.add(d)
 
-
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
             user = self.request.user
@@ -5697,20 +5559,9 @@ class MorphemeDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-
-        if hasattr(settings, 'MORPHEME_DISPLAY_FIELDS'):
-            context['MORPHEME_DISPLAY_FIELDS'] = settings.MORPHEME_DISPLAY_FIELDS
-        else:
-            context['MORPHEME_DISPLAY_FIELDS'] = []
-
-        if hasattr(settings, 'USE_DERIVATIONHISTORY') and settings.USE_DERIVATIONHISTORY:
-            context['USE_DERIVATIONHISTORY'] = settings.USE_DERIVATIONHISTORY
-        else:
-            context['USE_DERIVATIONHISTORY'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['MORPHEME_DISPLAY_FIELDS'] = getattr(settings, 'MORPHEME_DISPLAY_FIELDS', [])
+        context['USE_DERIVATIONHISTORY'] = getattr(settings, 'USE_DERIVATIONHISTORY', False)
 
         context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
@@ -6024,10 +5875,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
         other_gloss_dict['other_gloss_idgloss'] = translation
         result.append(other_gloss_dict)
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        SHOW_DATASET_INTERFACE_OPTIONS = False
+    SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
     if gloss_detail:
         return render(request, 'dictionary/minimalpairs_gloss_table.html', { 'focus_gloss': this_gloss,
@@ -6042,8 +5890,6 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
 def glosslist_ajax_complete(request, gloss_id):
 
-    user = request.user
-
     display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
 
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
@@ -6051,15 +5897,10 @@ def glosslist_ajax_complete(request, gloss_id):
             display_fields = json.loads(request.GET['display_fields'])
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
-    is_anonymous = user.is_authenticated
-
     this_gloss = Gloss.objects.get(id=gloss_id)
     default_language = this_gloss.lemma.dataset.default_language.language_code_2char
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        SHOW_DATASET_INTERFACE_OPTIONS = False
+    SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -6158,8 +5999,6 @@ def glosslist_ajax_complete(request, gloss_id):
 
 def glosslistheader_ajax(request):
 
-    user = request.user
-
     display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
     query_fields_parameters = []
 
@@ -6168,12 +6007,7 @@ def glosslistheader_ajax(request):
             display_fields = json.loads(request.GET['display_fields'])
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
-    is_anonymous = user.is_authenticated
-
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        SHOW_DATASET_INTERFACE_OPTIONS = False
+    SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -6222,30 +6056,16 @@ def glosslistheader_ajax(request):
                                                                     'width_lemma_columns': len(dataset_languages),
                                                                     'column_headers': column_headers,
                                                                     'sortOrder': str(sortOrder),
-                                                                    'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
+                                                                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
+
 
 def senselist_ajax_complete(request, sense_id):
 
-    user = request.user
-
-    display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
-
-    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
-        if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
-            display_fields = json.loads(request.GET['display_fields'])
-            query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
-
-    is_anonymous = user.is_authenticated
-
     this_sense = Sense.objects.get(id=sense_id)
-    default_language = this_sense.get_dataset().default_language.language_code_2char
     this_gloss = GlossSense.objects.filter(sense=this_sense).first().gloss
     sense_order = str(GlossSense.objects.filter(sense=this_sense).first().order)
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        SHOW_DATASET_INTERFACE_OPTIONS = False
+    SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -6264,11 +6084,10 @@ def senselist_ajax_complete(request, sense_id):
                                                           'selected_datasets': selected_datasets,
                                                           'sensetranslations_per_language': sensetranslations_per_language,
                                                           'sentences_per_language': sentences_per_language,
-                                                          'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
+                                                          'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
+
 
 def senselistheader_ajax(request):
-
-    user = request.user
 
     display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
     query_fields_parameters = []
@@ -6278,12 +6097,7 @@ def senselistheader_ajax(request):
             display_fields = json.loads(request.GET['display_fields'])
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
-    is_anonymous = user.is_authenticated
-
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        SHOW_DATASET_INTERFACE_OPTIONS = False
+    SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -6342,10 +6156,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        SHOW_DATASET_INTERFACE_OPTIONS = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        SHOW_DATASET_INTERFACE_OPTIONS = False
+    SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -6473,10 +6284,7 @@ class LemmaListView(ListView):
 
         set_up_language_fields(LemmaIdgloss, self, self.search_form)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -6632,10 +6440,7 @@ class LemmaCreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super(CreateView, self).get_context_data(**kwargs)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -6664,10 +6469,7 @@ class LemmaCreateView(CreateView):
             selected_datasets = get_selected_datasets_for_user(request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=self.last_used_dataset)
 
@@ -6785,10 +6587,7 @@ class LemmaUpdateView(UpdateView):
         context['active_id'] = self.object.pk
 
         # this is needed by the menu bar
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         # get the page of the lemma list on which this lemma appears in order ro return to it after update
         request_path = self.request.META.get('HTTP_REFERER')
@@ -6849,10 +6648,8 @@ class LemmaUpdateView(UpdateView):
 
     def post(self, request, *args, **kwargs):
         # set context variables for warning.html
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
@@ -6932,10 +6729,7 @@ class LemmaUpdateView(UpdateView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            show_dataset_interface = False
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         try:
             self.object = super().get_object()
@@ -7027,10 +6821,7 @@ class KeywordListView(ListView):
         query_parameters_keys = list(self.query_parameters.keys())
         context['query_parameters_keys'] = json.dumps(query_parameters_keys)
 
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-        else:
-            context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
 
         return context
 

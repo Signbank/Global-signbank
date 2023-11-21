@@ -536,30 +536,22 @@ def query_parameters_toggle_fields(query_parameters):
         if query_field == 'search_type':
             # don't show a button for this
             continue
-        elif query_field == 'hasothermedia':
-            toggle_query_parameter = (query_field, _("Other Media"))
-        elif query_field in GlossSearchForm.get_field_names():
+        if query_field in GlossSearchForm.get_field_names():
             toggle_query_parameter = (query_field,
                                       GlossSearchForm.get_field(query_field).label.encode('utf-8').decode())
         elif query_field == 'dialect':
             toggle_query_parameter = (query_field, _("Dialect"))
-        elif query_field == 'hasComponentOfType':
-            toggle_query_parameter = (query_field, _("Sequential Morphology"))
-        elif query_field == 'mrpType':
-            toggle_query_parameter = (query_field, _("Morpheme Type"))
-        elif query_field == 'morpheme':
-            toggle_query_parameter = (query_field, _("Simultaneous Morphology"))
         else:
+            print('toggle drop through: ', query_field)
             toggle_query_parameter = (query_field, query_field.capitalize())
         toggle_query_parameter_fields.append(toggle_query_parameter)
 
     toggle_publication_fields = []
     if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys():
         for publication_field in settings.SEARCH_BY['publication']:
-            publication_field_parameters = (publication_field,
-                                            GlossSearchForm.get_field(publication_field).label.encode(
-                                                'utf-8').decode())
-            toggle_publication_fields.append(publication_field_parameters)
+            toggle_publication_fields.append((publication_field,
+                                              GlossSearchForm.get_field(publication_field).label.encode(
+                                                  'utf-8').decode()))
 
     return query_fields_focus, query_fields_parameters, \
         toggle_gloss_list_display_fields, toggle_query_parameter_fields, toggle_publication_fields
