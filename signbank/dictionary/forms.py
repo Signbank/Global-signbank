@@ -311,8 +311,9 @@ def check_language_fields(searchform, formclass, queryDict, languages):
     # this function inspects the search parameters from GlossSearchForm looking for occurrences of + at the start
     language_fields_okay = True
     search_fields = []
+    field_values = []
     if not queryDict or not USE_REGULAR_EXPRESSIONS:
-        return language_fields_okay, search_fields
+        return language_fields_okay, search_fields, field_values
     menu_bar_fields = ['search', 'translation']
     search_form_fields = searchform.fields.keys()
 
@@ -357,12 +358,13 @@ def check_language_fields(searchform, formclass, queryDict, languages):
         except re.error:
             language_fields_okay = False
             search_fields.append(language_field_labels[language_field])
-            continue
+            field_values.append(language_field_values[language_field])
+            break
         if regexp.search(language_field_values[language_field]):
             language_fields_okay = False
             search_fields.append(language_field_labels[language_field])
 
-    return language_fields_okay, search_fields
+    return language_fields_okay, search_fields, field_values
 
 
 class MorphemeSearchForm(forms.ModelForm):
@@ -743,7 +745,7 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
         except re.error:
             language_fields_okay = False
             search_fields.append(language_field_labels[language_field])
-            continue
+            break
         if regexp.search(language_field_values[language_field]):
             language_fields_okay = False
             search_fields.append(language_field_labels[language_field])
