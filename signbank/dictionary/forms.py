@@ -728,6 +728,12 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
     # or ending with a +
     regexp = re.compile('^[+*\[()?]|([^+]+\+$)')
     for language_field in language_field_values.keys():
+        try:
+            re.compile(language_field_values[language_field])
+        except re.error:
+            language_fields_okay = False
+            search_fields.append(language_field_labels[language_field])
+            continue
         if regexp.search(language_field_values[language_field]):
             language_fields_okay = False
             search_fields.append(language_field_labels[language_field])

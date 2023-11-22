@@ -44,6 +44,7 @@ def show_error(request, translated_message, form, dataset_languages):
                   {'add_gloss_form': form,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 # this method is called from the GlossListView (Add Gloss button on the page)
@@ -2412,10 +2413,8 @@ def add_morpheme(request):
     else:
         last_used_dataset = None
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
+    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     form = MorphemeCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
@@ -2459,6 +2458,7 @@ def add_morpheme(request):
                        {'warning': translated_message,
                         'dataset_languages': dataset_languages,
                         'selected_datasets': selected_datasets,
+                        'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                         'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
     if form.is_valid() and (lemmaidgloss or lemma_form.is_valid()):
@@ -2475,6 +2475,7 @@ def add_morpheme(request):
             return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                  'dataset_languages': dataset_languages,
                                                  'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                 'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         if 'search_results' not in request.session.keys():
@@ -2488,6 +2489,7 @@ def add_morpheme(request):
         return render(request,'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                                 'dataset_languages': dataset_languages,
                                                                 'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                                                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
