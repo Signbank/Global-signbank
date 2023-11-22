@@ -55,12 +55,6 @@ $(document).ready(function() {
      });
      $('.js-example-basic-multiple').val(null).trigger('change');
 
-
-     // Empty menu_bar_search_mirror
-     $("#adminsearch :input").change(function() {
-        $("#menu_bar_search_mirror").val("");
-     });
-
      // initialize search parameters in multiple select fields
      for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = '#id_' + multiple_select_fields[i];

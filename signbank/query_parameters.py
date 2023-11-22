@@ -332,7 +332,7 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
     # it is expected that as the functionality of Query Parameters is extended that the descriptions will evolve
     # depending on what the user wants to be able to do
     gloss_fields = Gloss.get_field_names()
-    form_fields = GlossSearchForm.__dict__['base_fields']
+    form_fields = GlossSearchForm.get_field_names()
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
@@ -354,13 +354,13 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
             if key[:-2] in gloss_fields:
                 query_dict[key] = Gloss.get_field(key[:-2]).verbose_name.encode('utf-8').decode()
             elif key[:-2] in form_fields:
-                query_dict[key] = GlossSearchForm.__dict__['base_fields'][key[:-2]].label.encode('utf-8').decode()
+                query_dict[key] = GlossSearchForm.get_field(key[:-2]).label.encode('utf-8').decode()
             else:
                 print('pretty_print_query_fields: multiple select field not found in Gloss or GlossSearchForm: ', key)
                 query_dict[key] = key
         elif key not in gloss_fields:
             if key in form_fields:
-                query_dict[key] = GlossSearchForm.__dict__['base_fields'][key].label.encode('utf-8').decode()
+                query_dict[key] = GlossSearchForm.get_field(key).label.encode('utf-8').decode()
             else:
                 print('pretty_print_query_fields: key not in gloss_fields, not in form_fields:', key)
                 query_dict[key] = key
@@ -502,13 +502,68 @@ def pretty_print_query_values(dataset_languages,query_parameters):
     return query_dict
 
 
+def query_parameters_toggle_fields(query_parameters):
+    query_fields_focus = []
+    query_fields_parameters = []
+    for qp_key in query_parameters.keys():
+        if qp_key == 'search_type':
+            continue
+        if qp_key.startswith(GlossSearchForm.gloss_search_field_prefix) or \
+                qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
+                qp_key.startswith(GlossSearchForm.keyword_search_field_prefix):
+            continue
+        if qp_key in settings.GLOSS_LIST_DISPLAY_FIELDS:
+            continue
+        if qp_key == 'hasRelation[]':
+            query_fields_parameters.append(query_parameters[qp_key])
+        if qp_key[-2:] == '[]':
+            query_fields_focus.append(qp_key[:-2])
+        else:
+            query_fields_focus.append(qp_key)
+
+    if 'hasRelationToForeignSign' in query_fields_focus and 'relationToForeignSign' not in query_fields_focus:
+        if query_parameters['hasRelationToForeignSign'] == '2':
+            # If hasRelationToForeignSign is True, show the relations in the result table
+            query_fields_focus.append('relationToForeignSign')
+
+    gloss_list_display_fields = getattr(settings, 'GLOSS_LIST_DISPLAY_FIELDS', [])
+    toggle_gloss_list_display_fields = [(gloss_list_field,
+                                         GlossSearchForm.get_field(gloss_list_field).label.encode(
+                                             'utf-8').decode()) for gloss_list_field in gloss_list_display_fields]
+
+    toggle_query_parameter_fields = []
+    for query_field in query_fields_focus:
+        if query_field == 'search_type':
+            # don't show a button for this
+            continue
+        if query_field in GlossSearchForm.get_field_names():
+            toggle_query_parameter = (query_field,
+                                      GlossSearchForm.get_field(query_field).label.encode('utf-8').decode())
+        elif query_field == 'dialect':
+            toggle_query_parameter = (query_field, _("Dialect"))
+        else:
+            print('toggle drop through: ', query_field)
+            toggle_query_parameter = (query_field, query_field.capitalize())
+        toggle_query_parameter_fields.append(toggle_query_parameter)
+
+    toggle_publication_fields = []
+    if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys():
+        for publication_field in settings.SEARCH_BY['publication']:
+            toggle_publication_fields.append((publication_field,
+                                              GlossSearchForm.get_field(publication_field).label.encode(
+                                                  'utf-8').decode()))
+
+    return query_fields_focus, query_fields_parameters, \
+        toggle_gloss_list_display_fields, toggle_query_parameter_fields, toggle_publication_fields
+
+
 def search_fields_from_get(searchform, GET):
     """
     Collect non-empty search fields from GET into dictionary
     Called from get_context_data
-    :form: MorphemeSearchForm
-    :view: MorphemeListView
-    :model: Morpheme
+    :form: MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm
+    :view: MorphemeListView, MinimalPairsListView, LemmaListView
+    :model: Morpheme, Gloss, LemmaIdgloss
     """
     search_keys = []
     search_fields_to_populate = dict()
@@ -645,8 +700,8 @@ def set_up_fieldchoice_translations(form, fields_with_choices):
     Set up field choice choices in the form.
     This is done dynamically to make the choices language dependent (model translations).
     Called from __init__ method of the view
-    :form: GlossSearchForm, MorphemeSearchForm, SentenceForm
-    :view: GlossListView, MorphemeListView, SenseListView
+    :form: GlossSearchForm, MorphemeSearchForm, SentenceForm, FocusGlossSearchForm
+    :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView
     """
     for (fieldname, field_category) in fields_with_choices.items():
         if fieldname not in form.fields.keys():
@@ -681,9 +736,9 @@ def set_up_language_fields(model, view, form):
     This is done dynamically since they depend on the selected datasets.
     Called from get_context_data method of the view
     If only one translation language is used, the name of the language is omitted from the field label.
-    :model: Gloss, Morpheme, GlossSense
-    :form: GlossSearchForm, MorphemeSearchForm
-    :view: GlossListView, MorphemeListView, SenseListView
+    :model: Gloss, Morpheme, GlossSense, LemmaIdgloss
+    :form: GlossSearchForm, MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm
+    :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView, LemmaListView
     """
     selected_datasets = get_selected_datasets_for_user(view.request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -746,8 +801,8 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     Function used by both GlossListView and SenseListView
     Called from get_queryset
     The gloss_prefix is used for SenseListView to access the gloss since it queries over GlossSense
-    :form: GlossSearchForm
-    :view: GlossListView, SenseListView
+    :form: GlossSearchForm, FocusGlossSearchForm
+    :view: GlossListView, SenseListView, MinimalPairsListView
     :model: Gloss, GlossSense
     """
     if not searchform:

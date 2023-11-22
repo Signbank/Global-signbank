@@ -28,12 +28,6 @@ from easy_select2.widgets import Select2, Select2Multiple
 from signbank.settings.server_specific import LANGUAGES, REGEX_SPECIAL_CHARACTERS, USE_REGULAR_EXPRESSIONS
 
 
-# category choices are tag values that we'll restrict search to
-CATEGORY_CHOICES = (('all', 'All Signs'),
-                    ('semantic:health', 'Only Health Related Signs'),
-                    ('semantic:education', 'Only Education Related Signs'))
-
-
 # See if there are any tags there, but don't crash if there isn't even a table
 def tag_choices():
     try:
@@ -190,7 +184,7 @@ class GlossSearchForm(forms.ModelForm):
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
-    hasothermedia = forms.ChoiceField(label=_('Has Other Media'), choices=[(0, '-')],
+    hasothermedia = forms.ChoiceField(label=_('Other Media'), choices=[(0, '-')],
                                       widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     defspublished = forms.ChoiceField(label=_("All Definitions Published"), choices=[(0, '-')],
                                       widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
@@ -201,7 +195,7 @@ class GlossSearchForm(forms.ModelForm):
                                widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     relationToForeignSign = forms.CharField(label=_('Gloss of Foreign Sign'),
                                             widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
-    morpheme = forms.CharField(label=_('Search for gloss with this as morpheme'))
+    morpheme = forms.CharField(label=_("Simultaneous Morphology"))
 
     phonOth = forms.CharField(label=_('Phonology Other'), widget=forms.TextInput())
 
@@ -212,7 +206,7 @@ class GlossSearchForm(forms.ModelForm):
                                     choices=[(0, '-')],
                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
-    hasComponentOfType = forms.ChoiceField(label=_('Has Compound Component Type'),
+    hasComponentOfType = forms.ChoiceField(label=_("Sequential Morphology"),
                                            choices=[(0, '-')],
                                            widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
@@ -249,7 +243,7 @@ class GlossSearchForm(forms.ModelForm):
     definitionContains = forms.CharField(label=_('Note Contains'),
                                          widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
-    mrpType = forms.ChoiceField(label=_('Has Morpheme Type'),
+    mrpType = forms.ChoiceField(label=_('Morpheme Type'),
                                 choices=[(0, '-')],
                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
@@ -272,6 +266,16 @@ class GlossSearchForm(forms.ModelForm):
         model = Gloss
         fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + \
                  ['inWeb', 'isNew', 'excludeFromEcv']
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls.__dict__['base_fields']
+        return fields
+
+    @classmethod
+    def get_field(cls, fieldname):
+        field = cls.__dict__['base_fields'][fieldname]
+        return field
 
     def __init__(self, *args, **kwargs):
 
@@ -310,9 +314,6 @@ def check_language_fields(searchform, formclass, queryDict, languages):
     if not queryDict or not USE_REGULAR_EXPRESSIONS:
         return language_fields_okay, search_fields
     menu_bar_fields = ['search', 'translation']
-
-    import re
-    # from signbank.tools import strip_control_characters
 
     language_field_labels = dict()
     language_field_values = dict()
@@ -399,8 +400,6 @@ class MorphemeSearchForm(forms.ModelForm):
     gloss_search_field_prefix = "morphemesearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
-    menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
 
@@ -753,8 +752,6 @@ class LemmaSearchForm(forms.ModelForm):
                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
                                     widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
-    menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Translation"
     lemma_search_field_prefix = "lemma_"
 
     class Meta:
@@ -933,8 +930,6 @@ class FocusGlossSearchForm(forms.ModelForm):
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
-    menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
 
