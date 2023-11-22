@@ -314,6 +314,7 @@ def check_language_fields(searchform, formclass, queryDict, languages):
     if not queryDict or not USE_REGULAR_EXPRESSIONS:
         return language_fields_okay, search_fields
     menu_bar_fields = ['search', 'translation']
+    search_form_fields = searchform.fields.keys()
 
     language_field_labels = dict()
     language_field_values = dict()
@@ -340,18 +341,27 @@ def check_language_fields(searchform, formclass, queryDict, languages):
 
     for menu_bar_field in menu_bar_fields:
         if menu_bar_field in queryDict.keys():
-            if not hasattr(searchform, menu_bar_field):
+            if menu_bar_field not in search_form_fields:
                 continue
             language_field_values[menu_bar_field] = queryDict[menu_bar_field]
-            menu_bar_field_label = getattr(searchform, menu_bar_field)
+            menu_bar_field_label = GlossSearchForm.get_field(menu_bar_field).label
             language_field_labels[menu_bar_field] = gettext(menu_bar_field_label)
 
     import re
+    # check for matches starting with: + * [ ( ) ?
+    # or ending with a +
+    regexp = re.compile('^[+*\[()?]|([^+]+\+$)')
     for language_field in language_field_values.keys():
-        results = re.search(r"[^\\]" + REGEX_SPECIAL_CHARACTERS, language_field_values[language_field])
-        if results:
+        try:
+            re.compile(language_field_values[language_field])
+        except re.error:
             language_fields_okay = False
             search_fields.append(language_field_labels[language_field])
+            continue
+        if regexp.search(language_field_values[language_field]):
+            language_fields_okay = False
+            search_fields.append(language_field_labels[language_field])
+
     return language_fields_okay, search_fields
 
 

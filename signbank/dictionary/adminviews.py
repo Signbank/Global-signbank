@@ -36,7 +36,6 @@ from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import get_objects_for_user
 
 from signbank.dictionary.models import *
-from signbank.dictionary.forms import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForObjectForm
 from tagging.models import Tag, TaggedItem
@@ -51,7 +50,7 @@ from signbank.dictionary.translate_choice_list import machine_value_to_translate
 from signbank.dictionary.field_choices import get_static_choice_lists, get_frequencies_for_category, category_to_fields, \
     fields_to_categories, fields_to_fieldcategory_dict
 
-from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
+from signbank.dictionary.forms import *
 from django.forms import TypedMultipleChoiceField, ChoiceField
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
@@ -682,7 +681,6 @@ class GlossListView(ListView):
             selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
@@ -966,7 +964,6 @@ class SenseListView(ListView):
             selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
@@ -2203,7 +2200,6 @@ class MorphemeListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(self.search_form, MorphemeSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
@@ -2871,7 +2867,6 @@ class MinimalPairsListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
@@ -3756,7 +3751,6 @@ class HandshapeListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        from signbank.dictionary.forms import check_multilingual_fields
         valid_regex, search_fields = check_multilingual_fields(Handshape, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
@@ -6285,7 +6279,6 @@ class LemmaListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        from signbank.dictionary.forms import check_language_fields
         valid_regex, search_fields = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
