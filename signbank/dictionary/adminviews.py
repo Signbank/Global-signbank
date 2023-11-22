@@ -748,7 +748,6 @@ class GlossListView(ListView):
             val = get['search']
             query_parameters['search'] = val
             if USE_REGULAR_EXPRESSIONS:
-                val = re.escape(val)
                 query = Q(annotationidglosstranslation__text__iregex=val)
             else:
                 query = Q(annotationidglosstranslation__text__icontains=val)
@@ -770,7 +769,6 @@ class GlossListView(ListView):
             val = get['translation']
             query_parameters['translation'] = val
             if USE_REGULAR_EXPRESSIONS:
-                val = re.escape(val)
                 query = Q(senses__senseTranslations__translations__translation__text__iregex=val)
             else:
                 query = Q(senses__senseTranslations__translations__translation__text__icontains=val)
