@@ -76,7 +76,7 @@ LANGUAGES_LANGUAGE_CODE_3CHAR = (
 )
 
 #Short (abbreviated) version of how language users call their language, to be used in the langauge picker
-INTERFACE_LANGUAGE_SHORT_NAMES = ['EN','NL','官话','עִברִית','عربى']
+INTERFACE_LANGUAGE_SHORT_NAMES = ['EN']
 
 #The main interface language
 LANGUAGE_CODE = "en"
@@ -95,12 +95,8 @@ SHOW_ENGLISH_ONLY = False
 SEPARATE_ENGLISH_IDGLOSS_FIELD = True
 
 # This is a short mapping between 2 and 3 letter language code
-# This needs more complete solution (perhaps a library),
-# but then the code cn for Chinese should changed to zh.
 LANGUAGE_CODE_MAP = [
-    {2:'nl',3:'nld'},
-    {2:'en',3:'eng'},
-    {2:'zh-hans',3:'chi'}
+    {2: 'en', 3: 'eng'}
 ]
 
 # Regex patterns for CSV double quote
