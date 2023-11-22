@@ -252,19 +252,7 @@ $(document).ready(function() {
         $translation.val(query_initial);
      };
 
-     if (query_parameters_keys.includes('search')) {
-        var $menu_bar_search = $("input[name='search']");
-        var query_initial = query_parameters_dict['search'];
-        $menu_bar_search.val(query_initial);
-     };
-
-     if (gloss_fields_to_populate_keys.includes('search')) {
-        var $menu_bar_search = $("input[name='search']");
-        var query_initial = gloss_fields_to_populate['search'];
-        $menu_bar_search.val(query_initial);
-     };
-
-     // Empty menu_bar_search_mirror
+     // Empty menu_bar_search_mirror: if the user is still busy with the form and hits Reset, this clears it
      $("#adminsearch :input").change(function() {
         $("#menu_bar_search_mirror").val("");
      });
@@ -576,7 +564,7 @@ function do_toggle_language(el) {
                     <input name='search_type' class='form-control' value='{{search_type}}' type='hidden'>
                 </div>
                 <div>
-                    <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{ menu_bar_search }}"/>
+                    <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{menu_bar_search}}"/>
                 </div>
                 <div>
                     <table class='table' id='searchfields'>

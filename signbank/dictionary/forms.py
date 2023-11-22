@@ -400,8 +400,6 @@ class MorphemeSearchForm(forms.ModelForm):
     gloss_search_field_prefix = "morphemesearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
-    menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
 
@@ -754,8 +752,6 @@ class LemmaSearchForm(forms.ModelForm):
                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
                                     widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
-    menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Translation"
     lemma_search_field_prefix = "lemma_"
 
     class Meta:
@@ -934,8 +930,6 @@ class FocusGlossSearchForm(forms.ModelForm):
     gloss_search_field_prefix = "glosssearch_"
     keyword_search_field_prefix = "keyword_"
     lemma_search_field_prefix = "lemma_"
-    menu_bar_search = "Menu Bar Search Gloss"
-    menu_bar_translation = "Menu Bar Search Senses"
 
     class Meta:
 
