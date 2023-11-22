@@ -151,6 +151,7 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
     context['gloss_fields_to_populate_keys'] = json.dumps(populate_keys)
 
     context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys() and request.user.is_authenticated:
         context['search_by_publication_fields'] = searchform_panels(search_form, settings.SEARCH_BY['publication'])

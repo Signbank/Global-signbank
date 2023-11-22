@@ -1050,6 +1050,7 @@ class GlossDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
@@ -1059,6 +1060,7 @@ class GlossDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
         if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested gloss has no lemma or dataset.')
@@ -1066,6 +1068,7 @@ class GlossDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if not request.user.is_authenticated:
@@ -1084,6 +1087,7 @@ class GlossDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
@@ -1094,6 +1098,7 @@ class GlossDetailView(DetailView):
                               {'warning': translated_message,
                                'dataset_languages': dataset_languages,
                                'selected_datasets': selected_datasets,
+                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
         senses_consistent = consistent_senses(self.object, include_translations=True,
@@ -1581,6 +1586,7 @@ class GlossDetailView(DetailView):
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
         context['SHOW_LETTER_NUMBER_PHONOLOGY'] = getattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY', False)
         context['USE_DERIVATIONHISTORY'] = getattr(settings, 'USE_DERIVATIONHISTORY', False)
         context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
@@ -1666,6 +1672,7 @@ class GlossVideosView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
@@ -1675,6 +1682,7 @@ class GlossVideosView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
         if self.object.lemma == None or self.object.lemma.dataset == None:
             translated_message = _('Requested gloss has no lemma or dataset.')
@@ -1682,6 +1690,7 @@ class GlossVideosView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if not request.user.is_authenticated:
@@ -1700,6 +1709,7 @@ class GlossVideosView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
@@ -1710,6 +1720,7 @@ class GlossVideosView(DetailView):
                               {'warning': translated_message,
                                'dataset_languages': dataset_languages,
                                'selected_datasets': selected_datasets,
+                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
         context = self.get_context_data(object=self.object)
@@ -1780,6 +1791,7 @@ class GlossVideosView(DetailView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         return context
 
@@ -1796,6 +1808,7 @@ class GlossRelationsDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
@@ -1805,6 +1818,7 @@ class GlossRelationsDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
         if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested gloss has no lemma or dataset.')
@@ -1812,6 +1826,7 @@ class GlossRelationsDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if not request.user.is_authenticated:
@@ -1830,6 +1845,7 @@ class GlossRelationsDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
@@ -1840,6 +1856,7 @@ class GlossRelationsDetailView(DetailView):
                               {'warning': translated_message,
                                'dataset_languages': dataset_languages,
                                'selected_datasets': selected_datasets,
+                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
         context = self.get_context_data(object=self.object)
@@ -2012,6 +2029,7 @@ class GlossRelationsDetailView(DetailView):
         context['sensetranslations_per_language_dict'] = sensetranslations_per_language_dict(gl)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
         context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
 
         return context
@@ -2131,6 +2149,7 @@ class MorphemeListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
@@ -2340,6 +2359,7 @@ class HandshapeDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         match_machine_value = int(kwargs['pk'])
         try:
@@ -2353,6 +2373,7 @@ class HandshapeDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         context = self.get_context_data(object=self.object)
@@ -2465,6 +2486,7 @@ class HandshapeDetailView(DetailView):
             self.request.session['search_results'] = items
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         return context
 
@@ -2484,6 +2506,7 @@ class SemanticFieldDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         # Get the machine value in the URL
         match_machine_value = int(kwargs['pk'])
@@ -2496,6 +2519,7 @@ class SemanticFieldDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         context = self.get_context_data(object=self.object)
@@ -2537,6 +2561,7 @@ class SemanticFieldDetailView(DetailView):
         context['translation_mapping'] = translation_mapping
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         return context
 
@@ -2566,6 +2591,7 @@ class SemanticFieldListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         return context
 
@@ -2594,6 +2620,7 @@ class DerivationHistoryDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         # Get the machine value in the URL
         match_machine_value = int(kwargs['pk'])
@@ -2606,6 +2633,7 @@ class DerivationHistoryDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         context = self.get_context_data(object=self.object)
@@ -2628,6 +2656,7 @@ class DerivationHistoryDetailView(DetailView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         return context
 
@@ -2657,6 +2686,7 @@ class DerivationHistoryListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         return context
 
@@ -2692,6 +2722,7 @@ class HomonymListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         handedness_filter = 'handedness__name__in'
         strong_hand_filter = 'domhndsh__name__in'
@@ -2741,6 +2772,7 @@ class MinimalPairsListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view minimal pairs.')
@@ -2904,6 +2936,7 @@ class QueryListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
         context['GLOSS_LIST_DISPLAY_FIELDS'] = getattr(settings, 'GLOSS_LIST_DISPLAY_FIELDS', [])
 
         if 'search_results' in self.request.session.keys():
@@ -3015,6 +3048,7 @@ class SearchHistoryView(ListView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         # this gets the query parameters fields currently being stored by the code
         # see if we need to do anything with this qua feedback
@@ -3102,6 +3136,7 @@ class FrequencyListView(ListView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         context['dataset_ids'] = [ ds.id for ds in selected_datasets]
 
@@ -3237,6 +3272,7 @@ class GlossFrequencyView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
@@ -3246,6 +3282,7 @@ class GlossFrequencyView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
         if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested gloss has no lemma or dataset.')
@@ -3253,6 +3290,7 @@ class GlossFrequencyView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if not request.user.is_authenticated:
@@ -3271,6 +3309,7 @@ class GlossFrequencyView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
@@ -3281,6 +3320,7 @@ class GlossFrequencyView(DetailView):
                               {'warning': translated_message,
                                'dataset_languages': dataset_languages,
                                'selected_datasets': selected_datasets,
+                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
         context = self.get_context_data(object=self.object)
@@ -3416,6 +3456,7 @@ class GlossFrequencyView(DetailView):
         context['variants_age_distribution_data_percentage'] = variants_age_distribution_data_percentage
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
         context['SHOW_LETTER_NUMBER_PHONOLOGY'] = getattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY', False)
         context['SHOW_QUERY_PARAMETERS_AS_BUTTON'] = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
 
@@ -3494,6 +3535,7 @@ class LemmaFrequencyView(DetailView):
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
         context['SHOW_LETTER_NUMBER_PHONOLOGY'] = getattr(settings, 'SHOW_LETTER_NUMBER_PHONOLOGY', False)
 
         # Put annotation_idgloss per language in the context
@@ -3642,6 +3684,7 @@ class HandshapeListView(ListView):
         self.request.session['search_results'] = items
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         # this is a shorthand for use in the template
         handshape_to_fields = dict()
@@ -3855,6 +3898,7 @@ class DatasetListView(ListView):
         context['nr_of_glosses'] = nr_of_glosses
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         context['messages'] = messages.get_messages(self.request)
         return context
@@ -4124,6 +4168,7 @@ class DatasetManagerView(ListView):
         context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         context['messages'] = messages.get_messages(self.request)
 
@@ -4561,6 +4606,7 @@ class DatasetDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
@@ -4570,6 +4616,7 @@ class DatasetDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         context = self.get_context_data(object=self.object)
@@ -4596,6 +4643,7 @@ class DatasetDetailView(DetailView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         nr_of_glosses = 0
         nr_of_public_glosses = 0
@@ -4729,6 +4777,7 @@ class DatasetFieldChoiceView(ListView):
         context['datasets'] = managed_datasets
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
         context['SHOW_FIELD_CHOICE_COLORS'] = getattr(settings, 'SHOW_FIELD_CHOICE_COLORS', False)
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
@@ -4862,6 +4911,7 @@ class FieldChoiceView(ListView):
         user_object = self.request.user
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
         context['SHOW_FIELD_CHOICE_COLORS'] = getattr(settings, 'SHOW_FIELD_CHOICE_COLORS', False)
 
         choice_categories = fields_to_categories()
@@ -4926,6 +4976,7 @@ class DatasetFrequencyView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
@@ -4935,6 +4986,7 @@ class DatasetFrequencyView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if not request.user.is_authenticated:
@@ -4950,6 +5002,7 @@ class DatasetFrequencyView(DetailView):
                               {'warning': translated_message,
                                'dataset_languages': dataset_languages,
                                'selected_datasets': selected_datasets,
+                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
         if dataset not in selected_datasets:
             translated_message = _('Please select the dataset first to view its corpus.')
@@ -4957,6 +5010,7 @@ class DatasetFrequencyView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
         context = self.get_context_data(object=self.object)
@@ -4983,6 +5037,7 @@ class DatasetFrequencyView(DetailView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         corpus_name = dataset.acronym
         # create a Corpus object if it does not exist
@@ -5278,6 +5333,7 @@ class MorphemeDetailView(DetailView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
@@ -5287,6 +5343,7 @@ class MorphemeDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
         if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested morpheme has no lemma or dataset.')
@@ -5294,6 +5351,7 @@ class MorphemeDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if not request.user.is_authenticated:
@@ -5312,6 +5370,7 @@ class MorphemeDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
         if dataset_of_requested_morpheme not in datasets_user_can_view:
             translated_message = _('The morpheme you are trying to view is not in a dataset you can view.')
@@ -5319,6 +5378,7 @@ class MorphemeDetailView(DetailView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
         context = self.get_context_data(object=self.object)
@@ -5558,6 +5618,7 @@ class MorphemeDetailView(DetailView):
         context['dataset_languages'] = dataset_languages
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
         context['MORPHEME_DISPLAY_FIELDS'] = getattr(settings, 'MORPHEME_DISPLAY_FIELDS', [])
         context['USE_DERIVATIONHISTORY'] = getattr(settings, 'USE_DERIVATIONHISTORY', False)
 
@@ -5874,16 +5935,19 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
         result.append(other_gloss_dict)
 
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     if gloss_detail:
         return render(request, 'dictionary/minimalpairs_gloss_table.html', { 'focus_gloss': this_gloss,
                                                                              'focus_gloss_translation': translation_focus_gloss,
-                                                                             'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS,
+                                                                             'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                                                                             'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS,
                                                                              'minimal_pairs_dict' : result })
     else:
         return render(request, 'dictionary/minimalpairs_row.html', { 'focus_gloss': this_gloss,
                                                                      'focus_gloss_translation': translation_focus_gloss,
-                                                                     'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS,
+                                                                     'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                                                                     'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS,
                                                                      'minimal_pairs_dict' : result })
 
 def glosslist_ajax_complete(request, gloss_id):
@@ -5899,6 +5963,7 @@ def glosslist_ajax_complete(request, gloss_id):
     default_language = this_gloss.lemma.dataset.default_language.language_code_2char
 
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -5993,7 +6058,8 @@ def glosslist_ajax_complete(request, gloss_id):
                                                           'width_lemma_columns': len(dataset_languages),
                                                           'sensetranslations_per_language': sensetranslations_per_language,
                                                           'column_values': column_values,
-                                                          'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
+                                                          'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                                                          'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
 
 def glosslistheader_ajax(request):
 
@@ -6006,6 +6072,7 @@ def glosslistheader_ajax(request):
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -6054,6 +6121,7 @@ def glosslistheader_ajax(request):
                                                                     'width_lemma_columns': len(dataset_languages),
                                                                     'column_headers': column_headers,
                                                                     'sortOrder': str(sortOrder),
+                                                                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                                                                     'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
 
 
@@ -6064,6 +6132,7 @@ def senselist_ajax_complete(request, sense_id):
     sense_order = str(GlossSense.objects.filter(sense=this_sense).first().order)
 
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -6082,6 +6151,7 @@ def senselist_ajax_complete(request, sense_id):
                                                           'selected_datasets': selected_datasets,
                                                           'sensetranslations_per_language': sensetranslations_per_language,
                                                           'sentences_per_language': sentences_per_language,
+                                                          'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                                                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
 
 
@@ -6096,6 +6166,7 @@ def senselistheader_ajax(request):
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -6144,7 +6215,8 @@ def senselistheader_ajax(request):
                                                                     'selected_datasets': selected_datasets,
                                                                     'column_headers': column_headers,
                                                                     'sortOrder': str(sortOrder),
-                                                                    'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
+                                                                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                                                                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
 
 def lemmaglosslist_ajax_complete(request, gloss_id):
 
@@ -6155,6 +6227,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
     this_gloss = Gloss.objects.get(id=gloss_id)
 
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -6183,7 +6256,8 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
                                                           'dataset_languages': dataset_languages,
                                                           'sensetranslations_per_language': sensetranslations_per_language,
                                                           'column_values': column_values,
-                                                          'SHOW_DATASET_INTERFACE_OPTIONS' : SHOW_DATASET_INTERFACE_OPTIONS })
+                                                          'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                                                          'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
 
 class LemmaListView(ListView):
     model = LemmaIdgloss
@@ -6283,6 +6357,7 @@ class LemmaListView(ListView):
         set_up_language_fields(LemmaIdgloss, self, self.search_form)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -6439,6 +6514,7 @@ class LemmaCreateView(CreateView):
         context = super(CreateView, self).get_context_data(**kwargs)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -6468,6 +6544,7 @@ class LemmaCreateView(CreateView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=self.last_used_dataset)
 
@@ -6485,6 +6562,7 @@ class LemmaCreateView(CreateView):
                                   {'warning': translated_message,
                                    'dataset_languages': dataset_languages,
                                    'selected_datasets': selected_datasets,
+                                   'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
         if form.is_valid():
@@ -6500,7 +6578,8 @@ class LemmaCreateView(CreateView):
                                                                  last_used_dataset=self.last_used_dataset),
                                                                      'dataset_languages': dataset_languages,
                                                                      'selected_datasets': get_selected_datasets_for_user(request.user),
-                                                                        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                                                                     'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                                                                     'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
             # return HttpResponseRedirect(reverse('dictionary:admin_lemma_list', kwargs={'pk': lemma.id}))
             return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
@@ -6508,7 +6587,8 @@ class LemmaCreateView(CreateView):
             return render(request, 'dictionary/add_lemma.html', {'add_lemma_form': form,
                                                              'dataset_languages': dataset_languages,
                                                              'selected_datasets': get_selected_datasets_for_user(request.user),
-                                                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                                                             'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                                                             'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
 
 def create_lemma_for_gloss(request, glossid):
@@ -6586,6 +6666,7 @@ class LemmaUpdateView(UpdateView):
 
         # this is needed by the menu bar
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         # get the page of the lemma list on which this lemma appears in order ro return to it after update
         request_path = self.request.META.get('HTTP_REFERER')
@@ -6647,6 +6728,7 @@ class LemmaUpdateView(UpdateView):
     def post(self, request, *args, **kwargs):
         # set context variables for warning.html
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -6674,6 +6756,7 @@ class LemmaUpdateView(UpdateView):
                                               {'warning': translated_message,
                                                'dataset_languages': dataset_languages,
                                                'selected_datasets': selected_datasets,
+                                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
                 else:
@@ -6728,6 +6811,7 @@ class LemmaUpdateView(UpdateView):
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
@@ -6737,6 +6821,7 @@ class LemmaUpdateView(UpdateView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
         if self.object.dataset == None:
             translated_message = _('Requested lemma has no dataset.')
@@ -6744,6 +6829,7 @@ class LemmaUpdateView(UpdateView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
         if not request.user.is_authenticated:
@@ -6759,6 +6845,7 @@ class LemmaUpdateView(UpdateView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
         if dataset_of_requested_lemma not in datasets_user_can_view:
             translated_message = _('The lemma you are trying to view is not in a dataset you can view.')
@@ -6766,6 +6853,7 @@ class LemmaUpdateView(UpdateView):
                           {'warning': translated_message,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
         context = self.get_context_data(object=self.object)
@@ -6820,6 +6908,7 @@ class KeywordListView(ListView):
         context['query_parameters_keys'] = json.dumps(query_parameters_keys)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         return context
 

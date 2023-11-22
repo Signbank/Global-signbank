@@ -86,10 +86,8 @@ def gloss(request, glossid):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
+    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     if not(request.user.has_perm('dictionary.search_gloss') or gloss.inWeb):
         feedbackmessage = _('You are not allowed to see this sign.')
@@ -97,17 +95,18 @@ def gloss(request, glossid):
         messages.add_message(request, messages.ERROR, feedbackmessage)
 
         return render(request, "dictionary/word.html",
-                      { 'sensetranslations_per_language': {},
-                        'public_title': '',
-                        'gloss_or_morpheme': 'gloss',
-                        'notes_groupedby_role': {},
-                        'translations_per_language': {},
-                        'gloss': gloss,
-                        'active_id': glossid,  # used by search_result_bar.html
-                        'annotation_idgloss': {},
-                        'dataset_languages': dataset_languages,
-                        'selected_datasets': selected_datasets,
-                        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                      {'sensetranslations_per_language': {},
+                              'public_title': '',
+                              'gloss_or_morpheme': 'gloss',
+                              'notes_groupedby_role': {},
+                              'translations_per_language': {},
+                              'gloss': gloss,
+                              'active_id': glossid,  # used by search_result_bar.html
+                              'annotation_idgloss': {},
+                              'dataset_languages': dataset_languages,
+                              'selected_datasets': selected_datasets,
+                              'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                              'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
 
     # Put translations (senses) per language in the context
     sensetranslations_per_language = dict()
@@ -167,10 +166,8 @@ def morpheme(request, glossid):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
+    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     # we should only be able to get a single gloss, but since the URL
     # pattern could be spoofed, we might get zero or many
@@ -186,16 +183,17 @@ def morpheme(request, glossid):
         messages.add_message(request, messages.ERROR, feedbackmessage)
         return render(request, "dictionary/word.html",
                       {'sensetranslations_per_language': {},
-                       'public_title': '',
-                       'gloss_or_morpheme': 'morpheme',
-                       'notes_groupedby_role': {},
-                       'translations_per_language': {},
-                       'gloss': morpheme,
-                       'active_id': glossid,  # used by search_result_bar.html
-                       'annotation_idgloss': {},
-                       'dataset_languages': dataset_languages,
-                       'selected_datasets': selected_datasets,
-                       'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface}
+                              'public_title': '',
+                              'gloss_or_morpheme': 'morpheme',
+                              'notes_groupedby_role': {},
+                              'translations_per_language': {},
+                              'gloss': morpheme,
+                              'active_id': glossid,  # used by search_result_bar.html
+                              'annotation_idgloss': {},
+                              'dataset_languages': dataset_languages,
+                              'selected_datasets': selected_datasets,
+                              'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                              'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface}
                       )
 
     # morphemes use translations not senses
@@ -406,11 +404,13 @@ def import_media(request,video):
     if errors:
         print('import_media, errors: ', errors)
 
-    return render(request,'dictionary/import_media.html',{'files_per_dataset_per_language':files_per_dataset_per_language_list,
-                                                        'errors':errors,
-                                                        'dataset_languages':dataset_languages,
-                                                        'selected_datasets':selected_datasets,
-                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    return render(request,'dictionary/import_media.html',
+                  {'files_per_dataset_per_language': files_per_dataset_per_language_list,
+                          'errors': errors,
+                          'dataset_languages': dataset_languages,
+                          'selected_datasets': selected_datasets,
+                          'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                          'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def try_code(request, pk):
@@ -425,10 +425,8 @@ def try_code(request, pk):
 
     context['selected_datasets'] = selected_datasets
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+    context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     try:
         gloss = get_object_or_404(Gloss, pk=pk)
@@ -495,13 +493,14 @@ def add_new_sign(request):
 
     context['selected_datasets'] = selected_datasets
     context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
-    context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
 
-    return render(request,'dictionary/add_gloss.html',context)
+    context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+    context['add_gloss_form'] = GlossCreateForm(request.GET, languages=dataset_languages, user=request.user,
+                                                last_used_dataset=last_used_dataset)
+
+    return render(request, 'dictionary/add_gloss.html', context)
 
 
 def add_new_morpheme(request):
@@ -524,10 +523,8 @@ def add_new_morpheme(request):
         last_used_dataset = None
     context['last_used_dataset'] = last_used_dataset
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS'):
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        context['SHOW_DATASET_INTERFACE_OPTIONS'] = False
+    context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     form = MorphemeCreateForm(request.GET, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
     context['add_morpheme_form'] = form
@@ -610,6 +607,7 @@ def import_csv_create(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         fatal_error = False
@@ -672,6 +670,7 @@ def import_csv_create(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         # create a template for an empty row with the desired number of columns
@@ -984,15 +983,17 @@ def import_csv_create(request):
 
         stage = 0
 
-    return render(request,'dictionary/import_csv_create.html',{'form':uploadform,'stage':stage,'changes':changes,
-                                                        'creation':creation,
-                                                        'gloss_already_exists':gloss_already_exists,
-                                                        'error':error,
-                                                        'dataset_languages':dataset_languages,
-                                                        'selected_datasets':selected_datasets,
-                                                        'translation_languages_dict': translation_languages_dict,
-                                                        'seen_datasets': seen_datasets,
-                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    return render(request, 'dictionary/import_csv_create.html',
+                  {'form': uploadform, 'stage': stage, 'changes': changes,
+                          'creation': creation,
+                          'gloss_already_exists': gloss_already_exists,
+                          'error': error,
+                          'dataset_languages': dataset_languages,
+                          'selected_datasets': selected_datasets,
+                          'translation_languages_dict': translation_languages_dict,
+                          'seen_datasets': seen_datasets,
+                          'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                          'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def import_csv_update(request):
@@ -1073,6 +1074,7 @@ def import_csv_update(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         fatal_error = False
@@ -1156,6 +1158,7 @@ def import_csv_update(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         # create a template for an empty row with the desired number of columns
@@ -1518,17 +1521,19 @@ def import_csv_update(request):
     elif stage == 1 and not changes and not error:
         # no changes were found in the input file. print a message as feedback
         # this is needed in order to have output that can be tested for in the unit tests
-        messages.add_message(request, messages.INFO, ('No changes were found.'))
+        messages.add_message(request, messages.INFO, _('No changes were found.'))
 
-    return render(request,'dictionary/import_csv_update.html',{'form':uploadform,'stage':stage,'changes':changes,
-                                                        'creation':creation,
-                                                        'gloss_already_exists':gloss_already_exists,
-                                                        'error':error,
-                                                        'dataset_languages':dataset_languages,
-                                                        'selected_datasets':selected_datasets,
-                                                        'translation_languages_dict': translation_languages_dict,
-                                                        'seen_datasets': seen_datasets,
-                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    return render(request, 'dictionary/import_csv_update.html',
+                  {'form': uploadform, 'stage': stage, 'changes': changes,
+                          'creation': creation,
+                          'gloss_already_exists': gloss_already_exists,
+                          'error': error,
+                          'dataset_languages': dataset_languages,
+                          'selected_datasets': selected_datasets,
+                          'translation_languages_dict': translation_languages_dict,
+                          'seen_datasets': seen_datasets,
+                          'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                          'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def import_csv_lemmas(request):
@@ -1576,6 +1581,7 @@ def import_csv_lemmas(request):
                        'selected_datasets': selected_datasets,
                        'translation_languages_dict': translation_languages_dict,
                        'seen_datasets': seen_datasets,
+                       'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     # set the allowed dataset names to selected dataset, which must have change permission (checked below)
@@ -1593,6 +1599,7 @@ def import_csv_lemmas(request):
                        'selected_datasets': selected_datasets,
                        'translation_languages_dict': translation_languages_dict,
                        'seen_datasets': seen_datasets,
+                       'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
     # Process Input File
@@ -1616,6 +1623,7 @@ def import_csv_lemmas(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         fatal_error = False
@@ -1659,6 +1667,7 @@ def import_csv_lemmas(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         if extra_keys:
@@ -1672,6 +1681,7 @@ def import_csv_lemmas(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         # create a template for an empty row with the desired number of columns
@@ -1842,8 +1852,8 @@ def import_csv_lemmas(request):
                    'selected_datasets': selected_datasets,
                    'translation_languages_dict': translation_languages_dict,
                    'seen_datasets': seen_datasets,
+                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
-
 
 
 def switch_to_language(request,language):
@@ -1886,6 +1896,7 @@ def recently_added_glosses(request):
                    'selected_datasets': selected_datasets,
                    'language': interface_language,
                    'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
+                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
@@ -1899,6 +1910,7 @@ def proposed_new_signs(request):
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'number_of_days': RECENTLY_ADDED_SIGNS_PERIOD.days,
+                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
@@ -2136,10 +2148,8 @@ def find_and_save_variants(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
+    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     gloss_pattern_table = dict()
 
@@ -2150,10 +2160,11 @@ def find_and_save_variants(request):
         # we don't want to accidentally have variants from different datasets
         return render(request, 'dictionary/find_and_save_variants.html',
                       {'gloss_pattern_table': gloss_pattern_table,
-                       'dataset_languages': dataset_languages,
-                       'selected_datasets': selected_datasets,
-                       'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
-                       'too_many_datasets': True
+                              'dataset_languages': dataset_languages,
+                              'selected_datasets': selected_datasets,
+                              'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                              'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+                              'too_many_datasets': True
                        })
 
     # first get all the glosses from the (single) selected dataset that match the syntactical variant pattern
@@ -2229,11 +2240,10 @@ def get_unused_videos(request):
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-    selected_dataset_acronyms = [ ds.acronym for ds in selected_datasets ]
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
+    selected_dataset_acronyms = [ds.acronym for ds in selected_datasets]
+
+    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     file_not_in_glossvideo_object = []
     gloss_video_dir = os.path.join(settings.WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY)
@@ -2253,9 +2263,10 @@ def get_unused_videos(request):
 
     return render(request, "dictionary/unused_videos.html",
                   {'file_not_in_glossvideo_object': file_not_in_glossvideo_object,
-                   'dataset_languages': dataset_languages,
-                   'selected_datasets': selected_datasets,
-                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
+                          'dataset_languages': dataset_languages,
+                          'selected_datasets': selected_datasets,
+                          'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                          'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface
                    })
 
 
@@ -2399,10 +2410,9 @@ def show_glosses_with_no_lemma(request):
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
+
+    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     glosses_without_lemma = Gloss.objects.filter(lemma=None)
     gloss_tuples = []
@@ -2441,13 +2451,15 @@ def show_glosses_with_no_lemma(request):
         select_string = ', '.join(dummy_translations)
         lemma_choices.append((dummy, dummy.dataset.acronym + ': ' + select_string))
 
-    return render(request, "dictionary/glosses_with_no_lemma.html", {
-        'dataset_languages': dataset_languages,
-        'selected_datasets': selected_datasets,
-        'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
-        'glosses_without_lemma': gloss_tuples,
-        'dummy_lemmas': lemma_choices
-    })
+    return render(request, "dictionary/glosses_with_no_lemma.html",
+                  {'dataset_languages': dataset_languages,
+                          'selected_datasets': selected_datasets,
+                          'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                          'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
+                          'glosses_without_lemma': gloss_tuples,
+                          'dummy_lemmas': lemma_choices
+                   })
+
 
 @login_required_config
 def show_unassigned_glosses(request):
@@ -2584,15 +2596,9 @@ def gloss_revision_history(request,gloss_pk):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
-    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-        show_dataset_interface = settings.SHOW_DATASET_INTERFACE_OPTIONS
-    else:
-        show_dataset_interface = False
-
-    if hasattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON') and settings.SHOW_QUERY_PARAMETERS_AS_BUTTON:
-        show_query_parameters_as_button = settings.SHOW_QUERY_PARAMETERS_AS_BUTTON
-    else:
-        show_query_parameters_as_button = False
+    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    show_query_parameters_as_button = getattr(settings, 'SHOW_QUERY_PARAMETERS_AS_BUTTON', False)
+    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
@@ -2659,6 +2665,7 @@ def gloss_revision_history(request,gloss_pk):
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'active_id': gloss_pk,
+                   'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
                    'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button
                    })
@@ -2847,6 +2854,7 @@ def import_csv_create_sentences(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         fatal_error = False
@@ -2890,6 +2898,7 @@ def import_csv_create_sentences(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         if extra_keys:
@@ -2903,6 +2912,7 @@ def import_csv_create_sentences(request):
                            'selected_datasets': selected_datasets,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         # create a template for an empty row with the desired number of columns
@@ -3063,12 +3073,14 @@ def import_csv_create_sentences(request):
 
         stage = 0
 
-    return render(request,'dictionary/import_csv_create_sentences.html',{'form':uploadform,'stage':stage,'changes':changes,
-                                                        'creation':creation,
-                                                        'gloss_already_exists':gloss_already_exists,
-                                                        'error':error,
-                                                        'dataset_languages':dataset_languages,
-                                                        'selected_datasets':selected_datasets,
-                                                        'translation_languages_dict': translation_languages_dict,
-                                                        'seen_datasets': seen_datasets,
-                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+    return render(request, 'dictionary/import_csv_create_sentences.html',
+                  {'form': uploadform, 'stage': stage, 'changes': changes,
+                          'creation': creation,
+                          'gloss_already_exists': gloss_already_exists,
+                          'error': error,
+                          'dataset_languages': dataset_languages,
+                          'selected_datasets': selected_datasets,
+                          'translation_languages_dict': translation_languages_dict,
+                          'seen_datasets': seen_datasets,
+                          'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                          'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
