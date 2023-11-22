@@ -681,13 +681,14 @@ class GlossListView(ListView):
             selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        valid_regex, search_fields = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
+        valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters.')
-            error_message = error_message_1 + error_message_2 + error_message_3
+            error_message_3 = _(': Please use a backslash before special characters: ')
+            error_message_4 = ' '.join(field_values)
+            error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4
             messages.add_message(self.request, messages.ERROR, error_message)
             qs = Gloss.objects.none()
             return qs
@@ -964,13 +965,14 @@ class SenseListView(ListView):
             selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        valid_regex, search_fields = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
+        valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters.')
-            error_message = error_message_1 + error_message_2 + error_message_3
+            error_message_3 = _(': Please use a backslash before special characters: ')
+            error_message_4 = ' '.join(field_values)
+            error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4
             messages.add_message(self.request, messages.ERROR, error_message)
             qs = GlossSense.objects.none()
             return qs
@@ -2200,13 +2202,14 @@ class MorphemeListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        valid_regex, search_fields = check_language_fields(self.search_form, MorphemeSearchForm, get, dataset_languages)
+        valid_regex, search_fields, field_values = check_language_fields(self.search_form, MorphemeSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters.')
-            error_message = error_message_1 + error_message_2 + error_message_3
+            error_message_3 = _(': Please use a backslash before special characters: ')
+            error_message_4 = ' '.join(field_values)
+            error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4
             messages.add_message(self.request, messages.ERROR, error_message)
             qs = Morpheme.objects.none()
             return qs
@@ -2867,13 +2870,14 @@ class MinimalPairsListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        valid_regex, search_fields = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
+        valid_regex, search_fields, field_values = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters.')
-            error_message = error_message_1 + error_message_2 + error_message_3
+            error_message_3 = _(': Please use a backslash before special characters: ')
+            error_message_4 = ' '.join(field_values)
+            error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4
             messages.add_message(self.request, messages.ERROR, error_message)
             qs = Gloss.objects.none()
             self.request.session['search_results'] = []
@@ -6279,13 +6283,14 @@ class LemmaListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        valid_regex, search_fields = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
+        valid_regex, search_fields, field_values = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
             error_message_1 = _('Error in search field ')
             error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters.')
-            error_message = error_message_1 + error_message_2 + error_message_3
+            error_message_3 = _(': Please use a backslash before special characters: ')
+            error_message_4 = ' '.join(field_values)
+            error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4
             messages.add_message(self.request, messages.ERROR, error_message)
             qs = LemmaIdgloss.objects.none()
             return qs
