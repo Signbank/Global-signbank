@@ -70,7 +70,7 @@ urlpatterns = [
             name='import_csv_create_sentences'),
     re_path(r'^signs/import_csv_update/$', signbank.dictionary.views.import_csv_update, name='import_csv_update'),
     re_path(r'^signs/import_csv_lemmas/$', signbank.dictionary.views.import_csv_lemmas, name='import_csv_lemmas'),
-    re_path(r'^signs/senses/search/$', SenseListView.as_view(), {'show_all': False}, name='senses_search'),
+    re_path(r'^signs/senses/search/$', SenseListView.as_view(), name='senses_search'),
     re_path(r'^analysis/homonyms/$', HomonymListView.as_view(), name='admin_homonyms_list'),
     re_path(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete,
                       name='homonyms_complete'),

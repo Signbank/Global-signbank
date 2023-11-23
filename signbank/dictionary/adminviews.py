@@ -351,9 +351,7 @@ class GlossListView(ListView):
         return paginate_by
 
     def render_to_response(self, context):
-        # Look for a 'format=json' GET argument
         if self.request.GET.get('format') == 'CSV':
-            # show_all is passed by the calling template
             return self.render_to_csv_response(context)
         elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv:
             return self.render_to_ecv_export_response(context)
@@ -786,7 +784,6 @@ class SenseListView(ListView):
     search_type = 'sense'
     view_type = 'sense_list'
     web_search = False
-    show_all = False
     dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
     queryset_language_codes = []
@@ -890,35 +887,11 @@ class SenseListView(ListView):
     def get_queryset(self):
         get = self.request.GET
 
-        # First check whether we want to show everything or a subset
-        if 'show_all' in self.kwargs.keys():
-            show_all = self.kwargs['show_all']
-        else:
-            show_all = False
-
-        # Then check what kind of stuff we want
-        if 'search_type' in get:
-            self.search_type = get['search_type']
-        else:
-            self.search_type = 'sense'
-
+        self.search_type = self.request.GET.get('search_type', 'sense')
         setattr(self.request.session, 'search_type', self.search_type)
-
-        if 'view_type' in get:
-            self.view_type = get['view_type']
-            # don't change query, just change display
-        else:
-            # set to default
-            self.view_type = 'sense_list'
-
+        self.view_type = self.request.GET.get('view_type', 'sense_list')
         setattr(self.request, 'view_type', self.view_type)
-
-        if 'inWeb' in self.request.GET:
-            # user is searching for signs / morphemes visible to anonymous uers
-            self.web_search = self.request.GET['inWeb'] == '2'
-        elif not self.request.user.is_authenticated:
-            self.web_search = True
-
+        self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
         if 'query' not in self.request.GET:
@@ -952,7 +925,7 @@ class SenseListView(ListView):
             return qs
 
         # Get the initial selection
-        if show_all or (len(get) > 0 and 'query' not in self.request.GET):
+        if len(get) > 0 and 'query' not in self.request.GET:
             qs = GlossSense.objects.filter(gloss__lemma__dataset__in=selected_datasets)
             qs = qs.order_by('gloss__id', 'order')
 
@@ -975,9 +948,6 @@ class SenseListView(ListView):
             pass
         else:
             qs = qs.filter(gloss__inWeb__exact=True)
-
-        if show_all:
-            return qs
 
         qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
