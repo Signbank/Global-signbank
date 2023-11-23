@@ -1983,6 +1983,7 @@ class MorphemeListView(ListView):
 
     model = Morpheme
     search_type = 'morpheme'
+    view_type = ''
     show_all = False
     dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
@@ -2024,10 +2025,7 @@ class MorphemeListView(ListView):
 
         context['last_used_dataset'] = self.last_used_dataset
 
-        if 'show_all' in self.kwargs.keys():
-            context['show_all'] = self.kwargs['show_all']
-        else:
-            context['show_all'] = False
+        context['show_all'] = self.kwargs.get('show_all', self.show_all)
 
         context['searchform'] = self.search_form
 
@@ -2137,11 +2135,8 @@ class MorphemeListView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
-        try:
-            if self.kwargs['show_all']:
-                show_all = True
-        except (KeyError, TypeError):
-            show_all = False
+        self.show_all = self.kwargs.get('show_all', self.show_all)
+        setattr(self.request.session, 'search_type', self.search_type)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -2158,7 +2153,7 @@ class MorphemeListView(ListView):
             qs = Morpheme.objects.none()
             return qs
 
-        if len(get) > 0 or show_all:
+        if len(get) > 0 or self.show_all:
             qs = Morpheme.objects.filter(lemma__dataset__in=selected_datasets)
         else:
             qs = Morpheme.objects.none()
@@ -2166,7 +2161,7 @@ class MorphemeListView(ListView):
         if not self.request.user.has_perm('dictionary.search_gloss'):
             qs = qs.filter(inWeb__exact=True)
 
-        if show_all:
+        if self.show_all:
             qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return qs
 
