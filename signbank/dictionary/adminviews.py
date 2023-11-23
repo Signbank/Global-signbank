@@ -77,7 +77,7 @@ from signbank.dictionary.frequency_display import collect_speaker_age_data, coll
 from signbank.dictionary.senses_display import (senses_per_language, senses_per_language_list,
                                                 sensetranslations_per_language_dict,
                                                 senses_translations_per_language_list, senses_sentences_per_language_list)
-from signbank.dictionary.context_data import get_context_data_for_list_view, get_context_data_for_gloss_search_form
+from signbank.dictionary.context_data import get_context_data_for_list_view, get_context_data_for_gloss_search_form, get_web_search
 from signbank.dictionary.related_objects import gloss_is_related_to
 
 
@@ -242,6 +242,7 @@ class GlossListView(ListView):
 
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
         self.queryset_language_codes = context['queryset_language_codes']
+        self.show_all = context['show_all']
 
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs, context)
 
@@ -353,7 +354,7 @@ class GlossListView(ListView):
         # Look for a 'format=json' GET argument
         if self.request.GET.get('format') == 'CSV':
             # show_all is passed by the calling template
-            return self.render_to_csv_response({'show_all': self.request.GET.get('show_all')})
+            return self.render_to_csv_response(context)
         elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv:
             return self.render_to_ecv_export_response(context)
         else:
@@ -405,11 +406,6 @@ class GlossListView(ListView):
 
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
-
-        if 'show_all' in context.keys():
-            show_all = context['show_all']
-        else:
-            show_all = False
 
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
@@ -626,37 +622,15 @@ class GlossListView(ListView):
     def get_queryset(self):
         get = self.request.GET
 
-        # First check whether we want to show everything or a subset
-        if 'show_all' in self.kwargs.keys():
-            show_all = self.kwargs['show_all']
-        else:
-            show_all = False
-
-        if 'search_type' in get and get['search_type']:
-            self.search_type = get['search_type']
-        else:
-            self.search_type = 'sign'
-
+        self.show_all = self.kwargs.get('show_all', self.show_all)
+        self.search_type = self.request.GET.get('search_type', 'sign')
         setattr(self.request.session, 'search_type', self.search_type)
-
-        if 'view_type' in get and get['view_type']:
-            self.view_type = get['view_type']
-            # don't change query, just change display
-        else:
-            # set to default
-            self.view_type = 'gloss_list'
-
+        self.view_type = self.request.GET.get('view_type', 'gloss_list')
         setattr(self.request, 'view_type', self.view_type)
-
-        if 'inWeb' in self.request.GET:
-            # user is searching for signs / morphemes visible to anonymous uers
-            self.web_search = self.request.GET['inWeb'] == '2'
-        elif not self.request.user.is_authenticated:
-            self.web_search = True
-
+        self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
-        if show_all:
+        if self.show_all:
             self.query_parameters = dict()
             # erase the previous query
             self.request.session['query_parameters'] = json.dumps(self.query_parameters)
@@ -694,7 +668,7 @@ class GlossListView(ListView):
             return qs
 
         # Get the initial selection
-        if show_all or (len(get) > 0 and 'query' not in self.request.GET):
+        if self.show_all or (len(get) > 0 and 'query' not in self.request.GET):
             # anonymous users can search signs, make sure no morphemes are in the results
             if self.search_type == 'sign' or not self.request.user.is_authenticated:
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
@@ -733,7 +707,7 @@ class GlossListView(ListView):
             qs = qs.filter(inWeb__exact=True)
 
         # If we wanted to get everything, we're done now
-        if show_all:
+        if self.show_all:
             # sort the results
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
