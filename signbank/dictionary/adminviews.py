@@ -1983,7 +1983,6 @@ class MorphemeListView(ListView):
 
     model = Morpheme
     search_type = 'morpheme'
-    view_type = ''
     show_all = False
     dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
@@ -2535,9 +2534,6 @@ class SemanticFieldListView(ListView):
 
     def get_queryset(self):
 
-        # get query terms from self.request
-        get = self.request.GET
-
         qs = SemanticField.objects.filter(machine_value__gt=1).order_by('name')
 
         return qs
@@ -2629,9 +2625,6 @@ class DerivationHistoryListView(ListView):
         return context
 
     def get_queryset(self):
-
-        # get query terms from self.request
-        get = self.request.GET
 
         qs = DerivationHistory.objects.filter(machine_value__gt=1).order_by('name')
 
@@ -3562,17 +3555,12 @@ class HandshapeListView(ListView):
 
         search_form = HandshapeSearchForm(self.request.GET)
 
-        # Retrieve the search_type,so that we know whether the search should be Gloss or not
-        if 'search_type' in self.request.GET and self.request.GET['search_type']:
-            self.search_type = self.request.GET['search_type']
-        else:
-            self.search_type = 'handshape'
-
-        if 'search_type' not in self.request.session.keys():
-            self.request.session['search_type'] = self.search_type
-
         context['searchform'] = search_form
+
+        self.search_type = self.request.GET.get('search_type', self.search_type)
         context['search_type'] = self.search_type
+        setattr(self.request.session, 'search_type', self.search_type)
+        context['show_all'] = self.kwargs.get('show_all', self.show_all)
 
         context['handshapefieldchoicecount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
@@ -3590,11 +3578,6 @@ class HandshapeListView(ListView):
         context['signscount'] = Gloss.objects.filter(lemma__dataset__in=selected_datasets).count()
 
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
-
-        if 'show_all' in self.kwargs.keys():
-            context['show_all'] = self.kwargs['show_all']
-        else:
-            context['show_all'] = False
 
         context['handshapescount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
@@ -3675,19 +3658,11 @@ class HandshapeListView(ListView):
 
         get = self.request.GET
 
-        if 'show_all' in self.kwargs.keys():
-            show_all = self.kwargs['show_all']
-        else:
-            show_all = False
-
-        if 'search_type' in get:
-            self.search_type = get['search_type']
-        else:
-            self.search_type = 'handshape'
-
+        self.show_all = self.kwargs.get('show_all', self.show_all)
+        self.search_type = self.request.GET.get('search_type', self.search_type)
         setattr(self.request.session, 'search_type', self.search_type)
 
-        if not show_all and not get or 'reset' in get:
+        if not self.show_all and not get or 'reset' in get:
             qs = Handshape.objects.none()
             return qs
 
@@ -3707,7 +3682,7 @@ class HandshapeListView(ListView):
 
         qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
-        if show_all:
+        if self.show_all:
             if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
                 # User has toggled the sort order for the column
                 qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
