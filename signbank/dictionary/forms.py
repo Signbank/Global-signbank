@@ -351,7 +351,7 @@ def check_language_fields(searchform, formclass, queryDict, languages):
     import re
     # check for matches starting with: + * [ ( ) ?
     # or ending with a +
-    regexp = re.compile('^[+*\[()?]|([^+]+\+$)')
+    regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
     for language_field in language_field_values.keys():
         try:
             re.compile(language_field_values[language_field])
@@ -738,7 +738,7 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
     import re
     # check for matches starting with: + * [ ( ) ?
     # or ending with a +
-    regexp = re.compile('^[+*\[()?]|([^+]+\+$)')
+    regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
     for language_field in language_field_values.keys():
         try:
             re.compile(language_field_values[language_field])

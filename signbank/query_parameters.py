@@ -146,7 +146,7 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key == 'search' and get_value:
             query_filter_annotation_text = 'annotationidglosstranslation__text__' + text_filter
             query = Q(**{query_filter_annotation_text: get_value})
-            if re.match('^\d+$', get_value):
+            if re.match(r'^\d+$', get_value):
                 query = query | Q(sn__exact=get_value)
             query_list.append(query)
 

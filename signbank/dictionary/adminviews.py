@@ -723,7 +723,7 @@ class GlossListView(ListView):
             else:
                 query = Q(annotationidglosstranslation__text__icontains=val)
 
-            if re.match('^\d+$', val):
+            if re.match(r'^\d+$', val):
                 query = query | Q(sn__exact=val)
 
             qs = qs.filter(query).distinct()
@@ -6594,10 +6594,10 @@ class LemmaUpdateView(UpdateView):
                 # caller was Gloss Details
                 import re
                 try:
-                    m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
+                    m = re.search(r'/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
                     gloss_id_pattern = m.group(1)
                     self.gloss_id = gloss_id_pattern
-                except (AttributeError):
+                except AttributeError:
                     # it is unknown what gloss we were looking at, something went wrong with pattern matching on the url
                     # restore callback to lemma list
                     context['caller'] = 'lemma_list'
