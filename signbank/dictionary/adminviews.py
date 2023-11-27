@@ -1627,7 +1627,7 @@ class GlossVideosView(DetailView):
                            'selected_datasets': selected_datasets,
                            'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-        if self.object.lemma == None or self.object.lemma.dataset == None:
+        if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested gloss has no lemma or dataset.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
@@ -6735,7 +6735,7 @@ class LemmaUpdateView(UpdateView):
                            'selected_datasets': selected_datasets,
                            'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-        if self.object.dataset == None:
+        if not self.object.dataset:
             translated_message = _('Requested lemma has no dataset.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
