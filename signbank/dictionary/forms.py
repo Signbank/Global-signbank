@@ -569,7 +569,7 @@ class CSVMetadataForm(forms.Form):
 
 class EAFFilesForm(forms.Form):
 
-    file = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
+    file = forms.FileField(widget=forms.ClearableFileInput())
 
 class CSVUploadForm(forms.Form):
 
