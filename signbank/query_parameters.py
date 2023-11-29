@@ -355,6 +355,8 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
                 query_dict[key] = Gloss.get_field(key[:-2]).verbose_name.encode('utf-8').decode()
             elif key[:-2] in form_fields:
                 query_dict[key] = GlossSearchForm.get_field(key[:-2]).label.encode('utf-8').decode()
+            elif key[:-2] in ['sentenceType']:
+                query_dict[key] = SentenceForm.get_field('sentenceType').label.encode('utf-8').decode()
             else:
                 print('pretty_print_query_fields: multiple select field not found in Gloss or GlossSearchForm: ', key)
                 query_dict[key] = key
@@ -445,7 +447,10 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                 choices_for_category = DerivationHistory.objects.filter(machine_value__in=query_parameters[key])
             else:
                 field = key[:-2]
-                field_category = Gloss.get_field(field).field_choice_category
+                if field in ['sentenceType']:
+                    field_category = 'SentenceType'
+                else:
+                    field_category = Gloss.get_field(field).field_choice_category
                 choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
             query_dict[key] = [choice.name for choice in choices_for_category]
         elif key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):
@@ -541,6 +546,8 @@ def query_parameters_toggle_fields(query_parameters):
                                       GlossSearchForm.get_field(query_field).label.encode('utf-8').decode())
         elif query_field == 'dialect':
             toggle_query_parameter = (query_field, _("Dialect"))
+        elif query_field == 'sentenceType':
+            toggle_query_parameter = (query_field, _("Sentence Type"))
         else:
             print('toggle drop through: ', query_field)
             toggle_query_parameter = (query_field, query_field.capitalize())
@@ -1005,7 +1012,7 @@ def queryset_sentences_from_get(searchform, GET, qs):
                 continue
             if get_key in ['sentenceType[]']:
                 sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=vals)
-                qs = qs.filter(sense__exampleSentences__in=sentences_with_this_type)
+                qs = qs.filter(sense__exampleSentences__in=sentences_with_this_type).distinct()
         elif get_key not in searchform.fields.keys() \
                 or get_value in ['', '0']:
             continue
@@ -1020,9 +1027,9 @@ def queryset_sentences_from_get(searchform, GET, qs):
                 sentences_with_negative_type = ExampleSentence.objects.filter(negative__exact=True)
                 sentences_with_other_type = ExampleSentence.objects.filter(negative__exact=False)
                 if get_value == 'yes':  # only senses with negative sentences
-                    qs = qs.filter(sense__exampleSentences__in=sentences_with_negative_type)
+                    qs = qs.filter(sense__exampleSentences__in=sentences_with_negative_type).distinct()
                 else:  # only senses sentences that are not negative
-                    qs = qs.filter(sense__exampleSentences__in=sentences_with_other_type)
+                    qs = qs.filter(sense__exampleSentences__in=sentences_with_other_type).distinct()
     return qs
 
 

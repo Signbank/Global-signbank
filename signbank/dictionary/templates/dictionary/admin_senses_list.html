@@ -367,7 +367,7 @@ function do_adminsearch(el) {
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "sense":
-        $("#adminsearch").attr('action', ' {{PREFIX_URL}}/signs/senses/search/');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/senses/search/');
         break;
   }
   document.getElementById('adminsearch').submit();
@@ -756,7 +756,9 @@ function do_toggle_language(el) {
     <div class='btn-group' style="margin-bottom: 20px">
         <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
 
-        <input class="btn btn-primary" type="submit" value='{% trans "Search Sense" %}'/>
+        <button class="btn btn-primary" onclick="do_adminsearch(this);"
+                name="search_type" value="{{search_type}}"
+                type="submit">{% trans "Search Sense" %}</button>
 
         <input class='btn btn-default' type='reset' onclick="clearForm();"
                value='{% trans "Reset" %}'>

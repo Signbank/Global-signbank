@@ -299,7 +299,11 @@ class GlossListView(ListView):
         else:
             lang_attr_name = default_language_code
 
-        items = construct_scrollbar(list_of_objects, context['search_type'], lang_attr_name)
+        if context['search_type'] in ['sense']:
+            # this is GlossListView, do not show a scrollbar for Senses from a previous search
+            items = []
+        else:
+            items = construct_scrollbar(list_of_objects, context['search_type'], lang_attr_name)
         self.request.session['search_results'] = items
 
         if 'paginate_by' in self.request.GET:

@@ -419,7 +419,7 @@ function do_adminsearch(el) {
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "sign":
-        $("#adminsearch").attr('action', ' {{PREFIX_URL}}/signs/search/');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
         break;
     case "sign_or_morpheme":
         $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');

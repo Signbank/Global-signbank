@@ -1344,6 +1344,16 @@ class SentenceForm(forms.ModelForm):
 
         fields = ['sentenceType', 'negative']
 
+    @classmethod
+    def get_field_names(cls):
+        fields = cls.__dict__['base_fields']
+        return fields
+
+    @classmethod
+    def get_field(cls, fieldname):
+        field = cls.__dict__['base_fields'][fieldname]
+        return field
+
     def __init__(self, *args, **kwargs):
         super(SentenceForm, self).__init__(*args, **kwargs)
 
