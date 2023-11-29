@@ -67,6 +67,8 @@ DEFAULT_DATASET_ACRONYM = 'NGT'
 DEFAULT_DATASET_LANGUAGE_ID = 1
 DEFAULT_DATASET_PK = 5
 
+USE_REGULAR_EXPRESSIONS = True
+
 FREQUENCY_CATEGORIES = ['Occurences', 'Signers']
 
 FREQUENCY_REGIONS = ['Amsterdam', 'Voorburg', 'Rotterdam', 'Gestel', 'Groningen', 'Other']
