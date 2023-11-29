@@ -1096,7 +1096,7 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
         list_index += 1
 
     for split_value in splits_combined:
-        take_apart = re.match("([0-9]+): ?[(](False|True),([0-9]+),(.+)[)]", split_value)
+        take_apart = re.match(r'([0-9]+): ?[(](False|True),([0-9]+),(.+)[)]', split_value)
         if take_apart:
             (field, name, count, text) = take_apart.groups()
 
@@ -1651,7 +1651,7 @@ def gloss_from_identifier(value):
     BUT: first check if a unique hit can be found by the string alone (if it is not empty)
     """
 
-    match = re.match('(.*) \((\d+)\)', value)
+    match = re.match(r'(.*) \((\d+)\)', value)
     if match:
         print("MATCH: ", match)
         annotation_idgloss = match.group(1)

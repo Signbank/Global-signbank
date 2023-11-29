@@ -124,16 +124,16 @@ def map_values_to_sentence_type(values, include_sentences=True):
 
     sentence_types = '|'.join(pattern_mapped_sorted_note_names)
     if sentence_types:
-        pattern_sentence_types = '(\-|N\/A|' + sentence_types + ')'
+        pattern_sentence_types = '(-|N/A|' + sentence_types + ')'
     else:
-        pattern_sentence_types = '(\-|N\/A)'
+        pattern_sentence_types = '(-|N/A)'
     mapped_values = values
 
     if include_sentences:
-        regex_string = (r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False), %s([^\"]+)%s\)\s?"
+        regex_string = (r'\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False), %s([^\"]+)%s\)\s?'
                         % (pattern_sentence_types, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS))
     else:
-        regex_string = r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False)\)\s?" % pattern_sentence_types
+        regex_string = r'\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False)\)\s?' % pattern_sentence_types
     find_all = re.findall(regex_string, mapped_values)
     if not find_all:
         map_errors = True
