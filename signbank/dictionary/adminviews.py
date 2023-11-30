@@ -300,10 +300,9 @@ class GlossListView(ListView):
             lang_attr_name = default_language_code
 
         if context['search_type'] in ['sense']:
-            # this is GlossListView, do not show a scrollbar for Senses from a previous search
-            items = []
-        else:
-            items = construct_scrollbar(list_of_objects, context['search_type'], lang_attr_name)
+            # this is GlossListView, show a scrollbar for Glosses from a previous search
+            self.search_type = 'sign'
+        items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
         if 'paginate_by' in self.request.GET:
@@ -2882,7 +2881,7 @@ class QueryListView(ListView):
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape', 'sense']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
@@ -2940,7 +2939,7 @@ class QueryListView(ListView):
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape', 'sense']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
