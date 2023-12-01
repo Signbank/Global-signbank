@@ -373,21 +373,6 @@ function do_adminsearch(el) {
   document.getElementById('adminsearch').submit();
 }
 
-/**
- * toggle between normal list view and lemma group list view
- */
-function do_toggle_groups(el) {
-  var sViewType = $(el).attr('value');
-  $("#toggle_groups input[name='view_type']").val(sViewType);
-  switch(sViewType) {
-    case "sense_list":
-        $(el).val('sense_list');
-        $(el).html("Senses");
-        break;
-  }
-  document.getElementById('adminsearch').submit();
-}
-
 function ready_videos(el) {
     $(el).find('video').hide();
 

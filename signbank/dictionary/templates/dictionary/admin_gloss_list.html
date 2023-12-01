@@ -433,15 +433,14 @@ function do_adminsearch(el) {
  */
 function do_toggle_groups(el) {
   var sViewType = $(el).attr('value');
-  $("#toggle_groups input[name='view_type']").val(sViewType);
   switch(sViewType) {
-    case "lemma_groups":
-        $(el).val('gloss_list');
-        $(el).html("Gloss View");
-        break;
     case "gloss_list":
-        $(el).val('lemma_groups');
-        $(el).html("Lemma View");
+        $('#toggle_view_type').attr('value', 'lemma_groups');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
+        break;
+    case "lemma_groups":
+        $('#toggle_view_type').attr('value', 'gloss_list');
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
         break;
   }
   document.getElementById('adminsearch').submit();
@@ -650,9 +649,10 @@ function do_toggle_language(el) {
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
                                     {{search_field.label}}
                                 </label>
-                                <input id='glosssearch_{{dataset_lang.language_code_2char}}'
+                                <input name='glosssearch_{{dataset_lang.language_code_2char}}'
+                                       id='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'
                                        type='text'
-                                       name='glosssearch_{{dataset_lang.language_code_2char}}' class='form-control'>
+                                       class='form-control'>
                                 </div>
                             </td>
                             {% endwith %}
@@ -664,6 +664,7 @@ function do_toggle_language(el) {
                                     {{lemma_field.label}}
                                 </label>
                                 <input name='lemma_{{dataset_lang.language_code_2char}}'
+                                       id='id_lemma_{{dataset_lang.language_code_2char}}'
                                        type='text'
                                        class='form-control'></div>
                             </td>
@@ -674,6 +675,7 @@ function do_toggle_language(el) {
                                 <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>
                                     {{keyword_field.label}}</label>
                                 <input name='keyword_{{dataset_lang.language_code_2char}}'
+                                       id='id_keyword_{{dataset_lang.language_code_2char}}'
                                        type='text'
                                        class='form-control'></div>
                             </td>
@@ -847,6 +849,9 @@ function do_toggle_language(el) {
 
     <div class='btn-group' style="margin-bottom: 20px">
         <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
+        <input type="hidden" name="view_type"
+               id="toggle_view_type"
+               value="{{view_type}}">
 
         {% if SHOW_MORPHEME_SEARCH %}
         <div class="btn-group">
@@ -865,22 +870,19 @@ function do_toggle_language(el) {
                        value="sign_or_morpheme">{% trans "Sign or Morpheme" %}</a></li>
             </ul>
         </div>
-
-        <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
-        <input type="submit" style="visibility: hidden;"/>
-
+        
         {% else %}
         <input class="btn btn-primary" type="submit" value='{% trans "Search Sign" %}'/>
         {% endif %}
 
         {% if perms.dictionary.export_csv %}
-        <input class='btn btn-default' type='submit' name='format' value='CSV'>
+        <button class='btn btn-default' type='submit' name='format' value='CSV'>CSV</button>
         <input type='hidden' name='show_all' value="{{show_all}}">
         {% endif %}
 
         {% if not SHOW_DATASET_INTERFACE_OPTIONS %}
         {% if perms.dictionary.export_ecv %}
-        <input class='btn btn-default' type='submit' name='export_ecv' value='ECV'>
+        <button class='btn btn-default' type='submit' name='export_ecv' value='ECV'>ECV<</button>
         {% endif %}
         {% endif %}
         <input class='btn btn-default' type='reset' onclick="clearForm();"
@@ -890,15 +892,27 @@ function do_toggle_language(el) {
 
 
     <div>
-        <a class='btn' style="color:black;" type='submit' onclick="do_toggle_groups(this);">
-            {% if view_type == "gloss_list" %}
-            <label>{% trans "List View" %}</label>&nbsp;
-            <button class="btn btn-primary" type="submit" name="view_type" value='lemma_groups'/>{% trans "Lemma View" %}</button>
+        <button class="btn btn-default"
+                type="button"
+                id="view_type_left_button">
+            {% if view_type == "lemma_groups" %}
+            {% trans "Lemma View" %}
             {% else %}
-            <label>{% trans "Lemma View" %}</label>&nbsp;
-            <button class="btn btn-primary" type="submit" name="view_type" value='gloss_list'/>{% trans "List View" %}</button>
+            {% trans "List View" %}
             {% endif %}
-        </a>
+        </button>
+        &nbsp;&nbsp;
+        <button class="btn btn-primary" onclick="do_toggle_groups(this);"
+                type="button"
+                id="view_type_right_button"
+                value='{{view_type}}'>
+            {% if view_type == "gloss_list" %}
+            {% trans "Lemma View" %}
+            {% else %}
+            {% trans "List View" %}
+            {% endif %}
+        </button>
+        &nbsp;&nbsp;
         {% trans "Number of Matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{glosscount}}.
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}

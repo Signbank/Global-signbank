@@ -353,15 +353,16 @@ class GlossListView(ListView):
 
         return paginate_by
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
+        print('render to response: ', self.request.GET, context['view_type'])
         if self.request.GET.get('format') == 'CSV':
-            return self.render_to_csv_response(context)
+            return self.render_to_csv_response()
         elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv:
-            return self.render_to_ecv_export_response(context)
+            return self.render_to_ecv_export_response()
         else:
-            return super(GlossListView, self).render_to_response(context)
+            return super(GlossListView, self).render_to_response(context, **response_kwargs)
 
-    def render_to_ecv_export_response(self, context):
+    def render_to_ecv_export_response(self):
 
         # check that the user is logged in
         if self.request.user.is_authenticated:
@@ -403,7 +404,7 @@ class GlossListView(ListView):
             messages.add_message(self.request, messages.INFO, _('No ECV created for dataset.'))
         return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
-    def render_to_csv_response(self, context):
+    def render_to_csv_response(self):
 
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
@@ -519,17 +520,9 @@ class GlossListView(ListView):
                             # what to do here? leave it as None or use empty string (for export to csv)
                             value = ''
 
-                # This was disabled with the move to Python 3... might not be needed anymore?
-                # if isinstance(value,unicode):
-                #     value = str(value.encode('ascii','xmlcharrefreplace'))
-
                 if not isinstance(value,str):
                     # this is needed for csv
                     value = str(value)
-
-                # A handshape name can begin with =. To avoid Office thinking this is a formula, preface with '
-                # if value[:1] == '=':
-                #     value = '\'' + value
 
                 row.append(value)
 
@@ -2862,8 +2855,6 @@ class QueryListView(ListView):
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(QueryListView, self).get_context_data(**kwargs)
-
-        language_code = self.request.LANGUAGE_CODE
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
