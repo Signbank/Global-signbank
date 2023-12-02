@@ -11,7 +11,8 @@ from django.db.models.functions import Concat
 from django.db.models.fields import BooleanField, BooleanField
 from django.utils.functional import cached_property
 from django.db.models.sql.where import NothingNode, WhereNode
-from django.http import HttpResponse, HttpResponseRedirect, QueryDict, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, \
+    QueryDict, JsonResponse, StreamingHttpResponse
 from django.template import RequestContext
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
@@ -57,7 +58,7 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
-from signbank.csv_interface import sense_translations_for_language, sense_examplesentences_for_language
+from signbank.csv_interface import sense_translations_for_language, sense_examplesentences_for_language, csv_gloss_to_row
 from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
@@ -209,6 +210,16 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     return ordered
 
 
+class Echo:
+    """An object that implements just the write method of the file-like
+    interface. This is based on an example in the Django 4.2 documentation
+    """
+
+    def write(self, value):
+        """Write the value by returning it, instead of storing in a buffer."""
+        return value
+
+
 class GlossListView(ListView):
 
     model = Gloss
@@ -354,7 +365,6 @@ class GlossListView(ListView):
         return paginate_by
 
     def render_to_response(self, context, **response_kwargs):
-        print('render to response: ', self.request.GET, context['view_type'])
         if self.request.GET.get('format') == 'CSV':
             return self.render_to_csv_response()
         elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv:
@@ -409,10 +419,6 @@ class GlossListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-export.csv"'
-
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
 
         fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
@@ -430,7 +436,6 @@ class GlossListView(ListView):
 
         sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
                                                for language in dataset_languages]
-        writer = csv.writer(response)
 
         # CSV should be the first language in the settings
         activate(LANGUAGES[0][0])
@@ -440,178 +445,33 @@ class GlossListView(ListView):
                              'Relations to other signs','Relations to foreign signs', 'Tags', 'Notes']:
             header.append(extra_column)
 
-        writer.writerow(header)
-
         if self.object_list:
             query_set = self.object_list
         else:
             query_set = self.get_queryset()
 
-        # for some reason when show_all has been selected, the object list has become a list instead of a QuerySet
-        # it was also missing elements
-        # in order to simply debug print statements, it's converted to a list here to make sure it always has the same type
+        csv_rows = [header]
+
+        # for some reason when show_all has been selected,
+        # the object list has become a list instead of a QuerySet
+        # it's converted to a list here
+        # to make sure it always has the same type
         if isinstance(query_set, QuerySet):
             query_set = list(query_set)
         for gloss in query_set:
-            row = [str(gloss.pk), gloss.lemma.dataset.acronym]
-            for language in dataset_languages:
-                lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
-                if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
-                    # get rid of any invisible characters at the end such as \t
-                    lemmatranslation = lemmaidglosstranslations.first().text.strip()
-                    row.append(lemmatranslation)
-                else:
-                    row.append("")
-            for language in dataset_languages:
-                annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-                if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
-                    # get rid of any invisible characters at the end such as \t
-                    annotation = annotationidglosstranslations.first().text.strip()
-                    row.append(annotation)
-                else:
-                    row.append("")
 
-            # Put senses (keywords) per language in a cell
-            for language in dataset_languages:
-                gloss_senses_of_language = sense_translations_for_language(gloss, language)
-                row.append(gloss_senses_of_language)
+            safe_row = csv_gloss_to_row(gloss, dataset_languages, fields)
 
-            # Put example sentences per language in a cell
-            for language in dataset_languages:
-                gloss_example_sentences_of_language = sense_examplesentences_for_language(gloss, language)
-                row.append(gloss_example_sentences_of_language)
+            csv_rows.append(safe_row)
 
-            for f in fields:
-                #Try the value of the choicelist
-                if hasattr(f, 'field_choice_category'):
-                    if hasattr(gloss, 'get_' + f.name + '_display'):
-                        value = getattr(gloss, 'get_' + f.name + '_display')()
-                    else:
-                        field_value = getattr(gloss, f.name)
-                        value = field_value.name if field_value else '-'
-                elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
-                    handshape_field_value = getattr(gloss, f.name)
-                    value = handshape_field_value.name if handshape_field_value else '-'
-                elif f.related_model == SemanticField:
-                    value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
-                elif f.related_model == DerivationHistory:
-                    value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
-                else:
-                    value = getattr(gloss, f.name)
-
-                # some legacy glosses have empty text fields of other formats
-                if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
-                        and value in ['-','------',' ']:
-                    value = ''
-
-                if value is None:
-                    if f.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
-                        value = 'Neutral'
-                    elif f.name in settings.HANDSHAPE_ETYMOLOGY_FIELDS:
-                        value = 'False'
-                    else:
-                        if hasattr(f, 'field_choice_category'):
-                            value = '-'
-                        elif f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
-                            value = ''
-                        elif f.__class__.__name__ == 'IntegerField':
-                            value = 0
-                        else:
-                            # what to do here? leave it as None or use empty string (for export to csv)
-                            value = ''
-
-                if not isinstance(value,str):
-                    # this is needed for csv
-                    value = str(value)
-
-                row.append(value)
-
-            # get languages
-            signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
-            row.append(", ".join(signlanguages))
-
-            # get dialects
-            dialects = [dialect.name for dialect in gloss.dialect.all()]
-            row.append(", ".join(dialects))
-
-            # get morphology
-            # Sequential Morphology
-            morphemes = [morpheme.get_role()+':'+str(morpheme.morpheme.id) for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-            row.append(", ".join(morphemes))
-
-            # Simultaneous Morphology
-            morphemes = [(str(m.morpheme.id), m.role) for m in gloss.simultaneous_morphology.all()]
-            sim_morphs = []
-            for m in morphemes:
-                sim_morphs.append(':'.join(m))
-            simultaneous_morphemes = ', '.join(sim_morphs)
-            row.append(simultaneous_morphemes)
-
-            # Blend Morphology
-            ble_morphemes = [(str(m.glosses.id), m.role) for m in gloss.blend_morphology.all()]
-            ble_morphs = []
-            for m in ble_morphemes:
-                ble_morphs.append(':'.join(m))
-            blend_morphemes = ', '.join(ble_morphs)
-            row.append(blend_morphemes)
-
-            # get relations to other signs
-            relations = [(relation.role, str(relation.target.id)) for relation in Relation.objects.filter(source=gloss)]
-            relations_with_categories = []
-            for rel_cat in relations:
-                relations_with_categories.append(':'.join(rel_cat))
-
-            relations_categories = ", ".join(relations_with_categories)
-            row.append(relations_categories)
-
-            # get relations to foreign signs
-            relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss) for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
-            relations_with_categories = []
-            for rel_cat in relations:
-                relations_with_categories.append(':'.join(rel_cat))
-
-            relations_categories = ", ".join(relations_with_categories)
-            row.append(relations_categories)
-
-            # export tags
-            tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
-            tag_names_of_gloss = []
-            for t_obj in tags_of_gloss:
-                tag_id = t_obj.tag_id
-                tag_name = Tag.objects.get(id=tag_id)
-                tag_names_of_gloss += [str(tag_name).replace('_',' ')]
-
-            tag_names = ", ".join(tag_names_of_gloss)
-            row.append(tag_names)
-
-            # export notes
-            notes_of_gloss = gloss.definition_set.all()
-
-            notes_list = []
-            for note in notes_of_gloss:
-                notes_list += [note.note_tuple()]
-            sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
-
-            notes_list = []
-            for (role, published, count, text) in sorted_notes_list:
-                # does not use a comprehension because of nested parentheses in role and text fields
-                tuple_reordered = role + ': (' + published + ',' + count + ',' + text + ')'
-                notes_list.append(tuple_reordered)
-
-            notes_display = ", ".join(notes_list)
-            row.append(notes_display)
-
-            # Make it safe for weird chars
-            safe_row = []
-            for column in row:
-                try:
-                    safe_row.append(column.encode('utf-8').decode())
-                except AttributeError:
-                    safe_row.append(None)
-
-            writer.writerow(safe_row)
-
-        return response
+        # this is based on an example in the Django 4.2 documentation
+        pseudo_buffer = Echo()
+        new_writer = csv.writer(pseudo_buffer)
+        return StreamingHttpResponse(
+            (new_writer.writerow(row) for row in csv_rows),
+            content_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="dictionary-export.csv"'},
+        )
 
     def get_queryset(self):
         get = self.request.GET

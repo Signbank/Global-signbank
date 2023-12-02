@@ -446,6 +446,12 @@ function do_toggle_groups(el) {
   document.getElementById('adminsearch').submit();
 }
 
+function do_export_csv(e1) {
+  $('#format').val('CSV');
+  $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
+  document.getElementById('adminsearch').submit();
+}
+
 function ready_videos(el) {
     $(el).find('video').hide();
 
@@ -870,19 +876,23 @@ function do_toggle_language(el) {
                        value="sign_or_morpheme">{% trans "Sign or Morpheme" %}</a></li>
             </ul>
         </div>
-        
+
         {% else %}
         <input class="btn btn-primary" type="submit" value='{% trans "Search Sign" %}'/>
         {% endif %}
 
         {% if perms.dictionary.export_csv %}
-        <button class='btn btn-default' type='submit' name='format' value='CSV'>CSV</button>
+        <button class='btn btn-default' type='submit'
+                onclick="do_export_csv(this);"
+                id='export_format' value='CSV'>CSV</button>
+        <input type='hidden' id='format' name='format' value="">
         <input type='hidden' name='show_all' value="{{show_all}}">
         {% endif %}
 
         {% if not SHOW_DATASET_INTERFACE_OPTIONS %}
         {% if perms.dictionary.export_ecv %}
-        <button class='btn btn-default' type='submit' name='export_ecv' value='ECV'>ECV<</button>
+        <button class='btn btn-default' type='submit'
+                name='export_ecv' value='ECV'>ECV<</button>
         {% endif %}
         {% endif %}
         <input class='btn btn-default' type='reset' onclick="clearForm();"
