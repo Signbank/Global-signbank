@@ -58,7 +58,7 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
-from signbank.csv_interface import sense_translations_for_language, sense_examplesentences_for_language, csv_gloss_to_row
+from signbank.csv_interface import csv_gloss_to_row, csv_header_row_glosslist
 from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
@@ -381,16 +381,10 @@ class GlossListView(ListView):
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
-        # if the dataset is specified in the url parameters, set the dataset_name variable
-        get = self.request.GET
-        if 'dataset_name' in get:
-            self.dataset_name = get['dataset_name']
-        if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
-
+        # if the dataset is the default dataset since this option is only offered when
+        # there is only one dataset
         try:
-            dataset_object = Dataset.objects.get(name=self.dataset_name)
+            dataset_object = Dataset.objects.get(acronym=self.dataset_name)
         except ObjectDoesNotExist:
             messages.add_message(self.request, messages.ERROR, _('No dataset with that name found.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
@@ -420,48 +414,27 @@ class GlossListView(ListView):
             raise PermissionDenied
 
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
-
         fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
-        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
-                                               for language in dataset_languages]
-        lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
-                                          for language in dataset_languages]
 
-        keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
-                                               for language in dataset_languages]
-
-        sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
-                                               for language in dataset_languages]
-
-        # CSV should be the first language in the settings
-        activate(LANGUAGES[0][0])
-        header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
-                                + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
-        for extra_column in ['SignLanguages','Dialects', 'Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
-                             'Relations to other signs','Relations to foreign signs', 'Tags', 'Notes']:
-            header.append(extra_column)
+        header = csv_header_row_glosslist(dataset_languages, fields)
+        csv_rows = [header]
 
         if self.object_list:
             query_set = self.object_list
         else:
             query_set = self.get_queryset()
-
-        csv_rows = [header]
-
         # for some reason when show_all has been selected,
         # the object list has become a list instead of a QuerySet
         # it's converted to a list here
         # to make sure it always has the same type
         if isinstance(query_set, QuerySet):
             query_set = list(query_set)
+
         for gloss in query_set:
-
             safe_row = csv_gloss_to_row(gloss, dataset_languages, fields)
-
             csv_rows.append(safe_row)
 
         # this is based on an example in the Django 4.2 documentation

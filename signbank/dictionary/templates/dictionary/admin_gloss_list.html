@@ -452,6 +452,12 @@ function do_export_csv(e1) {
   document.getElementById('adminsearch').submit();
 }
 
+function do_export_ecv(e1) {
+  $('#export_ecv').val('ECV');
+  $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
+  document.getElementById('adminsearch').submit();
+}
+
 function ready_videos(el) {
     $(el).find('video').hide();
 
@@ -884,7 +890,7 @@ function do_toggle_language(el) {
         {% if perms.dictionary.export_csv %}
         <button class='btn btn-default' type='submit'
                 onclick="do_export_csv(this);"
-                id='export_format' value='CSV'>CSV</button>
+                id='button_export_csv' value='CSV'>CSV</button>
         <input type='hidden' id='format' name='format' value="">
         <input type='hidden' name='show_all' value="{{show_all}}">
         {% endif %}
@@ -892,7 +898,9 @@ function do_toggle_language(el) {
         {% if not SHOW_DATASET_INTERFACE_OPTIONS %}
         {% if perms.dictionary.export_ecv %}
         <button class='btn btn-default' type='submit'
-                name='export_ecv' value='ECV'>ECV<</button>
+                onclick="do_export_ecv(this);"
+                id='button_export_ecv' value='ECV'>ECV</button>
+        <input type='hidden' id='export_ecv' name='export_ecv' value="">
         {% endif %}
         {% endif %}
         <input class='btn btn-default' type='reset' onclick="clearForm();"

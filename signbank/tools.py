@@ -2208,11 +2208,11 @@ def searchform_panels(searchform, searchfields) :
 def map_search_results_to_gloss_list(search_results):
 
     if not search_results:
-        return ([], [])
+        return [], []
     gloss_ids = []
     for search_result in search_results:
         gloss_ids.append(search_result['id'])
-    return (gloss_ids, Gloss.objects.filter(id__in=gloss_ids))
+    return gloss_ids, Gloss.objects.filter(id__in=gloss_ids)
 
 
 def get_interface_language_and_default_language_codes(request):

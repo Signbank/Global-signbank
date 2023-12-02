@@ -636,6 +636,33 @@ def csv_create_senses(request, gloss, language, new_senses_string, create=False)
         add_sense_to_revision_history(request, gloss, sense_old_value, sense_new_value)
 
 
+def csv_header_row_glosslist(dataset_languages, fields):
+
+    lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+    annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                           for language in dataset_languages]
+    lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                      for language in dataset_languages]
+
+    keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
+                      for language in dataset_languages]
+
+    sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
+                       for language in dataset_languages]
+
+    # CSV should be the first language in the settings
+    activate(LANGUAGES[0][0])
+    header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
+        + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
+    for extra_column in ['SignLanguages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
+                         'Blend Morphology',
+                         'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']:
+        header.append(extra_column)
+
+    return header
+
+
+
 def csv_gloss_to_row(gloss, dataset_languages, fields):
 
     row = [str(gloss.pk), gloss.lemma.dataset.acronym]
