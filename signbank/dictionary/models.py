@@ -2581,18 +2581,19 @@ class Morpheme(Gloss):
         # all languages need to be represented for the template
         # languages not in the dataset translation languages are empty
         all_languages = Language.objects.all()
-        if self.dataset:
-            translation_languages = self.dataset.translation_languages.all()
+        if self.lemma and self.lemma.dataset:
+            translation_languages = self.lemma.dataset.translation_languages.all()
         else:
             translation_languages = Language.objects.filter(id=get_default_language_id())
         abstract_meaning = []
         for language in all_languages:
             if language in translation_languages:
-                translations = self.translation_set.filter(language=language).order_by('translation__index')
+                translations = self.translation_set.filter(language=language).order_by('index')
                 abstract_meaning.append((language, translations))
             else:
                 abstract_meaning.append((language, ''))
         return abstract_meaning
+
 
 def generate_fieldname_to_kind_table():
     temp_field_to_kind_table = dict()

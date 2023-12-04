@@ -662,7 +662,6 @@ def csv_header_row_glosslist(dataset_languages, fields):
     return header
 
 
-
 def csv_gloss_to_row(gloss, dataset_languages, fields):
 
     row = [str(gloss.pk), gloss.lemma.dataset.acronym]
@@ -814,6 +813,80 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
 
     notes_display = ", ".join(notes_list)
     row.append(notes_display)
+
+    # Make it safe for weird chars
+    safe_row = []
+    for column in row:
+        try:
+            safe_row.append(column.encode('utf-8').decode())
+        except AttributeError:
+            safe_row.append(None)
+
+    return safe_row
+
+
+def csv_header_row_morphemelist(dataset_languages, fields):
+
+    lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+    annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                           for language in dataset_languages]
+
+    # TO DO: make multilingual columns
+    keyword_fields = ["Keywords" + " (" + getattr(language, lang_attr_name) + ")"
+                      for language in dataset_languages]
+
+    with override(LANGUAGE_CODE):
+        header = ['Signbank ID'] + annotationidglosstranslation_fields + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
+
+    for extra_column in ['Keywords', 'Morphology', 'Appears in signs']:
+        header.append(extra_column)
+
+    return header
+
+
+def csv_morpheme_to_row(gloss, dataset_languages, fields):
+
+    row = [str(gloss.pk)]
+
+    for language in dataset_languages:
+        annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+        if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
+            row.append(annotationidglosstranslations[0].text)
+        else:
+            row.append("")
+
+    for f in fields:
+        # Try the value of the choicelist
+        if hasattr(f, 'field_choice_category'):
+            if hasattr(gloss, 'get_' + f.name + '_display'):
+                value = getattr(gloss, 'get_' + f.name + '_display')()
+            else:
+                field_value = getattr(gloss, f.name)
+                value = field_value.name if field_value else '-'
+        elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+            handshape_field_value = getattr(gloss, f.name)
+            value = handshape_field_value.name if handshape_field_value else '-'
+        elif f.related_model == SemanticField:
+            value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
+        elif f.related_model == DerivationHistory:
+            value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
+        else:
+            value = getattr(gloss, f.name)
+            value = str(value)
+
+        row.append(value)
+
+    # get translations
+    trans = [t.translation.text for t in gloss.translation_set.all().order_by('index')]
+    row.append(", ".join(trans))
+
+    # get compound's component type
+    morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+    row.append(", ".join(morphemes))
+
+    # Got all the glosses (=signs) this morpheme appears in
+    appearsin = [appears.idgloss for appears in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+    row.append(", ".join(appearsin))
 
     # Make it safe for weird chars
     safe_row = []

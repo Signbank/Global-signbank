@@ -14,6 +14,7 @@ from django.db.models.sql.where import NothingNode, WhereNode
 from django.http import HttpResponse, HttpResponseRedirect, \
     QueryDict, JsonResponse, StreamingHttpResponse
 from django.template import RequestContext
+from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.paginator import Paginator
@@ -58,7 +59,8 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
-from signbank.csv_interface import csv_gloss_to_row, csv_header_row_glosslist
+from signbank.csv_interface import csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist, \
+    csv_morpheme_to_row
 from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
@@ -1843,7 +1845,7 @@ class MorphemeListView(ListView):
         for lang in dataset_languages:
             if lang.language_code_2char not in self.queryset_language_codes:
                 self.queryset_language_codes.append(lang.language_code_2char)
-        if self.queryset_language_codes is None:
+        if not self.queryset_language_codes:
             self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
 
         if len(selected_datasets) == 1:
@@ -1853,7 +1855,8 @@ class MorphemeListView(ListView):
 
         context['last_used_dataset'] = self.last_used_dataset
 
-        context['show_all'] = self.kwargs.get('show_all', self.show_all)
+        self.show_all = self.kwargs.get('show_all', self.show_all)
+        context['show_all'] = self.show_all
 
         context['searchform'] = self.search_form
 
@@ -2007,14 +2010,13 @@ class MorphemeListView(ListView):
         # Return the resulting filtered and sorted queryset
         return qs
 
-    def render_to_response(self, context):
-        # Look for a 'format=json' GET argument
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'CSV':
-            return self.render_to_csv_response(context)
+            return self.render_to_csv_response()
         else:
-            return super(MorphemeListView, self).render_to_response(context)
+            return super(MorphemeListView, self).render_to_response(context, **response_kwargs)
 
-    def render_to_csv_response(self, context):
+    def render_to_csv_response(self):
         """Convert all Morphemes into a CSV
 
         This function is derived from and similar to the one used in class GlossListView
@@ -2025,87 +2027,39 @@ class MorphemeListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-morph-export.csv"'
-
-        # We want to manually set which fields to export here
-
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
-
-        # Different from Gloss: we use Morpheme here
         fields = [Morpheme.get_field(fname) for fname in fieldnames if fname in Morpheme.get_field_names()]
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
-        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in
-                                               dataset_languages]
 
-        writer = csv.writer(response)
+        header = csv_header_row_morphemelist(dataset_languages, fields)
+        csv_rows = [header]
 
-        with override(LANGUAGE_CODE):
-            header = ['Signbank ID'] + annotationidglosstranslation_fields + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
+        if self.object_list:
+            query_set = self.object_list
+        else:
+            query_set = self.get_queryset()
+        # for some reason when show_all has been selected,
+        # the object list has become a list instead of a QuerySet
+        # it's converted to a list here
+        # to make sure it always has the same type
+        if isinstance(query_set, QuerySet):
+            query_set = list(query_set)
 
-        for extra_column in ['Keywords', 'Morphology', 'Appears in signs']:
-            header.append(extra_column)
+        for morpheme in query_set:
 
-        writer.writerow(header)
+            safe_row = csv_morpheme_to_row(morpheme, dataset_languages, fields)
+            csv_rows.append(safe_row)
 
-        for gloss in self.get_queryset():
-            row = [str(gloss.pk)]
-
-            for language in dataset_languages:
-                annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-                if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
-                    row.append(annotationidglosstranslations[0].text)
-                else:
-                    row.append("")
-
-            for f in fields:
-                # Try the value of the choicelist
-                if hasattr(f, 'field_choice_category'):
-                    if hasattr(gloss, 'get_' + f.name + '_display'):
-                        value = getattr(gloss, 'get_' + f.name + '_display')()
-                    else:
-                        field_value = getattr(gloss, f.name)
-                        value = field_value.name if field_value else '-'
-                elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
-                    handshape_field_value = getattr(gloss, f.name)
-                    value = handshape_field_value.name if handshape_field_value else '-'
-                elif f.related_model == SemanticField:
-                    value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
-                elif f.related_model == DerivationHistory:
-                    value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
-                else:
-                    value = getattr(gloss, f.name)
-                    value = str(value)
-
-                row.append(value)
-
-            # get translations
-            trans = [t.translation.text for t in gloss.translation_set.all().order_by('translation__index')]
-            row.append(", ".join(trans))
-
-            # get compound's component type
-            morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-            row.append(", ".join(morphemes))
-
-            # Got all the glosses (=signs) this morpheme appears in
-            appearsin = [appears.idgloss for appears in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-            row.append(", ".join(appearsin))
-
-            # Make it safe for weird chars
-            safe_row = []
-            for column in row:
-                try:
-                    safe_row.append(column.encode('utf-8').decode())
-                except AttributeError:
-                    safe_row.append(None)
-
-            writer.writerow(safe_row)
-
-        return response
+        # this is based on an example in the Django 4.2 documentation
+        pseudo_buffer = Echo()
+        new_writer = csv.writer(pseudo_buffer)
+        return StreamingHttpResponse(
+            (new_writer.writerow(row) for row in csv_rows),
+            content_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="dictionary-morph-export.csv"'},
+        )
 
 
 class HandshapeDetailView(DetailView):
@@ -5303,10 +5257,10 @@ class MorphemeDetailView(DetailView):
         context['translations_per_language'] = {}
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
-                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('index')
         else:
             language = Language.objects.get(id=get_default_language_id())
-            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('index')
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
