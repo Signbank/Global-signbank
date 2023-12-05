@@ -55,12 +55,12 @@ from signbank.dictionary.field_choices import get_static_choice_lists, get_frequ
 from signbank.dictionary.forms import *
 from django.forms import TypedMultipleChoiceField, ChoiceField
 from signbank.dictionary.update import upload_metadata
-from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
+from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, \
     construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
 from signbank.csv_interface import csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist, \
-    csv_morpheme_to_row
+    csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row
 from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
@@ -428,10 +428,7 @@ class GlossListView(ListView):
             query_set = self.object_list
         else:
             query_set = self.get_queryset()
-        # for some reason when show_all has been selected,
-        # the object list has become a list instead of a QuerySet
-        # it's converted to a list here
-        # to make sure it always has the same type
+
         if isinstance(query_set, QuerySet):
             query_set = list(query_set)
 
@@ -2040,10 +2037,7 @@ class MorphemeListView(ListView):
             query_set = self.object_list
         else:
             query_set = self.get_queryset()
-        # for some reason when show_all has been selected,
-        # the object list has become a list instead of a QuerySet
-        # it's converted to a list here
-        # to make sure it always has the same type
+
         if isinstance(query_set, QuerySet):
             query_set = list(query_set)
 
@@ -3405,31 +3399,62 @@ class HandshapeListView(ListView):
         context['handshape_to_fields'] = handshape_to_fields
         return context
 
-    def render_to_response(self, context):
-        # Look for a 'format=json' GET argument
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'CSV':
-            return self.render_to_csv_response(context)
+            return self.render_to_csv_response()
         else:
-            return super(HandshapeListView, self).render_to_response(context)
+            return super(HandshapeListView, self).render_to_response(context, **response_kwargs)
 
-    def render_to_csv_response(self, context):
+    def render_to_csv_response(self):
 
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-export-handshapes.csv"'
-
-        writer = csv.writer(response)
-
-        if self.search_type and self.search_type == 'handshape':
-
-            writer = write_csv_for_handshapes(self, writer)
+        if self.object_list:
+            query_set = self.object_list
         else:
-            print('search type is sign')
+            query_set = self.get_queryset()
 
-        return response
+        if isinstance(query_set, QuerySet):
+            query_set = list(query_set)
+
+        if query_set and self.request.session['search_type'] == 'sign_handshape':
+            filename = "dictionary-export-handshapes-signs.csv"
+
+            fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb',
+                                                                                                             'isNew']
+            fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
+            dataset_languages = get_dataset_languages(selected_datasets)
+
+            header = csv_header_row_glosslist(dataset_languages, fields)
+            csv_rows = [header]
+
+            for gloss in query_set:
+                safe_row = csv_gloss_to_row(gloss, dataset_languages, fields)
+                csv_rows.append(safe_row)
+        else:
+            filename = "dictionary-export-handshapes.csv"
+
+            fields = [Handshape.get_field(fieldname) for fieldname in settings.HANDSHAPE_RESULT_FIELDS]
+
+            header = csv_header_row_handshapelist(fields)
+
+            csv_rows = [header]
+            for handshape in query_set:
+
+                safe_row = csv_handshape_to_row(handshape, fields)
+                csv_rows.append(safe_row)
+
+        # this is based on an example in the Django 4.2 documentation
+        pseudo_buffer = Echo()
+        new_writer = csv.writer(pseudo_buffer)
+        return StreamingHttpResponse(
+            (new_writer.writerow(row) for row in csv_rows),
+            content_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename='+filename},
+        )
 
     def get_queryset(self):
 

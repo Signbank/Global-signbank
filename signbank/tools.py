@@ -1922,6 +1922,7 @@ def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies
 
     return desc
 
+
 def get_value_for_ecv(gloss, fieldname):
     value = None
     annotationidglosstranslation_prefix = "annotationidglosstranslation_"
@@ -1950,60 +1951,6 @@ def get_value_for_ecv(gloss, fieldname):
     if value == '-':
         value = ' '
     return value
-
-def write_csv_for_handshapes(handshapelistview, csvwriter):
-    # called from the HandshapeListView when search_type is handshape
-
-    fields = [Handshape.get_field(fieldname) for fieldname in settings.HANDSHAPE_RESULT_FIELDS]
-
-    activate(LANGUAGES[0][0])
-    header = ['Handshape ID'] + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
-
-    csvwriter.writerow(header)
-
-    # case search result is list of handshapes
-
-    handshape_list = handshapelistview.object_list
-
-    for handshape in handshape_list:
-        row = [str(handshape.pk)]
-
-        for f in fields:
-            # Try the value of the choicelist
-            if hasattr(f, 'field_choice_category'):
-                if hasattr(handshape, 'get_' + f.name + '_display'):
-                    value = getattr(handshape, 'get_' + f.name + '_display')()
-                else:
-                    value = getattr(handshape, f.name)
-                    if value is not None:
-                        value = value.name
-            else:
-                value = getattr(handshape, f.name)
-
-            if not isinstance(value, str):
-                value = str(value)
-
-            if value is None:
-                if f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
-                    value = ''
-                elif f.__class__.__name__ == 'IntegerField':
-                    value = 0
-                else:
-                    value = ''
-
-            row.append(value)
-
-        # Make it safe for weird chars
-        safe_row = []
-        for column in row:
-            try:
-                safe_row.append(column.encode('utf-8').decode())
-            except AttributeError:
-                safe_row.append(None)
-
-        csvwriter.writerow(safe_row)
-
-    return csvwriter
 
 
 def construct_scrollbar(qs, search_type, language_code):
@@ -2183,18 +2130,6 @@ def minimalpairs_focusgloss(gloss_id, language_code):
         other_gloss_dict['other_gloss_idgloss'] = translation
         result.append(other_gloss_dict)
     return result
-
-
-def strip_control_characters(input):
-
-    if input:
-
-        import re
-
-        # remove an ending backslash
-        input = re.sub(r"\\$", "", input)
-
-    return input
 
 
 def searchform_panels(searchform, searchfields) :

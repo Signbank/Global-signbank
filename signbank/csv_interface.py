@@ -897,3 +897,53 @@ def csv_morpheme_to_row(gloss, dataset_languages, fields):
             safe_row.append(None)
 
     return safe_row
+
+
+def csv_header_row_handshapelist(fields):
+
+    activate(LANGUAGES[0][0])
+    header = ['Handshape ID'] + [f.verbose_name.encode('ascii', 'ignore').decode().capitalize()
+                                 for f in fields]
+
+    return header
+
+
+def csv_handshape_to_row(handshape, fields):
+
+    row = [str(handshape.pk)]
+
+    for f in fields:
+        # Try the value of the choicelist
+        if hasattr(f, 'field_choice_category'):
+            if hasattr(handshape, 'get_' + f.name + '_display'):
+                value = getattr(handshape, 'get_' + f.name + '_display')()
+            else:
+                value = getattr(handshape, f.name)
+                if value is not None:
+                    value = value.name
+        else:
+            value = getattr(handshape, f.name)
+
+        if not isinstance(value, str):
+            value = str(value)
+
+        if value is None:
+            if f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
+                value = ''
+            elif f.__class__.__name__ == 'IntegerField':
+                value = 0
+            else:
+                value = ''
+
+        row.append(value)
+
+    # Make it safe for weird chars
+    safe_row = []
+    for column in row:
+        try:
+            safe_row.append(column.encode('utf-8').decode())
+        except AttributeError:
+            safe_row.append(None)
+
+    return safe_row
+
