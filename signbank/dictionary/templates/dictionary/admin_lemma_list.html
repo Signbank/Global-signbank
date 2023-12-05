@@ -66,6 +66,36 @@ function clearForm() {
       });
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
+     $('#format').val('');
+     $('#show_all_lemmas').val('');
+     $('#show_all').val('False');
+     $('#reset').val('reset');
+}
+
+function do_adminsearch(el) {
+    $('#do_lemma_search').val('OK');
+    $('#format').val('');
+    $('#reset').val('');
+    $("#adminsearch").attr('action', '{{PREFIX_URL}}/dictionary/lemma/');
+    document.getElementById('adminsearch').submit();
+}
+
+function do_show_all(el) {
+    $('#do_lemma_search').val('');
+    $('#format').val('');
+    $('#reset').val('');
+    $('#show_all_lemmas').val('True');
+    $('#show_all').val('True');
+    $("#adminsearch").attr('action', '{{PREFIX_URL}}/dictionary/lemma/');
+    document.getElementById('adminsearch').submit();
+}
+
+function do_export_csv(e1) {
+  $('#format').val('CSV');
+  $('#show_all_lemmas').val('');
+  $('#reset').val('');
+  $("#adminsearch").attr('action', '{{PREFIX_URL}}/dictionary/lemma/');
+  document.getElementById('adminsearch').submit();
 }
 </script>
 {% endblock %}
@@ -139,10 +169,26 @@ function clearForm() {
 </div>
 
     <div class='btn-group' style="margin-bottom: 20px">
-       <input class="btn btn-primary" type="submit" name="search_lemma" value='{% trans "Search Lemma" %}'/>
-
-       <input class='btn btn-default' type='submit' onclick="clearForm();"
+       <button class='btn btn-primary' type='submit'
+               id='lemma_search_button'
+               onclick="do_adminsearch(this);"
+               value='lemma'>{% trans "Search Lemma" %}</button>
+        <input type='hidden' id='do_lemma_search' name='search_lemma' value="">
+       <button class='btn btn-default' type='submit'
+               id='show_all_lemmas_button'
+               onclick="do_show_all(this);"
+               value='lemma'>{% trans "Show All" %}</button>
+        <input type='hidden' id='show_all_lemmas' name='show_all_lemmas' value="">
+        {% if perms.dictionary.export_csv %}
+        <button class='btn btn-default' type='submit'
+                onclick="do_export_csv(this);"
+                id='button_export_csv' value='CSV'>CSV</button>
+        <input type='hidden' id='format' name='format' value="">
+        <input type='hidden' id='show_all' name='show_all' value="{{show_all}}">
+        {% endif %}
+        <input class='btn btn-default' type='submit' onclick="clearForm();"
                value='{% trans "Reset" %}'>
+        <input type='hidden' id="reset" name="reset" value="">
     </div>
 
     <h3>{% trans "Lemmas" %}</h3>
@@ -162,9 +208,6 @@ function clearForm() {
     <div class='btn-group'>
     {% if perms.dictionary.add_lemmaidgloss %}
     <a class="btn btn-primary" href="{% url 'dictionary:create_lemma' %}">{% trans "Create New Lemma" %}</a>
-    {% endif %}
-    {% if perms.dictionary.export_csv %}
-    <input class='btn btn-default' type='submit' name='format' value='CSV'>
     {% endif %}
     </div>
     {% if perms.dictionary.delete_lemmaidgloss and num_gloss_zero_matches %}
@@ -326,7 +369,7 @@ function clearForm() {
 
 
 {% else %}
-{% trans "No lemmas found." %}
+{% trans "No lemmas found. Please enter a query." %}
 {% endif %}
 
 </div>

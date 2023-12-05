@@ -947,3 +947,33 @@ def csv_handshape_to_row(handshape, fields):
 
     return safe_row
 
+
+def csv_header_row_lemmalist(dataset_languages):
+
+    lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+    lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                      for language in dataset_languages]
+
+    with override(LANGUAGE_CODE):
+        header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields + ['Number of glosses']
+
+    return header
+
+
+def csv_lemma_to_row(lemma, dataset_languages):
+    row = [str(lemma.pk), lemma.dataset.acronym]
+    for language in dataset_languages:
+        lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
+        if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
+            row.append(lemmaidglosstranslations[0].text)
+        else:
+            row.append("")
+    row.append(str(lemma.num_gloss))
+    # Make it safe for weird chars
+    safe_row = []
+    for column in row:
+        try:
+            safe_row.append(column.encode('utf-8').decode())
+        except AttributeError:
+            safe_row.append(None)
+    return safe_row

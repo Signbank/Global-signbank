@@ -60,7 +60,7 @@ from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_da
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
 from signbank.csv_interface import csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist, \
-    csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row
+    csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row, csv_header_row_lemmalist, csv_lemma_to_row
 from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
@@ -5977,6 +5977,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
                                                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                                                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
 
+
 class LemmaListView(ListView):
     model = LemmaIdgloss
     template_name = 'dictionary/admin_lemma_list.html'
@@ -6017,8 +6018,15 @@ class LemmaListView(ListView):
 
         qs = queryset.filter(dataset__in=selected_datasets)
 
-        if len(get) == 0:
-            # show all if there are no query parameters
+        if 'show_all_lemmas' in get and get['show_all_lemmas']:
+            self.show_all = True
+            return qs
+
+        if self.show_all:
+            return qs
+
+        if not get or ('reset' in get and get['reset']):
+            qs = LemmaIdgloss.objects.none()
             return qs
 
         # There are only Lemma ID Gloss fields
@@ -6040,14 +6048,14 @@ class LemmaListView(ListView):
             # either there was something wrong with the regex check and it returned empty results
             # or no matches to the query
             # in any case, there is nothing to annotate
-            return (self.object_list, 0)
+            return self.object_list, 0
 
         qs = self.get_queryset()
 
         if len(get) == 0:
             results = qs.annotate(num_gloss=Count('gloss'))
             num_gloss_zero_matches = results.filter(num_gloss=0).count()
-            return (results, num_gloss_zero_matches)
+            return results, num_gloss_zero_matches
 
         only_show_no_glosses = False
         only_show_has_glosses = False
@@ -6067,7 +6075,7 @@ class LemmaListView(ListView):
             num_gloss_zero_matches = 0
         else:
             num_gloss_zero_matches = results.filter(num_gloss=0).count()
-        return results,num_gloss_zero_matches
+        return results, num_gloss_zero_matches
 
     def get_context_data(self, **kwargs):
         context = super(LemmaListView, self).get_context_data(**kwargs)
@@ -6106,10 +6114,11 @@ class LemmaListView(ListView):
 
         context['searchform'] = self.search_form
         context['search_type'] = 'lemma'
+        context['show_all'] = self.show_all
 
         list_of_objects = self.object_list
 
-        # to accomodate putting lemma's in the scroll bar in the LemmaUpdateView (aka LemmaDetailView),
+        # to accommodate putting lemma's in the scroll bar in the LemmaUpdateView (aka LemmaDetailView),
         # look at available translations, choose the Interface language if it is a Dataset language
         # some legacy lemma's have missing translations,
         # the language code is used when more than one is available,
@@ -6135,59 +6144,36 @@ class LemmaListView(ListView):
 
         return context
 
-    def render_to_response(self, context, **kwargs):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'CSV':
-            return self.render_to_csv_response(context)
+            return self.render_to_csv_response()
         else:
-            return super(LemmaListView, self).render_to_response(context)
+            return super(LemmaListView, self).render_to_response(context, **response_kwargs)
 
-    def render_to_csv_response(self, context):
+    def render_to_csv_response(self):
 
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
-        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
 
-        lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
-                                          for language in dataset_languages]
+        header = csv_header_row_lemmalist(dataset_languages)
+        csv_rows = [header]
 
-        rows = []
         (queryset, num_gloss_zero_matches) = self.get_annotated_queryset()
         for lemma in queryset:
-            row = [str(lemma.pk), lemma.dataset.acronym]
-            for language in dataset_languages:
-                lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
-                if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
-                    row.append(lemmaidglosstranslations[0].text)
-                else:
-                    row.append("")
-            row.append(str(lemma.num_gloss))
-            #Make it safe for weird chars
-            safe_row = []
-            for column in row:
-                try:
-                    safe_row.append(column.encode('utf-8').decode())
-                except AttributeError:
-                    safe_row.append(None)
-            rows.append(safe_row)
+            safe_row = csv_lemma_to_row(lemma, dataset_languages)
+            csv_rows.append(safe_row)
 
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-export-lemmas.csv"'
-
-        writer = csv.writer(response)
-
-        with override(LANGUAGE_CODE):
-            header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields + ['Number of glosses']
-
-        writer.writerow(header)
-
-        for row in rows:
-            writer.writerow(row)
-
-        return response
+        # this is based on an example in the Django 4.2 documentation
+        pseudo_buffer = Echo()
+        new_writer = csv.writer(pseudo_buffer)
+        return StreamingHttpResponse(
+            (new_writer.writerow(row) for row in csv_rows),
+            content_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="dictionary-export-lemmas.csv"'},
+        )
 
     def post(self, request, *args, **kwargs):
         # this method deletes lemmas in the query that have no glosses
@@ -6229,7 +6215,7 @@ class LemmaCreateView(CreateView):
     fields = []
 
     def get_context_data(self, **kwargs):
-        context = super(CreateView, self).get_context_data(**kwargs)
+        context = super(LemmaCreateView, self).get_context_data(**kwargs)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
