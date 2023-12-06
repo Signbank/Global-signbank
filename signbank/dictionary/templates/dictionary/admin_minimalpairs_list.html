@@ -159,8 +159,37 @@ function clearForm() {
      $('.js-example-basic-multiple').val(null).trigger('change');
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
+     $('#format').val('');
+     $('#show_all_minimal_pairs').val('');
+     $('#show_all').val('False');
+     $('#reset').val('reset');
 }
 
+function do_adminsearch(el) {
+    $('#do_minimal_pairs_search').val('OK');
+    $('#format').val('');
+    $('#reset').val('');
+    $("#adminsearch").attr('action', '{{PREFIX_URL}}/analysis/minimalpairs/');
+    document.getElementById('adminsearch').submit();
+}
+
+function do_show_all(el) {
+    $('#do_minimal_pairs_search').val('');
+    $('#format').val('');
+    $('#reset').val('');
+    $('#show_all_minimal_pairs').val('True');
+    $('#show_all').val('True');
+    $("#adminsearch").attr('action', '{{PREFIX_URL}}/analysis/minimalpairs/');
+    document.getElementById('adminsearch').submit();
+}
+
+function do_export_csv(e1) {
+  $('#format').val('CSV');
+  $('#show_all_minimal_pairs').val('');
+  $('#reset').val('');
+  $("#adminsearch").attr('action', '{{PREFIX_URL}}/analysis/minimalpairs/');
+  document.getElementById('adminsearch').submit();
+}
 </script>
 {% endblock %}
 </head>
@@ -280,13 +309,26 @@ function clearForm() {
        </div>
     </div>
 <div class='btn-group' style="margin-bottom: 20px">
-<input class='btn btn-default' type='submit' name="filter" value='Apply Filter and Show Results'>
-<input class='btn btn-default' type='submit' name='showall' value='Show All Minimal Pairs'>
+<button class='btn btn-default' type='submit'
+       id='minimal_pairs_search_button'
+       onclick="do_adminsearch(this);"
+       value='minimal_pairs'>{% trans "Apply Filter and Show Results" %}</button>
+<input type='hidden' id='do_minimal_pairs_search' name='search_minimal_pairs' value="">
+<button class='btn btn-default' type='submit'
+       id='show_all_minimal_pairs_button'
+       onclick="do_show_all(this);"
+       value='minimal_pairs'>{% trans "Show All Minimal Pairs" %}</button>
+<input type='hidden' id='show_all_minimal_pairs' name='show_all_minimal_pairs' value="">
 {% if perms.dictionary.export_csv %}
-<input class='btn btn-default' type='submit' name='csv' value='Apply Filter and Export to CSV'>
+<button class='btn btn-default' type='submit'
+        onclick="do_export_csv(this);"
+        id='button_export_csv' value='CSV'>{% trans "Apply Filter and Export to CSV" %}</button>
+<input type='hidden' id='format' name='format' value="">
+<input type='hidden' name='show_all' value="{{show_all}}">
 {% endif %}
-<input class='btn btn-default' type='reset' onclick="clearForm();"
-               value='{% trans "Reset" %}'>
+<input class='btn btn-default' type='submit' onclick="clearForm();"
+       value='{% trans "Reset" %}'>
+<input type='hidden' id="reset" name="reset" value="">
 </div>
 </div>
 </form>

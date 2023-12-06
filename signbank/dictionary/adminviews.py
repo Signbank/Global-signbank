@@ -56,11 +56,12 @@ from signbank.dictionary.forms import *
 from django.forms import TypedMultipleChoiceField, ChoiceField
 from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, \
-    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
+    construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
-from signbank.csv_interface import csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist, \
-    csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row, csv_header_row_lemmalist, csv_lemma_to_row
+from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist, \
+    csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row, csv_header_row_lemmalist, csv_lemma_to_row,
+                                    csv_header_row_minimalpairslist, csv_focusgloss_to_minimalpairs)
 from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
@@ -1836,8 +1837,7 @@ class MorphemeListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
-        default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+        default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
 
         for lang in dataset_languages:
             if lang.language_code_2char not in self.queryset_language_codes:
@@ -2463,6 +2463,7 @@ class MinimalPairsListView(ListView):
     template_name = 'dictionary/admin_minimalpairs_list.html'
     paginate_by = 10
     filter = False
+    show_all = False
     search_form = FocusGlossSearchForm()
 
     def __init__(self, *args, **kwargs):
@@ -2496,6 +2497,9 @@ class MinimalPairsListView(ListView):
 
         context['searchform'] = self.search_form
 
+        self.show_all = self.request.GET.get('show_all', self.show_all)
+        context['show_all'] = self.show_all
+
         context['input_names_fields_and_labels'] = {}
         for topic in ['main', 'phonology', 'semantics']:
             context['input_names_fields_and_labels'][topic] = []
@@ -2525,45 +2529,45 @@ class MinimalPairsListView(ListView):
         """
         return self.request.GET.get('paginate_by', self.paginate_by)
 
-    def render_to_response(self, context):
-        if 'csv' in self.request.GET:
-            return self.render_to_csv_response(context)
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.GET.get('format') == 'CSV':
+            return self.render_to_csv_response()
         else:
-            return super(MinimalPairsListView, self).render_to_response(context)
+            return super(MinimalPairsListView, self).render_to_response(context, **response_kwargs)
 
-    def render_to_csv_response(self, context):
+    def render_to_csv_response(self):
 
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
         # this ends up being English for Global Signbank
         language_code = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-        dataset = context['dataset']
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset = selected_datasets.first()
 
-        # this can take a long time if the entire dataset is queried
-        rows = write_csv_for_minimalpairs(self, dataset, language_code=language_code)
-
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-export-minimalpairs.csv"'
-
-        import csv
-        csvwriter = csv.writer(response)
-
-        # write the actual file
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            header = ['Dataset', 'Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
-                      'Contrasting Sign Value']
+        if self.object_list:
+            query_set = self.object_list
         else:
-            header = ['Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
-                      'Contrasting Sign Value']
+            query_set = self.get_queryset()
 
-        csvwriter.writerow(header)
+        if isinstance(query_set, QuerySet):
+            query_set = list(query_set)
 
-        for row in rows:
-            csvwriter.writerow(row)
+        header = csv_header_row_minimalpairslist()
+        csv_rows = [header]
 
-        return response
+        for focusgloss in query_set:
+            # multiple rows are generated for each gloss, hence the csv_rows is passed as a state variable
+            csv_rows = csv_focusgloss_to_minimalpairs(focusgloss, dataset, language_code, csv_rows)
+
+        # this is based on an example in the Django 4.2 documentation
+        pseudo_buffer = Echo()
+        new_writer = csv.writer(pseudo_buffer)
+        return StreamingHttpResponse(
+            (new_writer.writerow(row) for row in csv_rows),
+            content_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="dictionary-export-minimalpairs.csv"'},
+        )
 
     def get_queryset(self):
 
@@ -2617,8 +2621,16 @@ class MinimalPairsListView(ListView):
                         (Q(**{handedness_filter: empty_value}))).exclude(
                         (Q(**{strong_hand_filter: empty_value}))).exclude(q_number_or_letter)
 
-        if 'showall' in get:
+        if 'show_all_minimal_pairs' in get and get['show_all_minimal_pairs']:
+            self.show_all = True
             return glosses_with_phonology
+
+        if self.show_all:
+            return glosses_with_phonology
+
+        if not get or ('reset' in get and get['reset']):
+            qs = Gloss.objects.none()
+            return qs
 
         qs = glosses_with_phonology
         qs = queryset_glosssense_from_get('Gloss', FocusGlossSearchForm, self.search_form, get, qs)
