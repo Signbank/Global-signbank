@@ -20,12 +20,12 @@ import django.contrib.auth.views
 import django.contrib.admindocs.urls
 import django_summernote.urls
 
-from signbank.dictionary.adminviews import (GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
-                                            HomonymListView, MinimalPairsListView, DatasetManagerView, \
-                                            DatasetDetailView, FrequencyListView, DatasetFieldChoiceView, \
-                                            dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView, \
+from signbank.dictionary.adminviews import (GlossListView, MorphemeListView, DatasetListView, HandshapeListView,
+                                            HomonymListView, MinimalPairsListView, DatasetManagerView,
+                                            DatasetDetailView, FrequencyListView, DatasetFieldChoiceView,
+                                            dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView,
                                             QueryListView, SemanticFieldListView, DerivationHistoryListView,
-                                            SearchHistoryView, SenseListView)
+                                            SearchHistoryView, SenseListView, LemmaListView)
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -87,6 +87,7 @@ urlpatterns = [
     re_path(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
     re_path(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()),
                 name='admin_handshape_list'),
+    re_path(r'^lemmas/show_all/$', LemmaListView.as_view(), {'show_all': True}),
     re_path(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view()),
             name='morphemes_search'),
     re_path(r'^morphemes/show_all/$', login_required(MorphemeListView.as_view()), {'show_all': True}),

@@ -4,6 +4,7 @@ from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
 from signbank.tools import get_selected_datasets_for_user
 from signbank.settings.base import *
+from django.utils.translation import override, gettext_lazy as _, activate
 
 from django.contrib.auth.models import User, Permission, Group
 from django.test import TestCase, RequestFactory
@@ -206,6 +207,7 @@ class BasicCRUDTests(TestCase):
         #Create the glosses
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
+        default_language = test_dataset.default_language
 
         # Create a lemma
         new_lemma = LemmaIdgloss(dataset=test_dataset)
@@ -513,7 +515,6 @@ class ImportExportTests(TestCase):
         response = client.get(url, follow=True)
         self.assertTrue("The dataset is empty, export ECV is not available." in str(response.content))
 
-
     def test_DatasetListView_ECV_export_permission_change_dataset(self):
 
         print('Test DatasetListView export_ecv with permission change_dataset')
@@ -586,7 +587,6 @@ class ImportExportTests(TestCase):
         response = client.get(url, follow=True)
         self.assertTrue("No permission to export dataset." in str(response.content))
 
-
     def test_DatasetListView_not_logged_in_ECV_export(self):
 
         print('Test DatasetListView export_ecv anonymous user not logged in')
@@ -615,17 +615,12 @@ class ImportExportTests(TestCase):
         assign_perm('dictionary.export_csv', self.user)
         print('User has permmission to export csv.')
 
-        # set the language for glosssearch field name
-        default_language = self.test_dataset.default_language
-        gloss_search_field_prefix = "glosssearch_"
-        glosssearch_field_name = gloss_search_field_prefix + default_language.language_code_2char
-
-        response = client.get('/signs/search/', {"search_type": "sign", glosssearch_field_name : "wesseltest6", "format": "CSV"})
-
+        response = client.get('/signs/search/',
+                              {'format': 'CSV'}, follow=True)
+        streaming_rows = b''.join(response.streaming_content)
         self.assertEqual(response['Content-Type'], "text/csv")
-        self.assertContains(response, b'Signbank ID,')
-        # self.assertContains(response, b',Lemma ID Gloss')  # For an empty database this wil not work
-        self.assertContains(response, b',Dataset')
+        self.assertIn(bytes('Signbank ID,', 'utf-8'), streaming_rows)
+        self.assertIn(bytes(',Dataset', 'utf-8'), streaming_rows)
 
     def test_Import_csv_update_gloss_for_lemma(self):
         """
@@ -1150,7 +1145,7 @@ class FrontEndTests(TestCase):
 
         everything_okay = True
 
-        for script in re.findall('(?si)<script type=.{1,2}text\/javascript.{1,2}>(.*)<\/script>', str(response.content)):
+        for script in re.findall(r'(?si)<script type=.{1,2}text/javascript.{1,2}>(.*)</script>', str(response.content)):
             for invalid_pattern in invalid_patterns:
                 if invalid_pattern in script:
                     everything_okay = False
@@ -1416,7 +1411,7 @@ class LemmaTests(TestCase):
         self.userprofile.selected_datasets.add(test_dataset)
         self.userprofile.save()
 
-        #Create the glosses
+        # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
 
@@ -1429,7 +1424,6 @@ class LemmaTests(TestCase):
         new_lemmaidglosstranslation = LemmaIdglossTranslation(text="lemma_with_gloss",
                                                               lemma=new_lemma, language=default_language)
         new_lemmaidglosstranslation.save()
-
 
         # Create a second lemma
         new_lemma2 = LemmaIdgloss(dataset=test_dataset)
@@ -1475,7 +1469,7 @@ class LemmaTests(TestCase):
         client = Client(enforce_csrf_checks=False)
         client.login(username='test-user', password='test-user')
 
-        #Get a dataset
+        # Get a dataset
         dataset_name = settings.DEFAULT_DATASET
 
         # Give the test user permission to change a dataset
@@ -1487,11 +1481,11 @@ class LemmaTests(TestCase):
         response = client.get('/dictionary/lemma/?lemma_en=without', follow=True)
         self.assertEqual(len(response.context['search_results']), 1)
 
-        #Search lemmas with no glosses (no_glosses=1 is set to true aka 1), there are 2
+        # Search lemmas with no glosses (no_glosses=1 is set to true aka 1), there are 2
         response = client.get('/dictionary/lemma/?no_glosses=1', follow=True)
         self.assertEqual(len(response.context['search_results']), 2)
 
-        #Search lemmas that have glosses, there is only one
+        # Search lemmas that have glosses, there is only one
         response = client.get('/dictionary/lemma/?has_glosses=1', follow=True)
         self.assertEqual(len(response.context['search_results']), 1)
 
@@ -1506,7 +1500,7 @@ class LemmaTests(TestCase):
         self.assertContains(response, 'Incorrect deletion code.')
 
         response = client.post('/dictionary/lemma/', {'delete_lemmas': 'delete_lemmas'}, follow=True)
-        self.assertContains(response, 'You do not have change permission on the dataset of the lemma you are atteempting to delete.')
+        self.assertContains(response, 'You do not have change permission on the dataset of the lemma you are attempting to delete.')
 
         assign_perm('change_dataset', self.user, test_dataset)
         self.user.save()
@@ -1521,8 +1515,8 @@ class LemmaTests(TestCase):
         self.assertEqual(len(response.context['search_results']), 1)
 
         # delete the remaining lemma without glosses
-        response = client.post('/dictionary/lemma/', {'delete_lemmas': 'delete_lemmas'}, follow=True)
-        self.assertEqual(response.status_code,200)
+        response = client.post('/lemmas/show_all/', {'delete_lemmas': 'delete_lemmas'}, follow=True)
+        self.assertEqual(response.status_code, 200)
 
         response = client.get('/dictionary/lemma/?no_glosses=1', follow=True)
         self.assertEqual(len(response.context['search_results']), 0)
@@ -1532,6 +1526,7 @@ class LemmaTests(TestCase):
 
         all_lemma_translations = LemmaIdglossTranslation.objects.all()
         print('LemmaTests translations after delete: ', all_lemma_translations)
+
 
 class HandshapeTests(TestCase):
 

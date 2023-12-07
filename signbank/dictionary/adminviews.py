@@ -6011,6 +6011,11 @@ class LemmaListView(ListView):
 
         get = self.request.GET
 
+        # this view accommodates both Show All Lemmas and Lemma Search
+        # the show_all argument is True for Show All Lemmas
+        # if it is missing, a Lemma Search is being done and starts with no results
+        self.show_all = self.kwargs.get('show_all', False)
+
         queryset = super(LemmaListView, self).get_queryset()
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -6037,7 +6042,11 @@ class LemmaListView(ListView):
         if self.show_all:
             return qs
 
-        if not get or ('reset' in get and get['reset']):
+        if not self.show_all and not get:
+            qs = LemmaIdgloss.objects.none()
+            return qs
+
+        if 'reset' in get and get['reset']:
             qs = LemmaIdgloss.objects.none()
             return qs
 
@@ -6053,14 +6062,6 @@ class LemmaListView(ListView):
     def get_annotated_queryset(self, **kwargs):
         # this method adds a gloss count column to the results for display
         get = self.request.GET
-
-        if hasattr(self, 'object_list') and not self.object_list:
-            # check to make sure get_queryset has already been called
-            # the post method does not seem to have this attribute when called from LemmaTests
-            # either there was something wrong with the regex check and it returned empty results
-            # or no matches to the query
-            # in any case, there is nothing to annotate
-            return self.object_list, 0
 
         qs = self.get_queryset()
 
@@ -6087,6 +6088,7 @@ class LemmaListView(ListView):
             num_gloss_zero_matches = 0
         else:
             num_gloss_zero_matches = results.filter(num_gloss=0).count()
+
         return results, num_gloss_zero_matches
 
     def get_context_data(self, **kwargs):
@@ -6108,8 +6110,6 @@ class LemmaListView(ListView):
         context['populate_fields_keys'] = json.dumps(populate_keys)
 
         context['page_number'] = context['page_obj'].number
-
-        context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
 
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
@@ -6198,10 +6198,17 @@ class LemmaListView(ListView):
             # the template sets POST value 'delete_lemmas' to value 'delete_lemmas'
             messages.add_message(request, messages.WARNING, _("Incorrect deletion code."))
             return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
-        datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset,
+                                                        accept_global_perms=False)
+        if not datasets_user_can_change:
+            messages.add_message(request, messages.WARNING,
+                                 _("You do not have change permission on the dataset of the lemma you are attempting to delete."))
+            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         (queryset, num_gloss_zero_matches) = self.get_annotated_queryset()
+
         # check permissions, if fails, do nothing and show error message
         for lemma in queryset:
             if lemma.num_gloss == 0:
@@ -6209,8 +6216,9 @@ class LemmaListView(ListView):
                 dataset_of_requested_lemma = lemma.dataset
                 if dataset_of_requested_lemma not in datasets_user_can_change:
                     messages.add_message(request, messages.WARNING,
-                                         _("You do not have change permission on the dataset of the lemma you are atteempting to delete."))
+                         _("You do not have change permission on the dataset of the lemma you are attempting to delete."))
                     return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+
         for lemma in queryset:
             if lemma.num_gloss == 0:
                 lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
@@ -6386,6 +6394,10 @@ class LemmaUpdateView(UpdateView):
 
         # get the page of the lemma list on which this lemma appears in order ro return to it after update
         request_path = self.request.META.get('HTTP_REFERER')
+
+        # if there was a query, return to the query results in the template on button Return to Lemma List
+        context['request_path'] = request_path
+
         if not request_path:
             context['caller'] = 'lemma_list'
         else:
