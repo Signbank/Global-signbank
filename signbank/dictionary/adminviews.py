@@ -213,6 +213,17 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     return ordered
 
 
+def error_message_regular_expression(request, search_fields, field_values):
+    error_message_1 = _('Error in search field ')
+    error_message_2 = ', '.join(search_fields)
+    error_message_3 = _(': A regular expression is expected due to special characters. ')
+    error_message_4 = _('Please use a backslash before special characters: ')
+    error_message_5 = ' '.join(field_values)
+    error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4 + error_message_5
+    messages.add_message(request, messages.ERROR, error_message)
+    return
+
+
 class Echo:
     """An object that implements just the write method of the file-like
     interface. This is based on an example in the Django 4.2 documentation
@@ -485,12 +496,7 @@ class GlossListView(ListView):
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
-            error_message_1 = _('Error in search field ')
-            error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters: ')
-            error_message_4 = ' '.join(field_values)
-            error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4
-            messages.add_message(self.request, messages.ERROR, error_message)
+            error_message_regular_expression(self.request, search_fields, field_values)
             qs = Gloss.objects.none()
             return qs
 
@@ -744,12 +750,7 @@ class SenseListView(ListView):
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
-            error_message_1 = _('Error in search field ')
-            error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters: ')
-            error_message_4 = ' '.join(field_values)
-            error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4
-            messages.add_message(self.request, messages.ERROR, error_message)
+            error_message_regular_expression(self.request, search_fields, field_values)
             qs = GlossSense.objects.none()
             return qs
 
@@ -1972,12 +1973,7 @@ class MorphemeListView(ListView):
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, MorphemeSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
-            error_message_1 = _('Error in search field ')
-            error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters: ')
-            error_message_4 = ' '.join(field_values)
-            error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4
-            messages.add_message(self.request, messages.ERROR, error_message)
+            error_message_regular_expression(self.request, search_fields, field_values)
             qs = Morpheme.objects.none()
             return qs
 
@@ -2586,12 +2582,7 @@ class MinimalPairsListView(ListView):
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
-            error_message_1 = _('Error in search field ')
-            error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters: ')
-            error_message_4 = ' '.join(field_values)
-            error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4
-            messages.add_message(self.request, messages.ERROR, error_message)
+            error_message_regular_expression(self.request, search_fields, field_values)
             qs = Gloss.objects.none()
             self.request.session['search_results'] = []
             self.request.session.modified = True
@@ -3487,14 +3478,10 @@ class HandshapeListView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
-        valid_regex, search_fields = check_multilingual_fields(Handshape, get, dataset_languages)
+        valid_regex, search_fields, field_values = check_multilingual_fields(Handshape, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
-            error_message_1 = _('Error in search field ')
-            error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters.')
-            error_message = error_message_1 + error_message_2 + error_message_3
-            messages.add_message(self.request, messages.ERROR, error_message)
+            error_message_regular_expression(self.request, search_fields, field_values)
             qs = Handshape.objects.none()
             return qs
 
@@ -6024,12 +6011,7 @@ class LemmaListView(ListView):
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
-            error_message_1 = _('Error in search field ')
-            error_message_2 = ', '.join(search_fields)
-            error_message_3 = _(': Please use a backslash before special characters: ')
-            error_message_4 = ' '.join(field_values)
-            error_message = error_message_1 + error_message_2 + error_message_3 + error_message_4
-            messages.add_message(self.request, messages.ERROR, error_message)
+            error_message_regular_expression(self.request, search_fields, field_values)
             qs = LemmaIdgloss.objects.none()
             return qs
 

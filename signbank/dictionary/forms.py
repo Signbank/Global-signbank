@@ -363,6 +363,7 @@ def check_language_fields(searchform, formclass, queryDict, languages):
         if regexp.search(language_field_values[language_field]):
             language_fields_okay = False
             search_fields.append(language_field_labels[language_field])
+            field_values.append(language_field_values[language_field])
 
     return language_fields_okay, search_fields, field_values
 
@@ -717,8 +718,9 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
     # this function inspects the name field of HandshapeSearchForm looking for occurrences of special characters
     language_fields_okay = True
     search_fields = []
+    field_values = []
     if not queryDict:
-        return language_fields_okay, search_fields
+        return language_fields_okay, search_fields, field_values
 
     language_field_labels = dict()
     language_field_values = dict()
@@ -745,12 +747,14 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
         except re.error:
             language_fields_okay = False
             search_fields.append(language_field_labels[language_field])
+            field_values.append(language_field_values[language_field])
             break
         if regexp.search(language_field_values[language_field]):
             language_fields_okay = False
             search_fields.append(language_field_labels[language_field])
+            field_values.append(language_field_values[language_field])
 
-    return language_fields_okay, search_fields
+    return language_fields_okay, search_fields, field_values
 
 
 class ImageUploadForHandshapeForm(forms.Form):
