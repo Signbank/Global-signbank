@@ -962,14 +962,11 @@ class GlossDetailView(DetailView):
         context['StrongHand'] = self.object.domhndsh.machine_value if strong_hand_obj else 0
         context['WeakHand'] = self.object.subhndsh.machine_value if self.object.subhndsh else 0
 
-        # context['NamedEntityDefined'] = (int(self.object.namEnt) > 1) if self.object.namEnt else 0        # minimal machine value is 2
-        context['SemanticFieldDefined'] =  self.object.semField.all().count() > 0
-        # context['ValenceDefined'] = (int(self.object.valence) > 1) if self.object.valence else 0          # minimal machine value is 2
-        # context['IconicImageDefined'] = self.object.iconImage                                             # exists if not emtpy
+        context['SemanticFieldDefined'] = self.object.semField.all().count() > 0
 
         context['DerivationHistoryDefined'] = self.object.derivHist.all().count() > 0
 
-        #Pass info about which fields we want to see
+        # Pass info about which fields we want to see
         gl = context['gloss']
         context['active_id'] = gl.id
         labels = gl.field_labels()
@@ -979,13 +976,12 @@ class GlossDetailView(DetailView):
 
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
-        # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
+        # if a sequence of glosses are being created by hand, this keeps the dataset setting the same
         if dataset_of_requested_gloss:
             self.request.session['datasetid'] = dataset_of_requested_gloss.pk
             self.last_used_dataset = dataset_of_requested_gloss.acronym
         else:
             # in this case the gloss does not have a dataset assigned
-            print("Alert: The gloss does not have a dataset. The default dataset is assigned to session variable 'datasetid'")
             self.request.session['datasetid'] = settings.DEFAULT_DATASET_PK
             self.last_used_dataset = settings.DEFAULT_DATASET_ACRONYM
 
@@ -1009,7 +1005,6 @@ class GlossDetailView(DetailView):
         subhndsh_letter = getattr(gl, 'subhndsh_letter')
         subhndsh_number = getattr(gl, 'subhndsh_number')
 
-
         context['etymology_fields_dom'].append([domhndsh_letter,'domhndsh_letter',labels['domhndsh_letter'],'check'])
         context['etymology_fields_dom'].append([domhndsh_number,'domhndsh_number',labels['domhndsh_number'],'check'])
         context['etymology_fields_sub'].append([subhndsh_letter,'subhndsh_letter',labels['subhndsh_letter'],'check'])
@@ -1029,11 +1024,11 @@ class GlossDetailView(DetailView):
 
         context['static_choice_lists'] = {}
         context['static_choice_list_colors'] = {}
-        #Translate the machine values to human values in the correct language, and save the choice lists along the way
-        for topic in ['main','phonology','semantics']:
+        # Translate the machine values to human values in the correct language, and save the choice lists along the way
+        for topic in ['main', 'phonology', 'semantics']:
             context[topic+'_fields'] = []
             for field in FIELDS[topic]:
-                # the following check will be used when querying is added, at the moment these don't appear in the phonology list
+                # these do not appear in the phonology querying list
                 if field not in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
                     kind = fieldname_to_kind(field)
 
@@ -1053,7 +1048,7 @@ class GlossDetailView(DetailView):
                         # they are not fields of Gloss
                         continue
 
-                    #Take the human value in the language we are using
+                    # Take the human value in the language we are using
                     field_value = getattr(gl,field)
                     if isinstance(field_value, FieldChoice) or isinstance(field_value, Handshape):
                         if field_value:
@@ -1075,13 +1070,11 @@ class GlossDetailView(DetailView):
         context['gloss_phonology'] = gloss_phonology
         context['phonology_list_kinds'] = phonology_list_kinds
 
-        #Collect all morphology definitions for th sequential morphology section, and make some translations in advance
-        morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
+        # Collect morphology definitions for sequential morphology section
         morphdefs = []
-
         for morphdef in context['gloss'].parent_glosses.all():
 
-            translated_role = morphdef.role.name
+            translated_role = morphdef.role.name if morphdef.role else ''
 
             sign_display = str(morphdef.morpheme.id)
             morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
@@ -1091,10 +1084,11 @@ class GlossDetailView(DetailView):
                 else:
                     sign_display = morph_texts[default_language_code]
 
-            morphdefs.append((morphdef,translated_role,sign_display))
+            morphdefs.append((morphdef, translated_role, sign_display))
 
         morphdefs = sorted(morphdefs, key=lambda tup: tup[1])
         context['morphdefs'] = morphdefs
+        context['sequential_morphology_display'] = [(md[0].morpheme.pk, md[2]) for md in morphdefs]
 
         (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms) = gl.homonyms()
         homonyms_different_phonology = []
@@ -1130,7 +1124,7 @@ class GlossDetailView(DetailView):
                 if interface_language_code in homo_trans.keys():
                     homo_display = homo_trans[interface_language_code][0].text
                 else:
-                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    # default language if the interface language hasn't been set for this gloss
                     homo_display = homo_trans[default_language_code][0].text
 
                 homonyms_but_not_saved.append((homonym,homo_display))
@@ -1138,7 +1132,6 @@ class GlossDetailView(DetailView):
         context['homonyms_but_not_saved'] = homonyms_but_not_saved
 
         # Regroup notes
-        note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
         notes = context['gloss'].definition_set.all()
         notes_groupedby_role = {}
         for note in notes:
@@ -1149,7 +1142,7 @@ class GlossDetailView(DetailView):
             notes_groupedby_role[role_id].append(note)
         context['notes_groupedby_role'] = notes_groupedby_role
 
-        #Gather the OtherMedia
+        # Gather the OtherMedia
         context['other_media'] = []
         context['other_media_field_choices'] = {}
         other_media_type_choice_list = FieldChoice.objects.filter(field__iexact='OthermediaType')
@@ -1202,7 +1195,7 @@ class GlossDetailView(DetailView):
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
-            except (ObjectDoesNotExist):
+            except ObjectDoesNotExist:
                 annotation_text = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_text
 
@@ -1232,7 +1225,7 @@ class GlossDetailView(DetailView):
 
         try:
             gloss_signlanguage = gl.lemma.dataset.signlanguage
-        except:
+        except (ObjectDoesNotExist, NothingNode):
             gloss_signlanguage = None
             # this is needed to catch legacy code
         initial_gloss_dialects = gl.dialect.all()
@@ -1271,13 +1264,10 @@ class GlossDetailView(DetailView):
 
         context['gloss_derivationhistory'] = gloss_derivationhistory
 
-
         simultaneous_morphology = []
-        sim_morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
-
         if gl.simultaneous_morphology:
             for sim_morph in gl.simultaneous_morphology.all():
-                translated_morph_type = sim_morph.morpheme.mrpType.name
+                translated_morph_type = sim_morph.morpheme.mrpType.name if sim_morph.morpheme.mrpType else ''
 
                 morpheme_annotation_idgloss = {}
                 if sim_morph.morpheme.dataset:
@@ -1289,12 +1279,13 @@ class GlossDetailView(DetailView):
                 if interface_language_code in morpheme_annotation_idgloss.keys():
                     morpheme_display = morpheme_annotation_idgloss[interface_language_code][0].text
                 else:
-                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    # default language if the interface language hasn't been set for this gloss
                     morpheme_display = morpheme_annotation_idgloss[default_language_code][0].text
 
-                simultaneous_morphology.append((sim_morph,morpheme_display,translated_morph_type))
+                simultaneous_morphology.append((sim_morph, morpheme_display, translated_morph_type))
 
         context['simultaneous_morphology'] = simultaneous_morphology
+        context['simultaneous_morphology_display'] = [(sm[0].morpheme.pk, sm[1]) for sm in simultaneous_morphology]
 
         # Obtain the number of morphemes in the dataset of this gloss
         # The template will not show the facility to add simultaneous morphology if there are no morphemes to choose from
@@ -1317,7 +1308,7 @@ class GlossDetailView(DetailView):
                 if interface_language_code in glosses_annotation_idgloss.keys():
                     morpheme_display = glosses_annotation_idgloss[interface_language_code][0].text
                 else:
-                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    # default language if the interface language hasn't been set for this gloss
                     morpheme_display = glosses_annotation_idgloss[default_language_code][0].text
 
                 blend_morphology.append((ble_morph,morpheme_display))
@@ -1339,7 +1330,7 @@ class GlossDetailView(DetailView):
                 if interface_language_code in other_relations_dict.keys():
                     target_display = other_relations_dict[interface_language_code][0].text
                 else:
-                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    # default language if the interface language hasn't been set for this gloss
                     target_display = other_relations_dict[default_language_code][0].text
 
                 otherrelations.append((oth_rel,target_display))
