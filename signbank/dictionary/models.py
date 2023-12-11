@@ -1250,7 +1250,7 @@ class Gloss(models.Model):
     def dataset(self):
         try:
             return self.lemma.dataset
-        except:
+        except ObjectDoesNotExist:
             return None
 
     @property
@@ -1322,12 +1322,74 @@ class Gloss(models.Model):
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
 
-    def get_fields_dict(self):
+    def get_domhndsh_display(self):
+        return self.domhndsh.name if self.domhndsh else '-'
+
+    def get_subhndsh_display(self):
+        return self.subhndsh.name if self.subhndsh else '-'
+
+    def get_semField_display(self):
+        return ", ".join([str(sf.name) for sf in self.semField.all()])
+
+    def get_derivHist_display(self):
+        return ", ".join([str(sf.name) for sf in self.derivHist.all()])
+
+    def get_dialect_display(self):
+        return ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in self.dialect.all()])
+
+    def get_signlanguage_display(self):
+        return ", ".join([str(sl.name) for sl in self.signlanguage.all()])
+
+    def get_morpheme_display(self):
+        return ", ".join([x.morpheme.__str__() for x in self.simultaneous_morphology.all()])
+
+    def get_relation_display(self):
+        default_language = self.lemma.dataset.default_language
+        relations_to_signs = Relation.objects.filter(source=self)
+        return ", ".join([x.role + ':' + x.target.annotation_idgloss(default_language)
+                                   for x in relations_to_signs])
+
+    def get_hasComponentOfType_display(self):
+        return " + ".join([x.__str__() for x in self.parent_glosses.all()])
+
+    def get_mrpType_display(self):
+        if not self.is_morpheme():
+            return '-'
+        morpheme_self = self.morpheme
+        return morpheme_self.get_mrpType_display()
+
+    def get_definitionRole_display(self):
+        return ", ".join([str(df.role.name) for df in self.definition_set.all()])
+
+    def get_hasRelationToForeignSign_display(self):
+        return _('Yes') if (self.relationtoforeignsign_set.count() > 0) else _('No')
+
+    def get_relationToForeignSign_display(self):
+        relations_to_foreign_signs = RelationToForeignSign.objects.filter(gloss=self)
+        return ", ".join([x.other_lang + ':' + x.other_lang_gloss for x in relations_to_foreign_signs])
+
+    def get_hasothermedia_display(self):
+        other_media_paths = []
+        for other_media in self.othermedia_set.all():
+            media_okay, path, other_media_filename = other_media.get_othermedia_path(self.id,
+                                                                                     check_existence=True)
+            if media_okay:
+                other_media_paths.append(other_media_filename)
+        return ", ".join(other_media_paths)
+
+    def get_fields_dict(self, fieldnames):
+
+        # TO DO include other gloss relations in the fieldnames (e.g., simultaneous morphology, below)
+        # a way to determine w/o hard-coding if a fieldname is for a related model
+        # then can use the above display methods
+        # related_models = [rel.related_model._meta.model_name for rel in self._meta.related_objects]
+        # print(related_models)
+        # requires changing search field names
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
         fields_data = []
         for field in gloss_fields:
-            if field.name in settings.API_FIELDS:
+            if field.name in fieldnames:
                 if hasattr(field, 'field_choice_category'):
                     fc_category = field.field_choice_category
                 else:
@@ -1335,33 +1397,40 @@ class Gloss(models.Model):
                 fields_data.append((field.name, field.verbose_name.title(), fc_category))
 
         fields = {}
-        for (f, field_verbose_name, fieldchoice_category) in fields_data:
-            if fieldchoice_category:
-                fieldchoice = getattr(self, f)
-                if fieldchoice:
-                    field_value = fieldchoice.name
-                else:
-                    field_value = ' '
-            else:
-                field_value = str(getattr(self, f))
-            fields[field_verbose_name] = field_value
-
         # Annotation Idgloss translations
         if self.dataset:
             for language in self.dataset.translation_languages.all():
                 annotationidglosstranslation = self.annotationidglosstranslation_set.filter(language=language)
                 if annotationidglosstranslation and len(annotationidglosstranslation) > 0:
-                    fields[_("Annotation ID Gloss") + ": %s" % language.name] = annotationidglosstranslation[0].text
+                    fields[_("Annotation ID Gloss") + ": %s" % language.name] = annotationidglosstranslation.first().text
+            for language in self.dataset.translation_languages.all():
+                lemmaidglosstranslations = self.lemma.lemmaidglosstranslation_set.filter(language=language)
+                if lemmaidglosstranslations and len(lemmaidglosstranslations) > 0:
+                    fields[_("Lemma ID Gloss") + ": %s" % language.name] = lemmaidglosstranslations.first().text
 
         # Get all the keywords associated with this sign
+        # TO DO this should be changed to senses per language
         allkwds = ", ".join([x.translation.text for x in self.translation_set.all()])
         fields[Translation.__name__ + "s"] = allkwds
 
-        # Get morphology
-        fields[Morpheme.__name__ + "s"] = ", ".join([x.__str__() for x in self.simultaneous_morphology.all()])
+        for (f, field_verbose_name, fieldchoice_category) in fields_data:
+            if f in ['domhndsh', 'subhndsh', 'semField', 'derivHist', 'dialect', 'signlanguage']:
+                display_method = 'get_'+f+'_display'
+                field_value = getattr(self, display_method)()
+            elif fieldchoice_category:
+                fieldchoice = getattr(self, f)
+                if fieldchoice:
+                    field_value = fieldchoice.name
+                else:
+                    field_value = '-'
+            else:
+                field_value = str(getattr(self, f))
+            fields[field_verbose_name] = field_value
 
-        #
-        fields["Parent glosses"] = ", ".join([x.__str__() for x in self.parent_glosses.all()])
+        # Get morphology
+        fields[_("Simultaneous Morphology")] = self.get_morpheme_display()
+
+        fields[_("Sequential Morphology")] = self.get_hasComponentOfType_display()
 
         fields["Link"] = settings.URL + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
 

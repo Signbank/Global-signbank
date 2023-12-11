@@ -5545,6 +5545,7 @@ def homonyms_ajax_complete(request, gloss_id):
 
     return JsonResponse(homonyms_dict, safe=False)
 
+
 def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
 
     if 'gloss_detail' in request.GET:
@@ -5565,6 +5566,9 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
         # if we are in gloss detail view or relations view, only show minimal pairs in
         # primary language of dataset
         language_code = this_gloss.lemma.dataset.default_language.language_code_2char
+        caller_url = 'dictionary/minimalpairs_gloss_table.html'
+    else:
+        caller_url = 'dictionary/minimalpairs_row.html'
 
     translation_focus_gloss = str(this_gloss.id)
     translations_this_gloss = this_gloss.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
@@ -5591,13 +5595,9 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
             focus_gloss_choice = values[2]
             other_gloss_choice = values[3]
 
-            if focus_gloss_choice:
-                pass
-            else:
+            if not focus_gloss_choice:
                 focus_gloss_choice = ''
-            if other_gloss_choice:
-                pass
-            else:
+            if not other_gloss_choice:
                 other_gloss_choice = ''
 
             field_kind = values[4]
@@ -5645,22 +5645,17 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    if gloss_detail:
-        return render(request, 'dictionary/minimalpairs_gloss_table.html', { 'focus_gloss': this_gloss,
-                                                                             'focus_gloss_translation': translation_focus_gloss,
-                                                                             'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
-                                                                             'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS,
-                                                                             'minimal_pairs_dict' : result })
-    else:
-        return render(request, 'dictionary/minimalpairs_row.html', { 'focus_gloss': this_gloss,
-                                                                     'focus_gloss_translation': translation_focus_gloss,
-                                                                     'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
-                                                                     'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS,
-                                                                     'minimal_pairs_dict' : result })
+    return render(request, caller_url, {'focus_gloss': this_gloss,
+                                        'focus_gloss_translation': translation_focus_gloss,
+                                        'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                                        'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS,
+                                        'minimal_pairs_dict': result})
+
 
 def glosslist_ajax_complete(request, gloss_id):
 
     display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+    query_fields_parameters = []
 
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
         if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
@@ -5669,6 +5664,12 @@ def glosslist_ajax_complete(request, gloss_id):
 
     this_gloss = Gloss.objects.get(id=gloss_id)
     default_language = this_gloss.lemma.dataset.default_language.language_code_2char
+
+    # TO DO could use the following method to generate the column values
+    # but the domain of that method is the column header
+    # gloss_data = this_gloss.get_fields_dict(display_fields)
+    # list_gloss_data = list(gloss_data)
+    # print(list_gloss_data)
 
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
@@ -5680,73 +5681,25 @@ def glosslist_ajax_complete(request, gloss_id):
 
     column_values = []
     for fieldname in display_fields:
-        if fieldname == 'semField':
-            semanticfields = ", ".join([str(sf.name) for sf in this_gloss.semField.all()])
-            column_values.append((fieldname, semanticfields))
-        elif fieldname == 'derivHist':
-            derivationhistories = ", ".join([str(dh.name) for dh in this_gloss.derivHist.all()])
-            column_values.append((fieldname, derivationhistories))
-        elif fieldname == 'dialect':
-            dialects = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in this_gloss.dialect.all()])
-            column_values.append((fieldname, dialects))
-        elif fieldname == 'signlanguage':
-            # this is a ManyToManyField field
-            signlanguages = ", ".join([str(sl.name) for sl in this_gloss.signlanguage.all()])
-            column_values.append((fieldname, signlanguages))
-        elif fieldname == 'definitionRole':
-            # this is a Note
-            definitions_this_gloss = ", ".join([str(df.role.name) for df in this_gloss.definition_set.all()])
-            column_values.append((fieldname, definitions_this_gloss))
-        elif fieldname == 'hasothermedia':
-            other_media_paths = []
-            for other_media in this_gloss.othermedia_set.all():
-                media_okay, path, other_media_filename = other_media.get_othermedia_path(this_gloss.id, check_existence=True)
-                if media_okay:
-                    other_media_paths.append(other_media_filename)
-            other_media = ", ".join(other_media_paths)
-            column_values.append((fieldname, other_media))
-        elif fieldname == 'hasComponentOfType':
-            morphemes = " + ".join([x.__str__() for x in this_gloss.parent_glosses.all()])
-            column_values.append((fieldname, morphemes))
-        elif fieldname == 'mrpType':
-            # the inheritance only works this way in this version of Django/Python
-            # the morphemes are filtered on this glosses id, then the morpheme is used
-            target_morphemes = Morpheme.objects.filter(id=this_gloss.id)
-            if target_morphemes:
-                morph_typ_choices = FieldChoice.objects.filter(field__iexact='MorphemeType')
-                target_morpheme = target_morphemes.first()
-                morpheme_type_machine_value = target_morpheme.mrpType.machine_value if target_morpheme.mrpType else 0
-                translated_morph_type = machine_value_to_translated_human_value(morpheme_type_machine_value, morph_typ_choices)
-            else:
-                translated_morph_type = ''
-            column_values.append((fieldname, translated_morph_type))
-        elif fieldname == 'morpheme':
-            morphemes = " + ".join([x.morpheme.__str__() for x in this_gloss.simultaneous_morphology.all()])
-            column_values.append((fieldname, morphemes))
+        if fieldname in ['semField', 'derivHist', 'dialect', 'signlanguage',
+                         'definitionRole', 'hasothermedia', 'hasComponentOfType',
+                         'mrpType', 'morpheme', 'relation',
+                         'hasRelationToForeignSign', 'relationToForeignSign']:
+            display_method = 'get_' + fieldname + '_display'
+            field_value = getattr(this_gloss, display_method)()
+            column_values.append((fieldname, field_value))
         elif fieldname == 'hasRelation':
+            # this field has a list of roles as a parameter
             if query_fields_parameters:
                 # query_fields_parameters ends up being a list of list for this field
                 field_paramters = query_fields_parameters[0]
                 relations_of_type = [r for r in this_gloss.relation_sources.all() if r.role in field_paramters]
                 relations = ", ".join([r.target.annotation_idgloss(default_language) for r in relations_of_type])
                 column_values.append((fieldname, relations))
-        elif fieldname == 'relation':
-            relations_to_signs = Relation.objects.filter(source=this_gloss)
-            relations = ", ".join([x.role + ':' + x.target.annotation_idgloss(default_language)
-                                   for x in relations_to_signs])
-            column_values.append((fieldname, relations))
-        elif fieldname == 'hasRelationToForeignSign':
-            has_relations = _('Yes') if (this_gloss.relationtoforeignsign_set.count() > 0) else _('No')
-            column_values.append((fieldname, has_relations))
-        elif fieldname == 'relationToForeignSign':
-            relations_to_foreign_signs = RelationToForeignSign.objects.filter(gloss=this_gloss)
-            relations = ", ".join([x.other_lang + ':' + x.other_lang_gloss for x in relations_to_foreign_signs])
-            column_values.append((fieldname, relations))
         elif fieldname not in Gloss.get_field_names():
             continue
         else:
             machine_value = getattr(this_gloss, fieldname)
-            gloss_field = Gloss.get_field(fieldname)
             if machine_value and isinstance(machine_value, Handshape):
                 human_value = machine_value.name
             elif machine_value and isinstance(machine_value, FieldChoice):
@@ -5754,20 +5707,22 @@ def glosslist_ajax_complete(request, gloss_id):
             else:
                 human_value = machine_value
             if human_value:
-                column_values.append((fieldname,human_value))
+                column_values.append((fieldname, human_value))
             else:
-                column_values.append((fieldname,'-'))
+                column_values.append((fieldname, '-'))
 
-    return render(request, 'dictionary/gloss_row.html', { 'focus_gloss': this_gloss,
-                                                          'dataset_languages': dataset_languages,
-                                                          'selected_datasets': selected_datasets,
-                                                          'width_senses_columns': len(dataset_languages),
-                                                          'width_gloss_columns': len(dataset_languages),
-                                                          'width_lemma_columns': len(dataset_languages),
-                                                          'sensetranslations_per_language': sensetranslations_per_language,
-                                                          'column_values': column_values,
-                                                          'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
-                                                          'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
+    return render(request, 'dictionary/gloss_row.html',
+                  {'focus_gloss': this_gloss,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'width_senses_columns': len(dataset_languages),
+                   'width_gloss_columns': len(dataset_languages),
+                   'width_lemma_columns': len(dataset_languages),
+                   'sensetranslations_per_language': sensetranslations_per_language,
+                   'column_values': column_values,
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
+
 
 def glosslistheader_ajax(request):
 
@@ -5815,22 +5770,22 @@ def glosslistheader_ajax(request):
             column_headers.append((fieldname, field_label))
 
     sortOrder = ''
-
     if 'HTTP_REFERER' in request.META.keys():
         sortOrderURL = request.META['HTTP_REFERER']
         sortOrderParameters = sortOrderURL.split('&sortOrder=')
         if len(sortOrderParameters) > 1:
             sortOrder = sortOrderParameters[1].split('&')[0]
 
-    return render(request, 'dictionary/glosslist_headerrow.html', { 'dataset_languages': dataset_languages,
-                                                                    'selected_datasets': selected_datasets,
-                                                                    'width_senses_columns': len(dataset_languages),
-                                                                    'width_gloss_columns': len(dataset_languages),
-                                                                    'width_lemma_columns': len(dataset_languages),
-                                                                    'column_headers': column_headers,
-                                                                    'sortOrder': str(sortOrder),
-                                                                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
-                                                                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
+    return render(request, 'dictionary/glosslist_headerrow.html',
+                  {'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'width_senses_columns': len(dataset_languages),
+                   'width_gloss_columns': len(dataset_languages),
+                   'width_lemma_columns': len(dataset_languages),
+                   'column_headers': column_headers,
+                   'sortOrder': str(sortOrder),
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def senselist_ajax_complete(request, sense_id):
@@ -5926,11 +5881,8 @@ def senselistheader_ajax(request):
                                                                     'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                                                                     'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
 
+
 def lemmaglosslist_ajax_complete(request, gloss_id):
-
-    user = request.user
-
-    is_anonymous = user.is_authenticated
 
     this_gloss = Gloss.objects.get(id=gloss_id)
 
@@ -5946,9 +5898,8 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
     gloss_list_display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
     for fieldname in gloss_list_display_fields:
 
-        machine_value = getattr(this_gloss,fieldname)
+        machine_value = getattr(this_gloss, fieldname)
 
-        gloss_field = Gloss.get_field(fieldname)
         if machine_value and isinstance(machine_value, Handshape):
             human_value = machine_value.name
         elif machine_value and isinstance(machine_value, FieldChoice):
@@ -5960,12 +5911,13 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
         else:
             column_values.append((fieldname, '-'))
 
-    return render(request, 'dictionary/lemma_gloss_row.html', { 'focus_gloss': this_gloss,
-                                                          'dataset_languages': dataset_languages,
-                                                          'sensetranslations_per_language': sensetranslations_per_language,
-                                                          'column_values': column_values,
-                                                          'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
-                                                          'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
+    return render(request, 'dictionary/lemma_gloss_row.html',
+                  {'focus_gloss': this_gloss,
+                   'dataset_languages': dataset_languages,
+                   'sensetranslations_per_language': sensetranslations_per_language,
+                   'column_values': column_values,
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 class LemmaListView(ListView):

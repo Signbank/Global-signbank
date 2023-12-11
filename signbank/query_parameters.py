@@ -301,7 +301,7 @@ def convert_query_parameters_to_filter(query_parameters):
             morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=get_value)
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_morphdefs_with_correct_role))
-        elif get_key in ['mrpType']:
+        elif get_key in ['mrpType[]']:
             # Get all Morphemes of the indicated mrpType
             target_morphemes = [ m.id for m in Morpheme.objects.filter(mrpType__machine_value__in=get_value) ]
             # this only works in the query is Sign or Morpheme
@@ -472,6 +472,9 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                 field = key[:-2]
                 if field in ['sentenceType']:
                     field_category = 'SentenceType'
+                elif field in ['mrpType']:
+                    # this is a field of Morpheme
+                    field_category = 'MorphemeType'
                 else:
                     field_category = Gloss.get_field(field).field_choice_category
                 choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])

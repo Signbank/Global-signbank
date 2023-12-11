@@ -1530,7 +1530,7 @@ def get_gloss_data(since_timestamp=0, dataset=None):
     gloss_data = {}
     for gloss in glosses:
         if int(format(gloss.lastUpdated, 'U')) > since_timestamp:
-            gloss_data[gloss.pk] = gloss.get_fields_dict()
+            gloss_data[gloss.pk] = gloss.get_fields_dict(settings.API_FIELDS)
 
     return gloss_data
 
