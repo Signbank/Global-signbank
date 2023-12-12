@@ -1343,6 +1343,14 @@ class Gloss(models.Model):
     def get_morpheme_display(self):
         return ", ".join([x.morpheme.__str__() for x in self.simultaneous_morphology.all()])
 
+    def get_blendmorphology_display(self):
+        ble_morphemes = [(str(m.glosses.id), m.role) for m in self.blend_morphology.all()]
+        ble_morphs = []
+        for m in ble_morphemes:
+            ble_morphs.append(':'.join(m))
+        blend_morphemes = ', '.join(ble_morphs)
+        return blend_morphemes
+
     def get_relation_display(self):
         default_language = self.lemma.dataset.default_language
         relations_to_signs = Relation.objects.filter(source=self)
@@ -2599,6 +2607,15 @@ class Morpheme(Gloss):
 
     def get_locprim_display(self):
         return self.locprim.name if self.locprim else self.locprim
+
+    def get_appearsin_display(self):
+        other_glosses_that_point_to_morpheme = self.glosses_containing.all()
+        appears_in = []
+        for sim_morph in other_glosses_that_point_to_morpheme:
+            gloss = sim_morph.parent_gloss
+            translated_word_class = gloss.wordClass.name if gloss.wordClass else '-'
+            appears_in.append(translated_word_class + ': ' + gloss.idgloss)
+        return ', '.join(appears_in)
 
     def admin_next_morpheme(self):
         """next morpheme in the admin view, shortcut for next_dictionary_morpheme with staff=True"""

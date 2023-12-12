@@ -804,7 +804,8 @@ class LemmaCreateForm(forms.ModelForm):
         if 'languages' in kwargs:
             self.languages = kwargs.pop('languages')
         self.user = kwargs.pop('user')
-        self.last_used_dataset = kwargs.pop('last_used_dataset')
+        if 'last_used_dataset' in kwargs:
+            self.last_used_dataset = kwargs.pop('last_used_dataset')
 
         super(LemmaCreateForm, self).__init__(queryDict, *args, **kwargs)
 

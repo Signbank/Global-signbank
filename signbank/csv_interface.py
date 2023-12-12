@@ -738,52 +738,32 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
         row.append(value)
 
     # get languages
-    signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
-    row.append(", ".join(signlanguages))
+    signlanguages = gloss.get_signlanguage_display()
+    row.append(signlanguages)
 
     # get dialects
-    dialects = [dialect.name for dialect in gloss.dialect.all()]
-    row.append(", ".join(dialects))
+    dialects = gloss.get_dialect_display()
+    row.append(dialects)
 
     # get morphology
     # Sequential Morphology
-    morphemes = [morpheme.get_role() + ':' + str(morpheme.morpheme.id) for morpheme in
-                 MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-    row.append(", ".join(morphemes))
+    morphemes = gloss.get_hasComponentOfType_display()
+    row.append(morphemes)
 
     # Simultaneous Morphology
-    morphemes = [(str(m.morpheme.id), m.role) for m in gloss.simultaneous_morphology.all()]
-    sim_morphs = []
-    for m in morphemes:
-        sim_morphs.append(':'.join(m))
-    simultaneous_morphemes = ', '.join(sim_morphs)
+    simultaneous_morphemes = gloss.get_morpheme_display()
     row.append(simultaneous_morphemes)
 
     # Blend Morphology
-    ble_morphemes = [(str(m.glosses.id), m.role) for m in gloss.blend_morphology.all()]
-    ble_morphs = []
-    for m in ble_morphemes:
-        ble_morphs.append(':'.join(m))
-    blend_morphemes = ', '.join(ble_morphs)
+    blend_morphemes = gloss.get_blendmorphology_display()
     row.append(blend_morphemes)
 
     # get relations to other signs
-    relations = [(relation.role, str(relation.target.id)) for relation in Relation.objects.filter(source=gloss)]
-    relations_with_categories = []
-    for rel_cat in relations:
-        relations_with_categories.append(':'.join(rel_cat))
-
-    relations_categories = ", ".join(relations_with_categories)
+    relations_categories = gloss.get_relation_display()
     row.append(relations_categories)
 
     # get relations to foreign signs
-    relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss) for relation in
-                 RelationToForeignSign.objects.filter(gloss=gloss)]
-    relations_with_categories = []
-    for rel_cat in relations:
-        relations_with_categories.append(':'.join(rel_cat))
-
-    relations_categories = ", ".join(relations_with_categories)
+    relations_categories = gloss.get_relationToForeignSign_display()
     row.append(relations_categories)
 
     # export tags
@@ -884,9 +864,9 @@ def csv_morpheme_to_row(gloss, dataset_languages, fields):
     morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
     row.append(", ".join(morphemes))
 
-    # Got all the glosses (=signs) this morpheme appears in
-    appearsin = [appears.idgloss for appears in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-    row.append(", ".join(appearsin))
+    # Got all the glosses this morpheme appears in
+    appearsin = gloss.get_appearsin_display()
+    row.append(appearsin)
 
     # Make it safe for weird chars
     safe_row = []

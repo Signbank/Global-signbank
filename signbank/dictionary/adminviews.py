@@ -5123,14 +5123,9 @@ class MorphemeDetailView(DetailView):
         # Get the set of all the Gloss signs that point to me
         other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(morpheme_id__exact=context['morpheme'].id)
         context['appears_in'] = []
-
         for sim_morph in other_glosses_that_point_to_morpheme:
             parent_gloss = sim_morph.parent_gloss
-            if parent_gloss.wordClass:
-                translated_word_class = parent_gloss.wordClass.name
-            else:
-                translated_word_class = ''
-
+            translated_word_class = parent_gloss.wordClass.name if parent_gloss.wordClass else '-'
             context['appears_in'].append((parent_gloss, translated_word_class))
 
         context['glosscount'] = Morpheme.objects.count()
@@ -5200,7 +5195,6 @@ class MorphemeDetailView(DetailView):
         context['phonology_list_kinds'] = phonology_list_kinds
 
         # Regroup notes
-        note_role_choices = FieldChoice.objects.filter(field__iexact='NoteType')
         notes = context['morpheme'].definition_set.all()
         notes_groupedby_role = {}
         for note in notes:
@@ -5351,7 +5345,7 @@ def handshape_ajax_search_results(request):
         return JsonResponse([], safe=False)
 
 def lemma_ajax_search_results(request):
-    """Returns a JSON list of handshapes that match the previous search stored in sessions"""
+    """Returns a JSON list of lemmas that match the previous search stored in sessions"""
     if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
             and request.session['search_type'] == 'lemma':
         return JsonResponse(request.session['search_results'], safe=False)
@@ -5412,8 +5406,14 @@ def morph_ajax_complete(request, prefix):
     """Return a list of morphemes matching the search term
     as a JSON structure suitable for typeahead."""
 
+    if 'datasetid' in request.session.keys():
+        datasetid = request.session['datasetid']
+    else:
+        datasetid = settings.DEFAULT_DATASET_PK
+    dataset = Dataset.objects.get(id=datasetid)
+
     # the following query retrieves morphemes with annotations that match the prefix
-    query = Q(annotationidglosstranslation__text__istartswith=prefix)
+    query = Q(lemma__dataset=dataset, annotationidglosstranslation__text__istartswith=prefix)
     qs = Morpheme.objects.filter(query).distinct()
 
     result = []
@@ -6241,6 +6241,7 @@ class LemmaCreateView(CreateView):
 
 
 def create_lemma_for_gloss(request, glossid):
+    print('create lemma for gloss')
     try:
         gloss = Gloss.objects.get(id=glossid)
     except ObjectDoesNotExist:
