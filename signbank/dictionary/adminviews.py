@@ -2408,7 +2408,7 @@ class HomonymListView(ListView):
         else:
             languages = Language.objects.filter(language_code_2char=self.request.LANGUAGE_CODE)
         if languages:
-            context['language'] = languages[0]
+            context['language'] = languages.first()
         else:
             context['language'] = Language.objects.get(id=get_default_language_id())
 
@@ -4214,8 +4214,8 @@ class DatasetManagerView(ListView):
 
             for language in dataset_languages:
                 annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-                if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
-                    row.append(annotationidglosstranslations[0].text)
+                if annotationidglosstranslations.count() > 0:
+                    row.append(annotationidglosstranslations.first().text)
                 else:
                     row.append("")
 
@@ -4244,7 +4244,7 @@ class DatasetManagerView(ListView):
                 try:
                     safe_row.append(column.encode('utf-8').decode())
                 except AttributeError:
-                    safe_row.append(None)
+                    safe_row.append("")
 
             writer.writerow(row)
 
@@ -4541,7 +4541,7 @@ class DatasetFieldChoiceView(ListView):
                     except (ObjectDoesNotExist, MultipleObjectsReturned):
                         try:
                             field_choice_object = \
-                            FieldChoice.objects.filter(field=field_choice_category, machine_value=machine_value)[0]
+                            FieldChoice.objects.filter(field=field_choice_category, machine_value=machine_value).first()
                         except (ObjectDoesNotExist, IndexError):
                             print('Multiple ', field_choice_category, ' objects share the same machine value: ',
                                   machine_value)

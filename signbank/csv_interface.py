@@ -667,7 +667,7 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
     row = [str(gloss.pk), gloss.lemma.dataset.acronym]
     for language in dataset_languages:
         lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
-        if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
+        if lemmaidglosstranslations.count() > 0:
             # get rid of any invisible characters at the end such as \t
             lemmatranslation = lemmaidglosstranslations.first().text.strip()
             row.append(lemmatranslation)
@@ -675,7 +675,7 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
             row.append("")
     for language in dataset_languages:
         annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-        if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
+        if annotationidglosstranslations.count() > 0:
             # get rid of any invisible characters at the end such as \t
             annotation = annotationidglosstranslations.first().text.strip()
             row.append(annotation)
@@ -800,7 +800,7 @@ def csv_gloss_to_row(gloss, dataset_languages, fields):
         try:
             safe_row.append(column.encode('utf-8').decode())
         except AttributeError:
-            safe_row.append(None)
+            safe_row.append("")
 
     return safe_row
 
@@ -830,8 +830,8 @@ def csv_morpheme_to_row(gloss, dataset_languages, fields):
 
     for language in dataset_languages:
         annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-        if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
-            row.append(annotationidglosstranslations[0].text)
+        if annotationidglosstranslations.count() > 0:
+            row.append(annotationidglosstranslations.first().text)
         else:
             row.append("")
 
@@ -874,7 +874,7 @@ def csv_morpheme_to_row(gloss, dataset_languages, fields):
         try:
             safe_row.append(column.encode('utf-8').decode())
         except AttributeError:
-            safe_row.append(None)
+            safe_row.append("")
 
     return safe_row
 
@@ -923,7 +923,7 @@ def csv_handshape_to_row(handshape, fields):
         try:
             safe_row.append(column.encode('utf-8').decode())
         except AttributeError:
-            safe_row.append(None)
+            safe_row.append("")
 
     return safe_row
 
@@ -944,8 +944,8 @@ def csv_lemma_to_row(lemma, dataset_languages):
     row = [str(lemma.pk), lemma.dataset.acronym]
     for language in dataset_languages:
         lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
-        if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
-            row.append(lemmaidglosstranslations[0].text)
+        if lemmaidglosstranslations.count() > 0:
+            row.append(lemmaidglosstranslations.first().text)
         else:
             row.append("")
     row.append(str(lemma.num_gloss))
@@ -955,7 +955,7 @@ def csv_lemma_to_row(lemma, dataset_languages):
         try:
             safe_row.append(column.encode('utf-8').decode())
         except AttributeError:
-            safe_row.append(None)
+            safe_row.append("")
     return safe_row
 
 
@@ -983,13 +983,9 @@ def minimalpairs_focusgloss(gloss_id, language_code):
             focus_gloss_choice = values[2]
             other_gloss_choice = values[3]
 
-            if focus_gloss_choice:
-                pass
-            else:
+            if not focus_gloss_choice:
                 focus_gloss_choice = ''
-            if other_gloss_choice:
-                pass
-            else:
+            if not other_gloss_choice:
                 other_gloss_choice = ''
 
             field_kind = values[4]
@@ -1024,12 +1020,12 @@ def minimalpairs_focusgloss(gloss_id, language_code):
 
         translation = ""
         translations = minimalpairs_object.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
-        if translations is not None and len(translations) > 0:
-            translation = translations[0].text
+        if translations.count() > 0:
+            translation = translations.first().text
         else:
             translations = minimalpairs_object.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
-            if translations is not None and len(translations) > 0:
-                translation = translations[0].text
+            if translations.count() > 0:
+                translation = translations.first().text
 
         other_gloss_dict['other_gloss_idgloss'] = translation
         result.append(other_gloss_dict)
@@ -1052,11 +1048,9 @@ def csv_focusgloss_to_minimalpairs(focusgloss, dataset, language_code, csv_rows)
 
     focus_gloss_columns = [dataset.acronym]
 
-    translation_focus_gloss = ""
     translations_gloss = focusgloss.annotationidglosstranslation_set.filter(
         language__language_code_2char=language_code)
-    if translations_gloss and len(translations_gloss) > 0:
-        translation_focus_gloss = translations_gloss[0].text
+    translation_focus_gloss = translations_gloss.first().text if translations_gloss.count() > 0 else ""
 
     focus_gloss_columns.append(translation_focus_gloss)
     focus_gloss_columns.append(str(focusgloss.pk))
@@ -1065,13 +1059,8 @@ def csv_focusgloss_to_minimalpairs(focusgloss, dataset, language_code, csv_rows)
 
     if minimal_pairs:
         for mpd in minimal_pairs:
-            other_gloss_columns = []
-            other_gloss_columns.append(mpd['other_gloss_idgloss'])
-            other_gloss_columns.append(mpd['id'])
-            other_gloss_columns.append(mpd['field_display'])
-            other_gloss_columns.append(mpd['focus_gloss_value'])
-            other_gloss_columns.append(mpd['other_gloss_value'])
-
+            other_gloss_columns = [mpd['other_gloss_idgloss'], mpd['id'], mpd['field_display'],
+                                   mpd['focus_gloss_value'], mpd['other_gloss_value']]
             # Make it safe for weird chars
             safe_row = []
             for column in focus_gloss_columns + other_gloss_columns:
