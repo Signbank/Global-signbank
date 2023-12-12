@@ -111,7 +111,7 @@ def add_gloss(request):
             glosses_for_this_language_and_annotation_idgloss = glosses_in_dataset.filter(
                         annotationidglosstranslation__language=language,
                         annotationidglosstranslation__text__exact=value)
-            if len(glosses_for_this_language_and_annotation_idgloss) != 0:
+            if glosses_for_this_language_and_annotation_idgloss.count() > 0:
                 messages.add_message(request, messages.ERROR, _('Annotation ID Gloss not unique.'))
                 return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -2450,9 +2450,10 @@ def add_morpheme(request):
             language_code_2char = item[len(form.morpheme_create_field_prefix):]
             language = Language.objects.get(language_code_2char=language_code_2char)
             morphemes_for_this_language_and_annotation_idgloss = Morpheme.objects.filter(
+                lemma__dataset=dataset,
                 annotationidglosstranslation__language=language,
                 annotationidglosstranslation__text__exact=value)
-            if len(morphemes_for_this_language_and_annotation_idgloss) != 0:
+            if morphemes_for_this_language_and_annotation_idgloss.count() > 0:
                 translated_message = _('Annotation ID Gloss not unique.')
                 return render(request, 'dictionary/warning.html',
                        {'warning': translated_message,
