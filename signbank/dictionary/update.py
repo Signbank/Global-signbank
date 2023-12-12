@@ -2422,7 +2422,7 @@ def add_morpheme(request):
     lemmaidgloss = None
     lemma_form = None
     if request.POST['select_or_new_lemma'] == 'new':
-        lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user)
+        lemma_form = LemmaCreateForm(request.POST, languages=dataset_languages, user=request.user, last_used_dataset=last_used_dataset)
     else:
         try:
             lemmaidgloss_id = request.POST['idgloss']
