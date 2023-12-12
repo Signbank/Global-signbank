@@ -6401,7 +6401,7 @@ class LemmaUpdateView(UpdateView):
                         lemmaidglosstranslation__language=language,
                         lemmaidglosstranslation__text__exact=value.upper(),
                         dataset=dataset)
-                    if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
+                    if lemmas_for_this_language_and_annotation_idgloss.count() > 0:
                         for nextLemma in lemmas_for_this_language_and_annotation_idgloss:
                             if nextLemma.id != instance.id:
                                 # found a different lemma with same translation
