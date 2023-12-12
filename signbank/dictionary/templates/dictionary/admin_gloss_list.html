@@ -384,6 +384,8 @@ function clearForm() {
      $('.js-example-basic-multiple').val(null).trigger('change');
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
+     $('#format').val('');
+     $('#export_ecv').val('');
 }
 
  /**
@@ -425,6 +427,8 @@ function do_adminsearch(el) {
         $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
         break;
   }
+  $('#format').val('');
+  $('#export_ecv').val('');
   document.getElementById('adminsearch').submit();
 }
 
@@ -443,17 +447,21 @@ function do_toggle_groups(el) {
         $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
         break;
   }
+  $('#format').val('');
+  $('#export_ecv').val('');
   document.getElementById('adminsearch').submit();
 }
 
 function do_export_csv(e1) {
   $('#format').val('CSV');
+  $('#export_ecv').val('');
   $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
   document.getElementById('adminsearch').submit();
 }
 
 function do_export_ecv(e1) {
   $('#export_ecv').val('ECV');
+  $('#format').val('');
   $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
   document.getElementById('adminsearch').submit();
 }

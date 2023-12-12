@@ -54,6 +54,7 @@ function clearForm() {
       });
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
+     $('#format').val('');
 }
 
 function do_export_csv(e1) {
@@ -99,6 +100,7 @@ function do_adminsearch(el) {
         $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search_handshape/');
         break;
   }
+  $('#format').val('');
   document.getElementById('adminsearch').submit();
 }
    </script>
