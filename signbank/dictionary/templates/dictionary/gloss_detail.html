@@ -621,7 +621,7 @@ option:not(:checked) {
      <!-- {{gloss.get_video}} -->
 
         <div id="player">
-          <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}" controls type="video/mp4" autoplay muted></video>
+            <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}" controls type="video/mp4" autoplay muted></video>
         </div>
         <div id="replay"></div>
 
@@ -636,7 +636,7 @@ option:not(:checked) {
 
     <div>
         {% if gloss.get_image_path %}
-            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}" style="height:259px;width:auto;">
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={% now 'YmdHis' %}" style="height:259px;width:auto;">
         {% endif %}
     </div>
 
@@ -1188,8 +1188,8 @@ option:not(:checked) {
                                                     <div id="videocontainer_{{examplesentence.id}}"  style="width:100%">
                                                         {% if examplesentence.has_video %}                                            
                                                             <div id="player">
-                                                                <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}" controls type="video/mp4" muted></video>
-                                                            </div>
+                                                                <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}?v={% now 'YmdHis' %}" controls type="video/mp4" muted></video>
+                                                                </div>
                                                             <div id="replay"></div>
                                                         {% else %}
                                                             <div id='player'>
