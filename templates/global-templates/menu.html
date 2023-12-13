@@ -95,6 +95,7 @@
 
     </ul>
     <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search">
+        {% csrf_token %}
             <div class="text-container {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
                 <input class='form-control' placeholder='{% trans "Search Gloss" %}' type="text" name="search" id="tooltip-search"
                                                onfocus="focusFunction()" onblur="blurFunction()" onclick="clickFunction()"
