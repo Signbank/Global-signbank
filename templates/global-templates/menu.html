@@ -94,18 +94,18 @@
     {% endfor %}
 
     </ul>
-    <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search">
+    <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search/">
         {% csrf_token %}
             <div class="text-container {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
                 <input class='form-control' placeholder='{% trans "Search Gloss" %}' type="text" name="search" id="tooltip-search"
                                                onfocus="focusFunction()" onblur="blurFunction()" onclick="clickFunction()"
-                                               value="{{ glossQuery }}" maxlength="60" size="36" />
+                                               value="" maxlength="60" size="36" />
 				{% if USE_REGULAR_EXPRESSIONS %}{% include "tooltip.html" with include_tags=True %}{% endif %}
             </div>
             <div class="text-container {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
                 <input class='form-control' placeholder='{% trans "Search Sense" %}' type="text" name="translation" id="tooltip-translation"
                                                onfocus="focusFunction2()" onblur="blurFunction2()" onclick="clickFunction2()"
-                                               value="{{ query }}" maxlength="60" size="36" />
+                                               value="" maxlength="60" size="36" />
 				{% if USE_REGULAR_EXPRESSIONS %}{% include "tooltip.html" with include_tags=True %}{% endif %}
             </div>
           <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
