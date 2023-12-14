@@ -183,7 +183,7 @@ def update_examplesentence(request, examplesentenceid):
     vals = {}
     for dataset_language in dataset_languages:
         stc = request.POST[str(dataset_language)]
-        if stc != "":
+        if stc:
             vals[str(dataset_language)] = stc
 
     # Edit and save the sentence translations
@@ -256,7 +256,7 @@ def create_examplesentence(request, senseid):
     vals = {}
     for dataset_language in dataset_languages:
         stc = request.POST[str(dataset_language)]
-        if stc != "":
+        if stc:
             vals[str(dataset_language)] = stc
 
     # Check if input was not empty and if both sentences already existed together
@@ -420,9 +420,9 @@ def update_sense(request, senseid):
     for dataset_language in dataset_languages:
         if str(dataset_language) in request.POST:
             input_values = request.POST[str(dataset_language)].splitlines()
-            values = [v for v in input_values if v != '']
+            values = [v for v in input_values if v]
             if values:
-                vals[str(dataset_language)]=values
+                vals[str(dataset_language)] = values
 
     # Check if input given is empty
     if vals == {}:
@@ -576,7 +576,7 @@ def create_sense(request, glossid):
     for dataset_language in dataset_languages:
         if str(dataset_language) in request.POST:
             input_values = request.POST[str(dataset_language)].splitlines()
-            values = [v for v in input_values if v != '']
+            values = [v for v in input_values if v]
             if values:
                 for k, v in enumerate(values): 
                     values[k] = v.strip()
@@ -1082,8 +1082,8 @@ def update_keywords(gloss, field, value):
     language = Language.objects.get(id=get_default_language_id())
     try:
         language_code_2char = field[len('keyword_'):]
-        language = Language.objects.filter(language_code_2char=language_code_2char)[0]
-    except:
+        language = Language.objects.filter(language_code_2char=language_code_2char).first()
+    except ObjectDoesNotExist:
         pass
 
     kwds = [k.strip() for k in value.split(',')]
@@ -1733,7 +1733,7 @@ def morph_from_identifier(value):
         target = Morpheme.objects.get(pk=int(pk))
         print("TARGET: ", target)
         return target
-    elif value != '':
+    elif value:
         idgloss = value
         target = Morpheme.objects.get(idgloss=idgloss)
         return target
@@ -2055,7 +2055,7 @@ def add_blend_definition(request, glossid):
     blend_id = form.cleaned_data['blend_id'] # This is a gloss ID now
     blend = Gloss.objects.get(id=blend_id)
 
-    if blend != None:
+    if blend is not None:
         definition = BlendMorphology()
         definition.parent_gloss = thisgloss
         definition.glosses = blend

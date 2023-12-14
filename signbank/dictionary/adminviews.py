@@ -153,11 +153,11 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     bText = True
 
     # See if the form contains any sort-order information
-    if ('sortOrder' in get and get['sortOrder'] != ''):
+    if 'sortOrder' in get and get['sortOrder']:
         # Take the user-indicated sort order
         sOrder = get['sortOrder']
         default_sort_order = False
-        if (sOrder[0:1] == '-'):
+        if sOrder[0:1] == '-':
             # A starting '-' sign means: descending order
             bReversed = True
     else:
@@ -169,13 +169,13 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     # The ordering method depends on the kind of field:
     # (1) text fields are ordered straightforwardly
     # (2) fields made from a choice_list need special treatment
-    if (sOrder.endswith('handedness')):
+    if sOrder.endswith('handedness'):
         bText = False
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Handedness", bReversed)
-    elif (sOrder.endswith('domhndsh') or sOrder.endswith('subhndsh')):
+    elif sOrder.endswith('domhndsh') or sOrder.endswith('subhndsh'):
         bText = False
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Handshape", bReversed)
-    elif (sOrder.endswith('locprim')):
+    elif sOrder.endswith('locprim'):
         bText = False
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Location", bReversed)
     elif sOrder.startswith("annotationidglosstranslation_order_") or sOrder.startswith("-annotationidglosstranslation_order_"):
@@ -389,9 +389,7 @@ class GlossListView(ListView):
     def render_to_ecv_export_response(self):
 
         # check that the user is logged in
-        if self.request.user.is_authenticated:
-            pass
-        else:
+        if not self.request.user.is_authenticated:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
@@ -407,9 +405,7 @@ class GlossListView(ListView):
         import guardian
         # from guardian.shortcuts import get_objects_for_user
         user_change_datasets = guardian.shortcuts.get_objects_for_user(self.request.user, 'change_dataset', Dataset)
-        if user_change_datasets and dataset_object in user_change_datasets:
-            pass
-        else:
+        if not user_change_datasets or dataset_object not in user_change_datasets:
             messages.add_message(self.request, messages.ERROR, _('No permission to export dataset.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
@@ -534,9 +530,7 @@ class GlossListView(ListView):
         else:
             qs = Gloss.objects.none()
 
-        if self.request.user.is_authenticated and self.request.user.has_perm('dictionary.search_gloss'):
-            pass
-        else:
+        if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.search_gloss'):
             qs = qs.filter(inWeb__exact=True)
 
         # If we wanted to get everything, we're done now
@@ -774,9 +768,7 @@ class SenseListView(ListView):
         else:
             qs = GlossSense.objects.none()
 
-        if self.request.user.is_authenticated and self.request.user.has_perm('dictionary.search_gloss'):
-            pass
-        else:
+        if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.search_gloss'):
             qs = qs.filter(gloss__inWeb__exact=True)
 
         qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
@@ -913,8 +905,8 @@ class GlossDetailView(DetailView):
 
         phonology_matrix = context['gloss'].phonology_matrix_homonymns(use_machine_value=True)
         phonology_focus = [field for field in phonology_matrix.keys()
-                           if phonology_matrix[field] != None
-                                and phonology_matrix[field] not in ['Neutral',  '0', '1', 'False'] ]
+                           if phonology_matrix[field] is not None
+                           and phonology_matrix[field] not in ['Neutral',  '0', '1', 'False']]
         default_query_parameters = query_parameters_this_gloss(phonology_focus, phonology_matrix)
         default_query_parameters_mapping = pretty_print_query_fields(dataset_languages, default_query_parameters.keys())
         default_query_parameters_values_mapping = pretty_print_query_values(dataset_languages, default_query_parameters)
@@ -1508,7 +1500,7 @@ class GlossVideosView(DetailView):
         # Call the base implementation first to get a context
         context = super(GlossVideosView, self).get_context_data(**kwargs)
 
-        #Pass info about which fields we want to see
+        # Pass info about which fields we want to see
         gl = context['gloss']
         context['active_id'] = gl.id
         labels = gl.field_labels()
@@ -3047,7 +3039,7 @@ class GlossFrequencyView(DetailView):
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
 
-        #Pass info about which fields we want to see
+        # Pass info about which fields we want to see
         gl = context['gloss']
         context['active_id'] = gl.id
         labels = gl.field_labels()
@@ -3198,7 +3190,7 @@ class LemmaFrequencyView(DetailView):
         # Call the base implementation first to get a context
         context = super(LemmaFrequencyView, self).get_context_data(**kwargs)
 
-        #Pass info about which fields we want to see
+        # Pass info about which fields we want to see
         gl = context['gloss']
         labels = gl.field_labels()
 
@@ -3494,7 +3486,7 @@ class HandshapeListView(ListView):
             field = handshape_fields[fieldname]
             if fieldname in get:
                 val = get[fieldname]
-                if fieldname == 'hsNumSel' and val != '':
+                if fieldname == 'hsNumSel' and val:
                     query_hsNumSel = field.name
                     with override('en'):
                         # the override is necessary in order to use the total fingers rather than each finger
@@ -3528,7 +3520,7 @@ class HandshapeListView(ListView):
                 if isinstance(Handshape.get_field(fieldname), BooleanField):
                     val = {'0': False, '1': True, 'True': True, 'False': False, 'None': '', '': ''}[val]
 
-                if fieldname == 'name' and val != '':
+                if fieldname == 'name' and val:
                     query = Q(name__iregex=val)
                     qs = qs.filter(query)
 
@@ -3627,9 +3619,7 @@ class DatasetListView(ListView):
     def render_to_request_response(self, context):
 
         # check that the user is logged in
-        if self.request.user.is_authenticated:
-            pass
-        else:
+        if not self.request.user.is_authenticated:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
@@ -3637,7 +3627,7 @@ class DatasetListView(ListView):
         get = self.request.GET
         if 'dataset_acronym' in get:
             self.dataset_acronym = get['dataset_acronym']
-        if self.dataset_acronym == '':
+        if not self.dataset_acronym:
             messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
@@ -3650,7 +3640,7 @@ class DatasetListView(ListView):
 
         # check that the dataset has an owner
         owners_of_dataset = dataset_object.owners.all()
-        if len(owners_of_dataset) <1:
+        if len(owners_of_dataset) < 1:
             messages.add_message(self.request, messages.ERROR, _('Dataset must have at least one owner.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
@@ -3748,9 +3738,7 @@ class DatasetListView(ListView):
     def render_to_ecv_export_response(self, context):
 
         # check that the user is logged in
-        if self.request.user.is_authenticated:
-            pass
-        else:
+        if not self.request.user.is_authenticated:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
@@ -3758,7 +3746,7 @@ class DatasetListView(ListView):
         get = self.request.GET
         if 'dataset_acronym' in get:
             self.dataset_acronym = get['dataset_acronym']
-        if self.dataset_acronym == '':
+        if not self.dataset_acronym:
             messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
@@ -3772,9 +3760,7 @@ class DatasetListView(ListView):
         # make sure the user can write to this dataset
         # from guardian.shortcuts import get_objects_for_user
         user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
-        if user_change_datasets and dataset_object in user_change_datasets:
-            pass
-        else:
+        if not user_change_datasets or dataset_object not in user_change_datasets:
             messages.add_message(self.request, messages.ERROR, _('No permission to export dataset.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
 
@@ -3899,9 +3885,7 @@ class DatasetManagerView(ListView):
         :return: 
         """
         # check that the user is logged in
-        if self.request.user.is_authenticated:
-            pass
-        else:
+        if not self.request.user.is_authenticated:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
@@ -3924,9 +3908,7 @@ class DatasetManagerView(ListView):
         # from guardian.shortcuts import get_objects_for_user
         user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset,
                                                     accept_global_perms=False)
-        if user_change_datasets and dataset_object in user_change_datasets:
-            pass
-        else:
+        if not user_change_datasets or dataset_object not in user_change_datasets:
             messages.add_message(self.request, messages.ERROR, _('No permission to modify dataset permissions.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
@@ -4392,9 +4374,7 @@ class DatasetDetailView(DetailView):
     def render_to_add_owner_response(self, context):
 
         # check that the user is logged in
-        if self.request.user.is_authenticated:
-            pass
-        else:
+        if not self.request.user.is_authenticated:
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
@@ -4531,7 +4511,7 @@ class DatasetFieldChoiceView(ListView):
 
         for field_choice_category in all_choice_lists.keys():
             for machine_value_string, display_with_frequency in all_choice_lists[field_choice_category].items():
-                if machine_value_string != '_0' and machine_value_string != '_1':
+                if machine_value_string not in ['_0', '_1']:
                     mvid, mvv = machine_value_string.split('_')
                     machine_value = int(mvv)
 
@@ -4978,7 +4958,7 @@ def order_handshape_queryset_by_sort_order(get, qs):
     # Set the default sort order
     sort_order = 'machine_value'  # Default sort order if nothing is specified
     # See if the form contains any sort-order information
-    if ('sortOrder' in get and get['sortOrder'] != ''):
+    if 'sortOrder' in get and get['sortOrder']:
         # Take the user-indicated sort order
         sort_order = get['sortOrder']
 
@@ -4999,7 +4979,7 @@ def order_handshape_queryset_by_sort_order(get, qs):
         )])
 
         ordered_handshapes = sorted(qs, key=lambda handshape_obj: order_dict[getattr(handshape_obj, sort_order).machine_value]
-                            if getattr(handshape_obj, sort_order) else -1, reverse=reverse)
+                                    if getattr(handshape_obj, sort_order) else -1, reverse=reverse)
 
     else:
         # Not a FK to FieldChoice field; sort by
@@ -5977,7 +5957,7 @@ class LemmaListView(ListView):
 
         # There are only Lemma ID Gloss fields
         for get_key, get_value in get.items():
-            if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value != '':
+            if get_key.startswith(LemmaSearchForm.lemma_search_field_prefix) and get_value:
                 language_code_2char = get_key[len(LemmaSearchForm.lemma_search_field_prefix):]
                 language = Language.objects.get(language_code_2char=language_code_2char)
                 qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
@@ -6394,7 +6374,7 @@ class LemmaUpdateView(UpdateView):
         for item, value in request.POST.items():
             value = value.strip()
             if item.startswith(form.lemma_update_field_prefix):
-                if value != '':
+                if value:
                     language_code_2char = item[len(form.lemma_update_field_prefix):]
                     language = Language.objects.get(language_code_2char=language_code_2char)
                     lemmas_for_this_language_and_annotation_idgloss = LemmaIdgloss.objects.filter(

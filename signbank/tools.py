@@ -127,9 +127,9 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
                 lemmatranslation_for_this_text_language = LemmaIdglossTranslation.objects.filter(lemma__dataset=dataset,
                                                                                    language=language, text__exact=lemmaidglosstranslation_text)
                 if lemmatranslation_for_this_text_language:
-                    one_lemma = lemmatranslation_for_this_text_language[0].lemma
+                    one_lemma = lemmatranslation_for_this_text_language.first().lemma
                     existing_lemmas[language.language_code_2char] = one_lemma
-                    if not one_lemma in existing_lemmas_list:
+                    if one_lemma not in existing_lemmas_list:
                         existing_lemmas_list.append(one_lemma)
                 elif not lemmaidglosstranslation_text:
                     empty_lemma_translation = True
@@ -146,7 +146,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
                     glosses_with_same_text = Gloss.objects.filter(lemma__dataset=dataset,
                                                                   annotationidglosstranslation__text__exact=annotationidglosstranslation_text,
                                                                   annotationidglosstranslation__language=language)
-                    if len(glosses_with_same_text) > 0:
+                    if glosses_with_same_text.count() > 0:
                         existing_glosses[language.language_code_2char] = glosses_with_same_text
                 else:
                     error_string = 'Row ' + str(row_nr + 1) + ' has an empty ' + column_name
@@ -298,14 +298,14 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
             if human_key.startswith(annotation_idgloss_key_prefix):
                 language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 language_name = human_key[len(annotation_idgloss_key_prefix):-1]
-                languages = Language.objects.filter(**{language_name_column:language_name})
+                languages = Language.objects.filter(**{language_name_column: language_name})
                 if languages:
-                    language = languages[0]
+                    language = languages.first()
                     annotation_idglosses = gloss.annotationidglosstranslation_set.filter(language=language)
                     if annotation_idglosses:
-                        annotation_idgloss_string = annotation_idglosses[0].text
+                        annotation_idgloss_string = annotation_idglosses.first().text
 
-                        if annotation_idgloss_string != new_human_value and new_human_value != 'None' and new_human_value != '':
+                        if annotation_idgloss_string != new_human_value and new_human_value not in ['None', '']:
                             glosses_with_same_annotation = Gloss.objects.filter(
                                 annotationidglosstranslation__text__exact=new_human_value,
                                 annotationidglosstranslation__language=language,
@@ -341,7 +341,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     else:
                         # lemma not set
                         lemma_idgloss_string = ''
-                    if lemma_idgloss_string != new_human_value and new_human_value != 'None' and new_human_value != '':
+                    if lemma_idgloss_string != new_human_value and new_human_value not in ['None', '']:
                         error_string = 'ERROR: Attempt to update Lemma ID Gloss translations: ' + human_key
                         errors_found += [error_string]
                 continue
@@ -422,7 +422,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             elif human_key == 'SignLanguages':
 
-                if new_human_value == 'None' or new_human_value == '':
+                if new_human_value in ['None', '']:
                     continue
 
                 current_signlanguages_string = str(', '.join([str(lang.name) for lang in gloss.signlanguage.all()]))
@@ -447,7 +447,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Dialects':
-                if new_human_value == 'None' or new_human_value == '':
+                if new_human_value in ['None', '']:
                     continue
 
                 current_dialects_string = str(', '.join([str(dia.name) for dia in gloss.dialect.all()]))
@@ -508,7 +508,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Relations to other signs':
-                if new_human_value == 'None' or new_human_value == '':
+                if new_human_value in ['None', '']:
                     continue
 
                 relations = [(relation.role, str(relation.target.id)) for relation in gloss.relation_sources.all()]
@@ -542,7 +542,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Relations to foreign signs':
-                if new_human_value == 'None' or new_human_value == '':
+                if new_human_value in ['None', '']:
                     continue
 
                 relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss)
@@ -573,7 +573,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Sequential Morphology':
-                if new_human_value == 'None' or new_human_value == '':
+                if new_human_value in ['None', '']:
                     continue
 
                 morphemes = [morpheme.get_role()+':'+str(morpheme.morpheme.id) for morpheme in
@@ -600,7 +600,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Simultaneous Morphology':
-                if new_human_value == 'None' or new_human_value == '':
+                if new_human_value in ['None', '']:
                     continue
 
                 morphemes = [(str(m.morpheme.id), m.role) for m in gloss.simultaneous_morphology.all()]
@@ -629,7 +629,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Blend Morphology':
-                if new_human_value == 'None' or new_human_value == '':
+                if new_human_value in ['None', '']:
                     continue
 
                 morphemes = [(str(m.glosses.id), m.role) for m in gloss.blend_morphology.all()]
@@ -664,7 +664,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
                 (tag_names_string, sorted_tags_display) = get_tags_as_string(gloss_id)
 
-                if new_human_value == 'None' or new_human_value == '':
+                if new_human_value in ['None', '']:
                     (sorted_new_tags_display, sorted_new_tags, new_tag_errors, tag_name_error) = \
                         ("", [], [], tag_name_error)
                 else:
@@ -806,10 +806,10 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     error_string = ''
                     # If the new value is empty, don't count this as a type error, error_string is generated conditionally
                     if field.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
-                        if new_human_value is not None and new_human_value != '' and new_human_value != 'None':
+                        if new_human_value is not None and new_human_value not in ['None', '']:
                             error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(gloss_id) + '), value ' + str(new_human_value) + ' for ' + human_key + ' should be a Boolean or Neutral.'
                     else:
-                        if new_human_value is not None and new_human_value != '' and new_human_value != 'None':
+                        if new_human_value is not None and new_human_value not in ['None', '']:
                             error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(gloss_id) + '), value ' + str(new_human_value) + ' for ' + human_key + ' is not a Boolean.'
 
                     if error_string:
@@ -880,10 +880,10 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
             s2 = re.sub(' ', '', new_human_value)
 
             # If the original value is implicitly not set, and the new value is not set, ignore this change
-            if (s1 == '' or s1 == 'None' or s1 == 'False') and s2 == '':
+            if (s1 in ['', 'None', 'False']) and s2 == '':
                 pass
             # Check for change, and save your findings if there is one
-            elif original_machine_value != new_machine_value and new_machine_value != None:
+            elif original_machine_value != new_machine_value and new_machine_value is not None:
                 if (human_key == 'WD' or human_key == 'WP') and original_human_value == 'None':
                     original_human_value = 'Neutral'
                 differences.append({'pk': gloss_id,
@@ -899,7 +899,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
     return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
 
-def compare_valuedict_to_lemma(valuedict,lemma_id,my_datasets, nl,
+def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
                                 lemmaidglosstranslations, current_lemmaidglosstranslations,
                                earlier_updates_same_csv, earlier_updates_lemmaidgloss):
     """Takes a dict of key-value pairs, and compares them to a lemma"""
@@ -913,12 +913,12 @@ def compare_valuedict_to_lemma(valuedict,lemma_id,my_datasets, nl,
 
         e = 'Could not find lemma for ID ' + str(lemma_id)
         errors_found.append(e)
-        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
     if lemma_id in earlier_updates_same_csv:
         e = 'Lemma ID (' + str(lemma_id) + ') found in multiple rows (Row ' + str(nl + 1) + ').'
         errors_found.append(e)
-        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
     else:
         earlier_updates_same_csv.append(lemma_id)
 
@@ -935,16 +935,15 @@ def compare_valuedict_to_lemma(valuedict,lemma_id,my_datasets, nl,
                 count_existing_nonempty_translations += 1
         pass
     else:
-        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
     if not count_new_nonempty_translations:
         # somebody has modified the lemma translations so as to delete alll of them:
         e = 'Row ' + str(nl + 1) + ': Lemma ID ' + str(lemma_id) + ' must have at least one translation.'
         errors_found.append(e)
-        return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+        return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
-
-    #Create an overview of all fields, sorted by their human name
+    # Create an overview of all fields, sorted by their human name
     with override(LANGUAGE_CODE):
 
         if lemma.dataset:
@@ -953,7 +952,7 @@ def compare_valuedict_to_lemma(valuedict,lemma_id,my_datasets, nl,
             # because of legacy code, the current dataset might not have been set
             current_dataset = 'None'
 
-        #Go through all values in the value dict, looking for differences with the lemma
+        # Go through all values in the value dict, looking for differences with the lemma
         for human_key, new_human_value in valuedict.items():
 
             new_human_value = new_human_value.strip()
@@ -991,7 +990,7 @@ def compare_valuedict_to_lemma(valuedict,lemma_id,my_datasets, nl,
                 # this case should be impossible! It's included for completeness of else otherwise case
                 print('Unknown lemma field encountered while comparing new to existing fields: ', human_key)
 
-    return (differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss)
+    return differences, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss
 
 
 def check_existence_dialect(gloss, values):
@@ -1015,7 +1014,7 @@ def check_existence_dialect(gloss, values):
             not_found += [new_value]
         continue
 
-    return (found, not_found, errors)
+    return found, not_found, errors
 
 
 def check_existence_signlanguage(gloss, values):
@@ -1181,6 +1180,7 @@ def map_values_to_notes_id(values):
         map_errors = True
     return mapped_values, map_errors
 
+
 def get_notes_as_string(gloss):
     activate(LANGUAGES[0][0])
     notes_of_gloss = gloss.definition_set.all()
@@ -1234,9 +1234,7 @@ def check_existence_tags(gloss_id, new_human_value_list, tag_name_error, default
 
     # check for non-existent tags
     for t in sorted_new_tags:
-        if t in all_tags:
-            pass
-        else:
+        if t not in all_tags:
             error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
                 gloss_id) + '), a new Tag name was found: ' + t.replace('_', ' ') + '.'
 
@@ -1393,13 +1391,14 @@ def check_existence_blend_morphology(gloss, values):
                 not_found += [gloss_id]
             continue
 
-    return (checked, errors)
+    return checked, errors
 
 
 RELATION_ROLES = ['homonym', 'Homonym', 'synonym', 'Synonym', 'variant', 'Variant', 'paradigm', 'Handshape Paradigm',
                          'antonym', 'Antonym', 'hyponym', 'Hyponym', 'hypernym', 'Hypernym', 'seealso', 'See Also']
 
 RELATION_ROLES_DISPLAY = 'homonym, synonym, variant, paradigm, antonym, hyponym, hypernym, seealso'
+
 
 def check_existence_relations(gloss, relations, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
@@ -1463,7 +1462,7 @@ def check_existence_relations(gloss, relations, values):
 
             pass
 
-    return (checked, errors)
+    return checked, errors
 
 
 def check_existence_foreign_relations(gloss, relations, values):
@@ -1508,19 +1507,21 @@ def check_existence_foreign_relations(gloss, relations, values):
 
             pass
 
-    return (checked, errors)
+    return checked, errors
+
 
 def reload_signbank(request=None):
     """Functions to clear the cache of Apache, also works as view"""
 
-    #Refresh the wsgi script
-    os.utime(WSGI_FILE,None)
+    # Refresh the wsgi script
+    os.utime(WSGI_FILE, None)
 
-    #If this is an HTTP request, give an HTTP response
-    if request != None:
+    # If this is an HTTP request, give an HTTP response
+    if request is not None:
 
         from django.shortcuts import render
-        return render(request,'reload_signbank.html')
+        return render(request, 'reload_signbank.html')
+
 
 def get_gloss_data(since_timestamp=0, dataset=None):
     if dataset:
@@ -1534,7 +1535,8 @@ def get_gloss_data(since_timestamp=0, dataset=None):
 
     return gloss_data
 
-def create_zip_with_json_files(data_per_file,output_path):
+
+def create_zip_with_json_files(data_per_file, output_path):
 
     """Creates a zip file filled with the output of the functions supplied.
 
@@ -1542,22 +1544,23 @@ def create_zip_with_json_files(data_per_file,output_path):
 
     INDENTATION_CHARS = 4
 
-    zip = ZipFile(output_path,'w')
+    zip = ZipFile(output_path, 'w')
 
     for filename, data in data_per_file.items():
 
-        if isinstance(data,list) or isinstance(data,dict):
-            output = json.dumps(data,indent=INDENTATION_CHARS)
-            zip.writestr(filename+'.json',output)
+        if isinstance(data, list) or isinstance(data, dict):
+            output = json.dumps(data, indent=INDENTATION_CHARS)
+            zip.writestr(filename+'.json', output)
 
-def get_deleted_gloss_or_media_data(item_type,since_timestamp):
+
+def get_deleted_gloss_or_media_data(item_type, since_timestamp):
 
     result = []
     from datetime import datetime, date
-    deletion_date_range = [datetime.fromtimestamp(since_timestamp),date.today()]
+    deletion_date_range = [datetime.fromtimestamp(since_timestamp), date.today()]
 
     for deleted_gloss_or_media in DeletedGlossOrMedia.objects.filter(deletion_date__range=deletion_date_range,
-                                                            item_type=item_type):
+                                                                     item_type=item_type):
         if item_type == 'gloss':
             result.append((str(deleted_gloss_or_media.old_pk), deleted_gloss_or_media.idgloss))
         else:
@@ -1661,7 +1664,7 @@ def gloss_from_identifier(value):
         target = Gloss.objects.get(pk=int(pk))
         print("TARGET: ", target)
         return target
-    elif value != '':
+    elif value:
         annotation_idgloss = value
         target = Gloss.objects.get(annotation_idgloss=annotation_idgloss)
         return target
