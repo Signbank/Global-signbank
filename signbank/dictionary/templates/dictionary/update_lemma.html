@@ -38,15 +38,16 @@
     {% endif %}
 </div>
 
+    <br><br>
    {% if perms.dictionary.change_lemmaidgloss %}
 
    <h3>{% trans "Update Lemma" %}</h3>
 
-
-
     {% if caller == 'lemma_list' %}
         {% if page_in_lemma_list %}
         <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}?page={{page_in_lemma_list}}'>{% trans "Return to Lemma List" %}</a>
+        {% elif request_path %}
+        <a class="btn btn-default" href='{{request_path}}'>{% trans "Return to Lemma List" %}</a>
         {% else %}
         <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}'>{% trans "Return to Lemma List" %}</a>
         {% endif %}

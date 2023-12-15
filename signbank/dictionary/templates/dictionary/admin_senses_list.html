@@ -367,22 +367,7 @@ function do_adminsearch(el) {
   $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "sense":
-        $("#adminsearch").attr('action', ' {{PREFIX_URL}}/signs/senses/search/');
-        break;
-  }
-  document.getElementById('adminsearch').submit();
-}
-
-/**
- * toggle between normal list view and lemma group list view
- */
-function do_toggle_groups(el) {
-  var sViewType = $(el).attr('value');
-  $("#toggle_groups input[name='view_type']").val(sViewType);
-  switch(sViewType) {
-    case "sense_list":
-        $(el).val('sense_list');
-        $(el).html("Senses");
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/senses/search/');
         break;
   }
   document.getElementById('adminsearch').submit();
@@ -554,7 +539,7 @@ function do_toggle_language(el) {
             {% endif %}
     </div>
 
-    <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+    <div id='query-area' class='collapse {% if request.GET|length == 0 %} in {% endif %}'>
         <div id='searchformwell' class='well search-results-collapsable'>
 
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
@@ -756,7 +741,9 @@ function do_toggle_language(el) {
     <div class='btn-group' style="margin-bottom: 20px">
         <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
 
-        <input class="btn btn-primary" type="submit" value='{% trans "Search Sense" %}'/>
+        <button class="btn btn-primary" onclick="do_adminsearch(this);"
+                name="search_type" value="{{search_type}}"
+                type="submit">{% trans "Search Sense" %}</button>
 
         <input class='btn btn-default' type='reset' onclick="clearForm();"
                value='{% trans "Reset" %}'>

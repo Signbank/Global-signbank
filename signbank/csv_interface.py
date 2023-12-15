@@ -1,5 +1,6 @@
 
 from signbank.dictionary.models import *
+from tagging.models import Tag, TaggedItem
 from signbank.dictionary.forms import *
 from signbank.dictionary.consistency_senses import check_consistency_senses
 from django.utils.translation import override, gettext_lazy as _, activate
@@ -124,16 +125,16 @@ def map_values_to_sentence_type(values, include_sentences=True):
 
     sentence_types = '|'.join(pattern_mapped_sorted_note_names)
     if sentence_types:
-        pattern_sentence_types = '(\-|N\/A|' + sentence_types + ')'
+        pattern_sentence_types = '(-|N/A|' + sentence_types + ')'
     else:
-        pattern_sentence_types = '(\-|N\/A)'
+        pattern_sentence_types = '(-|N/A)'
     mapped_values = values
 
     if include_sentences:
-        regex_string = (r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False), %s([^\"]+)%s\)\s?"
+        regex_string = (r'\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False), %s([^\"]+)%s\)\s?'
                         % (pattern_sentence_types, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS))
     else:
-        regex_string = r"\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False)\)\s?" % pattern_sentence_types
+        regex_string = r'\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False)\)\s?' % pattern_sentence_types
     find_all = re.findall(regex_string, mapped_values)
     if not find_all:
         map_errors = True
@@ -633,3 +634,480 @@ def csv_create_senses(request, gloss, language, new_senses_string, create=False)
 
     for sense_old_value, sense_new_value in revisions:
         add_sense_to_revision_history(request, gloss, sense_old_value, sense_new_value)
+
+
+def csv_header_row_glosslist(dataset_languages, fields):
+
+    lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+    annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                           for language in dataset_languages]
+    lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                      for language in dataset_languages]
+
+    keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
+                      for language in dataset_languages]
+
+    sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
+                       for language in dataset_languages]
+
+    # CSV should be the first language in the settings
+    activate(LANGUAGES[0][0])
+    header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
+        + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
+    for extra_column in ['SignLanguages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
+                         'Blend Morphology',
+                         'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']:
+        header.append(extra_column)
+
+    return header
+
+
+def csv_gloss_to_row(gloss, dataset_languages, fields):
+
+    row = [str(gloss.pk), gloss.lemma.dataset.acronym]
+    for language in dataset_languages:
+        lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
+        if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
+            # get rid of any invisible characters at the end such as \t
+            lemmatranslation = lemmaidglosstranslations.first().text.strip()
+            row.append(lemmatranslation)
+        else:
+            row.append("")
+    for language in dataset_languages:
+        annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+        if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
+            # get rid of any invisible characters at the end such as \t
+            annotation = annotationidglosstranslations.first().text.strip()
+            row.append(annotation)
+        else:
+            row.append("")
+
+    # Put senses (keywords) per language in a cell
+    for language in dataset_languages:
+        gloss_senses_of_language = sense_translations_for_language(gloss, language)
+        row.append(gloss_senses_of_language)
+
+    # Put example sentences per language in a cell
+    for language in dataset_languages:
+        gloss_example_sentences_of_language = sense_examplesentences_for_language(gloss, language)
+        row.append(gloss_example_sentences_of_language)
+
+    for f in fields:
+        # Try the value of the choicelist
+        if hasattr(f, 'field_choice_category'):
+            if hasattr(gloss, 'get_' + f.name + '_display'):
+                value = getattr(gloss, 'get_' + f.name + '_display')()
+            else:
+                field_value = getattr(gloss, f.name)
+                value = field_value.name if field_value else '-'
+        elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+            handshape_field_value = getattr(gloss, f.name)
+            value = handshape_field_value.name if handshape_field_value else '-'
+        elif f.related_model == SemanticField:
+            value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
+        elif f.related_model == DerivationHistory:
+            value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
+        else:
+            value = getattr(gloss, f.name)
+
+        # some legacy glosses have empty text fields of other formats
+        if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
+                and value in ['-', '------', ' ']:
+            value = ''
+
+        if value is None:
+            if f.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                value = 'Neutral'
+            elif f.name in settings.HANDSHAPE_ETYMOLOGY_FIELDS:
+                value = 'False'
+            else:
+                if hasattr(f, 'field_choice_category'):
+                    value = '-'
+                elif f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
+                    value = ''
+                elif f.__class__.__name__ == 'IntegerField':
+                    value = 0
+                else:
+                    # what to do here? leave it as None or use empty string (for export to csv)
+                    value = ''
+
+        if not isinstance(value, str):
+            # this is needed for csv
+            value = str(value)
+
+        row.append(value)
+
+    # get languages
+    signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
+    row.append(", ".join(signlanguages))
+
+    # get dialects
+    dialects = [dialect.name for dialect in gloss.dialect.all()]
+    row.append(", ".join(dialects))
+
+    # get morphology
+    # Sequential Morphology
+    morphemes = [morpheme.get_role() + ':' + str(morpheme.morpheme.id) for morpheme in
+                 MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+    row.append(", ".join(morphemes))
+
+    # Simultaneous Morphology
+    morphemes = [(str(m.morpheme.id), m.role) for m in gloss.simultaneous_morphology.all()]
+    sim_morphs = []
+    for m in morphemes:
+        sim_morphs.append(':'.join(m))
+    simultaneous_morphemes = ', '.join(sim_morphs)
+    row.append(simultaneous_morphemes)
+
+    # Blend Morphology
+    ble_morphemes = [(str(m.glosses.id), m.role) for m in gloss.blend_morphology.all()]
+    ble_morphs = []
+    for m in ble_morphemes:
+        ble_morphs.append(':'.join(m))
+    blend_morphemes = ', '.join(ble_morphs)
+    row.append(blend_morphemes)
+
+    # get relations to other signs
+    relations = [(relation.role, str(relation.target.id)) for relation in Relation.objects.filter(source=gloss)]
+    relations_with_categories = []
+    for rel_cat in relations:
+        relations_with_categories.append(':'.join(rel_cat))
+
+    relations_categories = ", ".join(relations_with_categories)
+    row.append(relations_categories)
+
+    # get relations to foreign signs
+    relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss) for relation in
+                 RelationToForeignSign.objects.filter(gloss=gloss)]
+    relations_with_categories = []
+    for rel_cat in relations:
+        relations_with_categories.append(':'.join(rel_cat))
+
+    relations_categories = ", ".join(relations_with_categories)
+    row.append(relations_categories)
+
+    # export tags
+    tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
+    tag_names_of_gloss = []
+    for t_obj in tags_of_gloss:
+        tag_id = t_obj.tag_id
+        tag_name = Tag.objects.get(id=tag_id)
+        tag_names_of_gloss += [str(tag_name).replace('_', ' ')]
+
+    tag_names = ", ".join(tag_names_of_gloss)
+    row.append(tag_names)
+
+    # export notes
+    notes_of_gloss = gloss.definition_set.all()
+
+    notes_list = []
+    for note in notes_of_gloss:
+        notes_list += [note.note_tuple()]
+    sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
+
+    notes_list = []
+    for (role, published, count, text) in sorted_notes_list:
+        # does not use a comprehension because of nested parentheses in role and text fields
+        tuple_reordered = role + ': (' + published + ',' + count + ',' + text + ')'
+        notes_list.append(tuple_reordered)
+
+    notes_display = ", ".join(notes_list)
+    row.append(notes_display)
+
+    # Make it safe for weird chars
+    safe_row = []
+    for column in row:
+        try:
+            safe_row.append(column.encode('utf-8').decode())
+        except AttributeError:
+            safe_row.append(None)
+
+    return safe_row
+
+
+def csv_header_row_morphemelist(dataset_languages, fields):
+
+    lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+    annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                           for language in dataset_languages]
+
+    # TO DO: make multilingual columns
+    keyword_fields = ["Keywords" + " (" + getattr(language, lang_attr_name) + ")"
+                      for language in dataset_languages]
+
+    with override(LANGUAGE_CODE):
+        header = ['Signbank ID'] + annotationidglosstranslation_fields + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
+
+    for extra_column in ['Keywords', 'Morphology', 'Appears in signs']:
+        header.append(extra_column)
+
+    return header
+
+
+def csv_morpheme_to_row(gloss, dataset_languages, fields):
+
+    row = [str(gloss.pk)]
+
+    for language in dataset_languages:
+        annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
+        if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
+            row.append(annotationidglosstranslations[0].text)
+        else:
+            row.append("")
+
+    for f in fields:
+        # Try the value of the choicelist
+        if hasattr(f, 'field_choice_category'):
+            if hasattr(gloss, 'get_' + f.name + '_display'):
+                value = getattr(gloss, 'get_' + f.name + '_display')()
+            else:
+                field_value = getattr(gloss, f.name)
+                value = field_value.name if field_value else '-'
+        elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
+            handshape_field_value = getattr(gloss, f.name)
+            value = handshape_field_value.name if handshape_field_value else '-'
+        elif f.related_model == SemanticField:
+            value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
+        elif f.related_model == DerivationHistory:
+            value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
+        else:
+            value = getattr(gloss, f.name)
+            value = str(value)
+
+        row.append(value)
+
+    # get translations
+    trans = [t.translation.text for t in gloss.translation_set.all().order_by('index')]
+    row.append(", ".join(trans))
+
+    # get compound's component type
+    morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+    row.append(", ".join(morphemes))
+
+    # Got all the glosses (=signs) this morpheme appears in
+    appearsin = [appears.idgloss for appears in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+    row.append(", ".join(appearsin))
+
+    # Make it safe for weird chars
+    safe_row = []
+    for column in row:
+        try:
+            safe_row.append(column.encode('utf-8').decode())
+        except AttributeError:
+            safe_row.append(None)
+
+    return safe_row
+
+
+def csv_header_row_handshapelist(fields):
+
+    activate(LANGUAGES[0][0])
+    header = ['Handshape ID'] + [f.verbose_name.encode('ascii', 'ignore').decode().capitalize()
+                                 for f in fields]
+
+    return header
+
+
+def csv_handshape_to_row(handshape, fields):
+
+    row = [str(handshape.pk)]
+
+    for f in fields:
+        # Try the value of the choicelist
+        if hasattr(f, 'field_choice_category'):
+            if hasattr(handshape, 'get_' + f.name + '_display'):
+                value = getattr(handshape, 'get_' + f.name + '_display')()
+            else:
+                value = getattr(handshape, f.name)
+                if value is not None:
+                    value = value.name
+        else:
+            value = getattr(handshape, f.name)
+
+        if not isinstance(value, str):
+            value = str(value)
+
+        if value is None:
+            if f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
+                value = ''
+            elif f.__class__.__name__ == 'IntegerField':
+                value = 0
+            else:
+                value = ''
+
+        row.append(value)
+
+    # Make it safe for weird chars
+    safe_row = []
+    for column in row:
+        try:
+            safe_row.append(column.encode('utf-8').decode())
+        except AttributeError:
+            safe_row.append(None)
+
+    return safe_row
+
+
+def csv_header_row_lemmalist(dataset_languages):
+
+    lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+    lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                      for language in dataset_languages]
+
+    with override(LANGUAGE_CODE):
+        header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields + ['Number of glosses']
+
+    return header
+
+
+def csv_lemma_to_row(lemma, dataset_languages):
+    row = [str(lemma.pk), lemma.dataset.acronym]
+    for language in dataset_languages:
+        lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
+        if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
+            row.append(lemmaidglosstranslations[0].text)
+        else:
+            row.append("")
+    row.append(str(lemma.num_gloss))
+    # Make it safe for weird chars
+    safe_row = []
+    for column in row:
+        try:
+            safe_row.append(column.encode('utf-8').decode())
+        except AttributeError:
+            safe_row.append(None)
+    return safe_row
+
+
+def minimalpairs_focusgloss(gloss_id, language_code):
+
+    from django.utils import translation
+    translation.activate(language_code)
+
+    this_gloss = Gloss.objects.get(id=gloss_id)
+
+    minimalpairs_objects = this_gloss.minimal_pairs_dict()
+
+    result = []
+    for minimalpairs_object, minimal_pairs_dict in minimalpairs_objects.items():
+
+        other_gloss_dict = dict()
+        other_gloss_dict['id'] = str(minimalpairs_object.id)
+        other_gloss_dict['other_gloss'] = minimalpairs_object
+        for field, values in minimal_pairs_dict.items():
+
+            other_gloss_dict['field'] = field
+            other_gloss_dict['field_display'] = values[0]
+            other_gloss_dict['field_category'] = values[1]
+
+            focus_gloss_choice = values[2]
+            other_gloss_choice = values[3]
+
+            if focus_gloss_choice:
+                pass
+            else:
+                focus_gloss_choice = ''
+            if other_gloss_choice:
+                pass
+            else:
+                other_gloss_choice = ''
+
+            field_kind = values[4]
+            if field_kind == 'list':
+                focus_gloss_value = focus_gloss_choice
+            elif field_kind == 'check':
+                # the value is a Boolean or it might not be set
+                if focus_gloss_choice == 'True' or focus_gloss_choice is True:
+                    focus_gloss_value = 'Yes'
+                elif focus_gloss_choice == 'Neutral' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                    focus_gloss_value = 'Neutral'
+                else:
+                    focus_gloss_value = 'No'
+            else:
+                # translate Boolean fields
+                focus_gloss_value = focus_gloss_choice
+            other_gloss_dict['focus_gloss_value'] = focus_gloss_value
+            if field_kind == 'list':
+                other_gloss_value = other_gloss_choice
+            elif field_kind == 'check':
+                # the value is a Boolean or it might not be set
+                if other_gloss_choice == 'True' or other_gloss_choice is True:
+                    other_gloss_value = 'Yes'
+                elif other_gloss_choice == 'Neutral' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
+                    other_gloss_value = 'Neutral'
+                else:
+                    other_gloss_value = 'No'
+            else:
+                other_gloss_value = other_gloss_choice
+            other_gloss_dict['other_gloss_value'] = other_gloss_value
+            other_gloss_dict['field_kind'] = field_kind
+
+        translation = ""
+        translations = minimalpairs_object.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
+        if translations is not None and len(translations) > 0:
+            translation = translations[0].text
+        else:
+            translations = minimalpairs_object.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
+            if translations is not None and len(translations) > 0:
+                translation = translations[0].text
+
+        other_gloss_dict['other_gloss_idgloss'] = translation
+        result.append(other_gloss_dict)
+    return result
+
+
+def csv_header_row_minimalpairslist():
+
+    if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
+        header = ['Dataset', 'Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
+                  'Contrasting Sign Value']
+    else:
+        header = ['Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
+                  'Contrasting Sign Value']
+
+    return header
+
+
+def csv_focusgloss_to_minimalpairs(focusgloss, dataset, language_code, csv_rows):
+
+    focus_gloss_columns = [dataset.acronym]
+
+    translation_focus_gloss = ""
+    translations_gloss = focusgloss.annotationidglosstranslation_set.filter(
+        language__language_code_2char=language_code)
+    if translations_gloss and len(translations_gloss) > 0:
+        translation_focus_gloss = translations_gloss[0].text
+
+    focus_gloss_columns.append(translation_focus_gloss)
+    focus_gloss_columns.append(str(focusgloss.pk))
+
+    minimal_pairs = minimalpairs_focusgloss(focusgloss.pk, language_code)
+
+    if minimal_pairs:
+        for mpd in minimal_pairs:
+            other_gloss_columns = []
+            other_gloss_columns.append(mpd['other_gloss_idgloss'])
+            other_gloss_columns.append(mpd['id'])
+            other_gloss_columns.append(mpd['field_display'])
+            other_gloss_columns.append(mpd['focus_gloss_value'])
+            other_gloss_columns.append(mpd['other_gloss_value'])
+
+            # Make it safe for weird chars
+            safe_row = []
+            for column in focus_gloss_columns + other_gloss_columns:
+                try:
+                    safe_row.append(column.encode('utf-8').decode())
+                except AttributeError:
+                    safe_row.append("")
+            csv_rows.append(safe_row)
+    else:
+        # Make it safe for weird chars
+        safe_row = []
+        for column in focus_gloss_columns:
+            try:
+                safe_row.append(column.encode('utf-8').decode())
+            except AttributeError:
+                safe_row.append("")
+        csv_rows.append(safe_row)
+
+    return csv_rows

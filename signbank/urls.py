@@ -20,12 +20,12 @@ import django.contrib.auth.views
 import django.contrib.admindocs.urls
 import django_summernote.urls
 
-from signbank.dictionary.adminviews import (GlossListView, MorphemeListView, DatasetListView, HandshapeListView, \
-                                            HomonymListView, MinimalPairsListView, DatasetManagerView, \
-                                            DatasetDetailView, FrequencyListView, DatasetFieldChoiceView, \
-                                            dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView, \
+from signbank.dictionary.adminviews import (GlossListView, MorphemeListView, DatasetListView, HandshapeListView,
+                                            HomonymListView, MinimalPairsListView, DatasetManagerView,
+                                            DatasetDetailView, FrequencyListView, DatasetFieldChoiceView,
+                                            dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView,
                                             QueryListView, SemanticFieldListView, DerivationHistoryListView,
-                                            SearchHistoryView, SenseListView)
+                                            SearchHistoryView, SenseListView, LemmaListView)
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -70,7 +70,7 @@ urlpatterns = [
             name='import_csv_create_sentences'),
     re_path(r'^signs/import_csv_update/$', signbank.dictionary.views.import_csv_update, name='import_csv_update'),
     re_path(r'^signs/import_csv_lemmas/$', signbank.dictionary.views.import_csv_lemmas, name='import_csv_lemmas'),
-    re_path(r'^signs/senses/search/$', SenseListView.as_view(), {'show_all': False}, name='senses_search'),
+    re_path(r'^signs/senses/search/$', SenseListView.as_view(), name='senses_search'),
     re_path(r'^analysis/homonyms/$', HomonymListView.as_view(), name='admin_homonyms_list'),
     re_path(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete,
                       name='homonyms_complete'),
@@ -87,7 +87,9 @@ urlpatterns = [
     re_path(r'^handshapes/show_all/$', HandshapeListView.as_view(), {'show_all': True}),
     re_path(r'^signs/search_handshape/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()),
                 name='admin_handshape_list'),
-    re_path(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view())),
+    re_path(r'^lemmas/show_all/$', LemmaListView.as_view(), {'show_all': True}),
+    re_path(r'^morphemes/search/$', permission_required('dictionary.search_gloss')(MorphemeListView.as_view()),
+            name='morphemes_search'),
     re_path(r'^morphemes/show_all/$', login_required(MorphemeListView.as_view()), {'show_all': True}),
     re_path(r'^morphemes/add/$', login_required(signbank.dictionary.views.add_new_morpheme)),
     re_path(r'^feedback/overview/$', signbank.feedback.views.showfeedback),

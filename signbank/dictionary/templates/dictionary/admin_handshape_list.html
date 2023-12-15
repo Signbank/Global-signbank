@@ -56,6 +56,12 @@ function clearForm() {
      $("input[name='search']").val('');
 }
 
+function do_export_csv(e1) {
+  $('#format').val('CSV');
+  $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search_handshape/');
+  document.getElementById('adminsearch').submit();
+}
+
 /**
  * @param {string} field_name - name of the field to sort on
  * @param {string} action     - one of: desc, asc, del
@@ -126,7 +132,7 @@ function do_adminsearch(el) {
 <div id='queryarea' class='panel-collapse collapse'>
         <div class="hidden">
             <input name='sortOrder' class='form-control' value='machine_value' >
-            <input name='search_type' class='form-control' value='handshape'>
+            <input name='search_type' class='form-control' value='{{search_type}}'>
         </div>
                 <div id='handshape_name'>
                     {% csrf_token %}
@@ -327,7 +333,11 @@ function do_adminsearch(el) {
     <input type="submit" style="visibility: hidden;" />
 
     {% if perms.dictionary.export_csv %}
-    <input class='btn btn-default' type='submit' name='format' value='CSV'>
+    <button class='btn btn-default' type='submit'
+            onclick="do_export_csv(this);"
+            id='button_export_csv' value='CSV'>CSV</button>
+    <input type='hidden' id='format' name='format' value="">
+    <input type='hidden' name='show_all' value="{{show_all}}">
     {% endif %}
 
     <input class='btn btn-default' type='submit' name='reset'

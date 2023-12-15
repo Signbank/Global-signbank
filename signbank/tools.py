@@ -1096,7 +1096,7 @@ def check_existence_notes(gloss, values, note_type_error, note_tuple_error, defa
         list_index += 1
 
     for split_value in splits_combined:
-        take_apart = re.match("([0-9]+): ?[(](False|True),([0-9]+),(.+)[)]", split_value)
+        take_apart = re.match(r'([0-9]+): ?[(](False|True),([0-9]+),(.+)[)]', split_value)
         if take_apart:
             (field, name, count, text) = take_apart.groups()
 
@@ -1651,7 +1651,7 @@ def gloss_from_identifier(value):
     BUT: first check if a unique hit can be found by the string alone (if it is not empty)
     """
 
-    match = re.match('(.*) \((\d+)\)', value)
+    match = re.match(r'(.*) \((\d+)\)', value)
     if match:
         print("MATCH: ", match)
         annotation_idgloss = match.group(1)
@@ -1922,6 +1922,7 @@ def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies
 
     return desc
 
+
 def get_value_for_ecv(gloss, fieldname):
     value = None
     annotationidglosstranslation_prefix = "annotationidglosstranslation_"
@@ -1950,60 +1951,6 @@ def get_value_for_ecv(gloss, fieldname):
     if value == '-':
         value = ' '
     return value
-
-def write_csv_for_handshapes(handshapelistview, csvwriter):
-    # called from the HandshapeListView when search_type is handshape
-
-    fields = [Handshape.get_field(fieldname) for fieldname in settings.HANDSHAPE_RESULT_FIELDS]
-
-    activate(LANGUAGES[0][0])
-    header = ['Handshape ID'] + [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
-
-    csvwriter.writerow(header)
-
-    # case search result is list of handshapes
-
-    handshape_list = handshapelistview.object_list
-
-    for handshape in handshape_list:
-        row = [str(handshape.pk)]
-
-        for f in fields:
-            # Try the value of the choicelist
-            if hasattr(f, 'field_choice_category'):
-                if hasattr(handshape, 'get_' + f.name + '_display'):
-                    value = getattr(handshape, 'get_' + f.name + '_display')()
-                else:
-                    value = getattr(handshape, f.name)
-                    if value is not None:
-                        value = value.name
-            else:
-                value = getattr(handshape, f.name)
-
-            if not isinstance(value, str):
-                value = str(value)
-
-            if value is None:
-                if f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
-                    value = ''
-                elif f.__class__.__name__ == 'IntegerField':
-                    value = 0
-                else:
-                    value = ''
-
-            row.append(value)
-
-        # Make it safe for weird chars
-        safe_row = []
-        for column in row:
-            try:
-                safe_row.append(column.encode('utf-8').decode())
-            except AttributeError:
-                safe_row.append(None)
-
-        csvwriter.writerow(safe_row)
-
-    return csvwriter
 
 
 def construct_scrollbar(qs, search_type, language_code):
@@ -2057,147 +2004,7 @@ def construct_scrollbar(qs, search_type, language_code):
     return items
 
 
-def write_csv_for_minimalpairs(minimalpairslistview, dataset, language_code):
-    # called from the MinimalPairsListView
-    rows = []
-
-    # for debug purposes use a count, otherwise this is extremely slow if all glosses are shown
-    for glo in minimalpairslistview.object_list:
-        focus_gloss_columns = [dataset.acronym]
-
-        translation_focus_gloss = ""
-        translations_gloss = glo.annotationidglosstranslation_set.filter(
-            language__language_code_2char=language_code)
-        if translations_gloss and len(translations_gloss) > 0:
-            translation_focus_gloss = translations_gloss[0].text
-
-        focus_gloss_columns.append(translation_focus_gloss)
-        focus_gloss_columns.append(str(glo.pk))
-
-        minimal_pairs = minimalpairs_focusgloss(glo.pk, language_code)
-
-        if minimal_pairs:
-            for mpd in minimal_pairs:
-                other_gloss_columns = []
-                other_gloss_columns.append(mpd['other_gloss_idgloss'])
-                other_gloss_columns.append(mpd['id'])
-                other_gloss_columns.append(mpd['field_display'])
-                other_gloss_columns.append(mpd['focus_gloss_value'])
-                other_gloss_columns.append(mpd['other_gloss_value'])
-
-                # Make it safe for weird chars
-                safe_row = []
-                for column in focus_gloss_columns + other_gloss_columns:
-                    try:
-                        safe_row.append(column.encode('utf-8').decode())
-                    except AttributeError:
-                        safe_row.append("")
-
-                rows.append(safe_row)
-        else:
-            # Make it safe for weird chars
-            safe_row = []
-            for column in focus_gloss_columns:
-                try:
-                    safe_row.append(column.encode('utf-8').decode())
-                except AttributeError:
-                    safe_row.append("")
-
-            rows.append(safe_row)
-
-    return rows
-
-
-def minimalpairs_focusgloss(gloss_id, language_code):
-
-    from django.utils import translation
-    translation.activate(language_code)
-
-    this_gloss = Gloss.objects.get(id=gloss_id)
-
-    minimalpairs_objects = this_gloss.minimal_pairs_dict()
-
-    result = []
-    for minimalpairs_object, minimal_pairs_dict in minimalpairs_objects.items():
-
-        other_gloss_dict = dict()
-        other_gloss_dict['id'] = str(minimalpairs_object.id)
-        other_gloss_dict['other_gloss'] = minimalpairs_object
-        for field, values in minimal_pairs_dict.items():
-
-            other_gloss_dict['field'] = field
-            other_gloss_dict['field_display'] = values[0]
-            other_gloss_dict['field_category'] = values[1]
-
-            focus_gloss_choice = values[2]
-            other_gloss_choice = values[3]
-
-            if focus_gloss_choice:
-                pass
-            else:
-                focus_gloss_choice = ''
-            if other_gloss_choice:
-                pass
-            else:
-                other_gloss_choice = ''
-
-            field_kind = values[4]
-            if field_kind == 'list':
-                focus_gloss_value = focus_gloss_choice
-            elif field_kind == 'check':
-                # the value is a Boolean or it might not be set
-                if focus_gloss_choice == 'True' or focus_gloss_choice is True:
-                    focus_gloss_value = 'Yes'
-                elif focus_gloss_choice == 'Neutral' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
-                    focus_gloss_value = 'Neutral'
-                else:
-                    focus_gloss_value = 'No'
-            else:
-                # translate Boolean fields
-                focus_gloss_value = focus_gloss_choice
-            other_gloss_dict['focus_gloss_value'] = focus_gloss_value
-            if field_kind == 'list':
-                other_gloss_value = other_gloss_choice
-            elif field_kind == 'check':
-                # the value is a Boolean or it might not be set
-                if other_gloss_choice == 'True' or other_gloss_choice is True:
-                    other_gloss_value = 'Yes'
-                elif other_gloss_choice == 'Neutral' and field in settings.HANDEDNESS_ARTICULATION_FIELDS:
-                    other_gloss_value = 'Neutral'
-                else:
-                    other_gloss_value = 'No'
-            else:
-                other_gloss_value = other_gloss_choice
-            other_gloss_dict['other_gloss_value'] = other_gloss_value
-            other_gloss_dict['field_kind'] = field_kind
-
-        translation = ""
-        translations = minimalpairs_object.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
-        if translations is not None and len(translations) > 0:
-            translation = translations[0].text
-        else:
-            translations = minimalpairs_object.annotationidglosstranslation_set.filter(language__language_code_3char='eng')
-            if translations is not None and len(translations) > 0:
-                translation = translations[0].text
-
-        other_gloss_dict['other_gloss_idgloss'] = translation
-        result.append(other_gloss_dict)
-    return result
-
-
-def strip_control_characters(input):
-
-    if input:
-
-        import re
-
-        # remove an ending backslash
-        input = re.sub(r"\\$", "", input)
-
-    return input
-
-
-def searchform_panels(searchform, searchfields) :
+def searchform_panels(searchform, searchfields):
     search_by_fields = []
     for field in searchfields:
         form_field_parameters = (field,searchform.fields[field].label,searchform[field])
@@ -2208,11 +2015,11 @@ def searchform_panels(searchform, searchfields) :
 def map_search_results_to_gloss_list(search_results):
 
     if not search_results:
-        return ([], [])
+        return [], []
     gloss_ids = []
     for search_result in search_results:
         gloss_ids.append(search_result['id'])
-    return (gloss_ids, Gloss.objects.filter(id__in=gloss_ids))
+    return gloss_ids, Gloss.objects.filter(id__in=gloss_ids)
 
 
 def get_interface_language_and_default_language_codes(request):

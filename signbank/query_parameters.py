@@ -146,7 +146,7 @@ def convert_query_parameters_to_filter(query_parameters):
         elif get_key == 'search' and get_value:
             query_filter_annotation_text = 'annotationidglosstranslation__text__' + text_filter
             query = Q(**{query_filter_annotation_text: get_value})
-            if re.match('^\d+$', get_value):
+            if re.match(r'^\d+$', get_value):
                 query = query | Q(sn__exact=get_value)
             query_list.append(query)
 
@@ -205,6 +205,24 @@ def convert_query_parameters_to_filter(query_parameters):
                 multiple_senses = [gsv['gloss'] for gsv in GlossSense.objects.values(
                     'gloss').annotate(Count('id')).filter(id__count=1)]
             query_list.append(Q(id__in=multiple_senses))
+
+        elif get_key == 'negative' and get_value:
+            sentences_with_negative_type = ExampleSentence.objects.filter(negative__exact=True)
+            sentences_with_other_type = ExampleSentence.objects.filter(negative__exact=False)
+            if get_value == 'yes':  # only senses with negative sentences
+                glosssenses = GlossSense.objects.filter(
+                    sense__exampleSentences__in=sentences_with_negative_type).distinct()
+            else:  # only senses sentences that are not negative
+                glosssenses = GlossSense.objects.filter(
+                    sense__exampleSentences__in=sentences_with_other_type).distinct()
+            relevant_glosses = [gs.gloss.pk for gs in glosssenses]
+            query_list.append(Q(pk__in=relevant_glosses))
+
+        elif get_key == 'sentenceType[]' and get_value:
+            sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=get_value)
+            glosssenses = GlossSense.objects.filter(sense__exampleSentences__in=sentences_with_this_type).distinct()
+            relevant_glosses = [gs.gloss.pk for gs in glosssenses]
+            query_list.append(Q(pk__in=relevant_glosses))
 
         elif get_key in ['definitionContains']:
             definitions_with_this_text = Definition.objects.filter(text__icontains=get_value)
@@ -278,7 +296,8 @@ def convert_query_parameters_to_filter(query_parameters):
                 print("convert_query_parameters_to_filter: Morpheme not found: ", get_value)
                 continue
         elif get_key in ['hasComponentOfType']:
-            # Look for "compound-components" of the indicated type. Compound Components are defined in class[MorphologyDefinition]
+            # Look for "compound-components" of the indicated type.
+            # Compound Components are defined in class[MorphologyDefinition]
             morphdefs_with_correct_role = MorphologyDefinition.objects.filter(role__machine_value__in=get_value)
             pks_for_glosses_with_morphdefs_with_correct_role = [morphdef.parent_gloss.pk for morphdef in morphdefs_with_correct_role]
             query_list.append(Q(pk__in=pks_for_glosses_with_morphdefs_with_correct_role))
@@ -355,11 +374,15 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
                 query_dict[key] = Gloss.get_field(key[:-2]).verbose_name.encode('utf-8').decode()
             elif key[:-2] in form_fields:
                 query_dict[key] = GlossSearchForm.get_field(key[:-2]).label.encode('utf-8').decode()
+            elif key[:-2] in ['sentenceType']:
+                query_dict[key] = SentenceForm.get_field('sentenceType').label.encode('utf-8').decode()
             else:
                 print('pretty_print_query_fields: multiple select field not found in Gloss or GlossSearchForm: ', key)
                 query_dict[key] = key
         elif key not in gloss_fields:
-            if key in form_fields:
+            if key == 'negative':
+                query_dict[key] = gettext("Negative")
+            elif key in form_fields:
                 query_dict[key] = GlossSearchForm.get_field(key).label.encode('utf-8').decode()
             else:
                 print('pretty_print_query_fields: key not in gloss_fields, not in form_fields:', key)
@@ -381,8 +404,10 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
             query_dict['translation'] = _('Search Senses')
     return query_dict
 
+
 def pretty_print_query_values(dataset_languages,query_parameters):
-    # this function maps the Gloss Search Form field values back to a human readable value for display in Query Parameters
+    # this function maps the Gloss Search Form field values back to a human readable value
+    # for display in Query Parameters
 
     # set up some mappings
     # if Query Parameters is made into a model, these will eventually become coded elsewhere
@@ -445,7 +470,10 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                 choices_for_category = DerivationHistory.objects.filter(machine_value__in=query_parameters[key])
             else:
                 field = key[:-2]
-                field_category = Gloss.get_field(field).field_choice_category
+                if field in ['sentenceType']:
+                    field_category = 'SentenceType'
+                else:
+                    field_category = Gloss.get_field(field).field_choice_category
                 choices_for_category = FieldChoice.objects.filter(field__iexact=field_category, machine_value__in=query_parameters[key])
             query_dict[key] = [choice.name for choice in choices_for_category]
         elif key.startswith(gloss_search_field_prefix) or key.startswith(keyword_search_field_prefix) or key.startswith(lemma_search_field_prefix):
@@ -463,7 +491,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
                 query_dict[key] = _('No')
         elif key in ['inWeb', 'isNew', 'excludeFromEcv', 'hasvideo', 'hasothermedia']:
             query_dict[key] = NULLBOOLEANCHOICES[query_parameters[key]]
-        elif key in ['defspublished', 'hasmultiplesenses']:
+        elif key in ['defspublished', 'hasmultiplesenses', 'negative']:
             query_dict[key] = YESNOCHOICES[query_parameters[key]]
         elif key in ['hasRelation']:
             choices_for_category = [RELATION_ROLE_CHOICES[val] for val in query_parameters[key]]
@@ -541,6 +569,10 @@ def query_parameters_toggle_fields(query_parameters):
                                       GlossSearchForm.get_field(query_field).label.encode('utf-8').decode())
         elif query_field == 'dialect':
             toggle_query_parameter = (query_field, _("Dialect"))
+        elif query_field == 'sentenceType':
+            toggle_query_parameter = (query_field, _("Sentence Type"))
+        elif query_field == 'negative':
+            toggle_query_parameter = (query_field, _("Negative"))
         else:
             print('toggle drop through: ', query_field)
             toggle_query_parameter = (query_field, query_field.capitalize())
@@ -1005,7 +1037,7 @@ def queryset_sentences_from_get(searchform, GET, qs):
                 continue
             if get_key in ['sentenceType[]']:
                 sentences_with_this_type = ExampleSentence.objects.filter(sentenceType__machine_value__in=vals)
-                qs = qs.filter(sense__exampleSentences__in=sentences_with_this_type)
+                qs = qs.filter(sense__exampleSentences__in=sentences_with_this_type).distinct()
         elif get_key not in searchform.fields.keys() \
                 or get_value in ['', '0']:
             continue
@@ -1020,9 +1052,9 @@ def queryset_sentences_from_get(searchform, GET, qs):
                 sentences_with_negative_type = ExampleSentence.objects.filter(negative__exact=True)
                 sentences_with_other_type = ExampleSentence.objects.filter(negative__exact=False)
                 if get_value == 'yes':  # only senses with negative sentences
-                    qs = qs.filter(sense__exampleSentences__in=sentences_with_negative_type)
+                    qs = qs.filter(sense__exampleSentences__in=sentences_with_negative_type).distinct()
                 else:  # only senses sentences that are not negative
-                    qs = qs.filter(sense__exampleSentences__in=sentences_with_other_type)
+                    qs = qs.filter(sense__exampleSentences__in=sentences_with_other_type).distinct()
     return qs
 
 

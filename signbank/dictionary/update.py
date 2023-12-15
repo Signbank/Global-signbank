@@ -1483,7 +1483,7 @@ def subst_notes(gloss, field, values):
     # the space is required in order to identify multiple notes in the input
     split_values = re.split(r', ', values)
     for note_value in split_values:
-        take_apart = re.match("([^:]+):\s?\((False|True),(\d),(.*)\)", note_value)
+        take_apart = re.match(r'([^:]+):\s?\((False|True),(\d),(.*)\)', note_value)
 
         if take_apart:
             (field, name, count, text) = take_apart.groups()
@@ -1723,7 +1723,7 @@ def morph_from_identifier(value):
     BUT: first check if a unique hit can be found by the string alone (if it is not empty)
     """
 
-    match = re.match('(.*) \((\d+)\)', value)
+    match = re.match(r'(.*) \((\d+)\)', value)
     if match:
         print("MATCH: ", match)
         idgloss = match.group(1)

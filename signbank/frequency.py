@@ -26,11 +26,8 @@ from tagging.models import TaggedItem, Tag
 
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
 from signbank.settings.server_specific import *
-
-from CNGT_scripts.python.signCounter import SignCounter
-from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
-
 from guardian.shortcuts import get_objects_for_user
+
 
 def get_gloss_from_frequency_dict(dataset_acronym, gloss_id_or_value):
     dataset = Dataset.objects.get(acronym=dataset_acronym)
@@ -412,6 +409,12 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
     new_eaf_files = []
     missing_eaf_files = []
 
+    try:
+        from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
+    except ImportError:
+        print('unable to import get_creation_time from CNGT_scripts')
+        return (eaf_files_to_update, new_eaf_files, missing_eaf_files)
+
     if not dataset or not corpus:
         # Something went wrong
         return (eaf_files_to_update, new_eaf_files, missing_eaf_files)
@@ -511,6 +514,12 @@ def document_has_been_updated(dataset_acronym, document_identifier, **kwargs):
         dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
     else:
         dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.DATASET_EAF_DIRECTORY,dataset_acronym)
+
+    try:
+        from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
+    except ImportError:
+        print('unable to import get_creation_time from CNGT_scripts')
+        return False
 
     try:
         existing_document = Document.objects.get(corpus__name=dataset_acronym, identifier=document_identifier)
@@ -715,6 +724,18 @@ def configure_corpus_documents(**kwargs):
 
 def configure_corpus_documents_for_dataset(dataset_acronym, **kwargs):
 
+    try:
+        from CNGT_scripts.python.signCounter import SignCounter
+    except ImportError:
+        print('unable to import SignCounter from CNGT_scripts')
+        return
+
+    try:
+        from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
+    except ImportError:
+        print('unable to import get_creation_time from CNGT_scripts')
+        return
+
     if 'testing' in kwargs.keys():
         dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER, settings.TEST_DATA_DIRECTORY, settings.DATASET_EAF_DIRECTORY,dataset_acronym)
         metadata_location = os.path.join(settings.WRITABLE_FOLDER, settings.TEST_DATA_DIRECTORY, settings.DATASET_METADATA_DIRECTORY, dataset_acronym + '_metadata.csv')
@@ -857,6 +878,18 @@ def get_path_of_eaf_file(dataset_eaf_folder, eaf_paths, document_id):
 
 
 def update_corpus_counts(dataset_acronym, **kwargs):
+
+    try:
+        from CNGT_scripts.python.signCounter import SignCounter
+    except ImportError:
+        print('unable to import SignCounter from CNGT_scripts')
+        return
+
+    try:
+        from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
+    except ImportError:
+        print('unable to import get_creation_time from CNGT_scripts')
+        return
 
     if 'testing' in kwargs.keys():
         dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
@@ -1011,6 +1044,19 @@ def update_corpus_counts(dataset_acronym, **kwargs):
 
 
 def update_corpus_document_counts(dataset_acronym, document_id, **kwargs):
+
+    try:
+        from CNGT_scripts.python.signCounter import SignCounter
+    except ImportError:
+        print('unable to import SignCounter from CNGT_scripts')
+        return []
+
+    try:
+        from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
+    except ImportError:
+        print('unable to import get_creation_time from CNGT_scripts')
+        return []
+
     if 'testing' in kwargs.keys():
         dataset_eaf_folder = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY,settings.DATASET_EAF_DIRECTORY, dataset_acronym)
         metadata_location = os.path.join(settings.WRITABLE_FOLDER,settings.TEST_DATA_DIRECTORY, settings.DATASET_METADATA_DIRECTORY,dataset_acronym + '_metadata.csv')

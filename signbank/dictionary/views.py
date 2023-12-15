@@ -710,7 +710,7 @@ def import_csv_create(request):
 
                 # only process a dataset_name once for the csv file being imported
                 # catch possible empty values for dataset, primarily for pretty printing error message
-                if dataset_name == '' or dataset_name == None or dataset_name == 0 or dataset_name == 'NULL':
+                if dataset_name in ['', None, 0, 'NULL']:
                     e_dataset_empty = 'Row '+str(nl + 1) + ': The Dataset is missing.'
                     error.append(e_dataset_empty)
                     break
@@ -1197,7 +1197,7 @@ def import_csv_update(request):
 
             if dataset_name not in seen_dataset_names:
                 # catch possible empty values for dataset, primarily for pretty printing error message
-                if dataset_name == '' or dataset_name == None or dataset_name == 0 or dataset_name == 'NULL':
+                if dataset_name in ['', None, 0, 'NULL']:
                     e_dataset_empty = 'Row '+str(nl + 1) + ': The Dataset is missing.'
                     error.append(e_dataset_empty)
                     break

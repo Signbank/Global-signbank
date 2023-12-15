@@ -194,7 +194,7 @@ SIGN_NAVIGATION = False
 # which definition fields do we show and in what order?
 DEFINITION_FIELDS = ['general', 'noun', 'verb', 'interact', 'deictic', 'modifier', 'question', 'augment', 'note']
 
-HANDSHAPE_RESULT_FIELDS = ['machine_value', 'name',
+HANDSHAPE_RESULT_FIELDS = ['name',
                            'hsFingSel', 'hsFingConf', 'hsFingSel2', 'hsFingConf2', 'hsNumSel',
                            'hsFingUnsel', 'hsSpread', 'hsAperture']
 

@@ -11,8 +11,10 @@ from django.db.models.functions import Concat
 from django.db.models.fields import BooleanField, BooleanField
 from django.utils.functional import cached_property
 from django.db.models.sql.where import NothingNode, WhereNode
-from django.http import HttpResponse, HttpResponseRedirect, QueryDict, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect, \
+    QueryDict, JsonResponse, StreamingHttpResponse
 from django.template import RequestContext
+from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.core.paginator import Paginator
@@ -53,11 +55,13 @@ from signbank.dictionary.field_choices import get_static_choice_lists, get_frequ
 from signbank.dictionary.forms import *
 from django.forms import TypedMultipleChoiceField, ChoiceField
 from signbank.dictionary.update import upload_metadata
-from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, write_csv_for_handshapes, \
-    construct_scrollbar, write_csv_for_minimalpairs, get_dataset_languages, get_datasets_with_public_glosses, \
+from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, \
+    construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
-from signbank.csv_interface import sense_translations_for_language, sense_examplesentences_for_language
+from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist, \
+    csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row, csv_header_row_lemmalist, csv_lemma_to_row,
+                                    csv_header_row_minimalpairslist, csv_focusgloss_to_minimalpairs)
 from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
@@ -77,7 +81,7 @@ from signbank.dictionary.frequency_display import collect_speaker_age_data, coll
 from signbank.dictionary.senses_display import (senses_per_language, senses_per_language_list,
                                                 sensetranslations_per_language_dict,
                                                 senses_translations_per_language_list, senses_sentences_per_language_list)
-from signbank.dictionary.context_data import get_context_data_for_list_view, get_context_data_for_gloss_search_form
+from signbank.dictionary.context_data import get_context_data_for_list_view, get_context_data_for_gloss_search_form, get_web_search
 from signbank.dictionary.related_objects import gloss_is_related_to
 
 
@@ -209,6 +213,16 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     return ordered
 
 
+class Echo:
+    """An object that implements just the write method of the file-like
+    interface. This is based on an example in the Django 4.2 documentation
+    """
+
+    def write(self, value):
+        """Write the value by returning it, instead of storing in a buffer."""
+        return value
+
+
 class GlossListView(ListView):
 
     model = Gloss
@@ -242,6 +256,7 @@ class GlossListView(ListView):
 
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
         self.queryset_language_codes = context['queryset_language_codes']
+        self.show_all = context['show_all']
 
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs, context)
 
@@ -298,7 +313,10 @@ class GlossListView(ListView):
         else:
             lang_attr_name = default_language_code
 
-        items = construct_scrollbar(list_of_objects, context['search_type'], lang_attr_name)
+        if context['search_type'] in ['sense']:
+            # this is GlossListView, show a scrollbar for Glosses from a previous search
+            self.search_type = 'sign'
+        items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
         if 'paginate_by' in self.request.GET:
@@ -349,17 +367,15 @@ class GlossListView(ListView):
 
         return paginate_by
 
-    def render_to_response(self, context):
-        # Look for a 'format=json' GET argument
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'CSV':
-            # show_all is passed by the calling template
-            return self.render_to_csv_response({'show_all': self.request.GET.get('show_all')})
+            return self.render_to_csv_response()
         elif self.request.GET.get('export_ecv') == 'ECV' or self.only_export_ecv:
-            return self.render_to_ecv_export_response(context)
+            return self.render_to_ecv_export_response()
         else:
-            return super(GlossListView, self).render_to_response(context)
+            return super(GlossListView, self).render_to_response(context, **response_kwargs)
 
-    def render_to_ecv_export_response(self, context):
+    def render_to_ecv_export_response(self):
 
         # check that the user is logged in
         if self.request.user.is_authenticated:
@@ -368,16 +384,10 @@ class GlossListView(ListView):
             messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
-        # if the dataset is specified in the url parameters, set the dataset_name variable
-        get = self.request.GET
-        if 'dataset_name' in get:
-            self.dataset_name = get['dataset_name']
-        if self.dataset_name == '':
-            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
-
+        # if the dataset is the default dataset since this option is only offered when
+        # there is only one dataset
         try:
-            dataset_object = Dataset.objects.get(name=self.dataset_name)
+            dataset_object = Dataset.objects.get(acronym=self.dataset_name)
         except ObjectDoesNotExist:
             messages.add_message(self.request, messages.ERROR, _('No dataset with that name found.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
@@ -401,262 +411,53 @@ class GlossListView(ListView):
             messages.add_message(self.request, messages.INFO, _('No ECV created for dataset.'))
         return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
 
-    def render_to_csv_response(self, context):
+    def render_to_csv_response(self):
 
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        if 'show_all' in context.keys():
-            show_all = context['show_all']
-        else:
-            show_all = False
-
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-export.csv"'
-
         fieldnames = FIELDS['main']+FIELDS['phonology']+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
-
         fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
-        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
-                                               for language in dataset_languages]
-        lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
-                                          for language in dataset_languages]
 
-        keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
-                                               for language in dataset_languages]
-
-        sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
-                                               for language in dataset_languages]
-        writer = csv.writer(response)
-
-        # CSV should be the first language in the settings
-        activate(LANGUAGES[0][0])
-        header = ['Signbank ID', 'Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields \
-                                + keyword_fields + sentence_fields + [f.verbose_name.encode('ascii','ignore').decode() for f in fields]
-        for extra_column in ['SignLanguages','Dialects', 'Sequential Morphology', 'Simultaneous Morphology', 'Blend Morphology',
-                             'Relations to other signs','Relations to foreign signs', 'Tags', 'Notes']:
-            header.append(extra_column)
-
-        writer.writerow(header)
+        header = csv_header_row_glosslist(dataset_languages, fields)
+        csv_rows = [header]
 
         if self.object_list:
             query_set = self.object_list
         else:
             query_set = self.get_queryset()
 
-        # for some reason when show_all has been selected, the object list has become a list instead of a QuerySet
-        # it was also missing elements
-        # in order to simply debug print statements, it's converted to a list here to make sure it always has the same type
         if isinstance(query_set, QuerySet):
             query_set = list(query_set)
+
         for gloss in query_set:
-            row = [str(gloss.pk), gloss.lemma.dataset.acronym]
-            for language in dataset_languages:
-                lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
-                if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
-                    # get rid of any invisible characters at the end such as \t
-                    lemmatranslation = lemmaidglosstranslations.first().text.strip()
-                    row.append(lemmatranslation)
-                else:
-                    row.append("")
-            for language in dataset_languages:
-                annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-                if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
-                    # get rid of any invisible characters at the end such as \t
-                    annotation = annotationidglosstranslations.first().text.strip()
-                    row.append(annotation)
-                else:
-                    row.append("")
+            safe_row = csv_gloss_to_row(gloss, dataset_languages, fields)
+            csv_rows.append(safe_row)
 
-            # Put senses (keywords) per language in a cell
-            for language in dataset_languages:
-                gloss_senses_of_language = sense_translations_for_language(gloss, language)
-                row.append(gloss_senses_of_language)
-
-            # Put example sentences per language in a cell
-            for language in dataset_languages:
-                gloss_example_sentences_of_language = sense_examplesentences_for_language(gloss, language)
-                row.append(gloss_example_sentences_of_language)
-
-            for f in fields:
-                #Try the value of the choicelist
-                if hasattr(f, 'field_choice_category'):
-                    if hasattr(gloss, 'get_' + f.name + '_display'):
-                        value = getattr(gloss, 'get_' + f.name + '_display')()
-                    else:
-                        field_value = getattr(gloss, f.name)
-                        value = field_value.name if field_value else '-'
-                elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
-                    handshape_field_value = getattr(gloss, f.name)
-                    value = handshape_field_value.name if handshape_field_value else '-'
-                elif f.related_model == SemanticField:
-                    value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
-                elif f.related_model == DerivationHistory:
-                    value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
-                else:
-                    value = getattr(gloss, f.name)
-
-                # some legacy glosses have empty text fields of other formats
-                if (f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField') \
-                        and value in ['-','------',' ']:
-                    value = ''
-
-                if value is None:
-                    if f.name in settings.HANDEDNESS_ARTICULATION_FIELDS:
-                        value = 'Neutral'
-                    elif f.name in settings.HANDSHAPE_ETYMOLOGY_FIELDS:
-                        value = 'False'
-                    else:
-                        if hasattr(f, 'field_choice_category'):
-                            value = '-'
-                        elif f.__class__.__name__ == 'CharField' or f.__class__.__name__ == 'TextField':
-                            value = ''
-                        elif f.__class__.__name__ == 'IntegerField':
-                            value = 0
-                        else:
-                            # what to do here? leave it as None or use empty string (for export to csv)
-                            value = ''
-
-                # This was disabled with the move to Python 3... might not be needed anymore?
-                # if isinstance(value,unicode):
-                #     value = str(value.encode('ascii','xmlcharrefreplace'))
-
-                if not isinstance(value,str):
-                    # this is needed for csv
-                    value = str(value)
-
-                # A handshape name can begin with =. To avoid Office thinking this is a formula, preface with '
-                # if value[:1] == '=':
-                #     value = '\'' + value
-
-                row.append(value)
-
-            # get languages
-            signlanguages = [signlanguage.name for signlanguage in gloss.signlanguage.all()]
-            row.append(", ".join(signlanguages))
-
-            # get dialects
-            dialects = [dialect.name for dialect in gloss.dialect.all()]
-            row.append(", ".join(dialects))
-
-            # get morphology
-            # Sequential Morphology
-            morphemes = [morpheme.get_role()+':'+str(morpheme.morpheme.id) for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-            row.append(", ".join(morphemes))
-
-            # Simultaneous Morphology
-            morphemes = [(str(m.morpheme.id), m.role) for m in gloss.simultaneous_morphology.all()]
-            sim_morphs = []
-            for m in morphemes:
-                sim_morphs.append(':'.join(m))
-            simultaneous_morphemes = ', '.join(sim_morphs)
-            row.append(simultaneous_morphemes)
-
-            # Blend Morphology
-            ble_morphemes = [(str(m.glosses.id), m.role) for m in gloss.blend_morphology.all()]
-            ble_morphs = []
-            for m in ble_morphemes:
-                ble_morphs.append(':'.join(m))
-            blend_morphemes = ', '.join(ble_morphs)
-            row.append(blend_morphemes)
-
-            # get relations to other signs
-            relations = [(relation.role, str(relation.target.id)) for relation in Relation.objects.filter(source=gloss)]
-            relations_with_categories = []
-            for rel_cat in relations:
-                relations_with_categories.append(':'.join(rel_cat))
-
-            relations_categories = ", ".join(relations_with_categories)
-            row.append(relations_categories)
-
-            # get relations to foreign signs
-            relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss) for relation in RelationToForeignSign.objects.filter(gloss=gloss)]
-            relations_with_categories = []
-            for rel_cat in relations:
-                relations_with_categories.append(':'.join(rel_cat))
-
-            relations_categories = ", ".join(relations_with_categories)
-            row.append(relations_categories)
-
-            # export tags
-            tags_of_gloss = TaggedItem.objects.filter(object_id=gloss.id)
-            tag_names_of_gloss = []
-            for t_obj in tags_of_gloss:
-                tag_id = t_obj.tag_id
-                tag_name = Tag.objects.get(id=tag_id)
-                tag_names_of_gloss += [str(tag_name).replace('_',' ')]
-
-            tag_names = ", ".join(tag_names_of_gloss)
-            row.append(tag_names)
-
-            # export notes
-            notes_of_gloss = gloss.definition_set.all()
-
-            notes_list = []
-            for note in notes_of_gloss:
-                notes_list += [note.note_tuple()]
-            sorted_notes_list = sorted(notes_list, key=lambda x: (x[0], x[1], x[2], x[3]))
-
-            notes_list = []
-            for (role, published, count, text) in sorted_notes_list:
-                # does not use a comprehension because of nested parentheses in role and text fields
-                tuple_reordered = role + ': (' + published + ',' + count + ',' + text + ')'
-                notes_list.append(tuple_reordered)
-
-            notes_display = ", ".join(notes_list)
-            row.append(notes_display)
-
-            # Make it safe for weird chars
-            safe_row = []
-            for column in row:
-                try:
-                    safe_row.append(column.encode('utf-8').decode())
-                except AttributeError:
-                    safe_row.append(None)
-
-            writer.writerow(safe_row)
-
-        return response
+        # this is based on an example in the Django 4.2 documentation
+        pseudo_buffer = Echo()
+        new_writer = csv.writer(pseudo_buffer)
+        return StreamingHttpResponse(
+            (new_writer.writerow(row) for row in csv_rows),
+            content_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="dictionary-export.csv"'},
+        )
 
     def get_queryset(self):
         get = self.request.GET
 
-        # First check whether we want to show everything or a subset
-        if 'show_all' in self.kwargs.keys():
-            show_all = self.kwargs['show_all']
-        else:
-            show_all = False
-
-        if 'search_type' in get and get['search_type']:
-            self.search_type = get['search_type']
-        else:
-            self.search_type = 'sign'
-
+        self.show_all = self.kwargs.get('show_all', self.show_all)
+        self.search_type = self.request.GET.get('search_type', 'sign')
         setattr(self.request.session, 'search_type', self.search_type)
-
-        if 'view_type' in get and get['view_type']:
-            self.view_type = get['view_type']
-            # don't change query, just change display
-        else:
-            # set to default
-            self.view_type = 'gloss_list'
-
+        self.view_type = self.request.GET.get('view_type', 'gloss_list')
         setattr(self.request, 'view_type', self.view_type)
-
-        if 'inWeb' in self.request.GET:
-            # user is searching for signs / morphemes visible to anonymous uers
-            self.web_search = self.request.GET['inWeb'] == '2'
-        elif not self.request.user.is_authenticated:
-            self.web_search = True
-
+        self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
-        if show_all:
+        if self.show_all:
             self.query_parameters = dict()
             # erase the previous query
             self.request.session['query_parameters'] = json.dumps(self.query_parameters)
@@ -694,7 +495,7 @@ class GlossListView(ListView):
             return qs
 
         # Get the initial selection
-        if show_all or (len(get) > 0 and 'query' not in self.request.GET):
+        if self.show_all or (len(get) > 0 and 'query' not in self.request.GET):
             # anonymous users can search signs, make sure no morphemes are in the results
             if self.search_type == 'sign' or not self.request.user.is_authenticated:
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
@@ -733,7 +534,7 @@ class GlossListView(ListView):
             qs = qs.filter(inWeb__exact=True)
 
         # If we wanted to get everything, we're done now
-        if show_all:
+        if self.show_all:
             # sort the results
             sorted_qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return sorted_qs
@@ -751,7 +552,7 @@ class GlossListView(ListView):
             else:
                 query = Q(annotationidglosstranslation__text__icontains=val)
 
-            if re.match('^\d+$', val):
+            if re.match(r'^\d+$', val):
                 query = query | Q(sn__exact=val)
 
             qs = qs.filter(query).distinct()
@@ -812,7 +613,6 @@ class SenseListView(ListView):
     search_type = 'sense'
     view_type = 'sense_list'
     web_search = False
-    show_all = False
     dataset_name = settings.DEFAULT_DATASET_ACRONYM
     last_used_dataset = None
     queryset_language_codes = []
@@ -916,35 +716,11 @@ class SenseListView(ListView):
     def get_queryset(self):
         get = self.request.GET
 
-        # First check whether we want to show everything or a subset
-        if 'show_all' in self.kwargs.keys():
-            show_all = self.kwargs['show_all']
-        else:
-            show_all = False
-
-        # Then check what kind of stuff we want
-        if 'search_type' in get:
-            self.search_type = get['search_type']
-        else:
-            self.search_type = 'sense'
-
+        self.search_type = self.request.GET.get('search_type', 'sense')
         setattr(self.request.session, 'search_type', self.search_type)
-
-        if 'view_type' in get:
-            self.view_type = get['view_type']
-            # don't change query, just change display
-        else:
-            # set to default
-            self.view_type = 'sense_list'
-
+        self.view_type = self.request.GET.get('view_type', 'sense_list')
         setattr(self.request, 'view_type', self.view_type)
-
-        if 'inWeb' in self.request.GET:
-            # user is searching for signs / morphemes visible to anonymous uers
-            self.web_search = self.request.GET['inWeb'] == '2'
-        elif not self.request.user.is_authenticated:
-            self.web_search = True
-
+        self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
         if 'query' not in self.request.GET:
@@ -978,7 +754,7 @@ class SenseListView(ListView):
             return qs
 
         # Get the initial selection
-        if show_all or (len(get) > 0 and 'query' not in self.request.GET):
+        if len(get) > 0 and 'query' not in self.request.GET:
             qs = GlossSense.objects.filter(gloss__lemma__dataset__in=selected_datasets)
             qs = qs.order_by('gloss__id', 'order')
 
@@ -1001,9 +777,6 @@ class SenseListView(ListView):
             pass
         else:
             qs = qs.filter(gloss__inWeb__exact=True)
-
-        if show_all:
-            return qs
 
         qs = queryset_glosssense_from_get('GlossSense', GlossSearchForm, self.search_form, get, qs)
         # this is a temporary query_parameters variable
@@ -1683,7 +1456,7 @@ class GlossVideosView(DetailView):
                            'selected_datasets': selected_datasets,
                            'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-        if self.object.lemma == None or self.object.lemma.dataset == None:
+        if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested gloss has no lemma or dataset.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,
@@ -2064,13 +1837,12 @@ class MorphemeListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
-        default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
+        default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
 
         for lang in dataset_languages:
             if lang.language_code_2char not in self.queryset_language_codes:
                 self.queryset_language_codes.append(lang.language_code_2char)
-        if self.queryset_language_codes is None:
+        if not self.queryset_language_codes:
             self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
 
         if len(selected_datasets) == 1:
@@ -2080,10 +1852,8 @@ class MorphemeListView(ListView):
 
         context['last_used_dataset'] = self.last_used_dataset
 
-        if 'show_all' in self.kwargs.keys():
-            context['show_all'] = self.kwargs['show_all']
-        else:
-            context['show_all'] = False
+        self.show_all = self.kwargs.get('show_all', self.show_all)
+        context['show_all'] = self.show_all
 
         context['searchform'] = self.search_form
 
@@ -2193,11 +1963,8 @@ class MorphemeListView(ListView):
         # get query terms from self.request
         get = self.request.GET
 
-        try:
-            if self.kwargs['show_all']:
-                show_all = True
-        except (KeyError, TypeError):
-            show_all = False
+        self.show_all = self.kwargs.get('show_all', self.show_all)
+        setattr(self.request.session, 'search_type', self.search_type)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -2214,7 +1981,7 @@ class MorphemeListView(ListView):
             qs = Morpheme.objects.none()
             return qs
 
-        if len(get) > 0 or show_all:
+        if len(get) > 0 or self.show_all:
             qs = Morpheme.objects.filter(lemma__dataset__in=selected_datasets)
         else:
             qs = Morpheme.objects.none()
@@ -2222,7 +1989,7 @@ class MorphemeListView(ListView):
         if not self.request.user.has_perm('dictionary.search_gloss'):
             qs = qs.filter(inWeb__exact=True)
 
-        if show_all:
+        if self.show_all:
             qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
             return qs
 
@@ -2240,14 +2007,13 @@ class MorphemeListView(ListView):
         # Return the resulting filtered and sorted queryset
         return qs
 
-    def render_to_response(self, context):
-        # Look for a 'format=json' GET argument
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'CSV':
-            return self.render_to_csv_response(context)
+            return self.render_to_csv_response()
         else:
-            return super(MorphemeListView, self).render_to_response(context)
+            return super(MorphemeListView, self).render_to_response(context, **response_kwargs)
 
-    def render_to_csv_response(self, context):
+    def render_to_csv_response(self):
         """Convert all Morphemes into a CSV
 
         This function is derived from and similar to the one used in class GlossListView
@@ -2258,87 +2024,36 @@ class MorphemeListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-morph-export.csv"'
-
-        # We want to manually set which fields to export here
-
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
-
-        # Different from Gloss: we use Morpheme here
         fields = [Morpheme.get_field(fname) for fname in fieldnames if fname in Morpheme.get_field_names()]
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
-        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in
-                                               dataset_languages]
 
-        writer = csv.writer(response)
+        header = csv_header_row_morphemelist(dataset_languages, fields)
+        csv_rows = [header]
 
-        with override(LANGUAGE_CODE):
-            header = ['Signbank ID'] + annotationidglosstranslation_fields + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
+        if self.object_list:
+            query_set = self.object_list
+        else:
+            query_set = self.get_queryset()
 
-        for extra_column in ['Keywords', 'Morphology', 'Appears in signs']:
-            header.append(extra_column)
+        if isinstance(query_set, QuerySet):
+            query_set = list(query_set)
 
-        writer.writerow(header)
+        for morpheme in query_set:
 
-        for gloss in self.get_queryset():
-            row = [str(gloss.pk)]
+            safe_row = csv_morpheme_to_row(morpheme, dataset_languages, fields)
+            csv_rows.append(safe_row)
 
-            for language in dataset_languages:
-                annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-                if annotationidglosstranslations and len(annotationidglosstranslations) == 1:
-                    row.append(annotationidglosstranslations[0].text)
-                else:
-                    row.append("")
-
-            for f in fields:
-                # Try the value of the choicelist
-                if hasattr(f, 'field_choice_category'):
-                    if hasattr(gloss, 'get_' + f.name + '_display'):
-                        value = getattr(gloss, 'get_' + f.name + '_display')()
-                    else:
-                        field_value = getattr(gloss, f.name)
-                        value = field_value.name if field_value else '-'
-                elif isinstance(f, models.ForeignKey) and f.related_model == Handshape:
-                    handshape_field_value = getattr(gloss, f.name)
-                    value = handshape_field_value.name if handshape_field_value else '-'
-                elif f.related_model == SemanticField:
-                    value = ", ".join([str(sf.name) for sf in gloss.semField.all()])
-                elif f.related_model == DerivationHistory:
-                    value = ", ".join([str(sf.name) for sf in gloss.derivHist.all()])
-                else:
-                    value = getattr(gloss, f.name)
-                    value = str(value)
-
-                row.append(value)
-
-            # get translations
-            trans = [t.translation.text for t in gloss.translation_set.all().order_by('translation__index')]
-            row.append(", ".join(trans))
-
-            # get compound's component type
-            morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-            row.append(", ".join(morphemes))
-
-            # Got all the glosses (=signs) this morpheme appears in
-            appearsin = [appears.idgloss for appears in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-            row.append(", ".join(appearsin))
-
-            # Make it safe for weird chars
-            safe_row = []
-            for column in row:
-                try:
-                    safe_row.append(column.encode('utf-8').decode())
-                except AttributeError:
-                    safe_row.append(None)
-
-            writer.writerow(safe_row)
-
-        return response
+        # this is based on an example in the Django 4.2 documentation
+        pseudo_buffer = Echo()
+        new_writer = csv.writer(pseudo_buffer)
+        return StreamingHttpResponse(
+            (new_writer.writerow(row) for row in csv_rows),
+            content_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="dictionary-morph-export.csv"'},
+        )
 
 
 class HandshapeDetailView(DetailView):
@@ -2596,9 +2311,6 @@ class SemanticFieldListView(ListView):
 
     def get_queryset(self):
 
-        # get query terms from self.request
-        get = self.request.GET
-
         qs = SemanticField.objects.filter(machine_value__gt=1).order_by('name')
 
         return qs
@@ -2691,9 +2403,6 @@ class DerivationHistoryListView(ListView):
 
     def get_queryset(self):
 
-        # get query terms from self.request
-        get = self.request.GET
-
         qs = DerivationHistory.objects.filter(machine_value__gt=1).order_by('name')
 
         return qs
@@ -2754,6 +2463,7 @@ class MinimalPairsListView(ListView):
     template_name = 'dictionary/admin_minimalpairs_list.html'
     paginate_by = 10
     filter = False
+    show_all = False
     search_form = FocusGlossSearchForm()
 
     def __init__(self, *args, **kwargs):
@@ -2787,6 +2497,9 @@ class MinimalPairsListView(ListView):
 
         context['searchform'] = self.search_form
 
+        self.show_all = self.request.GET.get('show_all', self.show_all)
+        context['show_all'] = self.show_all
+
         context['input_names_fields_and_labels'] = {}
         for topic in ['main', 'phonology', 'semantics']:
             context['input_names_fields_and_labels'][topic] = []
@@ -2816,45 +2529,45 @@ class MinimalPairsListView(ListView):
         """
         return self.request.GET.get('paginate_by', self.paginate_by)
 
-    def render_to_response(self, context):
-        if 'csv' in self.request.GET:
-            return self.render_to_csv_response(context)
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.GET.get('format') == 'CSV':
+            return self.render_to_csv_response()
         else:
-            return super(MinimalPairsListView, self).render_to_response(context)
+            return super(MinimalPairsListView, self).render_to_response(context, **response_kwargs)
 
-    def render_to_csv_response(self, context):
+    def render_to_csv_response(self):
 
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
         # this ends up being English for Global Signbank
         language_code = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-        dataset = context['dataset']
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset = selected_datasets.first()
 
-        # this can take a long time if the entire dataset is queried
-        rows = write_csv_for_minimalpairs(self, dataset, language_code=language_code)
-
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-export-minimalpairs.csv"'
-
-        import csv
-        csvwriter = csv.writer(response)
-
-        # write the actual file
-        if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
-            header = ['Dataset', 'Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
-                      'Contrasting Sign Value']
+        if self.object_list:
+            query_set = self.object_list
         else:
-            header = ['Focus Gloss', 'ID', 'Minimal Pair Gloss', 'ID', 'Field Name', 'Source Sign Value',
-                      'Contrasting Sign Value']
+            query_set = self.get_queryset()
 
-        csvwriter.writerow(header)
+        if isinstance(query_set, QuerySet):
+            query_set = list(query_set)
 
-        for row in rows:
-            csvwriter.writerow(row)
+        header = csv_header_row_minimalpairslist()
+        csv_rows = [header]
 
-        return response
+        for focusgloss in query_set:
+            # multiple rows are generated for each gloss, hence the csv_rows is passed as a state variable
+            csv_rows = csv_focusgloss_to_minimalpairs(focusgloss, dataset, language_code, csv_rows)
+
+        # this is based on an example in the Django 4.2 documentation
+        pseudo_buffer = Echo()
+        new_writer = csv.writer(pseudo_buffer)
+        return StreamingHttpResponse(
+            (new_writer.writerow(row) for row in csv_rows),
+            content_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="dictionary-export-minimalpairs.csv"'},
+        )
 
     def get_queryset(self):
 
@@ -2908,8 +2621,16 @@ class MinimalPairsListView(ListView):
                         (Q(**{handedness_filter: empty_value}))).exclude(
                         (Q(**{strong_hand_filter: empty_value}))).exclude(q_number_or_letter)
 
-        if 'showall' in get:
+        if 'show_all_minimal_pairs' in get and get['show_all_minimal_pairs']:
+            self.show_all = True
             return glosses_with_phonology
+
+        if self.show_all:
+            return glosses_with_phonology
+
+        if not get or ('reset' in get and get['reset']):
+            qs = Gloss.objects.none()
+            return qs
 
         qs = glosses_with_phonology
         qs = queryset_glosssense_from_get('Gloss', FocusGlossSearchForm, self.search_form, get, qs)
@@ -2928,8 +2649,6 @@ class QueryListView(ListView):
         # Call the base implementation first to get a context
         context = super(QueryListView, self).get_context_data(**kwargs)
 
-        language_code = self.request.LANGUAGE_CODE
-
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -2946,7 +2665,7 @@ class QueryListView(ListView):
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape', 'sense']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
@@ -3004,7 +2723,7 @@ class QueryListView(ListView):
             if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape', 'sense']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
@@ -3623,17 +3342,12 @@ class HandshapeListView(ListView):
 
         search_form = HandshapeSearchForm(self.request.GET)
 
-        # Retrieve the search_type,so that we know whether the search should be Gloss or not
-        if 'search_type' in self.request.GET and self.request.GET['search_type']:
-            self.search_type = self.request.GET['search_type']
-        else:
-            self.search_type = 'handshape'
-
-        if 'search_type' not in self.request.session.keys():
-            self.request.session['search_type'] = self.search_type
-
         context['searchform'] = search_form
+
+        self.search_type = self.request.GET.get('search_type', self.search_type)
         context['search_type'] = self.search_type
+        setattr(self.request.session, 'search_type', self.search_type)
+        context['show_all'] = self.kwargs.get('show_all', self.show_all)
 
         context['handshapefieldchoicecount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
@@ -3651,11 +3365,6 @@ class HandshapeListView(ListView):
         context['signscount'] = Gloss.objects.filter(lemma__dataset__in=selected_datasets).count()
 
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
-
-        if 'show_all' in self.kwargs.keys():
-            context['show_all'] = self.kwargs['show_all']
-        else:
-            context['show_all'] = False
 
         context['handshapescount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
@@ -3702,31 +3411,62 @@ class HandshapeListView(ListView):
         context['handshape_to_fields'] = handshape_to_fields
         return context
 
-    def render_to_response(self, context):
-        # Look for a 'format=json' GET argument
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'CSV':
-            return self.render_to_csv_response(context)
+            return self.render_to_csv_response()
         else:
-            return super(HandshapeListView, self).render_to_response(context)
+            return super(HandshapeListView, self).render_to_response(context, **response_kwargs)
 
-    def render_to_csv_response(self, context):
+    def render_to_csv_response(self):
 
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-export-handshapes.csv"'
-
-        writer = csv.writer(response)
-
-        if self.search_type and self.search_type == 'handshape':
-
-            writer = write_csv_for_handshapes(self, writer)
+        if self.object_list:
+            query_set = self.object_list
         else:
-            print('search type is sign')
+            query_set = self.get_queryset()
 
-        return response
+        if isinstance(query_set, QuerySet):
+            query_set = list(query_set)
+
+        if query_set and self.request.session['search_type'] == 'sign_handshape':
+            filename = "dictionary-export-handshapes-signs.csv"
+
+            fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb',
+                                                                                                             'isNew']
+            fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
+            dataset_languages = get_dataset_languages(selected_datasets)
+
+            header = csv_header_row_glosslist(dataset_languages, fields)
+            csv_rows = [header]
+
+            for gloss in query_set:
+                safe_row = csv_gloss_to_row(gloss, dataset_languages, fields)
+                csv_rows.append(safe_row)
+        else:
+            filename = "dictionary-export-handshapes.csv"
+
+            fields = [Handshape.get_field(fieldname) for fieldname in settings.HANDSHAPE_RESULT_FIELDS]
+
+            header = csv_header_row_handshapelist(fields)
+
+            csv_rows = [header]
+            for handshape in query_set:
+
+                safe_row = csv_handshape_to_row(handshape, fields)
+                csv_rows.append(safe_row)
+
+        # this is based on an example in the Django 4.2 documentation
+        pseudo_buffer = Echo()
+        new_writer = csv.writer(pseudo_buffer)
+        return StreamingHttpResponse(
+            (new_writer.writerow(row) for row in csv_rows),
+            content_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename='+filename},
+        )
 
     def get_queryset(self):
 
@@ -3736,19 +3476,11 @@ class HandshapeListView(ListView):
 
         get = self.request.GET
 
-        if 'show_all' in self.kwargs.keys():
-            show_all = self.kwargs['show_all']
-        else:
-            show_all = False
-
-        if 'search_type' in get:
-            self.search_type = get['search_type']
-        else:
-            self.search_type = 'handshape'
-
+        self.show_all = self.kwargs.get('show_all', self.show_all)
+        self.search_type = self.request.GET.get('search_type', self.search_type)
         setattr(self.request.session, 'search_type', self.search_type)
 
-        if not show_all and not get or 'reset' in get:
+        if not self.show_all and not get or 'reset' in get:
             qs = Handshape.objects.none()
             return qs
 
@@ -3768,7 +3500,7 @@ class HandshapeListView(ListView):
 
         qs = Handshape.objects.filter(machine_value__gt=1).order_by('machine_value')
 
-        if show_all:
+        if self.show_all:
             if 'sortOrder' in get and get['sortOrder'] != 'machine_value':
                 # User has toggled the sort order for the column
                 qs = order_handshape_queryset_by_sort_order(self.request.GET, qs)
@@ -5562,10 +5294,10 @@ class MorphemeDetailView(DetailView):
         context['translations_per_language'] = {}
         if gl.dataset:
             for language in gl.dataset.translation_languages.all():
-                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+                context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('index')
         else:
             language = Language.objects.get(id=get_default_language_id())
-            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+            context['translations_per_language'][language] = gl.translation_set.filter(language=language).order_by('index')
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
@@ -6257,6 +5989,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
                                                           'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                                                           'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
 
+
 class LemmaListView(ListView):
     model = LemmaIdgloss
     template_name = 'dictionary/admin_lemma_list.html'
@@ -6278,6 +6011,11 @@ class LemmaListView(ListView):
 
         get = self.request.GET
 
+        # this view accommodates both Show All Lemmas and Lemma Search
+        # the show_all argument is True for Show All Lemmas
+        # if it is missing, a Lemma Search is being done and starts with no results
+        self.show_all = self.kwargs.get('show_all', False)
+
         queryset = super(LemmaListView, self).get_queryset()
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -6297,8 +6035,19 @@ class LemmaListView(ListView):
 
         qs = queryset.filter(dataset__in=selected_datasets)
 
-        if len(get) == 0:
-            # show all if there are no query parameters
+        if 'show_all_lemmas' in get and get['show_all_lemmas']:
+            self.show_all = True
+            return qs
+
+        if self.show_all:
+            return qs
+
+        if not self.show_all and not get:
+            qs = LemmaIdgloss.objects.none()
+            return qs
+
+        if 'reset' in get and get['reset']:
+            qs = LemmaIdgloss.objects.none()
             return qs
 
         # There are only Lemma ID Gloss fields
@@ -6314,20 +6063,12 @@ class LemmaListView(ListView):
         # this method adds a gloss count column to the results for display
         get = self.request.GET
 
-        if hasattr(self, 'object_list') and not self.object_list:
-            # check to make sure get_queryset has already been called
-            # the post method does not seem to have this attribute when called from LemmaTests
-            # either there was something wrong with the regex check and it returned empty results
-            # or no matches to the query
-            # in any case, there is nothing to annotate
-            return (self.object_list, 0)
-
         qs = self.get_queryset()
 
         if len(get) == 0:
             results = qs.annotate(num_gloss=Count('gloss'))
             num_gloss_zero_matches = results.filter(num_gloss=0).count()
-            return (results, num_gloss_zero_matches)
+            return results, num_gloss_zero_matches
 
         only_show_no_glosses = False
         only_show_has_glosses = False
@@ -6347,7 +6088,8 @@ class LemmaListView(ListView):
             num_gloss_zero_matches = 0
         else:
             num_gloss_zero_matches = results.filter(num_gloss=0).count()
-        return results,num_gloss_zero_matches
+
+        return results, num_gloss_zero_matches
 
     def get_context_data(self, **kwargs):
         context = super(LemmaListView, self).get_context_data(**kwargs)
@@ -6369,8 +6111,6 @@ class LemmaListView(ListView):
 
         context['page_number'] = context['page_obj'].number
 
-        context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
-
         context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
 
         (results, num_gloss_zero_matches) = self.get_annotated_queryset()
@@ -6386,10 +6126,11 @@ class LemmaListView(ListView):
 
         context['searchform'] = self.search_form
         context['search_type'] = 'lemma'
+        context['show_all'] = self.show_all
 
         list_of_objects = self.object_list
 
-        # to accomodate putting lemma's in the scroll bar in the LemmaUpdateView (aka LemmaDetailView),
+        # to accommodate putting lemma's in the scroll bar in the LemmaUpdateView (aka LemmaDetailView),
         # look at available translations, choose the Interface language if it is a Dataset language
         # some legacy lemma's have missing translations,
         # the language code is used when more than one is available,
@@ -6415,59 +6156,36 @@ class LemmaListView(ListView):
 
         return context
 
-    def render_to_response(self, context, **kwargs):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'CSV':
-            return self.render_to_csv_response(context)
+            return self.render_to_csv_response()
         else:
-            return super(LemmaListView, self).render_to_response(context)
+            return super(LemmaListView, self).render_to_response(context, **response_kwargs)
 
-    def render_to_csv_response(self, context):
+    def render_to_csv_response(self):
 
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
-        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
 
-        lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
-                                          for language in dataset_languages]
+        header = csv_header_row_lemmalist(dataset_languages)
+        csv_rows = [header]
 
-        rows = []
         (queryset, num_gloss_zero_matches) = self.get_annotated_queryset()
         for lemma in queryset:
-            row = [str(lemma.pk), lemma.dataset.acronym]
-            for language in dataset_languages:
-                lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
-                if lemmaidglosstranslations and len(lemmaidglosstranslations) == 1:
-                    row.append(lemmaidglosstranslations[0].text)
-                else:
-                    row.append("")
-            row.append(str(lemma.num_gloss))
-            #Make it safe for weird chars
-            safe_row = []
-            for column in row:
-                try:
-                    safe_row.append(column.encode('utf-8').decode())
-                except AttributeError:
-                    safe_row.append(None)
-            rows.append(safe_row)
+            safe_row = csv_lemma_to_row(lemma, dataset_languages)
+            csv_rows.append(safe_row)
 
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="dictionary-export-lemmas.csv"'
-
-        writer = csv.writer(response)
-
-        with override(LANGUAGE_CODE):
-            header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields + ['Number of glosses']
-
-        writer.writerow(header)
-
-        for row in rows:
-            writer.writerow(row)
-
-        return response
+        # this is based on an example in the Django 4.2 documentation
+        pseudo_buffer = Echo()
+        new_writer = csv.writer(pseudo_buffer)
+        return StreamingHttpResponse(
+            (new_writer.writerow(row) for row in csv_rows),
+            content_type="text/csv",
+            headers={"Content-Disposition": 'attachment; filename="dictionary-export-lemmas.csv"'},
+        )
 
     def post(self, request, *args, **kwargs):
         # this method deletes lemmas in the query that have no glosses
@@ -6480,10 +6198,17 @@ class LemmaListView(ListView):
             # the template sets POST value 'delete_lemmas' to value 'delete_lemmas'
             messages.add_message(request, messages.WARNING, _("Incorrect deletion code."))
             return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
-        datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset,
+                                                        accept_global_perms=False)
+        if not datasets_user_can_change:
+            messages.add_message(request, messages.WARNING,
+                                 _("You do not have change permission on the dataset of the lemma you are attempting to delete."))
+            return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         (queryset, num_gloss_zero_matches) = self.get_annotated_queryset()
+
         # check permissions, if fails, do nothing and show error message
         for lemma in queryset:
             if lemma.num_gloss == 0:
@@ -6491,8 +6216,9 @@ class LemmaListView(ListView):
                 dataset_of_requested_lemma = lemma.dataset
                 if dataset_of_requested_lemma not in datasets_user_can_change:
                     messages.add_message(request, messages.WARNING,
-                                         _("You do not have change permission on the dataset of the lemma you are atteempting to delete."))
+                         _("You do not have change permission on the dataset of the lemma you are attempting to delete."))
                     return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
+
         for lemma in queryset:
             if lemma.num_gloss == 0:
                 lemma_translation_objects = lemma.lemmaidglosstranslation_set.all()
@@ -6509,7 +6235,7 @@ class LemmaCreateView(CreateView):
     fields = []
 
     def get_context_data(self, **kwargs):
-        context = super(CreateView, self).get_context_data(**kwargs)
+        context = super(LemmaCreateView, self).get_context_data(**kwargs)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
@@ -6668,6 +6394,10 @@ class LemmaUpdateView(UpdateView):
 
         # get the page of the lemma list on which this lemma appears in order ro return to it after update
         request_path = self.request.META.get('HTTP_REFERER')
+
+        # if there was a query, return to the query results in the template on button Return to Lemma List
+        context['request_path'] = request_path
+
         if not request_path:
             context['caller'] = 'lemma_list'
         else:
@@ -6680,10 +6410,10 @@ class LemmaUpdateView(UpdateView):
                 # caller was Gloss Details
                 import re
                 try:
-                    m = re.search('/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
+                    m = re.search(r'/dictionary/gloss/(\d+)(/|$|\?)', path_parms[0])
                     gloss_id_pattern = m.group(1)
                     self.gloss_id = gloss_id_pattern
-                except (AttributeError):
+                except AttributeError:
                     # it is unknown what gloss we were looking at, something went wrong with pattern matching on the url
                     # restore callback to lemma list
                     context['caller'] = 'lemma_list'
@@ -6821,7 +6551,7 @@ class LemmaUpdateView(UpdateView):
                            'selected_datasets': selected_datasets,
                            'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                            'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
-        if self.object.dataset == None:
+        if not self.object.dataset:
             translated_message = _('Requested lemma has no dataset.')
             return render(request, 'dictionary/warning.html',
                           {'warning': translated_message,

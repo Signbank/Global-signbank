@@ -351,7 +351,7 @@ def check_language_fields(searchform, formclass, queryDict, languages):
     import re
     # check for matches starting with: + * [ ( ) ?
     # or ending with a +
-    regexp = re.compile('^[+*\[()?]|([^+]+\+$)')
+    regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
     for language_field in language_field_values.keys():
         try:
             re.compile(language_field_values[language_field])
@@ -569,7 +569,7 @@ class CSVMetadataForm(forms.Form):
 
 class EAFFilesForm(forms.Form):
 
-    file = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}))
+    file = forms.FileField(widget=forms.ClearableFileInput())
 
 class CSVUploadForm(forms.Form):
 
@@ -738,7 +738,7 @@ def check_multilingual_fields(ClassModel, queryDict, languages):
     import re
     # check for matches starting with: + * [ ( ) ?
     # or ending with a +
-    regexp = re.compile('^[+*\[()?]|([^+]+\+$)')
+    regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
     for language_field in language_field_values.keys():
         try:
             re.compile(language_field_values[language_field])
@@ -1343,6 +1343,16 @@ class SentenceForm(forms.ModelForm):
         model = ExampleSentence
 
         fields = ['sentenceType', 'negative']
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls.__dict__['base_fields']
+        return fields
+
+    @classmethod
+    def get_field(cls, fieldname):
+        field = cls.__dict__['base_fields'][fieldname]
+        return field
 
     def __init__(self, *args, **kwargs):
         super(SentenceForm, self).__init__(*args, **kwargs)
