@@ -732,9 +732,7 @@ def import_csv_create(request):
                     break
                 if seen_datasets:
                     # already seen a dataset
-                    if dataset in seen_datasets:
-                        pass
-                    else:
+                    if dataset not in seen_datasets:
                         # seen more than one dataset
                         # e4 = 'You are attempting to modify two datasets.'
 
@@ -906,7 +904,7 @@ def import_csv_create(request):
                     glosses_to_create[pk] = dict()
                 glosses_to_create[pk][fieldname] = new_value
 
-            #In case there's no dot, this is not a value we set at the previous page
+            # In case there's no dot, this is not a value we set at the previous page
             except ValueError:
                 # when the database token csrfmiddlewaretoken is passed, there is no dot
                 continue
@@ -1222,9 +1220,7 @@ def import_csv_update(request):
                     break
                 if seen_datasets:
                     # already seen a dataset
-                    if dataset in seen_datasets:
-                        pass
-                    else:
+                    if dataset not in seen_datasets:
                         # seen more than one dataset
                         seen_datasets.append(dataset)
                         seen_dataset_names.append(dataset_name)
@@ -1309,7 +1305,7 @@ def import_csv_update(request):
             try:
                 pk, fieldname = key.split('.')
 
-            #In case there's no dot, this is not a value we set at the previous page
+            # In case there's no dot, this is not a value we set at the previous page
             except ValueError:
                 # when the database token csrfmiddlewaretoken is passed, there is no dot
                 continue
@@ -1337,7 +1333,7 @@ def import_csv_update(request):
                     else:
                         # lemma not set
                         lemma_idgloss_string = ''
-                    if lemma_idgloss_string != new_value and new_value != 'None' and new_value != '':
+                    if lemma_idgloss_string != new_value and new_value not in ['None', '']:
                         error_string = 'ERROR: Attempt to update Lemma ID Gloss translations: ' + new_value
                         if error:
                             error.append(error_string)
@@ -1799,7 +1795,7 @@ def import_csv_lemmas(request):
             try:
                 pk, fieldname = key.split('.')
 
-            #In case there's no dot, this is not a value we set in the proposed changes
+            # In case there's no dot, this is not a value we set in the proposed changes
             except ValueError:
                 # when the database token csrfmiddlewaretoken is passed, there is no dot
                 continue
@@ -1964,7 +1960,7 @@ def add_image(request):
 
             # construct a filename for the image, use sn
             # if present, otherwise use idgloss+gloss id
-            if gloss.sn != None:
+            if gloss.sn is not None:
                 imagefile.name = str(gloss.sn) + extension
             else:
                 imagefile.name = gloss.idgloss + "-" + str(gloss.pk) + extension
@@ -2466,7 +2462,7 @@ def show_unassigned_glosses(request):
     if request.method == 'POST':
         dataset_select_prefix = "sign-language__"
         for key, new_value in request.POST.items():
-            if key.startswith(dataset_select_prefix) and new_value != "":
+            if key.startswith(dataset_select_prefix) and new_value:
                 try:
                     signlanguage_id = key[len(dataset_select_prefix):]
                     dataset_id = int(new_value)
@@ -2974,9 +2970,7 @@ def import_csv_create_sentences(request):
                     break
                 if seen_datasets:
                     # already seen a dataset
-                    if dataset in seen_datasets:
-                        pass
-                    else:
+                    if dataset not in seen_datasets:
                         # seen more than one dataset
                         # e4 = 'You are attempting to modify two datasets.'
 

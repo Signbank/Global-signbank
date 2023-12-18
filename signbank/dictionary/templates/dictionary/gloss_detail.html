@@ -889,29 +889,22 @@ option:not(:checked) {
                     {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
                 </th>
                 <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}' colspan="2">{{annotation_idgloss_translation}}</td>
+            </tr>
+            <tr>
+                <th></th>
                 <td>
-                    {% if gloss.simultaneous_morphology.all.count > 0 %}
 
-                        {% if gloss.simultaneous_morphology.all.count > 2 %}
-                        <span class="gloss_detail_morpheme">({{gloss.simultaneous_morphology.all.count}} morphemes)</span>
-                        {% else %}
-                            <!-- Number of morphemes is [1-2] -->
-                            {% for morphdef in gloss.simultaneous_morphology.all %}
-                            <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef.morpheme.pk %}'>
-                                {% value morphdef.morpheme|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %}, {% endif %}
-                            </span>
-                            {% endfor %}
-                        {% endif %}
+                {% for morphdef_id, morphdef_display in simultaneous_morphology_display %}
+                <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef_id %}'>
+                    {{morphdef_display}}</a>{% if not forloop.last %}, {% endif %}
+                </span>
+                {% endfor %}
 
-                    {% endif %}
-
-                    {% if gloss.parent_glosses.all.count > 0 %}
-                    {% for component in gloss.parent_glosses.all|dictsort:"role" %}
-                    <span class="gloss_detail_component"><a href='{% url "dictionary:admin_gloss_view" pk=component.morpheme.pk %}'>
-                        {% value component.morpheme|get_annotation_idgloss_translation:lang %}</a>{% if not forloop.last %} + {% endif %}
-                    </span>
-                    {% endfor %}
-                    {% endif %}
+                {% for component_id, component_display in sequential_morphology_display %}
+                <span class="gloss_detail_component"><a href='{% url "dictionary:admin_gloss_view" pk=component_id %}'>
+                    {{component_display}}</a>{% if not forloop.last %} + {% endif %}
+                </span>
+                {% endfor %}
                 </td>
             </tr>
             {% endfor %}

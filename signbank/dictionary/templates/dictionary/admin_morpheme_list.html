@@ -200,16 +200,20 @@ function clearForm() {
      $('.js-example-basic-multiple').val(null).trigger('change');
      $("input[name='translation']").val('');
      $("input[name='search']").val('');
+     $('#format').val('');
+     $('#do_morpheme_search').val('');
 }
 
 function do_adminsearch(el) {
     $('#do_morpheme_search').val('OK');
+    $('#format').val('');
     $("#adminsearch").attr('action', '{{PREFIX_URL}}/morphemes/search/');
     document.getElementById('adminsearch').submit();
 }
 
 function do_export_csv(e1) {
   $('#format').val('CSV');
+  $('#do_morpheme_search').val('');
   $("#adminsearch").attr('action', '{{PREFIX_URL}}/morphemes/search/');
   document.getElementById('adminsearch').submit();
 }
