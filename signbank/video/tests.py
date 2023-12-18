@@ -4,12 +4,14 @@ from unittest.mock import patch
 from django.core.files import File
 from django.core.management import call_command
 from django.conf import settings
-from signbank import settings
+from signbank.settings.base import *
 from signbank.video.models import Video, GlossVideo
 from signbank.video.management.commands import remove_unused
 from io import StringIO
-import os, shutil
+import os
+import shutil
 import sys
+
 
 class CommandTests(unittest.TestCase):
 
@@ -42,18 +44,18 @@ class CommandTests(unittest.TestCase):
         args = ['image']
         kwargs = {'stdout': out}
         call_command('remove_unused', *args, **kwargs)
-        self.assertEquals(out.getvalue(), "Wrong argument: try 'video' or 'other_media'\n")
+        self.assertEqual(out.getvalue(), "Wrong argument: try 'video' or 'other_media'\n")
 
     def test_find_unused_files(self):
         """Check if right files are found to be removed"""
 
         # Make test folder + files
-        some_folder_path = os.path.join("../writable", "somefolder")
+        some_folder_path = os.path.join(settings.WRITABLE_FOLDER, "somefolder")
         if not os.path.exists(some_folder_path):
             os.mkdir(some_folder_path)
-        glossvideofile = open("../writable/somefolder/fileNOTindb.txt", "a")    # file that is not in database
+        glossvideofile = open(some_folder_path+os.sep+"fileNOTindb.txt", "a")    # file that is not in database
         glossvideofile.close()
-        glossvideofile2 = open("../writable/somefolder/fileindb.txt", "a")      # file that is in database
+        glossvideofile2 = open(some_folder_path+os.sep+"fileindb.txt", "a")      # file that is in database
         glossvideofile2.close()
 
         # files in database
@@ -62,7 +64,8 @@ class CommandTests(unittest.TestCase):
         # compare test files with db filenames
         unused_files_found = remove_unused.find_unused_files(self, some_folder_path, filenames_in_db)
 
-        self.assertEquals(unused_files_found, ["fileNOTindb.txt"])
+        self.assertEqual(unused_files_found, ["fileNOTindb.txt"])
+
 
 class VideoTests(unittest.TestCase):
     # These tests are causing UnicodeDecodeError errors.
@@ -78,7 +81,7 @@ class VideoTests(unittest.TestCase):
     #     vid = Video.objects.create(videofile=self.videofile)
     #
     #     # new file should be located in upload
-    #     self.assertEquals(os.path.dirname(vid.videofile.name), settings.VIDEO_UPLOAD_LOCATION)
+    #     self.assertEqual(os.path.dirname(vid.videofile.name), settings.VIDEO_UPLOAD_LOCATION)
     #     self.assertTrue(os.path.exists(vid.videofile.path), "vidfile doesn't exist at %s" % (vid.videofile.path,))
     #
     #     # test deletion of files
