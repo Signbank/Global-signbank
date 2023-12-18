@@ -885,7 +885,8 @@ option:not(:checked) {
             {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
             <tr>
                 <th>
-                    {% trans "Annotation ID Gloss" %} ({{lang}})
+                    {% trans "Annotation ID Gloss" %}
+                    {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
                 </th>
                 <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}' colspan="2">{{annotation_idgloss_translation}}</td>
             </tr>
