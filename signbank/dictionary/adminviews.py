@@ -823,7 +823,7 @@ class GlossDetailView(DetailView):
 
         dataset_of_requested_gloss = self.object.lemma.dataset
         datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
-                                                      Dataset, accept_global_perms=False, any_perm=True)
+                                                      Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
@@ -1295,7 +1295,7 @@ class GlossDetailView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated:
-                qs = get_objects_for_user(user, ['view_dataset', 'can_view_dataset'], Dataset, accept_global_perms=False, any_perm=True)
+                qs = get_objects_for_user(user, ['view_dataset', 'can_view_dataset'], Dataset, accept_global_perms=True, any_perm=True)
                 dataset_choices = {}
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
@@ -1417,7 +1417,7 @@ class GlossVideosView(DetailView):
 
         dataset_of_requested_gloss = self.object.lemma.dataset
         datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
-                                                      Dataset, accept_global_perms=False, any_perm=True)
+                                                      Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
@@ -1553,7 +1553,7 @@ class GlossRelationsDetailView(DetailView):
 
         dataset_of_requested_gloss = self.object.lemma.dataset
         datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
-                                                      Dataset, accept_global_perms=False, any_perm=True)
+                                                      Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
@@ -2935,7 +2935,7 @@ class GlossFrequencyView(DetailView):
 
         dataset_of_requested_gloss = self.object.lemma.dataset
         datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
-                                                      Dataset, accept_global_perms=False, any_perm=True)
+                                                      Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
@@ -3013,7 +3013,7 @@ class GlossFrequencyView(DetailView):
             user = self.request.user
             if user.is_authenticated:
                 qs = get_objects_for_user(user, ['view_dataset', 'can_view_dataset'],
-                                          Dataset, accept_global_perms=False, any_perm=True)
+                                          Dataset, accept_global_perms=True, any_perm=True)
                 dataset_choices = {}
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
@@ -3162,7 +3162,7 @@ class LemmaFrequencyView(DetailView):
             user = self.request.user
             if user.is_authenticated:
                 qs = get_objects_for_user(user, ['view_dataset', 'can_view_dataset'],
-                                          Dataset, accept_global_perms=False, any_perm=True)
+                                          Dataset, accept_global_perms=True, any_perm=True)
                 dataset_choices = {}
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
@@ -3583,7 +3583,7 @@ class DatasetListView(ListView):
         # make sure the user can write to this dataset
         from guardian.shortcuts import get_objects_for_user, assign_perm
         user_view_datasets = get_objects_for_user(self.request.user, ['view_dataset', 'can_view_dataset'],
-                                                  Dataset, accept_global_perms=False, any_perm=True)
+                                                  Dataset, accept_global_perms=True, any_perm=True)
         may_request_dataset = True
         if dataset_object.is_public and not dataset_object in user_view_datasets:
             # the user currently has no view permission for the requested dataset
@@ -4620,7 +4620,7 @@ class DatasetFrequencyView(DetailView):
 
         dataset = self.object
         datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
-                                                      Dataset, accept_global_perms=False, any_perm=True)
+                                                      Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset not in datasets_user_can_view:
                 translated_message = _('You do not have permission to view this corpus.')
