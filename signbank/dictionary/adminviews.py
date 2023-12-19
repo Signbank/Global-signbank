@@ -1,49 +1,30 @@
-import json
 
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
-from django.db.models import Q, F, ExpressionWrapper, IntegerField, Count
-from django.db.models import CharField, TextField, Value as V
+from django.db.models import F, ExpressionWrapper, IntegerField, Count
 from django.db.models import OuterRef, Subquery
 from django.db.models.query import QuerySet
-from django.db.models.functions import Concat
-from django.db.models.fields import BooleanField, BooleanField
-from django.utils.functional import cached_property
+from django.db.models.fields import BooleanField
 from django.db.models.sql.where import NothingNode, WhereNode
 from django.http import HttpResponse, HttpResponseRedirect, \
     QueryDict, JsonResponse, StreamingHttpResponse
-from django.template import RequestContext
-from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from django.core.paginator import Paginator
 from django.utils.translation import override, gettext_lazy as _, activate
-from django.utils.html import escape
-from django.forms.fields import ChoiceField
 from django.shortcuts import *
 from django.contrib import messages
 from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
-from signbank.dictionary.templatetags.field_choice import get_field_choice
 from django.contrib.auth.models import User, Group
 
 import csv
-import operator
-import re
-import xml.etree.ElementTree as ET
-from xml.dom import minidom
-import datetime as DT
 from guardian.core import ObjectPermissionChecker
 from guardian.shortcuts import get_objects_for_user
 
-from signbank.dictionary.models import *
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForObjectForm
 from tagging.models import Tag, TaggedItem
-from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, \
-    LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP, LANGUAGES, LANGUAGES_LANGUAGE_CODE_3CHAR
-from signbank.settings import server_specific
 from signbank.settings.server_specific import *
 
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
@@ -53,16 +34,14 @@ from signbank.dictionary.field_choices import get_static_choice_lists, get_frequ
     fields_to_categories, fields_to_fieldcategory_dict
 
 from signbank.dictionary.forms import *
-from django.forms import TypedMultipleChoiceField, ChoiceField
-from signbank.dictionary.update import upload_metadata
 from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, \
     construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses, \
     searchform_panels, map_search_results_to_gloss_list, \
     get_interface_language_and_default_language_codes
-from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist, \
-    csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row, csv_header_row_lemmalist, csv_lemma_to_row,
+from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
+                                    csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
+                                    csv_header_row_lemmalist, csv_lemma_to_row,
                                     csv_header_row_minimalpairslist, csv_focusgloss_to_minimalpairs)
-from signbank.dictionary.update_senses_mapping import delete_empty_senses
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
 from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
@@ -113,7 +92,7 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
             elif getattr_sOrder.machine_value in [0,1]:
                 return (True, dict(tpList)[getattr_sOrder.machine_value])
             else:
-                return(bReversed, dict(tpList)[getattr(x, sOrder).machine_value])
+                return (bReversed, dict(tpList)[getattr(x, sOrder).machine_value])
 
         return sorted(qs, key=lambda x: lambda_sort_tuple(x, bReversed), reverse=bReversed)
 
@@ -808,7 +787,7 @@ class GlossDetailView(DetailView):
     def get_template_names(self):
         return ['dictionary/gloss_detail.html']
 
-    #Overriding the get method get permissions right
+    # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
         # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -876,7 +855,7 @@ class GlossDetailView(DetailView):
             # somehow this gets mis-matched
             reorder_senses(self.object)
         context = self.get_context_data(object=self.object)
-        return self.render_to_response(context)
+        return self.render_to_response(context, **kwargs)
 
     def get_context_data(self, **kwargs):
         if 'search_results' in self.request.session.keys():
@@ -1041,16 +1020,10 @@ class GlossDetailView(DetailView):
                         continue
 
                     # Take the human value in the language we are using
-                    field_value = getattr(gl,field)
+                    field_value = getattr(gl, field)
                     if isinstance(field_value, FieldChoice) or isinstance(field_value, Handshape):
-                        if field_value:
-                            # this is a FieldChoice object
-                            human_value = field_value.name
-                        else:
-                            # if this is a field choice field, it is empty
-                            human_value = field_value
+                        human_value = field_value.name if field_value else field_value
                     else:
-                        # otherwise, it's not a fieldchoice
                         # take care of different representations of empty text in database
                         if fieldname_to_kind(field) == 'text' and (field_value is None or field_value in ['-',' ','------','']):
                             human_value = ''
@@ -1149,7 +1122,8 @@ class GlossDetailView(DetailView):
 
             context['other_media'].append([media_okay, other_media.pk, path, file_type, human_value_media_type, other_media.alternative_gloss, other_media_filename])
 
-            # Save the other_media_type choices (same for every other_media, but necessary because they all have other ids)
+            # Save the other_media_type choices (same for every other_media,
+            # but necessary because they all have other ids)
             context['other_media_field_choices'][
                 'other-media-type_' + str(other_media.pk)] = choicelist_queryset_to_translated_dict(other_media_type_choice_list)
 
@@ -1157,23 +1131,18 @@ class GlossDetailView(DetailView):
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
-        try:
-            lemma_group_count = gl.lemma.gloss_set.count()
-            if lemma_group_count > 1:
-                context['lemma_group'] = True
-                lemma_group_url_params = {'search_type': 'sign', 'view_type': 'lemma_groups'}
-                for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
-                    lang_code_2char = lemmaidglosstranslation.language.language_code_2char
-                    lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
-                from urllib.parse import urlencode
-                url_query = urlencode(lemma_group_url_params)
-                url_query = ("?" + url_query) if url_query else ''
-                context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
-            else:
-                context['lemma_group'] = False
-                context['lemma_group_url'] = ''
-        except:
-            print("lemma_group_count: except")
+        lemma_group = gl.lemma.gloss_set.all()
+        if lemma_group.count() > 1:
+            context['lemma_group'] = True
+            lemma_group_url_params = {'search_type': 'sign', 'view_type': 'lemma_groups'}
+            for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
+                lang_code_2char = lemmaidglosstranslation.language.language_code_2char
+                lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
+            from urllib.parse import urlencode
+            url_query = urlencode(lemma_group_url_params)
+            url_query = ("?" + url_query) if url_query else ''
+            context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
+        else:
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
@@ -1243,18 +1212,9 @@ class GlossDetailView(DetailView):
             for d in gloss_dialects:
                 gl.dialect.add(d)
 
-        gloss_semanticfields = []
-        for sf in gl.semField.all():
-            gloss_semanticfields.append(sf)
+        context['gloss_semanticfields'] = list(gl.semField.all())
 
-        context['gloss_semanticfields'] = gloss_semanticfields
-
-
-        gloss_derivationhistory = []
-        for sf in gl.derivHist.all():
-            gloss_derivationhistory.append(sf)
-
-        context['gloss_derivationhistory'] = gloss_derivationhistory
+        context['gloss_derivationhistory'] = list(gl.derivHist.all())
 
         simultaneous_morphology = []
         if gl.simultaneous_morphology:
@@ -1365,11 +1325,11 @@ class GlossDetailView(DetailView):
         request.session.modified = True
         return redirect(settings.PREFIX_URL + '/signs/search/?query')
 
-    def render_to_response(self, context):
+    def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'Copy':
             return self.copy_gloss(context)
         else:
-            return super(GlossDetailView, self).render_to_response(context)
+            return super(GlossDetailView, self).render_to_response(context, **response_kwargs)
 
     def copy_gloss(self, context):
         gl = context['gloss']
@@ -1686,30 +1646,24 @@ class GlossRelationsDetailView(DetailView):
 
         context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
-        try:
-            lemma_group_count = gl.lemma.gloss_set.count()
-            if lemma_group_count > 1:
-                context['lemma_group'] = True
-                lemma_group_url_params = {'search_type': 'sign', 'view_type': 'lemma_groups'}
-                for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
-                    lang_code_2char = lemmaidglosstranslation.language.language_code_2char
-                    lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
-                from urllib.parse import urlencode
-                url_query = urlencode(lemma_group_url_params)
-                url_query = ("?" + url_query) if url_query else ''
-                context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
-            else:
-                context['lemma_group'] = False
-                context['lemma_group_url'] = ''
-        except:
+        lemma_group = gl.lemma.gloss_set.all()
+        if lemma_group.count() > 1:
+            context['lemma_group'] = True
+            lemma_group_url_params = {'search_type': 'sign', 'view_type': 'lemma_groups'}
+            for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
+                lang_code_2char = lemmaidglosstranslation.language.language_code_2char
+                lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
+            from urllib.parse import urlencode
+            url_query = urlencode(lemma_group_url_params)
+            url_query = ("?" + url_query) if url_query else ''
+            context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
+        else:
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
-        lemma_group_glosses = gl.lemma.gloss_set.all()
         glosses_in_lemma_group = []
-
-        if lemma_group_glosses:
-            for gl_lem in lemma_group_glosses:
+        if lemma_group:
+            for gl_lem in lemma_group:
                 # This display is set to the default language for the dataset of this gloss
                 gl_lem_display = gl_lem.annotation_idgloss(gl_lem.lemma.dataset.default_language.language_code_2char)
                 glosses_in_lemma_group.append((gl_lem, gl_lem_display))
@@ -2045,7 +1999,7 @@ class HandshapeDetailView(DetailView):
         verbose_name_plural = "Handshapes"
         ordering = ['machine_value']
 
-    #Overriding the get method get permissions right
+    # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
         # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -2074,11 +2028,7 @@ class HandshapeDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
 
-        try:
-            context = super(HandshapeDetailView, self).get_context_data(**kwargs)
-        except:
-            # return custom template
-            return HttpResponse('invalid', {'content-type': 'text/plain'})
+        context = super(HandshapeDetailView, self).get_context_data(**kwargs)
 
         hs = context['handshape']
         context['active_id'] = hs.machine_value
@@ -2192,7 +2142,7 @@ class SemanticFieldDetailView(DetailView):
     class Meta:
         ordering = ['name']
 
-    #Overriding the get method get permissions right
+    # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
         # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -2220,11 +2170,7 @@ class SemanticFieldDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
 
-        try:
-            context = super(SemanticFieldDetailView, self).get_context_data(**kwargs)
-        except:
-            # return custom template
-            return HttpResponse('invalid', {'content-type': 'text/plain'})
+        context = super(SemanticFieldDetailView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -2303,7 +2249,7 @@ class DerivationHistoryDetailView(DetailView):
     class Meta:
         ordering = ['name']
 
-    #Overriding the get method get permissions right
+    # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
         # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -2331,11 +2277,7 @@ class DerivationHistoryDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
 
-        try:
-            context = super(DerivationHistoryDetailView, self).get_context_data(**kwargs)
-        except:
-            # return custom template
-            return HttpResponse('invalid', {'content-type': 'text/plain'})
+        context = super(DerivationHistoryDetailView, self).get_context_data(**kwargs)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         context['selected_datasets'] = selected_datasets
@@ -2957,7 +2899,7 @@ class GlossFrequencyView(DetailView):
 
     template_name = "dictionary/gloss_frequency.html"
 
-    #Overriding the get method get permissions right
+    # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
         # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -3236,7 +3178,7 @@ class LemmaFrequencyView(DetailView):
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
-            except (ObjectDoesNotExist):
+            except ObjectDoesNotExist:
                 annotation_text = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_text
         if interface_language in context['annotation_idgloss'].keys():
@@ -3245,33 +3187,26 @@ class LemmaFrequencyView(DetailView):
             gloss_idgloss = context['annotation_idgloss'][default_language]
         context['gloss_idgloss'] = gloss_idgloss
 
-        try:
-            lemma_group_count = gl.lemma.gloss_set.count()
-            if lemma_group_count > 1:
-                context['lemma_group'] = True
-                lemma_group_url_params = {'search_type': 'sign', 'view_type': 'lemma_groups'}
-                for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
-                    lang_code_2char = lemmaidglosstranslation.language.language_code_2char
-                    lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
-                from urllib.parse import urlencode
-                url_query = urlencode(lemma_group_url_params)
-                url_query = ("?" + url_query) if url_query else ''
-                context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
-            else:
-                context['lemma_group'] = False
-                context['lemma_group_url'] = ''
-        except:
-            print("lemma_group_count: except")
+        lemma_group = gl.lemma.gloss_set.all()
+        if lemma_group.count() > 1:
+            context['lemma_group'] = True
+            lemma_group_url_params = {'search_type': 'sign', 'view_type': 'lemma_groups'}
+            for lemmaidglosstranslation in gl.lemma.lemmaidglosstranslation_set.prefetch_related('language'):
+                lang_code_2char = lemmaidglosstranslation.language.language_code_2char
+                lemma_group_url_params['lemma_'+lang_code_2char] = '^' + lemmaidglosstranslation.text + '$'
+            from urllib.parse import urlencode
+            url_query = urlencode(lemma_group_url_params)
+            url_query = ("?" + url_query) if url_query else ''
+            context['lemma_group_url'] = reverse_lazy('signs_search') + url_query
+        else:
             context['lemma_group'] = False
             context['lemma_group_url'] = ''
 
-        lemma_group_glosses = gl.lemma.gloss_set.all()
         glosses_in_lemma_group = []
-
         total_occurrences = 0
         data_lemmas = []
-        if lemma_group_glosses:
-            for gl_lem in lemma_group_glosses:
+        if lemma_group:
+            for gl_lem in lemma_group:
                 data_lemmas_dict = {}
                 lemma_dict = {}
                 if gl_lem.dataset:
@@ -3283,7 +3218,8 @@ class LemmaFrequencyView(DetailView):
                 if interface_language_code in lemma_dict.keys():
                     gl_lem_display = lemma_dict[interface_language_code][0].text
                 else:
-                    # This should be set to the default language if the interface language hasn't been set for this gloss
+                    # This should be set to the default language
+                    # if the interface language hasn't been set for this gloss
                     gl_lem_display = lemma_dict[default_language_code][0].text
 
                 glosses_in_lemma_group.append((gl_lem,gl_lem_display))
@@ -4054,7 +3990,7 @@ class DatasetManagerView(ListView):
 
                 send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_object.email])
 
-            except:
+            except (PermissionError, SystemError, OSError):
                 messages.add_message(self.request, messages.ERROR, _('Error assigning view dataset permission to user.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
 
@@ -4093,7 +4029,7 @@ class DatasetManagerView(ListView):
 
                 messages.add_message(self.request, messages.INFO,
                                      _('Change permission for user successfully granted.'))
-            except:
+            except (PermissionError, SystemError, OSError):
                 messages.add_message(self.request, messages.ERROR, _('Error assigning change dataset permission to user.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
@@ -4113,7 +4049,7 @@ class DatasetManagerView(ListView):
                         remove_perm('change_dataset', user_object, dataset_object)
                         messages.add_message(self.request, messages.INFO,
                                              _('View (and change) permission for user successfully revoked.'))
-                    except:
+                    except (PermissionError, SystemError, OSError):
                         messages.add_message(self.request, messages.ERROR,
                                              _('Error revoking view dataset permission for user.'))
 
@@ -4145,7 +4081,7 @@ class DatasetManagerView(ListView):
                             editor_group.save()
                         messages.add_message(self.request, messages.INFO,
                                              _('Change permission for user successfully revoked.'))
-                    except:
+                    except (PermissionError, SystemError, OSError):
                         messages.add_message(self.request, messages.ERROR,
                                              _('Error revoking change dataset permission for user.'))
 
@@ -4154,7 +4090,8 @@ class DatasetManagerView(ListView):
                 messages.add_message(self.request, messages.ERROR, _('User currently has no permission to change this dataset.'))
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
 
-        # the code doesn't seem to get here. if somebody puts something else in the url (else case), there is no (hidden) csrf token.
+        # the code doesn't seem to get here. if somebody puts something else in the url (else case),
+        # there is no (hidden) csrf token.
         messages.add_message(self.request, messages.ERROR, _('Unrecognised argument to dataset manager url.'))
         return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
@@ -4220,7 +4157,7 @@ class DatasetManagerView(ListView):
             else:
                 row.append(gloss_image_path)
 
-            #Make it safe for weird chars
+            # Make it safe for weird chars
             safe_row = []
             for column in row:
                 try:
@@ -4281,6 +4218,7 @@ class DatasetManagerView(ListView):
             # User is not authenticated
             return None
 
+
 class DatasetDetailView(DetailView):
     model = Dataset
     context_object_name = 'dataset'
@@ -4289,7 +4227,7 @@ class DatasetDetailView(DetailView):
     # set the default dataset, this should not be empty
     dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
 
-    #Overriding the get method get permissions right
+    # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
         # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -4657,7 +4595,7 @@ class DatasetFrequencyView(DetailView):
     template_name = 'dictionary/dataset_frequency.html'
     dataset_name = ''
 
-    #Overriding the get method get permissions right
+    # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
         # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
@@ -5256,11 +5194,9 @@ class MorphemeDetailView(DetailView):
         bad_dialect = False
         morpheme_dialects = []
 
-        try:
-            gloss_signlanguage = gl.lemma.dataset.signlanguage
-        except:
-            gloss_signlanguage = None
-            # this is needed to catch legacy code
+        # this is needed to catch legacy code
+        gloss_signlanguage = gl.lemma.dataset.signlanguage if gl.lemma and gl.lemma.dataset else None
+
         initial_gloss_dialects = gl.dialect.all()
         if gloss_signlanguage:
             gloss_dialect_choices = Dialect.objects.filter(signlanguage=gloss_signlanguage)
@@ -6492,6 +6428,7 @@ class LemmaUpdateView(UpdateView):
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
+
 
 class LemmaDeleteView(DeleteView):
     model = LemmaIdgloss
