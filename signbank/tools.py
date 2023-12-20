@@ -1610,14 +1610,10 @@ def get_datasets_with_public_glosses():
     return datasets_with_public_glosses
 
 
-def get_selected_datasets_for_user(user, readonly=False):
+def get_selected_datasets_for_user(user):
     if user.is_authenticated:
         user_profile = UserProfile.objects.get(user=user)
-        viewable_datasets = get_objects_for_user(user, ['view_dataset', 'can_view_dataset'], Dataset, any_perm=True)
         selected_datasets = user_profile.selected_datasets.all()
-        return selected_datasets & viewable_datasets  # intersection of the selected and viewable datasets
-    elif readonly:
-        selected_datasets = Dataset.objects.all()
         return selected_datasets
     else:
         # Make sure a non-empty set is returned, for anonymous users when no datasets are public
