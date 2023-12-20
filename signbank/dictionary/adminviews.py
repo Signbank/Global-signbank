@@ -203,6 +203,19 @@ def error_message_regular_expression(request, search_fields, field_values):
     return
 
 
+def show_warning(request, translated_message, selected_datasets):
+    # this function is used by the get methods of detail views below
+    dataset_languages = get_dataset_languages(selected_datasets)
+    show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+    messages.add_message(request, messages.ERROR, translated_message)
+    return render(request, 'dictionary/warning.html',
+                  {'dataset_languages': dataset_languages,
+                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+
+
 class Echo:
     """An object that implements just the write method of the file-like
     interface. This is based on an example in the Django 4.2 documentation
@@ -789,31 +802,17 @@ class GlossDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
+
         if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested gloss has no lemma or dataset.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         if not request.user.is_authenticated:
             if self.object.inWeb:
@@ -827,23 +826,14 @@ class GlossDetailView(DetailView):
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            return show_warning(request, translated_message, selected_datasets)
+
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 translated_message = _('The gloss you are trying to view is not in a dataset you can view.')
-                return render(request, 'dictionary/warning.html',
-                              {'warning': translated_message,
-                               'dataset_languages': dataset_languages,
-                               'selected_datasets': selected_datasets,
-                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                return show_warning(request, translated_message, selected_datasets)
 
         senses_consistent = consistent_senses(self.object, include_translations=True,
                                               allow_empty_language=True)
@@ -855,7 +845,7 @@ class GlossDetailView(DetailView):
             # somehow this gets mis-matched
             reorder_senses(self.object)
         context = self.get_context_data(object=self.object)
-        return self.render_to_response(context, **kwargs)
+        return self.render_to_response(context)
 
     def get_context_data(self, **kwargs):
         if 'search_results' in self.request.session.keys():
@@ -1184,16 +1174,10 @@ class GlossDetailView(DetailView):
         bad_dialect = False
         gloss_dialects = []
 
-        try:
-            gloss_signlanguage = gl.lemma.dataset.signlanguage
-        except (ObjectDoesNotExist, NothingNode):
-            gloss_signlanguage = None
-            # this is needed to catch legacy code
+        gloss_signlanguage = gl.lemma.dataset.signlanguage if gl.lemma and gl.lemma.dataset else None
+
         initial_gloss_dialects = gl.dialect.all()
-        if gloss_signlanguage:
-            gloss_dialect_choices = Dialect.objects.filter(signlanguage=gloss_signlanguage)
-        else:
-            gloss_dialect_choices = []
+        gloss_dialect_choices = list(Dialect.objects.filter(signlanguage=gloss_signlanguage))
 
         for gd in initial_gloss_dialects:
             if gd in gloss_dialect_choices:
@@ -1383,31 +1367,17 @@ class GlossVideosView(DetailView):
     template_name = 'dictionary/gloss_videos.html'
 
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
+
         if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested gloss has no lemma or dataset.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         if not request.user.is_authenticated:
             if self.object.inWeb:
@@ -1421,23 +1391,14 @@ class GlossVideosView(DetailView):
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            return show_warning(request, translated_message, selected_datasets)
+
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 translated_message = _('The gloss you are trying to view is not in a dataset you can view.')
-                return render(request, 'dictionary/warning.html',
-                              {'warning': translated_message,
-                               'dataset_languages': dataset_languages,
-                               'selected_datasets': selected_datasets,
-                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -1519,31 +1480,17 @@ class GlossRelationsDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
+
         if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested gloss has no lemma or dataset.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         if not request.user.is_authenticated:
             if self.object.inWeb:
@@ -1557,23 +1504,14 @@ class GlossRelationsDetailView(DetailView):
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            return show_warning(request, translated_message, selected_datasets)
+
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 translated_message = _('The gloss you are trying to view is not in a dataset you can view.')
-                return render(request, 'dictionary/warning.html',
-                              {'warning': translated_message,
-                               'dataset_languages': dataset_languages,
-                               'selected_datasets': selected_datasets,
-                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -2001,12 +1939,7 @@ class HandshapeDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         match_machine_value = int(kwargs['pk'])
         try:
@@ -2016,12 +1949,7 @@ class HandshapeDetailView(DetailView):
         except (Http404, ObjectDoesNotExist):
             # The handshape machine value does not exist as a Handshape
             translated_message = _('Handshape not configured.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -2144,12 +2072,7 @@ class SemanticFieldDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         # Get the machine value in the URL
         match_machine_value = int(kwargs['pk'])
@@ -2158,12 +2081,7 @@ class SemanticFieldDetailView(DetailView):
         except ObjectDoesNotExist:
             # No SemanticField exists for this machine value
             translated_message = _('SemanticField not configured for this machine value.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -2251,12 +2169,7 @@ class DerivationHistoryDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         # Get the machine value in the URL
         match_machine_value = int(kwargs['pk'])
@@ -2265,12 +2178,7 @@ class DerivationHistoryDetailView(DetailView):
         except ObjectDoesNotExist:
             # No DerivationHistory exists for this machine value
             translated_message = _('DerivationHistory not configured for this machine value.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -2901,31 +2809,17 @@ class GlossFrequencyView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
+
         if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested gloss has no lemma or dataset.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         if not request.user.is_authenticated:
             if self.object.inWeb:
@@ -2939,23 +2833,14 @@ class GlossFrequencyView(DetailView):
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            return show_warning(request, translated_message, selected_datasets)
+
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
-                return HttpResponseRedirect(reverse('dictionary:public_gloss',kwargs={'glossid':self.object.pk}))
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 translated_message = _('The gloss you are trying to view is not in a dataset you can view.')
-                return render(request, 'dictionary/warning.html',
-                              {'warning': translated_message,
-                               'dataset_languages': dataset_languages,
-                               'selected_datasets': selected_datasets,
-                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -4229,23 +4114,13 @@ class DatasetDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested dataset does not exist.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -4597,23 +4472,13 @@ class DatasetFrequencyView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested dataset does not exist.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         if not request.user.is_authenticated:
             return HttpResponseRedirect(reverse('registration:login'))
@@ -4623,21 +4488,12 @@ class DatasetFrequencyView(DetailView):
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset not in datasets_user_can_view:
-                translated_message = _('You do not have permission to view this corpus.')
-                return render(request, 'dictionary/warning.html',
-                              {'warning': translated_message,
-                               'dataset_languages': dataset_languages,
-                               'selected_datasets': selected_datasets,
-                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            translated_message = _('You do not have permission to view this corpus.')
+            return show_warning(request, translated_message, selected_datasets)
+
         if dataset not in selected_datasets:
             translated_message = _('Please select the dataset first to view its corpus.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -4954,31 +4810,17 @@ class MorphemeDetailView(DetailView):
     # Overriding the get method get permissions right
 
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         try:
             self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested morpheme does not exist.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
+
         if not self.object.lemma or not self.object.lemma.dataset:
             translated_message = _('Requested morpheme has no lemma or dataset.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         if not request.user.is_authenticated:
             if self.object.inWeb:
@@ -4992,20 +4834,11 @@ class MorphemeDetailView(DetailView):
 
         if dataset_of_requested_morpheme not in selected_datasets:
             translated_message = _('The morpheme you are trying to view is not in your selected datasets.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            return show_warning(request, translated_message, selected_datasets)
+
         if dataset_of_requested_morpheme not in datasets_user_can_view:
             translated_message = _('The morpheme you are trying to view is not in a dataset you can view.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -6123,12 +5956,7 @@ class LemmaCreateView(CreateView):
                     dataset=dataset)
                 if len(lemmas_for_this_language_and_annotation_idgloss) != 0:
                     translated_message = _('Lemma ID Gloss is not unique for that language.')
-                    return render(request, 'dictionary/warning.html',
-                                  {'warning': translated_message,
-                                   'dataset_languages': dataset_languages,
-                                   'selected_datasets': selected_datasets,
-                                   'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                                   'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                    return show_warning(request, translated_message, selected_datasets)
 
         if form.is_valid():
             try:
@@ -6141,10 +5969,10 @@ class LemmaCreateView(CreateView):
                                                                  languages=dataset_languages,
                                                                  user=request.user,
                                                                  last_used_dataset=self.last_used_dataset),
-                                                                     'dataset_languages': dataset_languages,
-                                                                     'selected_datasets': get_selected_datasets_for_user(request.user),
-                                                                     'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                                                                     'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                               'dataset_languages': dataset_languages,
+                               'selected_datasets': get_selected_datasets_for_user(request.user),
+                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
             # return HttpResponseRedirect(reverse('dictionary:admin_lemma_list', kwargs={'pk': lemma.id}))
             return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
@@ -6153,7 +5981,7 @@ class LemmaCreateView(CreateView):
                                                              'dataset_languages': dataset_languages,
                                                              'selected_datasets': get_selected_datasets_for_user(request.user),
                                                              'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                                                             'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                                                             'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
 
 def create_lemma_for_gloss(request, glossid):
@@ -6296,12 +6124,8 @@ class LemmaUpdateView(UpdateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        # set context variables for warning.html
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
 
         instance = self.get_object()
         dataset = instance.dataset
@@ -6322,12 +6146,7 @@ class LemmaUpdateView(UpdateView):
                             if nextLemma.id != instance.id:
                                 # found a different lemma with same translation
                                 translated_message = _('Lemma ID Gloss is not unique for that language.')
-                                return render(request, 'dictionary/warning.html',
-                                              {'warning': translated_message,
-                                               'dataset_languages': dataset_languages,
-                                               'selected_datasets': selected_datasets,
-                                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+                                return show_warning(request, translated_message, selected_datasets)
 
                 else:
                     # intent to set lemma translation to empty
@@ -6376,31 +6195,18 @@ class LemmaUpdateView(UpdateView):
             return HttpResponseRedirect(reverse_lazy('dictionary:change_lemma', kwargs={'pk': instance.id}))
 
     def get(self, request, *args, **kwargs):
-        # set the context parameters for warning.html
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
 
-        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
-        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         try:
             self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested lemma does not exist.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
+
         if not self.object.dataset:
             translated_message = _('Requested lemma has no dataset.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+            return show_warning(request, translated_message, selected_datasets)
 
         if not request.user.is_authenticated:
             return HttpResponseRedirect(reverse('registration:login'))
@@ -6411,20 +6217,11 @@ class LemmaUpdateView(UpdateView):
 
         if dataset_of_requested_lemma not in selected_datasets:
             translated_message = _('The lemma you are trying to view is not in your selected datasets.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            return show_warning(request, translated_message, selected_datasets)
+
         if dataset_of_requested_lemma not in datasets_user_can_view:
             translated_message = _('The lemma you are trying to view is not in a dataset you can view.')
-            return render(request, 'dictionary/warning.html',
-                          {'warning': translated_message,
-                           'dataset_languages': dataset_languages,
-                           'selected_datasets': selected_datasets,
-                           'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
-                           'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+            return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)

@@ -32,7 +32,7 @@ def consistent_senses(gloss, include_translations=False, allow_empty_language=Fa
                 continue
             if allow_empty_language and not sense_translation:
                 continue
-            translations = sense_translation.translations.all().order_by('orderIndex', 'index')
+            translations = sense_translation.translations.all()
             if settings.DEBUG_SENSES:
                 for t in translations:
                     print("'gloss': ", str(gloss.id), ", 'sense': ", str(order),
@@ -96,7 +96,7 @@ def reorder_translations(gloss_sense, order):
         wrong_gloss_translations = []
         wrong_language_translations = []
         wrong_order_index_translations = []
-        for trans in sensetranslation.translations.all().order_by('index'):
+        for trans in sensetranslation.translations.all():
             this_trans_okay = True
             if trans.gloss != gloss:
                 # trans.gloss does not match this gloss
@@ -161,7 +161,7 @@ def reorder_sensetranslations(gloss, sensetranslation, order, reset=False, force
     wrong_gloss_translations = []
     wrong_language_translations = []
     wrong_order_index_translations = []
-    for trans in sensetranslation.translations.all().order_by('index'):
+    for trans in sensetranslation.translations.all():
         this_trans_okay = True
         if trans.gloss != gloss:
             # trans.gloss does not match this gloss
