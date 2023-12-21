@@ -355,13 +355,12 @@ $(document).ready(function() {
 <script type='text/javascript'>
 
 function clearForm() {
-
       $('input').each(function() {
         var this_field = $(this).attr('name');
         if (this_field == undefined) { return; };
         if (this_field == 'morpheme') { $(this).attr('value', ""); return; };
         var this_type = $(this).attr('type');
-        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio') { return; };
+        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio' || this_type == 'button') { return; };
         if (this_type == 'date') {
             $(this).attr('value', "");
         } else {
@@ -420,7 +419,6 @@ function do_sort_column(field_name, action, frmName) {
  */
 function do_adminsearch(el) {
  var sSearchType = $(el).attr('value');
-  $("#adminsearch input[name='search_type']").val(sSearchType);
   switch(sSearchType) {
     case "sign":
         $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/search/');
@@ -635,9 +633,14 @@ function do_toggle_language(el) {
 {{ form.media.css }}
 {{ form.media.js }}
 
-<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/search'>
+<form id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/search'>
 {% csrf_token %}
 <div class="panel panel-default">
+    <input type='hidden' id='export_format' name='export_format' value="">
+
+    <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
+    <input type="submit" onclick="do_adminsearch(this);" name="search_type" value="sign"
+           style="visibility: hidden;">
     <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
             {% if USE_REGULAR_EXPRESSIONS %}
             <span class="hasTooltip">
@@ -893,9 +896,6 @@ function do_toggle_language(el) {
             </ul>
         </div>
 
-        <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
-        <input type="submit" style="visibility: hidden;"/>
-
         {% else %}
         <input class="btn btn-primary" type="submit" value='{% trans "Search Sign" %}'/>
         {% endif %}
@@ -916,7 +916,7 @@ function do_toggle_language(el) {
         <input type='hidden' id='export_ecv' name='export_ecv' value="">
         {% endif %}
         {% endif %}
-        <input class='btn btn-default' type='reset' onclick="clearForm();"
+        <input class='btn btn-default' type='button' onclick="clearForm();"
                value='{% trans "Reset" %}'>
     </div>
 

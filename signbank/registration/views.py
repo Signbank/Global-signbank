@@ -24,6 +24,7 @@ from guardian.shortcuts import assign_perm
 
 import json
 
+
 def activate(request, activation_key, template_name='registration/activate.html'):
     """
     Activates a ``User``'s account, if their key is valid and hasn't
@@ -208,7 +209,7 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
             return HttpResponseRedirect(success_url)
         else:
             # error messages
-            messages.add_message(request, messages.ERROR, ('Error processing your request.'))
+            messages.add_message(request, messages.ERROR, _('Error processing your request.'))
             # for ff in form.visible_fields():
             #     if ff.errors:
             #         print('form error in field ', ff.name, ': ', ff.errors)
@@ -219,8 +220,8 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
     else:
         # this insures that a preselected dataset is available if we got here from Dataset Details
         form = form_class(request=request)
-    return render(request,template_name,{ 'form': form,
-                                          'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface })
+    return render(request,template_name, {'form': form,
+                                          'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
 # a copy of the login view since we need to change the form to allow longer
 # userids (> 30 chars) since we're using email addresses
@@ -243,12 +244,12 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         form = EmailAuthenticationForm(data=request.POST)
         if form.is_valid():
 
-            #Count the number of logins
+            # Count the number of logins
             profile = form.get_user().user_profile_user
             profile.number_of_logins += 1
             profile.save()
 
-            #Expiry date cannot be in the past
+            # Expiry date cannot be in the past
             if profile.expiry_date != None and date.today() > profile.expiry_date:
                 form = EmailAuthenticationForm(request)
                 error_message = _('This account has expired. Please contact o.crasborn@let.ru.nl.')
@@ -296,6 +297,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
         'error_message': error_message})
 mylogin = never_cache(mylogin)
 
+
 def users_without_dataset(request):
     if not request.user.is_superuser:
         return HttpResponse('Unauthorized', status=401)
@@ -320,7 +322,10 @@ def users_without_dataset(request):
     else:
         alert_success = None
 
-    return render (request, 'users_without_dataset.html', {'users_without_dataset':get_users_without_dataset(),'main_dataset_name':main_dataset.name,'alert_success':alert_success})
+    return render(request, 'users_without_dataset.html', {'users_without_dataset': get_users_without_dataset(),
+                                                          'main_dataset_name': main_dataset.name,
+                                                          'alert_success': alert_success})
+
 
 def user_profile(request):
 
@@ -338,7 +343,8 @@ def user_profile(request):
     else:
         delta = None
     selected_datasets = get_selected_datasets_for_user(user)
-    view_permit_datasets = get_objects_for_user(user, 'can_view_dataset', Dataset)
+    view_permit_datasets = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
+                                                Dataset, accept_global_perms=True, any_perm=True)
     change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
     user_has_queries = SearchHistory.objects.filter(user=user).count()
 

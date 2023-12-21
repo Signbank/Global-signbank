@@ -1649,12 +1649,16 @@ def import_csv_lemmas(request):
             delimiter = ','
             delimiter_radio = 'comma'
 
-        keys_found, extra_keys, csv_header, csv_body = split_csv_lines_header_body(dataset_languages, csv_lines,
-                                                                                   delimiter)
+        delimiter_okay, keys_found, extra_keys, csv_header, csv_body = split_csv_lines_header_body(dataset_languages,
+                                                                                                   csv_lines,
+                                                                                                   delimiter)
 
-        if not keys_found:
+        if not keys_found or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
-            feedback_message = _('The required column headers are missing.')
+            if not delimiter_okay:
+                feedback_message = _('The chosen delimiter is not correct.')
+            else:
+                feedback_message = _('The required column headers are missing.')
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_update_lemmas.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
