@@ -181,23 +181,21 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
         else:
             gloss_dict = {'gloss_pk' : str(row_nr + 1), 'dataset': dataset }
             trans_languages = [ l for l in dataset.translation_languages.all() ]
-            annotationidglosstranslation_dict = {}
+            annotationidglosstranslation_dict = dict()
             for language in trans_languages:
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
                 annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % (language_name) ]
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
-
-                if earlier_creation_annotationidgloss and \
-                        language.language_code_2char in earlier_creation_annotationidgloss.keys() and \
+                if language.language_code_2char in earlier_creation_annotationidgloss.keys() and \
                         annotationidglosstranslation_text in earlier_creation_annotationidgloss[language.language_code_2char]:
-                    error_string = 'Row ' + str(row_nr + 1) + ' contains a duplicate Annotation ID Gloss for '+ language_name +'.'
+                    error_string = 'Duplicate Annotation ID Gloss found for '+ language_name +': '+annotationidglosstranslation_text
                     errors_found += [error_string]
 
                 if not earlier_creation_annotationidgloss or (
                         language.language_code_2char not in earlier_creation_annotationidgloss.keys()):
-                    earlier_creation_annotationidgloss[language.language_code_2char] = []
-                earlier_creation_annotationidgloss[language.language_code_2char].append(annotationidglosstranslation_text)
-
+                    earlier_creation_annotationidgloss[language.language_code_2char] = [annotationidglosstranslation_text]
+                else:
+                    earlier_creation_annotationidgloss[language.language_code_2char].append(annotationidglosstranslation_text)
             gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
 
             lemmaidglosstranslation_dict = {}
