@@ -2044,6 +2044,7 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter):
 
     keys_found = False
     extra_keys = False
+    delimiter_okay = True
     csv_header = []
     csv_body = []
     while not keys_found and csv_lines_buffer:
@@ -2052,7 +2053,10 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter):
         first_csv_line, rest_csv_lines = csv_lines_buffer[0], csv_lines_buffer[1:]
 
         row = first_csv_line.strip().split(delimiter)
-
+        if first_csv_line and len(row) < 2:
+            # the row has not been split into columns
+            delimiter_okay = False
+            break
         all_keys_present = True
         for key in required_columns:
             if key not in row:
@@ -2069,7 +2073,7 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter):
             # only record extra keys if this is a header row
             extra_keys = False
             csv_lines_buffer = rest_csv_lines
-    return keys_found, extra_keys, csv_header, csv_body
+    return delimiter_okay, keys_found, extra_keys, csv_header, csv_body
 
 
 def split_csv_lines_sentences_header_body(dataset_languages, csv_lines, delimiter):
