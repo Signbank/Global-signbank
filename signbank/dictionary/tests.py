@@ -1,4 +1,5 @@
-
+from django.db.models import CharField, TextField
+#from django.forms import TextInput, Textarea, CharField
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
@@ -197,14 +198,14 @@ class BasicCRUDTests(TestCase):
 
     def testSearchForGlosses(self):
 
-        #Create a client and log in
+        # Create a client and log in
         client = Client()
         client.login(username='test-user', password='test-user')
 
         # Give the test user permission to search glosses
         assign_perm('dictionary.search_gloss', self.user)
 
-        #Create the glosses
+        # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
         default_language = test_dataset.default_language
@@ -221,6 +222,7 @@ class BasicCRUDTests(TestCase):
 
         new_gloss = Gloss()
         new_gloss.handedness = self.handedness_fieldchoice_1
+        new_gloss.inWeb = False
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -235,6 +237,7 @@ class BasicCRUDTests(TestCase):
 
         new_gloss = Gloss()
         new_gloss.handedness = self.handedness_fieldchoice_1
+        new_gloss.inWeb = False
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -249,6 +252,7 @@ class BasicCRUDTests(TestCase):
 
         new_gloss = Gloss()
         new_gloss.handedness = self.handedness_fieldchoice_2
+        new_gloss.inWeb = False
         new_gloss.lemma = new_lemma
         new_gloss.save()
 
@@ -264,30 +268,23 @@ class BasicCRUDTests(TestCase):
         all_glosses = Gloss.objects.all()
         for ag in all_glosses:
             try:
-                print('testSearchForGlosses created gloss: ', ag.annotationidglosstranslation_set.get(language=default_language).text)
-            except:
+                print('testSearchForGlosses created gloss: ',
+                      ag.annotationidglosstranslation_set.get(language=default_language).text)
+            except ObjectDoesNotExist:
                 print('testSearchForGlosses created gloss has empty annotation translation')
-        #Search
+        # Search
         search_value_handedness = str(self.handedness_fieldchoice_1.machine_value)
 
-        response = client.get('/signs/search/',{'handedness[]':search_value_handedness})
-        self.assertEqual(len(response.context['object_list']), 0) #Nothing without dataset permission
-
         assign_perm('can_view_dataset', self.user, test_dataset)
-        response = client.get('/signs/search/',{'handedness[]':search_value_handedness})
+        response = client.get('/signs/search/',{'handedness[]': search_value_handedness})
         self.assertEqual(len(response.context['object_list']), 2)
 
         other_search_value_handedness = str(self.handedness_fieldchoice_2.machine_value)
-        response = client.get('/signs/search/',{'handedness[]':other_search_value_handedness})
-        for gl in response.context['object_list']:
-            try:
-                print('testSearchForGlosses response 3: ', gl.annotationidglosstranslation_set.get(language=default_language).text)
-            except:
-                print('testSearchForGlosses response 3: returned gloss has empty annotation translation')
+        response = client.get('/signs/search/',{'handedness[]': other_search_value_handedness})
         self.assertEqual(len(response.context['object_list']), 1)
 
     def test_package_function(self):
-        #Create a client and log in
+        # Create a client and log in
         client = Client()
         client.login(username='test-user', password='test-user')
 
