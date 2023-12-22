@@ -34,10 +34,10 @@ from signbank.dictionary.field_choices import get_static_choice_lists, get_frequ
     fields_to_categories, fields_to_fieldcategory_dict
 
 from signbank.dictionary.forms import *
-from signbank.tools import get_selected_datasets_for_user, write_ecv_file_for_dataset, \
-    construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses, \
-    searchform_panels, map_search_results_to_gloss_list, \
-    get_interface_language_and_default_language_codes
+from signbank.tools import (get_selected_datasets_for_user, write_ecv_file_for_dataset,
+                            construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
+                            searchform_panels, map_search_results_to_gloss_list,
+                            get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
 from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, csv_header_row_morphemelist,
                                     csv_morpheme_to_row, csv_header_row_handshapelist, csv_handshape_to_row,
                                     csv_header_row_lemmalist, csv_lemma_to_row,
@@ -916,9 +916,9 @@ class GlossDetailView(DetailView):
         context['tokNo'] = self.object.tokNo                 # Number of occurrences of Sign, used to display Stars
 
         # check for existence of strong hand and weak hand shapes
-        try:
-            strong_hand_obj = Handshape.objects.get(machine_value = self.object.domhndsh.machine_value)
-        except (Handshape.DoesNotExist, AttributeError):
+        if self.object.domhndsh:
+            strong_hand_obj = Handshape.objects.filter(machine_value=self.object.domhndsh.machine_value).first()
+        else:
             strong_hand_obj = None
         context['StrongHand'] = self.object.domhndsh.machine_value if strong_hand_obj else 0
         context['WeakHand'] = self.object.subhndsh.machine_value if self.object.subhndsh else 0
@@ -949,12 +949,9 @@ class GlossDetailView(DetailView):
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # set up weak drop weak prop fields
-
         context['handedness_fields'] = []
         weak_drop = getattr(gl, 'weakdrop')
-
         weak_prop = getattr(gl, 'weakprop')
-
         context['handedness_fields'].append([weak_drop,'weakdrop',labels['weakdrop'],'list'])
         context['handedness_fields'].append([weak_prop,'weakprop',labels['weakprop'],'list'])
 
@@ -1201,76 +1198,42 @@ class GlossDetailView(DetailView):
         context['gloss_derivationhistory'] = list(gl.derivHist.all())
 
         simultaneous_morphology = []
-        if gl.simultaneous_morphology:
-            for sim_morph in gl.simultaneous_morphology.all():
-                translated_morph_type = sim_morph.morpheme.mrpType.name if sim_morph.morpheme.mrpType else ''
-
-                morpheme_annotation_idgloss = {}
-                if sim_morph.morpheme.dataset:
-                    for language in sim_morph.morpheme.dataset.translation_languages.all():
-                        morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-                else:
-                    language = Language.objects.get(id=get_default_language_id())
+        for sim_morph in gl.simultaneous_morphology.all():
+            translated_morph_type = sim_morph.morpheme.mrpType.name if sim_morph.morpheme.mrpType else ''
+            morpheme_annotation_idgloss = {}
+            if sim_morph.morpheme.dataset:
+                for language in sim_morph.morpheme.dataset.translation_languages.all():
                     morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
-                if interface_language_code in morpheme_annotation_idgloss.keys():
-                    morpheme_display = morpheme_annotation_idgloss[interface_language_code][0].text
-                else:
-                    # default language if the interface language hasn't been set for this gloss
-                    morpheme_display = morpheme_annotation_idgloss[default_language_code][0].text
+            else:
+                language = Language.objects.get(id=get_default_language_id())
+                morpheme_annotation_idgloss[language.language_code_2char] = sim_morph.morpheme.annotationidglosstranslation_set.filter(language=language)
+            if interface_language_code in morpheme_annotation_idgloss.keys():
+                morpheme_display = morpheme_annotation_idgloss[interface_language_code][0].text
+            else:
+                # default language if the interface language hasn't been set for this gloss
+                morpheme_display = morpheme_annotation_idgloss[default_language_code][0].text
 
-                simultaneous_morphology.append((sim_morph, morpheme_display, translated_morph_type))
+            simultaneous_morphology.append((sim_morph, morpheme_display, translated_morph_type))
 
         context['simultaneous_morphology'] = simultaneous_morphology
         context['simultaneous_morphology_display'] = [(sm[0].morpheme.pk, sm[1]) for sm in simultaneous_morphology]
 
         # Obtain the number of morphemes in the dataset of this gloss
-        # The template will not show the facility to add simultaneous morphology if there are no morphemes to choose from
+        # The template will not show the facility to add simultaneous morphology
+        # if there are no morphemes to choose from
         dataset_id_of_gloss = gl.dataset
         count_morphemes_in_dataset = Morpheme.objects.filter(lemma__dataset=dataset_id_of_gloss).count()
         context['count_morphemes_in_dataset'] = count_morphemes_in_dataset
 
         blend_morphology = []
-
-        if gl.blend_morphology:
-            for ble_morph in gl.blend_morphology.all():
-
-                glosses_annotation_idgloss = {}
-                if ble_morph.glosses.dataset:
-                    for language in ble_morph.glosses.dataset.translation_languages.all():
-                        glosses_annotation_idgloss[language.language_code_2char] = ble_morph.glosses.annotationidglosstranslation_set.filter(language=language)
-                else:
-                    language = Language.objects.get(id=get_default_language_id())
-                    glosses_annotation_idgloss[language.language_code_2char] = ble_morph.glosses.annotationidglosstranslation_set.filter(language=language)
-                if interface_language_code in glosses_annotation_idgloss.keys():
-                    morpheme_display = glosses_annotation_idgloss[interface_language_code][0].text
-                else:
-                    # default language if the interface language hasn't been set for this gloss
-                    morpheme_display = glosses_annotation_idgloss[default_language_code][0].text
-
-                blend_morphology.append((ble_morph,morpheme_display))
-
+        for ble_morph in gl.blend_morphology.all():
+            morpheme_display = get_default_annotationidglosstranslation(ble_morph.glosses)
+            blend_morphology.append((ble_morph, morpheme_display))
         context['blend_morphology'] = blend_morphology
 
         otherrelations = []
-
-        if gl.relation_sources:
-            for oth_rel in gl.relation_sources.all():
-
-                other_relations_dict = dict()
-                if oth_rel.target.lemma.dataset:
-                    for language in oth_rel.target.dataset.translation_languages.all():
-                        other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
-                else:
-                    language = Language.objects.get(id=get_default_language_id())
-                    other_relations_dict[language.language_code_2char] = oth_rel.target.annotationidglosstranslation_set.filter(language=language)
-                if interface_language_code in other_relations_dict.keys():
-                    target_display = other_relations_dict[interface_language_code][0].text
-                else:
-                    # default language if the interface language hasn't been set for this gloss
-                    target_display = other_relations_dict[default_language_code][0].text
-
-                otherrelations.append((oth_rel,target_display))
-
+        for oth_rel in gl.relation_sources.all():
+            otherrelations.append((oth_rel, oth_rel.get_target_display()))
         context['otherrelations'] = otherrelations
 
         context['related_objects'] = gloss_is_related_to(gl, interface_language_code, default_language_code)
@@ -1529,60 +1492,6 @@ class GlossRelationsDetailView(DetailView):
         # Pass info about which fields we want to see
         gl = context['gloss']
         context['active_id'] = gl.id
-        labels = gl.field_labels()
-
-        context['choice_lists'] = {}
-
-        # Translate the machine values to human values in the correct language, and save the choice lists along the way
-        for topic in ['main','phonology','semantics','frequency']:
-            context[topic+'_fields'] = []
-
-            for field in FIELDS[topic]:
-                choice_list = []
-                gloss_field = Gloss.get_field(field)
-                # Get and save the choice list for this field
-                if hasattr(gloss_field, 'field_choice_category'):
-                    fieldchoice_category = gloss_field.field_choice_category
-                    choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
-                elif isinstance(gloss_field, models.ForeignKey) and gloss_field.related_model == Handshape:
-                    choice_list = Handshape.objects.all()
-
-                if len(choice_list) > 0:
-                    context['choice_lists'][field] = choicelist_queryset_to_translated_dict(choice_list)
-
-                # Take the human value in the language we are using
-                machine_value = getattr(gl,field)
-                human_value = machine_value.name if isinstance(machine_value, FieldChoice) or isinstance(machine_value, Handshape) \
-                                                 else machine_value
-
-                # And add the kind of field
-                kind = fieldname_to_kind(field)
-                context[topic+'_fields'].append([human_value,field,labels[field],kind])
-
-        # Add morphology to choice lists
-        context['choice_lists']['morphology_role'] = choicelist_queryset_to_translated_dict(FieldChoice.objects.filter(field__iexact='MorphologyType'))
-
-        # Collect all morphology definitions for th sequential morphology section, and make some translations in advance
-        morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
-        morphdefs = []
-
-        for morphdef in context['gloss'].parent_glosses.all():
-
-            translated_role = morphdef.role.name
-
-            sign_display = str(morphdef.morpheme.id)
-            morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
-            if morph_texts.keys():
-                if interface_language_code in morph_texts.keys():
-                    sign_display = morph_texts[interface_language_code]
-                else:
-                    sign_display = morph_texts[default_language_code]
-
-            morphdefs.append((morphdef,translated_role,sign_display))
-
-        context['morphdefs'] = morphdefs
-
-        context['separate_english_idgloss_field'] = SEPARATE_ENGLISH_IDGLOSS_FIELD
 
         lemma_group = gl.lemma.gloss_set.all()
         if lemma_group.count() > 1:
@@ -1648,15 +1557,15 @@ class GlossRelationsDetailView(DetailView):
 
         context['minimalpairs'] = minimalpairs
 
-        morphdef_roles = FieldChoice.objects.filter(field__iexact='MorphologyType')
         compounds = []
-        reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl.id)
+        reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl)
         if reverse_morphdefs:
             for rm in reverse_morphdefs:
-                morphdef_role_machine_value = rm.role.machine_value if rm.role else 0
-                translated_role = machine_value_to_translated_human_value(morphdef_role_machine_value,morphdef_roles)
-
-                compounds.append((rm.parent_gloss, translated_role))
+                parent_glosses = rm.parent_gloss.parent_glosses.all()
+                parent_glosses_display = []
+                for pg in parent_glosses:
+                    parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
+                compounds.append((rm.parent_gloss, ' + '.join(parent_glosses_display)))
         context['compounds'] = compounds
 
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text

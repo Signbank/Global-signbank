@@ -622,30 +622,9 @@
 				  </div>
 				  {% endif %}
 			  </td>
-			  {% with request.LANGUAGE_CODE as lang %}
-			  <td id='comp_idgloss'><a href='{% url "dictionary:admin_gloss_view" pk=c.pk %}'>{{c|translated_annotationidgloss:lang}}</a></td>
-			  {% endwith %}
-			  <td colspan="2" id='comp_dataset'>
-                    {% if c.parent_glosses.all.count > 0 %}
-				  	{% with request.LANGUAGE_CODE as lang %}
-                    {% with c.parent_glosses.all as components %}
-                    {% with components|dictsort:"role" as sorted_components %}
-                    {% for component in sorted_components %}
-				    {% with component.morpheme as comp %}
-                    <span>
-						<a href='{% url "dictionary:admin_gloss_view" pk=component.morpheme.pk %}'>
-							{% if comp.pk == gloss.pk %}<strong>{% endif %}
-							{{comp|translated_annotationidgloss:lang}}</a>{% if comp.pk == gloss.pk %}</strong>{% endif %}
-						{% if not forloop.last %} + {% endif %}
-                    </span>
-				    {% endwith %}
-                    {% endfor %}
-                    {% endwith %}
-                    {% endwith %}
-				    {% endwith %}
-                    {% endif %}
-			  </td>
-
+			  <td id='comp_idgloss'>
+				  <a href='{% url "dictionary:admin_gloss_view" pk=c.pk %}'>{{c|get_default_annotation_idgloss_translation}}</a></td>
+			  <td colspan="2" id='comp_dataset'>{{c_display}}</td>
 		</tr>
 		{% endfor %}
 
