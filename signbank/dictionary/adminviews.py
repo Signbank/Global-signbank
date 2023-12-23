@@ -1538,35 +1538,39 @@ class GlossRelationsDetailView(DetailView):
         all_variants = pattern_variants + [ov for ov in other_variants if ov not in pattern_variants]
         has_variants = all_variants
         variants = []
-
-        if has_variants:
-            for gl_var in has_variants:
-                # This display is set to the default language for the dataset of the variant
-                gl_var_display = gl_var.annotation_idgloss(gl_var.lemma.dataset.default_language.language_code_2char)
-                variants.append((gl_var, senses_per_language(gl_var), gl_var_display))
-
+        for gl_var in has_variants:
+            # This display is set to the default language for the dataset of the variant
+            gl_var_display = gl_var.annotation_idgloss(gl_var.lemma.dataset.default_language.language_code_2char)
+            variants.append((gl_var, senses_per_language(gl_var), gl_var_display))
         context['variants'] = variants
 
         minimal_pairs_dict = gl.minimal_pairs_dict()
         minimalpairs = []
-
         for mpg, dict in minimal_pairs_dict.items():
             # This display is set to the default language for the dataset of the minimal pair gloss
             minpar_display = mpg.annotation_idgloss(mpg.lemma.dataset.default_language.language_code_2char)
             minimalpairs.append((mpg, dict, minpar_display))
-
         context['minimalpairs'] = minimalpairs
 
         compounds = []
         reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl)
-        if reverse_morphdefs:
-            for rm in reverse_morphdefs:
-                parent_glosses = rm.parent_gloss.parent_glosses.all()
-                parent_glosses_display = []
-                for pg in parent_glosses:
-                    parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
-                compounds.append((rm.parent_gloss, ' + '.join(parent_glosses_display)))
+        for rm in reverse_morphdefs:
+            parent_glosses = rm.parent_gloss.parent_glosses.all()
+            parent_glosses_display = []
+            for pg in parent_glosses:
+                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
+            compounds.append((rm.parent_gloss, ' + '.join(parent_glosses_display)))
         context['compounds'] = compounds
+
+        blends = []
+        reverse_blends = BlendMorphology.objects.filter(glosses=gl)
+        for rb in reverse_blends:
+            parent_glosses = rb.parent_gloss.blend_morphology.all()
+            parent_glosses_display = []
+            for pg in parent_glosses:
+                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses))
+            blends.append((rb.parent_gloss, ' + '.join(parent_glosses_display)))
+        context['blends'] = blends
 
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context

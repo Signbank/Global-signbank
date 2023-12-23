@@ -624,7 +624,37 @@
 			  </td>
 			  <td id='comp_idgloss'>
 				  <a href='{% url "dictionary:admin_gloss_view" pk=c.pk %}'>{{c|get_default_annotation_idgloss_translation}}</a></td>
-			  <td colspan="2" id='comp_dataset'>{{c_display}}</td>
+			  <td colspan="2" id='comp_display'>{{c_display}}</td>
+		</tr>
+		{% endfor %}
+
+		</tbody>
+		{% endif %}
+
+		{% if blends %}
+		<thead>
+		   <tr>
+			   <th style="width:8em; color:darkred">{% trans "Blends" %}</th>
+
+			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
+			   <th colspan="2" style='width:12em'>{% trans "Blend Morphology" %}</th>
+
+		   </tr>
+		</thead>
+		<tbody>
+		{% for c, c_display in blends %}
+		<tr>
+			  <td>{%if c.get_image_path %}
+				  <div class="thumbnail_container">
+				  <a href="{{PREFIX_URL}}/dictionary/gloss/{{c.pk}}/">
+					  <img class="thumbnail" src="{{protected_media_url}}{{c.get_image_url}}">
+				  </a>
+				  </div>
+				  {% endif %}
+			  </td>
+			  <td id='blend_idgloss'>
+				  <a href='{% url "dictionary:admin_gloss_view" pk=c.pk %}'>{{c|get_default_annotation_idgloss_translation}}</a></td>
+			  <td colspan="2" id='blend_display'>{{c_display}}</td>
 		</tr>
 		{% endfor %}
 
