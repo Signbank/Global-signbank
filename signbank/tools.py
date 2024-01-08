@@ -1665,6 +1665,7 @@ def gloss_from_identifier(value):
     else:
         return None
 
+
 def get_default_annotationidglosstranslation(gloss):
     try:
         language = gloss.lemma.dataset.default_language
@@ -1673,8 +1674,8 @@ def get_default_annotationidglosstranslation(gloss):
 
     default_annotationidglosstranslation = ""
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-    if annotationidglosstranslations and len(annotationidglosstranslations) > 0:
-        default_annotationidglosstranslation = annotationidglosstranslations[0].text
+    if annotationidglosstranslations.count() > 0:
+        default_annotationidglosstranslation = annotationidglosstranslations.first().text
     return default_annotationidglosstranslation
 
 

@@ -1294,30 +1294,14 @@ class Gloss(models.Model):
     def annotation_idgloss(self, language_code):
         # this function is used in Relations View to dynamically get the Annotation of related glosses
         # it is called by a template tag on the gloss using the interface language code
-
-        if language_code in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
-            interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[language_code]
-        else:
-            # this assumes the default language (settings.LANGUAGE_CODE) in included in the LANGUAGES_LANGUAGE_CODE_3CHAR setting
-            interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[settings.LANGUAGE_CODE]
-        interface_language = Language.objects.get(language_code_3char=interface_language_3char)
-        default_language = Language.objects.get(id=get_default_language_id())
-
-        try:
-            default_dataset_language = self.lemma.dataset.default_language
-        except (KeyError, ObjectDoesNotExist, None):
-            default_dataset_language = default_language
-
-        try:
-            return self.annotationidglosstranslation_set.get(language=interface_language).text
-        except ObjectDoesNotExist:
-            try:
-                return self.annotationidglosstranslation_set.get(language=default_dataset_language).text
-            except ObjectDoesNotExist:
-                try:
-                    return self.annotationidglosstranslation_set.get(language=default_language).text
-                except ObjectDoesNotExist:
-                    return str(self.id)
+        annotations = self.annotationidglosstranslation_set.filter(language__language_code_2char=language_code)
+        if annotations.count() > 0:
+            return annotations.first().text
+        default_annotations = self.annotationidglosstranslation_set.filter(language=self.lemma.dataset.default_language)
+        if default_annotations.count() > 0:
+            return default_annotations.first().text
+        # return the gloss id
+        return str(self.id)
 
     def get_fields(self):
         return [(field.name, field.value_to_string(self)) for field in Gloss._meta.fields]
@@ -1352,7 +1336,7 @@ class Gloss(models.Model):
         return blend_morphemes
 
     def get_relation_display(self):
-        default_language = self.lemma.dataset.default_language
+        default_language = self.lemma.dataset.default_language.language_code_2char
         relations_to_signs = Relation.objects.filter(source=self)
         return ", ".join([x.role + ':' + x.target.annotation_idgloss(default_language)
                                    for x in relations_to_signs])
@@ -1580,7 +1564,6 @@ class Gloss(models.Model):
             speaker_data['Total'] += 1
 
         return speaker_data
-
 
     def speaker_age_data(self):
         # this method returns a dictionary mapping ages
@@ -2540,6 +2523,10 @@ class Relation(models.Model):
             return 'hyponym'
         else:
             return role
+
+    def get_target_display(self):
+        default_language = self.target.lemma.dataset.default_language.language_code_2char
+        return self.target.annotation_idgloss(default_language)
 
 
 class MorphologyDefinition(models.Model):
