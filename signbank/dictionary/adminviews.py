@@ -3411,12 +3411,10 @@ class DatasetListView(ListView):
         datasets_with_public_glosses = get_datasets_with_public_glosses()
 
         for ds in Dataset.objects.all():
-            if ds in datasets_with_public_glosses and not self.request.user.is_authenticated:
+            if self.request.user.is_authenticated or ds in datasets_with_public_glosses:
                 glosses = Gloss.objects.filter(lemma__dataset=ds, morpheme=None)
                 nr_of_glosses[ds] = glosses.count()
                 nr_of_public_glosses[ds] = glosses.filter(inWeb=True).count()
-            if self.request.user.is_authenticated:
-                nr_of_glosses[ds] = Gloss.objects.filter(lemma__dataset=ds, morpheme=None).count()
 
         context['nr_of_public_glosses'] = nr_of_public_glosses
         context['nr_of_glosses'] = nr_of_glosses
