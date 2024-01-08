@@ -1718,7 +1718,6 @@ class MorphemeListView(ListView):
 
         multiple_select_morpheme_categories = fields_to_fieldcategory_dict(fieldnames)
         multiple_select_morpheme_categories['definitionRole'] = 'NoteType'
-        # multiple_select_morpheme_categories['hasComponentOfType'] = 'MorphologyType'
 
         multiple_select_morpheme_fields = [ fieldname for (fieldname, category) in multiple_select_morpheme_categories.items() ]
 
