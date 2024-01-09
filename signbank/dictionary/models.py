@@ -3402,7 +3402,9 @@ class QueryParameterFieldChoice(QueryParameter):
             if self.fieldName in ['definitionRole']:
                 glossFieldName = Definition.get_field('role').verbose_name.encode('utf-8').decode()
             elif self.fieldName in ['hasComponentOfType']:
-                glossFieldName = MorphologyDefinition.get_field('role').verbose_name.encode('utf-8').decode()
+                # the nomenclature is a bit confusing to use 'Morphology Type' (verbose name of the 'role' field)
+                # glossFieldName = MorphologyDefinition.get_field('role').verbose_name.encode('utf-8').decode()
+                glossFieldName = _('Sequential Morphology')
             elif self.fieldName in ['sentenceType']:
                 glossFieldName = ExampleSentence.get_field('sentenceType').verbose_name.encode('utf-8').decode()
             else:

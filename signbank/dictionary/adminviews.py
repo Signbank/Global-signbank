@@ -1553,13 +1553,13 @@ class GlossRelationsDetailView(DetailView):
         context['minimalpairs'] = minimalpairs
 
         compounds = []
-        reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl)
+        reverse_morphdefs = gl.parent_glosses.all()
         for rm in reverse_morphdefs:
             parent_glosses = rm.parent_gloss.parent_glosses.all()
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
-            compounds.append((rm.parent_gloss, ' + '.join(parent_glosses_display)))
+            compounds.append((rm.morpheme, ' + '.join(parent_glosses_display)))
         context['compounds'] = compounds
 
         blends = []
