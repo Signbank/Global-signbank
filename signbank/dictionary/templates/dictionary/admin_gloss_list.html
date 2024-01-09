@@ -763,6 +763,8 @@ function do_toggle_language(el) {
                                     <td style="width:600px;">{{searchform.mrpType}}</td></tr>
                                 <tr><td style="padding-left:30px;"><label for='id_isablend'>{{searchform.isablend.label}}</label></td>
                                     <td style="width:600px;">{{searchform.isablend}}</td></tr>
+                                <tr><td style="padding-left:30px;"><label for='id_ispartofablend'>{{searchform.ispartofablend.label}}</label></td>
+                                    <td style="width:600px;">{{searchform.ispartofablend}}</td></tr>
                             </table>
 
                           </td>
@@ -918,7 +920,7 @@ function do_toggle_language(el) {
         <input type='hidden' id='export_ecv' name='export_ecv' value="">
         {% endif %}
         {% endif %}
-        <input class='btn btn-default' type='button' onclick="clearForm();"
+        <input class='btn btn-default' type='reset' onclick="clearForm();"
                value='{% trans "Reset" %}'>
     </div>
 

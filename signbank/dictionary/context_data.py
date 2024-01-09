@@ -82,7 +82,7 @@ def get_other_parameter_keys():
     # other parameters are in the GlossSearchForm in the template that are not initialised
     # via multiselect or language fields, plus semantics and phonology fields with text types
     other_parameters = ['sortOrder'] + settings.SEARCH_BY['publication'] + settings.FIELDS['phonology'] + \
-                       settings.FIELDS['semantics']
+                       settings.FIELDS['semantics'] + settings.FIELDS['morpheme']
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
     fields_with_choices = fields_to_fieldcategory_dict()
     multiple_select_gloss_fields = [fieldname for fieldname in fieldnames if fieldname in fields_with_choices.keys()]

@@ -1350,6 +1350,26 @@ class Gloss(models.Model):
         morpheme_self = self.morpheme
         return morpheme_self.get_mrpType_display()
 
+    def get_isablend_display(self):
+        # This function displays the glosses of the blend
+        # To instead show only Yes or No, use the commented out return instead
+        # return _('Yes') if (self.blend_morphology.all().count() > 0) else _('No')
+        from signbank.tools import get_default_annotationidglosstranslation
+        return " + ".join([get_default_annotationidglosstranslation(bm.glosses) for bm in self.blend_morphology.all()])
+
+    def get_ispartofablend_display(self):
+        # This function displays the parent gloss plus the glosses of the blend of which the gloss is included
+        # To instead show only Yes or No, use the commented out return instead
+        # return _('Yes') if (self.glosses_comprising.all().count() > 0) else _('No')
+        blend_morphology = self.glosses_comprising.all().first()
+        if not blend_morphology:
+            return ""
+        glosses_comprising = blend_morphology.parent_gloss.blend_morphology.all()
+        from signbank.tools import get_default_annotationidglosstranslation
+        display = (get_default_annotationidglosstranslation(blend_morphology.parent_gloss) + ': '
+                   + " + ".join([get_default_annotationidglosstranslation(bm.glosses) for bm in glosses_comprising]))
+        return display
+
     def get_definitionRole_display(self):
         return ", ".join([str(df.role.name) for df in self.definition_set.all()])
 
@@ -3499,6 +3519,8 @@ class QueryParameterBoolean(QueryParameter):
         ('oriChFlex', 'oriChFlex'),
         # GlossSearchForm fields
         ('hasRelationToForeignSign', 'hasRelationToForeignSign'),
+        ('isablend', 'isablend'),
+        ('ispartofablend', 'ispartofablend'),
         ('defspublished', 'defspublished'),
         ('hasmultiplesenses', 'hasmultiplesenses'),
         ('hasvideo', 'hasvideo'),
@@ -3517,6 +3539,10 @@ class QueryParameterBoolean(QueryParameter):
             glossFieldName = _("Has Multiple Senses")
         elif self.fieldName == 'hasRelationToForeignSign':
             glossFieldName = _("Related to Foreign Sign")
+        elif self.fieldName == 'isablend':
+            glossFieldName = _("Is a Blend")
+        elif self.fieldName == 'ispartofablend':
+            glossFieldName = _("Is Part of a Blend")
         elif self.fieldName == 'hasvideo':
             glossFieldName = _('Has Video')
         else:

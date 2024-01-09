@@ -5337,7 +5337,7 @@ def glosslist_ajax_complete(request, gloss_id):
     for fieldname in display_fields:
         if fieldname in ['semField', 'derivHist', 'dialect', 'signlanguage',
                          'definitionRole', 'hasothermedia', 'hasComponentOfType',
-                         'mrpType', 'morpheme', 'relation',
+                         'mrpType', 'isablend', 'ispartofablend', 'morpheme', 'relation',
                          'hasRelationToForeignSign', 'relationToForeignSign']:
             display_method = 'get_' + fieldname + '_display'
             field_value = getattr(this_gloss, display_method)()
@@ -5400,6 +5400,8 @@ def glosslistheader_ajax(request):
                                   'hasothermedia': _("Other Media"),
                                   'hasComponentOfType': _("Sequential Morphology"),
                                   'morpheme': _("Simultaneous Morphology"),
+                                  'isablend': _("Blend"),
+                                  'ispartofablend': _("Part of Blend"),
                                   'mrpType': _("Morpheme Type"),
                                   'relation': _("Gloss of Related Sign"),
                                   'hasRelationToForeignSign': _("Related to Foreign Sign"),
@@ -5494,6 +5496,8 @@ def senselistheader_ajax(request):
                                   'hasothermedia': _("Other Media"),
                                   'hasComponentOfType': _("Sequential Morphology"),
                                   'morpheme': _("Simultaneous Morphology"),
+                                  'isablend': _("Is a Blend"),
+                                  'ispartofablend': _("Is Part of a Blend"),
                                   'mrpType': _("Morpheme Type"),
                                   'relation': _("Gloss of Related Sign"),
                                   'hasRelationToForeignSign': _("Related to Foreign Sign"),
