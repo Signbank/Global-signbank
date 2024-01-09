@@ -340,7 +340,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                         # lemma not set
                         lemma_idgloss_string = ''
                     if lemma_idgloss_string != new_human_value and new_human_value not in ['None', '']:
-                        error_string = 'ERROR: Attempt to update Lemma ID Gloss translations: ' + human_key
+                        error_string = 'ERROR: Attempt to update Lemma translations: ' + human_key
                         errors_found += [error_string]
                 continue
 
