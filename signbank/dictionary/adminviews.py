@@ -3320,13 +3320,14 @@ class DatasetListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
-        nr_of_public_glosses = {}
-        nr_of_glosses = {}
+        nr_of_public_glosses, nr_of_glosses = {}, {}
         datasets_with_public_glosses = get_datasets_with_public_glosses()
 
-        for ds in datasets_with_public_glosses:
-            nr_of_public_glosses[ds] = Gloss.objects.filter(lemma__dataset=ds, inWeb=True).count()
-            nr_of_glosses[ds] = Gloss.objects.filter(lemma__dataset=ds).count()
+        for ds in Dataset.objects.all():
+            if self.request.user.is_authenticated or ds in datasets_with_public_glosses:
+                glosses = Gloss.objects.filter(lemma__dataset=ds, morpheme=None)
+                nr_of_glosses[ds] = glosses.count()
+                nr_of_public_glosses[ds] = glosses.filter(inWeb=True).count()
 
         context['nr_of_public_glosses'] = nr_of_public_glosses
         context['nr_of_glosses'] = nr_of_glosses
@@ -4061,17 +4062,9 @@ class DatasetDetailView(DetailView):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-        nr_of_glosses = 0
-        nr_of_public_glosses = 0
-
-        # This code is slowing things down
-
-        for gloss in Gloss.objects.filter(lemma__dataset=dataset):
-
-            nr_of_glosses += 1
-
-            if gloss.inWeb:
-                nr_of_public_glosses += 1
+        glosses = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None)
+        nr_of_glosses = glosses.count()
+        nr_of_public_glosses = glosses.filter(inWeb=True).count()
 
         context['nr_of_glosses'] = nr_of_glosses
         context['nr_of_public_glosses'] = nr_of_public_glosses

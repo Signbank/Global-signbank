@@ -22,12 +22,8 @@
           <th style="width:150px;">{% trans "Dataset Acronym" %}</th>
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
           <th style="width:200px;">{% trans "Languages" %}</th>
-          {% if user.is_anonymous %}
-          <th style="width:255px;">{% trans "Number of Signs or Morphemes" %}</th>
-          <th style="width:255px;">{% trans "Number of Public Glosses" %}</th>
-          {% else %}
-          <th style="width:255px;">{% trans "Number of Signs or Morphemes" %}</th>
-          {% endif %}
+          <th style="width:255px;">{% trans "Number of Signs" %}</th>
+          <th style="width:255px;">{% trans "Number of Public Signs" %}</th>
           {% if not user.is_anonymous %}
           <th style="width:80px;">{% trans "View Dataset" %}</th>
           <th style="width:80px;">{% trans "Change Dataset" %}</th>
@@ -50,16 +46,12 @@
                     {{ dsl }}{% if not forloop.last %}, {% endif %}
                 {% endfor %}
             </td>
-            {% if user.is_anonymous %}
             {% with nr_of_glosses|keyvalue:dataset as count_glosses %}
             <td>{{count_glosses}}</td>
             {% endwith %}
             {% with nr_of_public_glosses|keyvalue:dataset as count_public_glosses %}
             <td>{{count_public_glosses}}</td>
-            {% endwith %}
-            {% else %}
-            <td>{{dataset.lemmaidgloss__gloss__count}}</td>
-            {% endif %}
+            {% endwith %}       
             {% if not user.is_anonymous %}
             <td>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
