@@ -66,7 +66,8 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
             query_parameters[field_key] = []
             query_parameters[field_key].append(field_value)
         elif field_key in ['weakdrop', 'weakprop', 'domhndsh_letter', 'domhndsh_number',
-                       'subhndsh_letter', 'subhndsh_number', 'repeat', 'altern', 'hasRelationToForeignSign', 'inWeb', 'isNew']:
+                           'subhndsh_letter', 'subhndsh_number', 'repeat', 'altern', 'hasRelationToForeignSign',
+                           'inWeb', 'isNew', 'isablend', 'ispartofablend']:
             # these mappings match the choices in the Gloss Search Form
             NEUTRALBOOLEANCHOICES = {'None': '1', 'True': '2', 'False': '3'}
             query_parameters[field_key] = NEUTRALBOOLEANCHOICES[field_value]
@@ -186,6 +187,24 @@ def convert_query_parameters_to_filter(query_parameters):
             elif get_value == '3':
                 # the code for "No" excludes the above glosses from the results
                 query_list.append(~Q(pk__in=pks_for_glosses_with_relations))
+
+        elif get_key == 'isablend':
+            pks_for_gloss_blends = [blemorph.parent_gloss.pk for blemorph in BlendMorphology.objects.all()]
+
+            if get_value == '2':  # glosses that are blends
+                query_list.append(Q(pk__in=pks_for_gloss_blends))
+            elif get_value == '3':
+                # the code for "No" excludes the above glosses from the results
+                query_list.append(~Q(pk__in=pks_for_gloss_blends))
+
+        elif get_key == 'ispartofablend':
+            pks_for_glosses_of_blends = [blemorph.glosses.pk for blemorph in BlendMorphology.objects.all()]
+
+            if get_value == '2':  # glosses that are part of blends
+                query_list.append(Q(pk__in=pks_for_glosses_of_blends))
+            elif get_value == '3':
+                # the code for "No" excludes the above glosses from the results
+                query_list.append(~Q(pk__in=pks_for_glosses_of_blends))
 
         elif get_key == 'relationToForeignSign':
             relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get_value)
@@ -487,7 +506,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
             query_dict[key] = UNKNOWNBOOLEANCHOICES[query_parameters[key]]
         elif key in ['repeat', 'altern']:
             query_dict[key] = UNKNOWNBOOLEANCHOICES[query_parameters[key]]
-        elif key in ['hasRelationToForeignSign']:
+        elif key in ['hasRelationToForeignSign', 'isablend', 'ispartofablend']:
             if query_parameters[key] in ['2']:
                 query_dict[key] = _('Yes')
             elif query_parameters[key] in ['3']:
@@ -991,6 +1010,22 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                     qs = qs.filter(**{query_filter: pks_for_glosses_with_relations})
                 else:  # glosses without a relation to a foreign sign
                     qs = qs.exclude(**{query_filter: pks_for_glosses_with_relations})
+                continue
+            elif get_key in ['isablend']:
+                pks_for_gloss_blends = [blemorph.parent_gloss.pk for blemorph in BlendMorphology.objects.all()]
+                query_filter = gloss_prefix + 'pk__in'
+                if get_value == '2':  # glosses that are blends
+                    qs = qs.filter(**{query_filter: pks_for_gloss_blends})
+                else:  # glosses that are not blends
+                    qs = qs.exclude(**{query_filter: pks_for_gloss_blends})
+                continue
+            elif get_key in ['ispartofablend']:
+                pks_for_glosses_of_blends = [blemorph.glosses.pk for blemorph in BlendMorphology.objects.all()]
+                query_filter = gloss_prefix + 'pk__in'
+                if get_value == '2':  # glosses that are part of blends
+                    qs = qs.filter(**{query_filter: pks_for_glosses_of_blends})
+                else:  # glosses that are not part of blends
+                    qs = qs.exclude(**{query_filter: pks_for_glosses_of_blends})
                 continue
             elif get_key in ['inWeb', 'repeat', 'altern', 'isNew', 'excludeFromEcv']:
                 val = get_value == '2'

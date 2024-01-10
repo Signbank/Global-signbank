@@ -816,9 +816,9 @@ def csv_header_row_morphemelist(dataset_languages, fields):
                       for language in dataset_languages]
 
     with override(LANGUAGE_CODE):
-        header = ['Signbank ID'] + annotationidglosstranslation_fields + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
+        header = ['Signbank ID'] + annotationidglosstranslation_fields + keyword_fields + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
 
-    for extra_column in ['Keywords', 'Morphology', 'Appears in signs']:
+    for extra_column in ['Appears in signs']:
         header.append(extra_column)
 
     return header
@@ -834,6 +834,11 @@ def csv_morpheme_to_row(gloss, dataset_languages, fields):
             row.append(annotationidglosstranslations.first().text)
         else:
             row.append("")
+
+    # get keywords
+    for language in dataset_languages:
+        keywords = [t.translation.text for t in gloss.translation_set.filter(language=language).order_by('index')]
+        row.append(", ".join(keywords))
 
     for f in fields:
         # Try the value of the choicelist
@@ -855,14 +860,6 @@ def csv_morpheme_to_row(gloss, dataset_languages, fields):
             value = str(value)
 
         row.append(value)
-
-    # get translations
-    trans = [t.translation.text for t in gloss.translation_set.all().order_by('index')]
-    row.append(", ".join(trans))
-
-    # get compound's component type
-    morphemes = [morpheme.role for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-    row.append(", ".join(morphemes))
 
     # Got all the glosses this morpheme appears in
     appearsin = gloss.get_appearsin_display()

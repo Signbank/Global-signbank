@@ -663,7 +663,7 @@ class ImportExportTests(TestCase):
         print('Form data test 1 of test_Import_csv_update_gloss_for_lemma: \n', form_data)
 
         response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
-        self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+        self.assertContains(response, 'Attempt to update Lemma translations')
 
         # Prepare form data for linking to AN EXISTING LemmaIdgloss + LemmaIdglossTranslations
         test_translation_index = 1
@@ -697,7 +697,7 @@ class ImportExportTests(TestCase):
         response = client.post(reverse_lazy('import_csv_update'), form_data, follow=True)
         if count_dataset_translation_languages > 1:
             print('More than one translation language, attempt to update a lemma translation')
-            self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+            self.assertContains(response, 'Attempt to update Lemma translations')
         else:
             print('Only one translation language, no changes found')
             self.assertContains(response, 'No changes were found.')
@@ -721,7 +721,7 @@ class ImportExportTests(TestCase):
 
         if count_dataset_translation_languages > 1:
             print('More than one translation language, attempt to update a lemma translation')
-            self.assertContains(response, 'Attempt to update Lemma ID Gloss translations')
+            self.assertContains(response, 'Attempt to update Lemma translations')
         else:
             print('Only one translation language, no changes found')
             self.assertContains(response, 'No changes were found.')

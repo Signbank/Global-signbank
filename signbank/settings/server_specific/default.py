@@ -136,7 +136,7 @@ FIELDS['properties'] = ['hasvideo', 'hasothermedia', 'hasmultiplesenses',
                         'createdBy', 'createdAfter', 'createdBefore',
                         'tags', 'excludeFromEcv']
 FIELDS['relations'] = ['relation', 'hasRelation', 'relationToForeignSign', 'hasRelationToForeignSign']
-FIELDS['morpheme'] = ['morpheme', 'hasComponentOfType', 'mrpType']
+FIELDS['morpheme'] = ['morpheme', 'isablend', 'ispartofablend']
 FIELDS['morpheme_properties'] = ['hasvideo',
                                  'definitionRole', 'definitionContains', 'defspublished',
                                  'createdBy', 'createdAfter', 'createdBefore',
@@ -187,7 +187,7 @@ SEARCH_BY = {}
 SEARCH_BY['publication'] = FIELDS['publication'] + FIELDS['properties']
 SEARCH_BY['morpheme_publication'] = FIELDS['publication'] + FIELDS['morpheme_properties']
 SEARCH_BY['relations'] = FIELDS['relations']
-SEARCH_BY['morpheme'] = FIELDS['morpheme']
+SEARCH_BY['morpheme'] = ['morpheme', 'hasComponentOfType', 'mrpType', 'isablend', 'ispartofablend']
 
 QUERY_DISPLAY_FIELDS = MINIMAL_PAIRS_SEARCH_FIELDS
 SHOW_QUERY_PARAMETERS_AS_BUTTON = True

@@ -261,6 +261,7 @@ def save_query_parameters(request, query_name, query_parameters):
                     search_history.parameters.add(qp)
         elif key in ['weakdrop', 'weakprop', 'domhndsh_letter', 'domhndsh_number',
                      'subhndsh_letter', 'subhndsh_number', 'repeat', 'altern', 'inWeb', 'isNew', 'hasmultiplesenses',
+                     'isablend', 'ispartofablend',
                      'excludeFromEcv', 'hasvideo', 'hasothermedia', 'defspublished', 'hasRelationToForeignSign']:
             NEUTRALBOOLEANCHOICES = {'0': None, '1': None, '2': True, '3': False}
             UNKNOWNBOOLEANCHOICES = {'0': False, '2': True, '3': False}

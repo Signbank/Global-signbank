@@ -1553,23 +1553,43 @@ class GlossRelationsDetailView(DetailView):
         context['minimalpairs'] = minimalpairs
 
         compounds = []
+        reverse_morphdefs = gl.parent_glosses.all()
+        for rm in reverse_morphdefs:
+            parent_glosses = rm.parent_gloss.parent_glosses.all()
+            parent_glosses_display = []
+            for pg in parent_glosses:
+                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
+            compounds.append((rm.morpheme, ' + '.join(parent_glosses_display)))
+        context['compounds'] = compounds
+
+        appearsin = []
         reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl)
         for rm in reverse_morphdefs:
             parent_glosses = rm.parent_gloss.parent_glosses.all()
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
-            compounds.append((rm.parent_gloss, ' + '.join(parent_glosses_display)))
-        context['compounds'] = compounds
+            appearsin.append((rm.parent_gloss, ' + '.join(parent_glosses_display)))
+        context['appearsin'] = appearsin
 
-        blends = []
+        appearsinblend = []
         reverse_blends = BlendMorphology.objects.filter(glosses=gl)
         for rb in reverse_blends:
             parent_glosses = rb.parent_gloss.blend_morphology.all()
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses))
-            blends.append((rb.parent_gloss, ' + '.join(parent_glosses_display)))
+            appearsinblend.append((rb.parent_gloss, ' + '.join(parent_glosses_display)))
+        context['appearsinblend'] = appearsinblend
+
+        blends = []
+        reverse_blends = gl.blend_morphology.all()
+        for rb in reverse_blends:
+            parent_glosses = rb.parent_gloss.blend_morphology.all()
+            parent_glosses_display = []
+            for pg in parent_glosses:
+                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses))
+            blends.append((rb.glosses, ' + '.join(parent_glosses_display)))
         context['blends'] = blends
 
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
@@ -1718,7 +1738,6 @@ class MorphemeListView(ListView):
 
         multiple_select_morpheme_categories = fields_to_fieldcategory_dict(fieldnames)
         multiple_select_morpheme_categories['definitionRole'] = 'NoteType'
-        # multiple_select_morpheme_categories['hasComponentOfType'] = 'MorphologyType'
 
         multiple_select_morpheme_fields = [ fieldname for (fieldname, category) in multiple_select_morpheme_categories.items() ]
 
@@ -5338,7 +5357,7 @@ def glosslist_ajax_complete(request, gloss_id):
     for fieldname in display_fields:
         if fieldname in ['semField', 'derivHist', 'dialect', 'signlanguage',
                          'definitionRole', 'hasothermedia', 'hasComponentOfType',
-                         'mrpType', 'morpheme', 'relation',
+                         'mrpType', 'isablend', 'ispartofablend', 'morpheme', 'relation',
                          'hasRelationToForeignSign', 'relationToForeignSign']:
             display_method = 'get_' + fieldname + '_display'
             field_value = getattr(this_gloss, display_method)()
@@ -5401,6 +5420,8 @@ def glosslistheader_ajax(request):
                                   'hasothermedia': _("Other Media"),
                                   'hasComponentOfType': _("Sequential Morphology"),
                                   'morpheme': _("Simultaneous Morphology"),
+                                  'isablend': _("Blend"),
+                                  'ispartofablend': _("Part of Blend"),
                                   'mrpType': _("Morpheme Type"),
                                   'relation': _("Gloss of Related Sign"),
                                   'hasRelationToForeignSign': _("Related to Foreign Sign"),
@@ -5495,6 +5516,8 @@ def senselistheader_ajax(request):
                                   'hasothermedia': _("Other Media"),
                                   'hasComponentOfType': _("Sequential Morphology"),
                                   'morpheme': _("Simultaneous Morphology"),
+                                  'isablend': _("Is a Blend"),
+                                  'ispartofablend': _("Is Part of a Blend"),
                                   'mrpType': _("Morpheme Type"),
                                   'relation': _("Gloss of Related Sign"),
                                   'hasRelationToForeignSign': _("Related to Foreign Sign"),

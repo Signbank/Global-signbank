@@ -1243,18 +1243,17 @@ def import_csv_update(request):
                     lemma_idgloss_value = value_dict[column_name].strip()
                     # also stores empty values
                     lemmaidglosstranslations[language] = lemma_idgloss_value
-
             # updating glosses
             try:
                 gloss = Gloss.objects.select_related().get(pk=pk)
             except ObjectDoesNotExist as e:
 
-                e = 'Row '+ str(nl + 1) + ': Could not find gloss for Signbank ID '+str(pk)
+                e = 'Row ' + str(nl + 1) + ': Could not find gloss for Signbank ID '+str(pk)
                 error.append(e)
                 continue
 
             if gloss.lemma.dataset != dataset:
-                e1 = 'Row '+ str(nl + 1) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Signbank ID (' \
+                e1 = 'Row ' + str(nl + 1) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Signbank ID (' \
                                                     + str(pk) + ').'
                 error.append(e1)
                 # ignore the rest of the row
@@ -1264,22 +1263,19 @@ def import_csv_update(request):
             # If there are changes in the LemmaIdglossTranslation, the changes should refer to another LemmaIdgloss
             current_lemmaidglosstranslations = {}
             for language in gloss.lemma.dataset.translation_languages.all():
-                try:
-                    lemma_translation = LemmaIdglossTranslation.objects.get(language=language, lemma=gloss.lemma)
-                    current_lemmaidglosstranslations[language] = lemma_translation.text
-                except:
-                    current_lemmaidglosstranslations[language] = ''
+                lemma_translation = LemmaIdglossTranslation.objects.filter(language=language, lemma=gloss.lemma).first()
+                current_lemmaidglosstranslations[language] = lemma_translation.text if lemma_translation else ''
             if lemmaidglosstranslations \
                     and current_lemmaidglosstranslations != lemmaidglosstranslations:
-
-                help = 'Row '+ str(nl + 1) + ': Attempt to update Lemma ID Gloss translations for Signbank ID (' + str(pk) + ")."
+                help = 'Row ' + str(nl + 1) + ': Attempt to update Lemma translations for Signbank ID ' + str(pk)
                 error.append(help)
-                messages.add_message(request, messages.ERROR, ('Attempt to update Lemma ID Gloss translations for Signbank ID.'))
+                messages.add_message(request, messages.ERROR,
+                                     _('Attempt to update Lemma translations. Use Import CSV Lemma to update lemmas.'))
                 continue
 
             try:
                 (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
-                            compare_valuedict_to_gloss(value_dict,gloss.id,user_datasets_names, nl,
+                            compare_valuedict_to_gloss(value_dict, gloss.id, user_datasets_names, nl,
                                                        earlier_updates_same_csv, earlier_updates_lemmaidgloss,
                                                        notes_toggle, notes_assign_toggle, tags_toggle)
                 changes += changes_found
@@ -1326,7 +1322,7 @@ def import_csv_update(request):
                 language_name_column = settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English']
                 languages = Language.objects.filter(**{language_name_column:language_name})
                 if languages:
-                    language = languages[0]
+                    language = languages.first()
                     lemma_idglosses = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
                     if lemma_idglosses:
                         lemma_idgloss_string = lemma_idglosses[0].text
@@ -1334,12 +1330,13 @@ def import_csv_update(request):
                         # lemma not set
                         lemma_idgloss_string = ''
                     if lemma_idgloss_string != new_value and new_value not in ['None', '']:
-                        error_string = 'ERROR: Attempt to update Lemma ID Gloss translations: ' + new_value
+                        error_string = 'ERROR: Attempt to update Lemma translations: ' + new_value
                         if error:
                             error.append(error_string)
                         else:
                             error = [error_string]
-                        messages.add_message(request, messages.ERROR, ('Attempt to update Lemma ID Gloss translations.'))
+                        messages.add_message(request, messages.ERROR,
+                                             _('Attempt to update Lemma translations. Use Import CSV Lemma to update lemmas.'))
 
                 continue   # avoid default field update
 

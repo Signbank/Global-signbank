@@ -197,6 +197,12 @@ class GlossSearchForm(forms.ModelForm):
                                             widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
     morpheme = forms.CharField(label=_("Simultaneous Morphology"))
 
+    isablend = forms.ChoiceField(label=_("Is a Blend"), choices=[(0, '-')],
+                                 widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
+    ispartofablend = forms.ChoiceField(label=_("Is Part of a Blend"), choices=[(0, '-')],
+                                       widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+
     phonOth = forms.CharField(label=_('Phonology Other'), widget=forms.TextInput())
 
     hasRelationToForeignSign = forms.ChoiceField(label=_('Related to Foreign Sign'),
@@ -299,7 +305,7 @@ class GlossSearchForm(forms.ModelForm):
                                                 widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         for boolean_field in ['hasvideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
                               'excludeFromEcv', 'hasRelationToForeignSign', 'hasmultiplesenses',
-                              'hasothermedia']:
+                              'hasothermedia', 'isablend', 'ispartofablend']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
         for boolean_field in ['weakdrop', 'weakprop']:
             self.fields[boolean_field].choices = [(0, '-'), (1, _('Neutral')), (2, _('True')), (3, _('False'))]
