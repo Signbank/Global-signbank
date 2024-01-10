@@ -1562,14 +1562,34 @@ class GlossRelationsDetailView(DetailView):
             compounds.append((rm.morpheme, ' + '.join(parent_glosses_display)))
         context['compounds'] = compounds
 
-        blends = []
+        appearsin = []
+        reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl)
+        for rm in reverse_morphdefs:
+            parent_glosses = rm.parent_gloss.parent_glosses.all()
+            parent_glosses_display = []
+            for pg in parent_glosses:
+                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
+            appearsin.append((rm.parent_gloss, ' + '.join(parent_glosses_display)))
+        context['appearsin'] = appearsin
+
+        appearsinblend = []
         reverse_blends = BlendMorphology.objects.filter(glosses=gl)
         for rb in reverse_blends:
             parent_glosses = rb.parent_gloss.blend_morphology.all()
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses))
-            blends.append((rb.parent_gloss, ' + '.join(parent_glosses_display)))
+            appearsinblend.append((rb.parent_gloss, ' + '.join(parent_glosses_display)))
+        context['appearsinblend'] = appearsinblend
+
+        blends = []
+        reverse_blends = gl.blend_morphology.all()
+        for rb in reverse_blends:
+            parent_glosses = rb.parent_gloss.blend_morphology.all()
+            parent_glosses_display = []
+            for pg in parent_glosses:
+                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses))
+            blends.append((rb.glosses, ' + '.join(parent_glosses_display)))
         context['blends'] = blends
 
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
