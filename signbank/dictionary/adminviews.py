@@ -1578,7 +1578,7 @@ class GlossRelationsDetailView(DetailView):
             parent_glosses = rb.parent_gloss.blend_morphology.all()
             parent_glosses_display = []
             for pg in parent_glosses:
-                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses))
+                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses) + ': ' + pg.role)
             appearsinblend.append((rb.parent_gloss, ' + '.join(parent_glosses_display)))
         context['appearsinblend'] = appearsinblend
 
@@ -1588,7 +1588,7 @@ class GlossRelationsDetailView(DetailView):
             parent_glosses = rb.parent_gloss.blend_morphology.all()
             parent_glosses_display = []
             for pg in parent_glosses:
-                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses))
+                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses) + ': ' + pg.role)
             blends.append((rb.glosses, ' + '.join(parent_glosses_display)))
         context['blends'] = blends
 
