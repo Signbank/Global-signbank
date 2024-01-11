@@ -1592,6 +1592,12 @@ class GlossRelationsDetailView(DetailView):
             blends.append((rb.glosses, ' + '.join(parent_glosses_display)))
         context['blends'] = blends
 
+        simultaneous_morphology = []
+        for sim_morph in gl.simultaneous_morphology.all():
+            morpheme_display = get_default_annotationidglosstranslation(sim_morph.morpheme)
+            simultaneous_morphology.append((sim_morph, morpheme_display))
+        context['simultaneous_morphology'] = simultaneous_morphology
+
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}

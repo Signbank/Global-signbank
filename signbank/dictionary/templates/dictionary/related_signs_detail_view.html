@@ -633,7 +633,7 @@
 		{% if appearsin %}
 		<thead>
 		   <tr>
-			   <th style="width:auto; color:darkred">{% trans "Appears In" %}</th>
+			   <th style="width:auto; color:darkred">{% trans "Appears in Compounds" %}</th>
 
 			   <th style='width:12em'>{% trans "Annotation ID Gloss" %}</th>
 			   <th colspan="2" style='width:12em'>{% trans "Sequential Morphology" %}</th>
@@ -716,6 +716,31 @@
 		</tr>
 		{% endfor %}
 
+		</tbody>
+		{% endif %}
+
+		{% if simultaneous_morphology %}
+		<thead>
+		   <tr>
+			   <th style="width:auto; color:darkred">{% trans "Simultaneous Morphology" %}</th>
+
+			   <th style='width:auto'>{% trans "Morpheme Gloss" %}</th>
+			   <th style='width:auto'>{% trans "Morpheme Type" %}</th>
+			   <th colspan="2" style='width:auto'>{% trans "Meaning in This Sign" %}</th>
+
+		   </tr>
+		</thead>
+		<tbody>
+		{% for sim_morph, sim_morph_display in simultaneous_morphology %}
+		{% with sim_morph.morpheme.get_mrpType_display as mrpType_display %}
+		<tr>
+			<td></td>
+			<td><a href='{% url "dictionary:admin_morpheme_view" pk=sim_morph.morpheme.pk %}'>{{sim_morph_display}}</a></td>
+			<td>{{mrpType_display}}</td>
+			<td>{{sim_morph.role}}</td>
+		</tr>
+		{% endwith %}
+		{% endfor %}
 		</tbody>
 		{% endif %}
 
