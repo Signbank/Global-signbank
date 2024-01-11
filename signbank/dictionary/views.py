@@ -1270,7 +1270,7 @@ def import_csv_update(request):
                 help = 'Row ' + str(nl + 1) + ': Attempt to update Lemma translations for Signbank ID ' + str(pk)
                 error.append(help)
                 messages.add_message(request, messages.ERROR,
-                                     _('Attempt to update Lemma translations. Use Import CSV Lemma to update lemmas.'))
+                                     _('Attempt to update Lemma translations. Use Import CSV Lemma Update.'))
                 continue
 
             try:
@@ -1336,7 +1336,7 @@ def import_csv_update(request):
                         else:
                             error = [error_string]
                         messages.add_message(request, messages.ERROR,
-                                             _('Attempt to update Lemma translations. Use Import CSV Lemma to update lemmas.'))
+                                             _('Attempt to update Lemma translations. Use Import CSV Lemma Update.'))
 
                 continue   # avoid default field update
 
