@@ -1275,6 +1275,8 @@ class GlossDetailView(DetailView):
     def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'Copy':
             return self.copy_gloss(context)
+        elif self.request.GET.get('format') == 'Move':
+            return self.move_gloss(context)
         else:
             return super(GlossDetailView, self).render_to_response(context, **response_kwargs)
 
@@ -1301,7 +1303,7 @@ class GlossDetailView(DetailView):
             for lemma_translation in existing_lemma_translations:
                 new_lemma_text = lemma_translation.text + '-duplicate'
                 duplication_lemma_translation = LemmaIdglossTranslation(lemma=new_lemma, language=lemma_translation.language,
-                                                                      text=new_lemma_text)
+                                                                        text=new_lemma_text)
                 duplication_lemma_translation.save()
             setattr(new_gloss, 'lemma', new_lemma)
 
@@ -1320,6 +1322,23 @@ class GlossDetailView(DetailView):
         self.request.session['last_used_dataset'] = dataset.acronym
 
         return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/'+str(new_gloss.id) + '?edit')
+
+    def move_gloss(self, context):
+        gl = context['gloss']
+        context['active_id'] = gl.id
+
+        dataset_pk = self.request.GET.get('dataset')
+        dataset = Dataset.objects.get(pk=dataset_pk)
+        gloss_lemma = gl.lemma
+        if gloss_lemma.dataset == dataset:
+            pass
+        else:
+            setattr(gloss_lemma, 'dataset', dataset)
+            gloss_lemma.save()
+
+        self.request.session['last_used_dataset'] = dataset.acronym
+
+        return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/'+str(gl.id))
 
 
 class GlossVideosView(DetailView):
