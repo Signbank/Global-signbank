@@ -61,7 +61,7 @@ from signbank.dictionary.senses_display import (senses_per_language, senses_per_
                                                 sensetranslations_per_language_dict,
                                                 senses_translations_per_language_list, senses_sentences_per_language_list)
 from signbank.dictionary.context_data import get_context_data_for_list_view, get_context_data_for_gloss_search_form, get_web_search
-from signbank.dictionary.related_objects import gloss_is_related_to
+from signbank.dictionary.related_objects import gloss_is_related_to, gloss_related_objects
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1326,17 +1326,35 @@ class GlossDetailView(DetailView):
     def move_gloss(self, context):
         gl = context['gloss']
         context['active_id'] = gl.id
+        related_objects = gloss_related_objects(gl)
+        user = self.request.user
+        if not user.is_superuser:
+            messages.add_message(self.request, messages.ERROR,
+                                 _('You must be superuser to use the requested functionality.'))
+            return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(gl.id))
 
         dataset_pk = self.request.GET.get('dataset')
         dataset = Dataset.objects.get(pk=dataset_pk)
         gloss_lemma = gl.lemma
-        if gloss_lemma.dataset == dataset:
-            pass
-        else:
-            setattr(gloss_lemma, 'dataset', dataset)
-            gloss_lemma.save()
+        try:
+            with atomic():
+                if gloss_lemma.dataset != dataset:
+                    setattr(gloss_lemma, 'dataset', dataset)
+                    gloss_lemma.save()
+                for related_gloss in related_objects:
+                    related_gloss_lemma = related_gloss.lemma
+                    if related_gloss_lemma.dataset != dataset:
+                        setattr(related_gloss_lemma, 'dataset', dataset)
+                        related_gloss_lemma.save()
+        except (ObjectDoesNotExist, PermissionDenied, PermissionError):
+            messages.add_message(self.request, messages.ERROR,
+                                 _('Error moving the gloss and related glosses to the requested dataset.'))
+            return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/'+str(gl.id))
 
         self.request.session['last_used_dataset'] = dataset.acronym
+
+        # success_message = _('Gloss moved to dataset ') + dataset.acronym
+        # messages.add_message(self.request, messages.INFO, success_message)
 
         return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/'+str(gl.id))
 

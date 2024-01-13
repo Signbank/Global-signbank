@@ -565,7 +565,7 @@ option:not(:checked) {
 
         {% endif %}
 
-        {% if perms.dictionary.add_gloss %}
+        {% if user.is_superuser %}
          <button id='move_gloss_btn' class='btn btn-primary move-button' data-toggle='modal' data-target='#move_gloss_modal'>{% trans "Move" %}</button>
 
           <div class="modal fade" id="move_gloss_modal" role="dialog" aria-labelledby="#modalGlossMove" aria-hidden="true">
@@ -575,7 +575,19 @@ option:not(:checked) {
                         <h2 id='modalGlossMove'>{% trans "Move Gloss" %}</h2>
                     </div>
                     <div class='modal-body'>
-                        <p>{% trans "This will change the dataset of the gloss." %}</p>
+                        <p>{% trans "This command will change the dataset of the gloss." %}</p>
+                        {% if related_objects.keys %}
+                        <p>{% trans "This gloss is related to other glosses:" %}</p>
+                        <table class="table table-condensed table-bordered">
+                            {% for key, glosses in related_objects.items %}
+                            <tr>
+                                <td style="width:240px">{{key}}</td>
+                                <td>{{glosses}}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                        <br>
+                        {% endif %}
                      </div>
                   <form id="move_gloss" method='get'>
                       {% csrf_token %}
