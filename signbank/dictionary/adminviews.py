@@ -61,7 +61,7 @@ from signbank.dictionary.senses_display import (senses_per_language, senses_per_
                                                 sensetranslations_per_language_dict,
                                                 senses_translations_per_language_list, senses_sentences_per_language_list)
 from signbank.dictionary.context_data import get_context_data_for_list_view, get_context_data_for_gloss_search_form, get_web_search
-from signbank.dictionary.related_objects import gloss_is_related_to, gloss_related_objects
+from signbank.dictionary.related_objects import gloss_is_related_to, gloss_related_objects, okay_to_move_gloss, same_translation_languages
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1335,6 +1335,21 @@ class GlossDetailView(DetailView):
 
         dataset_pk = self.request.GET.get('dataset')
         dataset = Dataset.objects.get(pk=dataset_pk)
+
+        if gl.lemma.dataset == dataset:
+            # do nothing
+            return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(gl.id))
+
+        if not same_translation_languages(gl.lemma.dataset, dataset):
+            messages.add_message(self.request, messages.ERROR,
+                                 _('The target dataset has different translation languages.'))
+            return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(gl.id))
+
+        if not okay_to_move_gloss(gl, gl.lemma.dataset, dataset):
+            messages.add_message(self.request, messages.ERROR,
+                                 _('A similar gloss already exists in the target dataset.'))
+            return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(gl.id))
+
         gloss_lemma = gl.lemma
         try:
             with atomic():
@@ -1353,8 +1368,8 @@ class GlossDetailView(DetailView):
 
         self.request.session['last_used_dataset'] = dataset.acronym
 
-        # success_message = _('Gloss moved to dataset ') + dataset.acronym
-        # messages.add_message(self.request, messages.INFO, success_message)
+        success_message = _('Gloss moved to dataset ') + dataset.acronym
+        messages.add_message(self.request, messages.INFO, success_message)
 
         return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/'+str(gl.id))
 

@@ -156,3 +156,45 @@ def gloss_related_objects(gloss):
                                     + siblings + simultaneous + blends + blendsiblings))
     return related_gloss_unique
 
+
+def same_translation_languages(dataset1, dataset2):
+    if dataset1 == dataset2:
+        return True
+    source_translation_languages = [ds.id for ds in dataset1.translation_languages.all()]
+    target_translation_languages = [ds.id for ds in dataset2.translation_languages.all()]
+    return source_translation_languages == target_translation_languages
+
+
+def gloss_exists_in_dataset(gloss, dataset):
+
+    if gloss.lemma.dataset == dataset:
+        return True
+
+    gloss_exists = False
+    gloss_lemma_translations = gloss.lemma.lemmaidglosstranslation_set.all()
+    gloss_annotation_translations = gloss.annotationidglosstranslation_set.all()
+    for lemma_translation in gloss_lemma_translations:
+        lemmas_with_same_text = dataset.lemmaidgloss_set.filter(lemmaidglosstranslation__text__exact=lemma_translation.text,
+                                                                lemmaidglosstranslation__language=lemma_translation.language)
+        if lemmas_with_same_text.count():
+            # The lemma translation text is already in use in the dataset
+            gloss_exists = True
+    target_dataset_glosses = Gloss.objects.filter(lemma__dataset=dataset)
+    for gloss_translation in gloss_annotation_translations:
+        glosses_with_same_text = target_dataset_glosses.filter(annotationidglosstranslation__text__exact=gloss_translation.text,
+                                                               annotationidglosstranslation__language=gloss_translation.language)
+        if glosses_with_same_text.count():
+            # The gloss annotation text is already in use in the dataset
+            gloss_exists = True
+    return gloss_exists
+
+
+def okay_to_move_gloss(gloss, dataset_source, dataset_target):
+
+    if not same_translation_languages(dataset_source, dataset_target):
+        return False
+
+    if gloss_exists_in_dataset(gloss, dataset_target):
+        return False
+
+    return True
