@@ -573,9 +573,22 @@ option:not(:checked) {
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h2 id='modalGlossMove'>{% trans "Move Gloss" %}</h2>
+                        {% with gloss.lemma.dataset.default_language as target_default_language %}
+			            {% with annotation_idgloss|get_item:target_default_language as annotation %}
+                        <h4>{{annotation}}</h4>
+                        {% endwith %}
+                        {% endwith %}
                     </div>
                     <div class='modal-body'>
-                        <p>{% trans "This command will change the dataset of the gloss." %}</p>
+                        {% blocktrans %}
+                        <p>This command will change the dataset of the gloss as well as its related glosses
+                            (via relations or morphology).</p>
+                        <p>The target dataset must have the same translation languages.</p>
+                        <p>If a gloss cannot be moved because of a similar gloss in the target dataset,
+                            the user is expected to modify the lemma translations or gloss annotations
+                            to remove ambiguity.</p>
+                        <p>The videos and images of the glosses are also moved to the new dataset.</p>
+                        {% endblocktrans %}
                         {% if related_objects.keys %}
                         <p>{% trans "This gloss is related to other glosses:" %}</p>
                         <table class="table table-condensed table-bordered">
@@ -586,7 +599,6 @@ option:not(:checked) {
                             </tr>
                             {% endfor %}
                         </table>
-                        <br>
                         {% endif %}
                      </div>
                   <form id="move_gloss" method='get'>
