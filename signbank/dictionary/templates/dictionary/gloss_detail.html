@@ -566,7 +566,7 @@ option:not(:checked) {
         {% endif %}
 
         {% if user.is_superuser and selected_datasets|length > 1 %}
-         <button id='move_gloss_btn' class='btn btn-primary move-button' data-toggle='modal' data-target='#move_gloss_modal'>{% trans "Move" %}</button>
+         <button id='move_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#move_gloss_modal'>{% trans "Move" %}</button>
 
           <div class="modal fade" id="move_gloss_modal" role="dialog" aria-labelledby="#modalGlossMove" aria-hidden="true">
              <div class="modal-dialog">
