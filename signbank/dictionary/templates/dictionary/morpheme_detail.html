@@ -433,12 +433,12 @@ function checkKey(e)
                 </td><td style="width:200px;"></td>
             </tr>
 
-            {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+            {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
             <tr>
                 <th>
                     {% trans "Annotation ID Gloss" %} ({{ lang }})
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}'>{{ annotation_idgloss_translations.0.text|safe }}</td>
+                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}'>{{annotation_idgloss_translation}}</td>
 
             </tr>
             {% endfor %}
@@ -467,12 +467,31 @@ function checkKey(e)
 
         {% if perms.dictionary.change_morpheme %}
          <div class="modal fade" id="delete_morpheme_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDel" aria-hidden="true">
-             <div class="modal-dialog modal-sm">
+             <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h2 id='modalTitleDel'>{% trans "Delete This Morpheme" %}</h2>
+                        <br>
+                        {% with morpheme.lemma.dataset.default_language as target_default_language %}
+			            {% with annotation_idgloss|get_item:target_default_language as annotation %}
+                        <h4>{% trans "Morpheme" %}: {{annotation}}</h4>
+                        {% endwith %}
+                        {% endwith %}
                     </div>
                     <div class='modal-body'>
+                        {% if related_objects.keys %}
+                        <p>{% trans "This morpheme is related to glosses:" %}</p>
+                        <br>
+                        <table class="table table-condensed table-bordered">
+                            {% for key, glosses in related_objects.items %}
+                            <tr>
+                                <td style="width:240px">{{key}}</td>
+                                <td>{{glosses}}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                        <br>
+                        {% endif %}
                         <p>{% trans "This action will delete this morpheme and all associated records. It cannot be undone." %}</p>
                      </div>
                   <form action='{% url "dictionary:update_morpheme" morpheme.id %}' method='post'>
