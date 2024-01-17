@@ -55,13 +55,18 @@ from signbank.frequency import import_corpus_speakers, configure_corpus_document
     dictionary_speakers_to_documents, document_has_been_updated, document_to_number_of_glosses, \
     document_to_glosses, get_corpus_speakers, remove_document_from_corpus, document_identifiers_from_paths, \
     eaf_file_from_paths, documents_paths_dictionary
-from signbank.dictionary.frequency_display import collect_speaker_age_data, collect_variants_data, collect_variants_age_range_data, \
-                                                    collect_variants_age_sex_raw_percentage
+from signbank.dictionary.frequency_display import (collect_speaker_age_data, collect_variants_data,
+                                                   collect_variants_age_range_data,
+                                                   collect_variants_age_sex_raw_percentage)
 from signbank.dictionary.senses_display import (senses_per_language, senses_per_language_list,
                                                 sensetranslations_per_language_dict,
-                                                senses_translations_per_language_list, senses_sentences_per_language_list)
-from signbank.dictionary.context_data import get_context_data_for_list_view, get_context_data_for_gloss_search_form, get_web_search
-from signbank.dictionary.related_objects import gloss_is_related_to
+                                                senses_translations_per_language_list,
+                                                senses_sentences_per_language_list)
+from signbank.dictionary.context_data import (get_context_data_for_list_view, get_context_data_for_gloss_search_form,
+                                              get_web_search)
+from signbank.dictionary.related_objects import (gloss_is_related_to, gloss_related_objects, okay_to_move_gloss,
+                                                 same_translation_languages, okay_to_move_glosses,
+                                                 glosses_in_lemma_group, transitive_related_objects)
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -1238,6 +1243,9 @@ class GlossDetailView(DetailView):
 
         context['related_objects'] = gloss_is_related_to(gl, interface_language_code, default_language_code)
 
+        related_objects = [get_default_annotationidglosstranslation(ro) for ro in transitive_related_objects(gl)]
+        context['extended_related_objects'] = ', '.join(related_objects)
+
         if hasattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS') and settings.SHOW_DATASET_INTERFACE_OPTIONS:
             context['dataset_choices'] = {}
             user = self.request.user
@@ -1275,6 +1283,8 @@ class GlossDetailView(DetailView):
     def render_to_response(self, context, **response_kwargs):
         if self.request.GET.get('format') == 'Copy':
             return self.copy_gloss(context)
+        elif self.request.GET.get('format') == 'Move':
+            return self.move_gloss(context)
         else:
             return super(GlossDetailView, self).render_to_response(context, **response_kwargs)
 
@@ -1301,7 +1311,7 @@ class GlossDetailView(DetailView):
             for lemma_translation in existing_lemma_translations:
                 new_lemma_text = lemma_translation.text + '-duplicate'
                 duplication_lemma_translation = LemmaIdglossTranslation(lemma=new_lemma, language=lemma_translation.language,
-                                                                      text=new_lemma_text)
+                                                                        text=new_lemma_text)
                 duplication_lemma_translation.save()
             setattr(new_gloss, 'lemma', new_lemma)
 
@@ -1320,6 +1330,62 @@ class GlossDetailView(DetailView):
         self.request.session['last_used_dataset'] = dataset.acronym
 
         return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/'+str(new_gloss.id) + '?edit')
+
+    def move_gloss(self, context):
+        gl = context['gloss']
+        context['active_id'] = gl.id
+        related_objects = transitive_related_objects(gl)
+
+        user = self.request.user
+        if not user.is_superuser:
+            messages.add_message(self.request, messages.ERROR,
+                                 _('You must be superuser to use the requested functionality.'))
+            return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(gl.id))
+
+        dataset_pk = self.request.GET.get('dataset')
+        dataset = Dataset.objects.get(pk=dataset_pk)
+
+        if not same_translation_languages(gl.lemma.dataset, dataset):
+            messages.add_message(self.request, messages.ERROR,
+                                 _('The target dataset has different translation languages.'))
+            return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(gl.id))
+
+        if gl.lemma.dataset != dataset:
+            okay_to_move, feedback = okay_to_move_gloss(gl, dataset)
+            if not okay_to_move:
+                feedback_message = _('A similar gloss already exists in the target dataset: ') + ', '.join(feedback)
+
+                messages.add_message(self.request, messages.ERROR, feedback_message)
+                return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(gl.id))
+
+        okay_to_move, feedback = okay_to_move_glosses(related_objects, dataset)
+        if not okay_to_move:
+            feedback_message = _('A related gloss already exists in the target dataset: ') + ', '.join(feedback)
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(gl.id))
+
+        gloss_lemma = gl.lemma
+        try:
+            with atomic():
+                if gloss_lemma.dataset != dataset:
+                    setattr(gloss_lemma, 'dataset', dataset)
+                    gloss_lemma.save()
+                for related_gloss in related_objects:
+                    related_gloss_lemma = related_gloss.lemma
+                    if related_gloss_lemma.dataset != dataset:
+                        setattr(related_gloss_lemma, 'dataset', dataset)
+                        related_gloss_lemma.save()
+        except (ObjectDoesNotExist, PermissionDenied, PermissionError):
+            messages.add_message(self.request, messages.ERROR,
+                                 _('Error moving the gloss and related glosses to the requested dataset.'))
+            return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/'+str(gl.id))
+
+        self.request.session['last_used_dataset'] = dataset.acronym
+
+        success_message = _('Gloss moved to dataset ') + dataset.acronym
+        messages.add_message(self.request, messages.INFO, success_message)
+
+        return HttpResponseRedirect(settings.PREFIX_URL + '/dictionary/gloss/'+str(gl.id))
 
 
 class GlossVideosView(DetailView):

@@ -727,6 +727,21 @@ def process_lemmaidglosstranslation_changes(sender, instance, **kwargs):
         glossvideo.move_video(move_files_on_disk=True)
 
 
+@receiver(models.signals.post_save, sender=LemmaIdgloss)
+def process_lemmaidgloss_changes(sender, instance, **kwargs):
+    """
+    Makes changes to GlossVideos if a LemmaIdgloss has been changed.
+    :param sender:
+    :param instance:
+    :param kwargs:
+    :return:
+    """
+    lemmaidgloss = instance
+    glossvideos = GlossVideo.objects.filter(gloss__lemma=lemmaidgloss)
+    for glossvideo in glossvideos:
+        glossvideo.move_video(move_files_on_disk=True)
+
+
 @receiver(models.signals.post_save, sender=Gloss)
 @receiver(models.signals.post_save, sender=Morpheme)
 def process_gloss_changes(sender, instance, **kwargs):
