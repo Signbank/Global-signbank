@@ -3,6 +3,52 @@ from signbank.tools import get_default_annotationidglosstranslation
 from django.utils.translation import override, gettext_lazy as _, activate
 
 
+def morpheme_is_related_to(morpheme, interface_language_code, default_language_code):
+    """
+    This function is used in the Delete Morpheme modal of the MorphemeDetailView template
+    It yields a dictionary of different kinds of related objects to the morpheme.
+    Because it is used in the template, it computes display appropriate data
+    """
+    related_objects = dict()
+
+    # Get the set of all the Gloss signs that point to morpheme
+    other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(
+        morpheme_id__exact=morpheme.id)
+    appears_in = []
+    for sim_morph in other_glosses_that_point_to_morpheme:
+        parent_gloss = sim_morph.parent_gloss
+        translated_word_class = parent_gloss.wordClass.name if parent_gloss.wordClass else '-'
+        appears_in.append((parent_gloss, translated_word_class))
+
+    appears_in_glosses = []
+    for parent_gloss, translated_word_class in appears_in:
+        sign_display = str(parent_gloss.id)
+        morph_texts = parent_gloss.get_annotationidglosstranslation_texts()
+        if morph_texts.keys():
+            if interface_language_code in morph_texts.keys():
+                sign_display = morph_texts[interface_language_code]
+            else:
+                sign_display = morph_texts[default_language_code]
+        appears_in_glosses.append(sign_display)
+    simultaneous = ', '.join(appears_in_glosses)
+    if simultaneous:
+        related_objects[_('Simultaneous Morphology')] = simultaneous
+
+    return related_objects
+
+
+def morpheme_related_objects(morpheme):
+
+    related_objects = []
+    # Make a list of all the glosses that point to this morpheme
+    other_glosses_that_point_to_morpheme = SimultaneousMorphologyDefinition.objects.filter(
+        morpheme_id__exact=morpheme.id)
+    for sim_morph in other_glosses_that_point_to_morpheme:
+        related_objects.append(sim_morph.parent_gloss)
+
+    return related_objects
+
+
 def gloss_is_related_to(gloss, interface_language_code, default_language_code):
     """
     This function is used in the Delete Sign modal of the GlossDetailView template

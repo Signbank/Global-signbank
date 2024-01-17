@@ -64,8 +64,8 @@ from signbank.dictionary.senses_display import (senses_per_language, senses_per_
                                                 senses_sentences_per_language_list)
 from signbank.dictionary.context_data import (get_context_data_for_list_view, get_context_data_for_gloss_search_form,
                                               get_web_search)
-from signbank.dictionary.related_objects import (gloss_is_related_to, gloss_related_objects, okay_to_move_gloss,
-                                                 same_translation_languages, okay_to_move_glosses,
+from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to, gloss_related_objects,
+                                                 okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
 
 
@@ -4858,6 +4858,9 @@ class MorphemeDetailView(DetailView):
         else:
             self.request.session['search_type'] = self.search_type
 
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
         # Call the base implementation first to get a context
         context = super(MorphemeDetailView, self).get_context_data(**kwargs)
         # Add in a QuerySet of all the books
@@ -4984,18 +4987,27 @@ class MorphemeDetailView(DetailView):
         context['lemma_group'] = False
         context['lemma_group_url'] = ''
 
+        default_language = Language.objects.get(id=get_default_language_id())
+        gloss_annotations = gl.annotationidglosstranslation_set.all()
+        if gloss_annotations:
+            gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
+        else:
+            gloss_default_annotationidglosstranslation = str(gl.id)
+
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
-        if gl.dataset:
-            for language in gl.dataset.translation_languages.all():
-                context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
-        else:
-            language = Language.objects.get(id=get_default_language_id())
-            context['annotation_idgloss'][language] = gl.annotationidglosstranslation_set.filter(language=language)
+        for language in gl.dataset.translation_languages.all():
+            try:
+                annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
+            except ObjectDoesNotExist:
+                annotation_text = gloss_default_annotationidglosstranslation
+            context['annotation_idgloss'][language] = annotation_text
 
         translated_morph_type = gl.mrpType.name if gl.mrpType else '-'
 
         context['morpheme_type'] = translated_morph_type
+
+        context['related_objects'] = morpheme_is_related_to(gl, interface_language_code, default_language_code)
 
         gloss_semanticfields = []
         for sf in gl.semField.all():

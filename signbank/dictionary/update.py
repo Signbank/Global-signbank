@@ -34,7 +34,7 @@ from django.shortcuts import redirect
 from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, mapping_group_keywords, mapping_add_keyword, \
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
 from signbank.dictionary.consistency_senses import reorder_translations
-from signbank.dictionary.related_objects import gloss_related_objects
+from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -2529,6 +2529,13 @@ def update_morpheme(request, morphemeid):
     if field == 'deletemorpheme':
         if value == 'confirmed':
             # delete the morpheme and redirect back to morpheme list
+            related_objects = morpheme_related_objects(morpheme)
+
+            if settings.GUARDED_MORPHEME_DELETE or related_objects:
+                reverse_url = 'dictionary:admin_morpheme_view'
+                messages.add_message(request, messages.INFO,
+                                     _("GUARDED_MORPHEME_DELETE is set to True or the morpheme has relations to other glosses and was not deleted."))
+                return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': morpheme.id}))
             morpheme.delete()
             return HttpResponseRedirect(reverse('dictionary:admin_morpheme_list'))
 
