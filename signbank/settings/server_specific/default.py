@@ -40,7 +40,7 @@ DATABASES = {'default':
 METADATA_LOCATION = 'metadata.csv'
 
 #Video software to use to get the middle frame
-FFMPEG_PROGRAM = "avconv"
+FFMPEG_PROGRAM = "ffmpeg"
 
 #List of tuples containing the name and the email address of the admins
 ADMINS = [('Spongebob Squarepants','s.squarepants@gmail.com')]
