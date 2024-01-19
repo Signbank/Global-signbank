@@ -59,10 +59,8 @@ class Video(models.Model):
 
         return poster_path
 
-
     def get_absolute_url(self):
         return self.videofile.url
-
 
     def ensure_mp4(self):
         """Ensure that the video file is an h264 format
@@ -80,7 +78,6 @@ class Video(models.Model):
         # print tmploc
         shutil.move(tmploc, self.videofile.path)
 
-
     def delete_files(self):
         """Delete the files associated with this object"""
 
@@ -94,6 +91,7 @@ class Video(models.Model):
 
 
 import shutil
+
 
 class GlossVideoStorage(FileSystemStorage):
     """Implement our shadowing video storage system"""
@@ -114,10 +112,11 @@ ACTION_CHOICES = (('delete', 'delete'),
                   ('watch', 'watch'),
                   )
 
+
 class ExampleVideoHistory(models.Model):
     """History of video uploading and deletion"""
 
-    action = models.CharField("Video History Action",max_length=6, choices=ACTION_CHOICES, default='watch')
+    action = models.CharField("Video History Action", max_length=6, choices=ACTION_CHOICES, default='watch')
     # When was this action done?
     datestamp = models.DateTimeField("Date and time of action", auto_now_add=True)  # WAS: default=datetime.now()
     # See 'vfile' in video.views.addvideo
@@ -142,10 +141,11 @@ class ExampleVideoHistory(models.Model):
     class Meta:
         ordering = ['datestamp']
 
+
 class GlossVideoHistory(models.Model):
     """History of video uploading and deletion"""
 
-    action = models.CharField("Video History Action",max_length=6, choices=ACTION_CHOICES, default='watch')
+    action = models.CharField("Video History Action", max_length=6, choices=ACTION_CHOICES, default='watch')
     # When was this action done?
     datestamp = models.DateTimeField("Date and time of action", auto_now_add=True)  # WAS: default=datetime.now()
     # See 'vfile' in video.views.addvideo
@@ -555,11 +555,12 @@ class GlossVideo(models.Model):
             print('Error generating still image', sys.exc_info())
 
     def convert_to_mp4(self):
-        print(self.videofile.path)
+        print('Convert to mp4: ', self.videofile.path)
         name, _ = os.path.splitext(self.videofile.path)
-        out_name = name + ".mp4"
+        out_name = name + "_copy.mp4"
         import ffmpeg
-        ffmpeg.input(self.videofile.path).output(out_name).run(quiet=True, overwrite_output=True)
+        ffmpeg.input(self.videofile.path).output(out_name).run(quiet=True)
+        os.rename(out_name, self.videofile.path)
         print("Finished converting {}".format(self.videofile.path))
 
     def delete_files(self):
