@@ -352,11 +352,14 @@ class ExampleVideo(models.Model):
             print('Error generating still image', sys.exc_info())
 
     def convert_to_mp4(self):
-        print(self.videofile.path)
+        print('Convert to mp4: ', self.videofile.path)
         name, _ = os.path.splitext(self.videofile.path)
-        out_name = name + ".mp4"
+        out_name = name + "_copy.mp4"
         import ffmpeg
-        ffmpeg.input(self.videofile.path).output(out_name).run(quiet=True, overwrite_output=True)
+        stream = ffmpeg.input(self.videofile.path)
+        stream = ffmpeg.output(stream, out_name)
+        ffmpeg.run(stream, quiet=True)
+        os.rename(out_name, self.videofile.path)
         print("Finished converting {}".format(self.videofile.path))
 
     def delete_files(self):
@@ -559,7 +562,9 @@ class GlossVideo(models.Model):
         name, _ = os.path.splitext(self.videofile.path)
         out_name = name + "_copy.mp4"
         import ffmpeg
-        ffmpeg.input(self.videofile.path).output(out_name).run(quiet=True)
+        stream = ffmpeg.input(self.videofile.path)
+        stream = ffmpeg.output(stream, out_name)
+        ffmpeg.run(stream, quiet=True)
         os.rename(out_name, self.videofile.path)
         print("Finished converting {}".format(self.videofile.path))
 
