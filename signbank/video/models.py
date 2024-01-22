@@ -373,7 +373,6 @@ class ExampleVideo(models.Model):
         except:
             pass
 
-
     def reversion(self, revert=False):
         """We have a new version of this video so increase
         the version count here and rename the video
@@ -395,7 +394,10 @@ class ExampleVideo(models.Model):
                 (newname, bak) = os.path.splitext(self.videofile.name)
                 if bak != '.bak' + str(self.id):
                     # hmm, something bad happened
-                    raise Exception('Unknown suffix on stored video file. Expected .bak')
+                    print('Unknown suffix on stored video file. Expected .bak')
+                    self.delete()
+                    self.delete_files()
+                    return
                 if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                     os.rename(os.path.join(storage.location, self.videofile.name),
                             os.path.join(storage.location, newname))
@@ -605,7 +607,10 @@ class GlossVideo(models.Model):
                     (newname, bak) = os.path.splitext(self.videofile.name)
                     if bak != '.bak' + str(self.id):
                         # hmm, something bad happened
-                        raise Exception('Unknown suffix on stored video file. Expected .bak')
+                        print('Unknown suffix on stored video file. Expected .bak')
+                        self.delete()
+                        self.delete_files()
+                        return
                     if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                         os.rename(os.path.join(storage.location, self.videofile.name),
                               os.path.join(storage.location, newname))
