@@ -2484,8 +2484,6 @@ RELATION_ROLE_CHOICES = (('homonym', 'Homonym'),
                          ('paradigm', 'Handshape Paradigm')
                          )
 
-VARIANT_ROLE_CHOICES = ('variant', 'Variant')
-
 
 # this can be used for phonology and handshape fields
 def fieldname_to_kind(fieldname):
