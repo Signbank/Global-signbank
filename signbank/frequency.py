@@ -35,14 +35,14 @@ def get_gloss_from_frequency_dict(dataset_acronym, gloss_id_or_value):
     try:
         gloss_id = int(gloss_id_or_value)
         gloss = Gloss.objects.get(id=gloss_id)
-        if gloss.lemma == None:
+        if gloss.lemma is None:
             # this is a problem because we don't know what dataset this gloss is in
             print('get_gloss_from_frequency_dict gloss has empty lemma: ', gloss_id_or_value, gloss)
             raise ValueError
         # the dataset has not been restricted to the dataset_acronym
         # if it succeeds to get a gloss with the gloss_id it might be in a different dataset
         # check that the gloss indeed has a dataset
-        if gloss.lemma.dataset == None:
+        if gloss.lemma.dataset is None:
             print('get_gloss_from_frequency_dict gloss has no dataset: ', gloss_id_or_value, gloss)
             raise ValueError
         # the caller will check whether the dataset of the gloss matches
@@ -325,7 +325,7 @@ def documents_paths_dictionary(dataset_acronym, **kwargs):
     # Check whether a folder exists for this dataset
     if not os.path.isdir(dataset_eaf_folder):
         # return empty data structures
-        return (uploaded_eafs_dict, duplicate_document_identifiers)
+        return uploaded_eafs_dict, duplicate_document_identifiers
 
     for file_or_folder in os.listdir(dataset_eaf_folder):
         dataset_subfolder = os.path.join(dataset_eaf_folder,file_or_folder)
@@ -380,7 +380,7 @@ def documents_paths_dictionary(dataset_acronym, **kwargs):
                         already_seen_document_identifiers.append(basename)
                         uploaded_eafs_dict[basename] = [ os.path.join(directory,file_basename) ]
 
-    return (uploaded_eafs_dict, duplicate_document_identifiers)
+    return uploaded_eafs_dict, duplicate_document_identifiers
 
 
 def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
@@ -395,13 +395,13 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
 
     try:
         dataset = Dataset.objects.get(acronym=dataset_acronym)
-    except (ObjectDoesNotExist):
+    except ObjectDoesNotExist:
         # A dataset with the acronym was not found
         dataset = None
 
     try:
         corpus = Corpus.objects.get(name=dataset_acronym)
-    except (ObjectDoesNotExist):
+    except ObjectDoesNotExist:
         # Corpus has not been created yet for this dataset
         corpus = None
 
@@ -413,11 +413,11 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
         from CNGT_scripts.python.cngt_calculated_metadata import get_creation_time
     except ImportError:
         print('unable to import get_creation_time from CNGT_scripts')
-        return (eaf_files_to_update, new_eaf_files, missing_eaf_files)
+        return eaf_files_to_update, new_eaf_files, missing_eaf_files
 
     if not dataset or not corpus:
         # Something went wrong
-        return (eaf_files_to_update, new_eaf_files, missing_eaf_files)
+        return eaf_files_to_update, new_eaf_files, missing_eaf_files
 
     # Get whatever is stored for this dataset acronym on the file system
     uploaded_paths = uploaded_eaf_paths(dataset_acronym, **kwargs)
@@ -473,7 +473,7 @@ def get_names_of_updated_eaf_files(dataset_acronym, **kwargs):
             # a new eaf file has been found
             new_eaf_files += [ eaf_path ]
 
-    return (eaf_files_to_update, new_eaf_files, missing_eaf_files)
+    return eaf_files_to_update, new_eaf_files, missing_eaf_files
 
 
 def document_identifiers_from_paths(eaf_paths):
@@ -562,7 +562,7 @@ def import_corpus_speakers(dataset_acronym):
 
         try:
             participant, location, age, gender, hand = row
-        except (ValueError):
+        except ValueError:
             errors.append('Line '+str(n)+' does not seem to have the correct amount of items')
             continue
 
@@ -571,10 +571,10 @@ def import_corpus_speakers(dataset_acronym):
             # if the speaker exists with the original participant as identifier (i.e., CNGT eaf files), add the dataset acronym
             speaker = Speaker.objects.get(identifier=participant)
             speaker.identifier = speaker.identifier+'_'+dataset_acronym
-        except (ObjectDoesNotExist):
+        except ObjectDoesNotExist:
             try:
                 speaker = Speaker.objects.get(identifier=participant+'_'+dataset_acronym)
-            except (ObjectDoesNotExist):
+            except ObjectDoesNotExist:
                 speaker = Speaker()
                 speaker.identifier = participant+'_'+dataset_acronym
         speaker.location = location
@@ -600,7 +600,7 @@ def import_corpus_speakers(dataset_acronym):
             speaker.handedness = ''
         try:
             speaker.age = int(age)
-        except (ValueError):
+        except ValueError:
             # might need to do some checking here if other data has been found
             errors.append('Line '+str(n)+' has an incorrect age format')
             pass
@@ -650,7 +650,7 @@ def dictionary_speakerIdentifiers_to_speakerObjects(dataset_acronym):
         # to speed up processing later, speaker objects are stored in a dict by their identifier
         dictionary_speakerIds_to_speakerObjs[speaker_identifier] = speaker
         speaker_identifiers += [speaker_identifier]
-    return (speaker_identifiers, dictionary_speakerIds_to_speakerObjs)
+    return speaker_identifiers, dictionary_speakerIds_to_speakerObjs
 
 def dictionary_documentIdentifiers_to_documentObjects(corpus, document_identifiers_of_eaf_files, document_creation_dates_of_eaf_files):
     dictionary_documentIds_to_documentObjs = {}
@@ -670,7 +670,7 @@ def dictionary_documentIdentifiers_to_documentObjects(corpus, document_identifie
 def process_frequencies_per_speaker(dataset_acronym, speaker_objects, document_objects, frequencies_per_speaker):
 
     if not frequencies_per_speaker:
-        return ([],{},[])
+        return [],{},[]
     glosses_not_in_signbank = []
     updated_glosses = {}
     glosses_in_other_dataset = []
@@ -694,7 +694,7 @@ def process_frequencies_per_speaker(dataset_acronym, speaker_objects, document_o
                             gloss_frequency = GlossFrequency.objects.get(speaker=speaker_objects[pers],
                                                                          document=document_objects[doc], gloss=gloss)
                             gloss_frequency.frequency = cnt
-                        except (ObjectDoesNotExist):
+                        except ObjectDoesNotExist:
                             gloss_frequency = GlossFrequency()
                             gloss_frequency.speaker = speaker_objects[pers]
                             gloss_frequency.document = document_objects[doc]
@@ -712,7 +712,7 @@ def process_frequencies_per_speaker(dataset_acronym, speaker_objects, document_o
                         glosses_not_in_signbank += [gloss_id_or_value]
 
     # print('glosses not in signbank: ', glosses_not_in_signbank)
-    return (glosses_not_in_signbank, updated_glosses, glosses_in_other_dataset)
+    return glosses_not_in_signbank, updated_glosses, glosses_in_other_dataset
 
 
 def configure_corpus_documents(**kwargs):
@@ -746,7 +746,7 @@ def configure_corpus_documents_for_dataset(dataset_acronym, **kwargs):
     # create a Corpus object if it does not exist
     try:
         corpus = Corpus.objects.get(name=dataset_acronym)
-    except (ObjectDoesNotExist):
+    except ObjectDoesNotExist:
         print('configure_corpus_documents: create a new corpus: ', dataset_acronym)
         corpus = Corpus()
         corpus.name = dataset_acronym
@@ -900,7 +900,7 @@ def update_corpus_counts(dataset_acronym, **kwargs):
 
     try:
         corpus = Corpus.objects.get(name=dataset_acronym)
-    except (ObjectDoesNotExist):
+    except ObjectDoesNotExist:
         print('frequency.update_corpus_counts: corpus does not exist: ', dataset_acronym)
         return
 
@@ -1066,7 +1066,7 @@ def update_corpus_document_counts(dataset_acronym, document_id, **kwargs):
 
     try:
         corpus = Corpus.objects.get(name=dataset_acronym)
-    except (ObjectDoesNotExist):
+    except ObjectDoesNotExist:
         print('update_corpus_document_counts: corpus does not exist: ', dataset_acronym)
         return []
 
@@ -1170,7 +1170,7 @@ def update_document_counts(request, dataset_id, document_id):
                 for glossfrequency_not_in_document in missing_gloss_has_glossfrequency:
                     print('GlossFrequency object, Gloss not in Document: ', glossfrequency_not_in_document)
                     glossfrequency_not_in_document.delete()
-            except (ObjectDoesNotExist):
+            except ObjectDoesNotExist:
                 print('GlossFrequency exists for Gloss but  not in updated glosses, but not retrieved properly: ', gl)
                 continue
     if updated_glosses:

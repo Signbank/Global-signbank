@@ -166,14 +166,14 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
                         annotationidglosstranslation_dict = {}
                         for lang in gloss.lemma.dataset.translation_languages.all():
                             language_name = getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                            annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % (language_name) ]
+                            annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language_name]
                             annotationidglosstranslation_dict[lang.language_code_2char] = annotationidglosstranslation_text
                         gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
 
                         lemmaidglosstranslation_dict = {}
                         for lang in gloss.lemma.dataset.translation_languages.all():
                             language_name = getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                            lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % (language_name) ]
+                            lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % language_name]
                             lemmaidglosstranslation_dict[lang.language_code_2char] = lemmaidglosstranslation_text
                         gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
                         already_exists.append(gloss_dict)
@@ -184,7 +184,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
             annotationidglosstranslation_dict = dict()
             for language in trans_languages:
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % (language_name) ]
+                annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language_name]
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
                 if language.language_code_2char in earlier_creation_annotationidgloss.keys() and \
                         annotationidglosstranslation_text in earlier_creation_annotationidgloss[language.language_code_2char]:
@@ -201,7 +201,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
             lemmaidglosstranslation_dict = {}
             for language in trans_languages:
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % (language_name) ]
+                lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % language_name]
                 lemmaidglosstranslation_dict[language.language_code_2char] = lemmaidglosstranslation_text
 
             gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
@@ -478,7 +478,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     # This check assumes that if the Dataset column is empty, it means no change
                     # Since we already know the id of the gloss, we keep the original dataset
                     # To be safe, confirm the original dataset is not empty, to catch legacy code
-                    if not current_dataset or current_dataset == 'None' or current_dataset == None:
+                    if not current_dataset or current_dataset == 'None' or current_dataset is None:
                         # Dataset must be non-empty to create a new gloss
                         error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(gloss_id) + '), Dataset must be non-empty. There is currently no dataset defined for this gloss.'
 
@@ -2027,7 +2027,7 @@ def get_interface_language_and_default_language_codes(request):
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     interface_language_code = interface_language.language_code_2char
 
-    return (interface_language, interface_language_code, default_language, default_language_code)
+    return interface_language, interface_language_code, default_language, default_language_code
 
 
 def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter):

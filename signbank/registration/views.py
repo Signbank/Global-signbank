@@ -232,7 +232,7 @@ from django.contrib.sites.requests import RequestSite
 
 
 def mylogin(request, template_name='registration/login.html', redirect_field_name='/signs/recently_added/'):
-    "Displays the login form and handles the login action."
+    """Displays the login form and handles the login action."""
 
     redirect_to = request.GET[REDIRECT_FIELD_NAME] if REDIRECT_FIELD_NAME in request.GET else ''
     error_message = ''
@@ -250,7 +250,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
             profile.save()
 
             # Expiry date cannot be in the past
-            if profile.expiry_date != None and date.today() > profile.expiry_date:
+            if profile.expiry_date is not None and date.today() > profile.expiry_date:
                 form = EmailAuthenticationForm(request)
                 error_message = _('This account has expired. Please contact o.crasborn@let.ru.nl.')
 

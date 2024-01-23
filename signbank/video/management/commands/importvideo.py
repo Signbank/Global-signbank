@@ -33,7 +33,7 @@ def import_existing_gloss_videos(path):
     
     # find the largest currently used id 
     id = GlossVideo.objects.all().aggregate(Max('id'))['id__max']
-    if id==None:
+    if id is None:
         id = 0
     
     basedir = settings.MEDIA_ROOT

@@ -656,7 +656,7 @@ class ExampleSentence(models.Model):
 
     
     def __str__(self):
-        return (" | ").join(self.get_examplestc_translations())
+        return " | ".join(self.get_examplestc_translations())
 
 
 class ExampleSentenceTranslation(models.Model):
@@ -793,7 +793,7 @@ class Sense(models.Model):
         return [k+": "+v for k, v in sense_translations.items()]
 
     def has_examplesentence_with_video(self):
-        "Return true if any of the example sentences has a video"
+        """Return true if any of the example sentences has a video"""
         for examplesentence in self.exampleSentences.all():
             if examplesentence.has_video():
                 return True
@@ -828,11 +828,11 @@ class Sense(models.Model):
         return sorted(similar_senses, key=lambda d: d['inglosses']) 
 
     def ordered_examplesentences(self):
-        "Return a properly ordered set of examplesentences"
+        """Return a properly ordered set of examplesentences"""
         return self.exampleSentences.order_by('senseexamplesentence')
 
     def reorder_examplesentences(self):
-        "when an examplesentence is deleted, they should be reordered"
+        """when an examplesentence is deleted, they should be reordered"""
         for sentence_i, sentence in enumerate(self.ordered_examplesentences().all()):
             sensesentence = SenseExamplesentence.objects.all().get(sense=self, examplesentence=sentence)
             sensesentence.order = sentence_i+1
@@ -1086,14 +1086,14 @@ class Gloss(models.Model):
     )
 
     def has_sense_with_examplesentence_with_video(self):
-        "Return true if the sense has any examplesentences that also have a video"
+        """Return true if the sense has any examplesentences that also have a video"""
         for sense in self.senses.all():
             if sense.has_examplesentence_with_video():
                 return True
         return False
 
     def ordered_senses(self):
-        "Return a properly ordered set of senses"
+        """Return a properly ordered set of senses"""
         return self.senses.all().order_by('glosssense__order')
 
     sn = models.IntegerField(_("Sign Number"),
@@ -1496,7 +1496,7 @@ class Gloss(models.Model):
         try:
             frequency_regions = self.lemma.dataset.frequency_regions()
         except (ObjectDoesNotExist, AttributeError):
-            return (total_occurrences, data_datasets)
+            return total_occurrences, data_datasets
 
         frequency_objects = self.glossfrequency_set.all()
 
@@ -1532,7 +1532,7 @@ class Gloss(models.Model):
                     k_value = len(speakers_per_region[r])
                     dataset_dict['data'].append(k_value)
                 data_datasets.append(dataset_dict)
-        return (total_occurrences, data_datasets)
+        return total_occurrences, data_datasets
 
     def has_frequency_data(self):
 
@@ -1789,7 +1789,7 @@ class Gloss(models.Model):
         other_relations = self.relation_sources.filter(role__in=['homonym', 'synonyn', 'antonym',
                                                                  'hyponym', 'hypernym', 'seealso', 'paradigm'])
 
-        return (other_relations, variant_relations)
+        return other_relations, variant_relations
 
     def phonology_matrix_homonymns(self, use_machine_value=False):
         # this method uses string representations for Boolean values
@@ -1881,7 +1881,7 @@ class Gloss(models.Model):
 
         empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
 
-        if (handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X):
+        if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
             # ignore gloss with empty or X handedness
             return minimalpairs_objects_list
 
@@ -2037,7 +2037,7 @@ class Gloss(models.Model):
 
         empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
 
-        if (handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X):
+        if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
             # ignore gloss with empty or X handedness
             return homonym_objects_list
 
@@ -2068,11 +2068,11 @@ class Gloss(models.Model):
                 q_or |= Q(**{comparison2: '0'})
                 q_or |= Q(**{comparison3: False})
                 q.add(q_or, q.AND)
-            elif (value_of_this_field == 'Neutral'):
+            elif value_of_this_field == 'Neutral':
                 # Can only match Null, not True or False
                 comparison = field + '__isnull'
                 q.add(Q(**{comparison: True}), q.AND)
-            elif (value_of_this_field == 'True'):
+            elif value_of_this_field == 'True':
                 comparison = field + '__exact'
                 q.add(Q(**{comparison: True}), q.AND)
             else:
@@ -2099,7 +2099,7 @@ class Gloss(models.Model):
 
         if not self.lemma or not self.lemma.dataset:
             # take care of glosses without a dataset
-            return ([], [], [])
+            return [], [], []
 
         gloss_homonym_relations = self.relation_sources.filter(role='homonym')
 
@@ -2119,13 +2119,13 @@ class Gloss(models.Model):
 
         except ObjectDoesNotExist:
             print('homonyms: Handedness X is not defined')
-            return ([], [], [])
+            return [], [], []
 
         empty_handedness = [ str(fc.id) for fc in FieldChoice.objects.filter(field='Handedness', name__in=['-','N/A']) ]
 
         if handedness_of_this_gloss in empty_handedness or handedness_of_this_gloss == handedness_X:
             # ignore gloss with empty or X handedness
-            return ([], [], [])
+            return [], [], []
 
         handshape_of_this_gloss = phonology_for_gloss['domhndsh']
 
@@ -2133,7 +2133,7 @@ class Gloss(models.Model):
                             Handshape.objects.filter(name__in=['-', 'N/A'])]
 
         if handshape_of_this_gloss in empty_handshape:
-            return ([], [], [])
+            return [], [], []
 
         homonyms_of_this_gloss = [g for g in self.homonym_objects()]
 
@@ -2141,13 +2141,13 @@ class Gloss(models.Model):
         saved_but_not_homonyms = []
 
         for r in list_of_homonym_relations:
-            if (not r.target in homonyms_of_this_gloss):
+            if not r.target in homonyms_of_this_gloss:
                 saved_but_not_homonyms += [r.target]
         for h in homonyms_of_this_gloss:
-            if (not h in targets_of_homonyms_of_this_gloss):
+            if not h in targets_of_homonyms_of_this_gloss:
                 homonyms_not_saved += [h]
 
-        return (homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms)
+        return homonyms_of_this_gloss, homonyms_not_saved, saved_but_not_homonyms
 
     def get_image_path(self, check_existence=True):
         """Returns the path within the writable and static folder"""
@@ -2484,7 +2484,7 @@ RELATION_ROLE_CHOICES = (('homonym', 'Homonym'),
                          ('paradigm', 'Handshape Paradigm')
                          )
 
-VARIANT_ROLE_CHOICES = (('variant', 'Variant'))
+VARIANT_ROLE_CHOICES = ('variant', 'Variant')
 
 
 # this can be used for phonology and handshape fields

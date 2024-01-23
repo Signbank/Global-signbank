@@ -629,7 +629,7 @@ class GlossVideo(models.Model):
 
         # also remove the post image if present, it will be regenerated
         poster = self.poster_path(create=False)
-        if poster != None:
+        if poster is not None:
             os.unlink(poster)
 
     def __str__(self):

@@ -454,7 +454,7 @@ def try_code(request, pk):
     for language in gloss.dataset.translation_languages.all():
         try:
             annotation_text = gloss.annotationidglosstranslation_set.get(language=language).text
-        except (ObjectDoesNotExist):
+        except ObjectDoesNotExist:
             annotation_text = gloss_default_annotationidglosstranslation
         context['annotation_idgloss'][language] = annotation_text
 
@@ -806,7 +806,7 @@ def import_csv_create(request):
             # check annotation translations
             for language in translation_languages:
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                annotationidglosstranslation_text = value_dict["Annotation ID Gloss (%s)" % (language_name) ]
+                annotationidglosstranslation_text = value_dict["Annotation ID Gloss (%s)" % language_name]
                 annotationidglosstranslations[language] = annotationidglosstranslation_text
 
                 annotationtranslation_for_this_text_language = AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset=dataset,

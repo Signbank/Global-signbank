@@ -913,7 +913,7 @@ class LemmaUpdateForm(forms.ModelForm):
                         # this exception refuses to be put into messages after being caught in LemmaUpdateView
                         # gives a runtime error
                         # therefore the exception is caught byt a different message is displayed
-                        raise Exception("Lemma with id %s must have at least one translation."% (self.instance.pk))
+                        raise Exception("Lemma with id %s must have at least one translation." % self.instance.pk)
                 else:
                     lemmaidglosstranslation.text = lemma_idgloss_text
                     lemmaidglosstranslation.save()

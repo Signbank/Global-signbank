@@ -78,7 +78,7 @@ def run_ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
     process =  Popen(ffmpeg, stdout=PIPE, stderr=PIPE)
     start = time.time()
     
-    while process.poll() == None: 
+    while process.poll() is None:
         if time.time()-start > timeout:
             # we've gone over time, kill the process  
             os.kill(process.pid, signal.SIGKILL)
@@ -106,7 +106,7 @@ def extract_frame(sourcefile, targetfile):
 def probe_format(file):
     """Find the format of a video file via ffmpeg,
     return a format name, eg mpeg4, h264"""
-    
+
     # for info, convert just one second to a null output format
     info_options = ["-f", "null", "-t", "1"]
     

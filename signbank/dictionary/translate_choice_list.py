@@ -68,7 +68,7 @@ def choicelist_queryset_to_colors(queryset,ordered=True,id_prefix='_',shortlist=
             empty_or_NA[human_value] = choice
             continue
 
-        if choices_to_exclude == None or choice not in choices_to_exclude:
+        if choices_to_exclude is None or choice not in choices_to_exclude:
             machine_values_seen.append(choice.machine_value)
             field_color = getattr(choice, 'field_color')
             # this should not happen, but it could be a legacy value that has a #

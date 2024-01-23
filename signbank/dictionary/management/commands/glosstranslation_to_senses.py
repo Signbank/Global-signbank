@@ -38,7 +38,7 @@ class Command(BaseCommand):
                 for translation in gloss.translation_set.filter(language=dataset_language).order_by('translation__index'):
                     if translation.translation != "":
                         translations.append(translation.translation.text.strip())
-                translations = (', ').join(sorted(translations))
+                translations = ', '.join(sorted(translations))
                 if translations != '':
                     vals[str(dataset_language)] = translations
 

@@ -44,7 +44,7 @@ def generalfeedback(request):
             if 'comment' in form.cleaned_data: 
                 feedback.comment = form.cleaned_data['comment'] 
             
-            if 'video' in form.cleaned_data and form.cleaned_data['video'] != None:
+            if 'video' in form.cleaned_data and form.cleaned_data['video'] is not None:
                 feedback.video = form.cleaned_data['video']
                 
             feedback.save()
@@ -110,7 +110,7 @@ def missingsign(request):
                 # the form yields a sign language object
                 fb.signlanguage = form.cleaned_data['signlanguage']
             
-            if 'video' in form.cleaned_data and form.cleaned_data['video'] != None:
+            if 'video' in form.cleaned_data and form.cleaned_data['video'] is not None:
                 fb.video = form.cleaned_data['video']
 
             # these last two are required either way (video or not)

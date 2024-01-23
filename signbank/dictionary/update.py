@@ -3115,7 +3115,7 @@ def update_dataset(request, datasetid):
             original_value = getattr(dataset,field)
 
         #This is because you cannot concat none to a string in py3
-        if original_value == None:
+        if original_value is None:
             original_value = ''
 
         # The machine_value (value) representation is also returned to accommodate Hyperlinks to Handshapes in gloss_edit.js
