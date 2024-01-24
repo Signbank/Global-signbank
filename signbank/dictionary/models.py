@@ -2259,9 +2259,9 @@ class Gloss(models.Model):
         else:
             return GlossVideo(gloss=self)
         video.save()
-        video.convert_to_mp4()
-        video.ch_own_mod_video()
-        video.make_small_video()
+        # video.convert_to_mp4()
+        # video.ch_own_mod_video()
+        # video.make_small_video()
         video.make_poster_image()
 
         return video

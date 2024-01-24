@@ -132,9 +132,13 @@ def convert_video(sourcefile, targetfile, force=False):
         shutil.copy(sourcefile, targetfile) 
     else: 
         # convert the video
+        print('run ffmpeg source: ', sourcefile)
+        print('run ffmpeg target: ', targetfile)
+        print('options: ', FFMPEG_OPTIONS)
         b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_OPTIONS)
 
     format = probe_format(targetfile)
+    print('format returned by probe_format: ', format)
     if format.startswith('h264'):
         # the output of ffmpeg includes extra information following h264, so only check the prefix
         return True

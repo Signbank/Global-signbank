@@ -70,13 +70,21 @@ class Video(models.Model):
         # create a temporary copy in the new format
         # then move it into place
 
-        # print "ENSURE: ", self.videofile.path
+        print("ENSURE MP$: ", self.videofile.path)
+
+        # (basename, ext) = os.path.splitext(self.videofile.path)
+        # tmploc = basename + "-conv.mp4"
+        # err = convert_video(self.videofile.path, tmploc, force=False)
+        # # print tmploc
+        # shutil.move(tmploc, self.videofile.path)
 
         (basename, ext) = os.path.splitext(self.videofile.path)
-        tmploc = basename + "-conv.mp4"
-        err = convert_video(self.videofile.path, tmploc, force=False)
-        # print tmploc
-        shutil.move(tmploc, self.videofile.path)
+        if ext == '.mov' or ext == '.webm':
+            oldloc = self.videofile.path
+            newloc = basename + ".mp4"
+            err = convert_video(oldloc, newloc, force=False)
+            self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
+            os.remove(oldloc)
 
     def delete_files(self):
         """Delete the files associated with this object"""
@@ -357,7 +365,7 @@ class ExampleVideo(models.Model):
         out_name = name + "_copy.mp4"
         import ffmpeg
         stream = ffmpeg.input(self.videofile.path)
-        stream = ffmpeg.output(stream, out_name)
+        stream = ffmpeg.output(stream, out_name, vcodec='h264')
         ffmpeg.run(stream, quiet=True)
         os.rename(out_name, self.videofile.path)
         print("Finished converting {}".format(self.videofile.path))
@@ -565,7 +573,7 @@ class GlossVideo(models.Model):
         out_name = name + "_copy.mp4"
         import ffmpeg
         stream = ffmpeg.input(self.videofile.path)
-        stream = ffmpeg.output(stream, out_name)
+        stream = ffmpeg.output(stream, out_name, vcodec='h264')
         ffmpeg.run(stream, quiet=True)
         os.rename(out_name, self.videofile.path)
         print("Finished converting {}".format(self.videofile.path))
