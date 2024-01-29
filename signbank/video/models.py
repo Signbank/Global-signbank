@@ -356,7 +356,7 @@ class ExampleVideo(models.Model):
         from signbank.tools import generate_still_image
         try:
             generate_still_image(self)
-        except:
+        except OSError:
             import sys
             print('Error generating still image', sys.exc_info())
 
@@ -567,7 +567,7 @@ class GlossVideo(models.Model):
         from signbank.tools import generate_still_image
         try:
             generate_still_image(self)
-        except:
+        except OSError:
             import sys
             print('Error generating still image', sys.exc_info())
 

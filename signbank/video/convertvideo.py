@@ -9,7 +9,12 @@ except KeyError:
     # FFMPEG_OPTIONS = ["-vcodec", "libx264", "-an", "-vpre", "hq", "-crf", "22", "-threads", "0"]
     FFMPEG_OPTIONS = ["-vcodec", "h264", "-an"]
 
-import sys, os, time, signal, shutil, glob
+import sys
+import os
+import time
+import signal
+import shutil
+import glob
 import ffmpeg
 from subprocess import Popen, PIPE
 import re
@@ -117,33 +122,31 @@ def probe_format(file):
 
 
 def make_thumbnail_video(sourcefile, targetfile):
-
+    # this function also works on source quicktime videos
     name, _ = os.path.splitext(sourcefile)
     temp_target = name + '_small.mov'
-    import ffmpeg
     (
         ffmpeg
         .input(sourcefile)
         .filter('fps', fps=15, round='up')
         .filter('scale', -2, 180)
         .output("%s-%%04d.png" % (sourcefile[:-4]), **{'qscale:v': 2})
-        .run()
+        .run(quiet=True)
     )
-    #  source is  yuv420p(tv, bt709, progressive) for h264 mov
-    #  Video: png, rgb24(pc, gbr/bt709/bt709, progressive),
-    #  180x101 [SAR 404:405 DAR 16:9], q=2-31, 200 kb/s, 15 fps, 15 tbn
     (
         ffmpeg
         .input((sourcefile[:-4])+"-*.png", pattern_type='glob', framerate=15)
         .output(temp_target, vcodec='rawvideo')
-        .run()
+        .run(quiet=True)
     )
-
+    # convert the small video to mp4
     convert_video(temp_target, targetfile)
 
+    # remove the temp files
     stills_pattern = (sourcefile[:-4])+"-*.png"
     for f in glob.glob(stills_pattern):
         os.remove(f)
+    os.remove(temp_target)
 
 
 def convert_video(sourcefile, targetfile, force=False):
@@ -155,7 +158,7 @@ def convert_video(sourcefile, targetfile, force=False):
         format = probe_format(sourcefile)
     else:
         format = 'force'
-    print(format)
+
     if format == "h264":
         # just do a copy of the file
         shutil.copy(sourcefile, targetfile)
@@ -176,8 +179,7 @@ def convert_video(sourcefile, targetfile, force=False):
 
 
 if __name__ == '__main__':
-    import sys
-    
+
     if len(sys.argv) != 3:
         print("Usage: convertvideo.py <sourcefile> <targetfile>")
         exit()
