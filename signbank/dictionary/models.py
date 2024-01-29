@@ -2261,7 +2261,7 @@ class Gloss(models.Model):
         video.save()
         # video.convert_to_mp4()
         # video.ch_own_mod_video()
-        # video.make_small_video()
+        video.make_small_video()
         video.make_poster_image()
 
         return video

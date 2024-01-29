@@ -4,9 +4,13 @@ keep track of uploaded videos and converted versions
 
 from django.db import models
 from django.conf import settings
-import sys, os, time, shutil, stat
+import sys
+import os
+import time
+import stat
+import shutil
 
-from signbank.video.convertvideo import extract_frame, convert_video, probe_format
+from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
@@ -39,7 +43,6 @@ class Video(models.Model):
         self.poster_path()
         # self.ensure_mp4()
 
-
     def poster_path(self, create=True):
         """Return the path of the poster image for this
         video, if create=True, create the image if needed
@@ -70,7 +73,7 @@ class Video(models.Model):
         # create a temporary copy in the new format
         # then move it into place
 
-        print("ENSURE MP$: ", self.videofile.path)
+        print("ENSURE MP4: ", self.videofile.path)
 
         # (basename, ext) = os.path.splitext(self.videofile.path)
         # tmploc = basename + "-conv.mp4"
@@ -94,11 +97,8 @@ class Video(models.Model):
             poster_path = self.poster_path(create=False)
             if poster_path:
                 os.unlink(poster_path)
-        except:
+        except OSError:
             pass
-
-
-import shutil
 
 
 class GlossVideoStorage(FileSystemStorage):
@@ -179,7 +179,7 @@ class GlossVideoHistory(models.Model):
         ordering = ['datestamp']
 
 
-#### VIDEO PATH ####
+# VIDEO PATH #
 #
 # The path of a video is constructed by
 # 1. the acronym of the corresponding dataset
@@ -210,7 +210,7 @@ def get_video_file_path(instance, filename, version=0):
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
     try:
         dataset_dir = instance.gloss.lemma.dataset.acronym
-    except:
+    except KeyError:
         dataset_dir = ""
     two_letter_dir = signbank.tools.get_two_letter_dir(idgloss)
     filename = idgloss + '-' + str(instance.gloss.id) + ext + (version * ".bak")
@@ -228,9 +228,9 @@ small_appendix = '_small'
 def add_small_appendix(path, reverse=False):
     path_no_extension, extension = os.path.splitext(path)
     if reverse and path_no_extension.endswith(small_appendix):
-            return path_no_extension[:-len(small_appendix)] + extension
+        return path_no_extension[:-len(small_appendix)] + extension
     elif not reverse and not path_no_extension.endswith(small_appendix):
-            return path_no_extension + small_appendix + extension
+        return path_no_extension + small_appendix + extension
     return path
 
 
@@ -239,7 +239,7 @@ def validate_file_extension(value):
         raise ValidationError(u'Error message')
 
 
-#### VIDEO PATH FOR AN EXAMPLESENTENCE ####
+# VIDEO PATH FOR AN EXAMPLESENTENCE #
 #
 # The path of a video is constructed by
 # 1. the acronym of the corresponding dataset
@@ -276,6 +276,7 @@ def get_sentence_video_file_path(instance, filename, version=0):
         path = escape_uri_path(path)
     return path
 
+
 class ExampleVideo(models.Model):
     """A video that shows an example of the use of a particular sense"""
 
@@ -284,7 +285,7 @@ class ExampleVideo(models.Model):
 
     examplesentence = models.ForeignKey(ExampleSentence, on_delete=models.CASCADE)
 
-    ## video version, version = 0 is always the one that will be displayed
+    # video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
     # for this gloss
     version = models.IntegerField("Version", default=0)
@@ -378,7 +379,7 @@ class ExampleVideo(models.Model):
             os.unlink(self.videofile.path)
             if small_video_path:
                 os.unlink(small_video_path)
-        except:
+        except OSError:
             pass
 
     def reversion(self, revert=False):
@@ -389,7 +390,6 @@ class ExampleVideo(models.Model):
         unless revert=True, in which case we go the other
         way and decrease the version number, if version=0
         we delete ourselves"""
-
         if revert:
             print("REVERT VIDEO", self.videofile.name, self.version)
             if self.version == 0:
@@ -416,7 +416,7 @@ class ExampleVideo(models.Model):
             if self.version == 0:
                 # find a name for the backup, a filename that isn't used already
                 newname = self.videofile.name + ".bak" + str(self.id)
-                if os.path.isfile(os.path.join(storage.location, self.videofile.name)):    
+                if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                     os.rename(os.path.join(storage.location, self.videofile.name), os.path.join(storage.location, newname))
                 self.videofile.name = newname
             self.version += 1
@@ -456,6 +456,7 @@ class ExampleVideo(models.Model):
             self.videofile.name = new_path
             self.save()
 
+
 class GlossVideo(models.Model):
     """A video that represents a particular idgloss"""
 
@@ -464,7 +465,7 @@ class GlossVideo(models.Model):
 
     gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
 
-    ## video version, version = 0 is always the one that will be displayed
+    # video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
     # for this gloss
     version = models.IntegerField("Version", default=0)
@@ -530,7 +531,6 @@ class GlossVideo(models.Model):
     def ch_own_mod_video(self):
         """Change owner and permissions"""
         location = self.videofile.path
-        
 
         # make sure they're readable by everyone
         # os.chown(location, 1000, 1002)
@@ -549,15 +549,19 @@ class GlossVideo(models.Model):
             return None
 
     def make_small_video(self):
-        from CNGT_scripts.python.resizeVideos import VideoResizer
+        name, _ = os.path.splitext(self.videofile.path)
+        small_name = name + "_small.mp4"
+        make_thumbnail_video(self.videofile.path, small_name)
 
-        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(self.videofile))
-        try:
-            resizer = VideoResizer([video_file_full_path], FFMPEG_PROGRAM, 180, 0, 0)
-            resizer.run()
-        except Exception as e:
-            print("Error resizing video: ", video_file_full_path)
-            print(e)
+        # from CNGT_scripts.python.resizeVideos import VideoResizer
+        # # ffmpeg_small = settings.FFMPEG_OPTIONS + ["-vf", "scale=180:-2"]
+        # video_file_full_path = os.path.join(WRITABLE_FOLDER, str(self.videofile))
+        # try:
+        #     resizer = VideoResizer([video_file_full_path], FFMPEG_PROGRAM, 180, 0, 0)
+        #     resizer.run()
+        # except Exception as e:
+        #     print("Error resizing video: ", video_file_full_path)
+        #     print(e)
 
     def make_poster_image(self):
         from signbank.tools import generate_still_image
@@ -589,9 +593,8 @@ class GlossVideo(models.Model):
                 os.unlink(small_video_path)
             if poster_path:
                 os.unlink(poster_path)
-        except:
+        except OSError:
             pass
-
 
     def reversion(self, revert=False):
         """We have a new version of this video so increase
@@ -621,7 +624,7 @@ class GlossVideo(models.Model):
                         return
                     if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                         os.rename(os.path.join(storage.location, self.videofile.name),
-                              os.path.join(storage.location, newname))
+                                  os.path.join(storage.location, newname))
                     self.videofile.name = newname
                 self.version -= 1
                 self.save()
@@ -629,8 +632,9 @@ class GlossVideo(models.Model):
             if self.version == 0:
                 # find a name for the backup, a filename that isn't used already
                 newname = self.videofile.name + ".bak" + str(self.id)
-                if os.path.isfile(os.path.join(storage.location, self.videofile.name)):    
-                    os.rename(os.path.join(storage.location, self.videofile.name), os.path.join(storage.location, newname))
+                if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
+                    os.rename(os.path.join(storage.location, self.videofile.name),
+                              os.path.join(storage.location, newname))
                 self.videofile.name = newname
             self.version += 1
             self.save()

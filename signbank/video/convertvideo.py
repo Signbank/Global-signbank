@@ -4,21 +4,21 @@ try:
     from django.conf import settings
     FFMPEG_PROGRAM = settings.FFMPEG_PROGRAM
     FFMPEG_OPTIONS = settings.FFMPEG_OPTIONS
-except:
+except KeyError:
     FFMPEG_PROGRAM = "/usr/bin/ffmpeg"
-    #FFMPEG_OPTIONS = ["-vcodec", "libx264", "-an", "-vpre", "hq", "-crf", "22", "-threads", "0"]
+    # FFMPEG_OPTIONS = ["-vcodec", "libx264", "-an", "-vpre", "hq", "-crf", "22", "-threads", "0"]
     FFMPEG_OPTIONS = ["-vcodec", "h264", "-an"]
 
-import sys, os, time, signal, shutil
+import sys, os, time, signal, shutil, glob
 import ffmpeg
 from subprocess import Popen, PIPE
 import re
-    
+
+
 def parse_ffmpeg_output(text):
     """Get relevant info from the ffmpeg output"""
 
     ffmpeg_output_string = text
-    # print('argument to parse_ffmpeg_output: ', ffmpeg_output_string)
     state = None
     result = {'input': '', 'output': ''}
     for line in ffmpeg_output_string.split(b'\n'):
@@ -75,7 +75,7 @@ def run_ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
     ffmpeg += options
     ffmpeg += [targetfile]
 
-    process =  Popen(ffmpeg, stdout=PIPE, stderr=PIPE)
+    process = Popen(ffmpeg, stdout=PIPE, stderr=PIPE)
     start = time.time()
     
     while process.poll() is None:
@@ -87,12 +87,13 @@ def run_ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
             return errormsg
         
     status = process.poll()
-    out,err = process.communicate()
+    out, err = process.communicate()
     
     # should check status
     
     # return the error output - messages from ffmpeg
     return err
+
 
 def extract_frame(sourcefile, targetfile):
     """Extract a single frame from the source video and 
@@ -112,9 +113,37 @@ def probe_format(file):
     
     b = run_ffmpeg(file, "tmp", options=info_options)
     r = parse_ffmpeg_output(b)
-     
     return r['inputvideoformat']
 
+
+def make_thumbnail_video(sourcefile, targetfile):
+
+    name, _ = os.path.splitext(sourcefile)
+    temp_target = name + '_small.mov'
+    import ffmpeg
+    (
+        ffmpeg
+        .input(sourcefile)
+        .filter('fps', fps=15, round='up')
+        .filter('scale', -2, 180)
+        .output("%s-%%04d.png" % (sourcefile[:-4]), **{'qscale:v': 2})
+        .run()
+    )
+    #  source is  yuv420p(tv, bt709, progressive) for h264 mov
+    #  Video: png, rgb24(pc, gbr/bt709/bt709, progressive),
+    #  180x101 [SAR 404:405 DAR 16:9], q=2-31, 200 kb/s, 15 fps, 15 tbn
+    (
+        ffmpeg
+        .input((sourcefile[:-4])+"-*.png", pattern_type='glob', framerate=15)
+        .output(temp_target, vcodec='rawvideo')
+        .run()
+    )
+
+    convert_video(temp_target, targetfile)
+
+    stills_pattern = (sourcefile[:-4])+"-*.png"
+    for f in glob.glob(stills_pattern):
+        os.remove(f)
 
 
 def convert_video(sourcefile, targetfile, force=False):
@@ -126,26 +155,27 @@ def convert_video(sourcefile, targetfile, force=False):
         format = probe_format(sourcefile)
     else:
         format = 'force'
-    
+    print(format)
     if format == "h264":
         # just do a copy of the file
-        shutil.copy(sourcefile, targetfile) 
+        shutil.copy(sourcefile, targetfile)
+    elif "h264" in format:
+        # ffmpeg copy video channel to new file with .mp4 extension
+        FFMPEG_COPY_OPTIONS = ["-c", "copy", "-an"]
+        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
     else: 
         # convert the video
-        print('run ffmpeg source: ', sourcefile)
-        print('run ffmpeg target: ', targetfile)
-        print('options: ', FFMPEG_OPTIONS)
         b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_OPTIONS)
 
     format = probe_format(targetfile)
-    print('format returned by probe_format: ', format)
     if format.startswith('h264'):
         # the output of ffmpeg includes extra information following h264, so only check the prefix
         return True
     else:
         return False
-        
-if __name__=='__main__':
+
+
+if __name__ == '__main__':
     import sys
     
     if len(sys.argv) != 3:
@@ -156,9 +186,3 @@ if __name__=='__main__':
     targetfile = sys.argv[2]
     
     convert_video(sourcefile, targetfile)
-        
-    
-        
-        
-        
-    
