@@ -2285,10 +2285,10 @@ def add_othermedia(request):
         destination.write(chunk)
     destination.close()
 
-    destination_location = os.path.join(goal_directory,filename_plus_extension)
+    destination_location = os.path.join(goal_directory, filename_plus_extension)
 
     import magic
-    magic_file_type = magic.from_buffer(open(destination_location,"rb").read(2040), mime=True)
+    magic_file_type = magic.from_buffer(open(destination_location, "rb").read(2040), mime=True)
 
     if not magic_file_type:
         # unrecognised file type has been uploaded
@@ -2300,25 +2300,27 @@ def add_othermedia(request):
     # the code below converts the file to an mp4 file if it is currently another type of video
     if magic_file_type == 'video/quicktime':
         # convert using ffmpeg
-        temp_destination_location = destination_location + ".mov"
-        os.rename(destination_location, temp_destination_location)
+        new_destination_location = filename_base + ".mp4"
+        other_media_path = str(gloss_or_morpheme.pk) + '/' + new_destination_location
+        target_destination_location = os.path.join(goal_directory, new_destination_location)
 
         from signbank.video.convertvideo import convert_video
-        # convert the quicktime video to h264
-        success = convert_video(temp_destination_location, destination_location)
-
-        if success:
-            # the destination filename already has the extension mp4
-            os.remove(temp_destination_location)
-        else:
-            # problems converting a quicktime media to h264
-            os.remove(temp_destination_location)
+        # convert the quicktime video to mp4
+        success = convert_video(destination_location, target_destination_location)
+        if not success:
+            # problems converting a quicktime media to mp4
+            os.remove(target_destination_location)
             os.remove(destination_location)
             # something went wrong with uploading, delete the object
             newothermedia.delete()
             messages.add_message(request, messages.ERROR,
-                                 _("Upload other media failed: The Quicktime file could not be converted to H264."))
+                                 _("Upload other media failed: The Quicktime file could not be converted to MP4."))
             return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': request.POST['gloss']}))
+        else:
+            newothermedia.path = other_media_path
+            newothermedia.save()
+            os.remove(destination_location)
+
     elif magic_file_type != 'video/mp4':
         # convert using ffmpeg
         temp_destination_location = destination_location + ".mov"
