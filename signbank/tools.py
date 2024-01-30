@@ -19,7 +19,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 from signbank.csv_interface import sense_translations_for_language, update_senses_parse, \
     update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers, parse_sentence_row, \
-    get_senses_to_sentences, csv_sentence_tuples_list_compare
+    get_senses_to_sentences, csv_sentence_tuples_list_compare, csv_header_row_glosslist, required_csv_columns
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from django.utils.dateformat import format
@@ -2030,20 +2030,47 @@ def get_interface_language_and_default_language_codes(request):
     return (interface_language, interface_language_code, default_language, default_language_code)
 
 
-def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter):
+def detect_delimiter(dataset_languages, csv_lines, create_or_update):
+    print('detect delimiter: ', create_or_update)
 
-    required_columns = ['Lemma ID', 'Dataset']
+    required_columns, optional_columns = required_csv_columns(dataset_languages, create_or_update)
 
-    for lang in dataset_languages:
-        language_name = getattr(lang, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-        column_name = "Lemma ID Gloss (%s)" % language_name
-        required_columns.append(column_name)
+    csv_lines_buffer = csv_lines
+
+    delimiter_okay = True
+    found_delimiter = ''
+
+    for delimiter in ['\t', ',', ';']:
+        while not found_delimiter:
+            # keep searching for the header row
+            # Apple Keynote stores an extra row above the header row when exported to CSV
+            first_csv_line, rest_csv_lines = csv_lines_buffer[0], csv_lines_buffer[1:]
+
+            row = first_csv_line.strip().split(delimiter)
+            if first_csv_line and len(row) < 2:
+                # the row has not been split into columns
+                delimiter_okay = False
+                print('wrong delimiter: ', delimiter)
+                break
+            delimiter_okay = True
+            found_delimiter = delimiter
+            print('delimiter okay: ', delimiter)
+
+        if found_delimiter:
+            break
+    return delimiter_okay, found_delimiter
+
+
+def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter, create_or_update):
+
+    required_columns, optional_columns = required_csv_columns(dataset_languages, create_or_update)
 
     csv_lines_buffer = csv_lines
 
     keys_found = False
-    extra_keys = False
+    extra_keys = []
     delimiter_okay = True
+    missing_keys = []
     csv_header = []
     csv_body = []
     while not keys_found and csv_lines_buffer:
@@ -2060,9 +2087,15 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter):
         for key in required_columns:
             if key not in row:
                 all_keys_present = False
+                if key not in missing_keys:
+                    missing_keys.append(key)
         for col in row:
-            if col not in required_columns:
-                extra_keys = True
+            if col in required_columns or col in optional_columns:
+                continue
+            if col not in extra_keys:
+                extra_keys.append(col)
+        if missing_keys or extra_keys:
+            break
         if all_keys_present:
             keys_found = True
             csv_header = row
@@ -2072,7 +2105,7 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter):
             # only record extra keys if this is a header row
             extra_keys = False
             csv_lines_buffer = rest_csv_lines
-    return delimiter_okay, keys_found, extra_keys, csv_header, csv_body
+    return delimiter_okay, keys_found, missing_keys, extra_keys, csv_header, csv_body
 
 
 def split_csv_lines_sentences_header_body(dataset_languages, csv_lines, delimiter):

@@ -636,7 +636,44 @@ def csv_create_senses(request, gloss, language, new_senses_string, create=False)
         add_sense_to_revision_history(request, gloss, sense_old_value, sense_new_value)
 
 
-def csv_header_row_glosslist(dataset_languages, fields):
+def required_csv_columns(dataset_languages, create_or_update='create_gloss'):
+    lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+    annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                           for language in dataset_languages]
+    lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+                                      for language in dataset_languages]
+    keyword_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
+                      for language in dataset_languages]
+    sentence_fields = ["Example Sentences" + " (" + getattr(language, lang_attr_name) + ")"
+                       for language in dataset_languages]
+    activate(LANGUAGES[0][0])
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+    fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+    gloss_fields = [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
+    extra_columns = ['SignLanguages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
+                     'Blend Morphology', 'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']
+
+    if create_or_update == 'create_gloss':
+        required_columns = ['Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields
+        optional_columns = []
+    elif create_or_update == 'update_lemma':
+        required_columns = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields
+        optional_columns = []
+    elif create_or_update == 'update_gloss':
+        required_columns = ['Signbank ID', 'Dataset']
+        optional_columns = (lemmaidglosstranslation_fields + annotationidglosstranslation_fields + keyword_fields
+                            + sentence_fields + gloss_fields + extra_columns)
+    else:
+        print('required_csv_columns: Required columns not defined for create_or_update: ', create_or_update)
+        required_columns = []
+        optional_columns = []
+    return required_columns, optional_columns
+
+
+def csv_header_row_glosslist(dataset_languages):
+
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb', 'isNew']
+    fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
     lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
     annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"

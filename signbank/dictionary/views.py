@@ -26,7 +26,7 @@ from signbank.tools import save_media
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, \
     get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
-    get_interface_language_and_default_language_codes, split_csv_lines_header_body, \
+    get_interface_language_and_default_language_codes, detect_delimiter, split_csv_lines_header_body, \
     split_csv_lines_sentences_header_body, create_sentence_from_valuedict
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
@@ -537,11 +537,12 @@ def add_new_morpheme(request):
 def import_csv_create(request):
     user = request.user
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
-    user_datasets_names = [ dataset.acronym for dataset in user_datasets ]
+    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
+    user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = get_dataset_languages(selected_datasets)
+    selected_dataset_acronyms = [dataset.acronym for dataset in selected_datasets]
 
     translation_languages_dict = {}
     # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
@@ -613,42 +614,50 @@ def import_csv_create(request):
         fatal_error = False
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
 
-        # the following code allows for specifying a column delimiter in the import_csv_create.html template
-        if 'delimiter' in request.POST:
-            delimiter_radio = request.POST['delimiter']
-            if delimiter_radio == 'tab':
-                delimiter = '\t'
-            elif delimiter_radio == 'comma':
-                delimiter = ','
-            elif delimiter_radio == 'semicolon':
-                delimiter = ';'
+        delimiter_okay, found_delimiter = detect_delimiter(dataset_languages, csv_lines, create_or_update='create_gloss')
+        delimiter_okay, keys_found, missing_keys, extra_keys, csv_header, csv_body = split_csv_lines_header_body(dataset_languages,
+                                                                                                                 csv_lines,
+                                                                                                                 found_delimiter, create_or_update='create_gloss')
+
+        if missing_keys or not delimiter_okay:
+            # this is intended to assist the user in the case that a wrong file was selected
+            if not delimiter_okay:
+                feedback_message = _('The chosen delimiter is not correct.')
             else:
-                # this should not occur
-                # perhaps only if the user is trying to fiddle without using the template
-                # set to template default, print message for Admin
-                print('Missing template default for delimiter_radio in import_csv_create.html')
-                delimiter = ','
-                delimiter_radio = 'comma'
-        else:
-            # this should not occur
-            # perhaps only if the user is trying to fiddle without using the template
-            # set to template default, print message for Admin
-            print('Missing template default for delimiter_radio in import_csv_create.html')
-            delimiter = ','
-            delimiter_radio = 'comma'
+                feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return render(request, 'dictionary/import_csv_create.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+        if extra_keys:
+            # this is intended to assist the user in the case that a wrong file was selected
+            feedback_message = _('Extra columns were found: ') + ', '. join(extra_keys)
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return render(request, 'dictionary/import_csv_create.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         first_csv_line, rest_csv_lines = csv_lines[0], csv_lines[1:]
 
-        keys = first_csv_line.strip().split(delimiter)
-        if len(keys) < 2:
-            feedback_message = _('Incorrect Delimiter: ') + delimiter_radio + '.'
-            messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        elif '' in keys:
+        keys = first_csv_line.strip().split(found_delimiter)
+        if '' in keys:
             feedback_message = _('Empty Column Header Found.')
             messages.add_message(request, messages.ERROR, feedback_message)
             encoding_error = True
-        elif len(keys) > len(list(set(keys))) :
+        elif len(keys) > len(list(set(keys))):
             feedback_message = _('Duplicate Column Header Found.')
             messages.add_message(request, messages.ERROR, feedback_message)
             encoding_error = True
@@ -679,7 +688,7 @@ def import_csv_create(request):
             if len(line) == 0:
                 # this happens at the end of the file
                 continue
-            values = csv.reader([line], delimiter=delimiter).__next__()
+            values = csv.reader([line], delimiter=found_delimiter).__next__()
             if values == empty_row:
                 continue
 
@@ -695,12 +704,20 @@ def import_csv_create(request):
             # 'Dataset' in value_dict keys, checked above
             dataset_name = value_dict['Dataset'].strip()
 
+            if dataset_name not in selected_dataset_acronyms:
+                e3 = 'Row ' + str(nl + 2) + ': Dataset %s is not selected.' % value_dict['Dataset'].strip()
+                error.append(e3)
+                break
+            if dataset_name not in user_datasets_names:
+                e3 = 'Row '+str(nl + 2) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                error.append(e3)
+                break
             # Check whether the user may change the dataset of the current row
             if dataset_name not in seen_dataset_names:
                 if seen_datasets:
                     # already seen a dataset
                     # this is a different dataset
-                    e3 = 'Row '+str(nl + 1) + ': A different dataset is mentioned.'
+                    e3 = 'Row '+str(nl + 2) + ': A different dataset is mentioned.'
                     e4 = 'You can only create glosses for one dataset at a time.'
                     e5 = 'To create glosses in multiple datasets, use a separate CSV file for each dataset.'
                     error.append(e3)
@@ -711,37 +728,23 @@ def import_csv_create(request):
                 # only process a dataset_name once for the csv file being imported
                 # catch possible empty values for dataset, primarily for pretty printing error message
                 if dataset_name in ['', None, 0, 'NULL']:
-                    e_dataset_empty = 'Row '+str(nl + 1) + ': The Dataset is missing.'
+                    e_dataset_empty = 'Row '+str(nl + 2) + ': The Dataset is missing.'
                     error.append(e_dataset_empty)
                     break
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
                 except ObjectDoesNotExist:
                     # An error message should be returned here, the dataset does not exist
-                    e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
+                    e_dataset_not_found = 'Row '+str(nl + 2) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
                     error.append(e_dataset_not_found)
                     break
 
-                if dataset_name not in user_datasets_names:
-                    e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
-                    error.append(e3)
+                if seen_datasets and dataset not in seen_datasets:
+                    e4 = 'You can only create glosses for one dataset at a time.'
+                    e5 = 'To create glosses in multiple datasets, use a separate CSV file for each dataset.'
+                    error.append(e4)
+                    error.append(e5)
                     break
-                if dataset not in selected_datasets:
-                    e3 = 'Row '+str(nl + 1) + ': Please select the dataset %s.' % value_dict['Dataset'].strip()
-                    error.append(e3)
-                    break
-                if seen_datasets:
-                    # already seen a dataset
-                    if dataset not in seen_datasets:
-                        # seen more than one dataset
-                        # e4 = 'You are attempting to modify two datasets.'
-
-                        e4 = 'You can only create glosses for one dataset at a time.'
-                        e5 = 'To create glosses in multiple datasets, use a separate CSV file for each dataset.'
-                        error.append(e4)
-                        error.append(e5)
-                        break
-
                 else:
                     seen_datasets.append(dataset)
                     seen_dataset_names.append(dataset_name)
@@ -806,14 +809,15 @@ def import_csv_create(request):
             # check annotation translations
             for language in translation_languages:
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                annotationidglosstranslation_text = value_dict["Annotation ID Gloss (%s)" % (language_name) ]
+                annotationidglosstranslation_text = value_dict["Annotation ID Gloss (%s)" % (language_name)]
                 annotationidglosstranslations[language] = annotationidglosstranslation_text
 
                 annotationtranslation_for_this_text_language = AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset=dataset,
                                                                                    language=language, text__exact=annotationidglosstranslation_text)
 
                 if annotationtranslation_for_this_text_language:
-                    error_string = 'Row ' + str(nl + 1) + ' contains a duplicate Annotation ID Gloss for '+ language_name +'.'
+                    error_string = ('Row ' + str(nl + 2) + ' contains an already existing Annotation ID Gloss for '
+                                    + language_name + ': ' + annotationidglosstranslation_text)
                     error.append(error_string)
 
             # check lemma translations
@@ -831,7 +835,7 @@ def import_csv_create(request):
                     existing_lemmas[language.language_code_2char] = one_lemma
                     if not one_lemma in existing_lemmas_list:
                         existing_lemmas_list.append(one_lemma)
-                        help = 'Row ' + str(nl + 1) + ": Existing Lemma ID Gloss (" + language_name + '): ' + lemmaidglosstranslation_text
+                        help = 'Row ' + str(nl + 2) + ": Existing Lemma ID Gloss (" + language_name + '): ' + lemmaidglosstranslation_text
                         contextual_error_messages_lemmaidglosstranslations.append(help)
                 elif not lemmaidglosstranslation_text:
                     # lemma translation is empty, determine if existing lemma is also empty for this language
@@ -840,28 +844,28 @@ def import_csv_create(request):
                             lemma__dataset=dataset, lemma=existing_lemmas_list[0],
                             language=language)
                         if lemmatranslation_for_this_text_language:
-                            help = 'Row ' + str(nl + 1) + ': Lemma ID Gloss (' + language_name + ') is empty'
+                            help = 'Row ' + str(nl + 2) + ': Lemma ID Gloss (' + language_name + ') is empty'
                             contextual_error_messages_lemmaidglosstranslations.append(help)
                             empty_lemma_translation = True
                     else:
                         empty_lemma_translation = True
                 else:
                     new_lemmas[language.language_code_2char] = lemmaidglosstranslation_text
-                    help = 'Row ' + str(nl + 1) + ': New Lemma ID Gloss (' + language_name + '): ' + lemmaidglosstranslation_text
+                    help = 'Row ' + str(nl + 2) + ': New Lemma ID Gloss (' + language_name + '): ' + lemmaidglosstranslation_text
                     contextual_error_messages_lemmaidglosstranslations.append(help)
 
             if len(existing_lemmas_list) > 0:
                 if len(existing_lemmas_list) > 1:
-                    e1 = 'Row '+str(nl + 1)+': The Lemma translations refer to different lemmas.'
+                    e1 = 'Row '+str(nl + 2)+': The Lemma translations refer to different lemmas.'
                     error.append(e1)
                 elif empty_lemma_translation:
-                    e1 = 'Row '+str(nl + 1)+': Exactly one lemma matches, but one of the translations in the csv is empty.'
+                    e1 = 'Row '+str(nl + 2)+': Exactly one lemma matches, but one of the translations in the csv is empty.'
                     error.append(e1)
                 if len(new_lemmas.keys()) and len(existing_lemmas.keys()):
-                    e1 = 'Row '+str(nl + 1)+': Combination of existing and new lemma translations.'
+                    e1 = 'Row '+str(nl + 2)+': Combination of existing and new lemma translations.'
                     error.append(e1)
             elif not len(new_lemmas.keys()):
-                e1 = 'Row '+str(nl + 1)+': No lemma translations provided.'
+                e1 = 'Row '+str(nl + 2)+': No lemma translations provided.'
                 error.append(e1)
 
             if error:
@@ -874,7 +878,7 @@ def import_csv_create(request):
                 (new_gloss, already_exists, error_create, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss) \
                     = create_gloss_from_valuedict(value_dict,dataset,nl, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss)
             except (KeyError, ValueError):
-                print('import csv create: got this far in processing loop before exception in row ', str(nl+1))
+                print('import csv create: got this far in processing loop before exception in row ', str(nl+2))
                 break
             if len(error_create):
                 errors_found_string = '\n'.join(error_create)
@@ -997,8 +1001,8 @@ def import_csv_create(request):
 def import_csv_update(request):
     user = request.user
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user,'change_dataset',Dataset)
-    user_datasets_names = [ dataset.acronym for dataset in user_datasets ]
+    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
+    user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -1078,30 +1082,6 @@ def import_csv_update(request):
         fatal_error = False
         csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
 
-        # the following code allows for specifying a column delimiter in the import_csv_update.html template
-        if 'delimiter' in request.POST:
-            delimiter_radio = request.POST['delimiter']
-            if delimiter_radio == 'tab':
-                delimiter = '\t'
-            elif delimiter_radio == 'comma':
-                delimiter = ','
-            elif delimiter_radio == 'semicolon':
-                delimiter = ';'
-            else:
-                # this should not occur
-                # perhaps only if the user is trying to fiddle without using the template
-                # set to template default, print message for Admin
-                print('Missing template default for delimiter_radio in import_csv_update.html')
-                delimiter = ','
-                delimiter_radio = 'comma'
-        else:
-            # this should not occur
-            # perhaps only if the user is trying to fiddle without using the template
-            # set to template default, print message for Admin
-            print('Missing template default for delimiter_radio in import_csv_update.html')
-            delimiter = ','
-            delimiter_radio = 'comma'
-
         # the obtains the notes togggle
         notes_toggle = 'keep'
         if 'toggle_notes' in request.POST:
@@ -1123,14 +1103,46 @@ def import_csv_update(request):
             if tags_radio == 'erase':
                 tags_toggle = 'erase'
 
+        delimiter_okay, found_delimiter = detect_delimiter(dataset_languages, csv_lines, create_or_update='update_gloss')
+        delimiter_okay, keys_found, missing_keys, extra_keys, csv_header, csv_body = split_csv_lines_header_body(dataset_languages,
+                                                                                                                 csv_lines,
+                                                                                                                 found_delimiter, create_or_update='update_gloss')
+
+        if missing_keys or not delimiter_okay:
+            # this is intended to assist the user in the case that a wrong file was selected
+            if not delimiter_okay:
+                feedback_message = _('The chosen delimiter is not correct.')
+            else:
+                feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return render(request, 'dictionary/import_csv_create.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+        if extra_keys:
+            # this is intended to assist the user in the case that a wrong file was selected
+            feedback_message = _('Extra columns were found: ') + ', '. join(extra_keys)
+            messages.add_message(request, messages.ERROR, feedback_message)
+            return render(request, 'dictionary/import_csv_create.html',
+                          {'form': uploadform, 'stage': 0, 'changes': changes,
+                           'error': error,
+                           'dataset_languages': dataset_languages,
+                           'selected_datasets': selected_datasets,
+                           'translation_languages_dict': translation_languages_dict,
+                           'seen_datasets': seen_datasets,
+                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
         first_csv_line, rest_csv_lines = csv_lines[0], csv_lines[1:]
 
-        keys = first_csv_line.strip().split(delimiter)
-        if len(keys) < 2:
-            feedback_message = _('Incorrect Delimiter: ') + delimiter_radio + '.'
-            messages.add_message(request, messages.ERROR, feedback_message)
-            encoding_error = True
-        elif '' in keys:
+        keys = first_csv_line.strip().split(found_delimiter)
+        if '' in keys:
             feedback_message = _('Empty Column Header Found.')
             messages.add_message(request, messages.ERROR, feedback_message)
             encoding_error = True
@@ -1165,7 +1177,7 @@ def import_csv_update(request):
             if len(line) == 0:
                 # this happens at the end of the file
                 continue
-            values = csv.reader([line], delimiter=delimiter).__next__()
+            values = csv.reader([line], delimiter=found_delimiter).__next__()
             if values == empty_row:
                 continue
 
@@ -1185,7 +1197,7 @@ def import_csv_update(request):
                 pk = int(value_dict['Signbank ID'])
             except (ValueError, KeyError):
                 # the ID is not a number
-                e = 'Row '+str(nl + 1) + ': Signbank ID must be numerical: ' + str(value_dict['Signbank ID'])
+                e = 'Row '+str(nl + 2) + ': Signbank ID must be numerical: ' + str(value_dict['Signbank ID'])
                 error.append(e)
                 fatal_error = True
                 break
@@ -1196,25 +1208,25 @@ def import_csv_update(request):
             if dataset_name not in seen_dataset_names:
                 # catch possible empty values for dataset, primarily for pretty printing error message
                 if dataset_name in ['', None, 0, 'NULL']:
-                    e_dataset_empty = 'Row '+str(nl + 1) + ': The Dataset is missing.'
+                    e_dataset_empty = 'Row '+str(nl + 2) + ': The Dataset is missing.'
                     error.append(e_dataset_empty)
                     break
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
                 except ObjectDoesNotExist:
                     # The dataset does not exist
-                    e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
+                    e_dataset_not_found = 'Row '+str(nl + 2) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
                     error.append(e_dataset_not_found)
                     fatal_error = True
                     break
                 if dataset_name not in user_datasets_names:
                     # Check whether the user may change the dataset of the current row
-                    e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                    e3 = 'Row '+str(nl + 2) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
                     error.append(e3)
                     fatal_error = True
                     break
                 if dataset not in selected_datasets:
-                    e3 = 'Row '+str(nl + 1) + ': Please select the dataset %s.' % value_dict['Dataset'].strip()
+                    e3 = 'Row '+str(nl + 2) + ': Dataset %s is not selected.' % value_dict['Dataset'].strip()
                     error.append(e3)
                     fatal_error = True
                     break
@@ -1248,12 +1260,12 @@ def import_csv_update(request):
                 gloss = Gloss.objects.select_related().get(pk=pk)
             except ObjectDoesNotExist as e:
 
-                e = 'Row ' + str(nl + 1) + ': Could not find gloss for Signbank ID '+str(pk)
+                e = 'Row ' + str(nl + 2) + ': Could not find gloss for Signbank ID '+str(pk)
                 error.append(e)
                 continue
 
             if gloss.lemma.dataset != dataset:
-                e1 = 'Row ' + str(nl + 1) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Signbank ID (' \
+                e1 = 'Row ' + str(nl + 2) + ': The Dataset column (' + dataset.acronym + ') does not correspond to that of the Signbank ID (' \
                                                     + str(pk) + ').'
                 error.append(e1)
                 # ignore the rest of the row
@@ -1267,7 +1279,7 @@ def import_csv_update(request):
                 current_lemmaidglosstranslations[language] = lemma_translation.text if lemma_translation else ''
             if lemmaidglosstranslations \
                     and current_lemmaidglosstranslations != lemmaidglosstranslations:
-                help = 'Row ' + str(nl + 1) + ': Attempt to update Lemma translations for Signbank ID ' + str(pk)
+                help = 'Row ' + str(nl + 2) + ': Attempt to update Lemma translations for Signbank ID ' + str(pk)
                 error.append(help)
                 messages.add_message(request, messages.ERROR,
                                      _('Attempt to update Lemma translations. Use Import CSV Lemma Update.'))
@@ -1622,40 +1634,17 @@ def import_csv_lemmas(request):
         fatal_error = False
         csv_lines = re.compile('[\r\n]+').split(csv_text)  # split the csv text on new line characters
 
-        # the following code allows for specifying a column delimiter in the import_csv_update_lemmas.html template
-        if 'delimiter' in request.POST:
-            delimiter_radio = request.POST['delimiter']
-            if delimiter_radio == 'tab':
-                delimiter = '\t'
-            elif delimiter_radio == 'comma':
-                delimiter = ','
-            elif delimiter_radio == 'semicolon':
-                delimiter = ';'
-            else:
-                # this should not occur
-                # perhaps only if the user is trying to fiddle without using the template
-                # set to template default, print message for Admin
-                print('Missing template default for delimiter_radio in import_csv_update_lemmas.html')
-                delimiter = ','
-                delimiter_radio = 'comma'
-        else:
-            # this should not occur
-            # perhaps only if the user is trying to fiddle without using the template
-            # set to template default, print message for Admin
-            print('Missing template default for delimiter_radio in import_csv_update_lemmas.html')
-            delimiter = ','
-            delimiter_radio = 'comma'
+        delimiter_okay, found_delimiter = detect_delimiter(dataset_languages, csv_lines, create_or_update='update_lemma')
+        delimiter_okay, keys_found, missing_keys, extra_keys, csv_header, csv_body = split_csv_lines_header_body(dataset_languages,
+                                                                                                                 csv_lines,
+                                                                                                                 found_delimiter, create_or_update='update_lemma')
 
-        delimiter_okay, keys_found, extra_keys, csv_header, csv_body = split_csv_lines_header_body(dataset_languages,
-                                                                                                   csv_lines,
-                                                                                                   delimiter)
-
-        if not keys_found or not delimiter_okay:
+        if missing_keys or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
             if not delimiter_okay:
                 feedback_message = _('The chosen delimiter is not correct.')
             else:
-                feedback_message = _('The required column headers are missing.')
+                feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_update_lemmas.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -1687,7 +1676,7 @@ def import_csv_lemmas(request):
             if len(line) == 0:
                 # this happens at the end of the file
                 continue
-            values = csv.reader([line], delimiter=delimiter).__next__()
+            values = csv.reader([line], delimiter=found_delimiter).__next__()
             if values == empty_row:
                 continue
 
@@ -1703,7 +1692,7 @@ def import_csv_lemmas(request):
             try:
                 pk = int(value_dict['Lemma ID'])
             except ValueError:
-                e = 'Row '+str(nl + 1) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
+                e = 'Row '+str(nl + 2) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
                 error.append(e)
                 fatal_error = True
                 break
@@ -1712,13 +1701,13 @@ def import_csv_lemmas(request):
 
             # catch possible empty values for dataset, primarily for pretty printing error message
             if dataset_name == '' or dataset_name is None or dataset_name == 0 or dataset_name == 'NULL':
-                e_dataset_empty = 'Row ' + str(nl + 1) + ': The Dataset is missing.'
+                e_dataset_empty = 'Row ' + str(nl + 2) + ': The Dataset is missing.'
                 error.append(e_dataset_empty)
                 fatal_error = True
                 break
             if dataset_name not in seen_dataset_names:
                 # seen more than one dataset
-                e3 = 'Row ' + str(nl + 1) + ': Dataset not in selected datasets: %s.' % dataset_name
+                e3 = 'Row ' + str(nl + 2) + ': Dataset not in selected datasets: %s.' % dataset_name
                 error.append(e3)
                 fatal_error = True
                 break
@@ -1749,12 +1738,12 @@ def import_csv_lemmas(request):
                 lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
             except ObjectDoesNotExist as e:
 
-                e = 'Row ' + str(nl + 1) + ': Could not find lemma for Lemma ID '+str(pk)
+                e = 'Row ' + str(nl + 2) + ': Could not find lemma for Lemma ID '+str(pk)
                 error.append(e)
                 continue
 
             if lemma.dataset.acronym != dataset_name:
-                e1 = 'Row ' + str(nl + 1) + ': The Dataset column (' + dataset.acronym \
+                e1 = 'Row ' + str(nl + 2) + ': The Dataset column (' + dataset.acronym \
                      + ') does not correspond to that of the Lemma ID (' + str(pk) + ').'
                 error.append(e1)
                 # ignore the rest of the row
@@ -2939,7 +2928,7 @@ def import_csv_create_sentences(request):
                 if seen_datasets:
                     # already seen a dataset
                     # this is a different dataset
-                    e3 = 'Row '+str(nl + 1) + ': A different dataset is mentioned.'
+                    e3 = 'Row '+str(nl + 2) + ': A different dataset is mentioned.'
                     e4 = 'You can only create glosses for one dataset at a time.'
                     e5 = 'To create glosses in multiple datasets, use a separate CSV file for each dataset.'
                     error.append(e3)
@@ -2950,23 +2939,23 @@ def import_csv_create_sentences(request):
                 # only process a dataset_name once for the csv file being imported
                 # catch possible empty values for dataset, primarily for pretty printing error message
                 if dataset_name in ['', None, 0, 'NULL']:
-                    e_dataset_empty = 'Row '+str(nl + 1) + ': The Dataset is missing.'
+                    e_dataset_empty = 'Row '+str(nl + 2) + ': The Dataset is missing.'
                     error.append(e_dataset_empty)
                     break
                 try:
                     dataset = Dataset.objects.get(acronym=dataset_name)
                 except ObjectDoesNotExist:
                     # An error message should be returned here, the dataset does not exist
-                    e_dataset_not_found = 'Row '+str(nl + 1) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
+                    e_dataset_not_found = 'Row '+str(nl + 2) + ': Dataset %s' % value_dict['Dataset'].strip() + ' does not exist.'
                     error.append(e_dataset_not_found)
                     break
 
                 if dataset_name not in user_datasets_names:
-                    e3 = 'Row '+str(nl + 1) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
+                    e3 = 'Row '+str(nl + 2) + ': You are not allowed to change dataset %s.' % value_dict['Dataset'].strip()
                     error.append(e3)
                     break
                 if dataset not in selected_datasets:
-                    e3 = 'Row '+str(nl + 1) + ': Please select the dataset %s.' % value_dict['Dataset'].strip()
+                    e3 = 'Row '+str(nl + 2) + ': Dataset %s is not selected.' % value_dict['Dataset'].strip()
                     error.append(e3)
                     break
                 if seen_datasets:
@@ -3002,7 +2991,7 @@ def import_csv_create_sentences(request):
                 (new_gloss, already_exists, error_create, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss) \
                     = create_sentence_from_valuedict(value_dict,dataset,nl, earlier_creation_same_csv, earlier_creation_annotationidgloss, earlier_creation_lemmaidgloss)
             except (KeyError, ValueError):
-                print('import csv create sentences: got this far in processing loop before exception in row ', str(nl+1))
+                print('import csv create sentences: got this far in processing loop before exception in row ', str(nl+2))
                 break
             if len(error_create):
                 errors_found_string = '\n'.join(error_create)
