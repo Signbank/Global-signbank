@@ -2806,12 +2806,12 @@ class OtherMedia(models.Model):
         split_norm_path = norm_path.split(os.sep)
         if len(split_norm_path) == 1:
             # other media path is a filename
-            path = 'dictionary/protected_media/othermedia/' + self.path
+            path = '/dictionary/protected_media/othermedia/' + self.path
             media_okay = False
             other_media_filename = self.path
         elif len(split_norm_path) == 2 and split_norm_path[0] == str(gloss_id):
             # other media path is gloss_id / filename
-            path = 'dictionary/protected_media/othermedia/' + self.path
+            path = '/dictionary/protected_media/othermedia/' + self.path
             other_media_filename = split_norm_path[-1]
         else:
             # other media path is not a filename and not the correct folder, do not prefix it
@@ -2824,7 +2824,7 @@ class OtherMedia(models.Model):
                 # check whether the file exists in the writable folder
                 # NOTE: Here is a discrepancy with the setting OTHER_MEDIA_DIRECTORY, it ends with a /
                 # os.path.exists needs a path, not a string of a path
-                writable_location = os.path.join(WRITABLE_FOLDER,'othermedia',self.path)
+                writable_location = os.path.join(WRITABLE_FOLDER, 'othermedia', self.path)
                 try:
                     imagefile_path_exists = os.path.exists(writable_location)
                 except (UnicodeEncodeError, IOError, OSError):
@@ -2833,6 +2833,7 @@ class OtherMedia(models.Model):
                 if not imagefile_path_exists:
                     media_okay = False
         return media_okay, path, other_media_filename
+
 
 class Dataset(models.Model):
     """A dataset, can be public/private and can be of only one SignLanguage"""
