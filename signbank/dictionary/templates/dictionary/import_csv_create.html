@@ -10,7 +10,8 @@
 {% endblock %}
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{PREFIX_URL}}/static/js/bootstrap-filestyle.min.js"> </script>
+<script type="text/javascript" src="{{PREFIX_URL}}/static/js/bootstrap-filestyle.min.js"
+        xmlns="http://www.w3.org/1999/html"> </script>
     <script type='text/javascript'>
 
      $(document).ready(function(){
@@ -32,21 +33,17 @@
 
 
 {% block content %}
-<h3>{% trans "Import CSV Create" %}</h3>
+<h3>{% trans "Import CSV Create New Glosses" %}</h3>
 
 {% if stage == 0 %}
 
-    <div>{% blocktrans %}Upload your CSV here:{% endblocktrans %}</div>
-
+    <div>{% trans "Upload your CSV here:" %}</div>
+    <div>
     <form action="" method="post" enctype="multipart/form-data" role="form">
         {% csrf_token %}
         <div class="form-group">
             <div class="row">
                 <div class="col-sm-1">
-                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom"
-                          data-html="true"
-                          title="To import new glosses, CSV files should omit the ID number column, but include the field columns:
-                          Dataset (acronym), Lemma ID Gloss, and Annotation ID Gloss for the translation languages of the dataset. Only one dataset can be modified."></span>
                 </div>
                 <div class="col-sm-10">
                     <input type="file" required="" name="file" class="filestyle" data-icon="false"
@@ -57,17 +54,38 @@
                     <input class="btn btn-primary" type="submit" value="{% blocktrans %}Submit{% endblocktrans %}" />
                 </div>
             </div>
-            <div class="col-xs-offset-1 col-xs-10">
-                <input type="radio" name="delimiter" id="delimiter_comma" value="comma" checked>
-                <label for="delimiter_comma">{% trans "Comma" %}</label>
-                <input type="radio" name="delimiter" id="delimiter_tab" value="tab">
-                <label for="delimiter_tab">{% trans "Tab" %}</label>
-                <input type="radio" name="delimiter" id="delimiter_semicolon" value="semicolon">
-                <label for="delimiter_semicolon">{% trans "Semicolon" %}</label>
-            </div>
         </div>
     </form>
-
+    </div>
+    <br>
+    <div>
+        <p>{% trans "To create new glosses, the CSV file must include the columns:" %}</p>
+        <br>
+        {% for dataset in selected_datasets %}
+        {% trans "For Dataset " %}{{dataset.acronym}}:
+        <table class="table table-striped center" style="width:80%;margin-left:50px;">
+            <thead>
+            <tr>
+                <th style="width:150px;">Dataset</th>
+                {% for dataset_language in dataset.translation_languages.all %}
+                <th style="width:200px;">Lemma ID Gloss ({{dataset_language.name}})</th>
+                {% endfor %}
+                {% for dataset_language in dataset.translation_languages.all %}
+                <th style="width:300px;">Annotation ID Gloss ({{dataset_language.name}})</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>{{dataset.acronym}}</td>
+            </tr>
+            </tbody>
+        </table>
+        {% endfor %}
+    </div>
+<div>
+<p>{% trans "Only one dataset can be modified in the file." %}</p>
+</div>
 {% elif stage == 1 %}
 
     <form action="" method="post">
