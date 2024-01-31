@@ -32,7 +32,7 @@
 
 
 {% block content %}
-<h3>{% trans "Import CSV Update" %}</h3>
+<h3>{% trans "Import CSV Update Existing Glosses" %}</h3>
 
 {% if stage == 0 %}
 
@@ -158,30 +158,58 @@
     </div>
     <br>
     <div>
-        <p>{% trans "To update existing glosses, the CSV file must include the columns:" %}</p>
+        <p>{% trans "To update existing glosses, the CSV file must include the first two columns:" %}</p>
         <br>
         {% for dataset in selected_datasets %}
         {% trans "For Dataset " %}{{dataset.acronym}}:
+        <div style="overflow-x:auto;">
         <table class="table table-striped center" style="width:80%;margin-left:50px;">
             <thead>
             <tr>
                 <th style="width:150px;">Signbank ID</th>
                 <th style="width:150px;">Dataset</th>
                 {% for dataset_language in dataset.translation_languages.all %}
-                <th style="width:200px;">Lemma ID Gloss ({{dataset_language.name}})</th>
+                <th style="white-space:nowrap;">Lemma ID Gloss ({{dataset_language.name}})</th>
                 {% endfor %}
                 {% for dataset_language in dataset.translation_languages.all %}
-                <th style="width:300px;">Annotation ID Gloss ({{dataset_language.name}})</th>
+                <th style="white-space:nowrap;">Annotation ID Gloss ({{dataset_language.name}})</th>
+                {% endfor %}
+                {% for dataset_language in dataset.translation_languages.all %}
+                <th style="white-space:nowrap;">Senses ({{dataset_language.name}})</th>
+                {% endfor %}
+                {% for col in optional_columns %}
+                <th style="white-space:nowrap;">{{col}}</th>
                 {% endfor %}
             </tr>
             </thead>
             <tbody>
+            <tr>
+                <td style="white-space:nowrap;">(required &mdash; static)</td>
+                <td style="white-space:nowrap;">(required &mdash; static)</td>
+                {% for dataset_language in dataset.translation_languages.all %}
+                <td>(optional &mdash; static)</td>
+                {% endfor %}
+                {% for dataset_language in dataset.translation_languages.all %}
+                <td style="white-space:nowrap;">(optional &mdash; can update)</td>
+                {% endfor %}
+                {% for dataset_language in dataset.translation_languages.all %}
+                <td style="white-space:nowrap;">(optional &mdash; see note)</td>
+                {% endfor %}
+                {% for col in optional_columns %}
+                {% if col == "Tags" or col == "Notes" %}
+                <td style="white-space:nowrap;">(optional &mdash; see note)</td>
+                {% else %}
+                <td style="white-space:nowrap;">(optional &mdash; can update)</td>
+                {% endif %}
+                {% endfor %}
+            </tr>
             <tr>
                 <td></td>
                 <td>{{dataset.acronym}}</td>
             </tr>
             </tbody>
         </table>
+        </div>
         {% endfor %}
     </div>
     <div>

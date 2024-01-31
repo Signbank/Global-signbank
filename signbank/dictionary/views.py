@@ -30,7 +30,7 @@ from signbank.tools import get_selected_datasets_for_user, get_default_annotatio
     split_csv_lines_sentences_header_body, create_sentence_from_valuedict
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
-from signbank.csv_interface import csv_create_senses, csv_update_sentences, csv_create_sentence
+from signbank.csv_interface import csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -612,9 +612,9 @@ def import_csv_create(request):
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
         fatal_error = False
-        csv_lines = re.compile('[\r\n]+').split(csv_text) # split the csv text on any combination of new line characters
+        csv_lines = re.compile('[\r\n]+').split(csv_text)  # split csv text on any combination of new line characters
 
-        delimiter_okay, found_delimiter = detect_delimiter(dataset_languages, csv_lines, create_or_update='create_gloss')
+        delimiter_okay, found_delimiter = detect_delimiter(csv_lines)
         delimiter_okay, keys_found, missing_keys, extra_keys, csv_header, csv_body = split_csv_lines_header_body(dataset_languages,
                                                                                                                  csv_lines,
                                                                                                                  found_delimiter, create_or_update='create_gloss')
@@ -622,7 +622,7 @@ def import_csv_create(request):
         if missing_keys or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
             if not delimiter_okay:
-                feedback_message = _('The chosen delimiter is not correct.')
+                feedback_message = _('The delimiter is not comma, tab, or semicolon.')
             else:
                 feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
             messages.add_message(request, messages.ERROR, feedback_message)
@@ -1006,8 +1006,12 @@ def import_csv_update(request):
 
     selected_datasets = get_selected_datasets_for_user(user)
     dataset_languages = get_dataset_languages(selected_datasets)
+
+    required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, 'update_gloss')
+
     translation_languages_dict = {}
-    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
+    # this dictionary is used in the template, it maps each dataset to a list of
+    # tuples: (English name of dataset, language_code_2char)
     for dataset_object in user_datasets:
         translation_languages_dict[dataset_object] = []
 
@@ -1074,6 +1078,7 @@ def import_csv_update(request):
                            'error': error,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'optional_columns': optional_columns,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1103,7 +1108,7 @@ def import_csv_update(request):
             if tags_radio == 'erase':
                 tags_toggle = 'erase'
 
-        delimiter_okay, found_delimiter = detect_delimiter(dataset_languages, csv_lines, create_or_update='update_gloss')
+        delimiter_okay, found_delimiter = detect_delimiter(csv_lines)
         delimiter_okay, keys_found, missing_keys, extra_keys, csv_header, csv_body = split_csv_lines_header_body(dataset_languages,
                                                                                                                  csv_lines,
                                                                                                                  found_delimiter, create_or_update='update_gloss')
@@ -1111,15 +1116,16 @@ def import_csv_update(request):
         if missing_keys or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
             if not delimiter_okay:
-                feedback_message = _('The chosen delimiter is not correct.')
+                feedback_message = _('The delimiter is not comma, tab, or semicolon.')
             else:
                 feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
             messages.add_message(request, messages.ERROR, feedback_message)
-            return render(request, 'dictionary/import_csv_create.html',
+            return render(request, 'dictionary/import_csv_update.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
                            'error': error,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'optional_columns': optional_columns,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1129,11 +1135,12 @@ def import_csv_update(request):
             # this is intended to assist the user in the case that a wrong file was selected
             feedback_message = _('Extra columns were found: ') + ', '. join(extra_keys)
             messages.add_message(request, messages.ERROR, feedback_message)
-            return render(request, 'dictionary/import_csv_create.html',
+            return render(request, 'dictionary/import_csv_update.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
                            'error': error,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'optional_columns': optional_columns,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1166,6 +1173,7 @@ def import_csv_update(request):
                            'error': error,
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
+                           'optional_columns': optional_columns,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1535,6 +1543,7 @@ def import_csv_update(request):
                           'error': error,
                           'dataset_languages': dataset_languages,
                           'selected_datasets': selected_datasets,
+                          'optional_columns': optional_columns,
                           'translation_languages_dict': translation_languages_dict,
                           'seen_datasets': seen_datasets,
                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1634,7 +1643,7 @@ def import_csv_lemmas(request):
         fatal_error = False
         csv_lines = re.compile('[\r\n]+').split(csv_text)  # split the csv text on new line characters
 
-        delimiter_okay, found_delimiter = detect_delimiter(dataset_languages, csv_lines, create_or_update='update_lemma')
+        delimiter_okay, found_delimiter = detect_delimiter(csv_lines)
         delimiter_okay, keys_found, missing_keys, extra_keys, csv_header, csv_body = split_csv_lines_header_body(dataset_languages,
                                                                                                                  csv_lines,
                                                                                                                  found_delimiter, create_or_update='update_lemma')
@@ -1642,7 +1651,7 @@ def import_csv_lemmas(request):
         if missing_keys or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
             if not delimiter_okay:
-                feedback_message = _('The chosen delimiter is not correct.')
+                feedback_message = _('The delimiter is not comma, tab, or semicolon.')
             else:
                 feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
             messages.add_message(request, messages.ERROR, feedback_message)
@@ -1658,7 +1667,7 @@ def import_csv_lemmas(request):
 
         if extra_keys:
             # this is intended to assist the user in the case that a wrong file was selected
-            feedback_message = _('Extra columns were found.')
+            feedback_message = _('Extra columns were found: ') + ', '. join(extra_keys)
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_update_lemmas.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -2846,36 +2855,16 @@ def import_csv_create_sentences(request):
         fatal_error = False
         csv_lines = re.compile('[\r\n]+').split(csv_text)  # split the csv text on any combination of newline characters
 
-        # the following code allows for specifying a column delimiter in the import_csv_create_sentences.html template
-        if 'delimiter' in request.POST:
-            delimiter_radio = request.POST['delimiter']
-            if delimiter_radio == 'tab':
-                delimiter = '\t'
-            elif delimiter_radio == 'comma':
-                delimiter = ','
-            elif delimiter_radio == 'semicolon':
-                delimiter = ';'
-            else:
-                # this should not occur
-                # perhaps only if the user is trying to fiddle without using the template
-                # set to template default, print message for Admin
-                print('Missing template default for delimiter_radio in import_csv_create_sentences.html')
-                delimiter = ','
-                delimiter_radio = 'comma'
-        else:
-            # this should not occur
-            # perhaps only if the user is trying to fiddle without using the template
-            # set to template default, print message for Admin
-            print('Missing template default for delimiter_radio in import_csv_create_sentences.html')
-            delimiter = ','
-            delimiter_radio = 'comma'
+        delimiter_okay, found_delimiter = detect_delimiter(csv_lines)
+        keys_found, missing_keys, extra_keys, csv_header, csv_body = split_csv_lines_sentences_header_body(dataset_languages, csv_lines,
+                                                                                                           found_delimiter)
 
-        keys_found, extra_keys, csv_header, csv_body = split_csv_lines_sentences_header_body(dataset_languages, csv_lines,
-                                                                                   delimiter)
-
-        if not keys_found:
+        if missing_keys or not delimiter_okay:
             # this is intended to assist the user in the case that a wrong file was selected
-            feedback_message = _('The required column headers are missing.')
+            if not delimiter_okay:
+                feedback_message = _('The delimiter is not comma, tab, or semicolon.')
+            else:
+                feedback_message = _('Some required column headers are missing: ') + ', '.join(missing_keys)
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_create_sentences.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -2889,7 +2878,7 @@ def import_csv_create_sentences(request):
 
         if extra_keys:
             # this is intended to assist the user in the case that a wrong file was selected
-            feedback_message = _('Extra columns were found.')
+            feedback_message = _('Extra columns were found: ') + ', '. join(extra_keys)
             messages.add_message(request, messages.ERROR, feedback_message)
             return render(request, 'dictionary/import_csv_create_sentences.html',
                           {'form': uploadform, 'stage': 0, 'changes': changes,
@@ -2907,7 +2896,7 @@ def import_csv_create_sentences(request):
             if len(line) == 0:
                 # this happens at the end of the file
                 continue
-            values = csv.reader([line], delimiter=delimiter).__next__()
+            values = csv.reader([line], delimiter=found_delimiter).__next__()
             if values == empty_row:
                 continue
 

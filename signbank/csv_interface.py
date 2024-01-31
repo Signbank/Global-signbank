@@ -131,10 +131,10 @@ def map_values_to_sentence_type(values, include_sentences=True):
     mapped_values = values
 
     if include_sentences:
-        regex_string = (r'\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False), %s([^\"]+)%s\)\s?'
+        regex_string = (r'\s?\(([1-9]), %s, (True|False), %s([^\"]+)%s\)\s?'
                         % (pattern_sentence_types, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS))
     else:
-        regex_string = r'\s?\(([1-9]), ([1-9][0-9]*), %s, (True|False)\)\s?' % pattern_sentence_types
+        regex_string = r'\s?\(([1-9]), %s, (True|False)\)\s?' % pattern_sentence_types
     find_all = re.findall(regex_string, mapped_values)
     if not find_all:
         map_errors = True
@@ -652,22 +652,27 @@ def required_csv_columns(dataset_languages, create_or_update='create_gloss'):
     gloss_fields = [f.verbose_name.encode('ascii', 'ignore').decode() for f in fields]
     extra_columns = ['SignLanguages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
                      'Blend Morphology', 'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']
-
+    required_columns = []
+    language_fields = []
+    optional_columns = []
     if create_or_update == 'create_gloss':
         required_columns = ['Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields
-        optional_columns = []
     elif create_or_update == 'update_lemma':
         required_columns = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields
-        optional_columns = []
     elif create_or_update == 'update_gloss':
         required_columns = ['Signbank ID', 'Dataset']
-        optional_columns = (lemmaidglosstranslation_fields + annotationidglosstranslation_fields + keyword_fields
-                            + sentence_fields + gloss_fields + extra_columns)
+        language_fields = (lemmaidglosstranslation_fields + annotationidglosstranslation_fields + keyword_fields)
+        optional_columns = gloss_fields + extra_columns
+    elif create_or_update == 'create_sentences':
+        required_columns = ['Signbank ID', 'Dataset', 'Sense Number', 'Sentence Type', 'Negative']
+
+        for lang in dataset_languages:
+            language_name = getattr(lang, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
+            column_name = "Example Sentences (%s)" % language_name
+            required_columns.append(column_name)
     else:
         print('required_csv_columns: Required columns not defined for create_or_update: ', create_or_update)
-        required_columns = []
-        optional_columns = []
-    return required_columns, optional_columns
+    return required_columns, language_fields, optional_columns
 
 
 def csv_header_row_glosslist(dataset_languages):

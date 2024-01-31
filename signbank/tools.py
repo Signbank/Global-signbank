@@ -2030,10 +2030,7 @@ def get_interface_language_and_default_language_codes(request):
     return (interface_language, interface_language_code, default_language, default_language_code)
 
 
-def detect_delimiter(dataset_languages, csv_lines, create_or_update):
-    print('detect delimiter: ', create_or_update)
-
-    required_columns, optional_columns = required_csv_columns(dataset_languages, create_or_update)
+def detect_delimiter(csv_lines):
 
     csv_lines_buffer = csv_lines
 
@@ -2050,20 +2047,19 @@ def detect_delimiter(dataset_languages, csv_lines, create_or_update):
             if first_csv_line and len(row) < 2:
                 # the row has not been split into columns
                 delimiter_okay = False
-                print('wrong delimiter: ', delimiter)
                 break
             delimiter_okay = True
             found_delimiter = delimiter
-            print('delimiter okay: ', delimiter)
 
         if found_delimiter:
+            # break out of the for loop
             break
     return delimiter_okay, found_delimiter
 
 
 def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter, create_or_update):
 
-    required_columns, optional_columns = required_csv_columns(dataset_languages, create_or_update)
+    required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, create_or_update)
 
     csv_lines_buffer = csv_lines
 
@@ -2103,24 +2099,19 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter, create_
         else:
             # set up for next row
             # only record extra keys if this is a header row
-            extra_keys = False
             csv_lines_buffer = rest_csv_lines
     return delimiter_okay, keys_found, missing_keys, extra_keys, csv_header, csv_body
 
 
 def split_csv_lines_sentences_header_body(dataset_languages, csv_lines, delimiter):
 
-    required_columns = ["Signbank ID", 'Dataset', "Sense Number", "Sentence Type", "Negative"]
-
-    for lang in dataset_languages:
-        language_name = getattr(lang, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-        column_name = "Example Sentences (%s)" % language_name
-        required_columns.append(column_name)
+    required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, 'create_sentences')
 
     csv_lines_buffer = csv_lines
 
     keys_found = False
-    extra_keys = False
+    missing_keys = []
+    extra_keys = []
     csv_header = []
     csv_body = []
     while not keys_found and csv_lines_buffer:
@@ -2134,9 +2125,15 @@ def split_csv_lines_sentences_header_body(dataset_languages, csv_lines, delimite
         for key in required_columns:
             if key not in row:
                 all_keys_present = False
+                if key not in missing_keys:
+                    missing_keys.append(key)
         for col in row:
-            if col not in required_columns:
-                extra_keys = True
+            if col in required_columns:
+                continue
+            if col not in extra_keys:
+                extra_keys.append(col)
+        if missing_keys or extra_keys:
+            break
         if all_keys_present:
             keys_found = True
             csv_header = row
@@ -2144,9 +2141,8 @@ def split_csv_lines_sentences_header_body(dataset_languages, csv_lines, delimite
         else:
             # set up for next row
             # only record extra keys if this is a header row
-            extra_keys = False
             csv_lines_buffer = rest_csv_lines
-    return keys_found, extra_keys, csv_header, csv_body
+    return keys_found, missing_keys, extra_keys, csv_header, csv_body
 
 
 def create_sentence_from_valuedict(valuedict, dataset, row_nr, earlier_creation_same_csv,
@@ -2170,10 +2166,10 @@ def create_sentence_from_valuedict(valuedict, dataset, row_nr, earlier_creation_
             # also stores empty values
             sentence_translations[language] = sentence_text
 
-        sentence_dict = {'row_nr': str(row_nr + 1), 'gloss_pk': valuedict["Signbank ID"], 'dataset': valuedict["Dataset"],
+        sentence_dict = {'row_nr': str(row_nr + 2), 'gloss_pk': valuedict["Signbank ID"], 'dataset': valuedict["Dataset"],
                          'order': valuedict["Sense Number"], 'sentence_type': valuedict["Sentence Type"],
                          'negative': valuedict["Negative"], 'translations': sentence_translations}
-        errors_found = parse_sentence_row(str(row_nr + 1), sentence_dict)
+        errors_found = parse_sentence_row(str(row_nr + 2), sentence_dict)
         new_sentence.append(sentence_dict)
     return new_sentence, already_exists, errors_found, earlier_creation_same_csv, earlier_creation_annotationidgloss, \
         earlier_creation_lemmaidgloss
