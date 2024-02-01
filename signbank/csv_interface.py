@@ -185,6 +185,22 @@ def get_senses_to_sentences(gloss):
     return gloss_senses_to_sentences_dict
 
 
+def trim_columns_in_row(row):
+    """If the user copies the initial header from the CSV template,
+    it is possible that the spreadsheet program added a space after the column text,
+    before the delimiter, or double quotes around the column text itself.
+    Example 1: Signbank ID ,Dataset
+    Example 2: "Signbank ID","Dataset"
+    This function removes those.
+    """
+    trimmed_row = []
+    for col in row:
+        col_without_white_space = col.strip()
+        col_without_double_quotes = col_without_white_space.strip('"')
+        trimmed_row.append(col_without_double_quotes)
+    return trimmed_row
+
+
 def parse_sentence_row(row_nr, sentence_dict):
     errors = []
     sentence_fields = '(' + sentence_dict['order'] + ', ' + sentence_dict['sentence_type'] + ', ' + sentence_dict['negative'] + ')'
