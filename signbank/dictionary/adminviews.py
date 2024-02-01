@@ -420,6 +420,9 @@ class GlossListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
+        fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb', 'isNew']
+        fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
 
