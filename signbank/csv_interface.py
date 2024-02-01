@@ -1138,3 +1138,34 @@ def csv_focusgloss_to_minimalpairs(focusgloss, dataset, language_code, csv_rows)
         csv_rows.append(safe_row)
 
     return csv_rows
+
+
+def choice_fields_choices():
+    fields_choices = dict()
+
+    activate(LANGUAGES[0][0])
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+    fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+
+    for f in fields:
+        if hasattr(f, 'field_choice_category'):
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
+                [fc.name for fc in FieldChoice.objects.filter(field__iexact=f.field_choice_category)]
+        elif f.name in ['domhndsh', 'subhndsh']:
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
+                [hs.name for hs in Handshape.objects.all()]
+        elif f.name == 'semField':
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
+                [sf.name for sf in SemanticField.objects.all()]
+        elif f.name == 'derivHist':
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
+                [dh.name for dh in DerivationHistory.objects.all()]
+        elif f.name in ['repeat', 'altern',
+                        'domhndsh_letter', 'domhndsh_number',
+                        'subhndsh_letter', 'subhndsh_number',
+                        'inWeb', 'isNew']:
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = ['False', 'True']
+        elif f.name in ['weakdrop', 'weakprop']:
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = ['Neutral', 'True', 'False']
+
+    return fields_choices
