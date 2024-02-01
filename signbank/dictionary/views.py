@@ -30,7 +30,8 @@ from signbank.tools import get_selected_datasets_for_user, get_default_annotatio
     split_csv_lines_sentences_header_body, create_sentence_from_valuedict
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
-from signbank.csv_interface import csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns
+from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
+                                    choice_fields_choices)
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -1009,6 +1010,8 @@ def import_csv_update(request):
 
     required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, 'update_gloss')
 
+    list_choice_fields_choices = choice_fields_choices()
+
     translation_languages_dict = {}
     # this dictionary is used in the template, it maps each dataset to a list of
     # tuples: (English name of dataset, language_code_2char)
@@ -1079,6 +1082,7 @@ def import_csv_update(request):
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
                            'optional_columns': optional_columns,
+                           'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1126,6 +1130,7 @@ def import_csv_update(request):
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
                            'optional_columns': optional_columns,
+                           'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1141,6 +1146,7 @@ def import_csv_update(request):
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
                            'optional_columns': optional_columns,
+                           'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1174,6 +1180,7 @@ def import_csv_update(request):
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
                            'optional_columns': optional_columns,
+                           'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1544,6 +1551,7 @@ def import_csv_update(request):
                           'dataset_languages': dataset_languages,
                           'selected_datasets': selected_datasets,
                           'optional_columns': optional_columns,
+                           'choice_fields_choices': list_choice_fields_choices,
                           'translation_languages_dict': translation_languages_dict,
                           'seen_datasets': seen_datasets,
                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -3078,6 +3086,7 @@ def import_csv_create_sentences(request):
                           'error': error,
                           'dataset_languages': dataset_languages,
                           'selected_datasets': selected_datasets,
+                          'sentence_types': [fc.name for fc in FieldChoice.objects.filter(field__iexact='SentenceType')],
                           'translation_languages_dict': translation_languages_dict,
                           'seen_datasets': seen_datasets,
                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,

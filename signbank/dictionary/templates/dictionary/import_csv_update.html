@@ -206,6 +206,30 @@
             <tr>
                 <td></td>
                 <td>{{dataset.acronym}}</td>
+                {% for dataset_language in dataset.translation_languages.all %}
+                <td></td>
+                {% endfor %}
+                {% for dataset_language in dataset.translation_languages.all %}
+                <td></td>
+                {% endfor %}
+                {% for dataset_language in dataset.translation_languages.all %}
+                <td></td>
+                {% endfor %}
+                {% for col in optional_columns %}
+                {% if col in choice_fields_choices.keys %}
+                {% with choice_fields_choices|get_item:col as choices %}
+                <td>
+                    <select>
+                    {% for st in choices %}
+                        <option>{{st}}</option>
+                    {% endfor %}
+                    </select>
+                </td>
+                {% endwith %}
+                {% else %}
+                <td></td>
+                {% endif %}
+                {% endfor %}
             </tr>
             </tbody>
         </table>

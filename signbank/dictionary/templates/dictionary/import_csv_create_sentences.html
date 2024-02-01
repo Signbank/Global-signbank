@@ -79,6 +79,21 @@
             <tr>
                 <td></td>
                 <td>{{dataset.acronym}}</td>
+                <td></td>
+                <td>
+                    <select>
+                    {% for st in sentence_types %}
+                        <option>{{st}}</option>
+                    {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <select>
+                        <option>-</option>
+                        <option>False</option>
+                        <option>True</option>
+                    </select>
+                </td>
             </tr>
             </tbody>
         </table>

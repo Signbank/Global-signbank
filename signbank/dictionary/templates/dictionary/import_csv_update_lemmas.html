@@ -80,13 +80,17 @@
             <tr>
                 <td style="white-space:nowrap;">(static &mdash; required if no Lemma ID)</td>
                 <td style="white-space:nowrap;">(static &mdash; required if no Signbank ID)</td>
-                <td>{{dataset.acronym}}</td>
+                <td style="white-space:nowrap;">(required &mdash; static)</td>
                 {% for dataset_language in dataset.translation_languages.all %}
                 <td>(required &mdash; can update)</td>
                 {% endfor %}
                 {% for dataset_language in dataset.translation_languages.all %}
                 <td style="white-space:nowrap;">(optional &mdash; ignored)</td>
                 {% endfor %}
+            </tr>
+            <tr>
+                <td></td><td></td>
+                <td style="white-space:nowrap;">{{dataset.acronym}}</td>
             </tr>
             </tbody>
         </table>
