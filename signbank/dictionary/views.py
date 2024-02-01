@@ -1698,13 +1698,24 @@ def import_csv_lemmas(request):
                     continue
                 value_dict[csv_header[nv]] = value
 
-            try:
-                pk = int(value_dict['Lemma ID'])
-            except ValueError:
-                e = 'Row '+str(nl + 2) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
-                error.append(e)
-                fatal_error = True
-                break
+            if 'Lemma ID' in value_dict.keys():
+                # make sure it is numerical
+                try:
+                    pk = int(value_dict['Lemma ID'])
+                except ValueError:
+                    e = 'Row '+str(nl + 2) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
+                    error.append(e)
+                    fatal_error = True
+                    break
+            if 'Signbank ID' in value_dict.keys():
+                # make sure it is numerical
+                try:
+                    pk = int(value_dict['Signbank ID'])
+                except ValueError:
+                    e = 'Row '+str(nl + 2) + ': Signbank ID must be numerical: ' + str(value_dict['Signbank ID'])
+                    error.append(e)
+                    fatal_error = True
+                    break
 
             dataset_name = value_dict['Dataset'].strip()
 
@@ -1743,14 +1754,28 @@ def import_csv_lemmas(request):
                     break
 
             # # updating lemmas, propose changes (make dict)
-            try:
-                lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
-            except ObjectDoesNotExist as e:
+            if 'Lemma ID' in value_dict.keys():
+                try:
+                    lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
+                except ObjectDoesNotExist as e:
 
-                e = 'Row ' + str(nl + 2) + ': Could not find lemma for Lemma ID '+str(pk)
+                    e = 'Row ' + str(nl + 2) + ': Could not find lemma for Lemma ID '+str(pk)
+                    error.append(e)
+                    continue
+            elif 'Signbank ID' in value_dict.keys():
+                try:
+                    gloss = Gloss.objects.select_related().get(pk=pk)
+                    lemma = gloss.lemma
+                    value_dict['Lemma ID'] = str(lemma.pk)
+                except ObjectDoesNotExist as e:
+
+                    e = 'Row ' + str(nl + 2) + ': Could not find lemma for Signbank ID ' + str(pk)
+                    error.append(e)
+                    continue
+            else:
+                e = 'Row ' + str(nl + 2) + ': Could not identify lemma.'
                 error.append(e)
                 continue
-
             if lemma.dataset.acronym != dataset_name:
                 e1 = 'Row ' + str(nl + 2) + ': The Dataset column (' + dataset.acronym \
                      + ') does not correspond to that of the Lemma ID (' + str(pk) + ').'

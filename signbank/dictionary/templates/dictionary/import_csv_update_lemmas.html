@@ -58,23 +58,35 @@
     </div>
     <br>
     <div>
-        <p>{% trans "To update existing lemmas, the CSV file must include the columns:" %}</p>
+        <p>{% trans "To update existing lemmas, the CSV file must include either a Signbank ID or a Lemma ID:" %}</p>
         <br>
         {% for dataset in selected_datasets %}
         {% trans "For Dataset " %}{{dataset.acronym}}:
         <table class="table table-striped center" style="width:80%;margin-left:50px;">
             <thead>
             <tr>
+                <th style="width:150px;">Signbank ID</th>
                 <th style="width:150px;">Lemma ID</th>
                 <th style="width:150px;">Dataset</th>
                 {% for dataset_language in dataset.translation_languages.all %}
                 <th style="width:200px;">Lemma ID Gloss ({{dataset_language.name}})</th>
                 {% endfor %}
+                {% for dataset_language in dataset.translation_languages.all %}
+                <th style="white-space:nowrap;">Annotation ID Gloss ({{dataset_language.name}})</th>
+                {% endfor %}
             </tr>
             </thead>
             <tbody>
             <tr>
-                <td></td><td>{{dataset.acronym}}</td>
+                <td style="white-space:nowrap;">(static &mdash; required if no Lemma ID)</td>
+                <td style="white-space:nowrap;">(static &mdash; required if no Signbank ID)</td>
+                <td>{{dataset.acronym}}</td>
+                {% for dataset_language in dataset.translation_languages.all %}
+                <td>(required &mdash; can update)</td>
+                {% endfor %}
+                {% for dataset_language in dataset.translation_languages.all %}
+                <td style="white-space:nowrap;">(optional &mdash; ignored)</td>
+                {% endfor %}
             </tr>
             </tbody>
         </table>
