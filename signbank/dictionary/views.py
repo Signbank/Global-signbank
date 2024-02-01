@@ -1290,7 +1290,7 @@ def import_csv_update(request):
                 help = 'Row ' + str(nl + 2) + ': Attempt to update Lemma translations for Signbank ID ' + str(pk)
                 error.append(help)
                 messages.add_message(request, messages.ERROR,
-                                     _('Attempt to update Lemma translations. Use Import CSV Lemma Update.'))
+                                     _('Attempt to update Lemma translations. Use Import CSV Lemma Update instead.'))
                 continue
 
             try:

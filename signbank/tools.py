@@ -2062,9 +2062,7 @@ def detect_delimiter(csv_lines):
 def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter, create_or_update):
 
     required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, create_or_update)
-
     csv_lines_buffer = csv_lines
-
     keys_found = False
     extra_keys = []
     delimiter_okay = True
@@ -2089,7 +2087,7 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter, create_
                 if key not in missing_keys:
                     missing_keys.append(key)
         for col in row:
-            if col in required_columns or col in optional_columns:
+            if col in required_columns or col in language_fields or col in optional_columns:
                 continue
             if col not in extra_keys:
                 extra_keys.append(col)
