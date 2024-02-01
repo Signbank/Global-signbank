@@ -30,7 +30,8 @@ from signbank.tools import get_selected_datasets_for_user, get_default_annotatio
     split_csv_lines_sentences_header_body, create_sentence_from_valuedict
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
-from signbank.csv_interface import csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns
+from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
+                                    choice_fields_choices)
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     check_value_to_translated_human_value
 
@@ -1009,6 +1010,8 @@ def import_csv_update(request):
 
     required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, 'update_gloss')
 
+    list_choice_fields_choices = choice_fields_choices()
+
     translation_languages_dict = {}
     # this dictionary is used in the template, it maps each dataset to a list of
     # tuples: (English name of dataset, language_code_2char)
@@ -1079,6 +1082,7 @@ def import_csv_update(request):
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
                            'optional_columns': optional_columns,
+                           'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1126,6 +1130,7 @@ def import_csv_update(request):
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
                            'optional_columns': optional_columns,
+                           'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1141,6 +1146,7 @@ def import_csv_update(request):
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
                            'optional_columns': optional_columns,
+                           'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1174,6 +1180,7 @@ def import_csv_update(request):
                            'dataset_languages': dataset_languages,
                            'selected_datasets': selected_datasets,
                            'optional_columns': optional_columns,
+                           'choice_fields_choices': list_choice_fields_choices,
                            'translation_languages_dict': translation_languages_dict,
                            'seen_datasets': seen_datasets,
                            'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1290,7 +1297,7 @@ def import_csv_update(request):
                 help = 'Row ' + str(nl + 2) + ': Attempt to update Lemma translations for Signbank ID ' + str(pk)
                 error.append(help)
                 messages.add_message(request, messages.ERROR,
-                                     _('Attempt to update Lemma translations. Use Import CSV Lemma Update.'))
+                                     _('Attempt to update Lemma translations. Use Import CSV Lemma Update instead.'))
                 continue
 
             try:
@@ -1544,6 +1551,7 @@ def import_csv_update(request):
                           'dataset_languages': dataset_languages,
                           'selected_datasets': selected_datasets,
                           'optional_columns': optional_columns,
+                           'choice_fields_choices': list_choice_fields_choices,
                           'translation_languages_dict': translation_languages_dict,
                           'seen_datasets': seen_datasets,
                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
@@ -1698,13 +1706,24 @@ def import_csv_lemmas(request):
                     continue
                 value_dict[csv_header[nv]] = value
 
-            try:
-                pk = int(value_dict['Lemma ID'])
-            except ValueError:
-                e = 'Row '+str(nl + 2) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
-                error.append(e)
-                fatal_error = True
-                break
+            if 'Lemma ID' in value_dict.keys():
+                # make sure it is numerical
+                try:
+                    pk = int(value_dict['Lemma ID'])
+                except ValueError:
+                    e = 'Row '+str(nl + 2) + ': Lemma ID must be numerical: ' + str(value_dict['Lemma ID'])
+                    error.append(e)
+                    fatal_error = True
+                    break
+            if 'Signbank ID' in value_dict.keys():
+                # make sure it is numerical
+                try:
+                    pk = int(value_dict['Signbank ID'])
+                except ValueError:
+                    e = 'Row '+str(nl + 2) + ': Signbank ID must be numerical: ' + str(value_dict['Signbank ID'])
+                    error.append(e)
+                    fatal_error = True
+                    break
 
             dataset_name = value_dict['Dataset'].strip()
 
@@ -1743,14 +1762,28 @@ def import_csv_lemmas(request):
                     break
 
             # # updating lemmas, propose changes (make dict)
-            try:
-                lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
-            except ObjectDoesNotExist as e:
+            if 'Lemma ID' in value_dict.keys():
+                try:
+                    lemma = LemmaIdgloss.objects.select_related().get(pk=pk)
+                except ObjectDoesNotExist as e:
 
-                e = 'Row ' + str(nl + 2) + ': Could not find lemma for Lemma ID '+str(pk)
+                    e = 'Row ' + str(nl + 2) + ': Could not find lemma for Lemma ID '+str(pk)
+                    error.append(e)
+                    continue
+            elif 'Signbank ID' in value_dict.keys():
+                try:
+                    gloss = Gloss.objects.select_related().get(pk=pk)
+                    lemma = gloss.lemma
+                    value_dict['Lemma ID'] = str(lemma.pk)
+                except ObjectDoesNotExist as e:
+
+                    e = 'Row ' + str(nl + 2) + ': Could not find lemma for Signbank ID ' + str(pk)
+                    error.append(e)
+                    continue
+            else:
+                e = 'Row ' + str(nl + 2) + ': Could not identify lemma.'
                 error.append(e)
                 continue
-
             if lemma.dataset.acronym != dataset_name:
                 e1 = 'Row ' + str(nl + 2) + ': The Dataset column (' + dataset.acronym \
                      + ') does not correspond to that of the Lemma ID (' + str(pk) + ').'
@@ -3053,6 +3086,7 @@ def import_csv_create_sentences(request):
                           'error': error,
                           'dataset_languages': dataset_languages,
                           'selected_datasets': selected_datasets,
+                          'sentence_types': [fc.name for fc in FieldChoice.objects.filter(field__iexact='SentenceType')],
                           'translation_languages_dict': translation_languages_dict,
                           'seen_datasets': seen_datasets,
                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,

@@ -17,9 +17,10 @@ from django.utils.translation import override, gettext_lazy as _, activate
 
 from django.http import HttpResponse, HttpResponseRedirect
 
-from signbank.csv_interface import sense_translations_for_language, update_senses_parse, \
-    update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers, parse_sentence_row, \
-    get_senses_to_sentences, csv_sentence_tuples_list_compare, csv_header_row_glosslist, required_csv_columns
+from signbank.csv_interface import (sense_translations_for_language, update_senses_parse,
+                                    update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
+                                    parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
+                                    csv_header_row_glosslist, required_csv_columns, trim_columns_in_row)
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from django.utils.dateformat import format
@@ -955,7 +956,8 @@ def compare_valuedict_to_lemma(valuedict, lemma_id, my_datasets, nl,
 
             new_human_value = new_human_value.strip()
 
-            if human_key == 'Lemma ID' or human_key == 'Dataset':
+            annotation_idgloss_key_prefix = "Annotation ID Gloss ("
+            if human_key in ['Lemma ID', 'Dataset', 'Signbank ID'] or human_key.startswith(annotation_idgloss_key_prefix):
                 # these fields can't be updated
                 continue
 
@@ -2044,6 +2046,7 @@ def detect_delimiter(csv_lines):
             first_csv_line, rest_csv_lines = csv_lines_buffer[0], csv_lines_buffer[1:]
 
             row = first_csv_line.strip().split(delimiter)
+            row = trim_columns_in_row(row)
             if first_csv_line and len(row) < 2:
                 # the row has not been split into columns
                 delimiter_okay = False
@@ -2060,9 +2063,7 @@ def detect_delimiter(csv_lines):
 def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter, create_or_update):
 
     required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, create_or_update)
-
     csv_lines_buffer = csv_lines
-
     keys_found = False
     extra_keys = []
     delimiter_okay = True
@@ -2075,6 +2076,7 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter, create_
         first_csv_line, rest_csv_lines = csv_lines_buffer[0], csv_lines_buffer[1:]
 
         row = first_csv_line.strip().split(delimiter)
+        row = trim_columns_in_row(row)
         if first_csv_line and len(row) < 2:
             # the row has not been split into columns
             delimiter_okay = False
@@ -2082,11 +2084,19 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter, create_
         all_keys_present = True
         for key in required_columns:
             if key not in row:
-                all_keys_present = False
-                if key not in missing_keys:
-                    missing_keys.append(key)
+                if key == 'Lemma ID':
+                    # create_or_update == 'update_lemma'
+                    if 'Signbank ID' not in row:
+                        # check for one or the other, Lemma ID or Signbank ID
+                        all_keys_present = False
+                        if key not in missing_keys:
+                            missing_keys.append(key)
+                else:
+                    all_keys_present = False
+                    if key not in missing_keys:
+                        missing_keys.append(key)
         for col in row:
-            if col in required_columns or col in optional_columns:
+            if col in required_columns or col in language_fields or col in optional_columns:
                 continue
             if col not in extra_keys:
                 extra_keys.append(col)
@@ -2120,7 +2130,7 @@ def split_csv_lines_sentences_header_body(dataset_languages, csv_lines, delimite
         first_csv_line, rest_csv_lines = csv_lines_buffer[0], csv_lines_buffer[1:]
 
         row = first_csv_line.strip().split(delimiter)
-
+        row = trim_columns_in_row(row)
         all_keys_present = True
         for key in required_columns:
             if key not in row:

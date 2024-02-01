@@ -185,6 +185,22 @@ def get_senses_to_sentences(gloss):
     return gloss_senses_to_sentences_dict
 
 
+def trim_columns_in_row(row):
+    """If the user copies the initial header from the CSV template,
+    it is possible that the spreadsheet program added a space after the column text,
+    before the delimiter, or double quotes around the column text itself.
+    Example 1: Signbank ID ,Dataset
+    Example 2: "Signbank ID","Dataset"
+    This function removes those.
+    """
+    trimmed_row = []
+    for col in row:
+        col_without_white_space = col.strip()
+        col_without_double_quotes = col_without_white_space.strip('"')
+        trimmed_row.append(col_without_double_quotes)
+    return trimmed_row
+
+
 def parse_sentence_row(row_nr, sentence_dict):
     errors = []
     sentence_fields = '(' + sentence_dict['order'] + ', ' + sentence_dict['sentence_type'] + ', ' + sentence_dict['negative'] + ')'
@@ -659,8 +675,11 @@ def required_csv_columns(dataset_languages, create_or_update='create_gloss'):
         required_columns = ['Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields
     elif create_or_update == 'update_lemma':
         required_columns = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields
+        # for convenience, allow but ignore annotation fields
+        optional_columns = ['Signbank ID'] + annotationidglosstranslation_fields
     elif create_or_update == 'update_gloss':
         required_columns = ['Signbank ID', 'Dataset']
+        # for display convenience in template, separate the language fields
         language_fields = (lemmaidglosstranslation_fields + annotationidglosstranslation_fields + keyword_fields)
         optional_columns = gloss_fields + extra_columns
     elif create_or_update == 'create_sentences':
@@ -1119,3 +1138,34 @@ def csv_focusgloss_to_minimalpairs(focusgloss, dataset, language_code, csv_rows)
         csv_rows.append(safe_row)
 
     return csv_rows
+
+
+def choice_fields_choices():
+    fields_choices = dict()
+
+    activate(LANGUAGES[0][0])
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew']
+    fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+
+    for f in fields:
+        if hasattr(f, 'field_choice_category'):
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
+                [fc.name for fc in FieldChoice.objects.filter(field__iexact=f.field_choice_category)]
+        elif f.name in ['domhndsh', 'subhndsh']:
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
+                [hs.name for hs in Handshape.objects.all()]
+        elif f.name == 'semField':
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
+                [sf.name for sf in SemanticField.objects.all()]
+        elif f.name == 'derivHist':
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
+                [dh.name for dh in DerivationHistory.objects.all()]
+        elif f.name in ['repeat', 'altern',
+                        'domhndsh_letter', 'domhndsh_number',
+                        'subhndsh_letter', 'subhndsh_number',
+                        'inWeb', 'isNew']:
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = ['False', 'True']
+        elif f.name in ['weakdrop', 'weakprop']:
+            fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = ['Neutral', 'True', 'False']
+
+    return fields_choices
