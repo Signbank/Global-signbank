@@ -83,7 +83,7 @@ function checkinput(e, file_type, file_placeholder) {
  * @param {div} typeGallery the gallery that shows file previews
  */
 function handleByButton(files, dropContainerTitle, fileType, fileTypeP, inputArea, typeGallery) {
-    if (files[0].size > 10485760){
+    if (files[0].size > 5242880){
         dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the file size under 10 MB</p>";
         inputArea.value = '';
         removeUploads(true, inputArea, dropContainerTitle, typeGallery)
@@ -120,7 +120,7 @@ function handleByButton(files, dropContainerTitle, fileType, fileTypeP, inputAre
  */
 function handleDrop(e, fileType, fileTypeT, fileTypeP, inputArea, typeGallery, dropContainerTitle){
     files = e.dataTransfer.files
-    if (files[0].size > 10485760){
+    if (files[0].size > 5242880){
         dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the file size under 10 MB</p>";
         inputArea.value = '';
         removeUploads(true, inputArea, dropContainerTitle, typeGallery)
