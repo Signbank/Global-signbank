@@ -85,7 +85,7 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
         # Get a list of tuples for this sort-order
         tpList = list(FieldChoice.objects.filter(field=sListName).values_list('machine_value', 'name'))
         # Determine sort order: ascending is default
-        if (sOrder[0:1] == '-'):
+        if sOrder[0:1] == '-':
             # A starting '-' sign means: descending order
             sOrder = sOrder[1:]
         def lambda_sort_tuple(x, bReversed):
@@ -93,18 +93,18 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
             getattr_sOrder = getattr(x, sOrder)
             if getattr_sOrder is None:
                 # if the field is not set, use the machine value 0 choice
-                return (True, dict(tpList)[0])
+                return True, dict(tpList)[0]
             elif getattr_sOrder.machine_value in [0,1]:
-                return (True, dict(tpList)[getattr_sOrder.machine_value])
+                return True, dict(tpList)[getattr_sOrder.machine_value]
             else:
-                return (bReversed, dict(tpList)[getattr(x, sOrder).machine_value])
+                return bReversed, dict(tpList)[getattr(x, sOrder).machine_value]
 
         return sorted(qs, key=lambda x: lambda_sort_tuple(x, bReversed), reverse=bReversed)
 
     def order_queryset_by_annotationidglosstranslation(qs, sOrder):
         language_code_2char = sOrder[-2:]
         sOrderAsc = sOrder
-        if (sOrder[0:1] == '-'):
+        if sOrder[0:1] == '-':
             # A starting '-' sign means: descending order
             sOrderAsc = sOrder[1:]
         annotationidglosstranslation = AnnotationIdglossTranslation.objects.filter(gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char).distinct()
@@ -114,7 +114,7 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     def order_queryset_by_lemmaidglosstranslation(qs, sOrder):
         language_code_2char = sOrder[-2:]
         sOrderAsc = sOrder
-        if (sOrder[0:1] == '-'):
+        if sOrder[0:1] == '-':
             # A starting '-' sign means: descending order
             sOrderAsc = sOrder[1:]
         lemmaidglosstranslation = LemmaIdglossTranslation.objects.filter(lemma=OuterRef('lemma'), language__language_code_2char__iexact=language_code_2char)
@@ -124,7 +124,7 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     def order_queryset_by_translation(qs, sOrder):
         language_code_2char = sOrder[-2:]
         sOrderAsc = sOrder
-        if (sOrder[0:1] == '-'):
+        if sOrder[0:1] == '-':
             # A starting '-' sign means: descending order
             sOrderAsc = sOrder[1:]
         translations = Translation.objects.filter(sensetranslation__sense__glosssense__gloss=OuterRef('pk')).filter(language__language_code_2char__iexact=language_code_2char)
@@ -1670,7 +1670,7 @@ class GlossRelationsDetailView(DetailView):
         for language in gl.dataset.translation_languages.all().order_by('id'):
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
-            except (ObjectDoesNotExist):
+            except ObjectDoesNotExist:
                 annotation_text = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_text
 
@@ -2989,7 +2989,7 @@ class GlossFrequencyView(DetailView):
         for language in gl.dataset.translation_languages.all():
             try:
                 annotation_translation = gl.annotationidglosstranslation_set.get(language=language).text
-            except (ValueError):
+            except ValueError:
                 annotation_translation = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_translation
 
@@ -4266,7 +4266,7 @@ class DatasetFieldChoiceView(ListView):
         change_dataset_permission = get_objects_for_user(self.request.user, 'change_dataset', Dataset)
         for dataset in selected_datasets:
             if dataset in change_dataset_permission:
-                dataset_excluded_choices = dataset.exclude_choices.all();
+                dataset_excluded_choices = dataset.exclude_choices.all()
                 list_of_excluded_ids = []
                 for ec in dataset_excluded_choices:
                     list_of_excluded_ids.append(ec.pk)
@@ -5143,7 +5143,7 @@ def gloss_ajax_complete(request, prefix):
             except ObjectDoesNotExist:
                 annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=default_language)
                 default_annotationidglosstranslation = annotationidglosstranslation.text
-            result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % (g.id)})
+            result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % g.id})
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
 
@@ -5182,7 +5182,7 @@ def morph_ajax_complete(request, prefix):
         # if there are results, just grab the first one
         default_annotationidglosstranslation = annotationidglosstranslations.first().text
         result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss,
-                       'pk': "%s" % (g.id)})
+                       'pk': "%s" % g.id})
 
     return JsonResponse(result, safe=False)
 
@@ -6318,7 +6318,7 @@ class KeywordListView(ListView):
 
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
-            if vals != []:
+            if vals:
                 query_parameters['tags[]'] = vals
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))

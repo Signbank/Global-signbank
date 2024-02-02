@@ -154,7 +154,7 @@ class VideoUploadToFLVField(forms.FileField):
         process =  Popen(ffmpeg, stdout=PIPE, stderr=PIPE)
         start = time.time()
         
-        while process.poll() == None: 
+        while process.poll() is None: 
             if time.time()-start > settings.FFMPEG_TIMEOUT:
                 # we've gone over time, kill the process  
                 os.kill(process.pid, signal.SIGKILL)
@@ -169,7 +169,7 @@ class VideoUploadToFLVField(forms.FileField):
         try:
             s = os.stat(targetfile) 
             fsize = s.st_size
-            if (fsize == 0):
+            if fsize == 0:
                 os.remove(targetfile)
                 errormsg = "Conversion of video failed: please try to use a diffent format"
         except:

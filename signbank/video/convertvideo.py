@@ -4,21 +4,26 @@ try:
     from django.conf import settings
     FFMPEG_PROGRAM = settings.FFMPEG_PROGRAM
     FFMPEG_OPTIONS = settings.FFMPEG_OPTIONS
-except:
+except KeyError:
     FFMPEG_PROGRAM = "/usr/bin/ffmpeg"
-    #FFMPEG_OPTIONS = ["-vcodec", "libx264", "-an", "-vpre", "hq", "-crf", "22", "-threads", "0"]
+    # FFMPEG_OPTIONS = ["-vcodec", "libx264", "-an", "-vpre", "hq", "-crf", "22", "-threads", "0"]
     FFMPEG_OPTIONS = ["-vcodec", "h264", "-an"]
 
-import sys, os, time, signal, shutil
+import sys
+import os
+import time
+import signal
+import shutil
+import glob
 import ffmpeg
 from subprocess import Popen, PIPE
 import re
-    
+
+
 def parse_ffmpeg_output(text):
     """Get relevant info from the ffmpeg output"""
 
     ffmpeg_output_string = text
-    # print('argument to parse_ffmpeg_output: ', ffmpeg_output_string)
     state = None
     result = {'input': '', 'output': ''}
     for line in ffmpeg_output_string.split(b'\n'):
@@ -75,10 +80,10 @@ def run_ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
     ffmpeg += options
     ffmpeg += [targetfile]
 
-    process =  Popen(ffmpeg, stdout=PIPE, stderr=PIPE)
+    process = Popen(ffmpeg, stdout=PIPE, stderr=PIPE)
     start = time.time()
     
-    while process.poll() == None: 
+    while process.poll() is None:
         if time.time()-start > timeout:
             # we've gone over time, kill the process  
             os.kill(process.pid, signal.SIGKILL)
@@ -87,12 +92,13 @@ def run_ffmpeg(sourcefile, targetfile, timeout=60, options=[]):
             return errormsg
         
     status = process.poll()
-    out,err = process.communicate()
+    out, err = process.communicate()
     
     # should check status
     
     # return the error output - messages from ffmpeg
     return err
+
 
 def extract_frame(sourcefile, targetfile):
     """Extract a single frame from the source video and 
@@ -106,15 +112,42 @@ def extract_frame(sourcefile, targetfile):
 def probe_format(file):
     """Find the format of a video file via ffmpeg,
     return a format name, eg mpeg4, h264"""
-    
+
     # for info, convert just one second to a null output format
     info_options = ["-f", "null", "-t", "1"]
     
     b = run_ffmpeg(file, "tmp", options=info_options)
     r = parse_ffmpeg_output(b)
-     
     return r['inputvideoformat']
 
+
+def make_thumbnail_video(sourcefile, targetfile):
+    # this method is not called (need to move temp files to /tmp instead)
+    # this function also works on source quicktime videos
+    name, _ = os.path.splitext(sourcefile)
+    temp_target = name + '_small.mov'
+    (
+        ffmpeg
+        .input(sourcefile)
+        .filter('fps', fps=15, round='up')
+        .filter('scale', -2, 180)
+        .output("%s-%%04d.png" % (sourcefile[:-4]), **{'qscale:v': 2})
+        .run(quiet=True)
+    )
+    (
+        ffmpeg
+        .input((sourcefile[:-4])+"-*.png", pattern_type='glob', framerate=15)
+        .output(temp_target, vcodec='rawvideo')
+        .run(quiet=True)
+    )
+    # convert the small video to mp4
+    convert_video(temp_target, targetfile)
+
+    # remove the temp files
+    stills_pattern = (sourcefile[:-4])+"-*.png"
+    for f in glob.glob(stills_pattern):
+        os.remove(f)
+    os.remove(temp_target)
 
 
 def convert_video(sourcefile, targetfile, force=False):
@@ -126,10 +159,14 @@ def convert_video(sourcefile, targetfile, force=False):
         format = probe_format(sourcefile)
     else:
         format = 'force'
-    
+
     if format == "h264":
         # just do a copy of the file
-        shutil.copy(sourcefile, targetfile) 
+        shutil.copy(sourcefile, targetfile)
+    elif "h264" in format:
+        # ffmpeg copy video channel to new file with .mp4 extension
+        FFMPEG_COPY_OPTIONS = ["-c", "copy", "-an"]
+        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
     else: 
         # convert the video
         b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_OPTIONS)
@@ -140,10 +177,10 @@ def convert_video(sourcefile, targetfile, force=False):
         return True
     else:
         return False
-        
-if __name__=='__main__':
-    import sys
-    
+
+
+if __name__ == '__main__':
+
     if len(sys.argv) != 3:
         print("Usage: convertvideo.py <sourcefile> <targetfile>")
         exit()
@@ -152,9 +189,3 @@ if __name__=='__main__':
     targetfile = sys.argv[2]
     
     convert_video(sourcefile, targetfile)
-        
-    
-        
-        
-        
-    

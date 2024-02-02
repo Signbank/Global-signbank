@@ -26,7 +26,7 @@ def collect_speaker_age_data(speakers_summary, age_range):
             # only show labels for ages that have speakers of that age
             speaker_age_data.append(0)
 
-    return (speaker_age_data, age_range)
+    return speaker_age_data, age_range
 
 
 def collect_variants_data(variants):
@@ -35,7 +35,7 @@ def collect_variants_data(variants):
     #   variants data quick access: dictionary mapping variant annotation to speaker data for variant
     #   sorted variants with keys: sorted list of pairs ( variant annotation, variant object )
     if not variants:
-        return ({}, [])
+        return {}, []
     variants_with_keys = []
     if len(variants) > 1:
         for v in variants:
@@ -52,7 +52,7 @@ def collect_variants_data(variants):
     for (og_idgloss, variant_of_gloss) in sorted_variants_with_keys:
         variants_speaker_data = variant_of_gloss.speaker_data()
         variants_data_quick_access[og_idgloss] = variants_speaker_data
-    return (variants_data_quick_access, sorted_variants_with_keys)
+    return variants_data_quick_access, sorted_variants_with_keys
 
 
 def collect_variants_age_range_data(sorted_variants_with_keys, age_range):
@@ -70,7 +70,7 @@ def collect_variants_age_range_data(sorted_variants_with_keys, age_range):
                 speaker_age_data_v.append(0)
         variants_age_range_distribution_data[variant_idgloss] = speaker_age_data_v
 
-    return (variants_age_range_distribution_data, age_range)
+    return variants_age_range_distribution_data, age_range
 
 
 def collect_variants_age_sex_raw_percentage(sorted_variants_with_keys, variants_data_quick_access):

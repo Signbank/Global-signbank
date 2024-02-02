@@ -1139,7 +1139,7 @@ class LemmaIdglossTranslationAdmin(VersionAdmin):
         else:
             queryset = super(LemmaIdglossTranslationAdmin, self).get_queryset(request)
         new_queryset = queryset.filter(Q(text__iregex=search_term))
-        return (new_queryset, use_distinct)
+        return new_queryset, use_distinct
 
     def has_add_permission(self, request):
         return False

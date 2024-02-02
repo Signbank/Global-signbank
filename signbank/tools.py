@@ -167,14 +167,14 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
                         annotationidglosstranslation_dict = {}
                         for lang in gloss.lemma.dataset.translation_languages.all():
                             language_name = getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                            annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % (language_name) ]
+                            annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language_name]
                             annotationidglosstranslation_dict[lang.language_code_2char] = annotationidglosstranslation_text
                         gloss_dict['annotationidglosstranslations'] = annotationidglosstranslation_dict
 
                         lemmaidglosstranslation_dict = {}
                         for lang in gloss.lemma.dataset.translation_languages.all():
                             language_name = getattr(language,settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                            lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % (language_name) ]
+                            lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % language_name]
                             lemmaidglosstranslation_dict[lang.language_code_2char] = lemmaidglosstranslation_text
                         gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
                         already_exists.append(gloss_dict)
@@ -185,7 +185,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
             annotationidglosstranslation_dict = dict()
             for language in trans_languages:
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % (language_name) ]
+                annotationidglosstranslation_text = valuedict["Annotation ID Gloss (%s)" % language_name]
                 annotationidglosstranslation_dict[language.language_code_2char] = annotationidglosstranslation_text
                 if language.language_code_2char in earlier_creation_annotationidgloss.keys() and \
                         annotationidglosstranslation_text in earlier_creation_annotationidgloss[language.language_code_2char]:
@@ -202,7 +202,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
             lemmaidglosstranslation_dict = {}
             for language in trans_languages:
                 language_name = getattr(language, settings.DEFAULT_LANGUAGE_HEADER_COLUMN['English'])
-                lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % (language_name) ]
+                lemmaidglosstranslation_text = valuedict["Lemma ID Gloss (%s)" % language_name]
                 lemmaidglosstranslation_dict[language.language_code_2char] = lemmaidglosstranslation_text
 
             gloss_dict['lemmaidglosstranslations'] = lemmaidglosstranslation_dict
@@ -446,10 +446,11 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Dialects':
-                if new_human_value in ['None', '']:
+                if new_human_value in ['None', '', '-']:
                     continue
 
-                current_dialects_string = str(', '.join([str(dia.name) for dia in gloss.dialect.all()]))
+                current_dialects_string = str(', '.join([dia.signlanguage.name + '/' + str(dia.name)
+                                                         for dia in gloss.dialect.all()]))
 
                 new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
@@ -479,7 +480,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     # This check assumes that if the Dataset column is empty, it means no change
                     # Since we already know the id of the gloss, we keep the original dataset
                     # To be safe, confirm the original dataset is not empty, to catch legacy code
-                    if not current_dataset or current_dataset == 'None' or current_dataset == None:
+                    if not current_dataset or current_dataset == 'None' or current_dataset is None:
                         # Dataset must be non-empty to create a new gloss
                         error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(gloss_id) + '), Dataset must be non-empty. There is currently no dataset defined for this gloss.'
 
@@ -510,7 +511,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if new_human_value in ['None', '']:
                     continue
 
-                relations = [(relation.role, str(relation.target.id)) for relation in gloss.relation_sources.all()]
+                relations = [(relation.role, get_default_annotationidglosstranslation(relation.target))
+                             for relation in gloss.relation_sources.all()]
 
                 # sort tuples on other gloss to allow comparison with imported values
 
@@ -572,16 +574,14 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Sequential Morphology':
-                if new_human_value in ['None', '']:
+                if new_human_value in ['None', '', '-']:
                     continue
 
-                morphemes = [morpheme.get_role()+':'+str(morpheme.morpheme.id) for morpheme in
-                             MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-                morphemes_string = ", ".join(morphemes)
+                morphemes = [get_default_annotationidglosstranslation(morpheme.morpheme)
+                             for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+                morphemes_string = " + ".join(morphemes)
 
-                new_human_value_list = [v.strip() for v in new_human_value.split(', ')]
-
-                (found, not_found, errors) = check_existence_sequential_morphology(gloss, new_human_value_list)
+                (found, not_found, errors) = check_existence_sequential_morphology(gloss, new_human_value)
 
                 if len(errors):
                     errors_found += errors
@@ -602,7 +602,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if new_human_value in ['None', '']:
                     continue
 
-                morphemes = [(str(m.morpheme.id), m.role) for m in gloss.simultaneous_morphology.all()]
+                morphemes = [(get_default_annotationidglosstranslation(m.morpheme), m.role) for m in gloss.simultaneous_morphology.all()]
                 sim_morphs = []
                 for m in morphemes:
                     sim_morphs.append(':'.join(m))
@@ -631,7 +631,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if new_human_value in ['None', '']:
                     continue
 
-                morphemes = [(str(m.glosses.id), m.role) for m in gloss.blend_morphology.all()]
+                morphemes = [(get_default_annotationidglosstranslation(m.glosses), m.role)
+                             for m in gloss.blend_morphology.all()]
 
                 ble_morphs = []
                 for m in morphemes:
@@ -1001,15 +1002,13 @@ def check_existence_dialect(gloss, values):
     not_found = []
 
     for new_value in values:
-        if Dialect.objects.filter(name=new_value):
-            if new_value in found:
-                error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss.pk) + '), new Dialect value ' + str(new_value) + ' is duplicate.'
-                errors.append(error_string)
-            else:
+        dialect_signlanguage, dialect_name = new_value.split('/')
+        if Dialect.objects.filter(name=dialect_name, signlanguage__name=dialect_signlanguage):
+            if new_value not in found:
                 found += [new_value]
         else:
-            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) + '), new Dialect value ' + str(new_value) + ' not found.'
+            error_string = ('ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk)
+                            + '), new Dialect value ' + str(new_value) + ' not found.')
             errors.append(error_string)
             not_found += [new_value]
         continue
@@ -1254,34 +1253,22 @@ def check_existence_tags(gloss_id, new_human_value_list, tag_name_error, default
 
 def check_existence_sequential_morphology(gloss, values):
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
-
+    new_values = values.split(' + ')
     errors = []
     found = []
     not_found = []
-
-    for new_value in values:
-        (role, morpheme_id) = new_value.split(':')
-        try:
-            morpheme = Gloss.objects.get(pk=int(morpheme_id))
-        except ObjectDoesNotExist:
-            if new_value in not_found:
-                error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' is duplicate.'
-            else:
-                error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' not found.'
+    for new_value in new_values:
+        filter_morphemes = Gloss.objects.filter(annotationidglosstranslation__text__exact=new_value).distinct()
+        if not filter_morphemes:
+            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' not found.'
             errors.append(error_string)
             not_found += [new_value]
             continue
-
-        if new_value in found:
-            error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' is duplicate.'
-            errors.append(error_string)
         else:
             found += [new_value]
 
-    if len(values) > 4:
+    if len(new_values) > 4:
         error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
             gloss.pk) + ', too many Sequential Morphology components.'
         errors.append(error_string)
@@ -1295,7 +1282,6 @@ def check_existence_simultaneous_morphology(gloss, values):
     errors = []
     tuples_list = []
     checked = ''
-    index_sim_morph = 0
 
     # check syntax
     for new_value_tuple in values:
@@ -1311,30 +1297,18 @@ def check_existence_simultaneous_morphology(gloss, values):
 
     for (morpheme, role) in tuples_list:
 
-        try:
+        filter_morphemes = Morpheme.objects.filter(annotationidglosstranslation__text__exact=morpheme).distinct()
 
-            # get the id for the morpheme identifier
-            # this is a gloss, make sure it exists
-            morpheme_gloss = Gloss.objects.get(pk=morpheme)
-            morpheme_id = Morpheme.objects.filter(gloss_ptr_id=morpheme_gloss)
-
-            if not morpheme_id:
-                error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' is not a morpheme.'
-                errors.append(error_string)
-                continue
-
-            if checked:
-                checked += ',' + ':'.join([morpheme, role])
-            else:
-                checked = ':'.join([morpheme, role])
-
-        except ObjectDoesNotExist:
+        if not filter_morphemes:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), new Simultaneous Morphology value ' + str(morpheme) + ' is not a gloss.'
+                gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' is not a morpheme.'
             errors.append(error_string)
-
             continue
+
+        if checked:
+            checked += ',' + ':'.join([morpheme, role])
+        else:
+            checked = ':'.join([morpheme, role])
 
     return checked, errors
 
@@ -1444,9 +1418,10 @@ def check_existence_relations(gloss, relations, values):
 
         try:
 
-            target_gloss = Gloss.objects.get(pk=other_gloss)
+            # target_gloss = Gloss.objects.get(pk=other_gloss)
+            filter_target = Gloss.objects.filter(annotationidglosstranslation__text__exact=other_gloss).distinct()
 
-            if not target_gloss:
+            if not filter_target:
                 raise ObjectDoesNotExist
 
             if checked:
@@ -2029,7 +2004,7 @@ def get_interface_language_and_default_language_codes(request):
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     interface_language_code = interface_language.language_code_2char
 
-    return (interface_language, interface_language_code, default_language, default_language_code)
+    return interface_language, interface_language_code, default_language, default_language_code
 
 
 def detect_delimiter(csv_lines):
