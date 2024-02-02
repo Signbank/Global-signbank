@@ -342,6 +342,7 @@ class ExampleVideo(models.Model):
             return None
 
     def make_small_video(self):
+        # this method is not called (bugs)
         from CNGT_scripts.python.resizeVideos import VideoResizer
 
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(self.videofile))
@@ -361,6 +362,7 @@ class ExampleVideo(models.Model):
             print('Error generating still image', sys.exc_info())
 
     def convert_to_mp4(self):
+        # this method is not called (bugs)
         print('Convert to mp4: ', self.videofile.path)
         name, _ = os.path.splitext(self.videofile.path)
         out_name = name + "_copy.mp4"
@@ -550,6 +552,7 @@ class GlossVideo(models.Model):
             return None
 
     def make_small_video(self):
+        # this method is not called (bugs)
         name, _ = os.path.splitext(self.videofile.path)
         small_name = name + "_small.mp4"
         make_thumbnail_video(self.videofile.path, small_name)
@@ -573,6 +576,7 @@ class GlossVideo(models.Model):
             print('Error generating still image', sys.exc_info())
 
     def convert_to_mp4(self):
+        # this method is not called (bugs)
         print('Convert to mp4: ', self.videofile.path)
         name, _ = os.path.splitext(self.videofile.path)
         out_name = name + "_copy.mp4"

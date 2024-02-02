@@ -122,6 +122,7 @@ def probe_format(file):
 
 
 def make_thumbnail_video(sourcefile, targetfile):
+    # this method is not called (need to move temp files to /tmp instead)
     # this function also works on source quicktime videos
     name, _ = os.path.splitext(sourcefile)
     temp_target = name + '_small.mov'
