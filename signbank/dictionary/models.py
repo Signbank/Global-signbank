@@ -1325,7 +1325,10 @@ class Gloss(models.Model):
         return ", ".join([str(sl.name) for sl in self.signlanguage.all()])
 
     def get_morpheme_display(self):
-        return ", ".join([x.morpheme.__str__() for x in self.simultaneous_morphology.all()])
+        from signbank.tools import get_default_annotationidglosstranslation
+        simultaneous = self.simultaneous_morphology.all()
+        return ", ".join([get_default_annotationidglosstranslation(sim_morph.morpheme)
+                          + ':' + (sim_morph.role if sim_morph.role else '-') for sim_morph in simultaneous])
 
     def get_blendmorphology_display(self):
         ble_morphemes = [(str(m.glosses.id), m.role) for m in self.blend_morphology.all()]
@@ -1342,7 +1345,9 @@ class Gloss(models.Model):
                                    for x in relations_to_signs])
 
     def get_hasComponentOfType_display(self):
-        return " + ".join([x.__str__() for x in self.parent_glosses.all()])
+        from signbank.tools import get_default_annotationidglosstranslation
+        morphdefs = self.parent_glosses.all()
+        return " + ".join([get_default_annotationidglosstranslation(mdef.morpheme) for mdef in morphdefs])
 
     def get_mrpType_display(self):
         if not self.is_morpheme():
@@ -1378,7 +1383,8 @@ class Gloss(models.Model):
 
     def get_relationToForeignSign_display(self):
         relations_to_foreign_signs = RelationToForeignSign.objects.filter(gloss=self)
-        return ", ".join([x.other_lang + ':' + x.other_lang_gloss for x in relations_to_foreign_signs])
+        return ", ".join([str(x.loan) + ':' + x.other_lang + ':' + x.other_lang_gloss
+                          for x in relations_to_foreign_signs])
 
     def get_hasothermedia_display(self):
         other_media_paths = []
@@ -2756,6 +2762,7 @@ def generate_fieldname_to_kind_table():
 
 fieldname_to_kind_table = generate_fieldname_to_kind_table()
 
+
 class SimultaneousMorphologyDefinition(models.Model):
     parent_gloss = models.ForeignKey(Gloss, related_name='simultaneous_morphology', on_delete=models.CASCADE)
     role = models.CharField(max_length=100)
@@ -2763,6 +2770,9 @@ class SimultaneousMorphologyDefinition(models.Model):
 
     def __str__(self):
         return self.parent_gloss.idgloss
+
+    def get_morpheme_type_display(self):
+        return self.morpheme.mrpType.name if self.morpheme.mrpType else ''
 
 
 class BlendMorphology(models.Model):

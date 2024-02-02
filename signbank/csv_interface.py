@@ -680,7 +680,8 @@ def required_csv_columns(dataset_languages, create_or_update='create_gloss'):
     elif create_or_update == 'update_gloss':
         required_columns = ['Signbank ID', 'Dataset']
         # for display convenience in template, separate the language fields
-        language_fields = (lemmaidglosstranslation_fields + annotationidglosstranslation_fields + keyword_fields)
+        language_fields = (lemmaidglosstranslation_fields + annotationidglosstranslation_fields
+                           + keyword_fields + sentence_fields)
         optional_columns = gloss_fields + extra_columns
     elif create_or_update == 'create_sentences':
         required_columns = ['Signbank ID', 'Dataset', 'Sense Number', 'Sentence Type', 'Negative']
