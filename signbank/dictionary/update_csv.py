@@ -1,26 +1,10 @@
-from django.core.exceptions import ObjectDoesNotExist
-
-from django.contrib.auth.decorators import permission_required
-from django.db.models.fields import BooleanField, IntegerField
-from django.db import DatabaseError, IntegrityError
-from django.db.transaction import TransactionManagementError
 
 from tagging.models import TaggedItem, Tag
-import os
-import shutil
-import re
-from datetime import datetime
-from django.utils.timezone import get_current_timezone
-from django.contrib import messages
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
 from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation
-
-from django.utils.translation import gettext_lazy as _
-
-from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
 
 
 def update_sequential_morphology(gloss, values):
@@ -78,16 +62,16 @@ def update_simultaneous_morphology(gloss, values):
     # the existence of the morphemes has already been checked, but check again anyway
     for (morpheme, role) in new_sim_tuples:
 
-        filter_morphemes = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
-                                                annotationidglosstranslation__text__exact=morpheme).distinct()
-        morpheme_gloss = filter_morphemes.first()
-        if not morpheme_gloss:
+        filter_morphemes = Morpheme.objects.filter(lemma__dataset=gloss.lemma.dataset,
+                                                   annotationidglosstranslation__text__exact=morpheme).distinct()
+        morpheme = filter_morphemes.first()
+        if not morpheme:
             print("morpheme not found")
             continue
         # create new morphology
         sim = SimultaneousMorphologyDefinition()
         sim.parent_gloss = gloss
-        sim.morpheme = morpheme_gloss
+        sim.morpheme = morpheme
         sim.role = role
         sim.save()
 
@@ -107,7 +91,8 @@ def update_blend_morphology(gloss, values):
     # delete any existing blend morphology objects
     for existing_blend in existing_blends:
         blend_object = BlendMorphology.objects.get(id=existing_blend)
-        print("DELETE Blend Morphology for gloss ", str(gloss.pk), ": ", blend_object.glosses.pk, " ", blend_object.role)
+        print("DELETE Blend Morphology for gloss ", str(gloss.pk), ": ",
+              blend_object.glosses.pk, " ", blend_object.role)
         blend_object.delete()
 
     for (morpheme, role) in new_blend_tuples:
@@ -133,8 +118,9 @@ def subst_relations(gloss, values):
     # values is a list of values, where each value is a tuple of the form 'Role:String'
     # The format of argument values has been checked before calling this function
 
-    existing_relations = [(relation.id, relation.role, relation.target.id) for relation in Relation.objects.filter(source=gloss)]
-    existing_relation_ids = [ r[0] for r in existing_relations ]
+    existing_relations = [(relation.id, relation.role, relation.target.id)
+                          for relation in Relation.objects.filter(source=gloss)]
+    existing_relation_ids = [r[0] for r in existing_relations]
     existing_relations_by_role = dict()
 
     for (rel_id, rel_role, rel_other_gloss) in existing_relations:
@@ -152,7 +138,7 @@ def subst_relations(gloss, values):
         role = role.strip()
         target = target.strip()
         if role in existing_relations_by_role and target in existing_relations_by_role[role]:
-            already_existing_to_keep.append((role,target))
+            already_existing_to_keep.append((role, target))
         else:
             new_tuples_to_add.append((role, target))
 
@@ -175,16 +161,17 @@ def subst_relations(gloss, values):
 
     # all remaining existing relations are to be updated
     for (role, target) in new_tuples_to_add:
-        try:
-            target_gloss = Gloss.objects.get(pk=target)
-            rel = Relation(source=gloss, role=role, target=target_gloss)
-            rel.save()
-            # Also add the reverse relation
-            reverse_relation = Relation(source=target_gloss, target=gloss, role=Relation.get_reverse_role(role))
-            reverse_relation.save()
-        except:
+        filter_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
+                                              annotationidglosstranslation__text__exact=target).distinct()
+        target_gloss = filter_glosses.first()
+        if not target_gloss:
             print("target gloss not found")
             continue
+        rel = Relation(source=gloss, role=role, target=target_gloss)
+        rel.save()
+        # Also add the reverse relation
+        reverse_relation = Relation(source=target_gloss, target=gloss, role=Relation.get_reverse_role(role))
+        reverse_relation.save()
 
     return
 
@@ -242,12 +229,12 @@ def update_tags(gloss, values):
 
         if tag_id not in new_tag_ids:
             # delete tag from object
-            tagged_obj = TaggedItem.objects.get(object_id=gloss.id,tag_id=tag_id)
+            tagged_obj = TaggedItem.objects.get(object_id=gloss.id, tag_id=tag_id)
             print("DELETE TAGGED OBJECT: ", tagged_obj, ' for gloss: ', tagged_obj.object_id)
             tagged_obj.delete()
 
     if not new_tag_ids:
-        # this was a delete
+        # this was a delete operation
         return
 
     for value in values:

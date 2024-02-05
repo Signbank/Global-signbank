@@ -1474,7 +1474,10 @@ def import_csv_update(request):
 
             if fieldname == 'Relations to foreign signs':
 
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
+                if new_value in ['None', '', '-']:
+                    new_human_value_list = []
+                else:
+                    new_human_value_list = [v.strip() for v in new_value.split(',')]
 
                 subst_foreignrelations(gloss, new_human_value_list)
                 continue

@@ -1331,7 +1331,9 @@ class Gloss(models.Model):
                           + ':' + (sim_morph.role if sim_morph.role else '-') for sim_morph in simultaneous])
 
     def get_blendmorphology_display(self):
-        ble_morphemes = [(str(m.glosses.id), m.role) for m in self.blend_morphology.all()]
+        from signbank.tools import get_default_annotationidglosstranslation
+        ble_morphemes = [(get_default_annotationidglosstranslation(m.glosses), m.role)
+                         for m in self.blend_morphology.all()]
         ble_morphs = []
         for m in ble_morphemes:
             ble_morphs.append(':'.join(m))

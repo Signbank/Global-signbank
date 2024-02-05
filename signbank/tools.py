@@ -543,18 +543,21 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Relations to foreign signs':
-                if new_human_value in ['None', '']:
-                    continue
 
                 relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss)
                              for relation in gloss.relationtoforeignsign_set.all().order_by('other_lang_gloss')]
+                if not relations and new_human_value in ['None', '', '-']:
+                    continue
 
                 relations_with_categories = []
                 for rel_cat in relations:
                     relations_with_categories.append(':'.join(rel_cat))
                 current_relations_foreign_string = ",".join(relations_with_categories)
 
-                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
+                if new_human_value in ['None', '', '-']:
+                    new_human_value_list = []
+                else:
+                    new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
                 (checked_new_human_value, errors) = check_existence_foreign_relations(gloss, relations_with_categories, new_human_value_list)
 
@@ -1308,12 +1311,18 @@ def check_existence_simultaneous_morphology(gloss, values):
 
         if not filter_morphemes:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' is not a morpheme.'
+                gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' not found.'
             errors.append(error_string)
             continue
         elif filter_morphemes.count() > 1:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
                 gloss.pk) + '), multiple matches found for Simultaneous Morphology gloss ' + morpheme + '.'
+            errors.append(error_string)
+            continue
+        morpheme_gloss = filter_morphemes.first()
+        if not morpheme_gloss.is_morpheme():
+            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' is not a morpheme.'
             errors.append(error_string)
             continue
         if checked:
@@ -1445,6 +1454,10 @@ def check_existence_foreign_relations(gloss, relations, values):
     errors = []
     checked = ''
     sorted_values = []
+
+    if not values:
+        # this is a delete
+        return checked, errors
 
     for new_value_tuple in values:
         try:
