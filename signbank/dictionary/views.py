@@ -11,17 +11,17 @@ from pathlib import Path
 
 import csv
 import time
-from signbank.dictionary.adminviews import order_queryset_by_sort_order
 
 from signbank.dictionary.forms import *
 from signbank.dictionary.models import *
 from signbank.feedback.models import *
-from signbank.dictionary.update import update_keywords, update_signlanguage, update_dialect, subst_relations, subst_foreignrelations, \
-    update_sequential_morphology, update_simultaneous_morphology, update_tags, update_blend_morphology, subst_notes
+from signbank.dictionary.update import (update_signlanguage, update_dialect)
+from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
+                                            update_sequential_morphology, subst_relations, subst_foreignrelations,
+                                            update_tags, subst_notes)
 import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
-from signbank.video.forms import VideoUploadForObjectForm
 from signbank.tools import save_media
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, \
     get_dataset_languages, \
@@ -1431,7 +1431,7 @@ def import_csv_update(request):
                     new_dataset = Dataset.objects.get(acronym=new_value)
                 try:
                     gloss_lemma = gloss.lemma
-                except:
+                except KeyError:
                     # this error should not happen
                     print('csv import make changes error: gloss ', gloss.id, ' gloss.lemma is empty, cannot set dataset')
                     continue
@@ -1442,14 +1442,10 @@ def import_csv_update(request):
                 continue
 
             if fieldname == 'Sequential Morphology':
+                new_human_value_list = [v.strip() for v in new_value.split(' + ')]
+                # the new values have already been parsed at the previous stage
 
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
-                # get the gloss ids out of the input
-                # the input is a sequence of role:id values
-                # these have already been parsed at the previous stage
-                glosses = [int(component.split(':')[1]) for component in new_human_value_list]
-
-                update_sequential_morphology(gloss, None, glosses)
+                update_sequential_morphology(gloss, new_human_value_list)
 
                 continue
 
@@ -1457,7 +1453,7 @@ def import_csv_update(request):
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
-                update_simultaneous_morphology(gloss,None,new_human_value_list)
+                update_simultaneous_morphology(gloss, new_human_value_list)
 
                 continue
 
@@ -1465,7 +1461,7 @@ def import_csv_update(request):
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
-                update_blend_morphology(gloss,None,new_human_value_list)
+                update_blend_morphology(gloss, new_human_value_list)
 
                 continue
 
@@ -1473,26 +1469,29 @@ def import_csv_update(request):
 
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
-                subst_relations(gloss,None,new_human_value_list)
+                subst_relations(gloss, new_human_value_list)
                 continue
 
             if fieldname == 'Relations to foreign signs':
 
-                new_human_value_list = [v.strip() for v in new_value.split(',')]
+                if new_value in ['None', '', '-']:
+                    new_human_value_list = []
+                else:
+                    new_human_value_list = [v.strip() for v in new_value.split(',')]
 
-                subst_foreignrelations(gloss,None,new_human_value_list)
+                subst_foreignrelations(gloss, new_human_value_list)
                 continue
 
             if fieldname == 'Tags':
 
-                new_human_value_list = [v.strip().replace(' ','_') for v in new_value.split(',')]
+                new_human_value_list = [v.strip().replace(' ', '_') for v in new_value.split(',')]
 
-                update_tags(gloss,None,new_human_value_list)
+                update_tags(gloss,new_human_value_list)
                 continue
 
             if fieldname == 'Notes':
 
-                subst_notes(gloss,None,new_value)
+                subst_notes(gloss,new_value)
                 continue
 
             with override(settings.LANGUAGE_CODE):
@@ -1545,17 +1544,17 @@ def import_csv_update(request):
 
     return render(request, 'dictionary/import_csv_update.html',
                   {'form': uploadform, 'stage': stage, 'changes': changes,
-                          'creation': creation,
-                          'gloss_already_exists': gloss_already_exists,
-                          'error': error,
-                          'dataset_languages': dataset_languages,
-                          'selected_datasets': selected_datasets,
-                          'optional_columns': optional_columns,
-                           'choice_fields_choices': list_choice_fields_choices,
-                          'translation_languages_dict': translation_languages_dict,
-                          'seen_datasets': seen_datasets,
-                          'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                          'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                   'creation': creation,
+                   'gloss_already_exists': gloss_already_exists,
+                   'error': error,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'optional_columns': optional_columns,
+                   'choice_fields_choices': list_choice_fields_choices,
+                   'translation_languages_dict': translation_languages_dict,
+                   'seen_datasets': seen_datasets,
+                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def import_csv_lemmas(request):

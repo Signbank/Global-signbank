@@ -543,18 +543,21 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 continue
 
             elif human_key == 'Relations to foreign signs':
-                if new_human_value in ['None', '']:
-                    continue
 
                 relations = [(str(relation.loan), relation.other_lang, relation.other_lang_gloss)
                              for relation in gloss.relationtoforeignsign_set.all().order_by('other_lang_gloss')]
+                if not relations and new_human_value in ['None', '', '-']:
+                    continue
 
                 relations_with_categories = []
                 for rel_cat in relations:
                     relations_with_categories.append(':'.join(rel_cat))
                 current_relations_foreign_string = ",".join(relations_with_categories)
 
-                new_human_value_list = [v.strip() for v in new_human_value.split(',')]
+                if new_human_value in ['None', '', '-']:
+                    new_human_value_list = []
+                else:
+                    new_human_value_list = [v.strip() for v in new_human_value.split(',')]
 
                 (checked_new_human_value, errors) = check_existence_foreign_relations(gloss, relations_with_categories, new_human_value_list)
 
@@ -1258,12 +1261,18 @@ def check_existence_sequential_morphology(gloss, values):
     found = []
     not_found = []
     for new_value in new_values:
-        filter_morphemes = Gloss.objects.filter(annotationidglosstranslation__text__exact=new_value).distinct()
+        filter_morphemes = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
+                                                annotationidglosstranslation__text__exact=new_value).distinct()
         if not filter_morphemes:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                gloss.pk) + '), new Sequential Morphology value ' + str(new_value) + ' not found.'
+                gloss.pk) + '), new Sequential Morphology gloss ' + new_value + ' not found.'
             errors.append(error_string)
             not_found += [new_value]
+            continue
+        elif filter_morphemes.count() > 1:
+            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                gloss.pk) + '), multiple matches found for Sequential Morphology gloss ' + new_value + '.'
+            errors.append(error_string)
             continue
         else:
             found += [new_value]
@@ -1297,14 +1306,25 @@ def check_existence_simultaneous_morphology(gloss, values):
 
     for (morpheme, role) in tuples_list:
 
-        filter_morphemes = Morpheme.objects.filter(annotationidglosstranslation__text__exact=morpheme).distinct()
+        filter_morphemes = Morpheme.objects.filter(lemma__dataset=gloss.lemma.dataset,
+                                                   annotationidglosstranslation__text__exact=morpheme).distinct()
 
         if not filter_morphemes:
+            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' not found.'
+            errors.append(error_string)
+            continue
+        elif filter_morphemes.count() > 1:
+            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                gloss.pk) + '), multiple matches found for Simultaneous Morphology gloss ' + morpheme + '.'
+            errors.append(error_string)
+            continue
+        morpheme_gloss = filter_morphemes.first()
+        if not morpheme_gloss.is_morpheme():
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
                 gloss.pk) + '), new Simultaneous Morphology gloss ' + str(morpheme) + ' is not a morpheme.'
             errors.append(error_string)
             continue
-
         if checked:
             checked += ',' + ':'.join([morpheme, role])
         else:
@@ -1325,45 +1345,34 @@ def check_existence_blend_morphology(gloss, values):
     # check syntax
     for new_value_tuple in values:
         try:
-            (gloss_id, role) = new_value_tuple.split(':')
+            (morpheme, role) = new_value_tuple.split(':')
             role = role.strip()
-            gloss_id = gloss_id.strip()
-            tuples_list.append((gloss_id,role))
+            morpheme = morpheme.strip()
+            tuples_list.append((morpheme, role))
         except ValueError:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
                            + '), formatting error in Blend Morphology: ' + str(new_value_tuple) + '. Tuple gloss:role expected.'
             errors.append(error_string)
 
-    for (gloss_id, role) in tuples_list:
+    for (morpheme, role) in tuples_list:
 
-        try:
+        filter_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
+                                              annotationidglosstranslation__text__exact=morpheme).distinct()
 
-            morpheme_gloss = Gloss.objects.get(pk=gloss_id)
-
-            if gloss_id in found:
-                error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss.pk) + '), new Blend Morphology value ' + str(gloss_id) + ' is duplicate.'
-                errors.append(error_string)
-            else:
-                found += [gloss_id]
-
-            if checked:
-                checked += ',' + ':'.join([gloss_id, role])
-            else:
-                checked = ':'.join([gloss_id, role])
-
-        except ObjectDoesNotExist:
-            if gloss_id in not_found:
-                # we've already seen this value
-                error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss.pk) + '), new Blend Morphology value ' + str(gloss_id) + ' is duplicate.'
-                errors.append(error_string)
-            else:
-                error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
-                    gloss.pk) + '), new Blend Morphology value ' + str(gloss_id) + ' not found.'
-                errors.append(error_string)
-                not_found += [gloss_id]
+        if not filter_glosses:
+            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                gloss.pk) + '), new Blend Morphology gloss ' + morpheme + '  not found.'
+            errors.append(error_string)
             continue
+        elif filter_glosses.count() > 1:
+            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                gloss.pk) + '), multiple matches found for Blend Morphology gloss ' + morpheme + '.'
+            errors.append(error_string)
+            continue
+        if checked:
+            checked += ',' + ':'.join([morpheme, role])
+        else:
+            checked = ':'.join([morpheme, role])
 
     return checked, errors
 
@@ -1416,26 +1425,25 @@ def check_existence_relations(gloss, relations, values):
     # check other glosses
     for (role, other_gloss) in sorted_values:
 
-        try:
+        filter_target = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
+                                             annotationidglosstranslation__text__exact=other_gloss).distinct()
 
-            # target_gloss = Gloss.objects.get(pk=other_gloss)
-            filter_target = Gloss.objects.filter(annotationidglosstranslation__text__exact=other_gloss).distinct()
-
-            if not filter_target:
-                raise ObjectDoesNotExist
-
-            if checked:
-                checked += ',' + ':'.join([role, other_gloss])
-            else:
-                checked = ':'.join([role, other_gloss])
-
-        except ObjectDoesNotExist:
+        if not filter_target:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
-                    + '), column Relations to other signs: ' + role + ':' + other_gloss + '. Other gloss ' + other_gloss + ' not found.' \
-                    + ' Please use Annotation ID Gloss: Dutch to identify the other gloss.'
+                           + '), column Relations to other signs: ' + role + ':' + other_gloss + '. Other gloss ' \
+                           + other_gloss + ' not found.'
             errors.append(error_string)
+        elif filter_target.count() > 1:
+            error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(
+                gloss.pk) + '), column Relations to other signs: ' + role + ':' + other_gloss + \
+                           '. Multiple matches found for other gloss ' + other_gloss + '.'
+            errors.append(error_string)
+            continue
 
-            pass
+        if checked:
+            checked += ',' + ':'.join([role, other_gloss])
+        else:
+            checked = ':'.join([role, other_gloss])
 
     return checked, errors
 
@@ -1447,13 +1455,18 @@ def check_existence_foreign_relations(gloss, relations, values):
     checked = ''
     sorted_values = []
 
+    if not values:
+        # this is a delete
+        return checked, errors
+
     for new_value_tuple in values:
         try:
             (loan_word, other_lang, other_lang_gloss) = new_value_tuple.split(':')
             sorted_values.append((loan_word,other_lang,other_lang_gloss))
         except ValueError:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
-                           + '), formatting error in Relations to foreign signs: ' + str(new_value_tuple) + '. Tuple bool:string:string expected.'
+                           + '), formatting error in Relations to foreign signs: ' + str(new_value_tuple) \
+                           + '. Tuple bool:string:string expected.'
             errors.append(error_string)
 
     # remove duplicates
@@ -1477,7 +1490,8 @@ def check_existence_foreign_relations(gloss, relations, values):
         except ValueError:
             error_string = 'ERROR: For gloss ' + default_annotationidglosstranslation + ' (' + str(gloss.pk) \
                            + '), formatting error in Relations to foreign signs: ' \
-                           + loan_word + ':' + other_lang + ':' + other_lang_gloss + '. Tuple bool:string:string expected.'
+                           + loan_word + ':' + other_lang + ':' + other_lang_gloss \
+                           + '. Tuple bool:string:string expected.'
             errors.append(error_string)
 
             pass
@@ -1796,6 +1810,7 @@ def fields_with_choices_morpheme_type():
             else:
                 fields_dict[field_category] = [field.name]
     return fields_dict
+
 
 def write_ecv_files_for_all_datasets():
 
