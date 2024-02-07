@@ -189,7 +189,7 @@ class GlossSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_('Search Gloss'))
     sortOrder = forms.CharField(label=_('Sort Order'))
-    tags = forms.ChoiceField(label=_('Tags'), choices=[(0, '-')])
+    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
