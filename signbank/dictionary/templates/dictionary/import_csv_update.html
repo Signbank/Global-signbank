@@ -30,6 +30,13 @@
    </script>
 {% endblock %}
 
+{% block extrahead %}
+<style>
+.panel-heading:hover {
+    background-color: #D2D2D2;
+}
+</style>
+{% endblock %}
 
 {% block content %}
 <h3>{% trans "Import CSV Update Existing Glosses" %}</h3>
@@ -60,10 +67,8 @@
             <br>
             <div class="row" id="senses_settings">
                 <div class="panel panel-default col-xs-offset-2 col-xs-8">
-                    <div class='panel-heading'>
-                        <div class='panel-title'>
-                            <a data-toggle='collapse' data-parent='#senses_settings'
-                               href="#senses_column_settings">{% trans "Senses Column" %}</a>
+                    <div class='panel-heading' data-toggle='collapse' data-target='#senses_column_settings'>
+                        <div class='panel-title'>{% trans "Senses Column" %}
                         </div>
                     </div>
             <div id='senses_column_settings' class='collapse'>
@@ -96,10 +101,8 @@
             <br>
             <div class="row" id="notes_settings">
                 <div class="panel panel-default col-xs-offset-2 col-xs-8">
-                    <div class='panel-heading'>
-                        <div class='panel-title'>
-                            <a data-toggle='collapse' data-parent='#notes_settings'
-                               href="#notes_column_settings">{% trans "Notes Column" %}</a>
+                    <div class='panel-heading' data-toggle='collapse' data-target='#notes_column_settings'>
+                        <div class='panel-title'>{% trans "Notes Column" %}
                         </div>
                     </div>
                 <div id='notes_column_settings' class='collapse'>
@@ -131,10 +134,8 @@
             <br>
             <div class="row" id="tags_settings">
                 <div class="panel panel-default col-xs-offset-2 col-xs-8">
-                    <div class='panel-heading'>
-                        <div class='panel-title'>
-                            <a data-toggle='collapse' data-parent='#tags_settings'
-                               href="#tags_column_settings">{% trans "Tags Column" %}</a>
+                    <div class='panel-heading' data-toggle='collapse' data-target='#tags_column_settings'>
+                        <div class='panel-title'>{% trans "Tags Column" %}
                         </div>
                     </div>
                 <div id='tags_column_settings' class='collapse'>
