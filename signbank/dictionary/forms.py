@@ -28,16 +28,12 @@ from easy_select2.widgets import Select2, Select2Multiple
 from signbank.settings.server_specific import LANGUAGES, REGEX_SPECIAL_CHARACTERS, USE_REGULAR_EXPRESSIONS
 
 
-# See if there are any tags there, but don't crash if there isn't even a table
-def tag_choices():
-    # this function is needed at compile time, tags are refreshed at run-time in the init methods
-    try:
-        tags_objects = Tag.objects.all()
-        tags_list = [tag.refresh_from_db() for tag in tags_objects]
-        tag_choices_list = [(tag.name, tag.name.replace('_', ' ')) for tag in tags_list]
-    except (OperationalError, ProgrammingError) as e:
-        tag_choices_list = []
-    return tag_choices_list
+# This overrides the __str__ method of class Tag (included in packages)
+# This is needed by the model choice fields to display the tags
+# The use of model choice fields fetches the most recent tags from the database
+Tag.__str__ = lambda self: self.name.replace('_', ' ')
+# To offer capital first letter tags
+# Tag.__str__ = lambda self: self.name.replace('_', ' ').title()
 
 
 class GlossCreateForm(forms.ModelForm):
@@ -160,23 +156,14 @@ class MorphemeCreateForm(forms.ModelForm):
 class TagUpdateForm(forms.Form):
     """Form to add a new tag to a gloss"""
 
-    tag = forms.ChoiceField(widget=forms.Select(attrs={'class': 'form-control'}), 
-                            choices=tag_choices)
     delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
 
     def __init__(self, *args, **kwargs):
         super(TagUpdateForm, self).__init__(*args, **kwargs)
 
-        # get and refresh tags from database in case anything has been updated
-        tags_objects = Tag.objects.all()
-        refreshed_tags = []
-        for tag in tags_objects:
-            tag.refresh_from_db()
-            refreshed_tags.append(tag)
-        self.fields['tag'] = forms.ChoiceField(label=_('Tags'),
-                                               choices=[(tag.name, tag.name.replace('_', ' '))
-                                                        for tag in refreshed_tags],
-                                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['tag'] = forms.ModelChoiceField(queryset=Tag.objects.all(), empty_label=None,
+                                                    label=_('Tags'),
+                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
 ATTRS_FOR_FORMS = {'class': 'form-control'}
@@ -189,7 +176,6 @@ class GlossSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_('Search Gloss'))
     sortOrder = forms.CharField(label=_('Sort Order'))
-    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
@@ -279,8 +265,8 @@ class GlossSearchForm(forms.ModelForm):
     class Meta:
 
         model = Gloss
-        fields = settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] + \
-                 ['inWeb', 'isNew', 'excludeFromEcv']
+        fields = (settings.FIELDS['phonology'] + settings.FIELDS['semantics'] + settings.FIELDS['main'] +
+                  ['inWeb', 'isNew', 'excludeFromEcv'])
 
     @classmethod
     def get_field_names(cls):
@@ -308,16 +294,9 @@ class GlossSearchForm(forms.ModelForm):
             self.fields[fieldname] = forms.ChoiceField(label=field_label,
                                                        choices=[(0, '-')],
                                                        required=False, widget=Select2)
-        # get and refresh tags from database in case anything has been updated
-        tags_objects = Tag.objects.all()
-        refreshed_tags = []
-        for tag in tags_objects:
-            tag.refresh_from_db()
-            refreshed_tags.append(tag)
-        self.fields['tags'] = forms.ChoiceField(label=_('Tags'),
-                                                choices=[(tag.name, tag.name.replace('_', ' '))
-                                                         for tag in refreshed_tags],
-                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
+                                                     queryset=Tag.objects.all(), empty_label=None,
+                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         for boolean_field in ['hasvideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished',
                               'excludeFromEcv', 'hasRelationToForeignSign', 'hasmultiplesenses',
                               'hasothermedia', 'isablend', 'ispartofablend']:
@@ -394,8 +373,6 @@ class MorphemeSearchForm(forms.ModelForm):
 
     search = forms.CharField(label=_("Search Gloss"))
     sortOrder = forms.CharField(label=_("Sort Order"))
-    tags = forms.ChoiceField(label=_('Tags'), choices=[(0, '-')],
-                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     translation = forms.CharField(label=_('Search Senses'))
     hasvideo = forms.ChoiceField(label=_('Has Video'), choices=[(0, '-')],
                                  widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
@@ -458,16 +435,9 @@ class MorphemeSearchForm(forms.ModelForm):
             self.fields[fieldname] = forms.ChoiceField(label=field_label,
                                                        choices=[(0, '-')],
                                                        required=False, widget=Select2)
-        # get and refresh tags from database in case anything has been updated
-        tags_objects = Tag.objects.all()
-        refreshed_tags = []
-        for tag in tags_objects:
-            tag.refresh_from_db()
-            refreshed_tags.append(tag)
-        self.fields['tags'] = forms.ChoiceField(label=_('Tags'),
-                                                choices=[(tag.name, tag.name.replace('_', ' '))
-                                                         for tag in refreshed_tags],
-                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
+                                                     queryset=Tag.objects.all(), empty_label=None,
+                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
         for boolean_field in ['hasvideo', 'repeat', 'altern', 'isNew', 'inWeb', 'defspublished']:
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
@@ -945,8 +915,6 @@ class LemmaUpdateForm(forms.ModelForm):
 
 class KeyMappingSearchForm(forms.ModelForm):
 
-    tags = forms.ChoiceField(label=_('Tags'), choices=tag_choices)
-
     class Meta:
 
         ATTRS_FOR_FORMS = {'class': 'form-control'}
@@ -958,16 +926,9 @@ class KeyMappingSearchForm(forms.ModelForm):
         languages = kwargs.pop('languages')
         super(KeyMappingSearchForm, self).__init__(queryDict, *args, **kwargs)
 
-        # get and refresh tags from database in case anything has been updated
-        tags_objects = Tag.objects.all()
-        refreshed_tags = []
-        for tag in tags_objects:
-            tag.refresh_from_db()
-            refreshed_tags.append(tag)
-        self.fields['tags'] = forms.ChoiceField(label=_('Tags'),
-                                                choices=[(tag.name, tag.name.replace('_', ' '))
-                                                         for tag in refreshed_tags],
-                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
+                                                     queryset=Tag.objects.all(), empty_label=None,
+                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
 class FocusGlossSearchForm(forms.ModelForm):
