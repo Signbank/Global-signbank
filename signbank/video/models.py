@@ -555,7 +555,7 @@ class GlossVideo(models.Model):
         # this method is not called (bugs)
         name, _ = os.path.splitext(self.videofile.path)
         small_name = name + "_small.mp4"
-        make_thumbnail_video(self.videofile.path, small_name)
+        make_thumbnail_video(self.videofile, small_name)
 
         # from CNGT_scripts.python.resizeVideos import VideoResizer
         # # ffmpeg_small = settings.FFMPEG_OPTIONS + ["-vf", "scale=180:-2"]
