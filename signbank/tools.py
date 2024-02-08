@@ -1224,7 +1224,13 @@ def check_existence_tags(gloss_id, new_human_value_list, tag_name_error, default
     # convert new Tags csv value to proper format
     # values is not empty
 
-    all_tags = [t.name for t in Tag.objects.all()]
+    tags_objects = Tag.objects.all()
+    refreshed_tags = []
+    for tag in tags_objects:
+        tag.refresh_from_db()
+        refreshed_tags.append(tag)
+    all_tags = [t.name for t in refreshed_tags]
+
     all_tags_display = ', '.join([t.replace('_',' ') for t in all_tags])
 
     new_tag_errors = []
@@ -1536,10 +1542,14 @@ def create_zip_with_json_files(data_per_file, output_path):
     zip = ZipFile(output_path, 'w')
 
     for filename, data in data_per_file.items():
-
         if isinstance(data, list) or isinstance(data, dict):
-            output = json.dumps(data, indent=INDENTATION_CHARS)
+            try:
+                output = json.dumps(data, indent=INDENTATION_CHARS)
+            except TypeError:
+                print('problem processing json.dumps on ', filename)
+                output = ''
             zip.writestr(filename+'.json', output)
+    zip.close()
 
 
 def get_deleted_gloss_or_media_data(item_type, since_timestamp):

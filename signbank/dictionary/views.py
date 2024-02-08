@@ -2318,14 +2318,14 @@ def package(request):
     else:
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
-
     video_folder_name = 'glossvideo'
     image_folder_name = 'glossimage'
 
     try:
-        if request.GET['small_videos'] not in [0,False,'false']:
-            video_folder_name+= '_small'
+        if request.GET['small_videos'] not in [0, False, 'false']:
+            video_folder_name += '_small'
     except KeyError:
+        print('key error on small videos')
         pass
 
     archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])

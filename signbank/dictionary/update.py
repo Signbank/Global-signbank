@@ -2465,11 +2465,8 @@ def update_blend_definition(gloss, field, value):
 def add_tag(request, glossid):
     """View to add a tag to a gloss"""
 
-    # default response
-    response = HttpResponse('invalid', {'content-type': 'text/plain'})
-
     if not request.method == "POST":
-        return HttpResponseForbidden("Add tag method must be POST")
+        return HttpResponseForbidden("Add gloss tag method must be POST")
 
     thisgloss = get_object_or_404(Gloss, id=glossid)
     tags_label = 'Tags'
@@ -2503,9 +2500,9 @@ def add_tag(request, glossid):
                                  gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
         revision.save()
         # response is new HTML for the tag list and form
-        response = render(request,'dictionary/glosstags.html',
-                                      {'gloss': thisgloss,
-                                       'tagform': TagUpdateForm()})
+        response = render(request, 'dictionary/glosstags.html',
+                          {'gloss': thisgloss,
+                           'tagform': TagUpdateForm()})
             
     return response
 
@@ -2580,9 +2577,6 @@ def toggle_sense_tag(request, glossid):
 def add_morphemetag(request, morphemeid):
     """View to add a tag to a morpheme"""
 
-    # default response
-    response = HttpResponse('invalid', {'content-type': 'text/plain'})
-
     if not request.method == "POST":
         return HttpResponseForbidden("Add morpheme tag method must be POST")
 
@@ -2606,8 +2600,8 @@ def add_morphemetag(request, morphemeid):
         Tag.objects.add_tag(thismorpheme, '"%s"' % tag)
         # response is new HTML for the tag list and form
         response = render(request,'dictionary/morphemetags.html',
-                                      {'morpheme': thismorpheme,
-                                       'tagform': TagUpdateForm()})
+                          {'morpheme': thismorpheme,
+                           'tagform': TagUpdateForm()})
     return response
 
 def change_dataset_selection(request):

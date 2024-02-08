@@ -254,8 +254,9 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(dialect__in=get_value))
 
         elif get_key == 'tags[]':
+            values = [int(v) for v in get_value]
             pks_for_glosses_with_tags = list(
-                TaggedItem.objects.filter(tag__name__in=get_value).values_list('object_id', flat=True))
+                TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
             query_list.append(Q(pk__in=pks_for_glosses_with_tags))
 
         elif get_key == 'signlanguage[]':
@@ -669,8 +670,9 @@ def queryset_from_get(formclass, searchform, GET, qs):
                 pks_for_glosses_with_these_definitions = [definition.gloss.pk for definition in definitions_with_this_role]
                 qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
             elif field in ['tags']:
+                values = [int(v) for v in vals]
                 morphemes_with_tag = list(
-                    TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 qs = qs.filter(id__in=morphemes_with_tag)
             else:
                 query_filter = field + '__machine_value__in'
@@ -897,8 +899,9 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: pks_for_glosses_with_correct_relation})
             elif field in ['tags']:
+                values = [int(v) for v in vals]
                 morphemes_with_tag = list(
-                    TaggedItem.objects.filter(tag__name__in=vals).values_list('object_id', flat=True))
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 query_filter = gloss_prefix + 'id__in'
                 qs = qs.filter(**{query_filter: morphemes_with_tag})
             else:
