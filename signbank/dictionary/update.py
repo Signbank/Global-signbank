@@ -2503,9 +2503,9 @@ def add_tag(request, glossid):
                                  gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
         revision.save()
         # response is new HTML for the tag list and form
-        response = render(request,'dictionary/glosstags.html',
-                                      {'gloss': thisgloss,
-                                       'tagform': TagUpdateForm()})
+        response = render(request, 'dictionary/glosstags.html',
+                          {'gloss': thisgloss,
+                           'tagform': TagUpdateForm()})
             
     return response
 

@@ -28,6 +28,18 @@ from easy_select2.widgets import Select2, Select2Multiple
 from signbank.settings.server_specific import LANGUAGES, REGEX_SPECIAL_CHARACTERS, USE_REGULAR_EXPRESSIONS
 
 
+def tag_choices():
+    # this function is needed at compile time, tags are refreshed at run-time in the init methods
+    try:
+        tag_choices_list = [(tag.name, tag.name.replace('_', ' ')) for tag in Tag.objects.all()]
+        tags_objects = Tag.objects.all()
+        tags_list = [tag.refresh_from_db() for tag in tags_objects]
+        tag_choices_list = [(tag.name, tag.name.replace('_', ' ')) for tag in tags_list]
+    except (OperationalError, ProgrammingError) as e:
+        tag_choices_list = []
+    return tag_choices_list
+
+
 # This overrides the __str__ method of class Tag (included in packages)
 # This is needed by the model choice fields to display the tags
 # The use of model choice fields fetches the most recent tags from the database
@@ -153,6 +165,10 @@ class MorphemeCreateForm(forms.ModelForm):
         return morpheme
 
 
+ATTRS_FOR_FORMS = {'class': 'form-control'}
+ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:80px'}
+
+
 class TagUpdateForm(forms.Form):
     """Form to add a new tag to a gloss"""
 
@@ -161,13 +177,16 @@ class TagUpdateForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(TagUpdateForm, self).__init__(*args, **kwargs)
 
-        self.fields['tag'] = forms.ModelChoiceField(queryset=Tag.objects.all(), empty_label=None,
-                                                    label=_('Tags'),
-                                                    widget=forms.Select(attrs=ATTRS_FOR_FORMS))
-
-
-ATTRS_FOR_FORMS = {'class': 'form-control'}
-ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:80px'}
+        # get and refresh tags from database in case anything has been updated
+        tags_objects = Tag.objects.all()
+        refreshed_tags = []
+        for tag in tags_objects:
+            tag.refresh_from_db()
+            refreshed_tags.append(tag)
+        self.fields['tag'] = forms.ChoiceField(label=_('Tags'),
+                                               choices=[(tag.name, tag.name.replace('_', ' '))
+                                                        for tag in refreshed_tags],
+                                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
 class GlossSearchForm(forms.ModelForm):

@@ -17,7 +17,7 @@
                 {% if "change_dataset" in dataset_perms %}
                  <span class='tagcount'>
                      <a class='tagdelete editform'
-                        id='{{tag.name}}'
+                        id='{{tag.name|underscore_to_space}}' value={{tag.id}} name='{{tag.name|underscore_to_space}}'
                         href='{{PREFIX_URL}}/dictionary/update/tag/{{gloss.id}}'
                         title='{% trans "delete this tag" %}'>x</a>
                  </span>
