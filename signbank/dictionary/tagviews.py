@@ -11,8 +11,14 @@ from signbank.dictionary.models import Gloss
 
 def taglist_json(request):
     """Return a list of tags as JSON"""
-    
-    tags = [t.name for t in Tag.objects.all()]
+
+    tags_objects = Tag.objects.all()
+    refreshed_tags = []
+    for tag in tags_objects:
+        tag.refresh_from_db()
+        refreshed_tags.append(tag)
+
+    tags = [t.name for t in refreshed_tags]
     
     return JsonResponse(tags, safe=False)
 

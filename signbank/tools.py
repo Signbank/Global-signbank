@@ -1224,7 +1224,13 @@ def check_existence_tags(gloss_id, new_human_value_list, tag_name_error, default
     # convert new Tags csv value to proper format
     # values is not empty
 
-    all_tags = [t.name for t in Tag.objects.all()]
+    tags_objects = Tag.objects.all()
+    refreshed_tags = []
+    for tag in tags_objects:
+        tag.refresh_from_db()
+        refreshed_tags.append(tag)
+    all_tags = [t.name for t in refreshed_tags]
+
     all_tags_display = ', '.join([t.replace('_',' ') for t in all_tags])
 
     new_tag_errors = []
