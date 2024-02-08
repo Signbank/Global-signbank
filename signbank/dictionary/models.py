@@ -1406,6 +1406,10 @@ class Gloss(models.Model):
         # print(related_models)
         # requires changing search field names
 
+        fields = {}
+        if 'idgloss' in fieldnames:
+            fields['idgloss'] = self.idgloss
+
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
         fields_data = []
         for field in gloss_fields:
@@ -1416,22 +1420,27 @@ class Gloss(models.Model):
                     fc_category = None
                 fields_data.append((field.name, field.verbose_name.title(), fc_category))
 
-        fields = {}
         # Annotation Idgloss translations
         if self.dataset:
             for language in self.dataset.translation_languages.all():
                 annotationidglosstranslation = self.annotationidglosstranslation_set.filter(language=language)
                 if annotationidglosstranslation and len(annotationidglosstranslation) > 0:
-                    fields[_("Annotation ID Gloss") + ": %s" % language.name] = annotationidglosstranslation.first().text
+                    field_name = _("Annotation ID Gloss") + ": %s" % language.name
+                    if field_name in fieldnames:
+                        fields[field_name] = annotationidglosstranslation.first().text
             for language in self.dataset.translation_languages.all():
                 lemmaidglosstranslations = self.lemma.lemmaidglosstranslation_set.filter(language=language)
                 if lemmaidglosstranslations and len(lemmaidglosstranslations) > 0:
-                    fields[_("Lemma ID Gloss") + ": %s" % language.name] = lemmaidglosstranslations.first().text
+                    field_name = _("Lemma ID Gloss") + ": %s" % language.name
+                    if field_name in fieldnames:
+                        fields[field_name] = lemmaidglosstranslations.first().text
 
         # Get all the keywords associated with this sign
         # TO DO this should be changed to senses per language
         allkwds = ", ".join([x.translation.text for x in self.translation_set.all()])
-        fields[Translation.__name__ + "s"] = allkwds
+        field_name = Translation.__name__ + "s"
+        if field_name in fieldnames:
+            fields[field_name] = allkwds
 
         for (f, field_verbose_name, fieldchoice_category) in fields_data:
             if f in ['domhndsh', 'subhndsh', 'semField', 'derivHist', 'dialect', 'signlanguage']:
@@ -1445,14 +1454,18 @@ class Gloss(models.Model):
                     field_value = '-'
             else:
                 field_value = str(getattr(self, f))
-            fields[field_verbose_name] = field_value
+            if field_verbose_name in fieldnames:
+                fields[field_verbose_name] = field_value
 
         # Get morphology
-        fields[_("Simultaneous Morphology")] = self.get_morpheme_display()
+        if _("Simultaneous Morphology") in fieldnames:
+            fields[_("Simultaneous Morphology")] = self.get_morpheme_display()
 
-        fields[_("Sequential Morphology")] = self.get_hasComponentOfType_display()
+        if _("Sequential Morphology") in fieldnames:
+            fields[_("Sequential Morphology")] = self.get_hasComponentOfType_display()
 
-        fields["Link"] = settings.URL + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
+        if "Link" in fieldnames:
+            fields["Link"] = settings.URL + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
 
         return fields
 
