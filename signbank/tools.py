@@ -1542,10 +1542,14 @@ def create_zip_with_json_files(data_per_file, output_path):
     zip = ZipFile(output_path, 'w')
 
     for filename, data in data_per_file.items():
-
         if isinstance(data, list) or isinstance(data, dict):
-            output = json.dumps(data, indent=INDENTATION_CHARS)
+            try:
+                output = json.dumps(data, indent=INDENTATION_CHARS)
+            except TypeError:
+                print('problem processing json.dumps on ', filename)
+                output = ''
             zip.writestr(filename+'.json', output)
+    zip.close()
 
 
 def get_deleted_gloss_or_media_data(item_type, since_timestamp):
