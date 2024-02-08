@@ -1170,3 +1170,43 @@ def choice_fields_choices():
             fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = ['Neutral', 'True', 'False']
 
     return fields_choices
+
+
+def export_csv_template(request):
+    dataset_id = request.GET['dataset']
+    dataset = Dataset.objects.get(id=dataset_id)
+
+    dataset_languages = dataset.translation_languages.all()
+    create_or_update = request.GET['create_or_update']
+
+    filename = '"template_' + create_or_update + '_' + dataset.acronym + '.csv"'
+    print(filename)
+    required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages,
+                                                                               create_or_update=create_or_update)
+    header_row = []
+    empty_row = []
+    for column in required_columns:
+        try:
+            header_row.append(column.encode('utf-8').decode())
+        except AttributeError:
+            header_row.append("")
+        if column == 'Dataset':
+            empty_row.append(dataset.acronym)
+        else:
+            empty_row.append("")
+
+    # two rows are output to ensure a line break character is in the csv file
+    csv_rows = [header_row, empty_row]
+    # this is based on an example in the Django 4.2 documentation
+    from signbank.dictionary.adminviews import Echo
+    from django.http import StreamingHttpResponse
+    import csv
+
+    pseudo_buffer = Echo()
+    new_writer = csv.writer(pseudo_buffer)
+    return StreamingHttpResponse(
+        (new_writer.writerow(row) for row in csv_rows),
+        content_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename='+filename},
+    )
+

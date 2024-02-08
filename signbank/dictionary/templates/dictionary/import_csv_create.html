@@ -38,8 +38,9 @@
 {% if stage == 0 %}
 
     <div>{% trans "Upload your CSV here:" %}</div>
+    <br>
     <div>
-    <form action="" method="post" enctype="multipart/form-data" role="form">
+    <form id='upload_csv' action="" method="post" enctype="multipart/form-data" role="form">
         {% csrf_token %}
         <div class="form-group">
             <div class="row">
@@ -59,6 +60,8 @@
     </div>
     <br>
     <div>
+
+
         <p>{% trans "To create new glosses, the CSV file must include the columns:" %}</p>
         <br>
         {% for dataset in selected_datasets %}
@@ -81,10 +84,17 @@
             </tr>
             </tbody>
         </table>
+        <form id="generate_template" action='{{PREFIX_URL}}/dictionary/export_csv_template/'
+              method="get">
+        <button class='btn btn-primary' type='submit'
+                id='button_export_template'>{% trans "Export" %} {{dataset.acronym}} {% trans "Template" %}</button>
+        <input type='hidden' name='dataset' value={{dataset.id}}>
+        <input type='hidden' name='create_or_update' value='create_gloss'>
+        </form>
         {% endfor %}
     </div>
 <div>
-<p>{% trans "Only one dataset can be modified in the file." %}</p>
+<br>
 </div>
 {% elif stage == 1 %}
 
