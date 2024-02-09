@@ -1519,14 +1519,22 @@ def reload_signbank(request=None):
 
 
 def get_gloss_data(since_timestamp=0, dataset=None):
-    if dataset:
-        glosses = Gloss.objects.filter(lemma__dataset=dataset)
-    else:
-        glosses = Gloss.objects.all()
+    # settings.API_FIELDS
+    api_fields_2023 = []
+    if not dataset:
+        dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+    for language in dataset.translation_languages.all():
+        language_field = _("Annotation ID Gloss") + ": %s" % language.name
+        api_fields_2023.append(language_field)
+    api_fields_2023.append("Translations")
+    api_fields_2023.append("Morphemes")
+    api_fields_2023.append("Parent glosses")
+    api_fields_2023.append("Link")
+    glosses = Gloss.objects.filter(lemma__dataset=dataset)
     gloss_data = {}
     for gloss in glosses:
         if int(format(gloss.lastUpdated, 'U')) > since_timestamp:
-            gloss_data[gloss.pk] = gloss.get_fields_dict(settings.API_FIELDS)
+            gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023)
 
     return gloss_data
 
