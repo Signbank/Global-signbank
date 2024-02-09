@@ -35,8 +35,9 @@
 <h3>{% trans "Import CSV Create Sentences" %}</h3>
 
 {% if stage == 0 %}
-
+    <br>
     <div>{% trans "Upload your CSV here:" %}</div>
+    <br>
     <div>
     <form action="" method="post" enctype="multipart/form-data" role="form">
         {% csrf_token %}
@@ -97,8 +98,16 @@
             </tr>
             </tbody>
         </table>
+        <form id="generate_template" action='{{PREFIX_URL}}/dictionary/export_csv_template/'
+              method="get">
+        <button class='btn btn-primary' type='submit'
+                id='button_export_template'>{% trans "Export" %} {{dataset.acronym}} {% trans "Template" %}</button>
+        <input type='hidden' name='dataset' value={{dataset.id}}>
+        <input type='hidden' name='create_or_update' value='create_sentences'>
+        </form>
         {% endfor %}
     </div>
+    <br>
     <div>
     <p>{% trans "Only one dataset can be modified in the file." %}</p>
     </div>

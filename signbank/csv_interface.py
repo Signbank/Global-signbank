@@ -1173,14 +1173,22 @@ def choice_fields_choices():
 
 
 def export_csv_template(request):
-    dataset_id = request.GET['dataset']
-    dataset = Dataset.objects.get(id=dataset_id)
+    if 'datseet_id' in request.GET:
+        dataset_id = request.GET['dataset']
+        dataset = Dataset.objects.get(id=dataset_id)
+    else:
+        # if the user uses the url outside the csv templates, the default dataset is used
+        dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
 
     dataset_languages = dataset.translation_languages.all()
-    create_or_update = request.GET['create_or_update']
+
+    if 'create_or_update' in request.GET:
+        create_or_update = request.GET['create_or_update']
+    else:
+        create_or_update = 'create_gloss'
 
     filename = '"template_' + create_or_update + '_' + dataset.acronym + '.csv"'
-    print(filename)
+
     required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages,
                                                                                create_or_update=create_or_update)
     header_row = []
