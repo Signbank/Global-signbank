@@ -546,7 +546,8 @@ def import_csv_create(request):
     selected_dataset_acronyms = [dataset.acronym for dataset in selected_datasets]
 
     translation_languages_dict = {}
-    # this dictionary is used in the template, it maps each dataset to a list of tuples (English name of dataset, language_code_2char)
+    # this dictionary is used in the template, it maps each dataset to a list of tuples
+    # (English name of dataset, language_code_2char)
     for dataset_object in user_datasets:
         translation_languages_dict[dataset_object] = []
 
@@ -579,7 +580,7 @@ def import_csv_create(request):
     earlier_creation_annotationidgloss = {}
     earlier_creation_lemmaidgloss = {}
 
-    #Propose changes
+    # Propose changes
     if len(request.FILES) > 0:
 
         new_file = request.FILES['file']
@@ -893,7 +894,7 @@ def import_csv_create(request):
 
         stage = 1
 
-    #Do changes
+    # Do changes
     elif len(request.POST) > 0:
 
         glosses_to_create = dict()
@@ -981,22 +982,22 @@ def import_csv_create(request):
 
         stage = 2
 
-    #Show uploadform
+    # Show uploadform
     else:
 
         stage = 0
 
     return render(request, 'dictionary/import_csv_create.html',
                   {'form': uploadform, 'stage': stage, 'changes': changes,
-                          'creation': creation,
-                          'gloss_already_exists': gloss_already_exists,
-                          'error': error,
-                          'dataset_languages': dataset_languages,
-                          'selected_datasets': selected_datasets,
-                          'translation_languages_dict': translation_languages_dict,
-                          'seen_datasets': seen_datasets,
-                          'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                          'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                   'creation': creation,
+                   'gloss_already_exists': gloss_already_exists,
+                   'error': error,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'translation_languages_dict': translation_languages_dict,
+                   'seen_datasets': seen_datasets,
+                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def import_csv_update(request):
