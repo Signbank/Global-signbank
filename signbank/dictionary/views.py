@@ -2305,9 +2305,11 @@ def package(request):
         else:
             dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset)
+        inWebSet = False  # not necessary
     else:
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
         available_glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True)
+        inWebSet = True
 
     first_part_of_file_name = 'signbank_pa'
 
@@ -2347,7 +2349,7 @@ def package(request):
 
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
-                      'glosses': signbank.tools.get_gloss_data(since_timestamp, dataset)}
+                      'glosses': signbank.tools.get_gloss_data(since_timestamp, dataset, inWebSet)}
 
     if since_timestamp != 0:
         collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss', since_timestamp)

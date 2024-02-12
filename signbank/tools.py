@@ -1518,7 +1518,7 @@ def reload_signbank(request=None):
         return render(request, 'reload_signbank.html')
 
 
-def get_gloss_data(since_timestamp=0, dataset=None):
+def get_gloss_data(since_timestamp=0, dataset=None, inWebSet=False):
     # settings.API_FIELDS
     api_fields_2023 = []
     if not dataset:
@@ -1527,10 +1527,19 @@ def get_gloss_data(since_timestamp=0, dataset=None):
         language_field = _("Annotation ID Gloss") + ": %s" % language.name
         api_fields_2023.append(language_field)
     api_fields_2023.append("Translations")
-    api_fields_2023.append("Morphemes")
-    api_fields_2023.append("Parent glosses")
+    for language in dataset.translation_languages.all():
+        language_field = _("Senses") + ": %s" % language.name
+        api_fields_2023.append(language_field)
+    api_fields_2023.append("Handedness")
+    api_fields_2023.append("Strong Hand")
+    api_fields_2023.append("Weak Hand")
+    api_fields_2023.append("Location")
+    api_fields_2023.append("Semantic Field")
     api_fields_2023.append("Link")
-    glosses = Gloss.objects.filter(lemma__dataset=dataset)
+    if inWebSet:
+        glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True)
+    else:
+        glosses = Gloss.objects.filter(lemma__dataset=dataset)
     gloss_data = {}
     for gloss in glosses:
         if int(format(gloss.lastUpdated, 'U')) > since_timestamp:

@@ -1408,17 +1408,17 @@ class Gloss(models.Model):
 
         fields = {}
         if 'idgloss' in fieldnames:
+            # this is the default setting API_FIELDS
             fields['idgloss'] = self.idgloss
 
         gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
         fields_data = []
         for field in gloss_fields:
-            if field.name in fieldnames:
-                if hasattr(field, 'field_choice_category'):
-                    fc_category = field.field_choice_category
-                else:
-                    fc_category = None
-                fields_data.append((field.name, field.verbose_name.title(), fc_category))
+            if hasattr(field, 'field_choice_category'):
+                fc_category = field.field_choice_category
+            else:
+                fc_category = None
+            fields_data.append((field.name, field.verbose_name.title(), fc_category))
 
         # Annotation Idgloss translations
         if self.dataset:
@@ -1435,12 +1435,28 @@ class Gloss(models.Model):
                     if field_name in fieldnames:
                         fields[field_name] = lemmaidglosstranslations.first().text
 
-        # Get all the keywords associated with this sign
-        # TO DO this should be changed to senses per language
+        # Get the keywords associated with this sign
         allkwds = ", ".join([x.translation.text for x in self.translation_set.all()])
         field_name = Translation.__name__ + "s"
-        if field_name in fieldnames:
+        if field_name in fieldnames and allkwds:
             fields[field_name] = allkwds
+
+        # Get the Senses associated with this sign
+        if self.dataset:
+            for language in self.dataset.translation_languages.all():
+                sensetranslations_for_this_language = dict()
+                for sensei, sense in enumerate(self.ordered_senses().all(), 1):
+                    if sense.senseTranslations.filter(language=language).exists():
+                        sensetranslation = sense.senseTranslations.get(language=language)
+                        translations = sensetranslation.translations.all().order_by('index')
+                        if translations:
+                            keywords_list = [trans.translation.text for trans in translations if
+                                             trans.translation.text != '']
+                            sensetranslations_for_this_language[sensei] = ', '.join(keywords_list)
+                if sensetranslations_for_this_language.keys():
+                    field_name = _("Senses") + ": %s" % language.name
+                    if field_name in fieldnames:
+                        fields[field_name] = sensetranslations_for_this_language
 
         for (f, field_verbose_name, fieldchoice_category) in fields_data:
             if f in ['domhndsh', 'subhndsh', 'semField', 'derivHist', 'dialect', 'signlanguage']:
@@ -1448,21 +1464,11 @@ class Gloss(models.Model):
                 field_value = getattr(self, display_method)()
             elif fieldchoice_category:
                 fieldchoice = getattr(self, f)
-                if fieldchoice:
-                    field_value = fieldchoice.name
-                else:
-                    field_value = '-'
+                field_value = fieldchoice.name if fieldchoice else '-'
             else:
                 field_value = str(getattr(self, f))
-            if field_verbose_name in fieldnames:
+            if field_verbose_name in fieldnames and field_value not in ['', '-']:
                 fields[field_verbose_name] = field_value
-
-        # Get morphology
-        if _("Simultaneous Morphology") in fieldnames:
-            fields[_("Simultaneous Morphology")] = self.get_morpheme_display()
-
-        if _("Sequential Morphology") in fieldnames:
-            fields[_("Sequential Morphology")] = self.get_hasComponentOfType_display()
 
         if "Link" in fieldnames:
             fields["Link"] = settings.URL + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
