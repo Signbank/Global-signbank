@@ -13,7 +13,7 @@ import csv
 import time
 
 from signbank.dictionary.forms import *
-from signbank.dictionary.models import *
+from signbank.dictionary.models import Gloss
 from signbank.feedback.models import *
 from signbank.dictionary.update import (update_signlanguage, update_dialect)
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
@@ -2298,10 +2298,20 @@ def get_unused_videos(request):
                    })
 
 
-@login_required_config
 def package(request):
 
-    # :)
+    if request.user.is_authenticated:
+        if 'dataset_name' in request.GET:
+            dataset = Dataset.objects.get(acronym=request.GET['dataset_name'])
+        else:
+            dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
+        available_glosses = Gloss.objects.filter(lemma__dataset=dataset)
+        inWebSet = False  # not necessary
+    else:
+        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
+        available_glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True)
+        inWebSet = True
+
     first_part_of_file_name = 'signbank_pa'
 
     timestamp_part_of_file_name = str(int(time.time()))
@@ -2314,11 +2324,6 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = 0
 
-    if 'dataset_name' in request.GET:
-        dataset = Dataset.objects.get(acronym=request.GET['dataset_name'])
-    else:
-        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
-
     video_folder_name = 'glossvideo'
     image_folder_name = 'glossimage'
 
@@ -2329,32 +2334,32 @@ def package(request):
         print('key error on small videos')
         pass
 
-    archive_file_name = '.'.join([first_part_of_file_name,timestamp_part_of_file_name,'zip'])
+    archive_file_name = '.'.join([first_part_of_file_name, timestamp_part_of_file_name, 'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
 
     video_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
                       reverse('dictionary:protected_media', args=[gv.small_video(use_name=True) or gv.videofile.name])
-                  for gv in GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
+                  for gv in GlossVideo.objects.filter(gloss__in=available_glosses)
                   if os.path.exists(str(gv.videofile.path))
                   and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
     image_urls = {os.path.splitext(os.path.basename(gv.videofile.name))[0]:
                        reverse('dictionary:protected_media', args=[gv.poster_file()])
-                  for gv in GlossVideo.objects.filter(gloss__lemma__dataset=dataset)
+                  for gv in GlossVideo.objects.filter(gloss__in=available_glosses)
                   if os.path.exists(str(gv.videofile.path))
                      and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
 
-    collected_data = {'video_urls':video_urls,
-                      'image_urls':image_urls,
-                      'glosses':signbank.tools.get_gloss_data(since_timestamp, dataset)}
+    collected_data = {'video_urls': video_urls,
+                      'image_urls': image_urls,
+                      'glosses': signbank.tools.get_gloss_data(since_timestamp, dataset, inWebSet)}
 
     if since_timestamp != 0:
-        collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss',since_timestamp)
-        collected_data['deleted_videos'] = signbank.tools.get_deleted_gloss_or_media_data('video',since_timestamp)
-        collected_data['deleted_images'] = signbank.tools.get_deleted_gloss_or_media_data('image',since_timestamp)
+        collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss', since_timestamp)
+        collected_data['deleted_videos'] = signbank.tools.get_deleted_gloss_or_media_data('video', since_timestamp)
+        collected_data['deleted_images'] = signbank.tools.get_deleted_gloss_or_media_data('image', since_timestamp)
 
-    signbank.tools.create_zip_with_json_files(collected_data,archive_file_path)
+    signbank.tools.create_zip_with_json_files(collected_data, archive_file_path)
 
-    response = HttpResponse(FileWrapper(open(archive_file_path,'rb')), content_type='application/zip')
+    response = HttpResponse(FileWrapper(open(archive_file_path, 'rb')), content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename='+archive_file_name
     return response
 

@@ -124,19 +124,31 @@ def probe_format(file):
 def make_thumbnail_video(sourcefile, targetfile):
     # this method is not called (need to move temp files to /tmp instead)
     # this function also works on source quicktime videos
-    name, _ = os.path.splitext(sourcefile)
-    temp_target = name + '_small.mov'
+    # the sourcefile needs to be a videofile
+    basename, _ = os.path.splitext(sourcefile.path)
+    temp_target = basename + '_small.mov'
+    temp_location_frames = os.path.join(settings.TMP_DIR, "signbank-thumbnail-frames")
+    filename, ext = os.path.splitext(os.path.basename(sourcefile.name))
+    filename = filename.replace(' ', '_')
+    folder_name, _ = os.path.splitext(filename)
+    temp_video_frames_folder = os.path.join(temp_location_frames, folder_name)
+    # Create the necessary subfolder if needed
+    if not os.path.isdir(temp_location_frames):
+        os.mkdir(temp_location_frames)
+    if not os.path.isdir(temp_video_frames_folder):
+        os.mkdir(temp_video_frames_folder)
     (
         ffmpeg
-        .input(sourcefile)
+        .input(sourcefile.path)
         .filter('fps', fps=15, round='up')
         .filter('scale', -2, 180)
-        .output("%s-%%04d.png" % (sourcefile[:-4]), **{'qscale:v': 2})
+        .output("%s/%s-%%04d.png" % (temp_video_frames_folder, folder_name), **{'qscale:v': 2})
         .run(quiet=True)
     )
+    image_files_path = os.path.join(temp_video_frames_folder, folder_name)
     (
         ffmpeg
-        .input((sourcefile[:-4])+"-*.png", pattern_type='glob', framerate=15)
+        .input(temp_video_frames_folder+"/*.png", pattern_type='glob', framerate=15)
         .output(temp_target, vcodec='rawvideo')
         .run(quiet=True)
     )
@@ -144,7 +156,7 @@ def make_thumbnail_video(sourcefile, targetfile):
     convert_video(temp_target, targetfile)
 
     # remove the temp files
-    stills_pattern = (sourcefile[:-4])+"-*.png"
+    stills_pattern = temp_video_frames_folder+"/*.png"
     for f in glob.glob(stills_pattern):
         os.remove(f)
     os.remove(temp_target)
@@ -169,7 +181,11 @@ def convert_video(sourcefile, targetfile, force=False):
         b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
     else: 
         # convert the video
-        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_OPTIONS)
+        RAW_OPTIONS = ["-f", "rawvideo", "-vcodec", "h264"]
+        # RAW_OPTIONS = ["-vcodec", "libx264", "-an"]
+        print('convert small video: ', RAW_OPTIONS)
+        b = run_ffmpeg(sourcefile, targetfile, options=RAW_OPTIONS)
+        print(b)
 
     format = probe_format(targetfile)
     if format.startswith('h264'):

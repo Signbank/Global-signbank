@@ -355,6 +355,7 @@ $(document).ready(function() {
 <script type='text/javascript'>
 
 function clearForm() {
+
       $('input').each(function() {
         var this_field = $(this).attr('name');
         if (this_field == undefined) { return; };
@@ -901,7 +902,8 @@ function do_toggle_language(el) {
         </div>
 
         {% else %}
-        <input class="btn btn-primary" type="submit" value='{% trans "Search Sign" %}'/>
+        <button class="btn btn-primary" name="search_type" value="sign" onclick="do_adminsearch(this);"
+                type="button">{% trans "Search Sign" %}</button>
         {% endif %}
 
         {% if perms.dictionary.export_csv %}
@@ -958,9 +960,9 @@ function do_toggle_language(el) {
     </div>
 </form>
 
-    <div></div>
+<div></div>
 
-<!--{% if perms.dictionary.add_gloss %}-->
+{% if perms.dictionary.add_gloss %}
 <div  class="panel panel-default">
   <div class="panel-heading" data-toggle="collapse"  data-target='#add_gloss_form'>{% trans "Add New Sign" %}</div>
 
@@ -1053,7 +1055,7 @@ function do_toggle_language(el) {
          </form>
      </div>
   </div>
-<!--  {% endif %}-->
+{% endif %}
 
 
 {% if view_type == "gloss_list" %}
