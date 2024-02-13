@@ -6409,3 +6409,82 @@ class KeywordListView(ListView):
                                    matrix_dimensions))
         return glossesXsenses
 
+
+class ToggleListView(ListView):
+
+    model = Gloss
+    template_name = 'dictionary/admin_toggle_view.html'
+    paginate_by = 25
+    query_parameters = dict()
+
+    def get(self, request, *args, **kwargs):
+        return super(ToggleListView, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(ToggleListView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+
+        if not selected_datasets or selected_datasets.count() > 1:
+            dataset_languages = Language.objects.filter(id=get_default_language_id())
+        else:
+            dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+
+        context['dataset_languages'] = dataset_languages
+
+        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
+
+        context['searchform'] = search_form
+
+        multiple_select_gloss_fields = ['tags']
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+
+        context['available_tags'] = [tag for tag in Tag.objects.all()]
+
+        # data structures to store the query parameters in order to keep them in the form
+        context['query_parameters'] = json.dumps(self.query_parameters)
+        query_parameters_keys = list(self.query_parameters.keys())
+        context['query_parameters_keys'] = json.dumps(query_parameters_keys)
+
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+        return context
+
+    def get_queryset(self):
+        # this is a ListView for a complicated data structure
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        if not selected_datasets or selected_datasets.count() > 1:
+            feedback_message = _('Please select a single dataset to view keywords.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
+            return []
+
+        get = self.request.GET
+
+        # multilingual
+        # this needs to be sorted for jquery purposes
+        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+
+        # exclude morphemes
+        glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
+
+        # data structure to store the query parameters in order to keep them in the form
+        query_parameters = dict()
+
+        if 'tags[]' in get:
+            vals = get.getlist('tags[]')
+            if vals:
+                print(vals)
+                query_parameters['tags[]'] = vals
+                glosses_with_tag = list(
+                    TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
+                print(glosses_with_tag)
+                glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
+
+        self.query_parameters = query_parameters
+
+        return glosses_of_datasets

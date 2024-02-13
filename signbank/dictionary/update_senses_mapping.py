@@ -769,7 +769,7 @@ def mapping_toggle_sense_tag(request, glossid):
 
     result = dict()
     result['glossid'] = str(gloss.id)
-    newvalue = [tag.name.replace('_',' ') for tag in  Tag.objects.filter(id__in=new_tag_ids)]
+    newvalue = [tag.name.replace('_',' ') for tag in Tag.objects.filter(id__in=new_tag_ids)]
     result['tags_list'] = newvalue
 
     return result

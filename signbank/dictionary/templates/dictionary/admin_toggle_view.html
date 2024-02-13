@@ -1,0 +1,302 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Toggle View{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+
+<script type='text/javascript'>
+var url = '{{ PREFIX_URL }}';
+var saving_str = '{{saving_str|escapejs}}';
+var csrf_token = '{{csrf_token}}';
+var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+var query_parameters_keys = {{query_parameters_keys|safe}};
+var query_parameters_dict = {{query_parameters|safe}};
+</script>
+
+<script type='text/javascript' src="{{ STATIC_URL }}js/glosses_toggle_edit.js"></script>
+
+<script type='text/javascript'>
+$(document).ready(function() {
+
+    function makeMultipleSelect(fieldId,fieldVar) {
+        var target_pulldown = document.getElementById(fieldId);
+        if (!target_pulldown) { return; }
+        target_pulldown.setAttribute('multiple','multiple');
+        target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+        target_pulldown.setAttribute('name',fieldVar);
+        target_pulldown.style.width = '100%';
+    }
+
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = 'id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        makeMultipleSelect(this_id, this_var);
+     }
+
+     $('.js-example-basic-multiple').each(function() {
+         var thisId = this.id;
+         $(this).select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve',
+            placeholder: '',
+         });
+     });
+
+     $('.js-example-basic-multiple').val(null).trigger('change');
+
+     // initialize query parameters in multiple select fields
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = '#id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        if (query_parameters_keys.includes(this_var)) {
+            var query_initial = query_parameters_dict[this_var];
+            $(this_id).val(query_initial);
+            $(this_id).trigger('change');
+        };
+     }
+});
+</script>
+
+<script type='text/javascript'>
+
+// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
+function clearForm() {
+     $('.js-example-basic-multiple').val(null).trigger('change');
+}
+</script>
+
+<script type='text/javascript'>
+
+// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
+function clearForm() {
+     $('.js-example-basic-multiple').val(null).trigger('change');
+}
+</script>
+{% endblock %}
+
+{% block extrahead %}
+<style>
+.actions {
+    color: white !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.actionLabel {
+    border: 1px solid;
+    text-align: center;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: white;
+    margin: 0 0 0 0;
+}
+.actionLabel:hover {
+    text-decoration: none;
+}
+.actionLabel:active:focus {
+    text-decoration: none;
+    outline: none;
+}
+.actionButton {
+    padding: 0;
+    border: 0px;
+    border-width: 0px;
+    margin: 0 0 0 0;
+    border-radius: 6px;
+    text-align: center;
+}
+.actionButton:hover {
+    text-decoration: none;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
+.tags-cell {
+    overflow-y: visible;
+    width: 255px;
+    box-sizing: inherit;
+    white-space: nowrap;
+}
+input {
+    height: 26px;
+    font-size: 14px;
+    padding: 0;
+}
+.span-cell {
+    padding: 1px;
+    height: auto;
+}
+.table-condensed {
+    border-collapse: no-collapse;
+    box-sizing: content-box;
+}
+.table-condensed td {
+    height: auto;
+}
+.modal-dialog {
+    width: 1200px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock" style="padding-top: 30px;">
+
+    <div class="keywordsSenses" id="keywordsSenses">
+    <h3>{% trans "Toggle View" %}</h3>
+
+        <div id='searchform_outer' class='well '>
+        <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/toggle_view/'>
+        {% csrf_token %}
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
+            </div>
+                <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+                <div id='searchformwell' class='well search-results-collapsable'>
+
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='' >
+                    <input name='search_type' class='form-control' value='filter'>
+                </div>
+
+                <div class="panel panel-default">
+                  <div class="panel-heading" data-toggle="collapse"
+                           data-target="#pub_search">{% trans "Search by Tags" %}</div>
+
+                      <div id='pub_search' class='collapse'>
+                      <table class='table table-condensed' style="width:65%;">
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
+                          <td style="width:600px;">{{searchform.tags}}</td>
+                      </tr>
+                      </table>
+                      </div>
+                    </div>
+                </div>
+        <div class='btn-group' style="margin-bottom: 20px">
+        <input class='btn btn-primary' type='submit' name="filter" value='Apply Filter'>
+        <input class='btn btn-primary' type='reset' onclick="clearForm();"
+                       value='{% trans "Reset" %}'>
+        </div>
+        </div>
+        </div>
+
+        </form>
+        </div>
+
+<div>
+<table class='table table-condensed' style="width:80%;">
+    <thead>
+      <tr>
+          <th style="width:200px;">{% trans "Gloss" %}</th>
+          <th style="width:400px;">{% trans "Quick Toggles" %}</th>
+          <th style="width:400px;">{% trans "Tags" %}</th>
+          <th style="width:200px;">{% trans "Semantic Fields" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% load underscore_to_space %}
+    {% for gloss in page_obj %}
+        <tr style="height:auto;">
+            <td>{{gloss|get_default_annotation_idgloss_translation}}</td>
+            <td>{% if perms.dictionary.change_gloss %}
+                <div class="panel panel-default">
+                <div class='panel-heading' data-toggle='collapse'
+                     data-target='#toggle_tags_panel_{{gloss.id}}'>{% trans "Toggle Tags" %}
+                </div>
+                <div id='toggle_tags_panel_{{gloss.id}}' class="collapse">
+                <p>
+                {% for tag in available_tags %}
+                <button id='quick_tag_btn_{{gloss.id}}' class="quick_tag btn actionButton"
+                        name='quick_tag_{{gloss.id}}'
+                        value='{{gloss.id}}' data-tagname="{{tag.name}}" style="height:36px;"
+                        type="submit" ><a class="actionLabel">{{tag.name|underscore_to_space}}</a>
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+
+                <div class="panel panel-default">
+                <div class='panel-heading' data-toggle='collapse'
+                     data-target='#toggle_semantics_panel_{{gloss.id}}'>{% trans "Set Semantic Fields" %}
+                </div>
+                <div id='toggle_semantics_panel_{{gloss.id}}' class="collapse">
+                </div>
+                </div>
+
+                <div class="panel panel-default">
+                <div class='panel-heading' data-toggle='collapse'
+                     data-target='#toggle_wordclass_panel_{{gloss.id}}'>{% trans "Set Word Class" %}
+                </div>
+                <div id='toggle_wordclass_panel_{{gloss.id}}' class="collapse">
+                </div>
+                </div>
+                {% endif %}
+            </td>
+            {% tags_for_object gloss as tag_list %}
+            <td class="field_tags" style="width:400px;">
+                <div class="tags-cell"
+                     id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
+            </td>
+            <td>{% for sf in gloss.semField.all %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+
+<div class="pagination">
+    <span class="step-links">
+        <ul class='pagination pagination-sm'>
+        {% if page_obj.has_previous %}
+            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
+        {% endif %}
+
+          {% if  page_obj.number > 10 %}
+            <li><a>...</a></li>
+          {% endif %}
+
+          {% for p in page_obj.paginator.page_range %}
+
+             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
+             <li {% if p == page_obj.number %}class='active'{% endif %}>
+             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+             </li>
+             {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
+            <li><a>...</a></li>
+            <li>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+            </li>
+          {% endif %}
+
+        {% if page_obj.has_next %}
+            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
+
+      </ul>
+        {% endif %}
+    </span>
+</div>
+</div>
+{% endblock content %}
