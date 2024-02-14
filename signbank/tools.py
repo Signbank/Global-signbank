@@ -2087,6 +2087,7 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter, create_
     missing_keys = []
     csv_header = []
     csv_body = []
+    count_check_rows = 0
     while not keys_found and csv_lines_buffer:
         # keep searching for the header row
         # Apple Keynote stores an extra row above the header row when exported to CSV
@@ -2117,16 +2118,20 @@ def split_csv_lines_header_body(dataset_languages, csv_lines, delimiter, create_
                 continue
             if col not in extra_keys:
                 extra_keys.append(col)
-        if missing_keys or extra_keys:
-            break
         if all_keys_present:
             keys_found = True
             csv_header = row
             csv_body = rest_csv_lines
+            # reset these since keys were found in the second row
+            missing_keys = []
+            extra_keys = []
+        elif count_check_rows > 1 and (missing_keys or extra_keys):
+            break
         else:
             # set up for next row
             # only record extra keys if this is a header row
             csv_lines_buffer = rest_csv_lines
+            count_check_rows += 1
     return delimiter_okay, keys_found, missing_keys, extra_keys, csv_header, csv_body
 
 
@@ -2141,6 +2146,7 @@ def split_csv_lines_sentences_header_body(dataset_languages, csv_lines, delimite
     extra_keys = []
     csv_header = []
     csv_body = []
+    count_check_rows = 0
     while not keys_found and csv_lines_buffer:
         # keep searching for the header row
         # Apple Keynote stores an extra row above the header row when exported to CSV
@@ -2159,16 +2165,20 @@ def split_csv_lines_sentences_header_body(dataset_languages, csv_lines, delimite
                 continue
             if col not in extra_keys:
                 extra_keys.append(col)
-        if missing_keys or extra_keys:
-            break
         if all_keys_present:
             keys_found = True
             csv_header = row
             csv_body = rest_csv_lines
+            # reset these since keys were found in the second row
+            missing_keys = []
+            extra_keys = []
+        elif count_check_rows > 1 and (missing_keys or extra_keys):
+            break
         else:
             # set up for next row
             # only record extra keys if this is a header row
             csv_lines_buffer = rest_csv_lines
+            count_check_rows += 1
     return keys_found, missing_keys, extra_keys, csv_header, csv_body
 
 

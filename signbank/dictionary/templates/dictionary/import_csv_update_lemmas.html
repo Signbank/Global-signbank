@@ -35,8 +35,9 @@
 <h3>{% trans "Import CSV Update Existing Lemmas" %}</h3>
 
 {% if stage == 0 %}
-
+    <br>
     <div>{% trans "Upload your CSV here:" %}</div>
+    <br>
     <div>
     <form action="" method="post" enctype="multipart/form-data" role="form">
         {% csrf_token %}
@@ -94,12 +95,19 @@
             </tr>
             </tbody>
         </table>
+        <form id="generate_template" action='{{PREFIX_URL}}/dictionary/export_csv_template/'
+              method="get">
+        <button class='btn btn-primary' type='submit'
+                id='button_export_template'>{% trans "Export" %} {{dataset.acronym}} {% trans "Template" %}</button>
+        <input type='hidden' name='dataset' value={{dataset.id}}>
+        <input type='hidden' name='create_or_update' value='update_lemma'>
+        </form>
         {% endfor %}
     </div>
+    <br>
     <div>
     <p>{% trans "The Lemma ID can be obtained from CSV export on the Search Lemmas or Show All Lemmas pages." %}</p>
     <p>{% trans "Changes can be made to the Lemma ID Gloss fields." %}</p>
-    <p>{% trans "Only one dataset can be modified in the file." %}</p>
     </div>
 {% elif stage == 1 %}
 
