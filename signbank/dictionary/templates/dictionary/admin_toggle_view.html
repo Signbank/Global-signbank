@@ -72,19 +72,11 @@ $(document).ready(function() {
 
 <script type='text/javascript'>
 
-// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
 function clearForm() {
      $('.js-example-basic-multiple').val(null).trigger('change');
 }
 </script>
 
-<script type='text/javascript'>
-
-// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
-function clearForm() {
-     $('.js-example-basic-multiple').val(null).trigger('change');
-}
-</script>
 {% endblock %}
 
 {% block extrahead %}
@@ -238,6 +230,15 @@ input {
                      data-target='#toggle_semantics_panel_{{gloss.id}}'>{% trans "Set Semantic Fields" %}
                 </div>
                 <div id='toggle_semantics_panel_{{gloss.id}}' class="collapse">
+                <p>
+                {% for semfield in available_semanticfields %}
+                <button id='quick_semantics_btn_{{gloss.id}}' class="quick_semantics btn actionButton"
+                        name='quick_semantics_{{gloss.id}}'
+                        value='{{gloss.id}}' data-semanticfield="{{semfield.name}}" style="height:36px;"
+                        type="submit" ><a class="actionLabel">{{semfield.name}}</a>
+                </button>
+                {% endfor %}
+                </p>
                 </div>
                 </div>
 
@@ -251,11 +252,18 @@ input {
                 {% endif %}
             </td>
             {% tags_for_object gloss as tag_list %}
-            <td class="field_tags" style="width:400px;">
+            <td class="field_tags" style="width:200px;">
                 <div class="tags-cell"
                      id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
             </td>
-            <td>{% for sf in gloss.semField.all %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+            {% with gloss.semField.all as semantic_fields_list %}
+            <td class="field_semantics" style="width:200px;">
+                <div class="semantics-cell"
+                     id="semantics_cell_{{gloss.id}}">{% for sf in semantic_fields_list %}<span class='semanticfield'>{{sf.name}}</span>
+                            {% if not forloop.last %}, {% endif %}{% endfor %}
+                </div>
+            </td>
+            {% endwith %}
         </tr>
     {% endfor %}
     </tbody>

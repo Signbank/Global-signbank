@@ -35,7 +35,7 @@ from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, map
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
 from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
-from signbank.dictionary.update_glosses import mapping_toggle_tag
+from signbank.dictionary.update_glosses import mapping_toggle_tag, mapping_toggle_semanticfield
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -3306,5 +3306,19 @@ def toggle_tag(request, glossid, tagname):
         return JsonResponse({})
 
     result = mapping_toggle_tag(request, glossid, tagname)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_semantic_field(request, glossid, semanticfield):
+
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = mapping_toggle_semanticfield(request, glossid, semanticfield)
 
     return JsonResponse(result)

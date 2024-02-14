@@ -27,10 +27,6 @@ def mapping_toggle_tag(request, glossid, tagname):
 
     current_tags = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
 
-    # new_tag_get = request.POST.get('new_tag')
-    # new_translation_list = json.loads(new_tag_get) if new_tag_get else []
-    # new_tag_names = [s.strip().replace(' ', '_') for s in new_translation_list]
-
     change_tag = Tag.objects.get_or_create(name=tagname)
     (new_tag, created) = change_tag
 
@@ -51,3 +47,33 @@ def mapping_toggle_tag(request, glossid, tagname):
     return result
 
 
+@permission_required('dictionary.change_gloss')
+def mapping_toggle_semanticfield(request, glossid, semanticfield):
+
+    if not request.user.is_authenticated:
+        return {}
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return {}
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    current_semanticfields = [semfield.machine_value for semfield in gloss.semField.all()]
+
+    semanticfield = SemanticField.objects.get_or_create(name=semanticfield)
+    (new_semanticfield, created) = semanticfield
+
+    if new_semanticfield.machine_value not in current_semanticfields:
+        gloss.semField.add(new_semanticfield)
+    else:
+        # delete semantic field from gloss
+        gloss.semField.remove(new_semanticfield)
+
+    updated_semanticfields = [semfield.machine_value for semfield in gloss.semField.all()]
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = [semfield.name for semfield in SemanticField.objects.filter(machine_value__in=updated_semanticfields)]
+    result['semantic_fields_list'] = newvalue
+
+    return result

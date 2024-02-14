@@ -6442,6 +6442,9 @@ class ToggleListView(ListView):
 
         context['available_tags'] = [tag for tag in Tag.objects.all()]
 
+        context['available_semanticfields'] = [semfield for semfield in SemanticField.objects.filter(
+            machine_value__gt=1).order_by('name')]
+
         # data structures to store the query parameters in order to keep them in the form
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())

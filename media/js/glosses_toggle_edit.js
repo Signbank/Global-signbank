@@ -21,6 +21,26 @@ function toggle_tags(data) {
     tagsCell.html(cell);
 }
 
+function toggle_semantic_fields(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var sf_list = data.semantic_fields_list;
+    var sfCell = $("#semantics_cell_"+glossid);
+    $(sfCell).empty();
+    var cell = "";
+    var num_spaces = sf_list.length - 1;
+    for (var key in sf_list) {
+        if (key < num_spaces) {
+            cell = cell + "<span class='semanticfield'>"+sf_list[key]+"</span>, ";
+        } else {
+            cell = cell + "<span class='semanticfield'>"+sf_list[key]+"</span>";
+        }
+    }
+    sfCell.html(cell);
+}
+
 $(document).ready(function() {
 
     // setup required for Ajax POST
@@ -52,4 +72,17 @@ $(document).ready(function() {
          });
      });
 
+     $('.quick_semantics').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var semanticfield = $(this).attr("data-semanticfield");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_semantics/" + glossid + "/" + semanticfield,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_semantic_fields
+         });
+     });
 });
