@@ -109,6 +109,8 @@ urlpatterns = [
         permission_required('dictionary.change_gloss')(signbank.frequency.update_corpora)),
 
     re_path(r'find_and_save_variants/$',login_required(signbank.dictionary.views.find_and_save_variants), name='find_and_save_variants'),
+    re_path(r'export_csv_template/$', signbank.csv_interface.export_csv_template,
+            name='export_csv_template'),
 
     re_path(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     re_path(r'package/$', signbank.dictionary.views.package),
