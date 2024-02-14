@@ -41,6 +41,18 @@ function toggle_semantic_fields(data) {
     sfCell.html(cell);
 }
 
+function toggle_wordclass(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var wordclass = data.wordclass;
+    var wcCell = $("#wordclass_cell_"+glossid);
+    $(wcCell).empty();
+    var cell = "<span class='wordclass'>"+wordclass+"</span>";
+    wcCell.html(cell);
+}
+
 $(document).ready(function() {
 
     // setup required for Ajax POST
@@ -83,6 +95,20 @@ $(document).ready(function() {
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
             success : toggle_semantic_fields
+         });
+     });
+
+     $('.quick_wordclass').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var wordclass = $(this).attr("data-wordclass");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_wordclass/" + glossid + "/" + wordclass,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_wordclass
          });
      });
 });

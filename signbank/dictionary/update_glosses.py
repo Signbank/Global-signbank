@@ -77,3 +77,30 @@ def mapping_toggle_semanticfield(request, glossid, semanticfield):
     result['semantic_fields_list'] = newvalue
 
     return result
+
+
+@permission_required('dictionary.change_gloss')
+def mapping_toggle_wordclass(request, glossid, wordclass):
+
+    if not request.user.is_authenticated:
+        return {}
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return {}
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    new_wordclass = FieldChoice.objects.filter(field='WordClass', name=wordclass).first()
+
+    if not new_wordclass:
+        # if the word class does not exist, set it to empty
+        new_wordclass = FieldChoice.objects.get(field='WordClass', machine_value=0)
+
+    gloss.wordClass = new_wordclass
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = new_wordclass.name
+    result['wordclass'] = newvalue
+
+    return result

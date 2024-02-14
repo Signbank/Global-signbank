@@ -200,6 +200,7 @@ input {
           <th style="width:400px;">{% trans "Quick Toggles" %}</th>
           <th style="width:400px;">{% trans "Tags" %}</th>
           <th style="width:200px;">{% trans "Semantic Fields" %}</th>
+          <th style="width:100px;">{% trans "Word Class" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -247,6 +248,15 @@ input {
                      data-target='#toggle_wordclass_panel_{{gloss.id}}'>{% trans "Set Word Class" %}
                 </div>
                 <div id='toggle_wordclass_panel_{{gloss.id}}' class="collapse">
+                <p>
+                {% for wc in available_wordclass %}
+                <button id='quick_wordclass_btn_{{gloss.id}}' class="quick_wordclass btn actionButton"
+                        name='quick_wordclass_{{gloss.id}}'
+                        value='{{gloss.id}}' data-wordclass="{{wc.name}}" style="height:36px;"
+                        type="submit" ><a class="actionLabel">{{wc.name}}</a>
+                </button>
+                {% endfor %}
+                </p>
                 </div>
                 </div>
                 {% endif %}
@@ -264,6 +274,11 @@ input {
                 </div>
             </td>
             {% endwith %}
+            <td class="field_wordclass" style="width:100px;">
+                <div class="wordclass-cell"
+                     id="wordclass_cell_{{gloss.id}}"><span class='wordclass'>{% if gloss.wordClass %}{{gloss.wordClass.name}}{% endif %}</span>
+                </div>
+            </td>
         </tr>
     {% endfor %}
     </tbody>
