@@ -35,7 +35,8 @@ from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, map
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
 from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
-from signbank.dictionary.update_glosses import mapping_toggle_tag, mapping_toggle_semanticfield, mapping_toggle_wordclass
+from signbank.dictionary.update_glosses import mapping_toggle_tag, mapping_toggle_semanticfield, \
+    mapping_toggle_wordclass, mapping_toggle_namedentity
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -3297,7 +3298,7 @@ def assign_lemma_dataset_to_gloss(request, glossid):
 
 
 @permission_required('dictionary.change_gloss')
-def toggle_tag(request, glossid, tagname):
+def toggle_tag(request, glossid, tagid):
 
     if not request.user.is_authenticated:
         return JsonResponse({})
@@ -3305,7 +3306,7 @@ def toggle_tag(request, glossid, tagname):
     if not request.user.has_perm('dictionary.change_gloss'):
         return JsonResponse({})
 
-    result = mapping_toggle_tag(request, glossid, tagname)
+    result = mapping_toggle_tag(request, glossid, tagid)
 
     return JsonResponse(result)
 
@@ -3334,5 +3335,19 @@ def toggle_wordclass(request, glossid, wordclass):
         return JsonResponse({})
 
     result = mapping_toggle_wordclass(request, glossid, wordclass)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_namedentity(request, glossid, namedentity):
+
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = mapping_toggle_namedentity(request, glossid, namedentity)
 
     return JsonResponse(result)

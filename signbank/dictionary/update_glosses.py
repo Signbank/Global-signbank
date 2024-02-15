@@ -15,7 +15,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidde
 
 
 @permission_required('dictionary.change_gloss')
-def mapping_toggle_tag(request, glossid, tagname):
+def mapping_toggle_tag(request, glossid, tagid):
 
     if not request.user.is_authenticated:
         return {}
@@ -27,11 +27,12 @@ def mapping_toggle_tag(request, glossid, tagname):
 
     current_tags = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
 
-    change_tag = Tag.objects.get_or_create(name=tagname)
-    (new_tag, created) = change_tag
+    new_tag = Tag.objects.filter(id=tagid).first()
 
-    if new_tag.id not in current_tags:
-        Tag.objects.add_tag(gloss, tagname)
+    if not new_tag:
+        pass
+    elif new_tag.id not in current_tags:
+        Tag.objects.add_tag(gloss, '"%s"' % new_tag)
     else:
         # delete tag from object
         tagged_obj = TaggedItem.objects.get(object_id=gloss.id, tag_id=new_tag.id)
@@ -102,5 +103,32 @@ def mapping_toggle_wordclass(request, glossid, wordclass):
     result['glossid'] = str(gloss.id)
     newvalue = new_wordclass.name
     result['wordclass'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
+def mapping_toggle_namedentity(request, glossid, namedentity):
+
+    if not request.user.is_authenticated:
+        return {}
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return {}
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    new_namedentity = FieldChoice.objects.filter(field='NamedEntity', name=namedentity).first()
+
+    if not new_namedentity:
+        # if the word class does not exist, set it to empty
+        new_namedentity = FieldChoice.objects.get(field='NamedEntity', machine_value=0)
+
+    gloss.namEnt = new_namedentity
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = new_namedentity.name
+    result['namedentity'] = newvalue
 
     return result

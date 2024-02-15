@@ -103,15 +103,17 @@ function clearForm() {
     outline: none;
 }
 .actionButton {
-    padding: 0;
-    border: 0px;
-    border-width: 0px;
-    margin: 0 0 0 0;
-    border-radius: 6px;
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-color: Grey;
+    border-radius: 8px;
     text-align: center;
+    color: Grey;
+    background-color: white;
 }
 .actionButton:hover {
     text-decoration: none;
+    background-color: LightGrey;
 }
 .actionButton:active:focus {
     text-decoration: none;
@@ -193,14 +195,15 @@ input {
         </div>
 
 <div>
-<table class='table table-condensed' style="width:80%;">
+<table class='table table-condensed' style="width:100%;">
     <thead>
       <tr>
-          <th style="width:200px;">{% trans "Gloss" %}</th>
+          <th style="width:250px;">{% trans "Gloss" %}</th>
           <th style="width:400px;">{% trans "Quick Toggles" %}</th>
-          <th style="width:400px;">{% trans "Tags" %}</th>
+          <th style="width:200px;">{% trans "Tags" %}</th>
           <th style="width:200px;">{% trans "Semantic Fields" %}</th>
           <th style="width:100px;">{% trans "Word Class" %}</th>
+          <th style="width:100px;">{% trans "Named Entity" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -209,60 +212,94 @@ input {
         <tr style="height:auto;">
             <td>{{gloss|get_default_annotation_idgloss_translation}}</td>
             <td>{% if perms.dictionary.change_gloss %}
+                <div id="toggles" class='panel-group' style="background-color:white;border:0;">
+                <div class="row">
+                <div class="col">
                 <div class="panel panel-default">
-                <div class='panel-heading' data-toggle='collapse'
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_tags_panel_{{gloss.id}}'>{% trans "Toggle Tags" %}
                 </div>
-                <div id='toggle_tags_panel_{{gloss.id}}' class="collapse">
+                <div id='toggle_tags_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="width:400px;">
                 <p>
                 {% for tag in available_tags %}
                 <button id='quick_tag_btn_{{gloss.id}}' class="quick_tag btn actionButton"
                         name='quick_tag_{{gloss.id}}'
-                        value='{{gloss.id}}' data-tagname="{{tag.name}}" style="height:36px;"
-                        type="submit" ><a class="actionLabel">{{tag.name|underscore_to_space}}</a>
+                        value='{{gloss.id}}' data-tagname="{{tag.id}}" style="height:36px;"
+                        type="submit" >{{tag.name|underscore_to_space}}
                 </button>
                 {% endfor %}
                 </p>
                 </div>
                 </div>
-
-                <div class="panel panel-default">
-                <div class='panel-heading' data-toggle='collapse'
-                     data-target='#toggle_semantics_panel_{{gloss.id}}'>{% trans "Set Semantic Fields" %}
                 </div>
-                <div id='toggle_semantics_panel_{{gloss.id}}' class="collapse">
+                </div>
+                <div class="col">
+                <div class="panel panel-default">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_semantics_panel_{{gloss.id}}'>{% trans "Toggle Semantic Fields" %}
+                </div>
+                <div id='toggle_semantics_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="width:400px;">
                 <p>
                 {% for semfield in available_semanticfields %}
                 <button id='quick_semantics_btn_{{gloss.id}}' class="quick_semantics btn actionButton"
                         name='quick_semantics_{{gloss.id}}'
                         value='{{gloss.id}}' data-semanticfield="{{semfield.name}}" style="height:36px;"
-                        type="submit" ><a class="actionLabel">{{semfield.name}}</a>
+                        type="submit" >{{semfield.name}}
                 </button>
                 {% endfor %}
                 </p>
                 </div>
                 </div>
-
+                </div>
+                </div>
+                <div class="col">
                 <div class="panel panel-default">
-                <div class='panel-heading' data-toggle='collapse'
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_wordclass_panel_{{gloss.id}}'>{% trans "Set Word Class" %}
                 </div>
-                <div id='toggle_wordclass_panel_{{gloss.id}}' class="collapse">
+                <div id='toggle_wordclass_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="width:400px;">
                 <p>
                 {% for wc in available_wordclass %}
                 <button id='quick_wordclass_btn_{{gloss.id}}' class="quick_wordclass btn actionButton"
                         name='quick_wordclass_{{gloss.id}}'
                         value='{{gloss.id}}' data-wordclass="{{wc.name}}" style="height:36px;"
-                        type="submit" ><a class="actionLabel">{{wc.name}}</a>
+                        type="submit" >{{wc.name}}
                 </button>
                 {% endfor %}
                 </p>
                 </div>
                 </div>
+                </div>
+                </div>
+                <div class="col">
+                <div class="panel panel-default">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_namedentity_panel_{{gloss.id}}'>{% trans "Set Named Entity" %}
+                </div>
+                <div id='toggle_namedentity_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="width:400px;">
+                <p>
+                {% for ne in available_namedentity %}
+                <button id='quick_namedentity_btn_{{gloss.id}}' class="quick_namedentity btn actionButton"
+                        name='quick_namedentity_{{gloss.id}}'
+                        value='{{gloss.id}}' data-namedentity="{{ne.name}}" style="height:36px;"
+                        type="submit" >{{ne.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+                </div>
+                </div>
+                </div>
                 {% endif %}
             </td>
             {% tags_for_object gloss as tag_list %}
-            <td class="field_tags" style="width:200px;">
+            <td class="field_tags" style="width:200px;padding-left:10px;">
                 <div class="tags-cell"
                      id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
             </td>
@@ -277,6 +314,11 @@ input {
             <td class="field_wordclass" style="width:100px;">
                 <div class="wordclass-cell"
                      id="wordclass_cell_{{gloss.id}}"><span class='wordclass'>{% if gloss.wordClass %}{{gloss.wordClass.name}}{% endif %}</span>
+                </div>
+            </td>
+            <td class="field_namedentity" style="width:150px;">
+                <div class="namedentity-cell"
+                     id="namedentity_cell_{{gloss.id}}"><span class='namedentity'>{% if gloss.namEnt %}{{gloss.namEnt.name}}{% endif %}</span>
                 </div>
             </td>
         </tr>
