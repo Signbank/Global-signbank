@@ -94,22 +94,22 @@ async function stopCamera(){
  */
 async function init(constraints){
 
-    if(navigator.userAgent.indexOf("Firefox") != -1 ) 
-    {
-        recordButton.disabled=true;
-        startButton.disabled=true;
-        errorMsgElement.innerHTML = "<p style='color:#FF0000';>Webcam recording does not work in Firefox. Please try another browser.</p>"
+    // if(navigator.userAgent.indexOf("Firefox") != -1 ) 
+    // {
+    //     recordButton.disabled=true;
+    //     startButton.disabled=true;
+    //     errorMsgElement.innerHTML = "<p style='color:#FF0000';>Webcam recording does not work in Firefox. Please try another browser.</p>"
+    // }
+    // else{
+    try{
+        const stream = await navigator.mediaDevices.getUserMedia(constraints)
+        handleSuccess(stream)
+        startButton.textContent = "Stop Camera"
+    }catch (e){
+        console.error('navigator.getUserMedia error:', e)
+        errorMsgElement.innerHTML = "<p style='color:#FF0000';>Could not start the camera. Please try another browser.</p>"
     }
-    else{
-        try{
-            const stream = await navigator.mediaDevices.getUserMedia(constraints)
-            handleSuccess(stream)
-            startButton.textContent = "Stop Camera"
-        }catch (e){
-            console.error('navigator.getUserMedia error:', e)
-            errorMsgElement.innerHTML = "<p style='color:#FF0000';>Could not start the camera. Please try another browser.</p>"
-        }
-    }
+    // }
 }
 
 /**

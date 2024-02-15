@@ -265,7 +265,7 @@ def get_sentence_video_file_path(instance, filename, version=0):
     video_dir = settings.EXAMPLESENTENCE_VIDEO_DIRECTORY
     try:
         dataset_dir = os.path.join(instance.examplesentence.get_dataset().acronym, str(instance.examplesentence.id))
-    except ObjectDoesNotExist:
+    except (ObjectDoesNotExist, AttributeError):
         dataset_dir = ""
     
     filename = str(instance.examplesentence.id) + ext + (version * ".bak")
@@ -315,7 +315,7 @@ class ExampleVideo(models.Model):
         # then move it into place
 
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext == '.mov' or ext == '.webm':
+        if ext == '.mov' or ext == '.webm' or ext == '.m4v':
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
             err = convert_video(oldloc, newloc, force=False)

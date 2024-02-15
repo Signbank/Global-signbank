@@ -181,11 +181,11 @@ def convert_video(sourcefile, targetfile, force=False):
         b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
     else: 
         # convert the video
-        RAW_OPTIONS = ["-f", "rawvideo", "-vcodec", "h264"]
+        RAW_OPTIONS = ["-vcodec", "h264"]
         # RAW_OPTIONS = ["-vcodec", "libx264", "-an"]
-        print('convert small video: ', RAW_OPTIONS)
+        # print('convert small video: ', RAW_OPTIONS)
         b = run_ffmpeg(sourcefile, targetfile, options=RAW_OPTIONS)
-        print(b)
+        # print(b)
 
     format = probe_format(targetfile)
     if format.startswith('h264'):
