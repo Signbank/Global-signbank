@@ -16,6 +16,7 @@ from signbank.dictionary.views import create_citation_image
 import signbank.dictionary.views
 import signbank.dictionary.tagviews
 import signbank.dictionary.adminviews
+import signbank.api_interface
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -109,6 +110,9 @@ urlpatterns = [
 
     re_path(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     re_path(r'package/$', signbank.dictionary.views.package),
+    re_path(r'get_gloss_data/(?P<datasetid>.*)/(?P<glossid>.*)/$',
+            signbank.api_interface.get_gloss_data_json),
+
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
 
