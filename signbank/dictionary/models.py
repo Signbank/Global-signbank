@@ -1459,15 +1459,28 @@ class Gloss(models.Model):
                         fields[field_name] = sensetranslations_for_this_language
 
         for (f, field_verbose_name, fieldchoice_category) in fields_data:
-            if f in ['domhndsh', 'subhndsh', 'semField', 'derivHist', 'dialect', 'signlanguage']:
+            if f in ['final_domhndsh', 'final_subhndsh', 'morphemePart', 'senses']:
+                continue
+            elif f == 'lastUpdated':
+                last_updated = getattr(self, f)
+                field_value = last_updated.date()
+            elif f == 'creator':
+                creator = getattr(self, f)
+                field_value = ', '.join([c.first_name for c in self.creator.all()])
+            elif f in ['domhndsh', 'subhndsh',
+                       'semField', 'derivHist', 'dialect', 'signlanguage']:
                 display_method = 'get_'+f+'_display'
                 field_value = getattr(self, display_method)()
             elif fieldchoice_category:
                 fieldchoice = getattr(self, f)
+                if fieldchoice is None:
+                    continue
+                if fieldchoice.machine_value == 0:
+                    continue
                 field_value = fieldchoice.name if fieldchoice else '-'
             else:
                 field_value = str(getattr(self, f))
-            if field_verbose_name in fieldnames and field_value not in ['', '-']:
+            if field_verbose_name in fieldnames and field_value not in ['', '-', "None"]:
                 fields[field_verbose_name] = field_value
 
         if "Link" in fieldnames:
