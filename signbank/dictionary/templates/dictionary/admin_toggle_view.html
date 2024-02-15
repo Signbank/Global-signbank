@@ -225,7 +225,7 @@ input {
                 {% for tag in available_tags %}
                 <button id='quick_tag_btn_{{gloss.id}}' class="quick_tag btn actionButton"
                         name='quick_tag_{{gloss.id}}'
-                        value='{{gloss.id}}' data-tagname="{{tag.id}}" style="height:36px;"
+                        value='{{gloss.id}}' data-tagname='{{tag.id}}' style="height:36px;"
                         type="submit" >{{tag.name|underscore_to_space}}
                 </button>
                 {% endfor %}
@@ -245,7 +245,7 @@ input {
                 {% for semfield in available_semanticfields %}
                 <button id='quick_semantics_btn_{{gloss.id}}' class="quick_semantics btn actionButton"
                         name='quick_semantics_{{gloss.id}}'
-                        value='{{gloss.id}}' data-semanticfield="{{semfield.name}}" style="height:36px;"
+                        value='{{gloss.id}}' data-semanticfield='{{semfield.machine_value}}' style="height:36px;"
                         type="submit" >{{semfield.name}}
                 </button>
                 {% endfor %}
@@ -265,7 +265,7 @@ input {
                 {% for wc in available_wordclass %}
                 <button id='quick_wordclass_btn_{{gloss.id}}' class="quick_wordclass btn actionButton"
                         name='quick_wordclass_{{gloss.id}}'
-                        value='{{gloss.id}}' data-wordclass="{{wc.name}}" style="height:36px;"
+                        value='{{gloss.id}}' data-wordclass='{{wc.machine_value}}' style="height:36px;"
                         type="submit" >{{wc.name}}
                 </button>
                 {% endfor %}
@@ -285,7 +285,7 @@ input {
                 {% for ne in available_namedentity %}
                 <button id='quick_namedentity_btn_{{gloss.id}}' class="quick_namedentity btn actionButton"
                         name='quick_namedentity_{{gloss.id}}'
-                        value='{{gloss.id}}' data-namedentity="{{ne.name}}" style="height:36px;"
+                        value='{{gloss.id}}' data-namedentity='{{ne.machine_value}}' style="height:36px;"
                         type="submit" >{{ne.name}}
                 </button>
                 {% endfor %}

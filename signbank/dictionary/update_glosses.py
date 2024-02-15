@@ -25,14 +25,26 @@ def mapping_toggle_tag(request, glossid, tagid):
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
+    try:
+        tag_id = int(tagid)
+    except TypeError:
+        return {}
+
     current_tags = [tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
 
-    new_tag = Tag.objects.filter(id=tagid).first()
+    try:
+        new_tag = Tag.objects.get(id=tag_id)
+    except (ObjectDoesNotExist, MultipleObjectsReturned):
+        return {}
 
-    if not new_tag:
-        pass
-    elif new_tag.id not in current_tags:
-        Tag.objects.add_tag(gloss, '"%s"' % new_tag)
+    new_tag_name = new_tag.name.replace(' ', '_')
+    if new_tag.id not in current_tags:
+        # do not store spaces in tag name
+        # the add_tag method of class Tag is inside a package
+        # it creates a new tag if it does not exist
+        # the second argument is a string that is the tag name
+        # make sure we keep using underscores on tag names to avoid creating new names with spaces instead
+        Tag.objects.add_tag(gloss, new_tag_name)
     else:
         # delete tag from object
         tagged_obj = TaggedItem.objects.get(object_id=gloss.id, tag_id=new_tag.id)
@@ -59,22 +71,29 @@ def mapping_toggle_semanticfield(request, glossid, semanticfield):
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
+    try:
+        semanticfield_machine_value = int(semanticfield)
+    except TypeError:
+        return {}
+
     current_semanticfields = [semfield.machine_value for semfield in gloss.semField.all()]
 
-    semanticfield = SemanticField.objects.get_or_create(name=semanticfield)
-    (new_semanticfield, created) = semanticfield
+    semanticfield = SemanticField.objects.filter(machine_value=semanticfield_machine_value).first()
 
-    if new_semanticfield.machine_value not in current_semanticfields:
-        gloss.semField.add(new_semanticfield)
+    if not semanticfield:
+        pass
+    elif semanticfield.machine_value not in current_semanticfields:
+        gloss.semField.add(semanticfield)
     else:
         # delete semantic field from gloss
-        gloss.semField.remove(new_semanticfield)
+        gloss.semField.remove(semanticfield)
 
     updated_semanticfields = [semfield.machine_value for semfield in gloss.semField.all()]
 
     result = dict()
     result['glossid'] = str(gloss.id)
-    newvalue = [semfield.name for semfield in SemanticField.objects.filter(machine_value__in=updated_semanticfields)]
+    newvalue = [semfield.name for semfield in SemanticField.objects.filter(
+        machine_value__in=updated_semanticfields).order_by('name')]
     result['semantic_fields_list'] = newvalue
 
     return result
@@ -91,17 +110,29 @@ def mapping_toggle_wordclass(request, glossid, wordclass):
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
-    new_wordclass = FieldChoice.objects.filter(field='WordClass', name=wordclass).first()
+    try:
+        wordclass_machine_value = int(wordclass)
+    except TypeError:
+        return {}
+
+    empty_wordclass = FieldChoice.objects.get(field='WordClass', machine_value=0)
+    new_wordclass = FieldChoice.objects.filter(field='WordClass', machine_value=wordclass_machine_value).first()
 
     if not new_wordclass:
         # if the word class does not exist, set it to empty
-        new_wordclass = FieldChoice.objects.get(field='WordClass', machine_value=0)
+        wordclass_machine_value = 0
 
-    gloss.wordClass = new_wordclass
+    if not gloss.wordClass:
+        gloss.wordClass = new_wordclass
+    elif gloss.wordClass.machine_value != wordclass_machine_value:
+        gloss.wordClass = new_wordclass
+    else:
+        gloss.wordClass = empty_wordclass
+    gloss.save()
 
     result = dict()
     result['glossid'] = str(gloss.id)
-    newvalue = new_wordclass.name
+    newvalue = gloss.wordClass.name
     result['wordclass'] = newvalue
 
     return result
@@ -118,17 +149,29 @@ def mapping_toggle_namedentity(request, glossid, namedentity):
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
-    new_namedentity = FieldChoice.objects.filter(field='NamedEntity', name=namedentity).first()
+    try:
+        namedentity_machine_value = int(namedentity)
+    except TypeError:
+        return {}
+
+    empty_namedentity = FieldChoice.objects.get(field='NamedEntity', machine_value=0)
+    new_namedentity = FieldChoice.objects.filter(field='NamedEntity', machine_value=namedentity_machine_value).first()
 
     if not new_namedentity:
         # if the word class does not exist, set it to empty
-        new_namedentity = FieldChoice.objects.get(field='NamedEntity', machine_value=0)
+        namedentity_machine_value = 0
 
-    gloss.namEnt = new_namedentity
+    if not gloss.namEnt:
+        gloss.namEnt = new_namedentity
+    elif gloss.namEnt.machine_value != namedentity_machine_value:
+        gloss.namEnt = new_namedentity
+    else:
+        gloss.namEnt = empty_namedentity
+    gloss.save()
 
     result = dict()
     result['glossid'] = str(gloss.id)
-    newvalue = new_namedentity.name
+    newvalue = gloss.namEnt.name
     result['namedentity'] = newvalue
 
     return result
