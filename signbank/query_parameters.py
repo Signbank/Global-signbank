@@ -474,7 +474,9 @@ def pretty_print_query_values(dataset_languages,query_parameters):
             choices_for_category = FieldChoice.objects.filter(field__iexact='MorphologyType', machine_value__in=query_parameters[key])
             query_dict[key] = [choice.name for choice in choices_for_category]
         elif key == 'tags[]':
-            query_dict[key] = query_parameters[key]
+            tag_objects = Tag.objects.filter(id__in=query_parameters[key])
+            tag_names = [t.name for t in tag_objects]
+            query_dict[key] = tag_names
         elif key[-2:] == '[]':
             if key in ['hasRelation[]']:
                 choices_for_category = [RELATION_ROLE_CHOICES[val] for val in query_parameters[key]]

@@ -67,6 +67,10 @@ $(document).ready(function() {
             $(this_id).trigger('change');
         };
      }
+     $('.hover-shows-video').each(function() {
+        ready_videos(this);
+     });
+
 });
 </script>
 
@@ -74,6 +78,32 @@ $(document).ready(function() {
 
 function clearForm() {
      $('.js-example-basic-multiple').val(null).trigger('change');
+}
+
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            $(this).find('img').hide();
+            video.show();
+            video.get(0).play();
+        }
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            video.hide();
+            video.get(0).pause();
+            video.get(0).currentTime = 0;
+        }
+    });
 }
 </script>
 
@@ -154,6 +184,7 @@ input {
 
     <div class="keywordsSenses" id="keywordsSenses">
     <h3>{% trans "Annotation Toggle View" %}</h3>
+        <h4>{% trans "On initial view, prior to searching, recently added glosses are shown below." %}</h4>
 
         <div id='searchform_outer' class='well '>
         <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/toggle_view/'>
@@ -198,7 +229,10 @@ input {
 <table class='table table-condensed' style="width:100%;">
     <thead>
       <tr>
+          <th></th>
           <th style="width:250px;">{% trans "Gloss" %}</th>
+          <th style="width:180px;">{% trans "Creator" %}</th>
+          <th style="width:180px">{% trans "Creation Date" %}</th>
           <th style="width:400px;">{% trans "Quick Toggles" %}</th>
           <th style="width:200px;">{% trans "Tags" %}</th>
           <th style="width:200px;">{% trans "Semantic Fields" %}</th>
@@ -210,7 +244,33 @@ input {
     {% load underscore_to_space %}
     {% for gloss in page_obj %}
         <tr style="height:auto;">
-            <td>{{gloss|get_default_annotation_idgloss_translation}}</td>
+            <td>{% if gloss.get_image_path %}
+            {% url 'dictionary:protected_media' '' as protected_media_url %}
+            <div class="thumbnail_container">
+            <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
+            <div id='glossvideo_{{gloss.id}}' class="hover-shows-video">
+                <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_url}}">
+
+                {% if gloss.has_video %}
+                <video id="videoplayer" class="thumbnail-video"
+                       src="{{protected_media_url}}{{gloss.get_video_url}}"  type="video/mp4" muted="muted"></video>
+                {% endif %}
+            </div>
+            </a>
+            </div>
+            {% endif %}
+            </td>
+            <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
+                {{gloss|get_default_annotation_idgloss_translation}}</a></td>
+            <td>{% for creator in gloss.creator.all %}
+                    {% if forloop.last %}
+                        {{creator.first_name}} {{creator.last_name}}
+                    {% else %}
+                        {{creator.first_name}} {{creator.last_name}},
+                    {% endif %}
+                {% endfor %}
+            </td>
+            <td>{{gloss.creationDate}}</td>
             <td>{% if perms.dictionary.change_gloss %}
                 <div id="toggles" class='panel-group' style="background-color:white;border:0;">
                 <div class="row">

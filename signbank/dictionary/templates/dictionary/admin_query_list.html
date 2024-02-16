@@ -476,11 +476,7 @@ thead tr th {
         {% for key, value in query_parameters.items %}
         <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                         border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_mapping|get_item:key}}</td>
-            {% if '[]' in key %}
-        <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
-                class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
-            {% elif key == 'tags' %}
+            {% if key == 'tags[]' %}
                 <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                         border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
                    <div class='tagQP' >
@@ -488,6 +484,10 @@ thead tr th {
                         <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
                    </div>
                     {% if not forloop.last %} {% endif %}{% endfor %}</td>
+            {% elif '[]' in key %}
+            <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
+                class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
             {% else %}
                     <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                     border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_values_mapping|get_item:key}}</td>

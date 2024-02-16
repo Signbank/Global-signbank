@@ -6415,6 +6415,7 @@ class ToggleListView(ListView):
     model = Gloss
     template_name = 'dictionary/admin_toggle_view.html'
     paginate_by = 25
+    search_type = 'sign'
     query_parameters = dict()
 
     def get(self, request, *args, **kwargs):
@@ -6459,6 +6460,26 @@ class ToggleListView(ListView):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
+        # construct scroll bar
+        # the following retrieves language code for English (or DEFAULT LANGUAGE)
+        # so the sorting of the scroll bar matches the default sorting of the results in Gloss List View
+
+        list_of_objects = self.object_list
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
+
         return context
 
     def get_queryset(self):
@@ -6478,8 +6499,13 @@ class ToggleListView(ListView):
         # this needs to be sorted for jquery purposes
         dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
 
-        # exclude morphemes
-        glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
+        if get:
+            glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
+        else:
+            recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
+            glosses_of_datasets = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets).filter(
+                creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
+                'creationDate')
 
         # data structure to store the query parameters in order to keep them in the form
         query_parameters = dict()
@@ -6487,11 +6513,9 @@ class ToggleListView(ListView):
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
             if vals:
-                print(vals)
                 query_parameters['tags[]'] = vals
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
-                print(glosses_with_tag)
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
 
         self.query_parameters = query_parameters

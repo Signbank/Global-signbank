@@ -256,6 +256,9 @@ class GlossSearchForm(forms.ModelForm):
                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     excludeFromEcv = forms.ChoiceField(label=_('Exclude from ECV'), choices=[(0, '-')],
                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    tags = forms.ChoiceField(label=_('Tags'),
+                             choices=[(0, '-')],
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     definitionRole = forms.ChoiceField(label=_('Note Type'),
                                        choices=[(0, '-')],
