@@ -111,7 +111,9 @@ urlpatterns = [
     re_path(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     re_path(r'package/$', signbank.dictionary.views.package),
     re_path(r'get_gloss_data/(?P<datasetid>.*)/(?P<glossid>.*)/$',
-            signbank.api_interface.get_gloss_data_json),
+            signbank.api_interface.get_gloss_data_json, name='get_gloss_data_json'),
+    re_path(r'get_fields_data/(?P<datasetid>.*)/$',
+            signbank.api_interface.get_fields_data_json, name='get_fields_data_json'),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),

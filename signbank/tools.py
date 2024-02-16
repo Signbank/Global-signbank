@@ -1526,7 +1526,6 @@ def get_gloss_data(since_timestamp=0, dataset=None, inWebSet=False):
     for language in dataset.translation_languages.all():
         language_field = _("Annotation ID Gloss") + ": %s" % language.name
         api_fields_2023.append(language_field)
-    api_fields_2023.append("Translations")
     for language in dataset.translation_languages.all():
         language_field = _("Senses") + ": %s" % language.name
         api_fields_2023.append(language_field)
@@ -1535,6 +1534,8 @@ def get_gloss_data(since_timestamp=0, dataset=None, inWebSet=False):
     api_fields_2023.append("Weak Hand")
     api_fields_2023.append("Location")
     api_fields_2023.append("Semantic Field")
+    api_fields_2023.append("Word Class")
+    api_fields_2023.append("Named Entity")
     api_fields_2023.append("Link")
     if inWebSet:
         glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True)
