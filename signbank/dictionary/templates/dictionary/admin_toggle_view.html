@@ -167,13 +167,27 @@ input {
 }
 .table-condensed {
     border-collapse: no-collapse;
-    box-sizing: content-box;
+    overflow-y: scroll;
 }
 .table-condensed td {
     height: auto;
 }
 .modal-dialog {
     width: 1200px;
+}
+.table.collapse.in {
+   display: table;
+}
+.panel-body {
+    display: table;
+}
+.table-toggles {
+    table-layout:fixed;
+    overflow:auto;
+}
+.panel-toggles {
+    margin: 0 important!;
+    width: inherit;
 }
 </style>
 {% endblock %}
@@ -226,18 +240,18 @@ input {
         </div>
 
 <div>
-<table class='table table-condensed' style="width:100%;">
+<table class='table table-condensed table-toggles'
+       style="width:100%; overflow-y:scroll;">
     <thead>
       <tr>
           <th></th>
           <th style="width:250px;">{% trans "Gloss" %}</th>
-          <th style="width:180px;">{% trans "Creator" %}</th>
-          <th style="width:180px">{% trans "Creation Date" %}</th>
-          <th style="width:400px;">{% trans "Quick Toggles" %}</th>
-          <th style="width:200px;">{% trans "Tags" %}</th>
+          <th style="width:240px;">{% trans "Creator" %}</th>
+          <th style="width:500px;">{% trans "Quick Toggles" %}</th>
+          <th style="width:300px;">{% trans "Tags" %}</th>
           <th style="width:200px;">{% trans "Semantic Fields" %}</th>
           <th style="width:100px;">{% trans "Word Class" %}</th>
-          <th style="width:100px;">{% trans "Named Entity" %}</th>
+          <th style="width:150px;">{% trans "Named Entity" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -262,26 +276,33 @@ input {
             </td>
             <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
                 {{gloss|get_default_annotation_idgloss_translation}}</a></td>
-            <td>{% for creator in gloss.creator.all %}
-                    {% if forloop.last %}
-                        {{creator.first_name}} {{creator.last_name}}
-                    {% else %}
-                        {{creator.first_name}} {{creator.last_name}},
-                    {% endif %}
-                {% endfor %}
+            <td>
+                <table>
+                    <tr>
+                        <td>
+                        {% for creator in gloss.creator.all %}
+                            {% if forloop.last %}
+                                {{creator.first_name}} {{creator.last_name}}
+                            {% else %}
+                                {{creator.first_name}} {{creator.last_name}},
+                            {% endif %}
+                        {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>{{gloss.creationDate}}</td>
+                    </tr>
+            </table>
             </td>
-            <td>{{gloss.creationDate}}</td>
-            <td>{% if perms.dictionary.change_gloss %}
-                <div id="toggles" class='panel-group' style="background-color:white;border:0;">
-                <div class="row">
-                <div class="col">
-                <div class="panel panel-default">
+            <td style="width:500px;">
+                <div id="toggles" class='panel-group'>
+                <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_tags_panel_{{gloss.id}}'>{% trans "Toggle Tags" %}
                 </div>
                 <div id='toggle_tags_panel_{{gloss.id}}' class="panel-collapse collapse">
-                <div class="panel-body" style="width:400px;">
-                <p>
+                <div class="panel-body" style="display:inline-block;">
+                <span>
                 {% for tag in available_tags %}
                 <button id='quick_tag_btn_{{gloss.id}}' class="quick_tag btn actionButton"
                         name='quick_tag_{{gloss.id}}'
@@ -289,18 +310,16 @@ input {
                         type="submit" >{{tag.name|underscore_to_space}}
                 </button>
                 {% endfor %}
-                </p>
+                </span>
                 </div>
                 </div>
                 </div>
-                </div>
-                <div class="col">
-                <div class="panel panel-default">
+                <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_semantics_panel_{{gloss.id}}'>{% trans "Toggle Semantic Fields" %}
                 </div>
                 <div id='toggle_semantics_panel_{{gloss.id}}' class="panel-collapse collapse">
-                <div class="panel-body" style="width:400px;">
+                <div class="panel-body" style="display:inline-block;">
                 <p>
                 {% for semfield in available_semanticfields %}
                 <button id='quick_semantics_btn_{{gloss.id}}' class="quick_semantics btn actionButton"
@@ -313,14 +332,12 @@ input {
                 </div>
                 </div>
                 </div>
-                </div>
-                <div class="col">
-                <div class="panel panel-default">
+                <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_wordclass_panel_{{gloss.id}}'>{% trans "Set Word Class" %}
                 </div>
                 <div id='toggle_wordclass_panel_{{gloss.id}}' class="panel-collapse collapse">
-                <div class="panel-body" style="width:400px;">
+                <div class="panel-body" style="display:inline-block;">
                 <p>
                 {% for wc in available_wordclass %}
                 <button id='quick_wordclass_btn_{{gloss.id}}' class="quick_wordclass btn actionButton"
@@ -333,14 +350,12 @@ input {
                 </div>
                 </div>
                 </div>
-                </div>
-                <div class="col">
-                <div class="panel panel-default">
+                <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_namedentity_panel_{{gloss.id}}'>{% trans "Set Named Entity" %}
                 </div>
                 <div id='toggle_namedentity_panel_{{gloss.id}}' class="panel-collapse collapse">
-                <div class="panel-body" style="width:400px;">
+                <div class="panel-body" style="display:inline-block;">
                 <p>
                 {% for ne in available_namedentity %}
                 <button id='quick_namedentity_btn_{{gloss.id}}' class="quick_namedentity btn actionButton"
@@ -354,12 +369,9 @@ input {
                 </div>
                 </div>
                 </div>
-                </div>
-                </div>
-                {% endif %}
             </td>
             {% tags_for_object gloss as tag_list %}
-            <td class="field_tags" style="width:200px;padding-left:10px;">
+            <td class="field_tags" style="width:300px;padding-left:10px;">
                 <div class="tags-cell"
                      id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
             </td>
