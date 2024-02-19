@@ -691,7 +691,7 @@ def queryset_from_get(formclass, searchform, GET, qs):
                                                           definitions_with_this_text]
                 qs = qs.filter(pk__in=pks_for_glosses_with_these_definitions)
             elif get_key in ['createdBy']:
-                created_by_search_string = ' '.join(get_key.strip().split())  # remove redundant spaces
+                created_by_search_string = ' '.join(get_value.strip().split())  # remove redundant spaces
                 qs = qs.annotate(
                     created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
                     .filter(created_by__icontains=created_by_search_string)

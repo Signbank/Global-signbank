@@ -937,6 +937,10 @@ class LemmaUpdateForm(forms.ModelForm):
 
 class KeyMappingSearchForm(forms.ModelForm):
 
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    createdBy = forms.CharField(label=_('Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+
     class Meta:
 
         ATTRS_FOR_FORMS = {'class': 'form-control'}

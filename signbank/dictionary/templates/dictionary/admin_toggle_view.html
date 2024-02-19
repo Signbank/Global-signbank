@@ -77,6 +77,17 @@ $(document).ready(function() {
 <script type='text/javascript'>
 
 function clearForm() {
+      $('input').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio' || this_type == 'button') { return; };
+        if (this_type == 'date') {
+            $(this).attr('value', "");
+        } else {
+            $(this).val('');
+        };
+      });
      $('.js-example-basic-multiple').val(null).trigger('change');
 }
 
@@ -216,13 +227,17 @@ input {
 
                 <div class="panel panel-default">
                   <div class="panel-heading" data-toggle="collapse"
-                           data-target="#pub_search">{% trans "Search by Tags" %}</div>
+                           data-target="#pub_search">{% trans "Search by Attributes" %}</div>
 
                       <div id='pub_search' class='collapse'>
                       <table class='table table-condensed' style="width:65%;">
                       <tr>
                           <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
                           <td style="width:600px;">{{searchform.tags}}</td>
+                      </tr>
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_createdBy'>{% trans "Created By" %}</label></td>
+                          <td style="width:600px;">{{searchform.createdBy}}</td>
                       </tr>
                       </table>
                       </div>

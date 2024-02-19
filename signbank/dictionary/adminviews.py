@@ -5,6 +5,8 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.db.models import F, ExpressionWrapper, IntegerField, Count
 from django.db.models import OuterRef, Subquery
 from django.db.models.query import QuerySet
+from django.db.models.functions import Concat
+from django.db.models import Q, Count, CharField, TextField, Value as V
 from django.db.models.fields import BooleanField
 from django.db.models.sql.where import NothingNode, WhereNode
 from django.http import HttpResponse, HttpResponseRedirect, \
@@ -6517,7 +6519,17 @@ class ToggleListView(ListView):
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
+        if 'createdBy' in get and get['createdBy']:
+            get_value = get['createdBy']
+            query_parameters['createdBy'] = get_value.strip()
+            created_by_search_string = ' '.join(get_value.strip().split())  # remove redundant spaces
+            glosses_of_datasets = glosses_of_datasets.annotate(
+                created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
+                .filter(created_by__icontains=created_by_search_string)
 
+        # save the query parameters to a session variable
+        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session.modified = True
         self.query_parameters = query_parameters
 
         return glosses_of_datasets
