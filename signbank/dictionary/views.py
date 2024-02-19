@@ -335,7 +335,7 @@ def import_media(request,video):
                 glosses = Gloss.objects.filter(lemma__dataset=dataset, annotationidglosstranslation__language=language,
                                              annotationidglosstranslation__text__exact=filename_without_extension)
                 if glosses:
-                    gloss = glosses[0]
+                    gloss = glosses.first()
                     if glosses.count() > 1:
                         # not sure if this can happen
                         status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Warning: Duplicate gloss found.')
@@ -366,7 +366,7 @@ def import_media(request,video):
                 else:
                     video_file_path = os.path.join(lang3code_folder_path, filename)
                     vfile = File(open(video_file_path, 'rb'))
-                    video = gloss.add_video(request.user, vfile)
+                    video = gloss.add_video(request.user, vfile, '')
                     vfile.close()
                     overwritten = GlossVideo.objects.filter(gloss=gloss).count() > 1
                     if overwritten:
@@ -378,6 +378,7 @@ def import_media(request,video):
                         os.remove(video_file_path)
                     except OSError as oserror:
                         errors.append("OSError: {}".format(oserror))
+                        errors.append("Cannot delete the source video: " + video_file_path)
 
                 if overwritten:
                     overwritten_files.append(filename)

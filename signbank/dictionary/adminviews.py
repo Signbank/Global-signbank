@@ -3682,6 +3682,9 @@ class DatasetManagerView(ListView):
 
         form = EAFFilesForm()
 
+        zippedvideosform = ZippedVideosForm()
+        context['zippedvideosform'] = zippedvideosform
+
         default_language_choice_dict = dict()
         for language in dataset_languages:
             default_language_choice_dict[language.name] = language.name

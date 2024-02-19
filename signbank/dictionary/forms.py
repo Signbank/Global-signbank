@@ -580,6 +580,12 @@ class OtherMediaForm(forms.ModelForm):
         else:
             return data
 
+
+class ZippedVideosForm(forms.Form):
+
+    file = forms.FileField()
+
+
 class CSVMetadataForm(forms.Form):
 
     file = forms.FileField()

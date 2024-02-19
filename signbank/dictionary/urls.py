@@ -114,6 +114,8 @@ urlpatterns = [
             signbank.api_interface.get_gloss_data_json, name='get_gloss_data_json'),
     re_path(r'get_fields_data/(?P<datasetid>.*)/$',
             signbank.api_interface.get_fields_data_json, name='get_fields_data_json'),
+    re_path(r'upload_zipped_videos_folder/$',
+            signbank.api_interface.upload_zipped_videos_folder, name='upload_zipped_videos_folder'),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
