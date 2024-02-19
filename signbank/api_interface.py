@@ -22,6 +22,10 @@ def api_fields(dataset, advanced=False):
     api_fields_2023 = []
     if not dataset:
         dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+    if advanced:
+        for language in dataset.translation_languages.all():
+            language_field = _("Lemma ID Gloss") + ": %s" % language.name
+            api_fields_2023.append(language_field)
     for language in dataset.translation_languages.all():
         language_field = _("Annotation ID Gloss") + ": %s" % language.name
         api_fields_2023.append(language_field)
@@ -38,8 +42,10 @@ def api_fields(dataset, advanced=False):
         api_fields_2023.append("Word Class")
         api_fields_2023.append("Named Entity")
         api_fields_2023.append("Link")
+        api_fields_2023.append("Video")
     else:
         api_fields_2023.append("Link")
+        api_fields_2023.append("Video")
 
         activate(LANGUAGES[0][0])
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
