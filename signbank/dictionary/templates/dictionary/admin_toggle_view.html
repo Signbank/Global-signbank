@@ -149,7 +149,7 @@ function ready_videos(el) {
     border-color: Grey;
     border-radius: 8px;
     text-align: center;
-    color: Grey;
+    color: Black;
     background-color: white;
 }
 .actionButton:hover {
@@ -207,7 +207,7 @@ input {
 
 <div id="definitionblock" style="padding-top: 30px;">
 
-    <div class="keywordsSenses" id="keywordsSenses">
+    <div id="keywordsSenses">
     <h3>{% trans "Annotation Toggle View" %}</h3>
         <h4>{% trans "On initial view, prior to searching, recently added glosses are shown below." %}</h4>
 
@@ -218,7 +218,7 @@ input {
             <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
             </div>
                 <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
-                <div id='searchformwell' class='well search-results-collapsable'>
+                <div id='searchformwell' class='well'>
 
                 <div class="hidden">
                     <input name='sortOrder' class='form-control' value='' >
