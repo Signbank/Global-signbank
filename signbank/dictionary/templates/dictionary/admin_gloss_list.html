@@ -29,7 +29,9 @@
     color: black !important;
     font-weight: bold;
 }
-
+.select2-selection__choice {
+    color: black;
+}
 .pub-row tr {float: left!important; width: 50%!important;}
 </style>
 
@@ -82,7 +84,7 @@ $(document).ready(function() {
         $('option',target_pulldown).each(function(){
             var this_code = $(this).attr('value');
             var this_color = pulldown_lookup[this_code];
-            $(this).attr('style','background-color:#'+this_color);
+            $(this).attr('style','color:black;background-color:#'+this_color);
         });
     }
 
@@ -116,7 +118,7 @@ $(document).ready(function() {
             var pulldown_colors_str = new String(pulldown_colors);
             var pulldown_lookup = JSON.parse(pulldown_colors_str);
             var this_color = pulldown_lookup[this_code];
-            var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;background-color:#"+this_color+"'>"+color_text+"</span>");
+            var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:black;background-color:#"+this_color+"'>"+color_text+"</span>");
             return $color_text_node
         } else {
             return color_text;
@@ -183,12 +185,18 @@ $(document).ready(function() {
          $('#id_dialects').val(null).trigger('change');
     };
 
+     function identityOption(optionNode) {
+        var color_text = optionNode.text;
+        var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:black;background-color:inherit'>"+color_text+"</span>");
+        return $color_text_node
+     }
      makeMultipleSelect('id_tags', 'tags[]');
      $('#id_tags').select2({
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve',
-        placeholder: ''
+        placeholder: '',
+        templateResult: identityOption
      });
 
      if (query_parameters_keys.includes('tags[]')) {

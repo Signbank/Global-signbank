@@ -36,7 +36,9 @@
     color: black !important;
     font-weight: bold;
 }
-
+.select2-selection__choice {
+    color: black;
+}
 .pub-row tr {float: left!important; width: 50%!important;}
 </style>
 
@@ -174,13 +176,18 @@ $(document).ready(function() {
     } else {
          $('#id_dialects').val(null).trigger('change');
     };
-
+     function identityOption(optionNode) {
+        var color_text = optionNode.text;
+        var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:black;background-color:inherit'>"+color_text+"</span>");
+        return $color_text_node
+     }
      makeMultipleSelect('id_tags', 'tags[]');
      $('#id_tags').select2({
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve',
-        placeholder: ''
+        placeholder: '',
+        templateResult: identityOption
      });
 
      if (query_parameters_keys.includes('tags[]')) {

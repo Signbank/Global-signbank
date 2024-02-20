@@ -66,7 +66,7 @@
         <br>
         {% for dataset in selected_datasets %}
         {% trans "For Dataset " %}{{dataset.acronym}}:
-        <table class="table table-striped center" style="width:80%;margin-left:50px;">
+        <table class="table table-bordered center" style="width:80%;margin-left:50px;">
             <thead>
             <tr>
                 <th style="width:150px;">Dataset</th>
@@ -81,6 +81,12 @@
             <tbody>
             <tr>
                 <td>{{dataset.acronym}}</td>
+                {% for dataset_language in dataset.translation_languages.all %}
+                <th style="width:200px;"></th>
+                {% endfor %}
+                {% for dataset_language in dataset.translation_languages.all %}
+                <th style="width:300px;"></th>
+                {% endfor %}
             </tr>
             </tbody>
         </table>
@@ -114,7 +120,7 @@
             {% if creation or gloss_already_exists %}
                 {% if gloss_already_exists %}
                 <h4>{% trans "Already Existing Annotation ID Glosses:" %}</h4>
-                <table class="table table-striped">
+                <table class="table table-bordered">
                     <tr>
                         <th>{% trans "Dataset" %}</th>
                          {% with seen_datasets.0 as seen_dataset %}
@@ -153,7 +159,7 @@
                 {% endif %}
                 {% if creation %}
                 <h4>{% trans "Glosses to Create:" %}</h4>
-                <table class="table table-striped">
+                <table class="table table-bordered">
                     <tr>
                         <th>{% trans "Dataset" %}</th>
                          {% with seen_datasets.0 as seen_dataset %}

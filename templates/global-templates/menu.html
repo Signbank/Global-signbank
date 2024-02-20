@@ -4,13 +4,26 @@
 <!-- This was commented out, WEBSITE_LANGUAGE is already defined in baselayout.html -->
 <!--{% get_current_language as LANGUAGE %}-->
 
+<script>
+function toggle_dark_mode(e) {
+  var element = document.body;
+  element.classList.toggle("dark-mode");
+  $(".modal").each(function () {
+        if ($(this).hasClass("dark-mode")) {
+            $(this).removeClass("dark-mode");
+        } else {
+            $(this).addClass("dark-mode");
+        }
+  });
+}
+</script>
 <style>
-  #affix-bar.affix {
+#affix-bar.affix {
     position:fixed;
     top: 0;
     z-index: 1000 !important;
-    background: white;
-  }
+    background: inherit;
+}
 </style>
 
 <div id="signbank-bar" class="navbar navbar-fixed-top" style="box-sizing:content-box;">
@@ -119,6 +132,9 @@
     </div>
       <div class="nav navbar-right" style="height: 10px;box-sizing:content-box;">
         {% if user.is_authenticated %}
+          <div id="toggle_dark_mode">
+              <button onclick="toggle_dark_mode()" class="btn btn-primary">{% trans "Dark Mode" %}</button>
+          </div>
             <div class='navbar-text'>
                 <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
         {% else %}

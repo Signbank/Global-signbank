@@ -63,7 +63,7 @@
         <br>
         {% for dataset in selected_datasets %}
         {% trans "For Dataset " %}{{dataset.acronym}}:
-        <table class="table table-striped center" style="width:80%;margin-left:50px;">
+        <table class="table table-bordered center" style="width:80%;margin-left:50px;">
             <thead>
             <tr>
                 <th style="width:150px;">Signbank ID</th>
@@ -95,6 +95,9 @@
                         <option>True</option>
                     </select>
                 </td>
+                {% for dataset_language in dataset.translation_languages.all %}
+                <th style="width:200px;"></th>
+                {% endfor %}
             </tr>
             </tbody>
         </table>
@@ -126,7 +129,7 @@
 
         {% elif creation %}
             <h4>{% trans "Sentences to Create:" %}</h4>
-            <table class="table table-striped">
+            <table class="table table-bordered">
                 <tr>
                     <th>{% trans "Signbank ID" %}</th>
                     <th>{% trans "Dataset" %}</th>

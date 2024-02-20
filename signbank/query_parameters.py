@@ -603,6 +603,7 @@ def query_parameters_toggle_fields(query_parameters):
 
     toggle_publication_fields = []
     if hasattr(settings, 'SEARCH_BY') and 'publication' in settings.SEARCH_BY.keys():
+        print('publication fields: ', settings.SEARCH_BY['publication'])
         for publication_field in settings.SEARCH_BY['publication']:
             toggle_publication_fields.append((publication_field,
                                               GlossSearchForm.get_field(publication_field).label.encode(

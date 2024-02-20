@@ -1,9 +1,9 @@
 {% extends 'baselayout.html' %}
 {% load i18n %}
+{% load bootstrap3 %}
 {% load stylesheet %}
 {% load annotation_idgloss_translation %}
 {% load has_group %}
-{% load bootstrap3 %}
 
 {% load guardian_tags %}
 
@@ -57,7 +57,7 @@
             </td>
         </tr>
         <tr><th>{% trans "Owner &amp; Contact person(s)" %}</th>
-            <td>
+            <td class="table-cell">
                 {% for owner in dataset.owners.all %}
                     {% if forloop.last %}
                         {{owner.first_name}} {{owner.last_name}} ({{owner.username}})
@@ -72,12 +72,13 @@
                         <div class="hidden">
                             <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
                         </div>
-                        <table class='table table-condensed'>
+                        <table class='table table-condensed' style="background: transparent;">
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
-                            <input type="hidden" name="username" id="username" value=""/>
+                            <input class='form-control usertypeahead' size="36"
+                                   placeholder='{% trans "Username" %}'>
+                            <input type="hidden" name="username" id="username" value="">
                             </td>
                             <td>
                             <input class='btn btn-primary' id='add_owner' name='add_owner' type='submit' value='{% trans "Add Owner" %}'>

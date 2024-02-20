@@ -108,6 +108,8 @@ legend
 .modal-dialog {
   margin: 300px auto;
   z-index: 1100 !important;
+  background-color: inherit;
+  color: inherit;
 }
 
 .global_sb_logo
