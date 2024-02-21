@@ -286,11 +286,8 @@ def convert_query_parameters_to_filter(query_parameters):
             created_after_date = DT.datetime.strptime(get_value, settings.DATE_FORMAT).date()
             query_list.append(Q(creationDate__range=(created_after_date, DT.datetime.now())))
         elif get_key == 'createdBy':
-            created_by_first_name = [gloss.pk for gloss in Gloss.objects.filter(creator__first_name__icontains=get_value)]
-            created_by_last_name = [gloss.pk for gloss in Gloss.objects.filter(creator__last_name__icontains=get_value)]
-            pks_for_glosses_with_matching_creator = created_by_last_name + created_by_first_name
-            query_list.append(Q(pk__in=pks_for_glosses_with_matching_creator))
-
+            query_list.append(Q(**{'creator__first_name__icontains': get_value}) |
+                              Q(**{'creator__last_name__icontains': get_value}))
         elif get_key in multiple_select_gloss_fields:
             mapped_key = get_key[:-2]
             q_filter = mapped_key + '__machine_value__in'
@@ -944,12 +941,9 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: potential_pks})
             elif get_key in ['createdBy']:
-                first_name = gloss_prefix + 'creator__first_name'
-                last_name = gloss_prefix + 'creator__last_name'
-                created_by_search_string = ' '.join(get_key.strip().split())  # remove redundant spaces
-                qs = qs.annotate(
-                    created_by=Concat(first_name, V(' '), last_name, output_field=CharField())) \
-                    .filter(created_by__icontains=created_by_search_string)
+                first_name = gloss_prefix + 'creator__first_name__icontains'
+                last_name = gloss_prefix + 'creator__last_name__icontains'
+                qs = qs.filter(Q(**{first_name:get_value}) | Q(**{last_name:get_value}))
             elif hasattr(searchform, 'gloss_search_field_prefix') and \
                     get_key.startswith(formclass.gloss_search_field_prefix):
                 language_code_2char = get_key[len(formclass.gloss_search_field_prefix):]

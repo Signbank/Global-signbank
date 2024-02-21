@@ -1423,17 +1423,17 @@ class Gloss(models.Model):
         # Annotation Idgloss translations
         if self.dataset:
             for language in self.dataset.translation_languages.all():
-                annotationidglosstranslation = self.annotationidglosstranslation_set.filter(language=language)
-                if annotationidglosstranslation and len(annotationidglosstranslation) > 0:
-                    field_name = _("Annotation ID Gloss") + ": %s" % language.name
-                    if field_name in fieldnames:
-                        fields[field_name] = annotationidglosstranslation.first().text
-            for language in self.dataset.translation_languages.all():
                 lemmaidglosstranslations = self.lemma.lemmaidglosstranslation_set.filter(language=language)
                 if lemmaidglosstranslations and len(lemmaidglosstranslations) > 0:
                     field_name = _("Lemma ID Gloss") + ": %s" % language.name
                     if field_name in fieldnames:
                         fields[field_name] = lemmaidglosstranslations.first().text
+            for language in self.dataset.translation_languages.all():
+                annotationidglosstranslation = self.annotationidglosstranslation_set.filter(language=language)
+                if annotationidglosstranslation and len(annotationidglosstranslation) > 0:
+                    field_name = _("Annotation ID Gloss") + ": %s" % language.name
+                    if field_name in fieldnames:
+                        fields[field_name] = annotationidglosstranslation.first().text
 
         # Get the keywords associated with this sign
         allkwds = ", ".join([x.translation.text for x in self.translation_set.all()])
@@ -1485,6 +1485,11 @@ class Gloss(models.Model):
 
         if "Link" in fieldnames:
             fields["Link"] = settings.URL + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
+
+        if "Video" in fieldnames:
+            video_path = self.get_video_url()
+            if video_path:
+                fields["Video"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
 
         return fields
 
