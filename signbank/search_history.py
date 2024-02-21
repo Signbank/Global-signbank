@@ -180,9 +180,15 @@ def get_query_parameters(query):
             if field_name == 'tags':
                 # tags are multi-select
                 field_name = field_name + '[]'
+                stored_value = getattr(multilingual, 'fieldValue')
+                # the stored value does not have spaces
+                # but __str__ of Tag converts underscore to spaces
+                # replace just in case
+                underscored_value = stored_value.replace(' ', '_')
+                tag = Tag.objects.get(name=underscored_value)
                 if field_name not in search_history_parameters.keys():
                     search_history_parameters[field_name] = []
-                search_history_parameters[field_name].append(multilingual.fieldValue)
+                search_history_parameters[field_name].append(str(tag.id))
             else:
                 search_history_parameters[field_name] = multilingual.fieldValue
     return search_history_parameters
@@ -224,8 +230,9 @@ def save_query_parameters(request, query_name, query_parameters):
                 language_code_2char = LANGUAGE_CODE
                 language = Language.objects.get(language_code_2char=language_code_2char)
                 for tag_value in tag_values:
+                    tag = Tag.objects.get(id=int(tag_value))
                     qp = QueryParameterMultilingual(fieldName=search_field, fieldLanguage=language,
-                                                    fieldValue=tag_value, search_history=search_history)
+                                                    fieldValue=tag.name, search_history=search_history)
                     qp.save()
                     search_history.parameters.add(qp)
             elif key[:-2] in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:

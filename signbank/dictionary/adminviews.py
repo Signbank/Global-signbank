@@ -6319,11 +6319,9 @@ class KeywordListView(ListView):
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
             if vals:
-                print(vals)
                 query_parameters['tags[]'] = vals
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
-                print(glosses_with_tag)
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
 
         self.query_parameters = query_parameters
