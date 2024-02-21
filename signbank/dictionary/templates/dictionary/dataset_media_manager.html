@@ -1,0 +1,91 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load has_group %}
+{% load bootstrap3 %}
+
+{% load guardian_tags %}
+
+
+{% block extrajs %}
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+
+    <script type='text/javascript'>
+    var url = '{{ PREFIX_URL }}';
+
+    var edit_mode_str = '{% trans "Edit" %}';
+    var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
+    var saving_str = '{% trans "Saving..." %}'
+    var csrf_token = '{{csrf_token}}';
+    var edit_post_url = '{{PREFIX_URL}}/datasets/change_details/{{dataset.id}}';
+    var language_choices = '{{default_language_choice_list|safe}}';
+    console.log(language_choices);
+    </script>
+    <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
+
+{% endblock %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Dataset Media{% endblocktrans %}
+{% endblock %}
+
+{% block content %}
+<div>
+<h3>{% trans "Dataset Media Manager" %}</h3>
+
+    <div class='pull-right'>
+        {% get_obj_perms request.user for dataset as "dataset_perms" %}
+        {% if "change_dataset" in dataset_perms %}
+        {% if request.user|has_group:"Dataset_Manager" %}
+         <span id='edit_message' style="padding-right: 1.8em;"></span>
+         <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
+         {% endif %}
+         {% endif %}
+    </div>
+
+    <table class='table table-responsive'>
+        <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:800px;">{{dataset.name}}</td></tr>
+        <tr><th>{% trans "Acronym" %}</th><td class='edit edit_text' align="left" id='acronym' name='acronym'
+                value="{{datasetform.acronym.value|default:'-'}}">{{dataset.acronym}}</td></tr>
+        <tr><th>Number of glosses</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
+        <tr><th>{% trans "Accessible by others" %}</th>
+            <td class="edit edit_check" id='is_public' type="hidden" value='{% if dataset.is_public %}True{% else %}False{% endif %}' name="is_public">
+                {% if dataset.is_public %}True{% else %}False{% endif %}
+            </td>
+        </tr>
+        <tr>
+        <th>
+          <div class="text-container"><p>{% trans "Zipped Videos Folder" %}</p></div>
+        </th>
+        <td>
+            <form id="upload_zipped_videos_{{dataset.acronym}}"
+                  action="{{PREFIX_URL}}/dictionary/upload_zipped_videos_folder/"
+                  method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <label for="id_file">{{zippedvideosform.label}}</label>
+                <span>{{zippedvideosform.file}}</span>
+                <input type='hidden' name='dataset' value='{{dataset.id}}'>
+                <input type="submit" value="Upload Zipped File" class="btn btn-primary">
+            </form>
+        </td>
+        </tr>
+        <tr>
+            <th>{% trans "Uploaded Video Files" %}</th>
+            <td>
+                <list>
+                    {% for videopath in uploaded_video_files %}
+                    <li>
+                        {{videopath}}
+                    </li>
+                    {% endfor %}
+                </list>
+            </td>
+        </tr>
+    </table>
+
+</div>
+
+{% endblock %}

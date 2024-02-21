@@ -70,9 +70,6 @@
           <th style="width:80px;">
               <div class="text-container"><p>{% trans "Hyperlinks" %}</p></div>
           </th>
-          <th>
-              <div class="text-container"><p>{% trans "Zipped Videos Folder" %}</p></div>
-          </th>
           <th style="width:250px;">
                 <div class="text-container hasTooltip"><p>{% trans "Metadata CSV" %}</p>
               <span class="isTooltip" style="width: 400px;">The Metadata CSV currently supports:<br>
@@ -262,17 +259,6 @@
                         <input class='btn btn-default' type='submit' name='format' id='format' value='CSV' >
                   </form>
               </div>
-            </td>
-            <td>
-                <form id="upload_zipped_videos_{{dataset.acronym}}"
-                      action="{{PREFIX_URL}}/dictionary/upload_zipped_videos_folder/"
-                      method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <label for="id_file">{{zippedvideosform.label}}</label>
-                    <span>{{zippedvideosform.file}}</span>
-                    <input type='hidden' name='dataset_acronym' value='{{dataset.acronym}}'>
-                    <input type="submit" value="Upload Zipped File">
-                </form>
             </td>
           <td>
             <div data-toggle="collapse" href="#dataset_{{dataset.acronym}}_metadata" data-target=".multi-collapse-meta-{{dataset.pk}}">

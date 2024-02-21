@@ -67,6 +67,7 @@ from signbank.dictionary.context_data import (get_context_data_for_list_view, ge
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to, gloss_related_objects,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
+from signbank.api_interface import uploaded_video_files
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -3682,9 +3683,6 @@ class DatasetManagerView(ListView):
 
         form = EAFFilesForm()
 
-        zippedvideosform = ZippedVideosForm()
-        context['zippedvideosform'] = zippedvideosform
-
         default_language_choice_dict = dict()
         for language in dataset_languages:
             default_language_choice_dict[language.name] = language.name
@@ -4250,6 +4248,64 @@ def dataset_detail_view_by_acronym(request, acronym):
         dataset = get_object_or_404(Dataset, acronym=acronym)
         return DatasetDetailView.as_view()(request, pk=dataset.pk)
     raise Http404()
+
+
+class DatasetMediaView(DetailView):
+    model = Dataset
+    context_object_name = 'dataset'
+    template_name = 'dictionary/dataset_media_manager.html'
+
+    # set the default dataset, this should not be empty
+    dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+
+    # Overriding the get method get permissions right
+    def get(self, request, *args, **kwargs):
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        try:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
+            translated_message = _('The requested dataset does not exist.')
+            return show_warning(request, translated_message, selected_datasets)
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(DatasetMediaView, self).get_context_data(**kwargs)
+
+        dataset = context['dataset']
+
+        context['default_language_choice_list'] = {}
+        translation_languages = dataset.translation_languages.all()
+        default_language_choice_dict = dict()
+        for language in translation_languages:
+            default_language_choice_dict[language.name] = language.name
+        context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
+
+        zippedvideosform = ZippedVideosForm()
+        context['zippedvideosform'] = zippedvideosform
+
+        context['uploaded_video_files'] = uploaded_video_files(dataset)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+        glosses = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None)
+        nr_of_glosses = glosses.count()
+        nr_of_public_glosses = glosses.filter(inWeb=True).count()
+
+        context['nr_of_glosses'] = nr_of_glosses
+        context['nr_of_public_glosses'] = nr_of_public_glosses
+
+        context['messages'] = messages.get_messages(self.request)
+
+        return context
 
 
 class DatasetFieldChoiceView(ListView):
