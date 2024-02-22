@@ -18,7 +18,7 @@ from signbank.feedback.models import *
 from signbank.dictionary.update import (update_signlanguage, update_dialect)
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
-                                            update_tags, subst_notes)
+                                            update_tags, subst_notes, subst_semanticfield)
 import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
@@ -1392,6 +1392,12 @@ def import_csv_update(request):
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
                 update_blend_morphology(gloss, new_human_value_list)
+
+                continue
+            if fieldname == 'Semantic Field':
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                subst_semanticfield(gloss, new_human_value_list)
 
                 continue
 

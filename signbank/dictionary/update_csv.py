@@ -290,3 +290,32 @@ def subst_notes(gloss, values):
         defn.save()
 
     return
+
+
+def subst_semanticfield(gloss, values):
+    # this is called by csv_import to modify the notes for a gloss
+    new_semanticfields_to_save = []
+
+    # fetch all the valid semantic field choices
+    # create a lookup dictionary mapping names to objects
+    # the name is a unique field in the model
+    semanticfield_choices = {}
+    for sf in SemanticField.objects.all():
+        semanticfield_choices[sf.name] = sf
+
+    # get the SemanticField objects for the values
+    for value in values:
+        # there's a conditional here, although it's not really needed
+        # it is impossible for a value not to be found among the choices
+        # we test for it among the keys to avoid a key error
+        # if a value is not found it is simply ignored
+        if value in semanticfield_choices.keys():
+            new_semanticfields_to_save.append(semanticfield_choices[value])
+
+    # clear the old semantic fields only after we've parsed and checked the new ones
+    gloss.semField.clear()
+    for sf in new_semanticfields_to_save:
+        gloss.semField.add(sf)
+    gloss.save()
+
+    return
