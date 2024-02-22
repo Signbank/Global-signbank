@@ -1052,6 +1052,20 @@ def import_csv_update(request):
             if notes_radio == 'update':
                 notes_assign_toggle = 'update'
 
+        # the obtains the semantic field togggle
+        semfield_toggle = 'keep'
+        if 'toggle_semfield' in request.POST:
+            semfield_radio = request.POST['toggle_semfield']
+            if semfield_radio == 'erase':
+                semfield_toggle = 'erase'
+
+        # the obtains the semantic field assign togggle
+        semfield_assign_toggle = 'replace'
+        if 'toggle_semfield_assign' in request.POST:
+            semfield_radio = request.POST['toggle_semfield_assign']
+            if semfield_radio == 'update':
+                semfield_assign_toggle = 'update'
+
         # the obtains the tags togggle
         tags_toggle = 'keep'
         if 'toggle_tags' in request.POST:
@@ -1234,7 +1248,8 @@ def import_csv_update(request):
                 (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
                             compare_valuedict_to_gloss(value_dict, gloss.id, user_datasets_names, nl,
                                                        earlier_updates_same_csv, earlier_updates_lemmaidgloss,
-                                                       notes_toggle, notes_assign_toggle, tags_toggle)
+                                                       notes_toggle, notes_assign_toggle,
+                                                       semfield_toggle, semfield_assign_toggle, tags_toggle)
                 changes += changes_found
 
                 if len(errors_found):
