@@ -141,7 +141,7 @@ var busy_editing = 0;
 
 function disable_edit() {
     $('.edit').editable('disable');
-    $('.edit').css('color', 'black');
+    $('.edit').css('color', 'inherit');
     $('#edit_message').text('');
     if (busy_editing) {
         strong_hand = $('#domhndsh').text();
@@ -242,8 +242,11 @@ function enable_edit() {
     $('.copy-button').hide();
     $('.edit').editable('enable');
     $('.edit').css('color', 'red');
+    $('.edit_list').css('color', 'red');
+    $('.edit_check').css('color', 'red');
+
     $('#edit_message').text('Click on red text to edit  ');
-    $('#edit_message').css('color', 'black');
+    $('#edit_message').css('color', 'inherit');
     strong_hand = $('#domhndsh').text();
     weak_hand = $('#subhndsh').text();
     lemma_group_text = $('#idgloss').text();
@@ -268,10 +271,10 @@ function enable_edit() {
     $('#add_morphemedefinition_form').show();
     $('.definition_delete').show();
     $('.relation_delete').show();
-    $('.relation_delete').css('color', 'black');
+    $('.relation_delete').css('color', 'inherit');
     $('.other-video-delete').show();
     $('.relationtoforeignsign_delete').show();
-    $('.relationtoforeignsign_delete').css('color', 'black');
+    $('.relationtoforeignsign_delete').css('color', 'inherit');
     $('.morphology-definition-delete').show();
     $('.morpheme-definition-delete').show();
     $('.blend-definition-delete').show();
@@ -845,7 +848,7 @@ function update_foreign_delete(change_summary)
     var deleted_relation_for_gloss = $(this).attr('id');
     var deleted_relation = deleted_relation_for_gloss.split('_');
     var deleted_relation_id = deleted_relation[1];
-    $(this).css("color", "black");
+    $(this).css("color", "inherit");
     var search_id = 'foreign_' + deleted_relation_id;
     $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
   	$(this).html('');
@@ -857,7 +860,7 @@ function update_relation_delete(change_summary)
     var deleted_relation_for_gloss = $(this).attr('id');
     var deleted_relation = deleted_relation_for_gloss.split('_');
     var deleted_relation_id = deleted_relation[1];
-    $(this).css("color", "black");
+    $(this).css("color", "inherit");
     var search_id = 'row_' + deleted_relation_id;
     $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
   	$(this).html('');

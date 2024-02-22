@@ -241,7 +241,8 @@ function checkKey(e)
     </style>
 <style>
 .preview {
-    background-color: white !important;
+    background-color: inherit !important;
+    color: inherit !important;
     height: 40;
     width: auto;
     position: relative;
@@ -303,8 +304,8 @@ select option {
 </style>
 <style>
 .form-group {
-    background-color: white;
-    color: black;
+    background-color: inherit;
+    color: inherit;
 }
 option:not(:checked) {
     background-color: white !important;
@@ -336,16 +337,16 @@ option:not(:checked) {
 {% endblock %}
 
 {% block content %}
-    <div class="navbar" id="searchquery" style="background-color:white;z-index: 50;">
+    <div class="navbar" id="searchquery" style="background-color:inherit;z-index: 50;">
 
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
     <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'
             style="z-index: 50;">{% trans "QUERY" %}</span></button>
     {% endif %}
-    <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+    <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:inherit;border:0;box-sizing:content-box; z-index: 50;">
         {% if request.session.search_results %}{# See if search_results in sessions is empty #}
 
-        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:inherit;">
         </div>
         {% endif %}
     </div>
@@ -471,7 +472,7 @@ option:not(:checked) {
 
 {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
 
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;">
     <ul class='nav nav-tabs'>
@@ -883,7 +884,7 @@ option:not(:checked) {
     {% endif %}
 
 </div>
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background: white;">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background: inherit;">
 
         {% include "dictionary/glosstags.html" %}
 
@@ -1725,7 +1726,7 @@ option:not(:checked) {
                     <tr >
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >
-                            <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
+                            <a id="strong_hand_link" style="color: {% if StrongHand %}blue{% else %}red{% endif %}; display: visible;"
                                             {% if StrongHand %}
                                                 href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/"
                                             {% endif %}>{{value}}</a>

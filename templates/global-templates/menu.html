@@ -131,10 +131,10 @@ function toggle_dark_mode(e) {
         {% endif %}
     </div>
       <div class="nav navbar-right" style="height: 10px;box-sizing:content-box;">
-        {% if user.is_authenticated %}
           <div id="toggle_dark_mode">
               <button onclick="toggle_dark_mode()" class="btn btn-primary">{% trans "Dark Mode" %}</button>
           </div>
+        {% if user.is_authenticated %}
             <div class='navbar-text'>
                 <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
         {% else %}

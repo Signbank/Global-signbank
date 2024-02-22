@@ -37,14 +37,17 @@ body {
     margin-bottom: 15px;
     margin-top: 0px;
     background-color: inherit;
+    color: inherit;
 }
 
 #content {
     background-color: inherit;
+    color: inherit;
 }
 
 #signinfo {
     background-color: inherit;
+    color: inherit;
     margin-bottom: 0px;
     margin-top: 10px;
     padding-left: 0px;
@@ -52,6 +55,7 @@ body {
 
 #signinfo .navbar-text {
     color: inherit;
+    background-color: inherit;
 }
 #signinfo #editbutton {
     margin-right: 15px;
@@ -69,6 +73,7 @@ body {
 #definitionblock {
    margin-top: 0px;
    background-color: inherit;
+   color: inherit;
 }
 
 @media (min-width: 992px) {
@@ -92,6 +97,7 @@ body {
    width:450px;
    height:259px;
    background-color: inherit;
+   color: inherit;
 }
 
 #novideo
@@ -167,6 +173,7 @@ body {
 
 #searchformwell {
     background-color: inherit;
+    color: inherit;
 }
 
 #adminsearch td input {
@@ -222,6 +229,7 @@ body {
 
 .edit_enabled {
     background-color: red;
+    color: inherit;
 }
 
 #definition .table th {
@@ -716,6 +724,14 @@ canvas{
     background-color: Pink;
 }
 
+.btn-toolbar {
+    background-color: inherit;
+    color: inherit;
+}
+.btn-group {
+    background-color: inherit;
+    color: inherit;
+}
 .container {
     background-color: inherit;
     color: inherit;
@@ -741,7 +757,17 @@ canvas{
     color: inherit;
 }
 
+.panel-heading {
+    background-color: inherit;
+    color: black;
+}
+
 .panel-body {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel-footer {
     background-color: inherit;
     color: inherit;
 }
@@ -752,7 +778,7 @@ form {
 }
 
 .table .table-condensed {
-    background-color: transparent;
+    background-color: inherit;
     color: inherit;
 }
 
@@ -771,6 +797,18 @@ tbody tr {
     color: inherit;
 }
 
+tr td {
+    background-color: inherit;
+    color: inherit;
+}
+td {
+    background-color: inherit;
+    color: inherit;
+}
+tr th {
+    background-color: inherit;
+    color: inherit;
+}
 @body-bg {
     background-color: inherit;
     color: inherit;
@@ -823,4 +861,30 @@ input {
     background-color: inherit;
     color: inherit;
 }
+.edit .edit_list {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_text {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_area {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_int {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_check {
+    background-color: inherit;
+    color: inherit !important;
+}
+/* this is the Edit button in e.g., Gloss Detail View */
+.edit_enabled {
+    background-color: red;
+    color: white !important;
+}
+
 
