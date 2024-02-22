@@ -18,7 +18,7 @@ from signbank.feedback.models import *
 from signbank.dictionary.update import (update_signlanguage, update_dialect)
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
-                                            update_tags, subst_notes)
+                                            update_tags, subst_notes, subst_semanticfield)
 import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
@@ -1052,6 +1052,20 @@ def import_csv_update(request):
             if notes_radio == 'update':
                 notes_assign_toggle = 'update'
 
+        # the obtains the semantic field togggle
+        semfield_toggle = 'keep'
+        if 'toggle_semfield' in request.POST:
+            semfield_radio = request.POST['toggle_semfield']
+            if semfield_radio == 'erase':
+                semfield_toggle = 'erase'
+
+        # the obtains the semantic field assign togggle
+        semfield_assign_toggle = 'replace'
+        if 'toggle_semfield_assign' in request.POST:
+            semfield_radio = request.POST['toggle_semfield_assign']
+            if semfield_radio == 'update':
+                semfield_assign_toggle = 'update'
+
         # the obtains the tags togggle
         tags_toggle = 'keep'
         if 'toggle_tags' in request.POST:
@@ -1234,7 +1248,8 @@ def import_csv_update(request):
                 (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
                             compare_valuedict_to_gloss(value_dict, gloss.id, user_datasets_names, nl,
                                                        earlier_updates_same_csv, earlier_updates_lemmaidgloss,
-                                                       notes_toggle, notes_assign_toggle, tags_toggle)
+                                                       notes_toggle, notes_assign_toggle,
+                                                       semfield_toggle, semfield_assign_toggle, tags_toggle)
                 changes += changes_found
 
                 if len(errors_found):
@@ -1392,6 +1407,12 @@ def import_csv_update(request):
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
                 update_blend_morphology(gloss, new_human_value_list)
+
+                continue
+            if fieldname == 'Semantic Field':
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                subst_semanticfield(gloss, new_human_value_list)
 
                 continue
 
