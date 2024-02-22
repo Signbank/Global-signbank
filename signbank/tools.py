@@ -234,7 +234,7 @@ def create_gloss_from_valuedict(valuedict, dataset, row_nr, earlier_creation_sam
 
 def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                                earlier_updates_same_csv, earlier_updates_lemmaidgloss,
-                               notes_toggle, notes_assign_toggle, tags_toggle):
+                               notes_toggle, notes_assign_toggle, semfield_toggle, semfield_assign_toggle, tags_toggle):
     """Takes a dict of arbitrary key-value pairs, and compares them to a gloss"""
     # called by import_csv_update in views.py
 
@@ -726,6 +726,42 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
 
             elif human_key == 'Semantic Field':
 
+                if new_human_value in ['', '0', ' ', None, 'None']:
+                    new_human_value = '-'
+                    new_human_value_list = []
+                else:
+                    new_human_value_list = [v.strip() for v in new_human_value.split(',')]
+
+                if semfield_toggle == 'keep' and new_human_value == '-':
+                    continue
+
+                # make sure all fields exist
+                new_values_sorted_lookup = SemanticField.objects.filter(name__in=new_human_value_list).order_by('machine_value')
+                if new_values_sorted_lookup.count() != len(new_human_value_list):
+                    error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                        gloss_id) + '), could not parse ' + new_human_value + ' for ' + human_key
+                    errors_found += [error_string]
+                    continue
+                new_semfield_sorted_lookup_values = [str(sf.name) for sf in new_values_sorted_lookup]
+                new_semanticfield_value = ', '.join(new_semfield_sorted_lookup_values)
+                original_sorted_semfield_values = [str(sf.name) for sf in gloss.semField.all().order_by('machine_value')]
+                original_semanticfield_value = ", ".join(original_sorted_semfield_values)
+                if new_semanticfield_value != original_semanticfield_value:
+                    if semfield_assign_toggle == 'update':
+                        combined_semfield = original_sorted_semfield_values + new_semfield_sorted_lookup_values
+                        compined_values_sorted_lookup = SemanticField.objects.filter(name__in=combined_semfield).order_by(
+                            'machine_value')
+                        new_semanticfield_value = ', '.join([str(sf.name) for sf in compined_values_sorted_lookup])
+
+                    differences.append({'pk': gloss_id,
+                                        'dataset': current_dataset,
+                                        'annotationidglosstranslation': default_annotationidglosstranslation,
+                                        'machine_key': human_key,
+                                        'human_key': human_key,
+                                        'original_machine_value': original_semanticfield_value,
+                                        'original_human_value': original_semanticfield_value,
+                                        'new_machine_value': new_semanticfield_value,
+                                        'new_human_value': new_semanticfield_value})
                 continue
 
             elif human_key in ['Derivation history', 'Derivation History']:
