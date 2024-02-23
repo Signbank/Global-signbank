@@ -884,7 +884,7 @@ option:not(:checked) {
     {% endif %}
 
 </div>
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background: inherit;">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative;">
 
         {% include "dictionary/glosstags.html" %}
 
@@ -1409,7 +1409,7 @@ option:not(:checked) {
 
    <!-- Morphology -->
    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#morphology'>{% trans "Morphology" %}
         </div>
         <div id='morphology' class='collapse'>
@@ -1665,7 +1665,7 @@ option:not(:checked) {
 
     <!-- Phonology -->
 	<div class="panel panel-default">
-        <div class='panel-heading' id='phonology_heading'
+        <div class='panel-heading panel-light' id='phonology_heading'
              data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
                     {% if handedness and domhndsh %}
                     <div class="pull-right">
@@ -1817,7 +1817,7 @@ option:not(:checked) {
     <!-- Minimal Pairs -->
  {% if homonyms_but_not_saved %}
   <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+        <div class='panel-heading panel-light' data-toggle='collapse'
              style="color:red" data-target='#identicalphonology'>{% trans "Identical phonology but not marked as homonym" %}
         </div>
         <div id='identicalphonology' class='collapse'>
@@ -1834,7 +1834,7 @@ option:not(:checked) {
  {% endif %}
  {% if homonyms_different_phonology %}
  <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+        <div class='panel-heading panel-light' data-toggle='collapse'
              style="color:red" data-target='#differentphonology'>{% trans "Marked as homonym but different phonology" %}
         </div>
         <div id='differentphonology' class='collapse'>
@@ -1850,7 +1850,7 @@ option:not(:checked) {
   </div>
 {% endif %}
 <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
         </div>
         <div id='minimalpairs' class='collapse'>
@@ -1870,7 +1870,7 @@ option:not(:checked) {
 
     <!-- Semantics -->
     <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
                     {% if SemanticFieldDefined %}
                     <div class="pull-right">
                     <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png'
@@ -1921,7 +1921,7 @@ option:not(:checked) {
 
     <!-- Relations to other signs -->
     <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relations'>{% trans "Relations to Other Signs" %}
                     {% if gloss.relations_count %}
                     <div class="pull-right">
@@ -2005,7 +2005,7 @@ option:not(:checked) {
 
     <!-- Relations to foreign signs -->
     <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relationsforeign'>{% trans "Relations to Foreign Signs" %}
                     {% if gloss.relationtoforeignsign_set.all %}
                     <div class="pull-right">
@@ -2088,7 +2088,7 @@ option:not(:checked) {
 
     <!-- Publication status -->
     <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#pubStatus'>{% trans "Publication Status" %}
         </div>
 
@@ -2124,7 +2124,7 @@ option:not(:checked) {
    
     <!-- Notes -->
     <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
                     {% if notes_groupedby_role.items %}
                     <div class="pull-right">
                     <span id="document-icon"><img id='document' src='{{STATIC_URL}}images/document_with_text_and_picture.png'
@@ -2220,7 +2220,7 @@ option:not(:checked) {
 
      <!-- Other media -->
     <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#othermedia'>{% trans "Other Media" %}
                     {% if other_media %}
                     <div class="pull-right">

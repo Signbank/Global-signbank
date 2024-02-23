@@ -15,6 +15,15 @@ function toggle_dark_mode(e) {
             $(this).addClass("dark-mode");
         }
   });
+  $(".panel-heading").each(function () {
+        if ($(this).hasClass("panel-light")) {
+            $(this).removeClass("panel-light");
+            $(this).addClass("panel-dark");
+        } else if ($(this).hasClass("panel-dark")) {
+            $(this).removeClass("panel-dark");
+            $(this).addClass("panel-light");
+        }
+  });
 }
 </script>
 <style>

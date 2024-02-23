@@ -759,7 +759,7 @@ canvas{
 
 .panel-heading {
     background-color: inherit;
-    color: black;
+    color: inherit;
 }
 
 .panel-body {
@@ -887,8 +887,18 @@ input {
     color: white !important;
 }
 
-span {
+.pull-right {
     background-color: inherit;
     color: inherit !important;
 }
+
+.panel-light {
+    background-color: inherit;
+    color: inherit !important;
+}
+.panel-dark {
+    background-color: black !important;
+    color: white !important;
+}
+
 
