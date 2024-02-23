@@ -773,7 +773,7 @@ canvas{
 }
 
 form {
-    background-color: transparent;
+    background-color: inherit;
     color: inherit;
 }
 
@@ -788,7 +788,7 @@ form {
 }
 
 .table .table-bordered {
-    background-color: transparent;
+    background-color: inherit;
     color: inherit;
 }
 
@@ -887,4 +887,8 @@ input {
     color: white !important;
 }
 
+span {
+    background-color: inherit;
+    color: inherit !important;
+}
 

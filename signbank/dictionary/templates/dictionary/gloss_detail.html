@@ -915,8 +915,10 @@ option:not(:checked) {
                     </div>
                 </td>
             </tr>
-            <tr name="lemma_forms_row"><th></th>
-                <td name="lemma_forms_cell">
+            <tr id="lemma_forms_row">
+                <th></th>
+                <td id="lemma_forms_cell">
+                <span>
                 <form name='edit_lemma_form' id='edit_lemma_form'
                         method='post' action='{% url "dictionary:change_lemma" gloss.lemma.id %}'>
                         {% csrf_token %}
@@ -961,6 +963,7 @@ option:not(:checked) {
                     <input class='btn btn-primary' value='{% trans "Add Lemma" %}' type='submit'>
                     <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
                 </form>
+                </span>
                 </td>
             </tr>
 
@@ -970,7 +973,10 @@ option:not(:checked) {
                     {% trans "Annotation ID Gloss" %}
                     {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}' colspan="2">{{annotation_idgloss_translation}}</td>
+                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}'
+                    style="color:inherit;"
+                    colspan="2"><span>{{annotation_idgloss_translation}}</span>
+                </td>
             </tr>
             <tr>
                 <th></th>
