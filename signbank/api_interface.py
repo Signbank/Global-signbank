@@ -21,6 +21,9 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidde
 from signbank.settings.server_specific import VIDEOS_TO_IMPORT_FOLDER
 import zipfile
 from django.urls import reverse, reverse_lazy
+import urllib.request
+import tempfile
+import shutil
 
 
 def api_fields(dataset, advanced=False):
@@ -154,6 +157,7 @@ def unzip_video_files(zipped_videos_file, destination):
             # zip_folder = os.path.dirname(zip_info.filename)
             # target_folder = os.path.join(destination, zip_folder)
             zipped_file.extract(zip_info, destination)
+    return
 
 
 def upload_zipped_videos_folder(request):
@@ -277,4 +281,146 @@ def uploaded_video_files(dataset):
                     file_path = os.path.join('import_videos', dataset.acronym, language3char, file)
                     list_of_videos.append(file_path)
     return list_of_videos
+
+
+def get_unzipped_video_files_json(request, datasetid):
+
+    sequence_of_digits = True
+    for i in datasetid:
+        if not i.isdigit():
+            sequence_of_digits = False
+            break
+
+    if not sequence_of_digits:
+        return JsonResponse({})
+
+    try:
+        dataset_id = int(datasetid)
+    except TypeError:
+        return JsonResponse({})
+
+    dataset = Dataset.objects.filter(id=dataset_id).first()
+    if not dataset or not request.user.is_authenticated:
+        # ignore the database in the url if necessary
+        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
+
+    videos_data = dict()
+    videos_data['import_videos/'+dataset.acronym] = uploaded_video_files(dataset)
+
+    return JsonResponse(videos_data)
+
+
+def upload_zipped_videos_folder_json(request, datasetid):
+
+    status_request = dict()
+
+    if not request.user.is_authenticated:
+        status_request['errors'] = _('Please login to use this functionality.')
+        return JsonResponse(status_request)
+
+    # check if the user can manage this dataset
+    from django.contrib.auth.models import Group, User
+
+    try:
+        group_manager = Group.objects.get(name='Dataset_Manager')
+    except ObjectDoesNotExist:
+        status_request['errors'] = _('No group Dataset Manager found.')
+        return JsonResponse(status_request)
+
+    groups_of_user = request.user.groups.all()
+    if group_manager not in groups_of_user:
+        status_request['errors'] = _('You must be in group Dataset Manager to upload a zip video archive.')
+        return JsonResponse(status_request)
+
+    sequence_of_digits = True
+    for i in datasetid:
+        if not i.isdigit():
+            sequence_of_digits = False
+            break
+
+    if not sequence_of_digits:
+        status_request['errors'] = _('The dataset ID must be numerical.')
+        return JsonResponse(status_request)
+
+    dataset_id = int(datasetid)
+    dataset = Dataset.objects.filter(id=dataset_id).first()
+    if not dataset or not request.user.is_authenticated:
+        # ignore the database in the url if necessary
+        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
+
+    import_folder_exists = os.path.exists(VIDEOS_TO_IMPORT_FOLDER)
+    if not import_folder_exists:
+        status_request['errors'] = _("Upload zip archive: The folder VIDEOS_TO_IMPORT_FOLDER is missing.")
+        return JsonResponse(status_request)
+
+    lang3charcodes = [language.language_code_3char for language in dataset.translation_languages.all()]
+
+    # Create the TEMP folder if needed
+    temp_goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP')
+    if not os.path.isdir(temp_goal_directory):
+        os.mkdir(temp_goal_directory, mode=0o777)
+
+    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym)
+    if not os.path.isdir(goal_directory):
+        os.mkdir(temp_goal_directory, mode=0o777)
+
+    for lang3char in lang3charcodes:
+        dataset_subfolder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym, lang3char)
+        if not os.path.isdir(dataset_subfolder):
+            os.mkdir(dataset_subfolder, mode=0o777)
+
+    # get file as a url parameter: /dictionary/upload_zipped_videos_folder_json/5/?file=file:///path/to/zipfile.zip
+    
+    zipped_file_url = request.GET['file']
+    file_path_units = zipped_file_url.split('/')
+    file_name = file_path_units[-1]
+
+    goal_zipped_file = temp_goal_directory + os.sep + file_name
+
+    with urllib.request.urlopen(zipped_file_url) as response:
+        with tempfile.NamedTemporaryFile(delete=False) as tmp_zipped_file:
+            shutil.copyfileobj(response, tmp_zipped_file)
+
+    chunk_size = 4096
+    temp_zipped = open(tmp_zipped_file.name, 'rb')
+    zipped_file = open(goal_zipped_file, 'wb')
+    with open(goal_zipped_file, "wb+") as destination:
+        while True:
+            chunk = temp_zipped.read(chunk_size)
+            if chunk == b"":
+                break  # end of file
+            destination.write(chunk)
+        destination.close()
+
+    shutil.copyfileobj(temp_zipped, zipped_file)
+
+    if not zipfile.is_zipfile(goal_zipped_file):
+        # unrecognised file type has been uploaded
+        status_request['errors'] = _("Upload zip archive: The file is not a zip file.")
+        return JsonResponse(status_request)
+
+    norm_filename = os.path.normpath(goal_zipped_file)
+    split_norm_filename = norm_filename.split('.')
+
+    if len(split_norm_filename) == 1:
+        # file has no extension
+        status_request['errors'] = _("Upload zip archive: The file has no extension.")
+        return JsonResponse(status_request)
+
+    filenames = get_filenames(goal_zipped_file)
+    video_paths_okay = check_subfolders_for_unzipping(dataset.acronym, lang3charcodes, filenames)
+    if not video_paths_okay:
+        status_request['errors'] = _("Upload zip archive: The zip archive has the wrong structure.")
+        return JsonResponse(status_request)
+
+    with atomic():
+        unzip_video_files(goal_zipped_file, VIDEOS_TO_IMPORT_FOLDER)
+
+    unzipped_files = uploaded_video_files(dataset)
+
+    videos_data = dict()
+    videos_data['filename'] = VIDEOS_TO_IMPORT_FOLDER + '/TEMP/' + norm_filename
+    videos_data['unzipped videos'] = unzipped_files
+
+    return JsonResponse(videos_data)
 

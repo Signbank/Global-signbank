@@ -110,10 +110,15 @@ urlpatterns = [
 
     re_path(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     re_path(r'package/$', signbank.dictionary.views.package),
-    re_path(r'get_gloss_data/(?P<datasetid>.*)/(?P<glossid>.*)/$',
+    re_path(r'get_gloss_data/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.api_interface.get_gloss_data_json, name='get_gloss_data_json'),
-    re_path(r'get_fields_data/(?P<datasetid>.*)/$',
+    re_path(r'get_fields_data/(?P<datasetid>\d+)/$',
             signbank.api_interface.get_fields_data_json, name='get_fields_data_json'),
+    re_path(r'get_unzipped_video_files_json/(?P<datasetid>\d+)/$',
+            signbank.api_interface.get_unzipped_video_files_json, name='get_unzipped_video_files_json'),
+    re_path(r'upload_zipped_videos_folder_json/(?P<datasetid>\d+)/$',
+            signbank.api_interface.upload_zipped_videos_folder_json, name='upload_zipped_videos_folder_json'),
+
     re_path(r'upload_zipped_videos_folder/$',
             signbank.api_interface.upload_zipped_videos_folder, name='upload_zipped_videos_folder'),
 
