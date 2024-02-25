@@ -1,4 +1,3 @@
-import os.path
 
 from signbank.dictionary.models import *
 from tagging.models import Tag, TaggedItem
@@ -24,6 +23,7 @@ from django.urls import reverse, reverse_lazy
 import urllib.request
 import tempfile
 import shutil
+import os
 
 
 def api_fields(dataset, advanced=False):
@@ -72,11 +72,17 @@ def api_fields(dataset, advanced=False):
 
 
 def get_fields_data_json(request, datasetid):
-    try:
-        dataset_id = int(datasetid)
-    except TypeError:
+
+    sequence_of_digits = True
+    for i in datasetid:
+        if not i.isdigit():
+            sequence_of_digits = False
+            break
+
+    if not sequence_of_digits:
         return JsonResponse({})
 
+    dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset or not request.user.is_authenticated:
         # ignore the database in the url if necessary
@@ -94,21 +100,31 @@ def get_fields_data_json(request, datasetid):
 
 def get_gloss_data_json(request, datasetid, glossid):
 
-    try:
-        dataset_id = int(datasetid)
-    except TypeError:
+    sequence_of_digits = True
+    for i in datasetid:
+        if not i.isdigit():
+            sequence_of_digits = False
+            break
+
+    if not sequence_of_digits:
         return JsonResponse({})
 
+    dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset or not request.user.is_authenticated:
         # ignore the database in the url if necessary
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
+    sequence_of_digits = True
+    for i in glossid:
+        if not i.isdigit():
+            sequence_of_digits = False
+            break
+
+    if not sequence_of_digits:
         return JsonResponse({})
 
+    gloss_id = int(glossid)
     gloss = Gloss.objects.filter(lemma__dataset=dataset, id=gloss_id).first()
 
     if not gloss:
@@ -125,6 +141,20 @@ def get_gloss_data_json(request, datasetid, glossid):
     return JsonResponse(gloss_data)
 
 
+def get_target_filepath(dataset, lang3charcodes, filepath_in_zip_archive):
+
+    acronym = dataset.acronym
+    lang3char = dataset.default_language.language_code_3char
+
+    filepath_units = filepath_in_zip_archive.split('/')
+    filename = filepath_units[-1]
+    for unit in filepath_units:
+        if unit in lang3charcodes:
+            lang3char = unit
+    target_path = os.path.join(acronym, lang3char, filename)
+    return target_path
+
+
 def get_filenames(path_to_zip):
     """ return list of filenames inside of the zip folder"""
     with zipfile.ZipFile(path_to_zip, 'r') as zipped:
@@ -132,31 +162,47 @@ def get_filenames(path_to_zip):
 
 
 def check_subfolders_for_unzipping(acronym, lang3charcodes, filenames):
+    # the zip file possibly has an outer folder container
     commonprefix = os.path.commonprefix(filenames)
-    if commonprefix != acronym + '/':
-        return []
-    subfolders = [acronym + '/' + lang3char + '/' for lang3char in lang3charcodes]
+    subfolders = [commonprefix] + \
+                 [commonprefix + acronym + '/' + lang3char + '/' for lang3char in lang3charcodes]
+
     video_files = []
     for zipfilename in filenames:
-        if zipfilename == commonprefix:
-            continue
         if zipfilename in subfolders:
+            # skip directory nesting structures
+            continue
+        if '/' not in zipfilename:
+            # this is not a path
             continue
         file_dirname = os.path.dirname(zipfilename)
         if file_dirname + '/' not in subfolders:
-            return []
+            # this path not an allowed nesting structure, ignore this
+            continue
         video_files.append(zipfilename)
     return video_files
 
 
-def unzip_video_files(zipped_videos_file, destination):
-    with zipfile.ZipFile(zipped_videos_file) as zipped_file:
-        for zip_info in zipped_file.infolist():
-            if zip_info.is_dir():
+def unzip_video_files(dataset, zipped_videos_file, destination):
+    with zipfile.ZipFile(zipped_videos_file, "r") as zf:
+        for name in zf.namelist():
+            if not name.endswith('.mp4'):
+                # this can be an Apple .DS_Store file
                 continue
-            # zip_folder = os.path.dirname(zip_info.filename)
-            # target_folder = os.path.join(destination, zip_folder)
-            zipped_file.extract(zip_info, destination)
+            # this is a video
+            localfilepath = zf.extract(name, destination)
+            path_units = localfilepath.split('/')
+            filename = path_units[-1]
+            lang3code = path_units[-2]
+            new_location = os.path.join(destination, dataset.acronym, lang3code, filename)
+            shutil.move(localfilepath, new_location)
+
+    unzipped_filename = os.path.basename(zipped_videos_file)
+    folder_name, extension = os.path.splitext(unzipped_filename)
+    unzipped_folder = os.path.join(destination, folder_name)
+    if os.path.exists(unzipped_folder):
+        shutil.rmtree(unzipped_folder)
+
     return
 
 
@@ -233,9 +279,6 @@ def upload_zipped_videos_folder(request):
         messages.add_message(request, messages.ERROR, _("Upload zip archive: The file has no extension."))
         return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
 
-    extension = split_norm_filename[-1]
-    filename_base = '.'.join(split_norm_filename[:-1])
-
     # Create the folder if needed
     temp_goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP')
     if not os.path.isdir(temp_goal_directory):
@@ -262,7 +305,7 @@ def upload_zipped_videos_folder(request):
         messages.add_message(request, messages.ERROR, _("Upload zip archive: The zip archive has the wrong structure."))
         return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
 
-    unzip_video_files(goal_zipped_file, VIDEOS_TO_IMPORT_FOLDER)
+    unzip_video_files(dataset, goal_zipped_file, VIDEOS_TO_IMPORT_FOLDER)
 
     messages.add_message(request, messages.INFO, _("Upload zipped videos media was successful."))
     return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
@@ -277,9 +320,9 @@ def uploaded_video_files(dataset):
         for language3char in os.listdir(goal_directory):
             language_subfolder = os.path.join(goal_directory, language3char)
             if os.path.isdir(language_subfolder):
-                for file in os.listdir(language_subfolder):
-                    file_path = os.path.join('import_videos', dataset.acronym, language3char, file)
-                    list_of_videos.append(file_path)
+                files = os.listdir(language_subfolder)
+                for file in files:
+                    list_of_videos.append(file)
     return list_of_videos
 
 
@@ -294,11 +337,7 @@ def get_unzipped_video_files_json(request, datasetid):
     if not sequence_of_digits:
         return JsonResponse({})
 
-    try:
-        dataset_id = int(datasetid)
-    except TypeError:
-        return JsonResponse({})
-
+    dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset or not request.user.is_authenticated:
         # ignore the database in the url if necessary
@@ -315,7 +354,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
     status_request = dict()
 
     if not request.user.is_authenticated:
-        status_request['errors'] = _('Please login to use this functionality.')
+        status_request['errors'] = 'Please login to use this functionality.'
         return JsonResponse(status_request)
 
     # check if the user can manage this dataset
@@ -324,12 +363,12 @@ def upload_zipped_videos_folder_json(request, datasetid):
     try:
         group_manager = Group.objects.get(name='Dataset_Manager')
     except ObjectDoesNotExist:
-        status_request['errors'] = _('No group Dataset Manager found.')
+        status_request['errors'] = 'No group Dataset Manager found.'
         return JsonResponse(status_request)
 
     groups_of_user = request.user.groups.all()
     if group_manager not in groups_of_user:
-        status_request['errors'] = _('You must be in group Dataset Manager to upload a zip video archive.')
+        status_request['errors'] = 'You must be in group Dataset Manager to upload a zip video archive.'
         return JsonResponse(status_request)
 
     sequence_of_digits = True
@@ -339,7 +378,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
             break
 
     if not sequence_of_digits:
-        status_request['errors'] = _('The dataset ID must be numerical.')
+        status_request['errors'] = 'The dataset ID must be numerical.'
         return JsonResponse(status_request)
 
     dataset_id = int(datasetid)
@@ -350,7 +389,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     import_folder_exists = os.path.exists(VIDEOS_TO_IMPORT_FOLDER)
     if not import_folder_exists:
-        status_request['errors'] = _("Upload zip archive: The folder VIDEOS_TO_IMPORT_FOLDER is missing.")
+        status_request['errors'] = "Upload zip archive: The folder VIDEOS_TO_IMPORT_FOLDER is missing."
         return JsonResponse(status_request)
 
     lang3charcodes = [language.language_code_3char for language in dataset.translation_languages.all()]
@@ -360,14 +399,15 @@ def upload_zipped_videos_folder_json(request, datasetid):
     if not os.path.isdir(temp_goal_directory):
         os.mkdir(temp_goal_directory, mode=0o777)
 
-    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym)
-    if not os.path.isdir(goal_directory):
-        os.mkdir(temp_goal_directory, mode=0o777)
+    dataset_folder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym)
+    dataset_folder_exists = os.path.exists(dataset_folder)
+    if not dataset_folder_exists:
+        os.mkdir(dataset_folder, mode=0o777)
 
     for lang3char in lang3charcodes:
-        dataset_subfolder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym, lang3char)
-        if not os.path.isdir(dataset_subfolder):
-            os.mkdir(dataset_subfolder, mode=0o777)
+        dataset_lang3char_folder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym, lang3char)
+        if not os.path.isdir(dataset_lang3char_folder):
+            os.mkdir(dataset_lang3char_folder, mode=0o777)
 
     # get file as a url parameter: /dictionary/upload_zipped_videos_folder_json/5/?file=file:///path/to/zipfile.zip
     
@@ -375,7 +415,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
     file_path_units = zipped_file_url.split('/')
     file_name = file_path_units[-1]
 
-    goal_zipped_file = temp_goal_directory + os.sep + file_name
+    goal_zipped_file = os.path.join(temp_goal_directory, file_name)
 
     with urllib.request.urlopen(zipped_file_url) as response:
         with tempfile.NamedTemporaryFile(delete=False) as tmp_zipped_file:
@@ -396,7 +436,8 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     if not zipfile.is_zipfile(goal_zipped_file):
         # unrecognised file type has been uploaded
-        status_request['errors'] = _("Upload zip archive: The file is not a zip file.")
+        status_request['filename'] = file_name
+        status_request['errors'] = "Upload zip archive: The file is not a zip file."
         return JsonResponse(status_request)
 
     norm_filename = os.path.normpath(goal_zipped_file)
@@ -404,23 +445,26 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     if len(split_norm_filename) == 1:
         # file has no extension
-        status_request['errors'] = _("Upload zip archive: The file has no extension.")
+        status_request['filename'] = file_name
+        status_request['errors'] = "Upload zip archive: The file has no extension."
         return JsonResponse(status_request)
 
     filenames = get_filenames(goal_zipped_file)
     video_paths_okay = check_subfolders_for_unzipping(dataset.acronym, lang3charcodes, filenames)
     if not video_paths_okay:
-        status_request['errors'] = _("Upload zip archive: The zip archive has the wrong structure.")
+        status_request['filename'] = file_name
+        status_request['errors'] = "The zip archive has the wrong structure."
+        status_request['zippedfiles'] = filenames
         return JsonResponse(status_request)
 
     with atomic():
-        unzip_video_files(goal_zipped_file, VIDEOS_TO_IMPORT_FOLDER)
+        unzip_video_files(dataset, goal_zipped_file, VIDEOS_TO_IMPORT_FOLDER)
 
     unzipped_files = uploaded_video_files(dataset)
 
     videos_data = dict()
-    videos_data['filename'] = VIDEOS_TO_IMPORT_FOLDER + '/TEMP/' + norm_filename
-    videos_data['unzipped videos'] = unzipped_files
+    videos_data['filename'] = file_name
+    videos_data['unzippedvideos'] = unzipped_files
 
     return JsonResponse(videos_data)
 
