@@ -25,7 +25,39 @@
     console.log(language_choices);
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
+<style>
+list {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+}
+dl:after {
+    content: none;
+}
+dl {
+    margin-bottom: 0px;
+}
+dt {
+    margin-left: 0px;
+}
+dd {
+    margin-left: 0px;
+}
 
+.list-group-item.active {
+    background-color: #fff;
+    color: #000;
+}
+.list-group-item.active:hover {
+    color: #000;
+}
+.list-group-item {
+    color: black;
+}
+.list-group-item:hover {
+    color: #428bca;
+}
+</style>
 {% endblock %}
 
 {% block bootstrap3_title %}
@@ -58,7 +90,7 @@
         </tr>
         <tr>
         <th>
-          <div class="text-container"><p>{% trans "Zipped Videos Folder" %}</p></div>
+          <div class="text-container"><p>{% trans "Videos Archive" %}</p></div>
         </th>
         <td>
             <form id="upload_zipped_videos_{{dataset.acronym}}"
@@ -73,15 +105,21 @@
         </td>
         </tr>
         <tr>
-            <th>{% trans "Uploaded Video Files" %}</th>
+            <th>{% trans "Unzipped Video Files" %}</th>
             <td>
-                <list>
-                    {% for videopath in uploaded_video_files %}
-                    <li>
-                        {{videopath}}
+              <div name="uploaded_eaf_files"
+                    style="height:120px; overflow-y:auto;display:block;">
+                  <ul class="list-group-hover" style="padding: 0;">
+                      <li class="list-group-item active" style="padding: 0;">{% trans "Path" %}</li>
+                    {% for lang3char, videopaths in uploaded_video_files.items %}
+                    {% for videofile in videopaths %}
+                    <li class="list-group-item" style="padding: 0;">
+                        import_videos/{{dataset.acronym}}/{{lang3char}}/{{videofile}}
                     </li>
                     {% endfor %}
-                </list>
+                    {% endfor %}
+                </ul>
+              </div>
             </td>
         </tr>
     </table>

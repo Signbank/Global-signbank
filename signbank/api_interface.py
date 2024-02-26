@@ -314,15 +314,16 @@ def upload_zipped_videos_folder(request):
 def uploaded_video_files(dataset):
 
     goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym)
-    list_of_videos = []
+    list_of_videos = dict()
 
     if os.path.isdir(goal_directory):
         for language3char in os.listdir(goal_directory):
             language_subfolder = os.path.join(goal_directory, language3char)
             if os.path.isdir(language_subfolder):
+                list_of_videos[language3char] = []
                 files = os.listdir(language_subfolder)
                 for file in files:
-                    list_of_videos.append(file)
+                    list_of_videos[language3char].append(file)
     return list_of_videos
 
 
