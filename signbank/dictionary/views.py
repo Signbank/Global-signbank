@@ -2252,15 +2252,17 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = 0
 
+    if not inWebSet and 'extended_fields' in request.GET and request.GET['extended_fields'] in [1, True, 'true']:
+        extended_fields = True
+    else:
+        extended_fields = False
+
+    # these actually do nothing
     video_folder_name = 'glossvideo'
     image_folder_name = 'glossimage'
 
-    try:
-        if request.GET['small_videos'] not in [0, False, 'false']:
-            video_folder_name += '_small'
-    except KeyError:
-        print('key error on small videos')
-        pass
+    if 'small_videos' in request.GET and request.GET['small_videos'] not in [0, False, 'false']:
+        video_folder_name += '_small'
 
     archive_file_name = '.'.join([first_part_of_file_name, timestamp_part_of_file_name, 'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
@@ -2278,7 +2280,7 @@ def package(request):
 
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
-                      'glosses': signbank.tools.get_gloss_data(since_timestamp, dataset, inWebSet)}
+                      'glosses': signbank.tools.get_gloss_data(since_timestamp, dataset, inWebSet, extended_fields)}
 
     if since_timestamp != 0:
         collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss', since_timestamp)
