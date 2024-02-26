@@ -20,15 +20,11 @@
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
     var saving_str = '{% trans "Saving..." %}'
     var csrf_token = '{{csrf_token}}';
-    var edit_post_url = '{{PREFIX_URL}}/datasets/change_details/{{dataset.id}}';
-    var language_choices = '{{default_language_choice_list|safe}}';
-    console.log(language_choices);
     </script>
-    <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
 <style>
 list {
     overflow-y: scroll;
-    overflow-x: hidden;
+    overflow-x: auto;
     scrollbar-width: thin;
 }
 dl:after {
@@ -79,13 +75,12 @@ dd {
     </div>
 
     <table class='table table-responsive'>
-        <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:800px;">{{dataset.name}}</td></tr>
+        <tr><th style="width:200px;">{% trans "Dataset name" %}</th><td style="width:600px;">{{dataset.name}}</td></tr>
         <tr><th>{% trans "Acronym" %}</th><td class='edit edit_text' align="left" id='acronym' name='acronym'
                 value="{{datasetform.acronym.value|default:'-'}}">{{dataset.acronym}}</td></tr>
         <tr><th>Number of glosses</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
         <tr><th>{% trans "Accessible by others" %}</th>
-            <td class="edit edit_check" id='is_public' type="hidden" value='{% if dataset.is_public %}True{% else %}False{% endif %}' name="is_public">
-                {% if dataset.is_public %}True{% else %}False{% endif %}
+            <td id='is_public'>{% if dataset.is_public %}True{% else %}False{% endif %}
             </td>
         </tr>
         <tr>
@@ -105,20 +100,44 @@ dd {
         </td>
         </tr>
         <tr>
+        <th>
+          <div class="text-container"><p>{% trans "Zipped Archives" %}</p></div>
+        </th>
+        <td>
+          <div name="zipped_archives"
+                style="height:120px; overflow-y:auto;display:block;">
+              <ul class="list-group-hover" style="padding: 0;">
+                  {% for zipfilename, zipcontents in zipped_archives.items %}
+                  <li class="list-group-item active" style="padding: 0;">{{zipfilename}}</li>
+                  <ul>
+                    {% for struct in zipcontents %}
+                    <li class="list-group-item" style="padding: 0;">
+                        {{struct}}
+                    </li>
+                    {% endfor %}
+                  </ul>
+                  {% endfor %}
+            </ul>
+          </div>
+        </td>
+        </tr>
+        <tr>
             <th>{% trans "Unzipped Video Files" %}</th>
             <td>
-              <div name="uploaded_eaf_files"
-                    style="height:120px; overflow-y:auto;display:block;">
-                  <ul class="list-group-hover" style="padding: 0;">
-                      <li class="list-group-item active" style="padding: 0;">{% trans "Path" %}</li>
-                    {% for lang3char, videopaths in uploaded_video_files.items %}
+              <div name="uploaded_video_files"
+                    style="height:150px; overflow-y:auto;display:block; width:600px;">
+                  <list class="list-group-hover" style="padding: 0;">
+                      {% for lang3char, videopaths in uploaded_video_files.items %}
+                      {% if videopaths %}
+                      <li class="list-group-item active" style="padding: 0;">import_videos/{{dataset.acronym}}/{{lang3char}}/</li>
                     {% for videofile in videopaths %}
                     <li class="list-group-item" style="padding: 0;">
                         import_videos/{{dataset.acronym}}/{{lang3char}}/{{videofile}}
                     </li>
                     {% endfor %}
+                    {% endif %}
                     {% endfor %}
-                </ul>
+                </list>
               </div>
             </td>
         </tr>

@@ -163,10 +163,11 @@ def get_filenames(path_to_zip):
 
 def check_subfolders_for_unzipping(acronym, lang3charcodes, filenames):
     # the zip file possibly has an outer folder container
+    # include both possible structures in the allowed structural paths
     commonprefix = os.path.commonprefix(filenames)
-    subfolders = [commonprefix] + \
-                 [commonprefix + acronym + '/' + lang3char + '/' for lang3char in lang3charcodes]
-
+    subfolders = ([commonprefix] +
+                  [commonprefix + acronym + '/' + lang3char + '/' for lang3char in lang3charcodes] +
+                  [acronym + '/' + lang3char + '/' for lang3char in lang3charcodes])
     video_files = []
     for zipfilename in filenames:
         if zipfilename in subfolders:
@@ -311,18 +312,39 @@ def upload_zipped_videos_folder(request):
     return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
 
 
+def uploaded_zip_archives(dataset):
+    # find the uploaded zip archives in TEMP that include the dataset
+    zip_archive = dict()
+    zipped_archive_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP')
+    if os.path.isdir(zipped_archive_directory):
+        for file_or_folder in os.listdir(zipped_archive_directory):
+            file_or_folder_path = os.path.join(zipped_archive_directory, file_or_folder)
+            if os.path.isdir(file_or_folder_path):
+                continue
+            if not zipfile.is_zipfile(file_or_folder_path):
+                continue
+            archive_contents = get_filenames(file_or_folder_path)
+            common_prefix = os.path.commonprefix(archive_contents)
+            if dataset.acronym not in common_prefix:
+                continue
+            zipfilename = os.path.basename(file_or_folder_path)
+            zip_archive[zipfilename] = get_filenames(file_or_folder_path)
+    return zip_archive
+
+
 def uploaded_video_files(dataset):
 
-    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym)
+    dataset_acronym = str(dataset.acronym)
+    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset_acronym)
     list_of_videos = dict()
 
     if os.path.isdir(goal_directory):
         for language3char in os.listdir(goal_directory):
+            if language3char not in list_of_videos.keys():
+                list_of_videos[language3char] = []
             language_subfolder = os.path.join(goal_directory, language3char)
             if os.path.isdir(language_subfolder):
-                list_of_videos[language3char] = []
-                files = os.listdir(language_subfolder)
-                for file in files:
+                for file in os.listdir(language_subfolder):
                     list_of_videos[language3char].append(file)
     return list_of_videos
 

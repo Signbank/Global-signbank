@@ -67,7 +67,7 @@ from signbank.dictionary.context_data import (get_context_data_for_list_view, ge
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to, gloss_related_objects,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
-from signbank.api_interface import uploaded_video_files
+from signbank.api_interface import uploaded_video_files, get_filenames, uploaded_zip_archives
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -4277,17 +4277,14 @@ class DatasetMediaView(DetailView):
 
         dataset = context['dataset']
 
-        context['default_language_choice_list'] = {}
-        translation_languages = dataset.translation_languages.all()
-        default_language_choice_dict = dict()
-        for language in translation_languages:
-            default_language_choice_dict[language.name] = language.name
-        context['default_language_choice_list'] = json.dumps(default_language_choice_dict)
-
         zippedvideosform = ZippedVideosForm()
         context['zippedvideosform'] = zippedvideosform
 
-        context['uploaded_video_files'] = uploaded_video_files(dataset)
+        uploaded_videos = uploaded_video_files(dataset)
+        context['uploaded_video_files'] = uploaded_videos
+
+        zipped_archives = uploaded_zip_archives(dataset)
+        context['zipped_archives'] = zipped_archives
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
