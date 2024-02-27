@@ -33,6 +33,7 @@ from django.urls import reverse
 from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
+from signbank.api_interface import api_fields
 
 
 def get_two_letter_dir(idgloss):
@@ -1554,29 +1555,16 @@ def reload_signbank(request=None):
         return render(request, 'reload_signbank.html')
 
 
-def get_gloss_data(since_timestamp=0, dataset=None, inWebSet=False):
-    # settings.API_FIELDS
-    api_fields_2023 = []
-    if not dataset:
-        dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
-    for language in dataset.translation_languages.all():
-        language_field = _("Annotation ID Gloss") + ": %s" % language.name
-        api_fields_2023.append(language_field)
-    for language in dataset.translation_languages.all():
-        language_field = _("Senses") + ": %s" % language.name
-        api_fields_2023.append(language_field)
-    api_fields_2023.append("Handedness")
-    api_fields_2023.append("Strong Hand")
-    api_fields_2023.append("Weak Hand")
-    api_fields_2023.append("Location")
-    api_fields_2023.append("Semantic Field")
-    api_fields_2023.append("Word Class")
-    api_fields_2023.append("Named Entity")
-    api_fields_2023.append("Link")
+def get_gloss_data(since_timestamp=0, dataset=None, inWebSet=False, extended_fields=False):
+
     if inWebSet:
         glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True)
     else:
         glosses = Gloss.objects.filter(lemma__dataset=dataset)
+
+    # settings.API_FIELDS
+    api_fields_2023 = api_fields(dataset, extended_fields)
+
     gloss_data = {}
     for gloss in glosses:
         if int(format(gloss.lastUpdated, 'U')) > since_timestamp:
