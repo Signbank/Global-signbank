@@ -48,10 +48,23 @@ dd {
     color: #000;
 }
 .list-group-item {
+    justify-content: space-between;
+    display: flex;
     color: black;
+    overflow: visible;
+    margin-right: 10px;
+    scrollbar-gutter: auto;
 }
 .list-group-item:hover {
     color: #428bca;
+}
+.check {
+    height: 14px;
+    width: 7px;
+    border-bottom: 2px solid green;
+    border-right: 2px solid green;
+    transform: rotate(45deg);
+    margin: 3px;
 }
 </style>
 {% endblock %}
@@ -105,14 +118,19 @@ dd {
         </th>
         <td>
           <div name="zipped_archives"
-                style="height:120px; overflow-y:auto;display:block;">
+                style="height:250px; overflow-y:auto;display:block; width:600px;">
               <ul class="list-group-hover" style="padding: 0;">
                   {% for zipfilename, zipcontents in zipped_archives.items %}
-                  <li class="list-group-item active" style="padding: 0;">{{zipfilename}}</li>
+                  <li class="list-group-item active" style="padding: 0;">
+                      <span>{{zipfilename}}</span><span>{% trans "IMPORT STATUS" %}</span></li>
                   <ul>
-                    {% for struct in zipcontents %}
+                    {% for struct, status in zipcontents.items %}
                     <li class="list-group-item" style="padding: 0;">
-                        {{struct}}
+                        {% if status %}
+                        <span>{{struct}}</span><span class="check"></span>
+                        {% else %}
+                        <span>{{struct}}</span><span>&#10060;</span>
+                        {% endif %}
                     </li>
                     {% endfor %}
                   </ul>
@@ -122,18 +140,33 @@ dd {
         </td>
         </tr>
         <tr>
-            <th>{% trans "Unzipped Video Files" %}</th>
+            <th>{% trans "Status Video Files in Import Folder" %}</th>
             <td>
-              <div name="uploaded_video_files"
-                    style="height:150px; overflow-y:auto;display:block; width:600px;">
-                  <list class="list-group-hover" style="padding: 0;">
-                      {% for lang3char, videopaths in uploaded_video_files.items %}
-                      {% if videopaths %}
-                      <li class="list-group-item active" style="padding: 0;">import_videos/{{dataset.acronym}}/{{lang3char}}/</li>
-                    {% for videofile in videopaths %}
+              <div name="status_uploaded_video_files"
+                    style="height:250px; overflow-y:auto;display:block; width:600px;">
+                  <list class="list-group-hover" style="padding:0;">
+                      {% for lang3char, status_files in status_uploaded_files.items %}
+                      {% if status_files %}
+                      <li class="list-group-item active" style="padding: 0;">
+                          <span>import_videos/{{dataset.acronym}}/{{lang3char}}/</span>
+                          <span>{% trans "GLOSS IDENTIFIED" %}</span>
+                      </li>
+                      {% for videofile, video_format_okay, gloss in status_files %}
+                      {% if video_format_okay and gloss %}
+                      <li class="list-group-item" style="padding:0;">
+                          <span>import_videos/{{dataset.acronym}}/{{lang3char}}/{{videofile}}</span>
+                          <span>{{gloss|get_default_annotation_idgloss_translation}}</span></li>
+                      {% elif gloss %}
                     <li class="list-group-item" style="padding: 0;">
-                        import_videos/{{dataset.acronym}}/{{lang3char}}/{{videofile}}
+                        <span>import_videos/{{dataset.acronym}}/{{lang3char}}/{{videofile}}</span>
+                        <span style="color:red">(video is not mp4)</span>
                     </li>
+                    {% else %}
+                    <li class="list-group-item" style="padding: 0;">
+                        <span>import_videos/{{dataset.acronym}}/{{lang3char}}/{{videofile}}</span>
+                        <span style="color:red"><span>&#10060;</span></span>
+                    </li>
+                    {% endif %}
                     {% endfor %}
                     {% endif %}
                     {% endfor %}

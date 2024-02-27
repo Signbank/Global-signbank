@@ -24,6 +24,7 @@ import urllib.request
 import tempfile
 import shutil
 import os
+from signbank.video.convertvideo import probe_format
 
 
 def api_fields(dataset, advanced=False):
@@ -159,6 +160,19 @@ def get_filenames(path_to_zip):
     """ return list of filenames inside of the zip folder"""
     with zipfile.ZipFile(path_to_zip, 'r') as zipped:
         return zipped.namelist()
+
+
+def get_filenames_with_filetype(path_to_zip):
+    """ return list of filenames inside of the zip folder"""
+    files_in_zip_archive = dict()
+    with zipfile.ZipFile(path_to_zip, 'r') as zipped:
+        for entry in zipped.infolist():
+            if not entry.filename.endswith('.mp4'):
+                # this can be an Apple .DS_Store file
+                files_in_zip_archive[entry.filename] = False
+                continue
+            files_in_zip_archive[entry.filename] = True
+        return files_in_zip_archive
 
 
 def check_subfolders_for_unzipping(acronym, lang3charcodes, filenames):
@@ -312,6 +326,33 @@ def upload_zipped_videos_folder(request):
     return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
 
 
+def check_gloss_existence_for_uploaded_video(dataset):
+    dataset_acronym = str(dataset.acronym)
+    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset_acronym)
+    list_of_video_gloss_status = dict()
+
+    if os.path.isdir(goal_directory):
+        for language3char in os.listdir(goal_directory):
+            if language3char not in list_of_video_gloss_status.keys():
+                list_of_video_gloss_status[language3char] = []
+            language_subfolder = os.path.join(goal_directory, language3char)
+            if os.path.isdir(language_subfolder):
+                for file in os.listdir(language_subfolder):
+                    video_file_path = os.path.join(goal_directory, language3char, file)
+                    format = probe_format(video_file_path)
+                    (filename_without_extension, extension) = os.path.splitext(file)
+                    gloss = Gloss.objects.filter(lemma__dataset=dataset,
+                                                 annotationidglosstranslation__language__language_code_3char=language3char,
+                                                 annotationidglosstranslation__text__exact=filename_without_extension).first()
+                    if format.startswith('h264'):
+                        # the output of ffmpeg includes extra information following h264, so only check the prefix
+                        list_of_video_gloss_status[language3char].append((file, True, gloss))
+                    else:
+                        list_of_video_gloss_status[language3char].append((file, False, gloss))
+
+    return list_of_video_gloss_status
+
+
 def uploaded_zip_archives(dataset):
     # find the uploaded zip archives in TEMP that include the dataset
     zip_archive = dict()
@@ -328,7 +369,7 @@ def uploaded_zip_archives(dataset):
             if dataset.acronym not in common_prefix:
                 continue
             zipfilename = os.path.basename(file_or_folder_path)
-            zip_archive[zipfilename] = get_filenames(file_or_folder_path)
+            zip_archive[zipfilename] = get_filenames_with_filetype(file_or_folder_path)
     return zip_archive
 
 
