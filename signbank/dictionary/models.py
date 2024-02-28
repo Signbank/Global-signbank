@@ -2302,7 +2302,21 @@ class Gloss(models.Model):
             # Save the new videofile in the video object
             video.videofile.save(get_video_file_path(video, str(videofile)), videofile)
         else:
-            return GlossVideo(gloss=self)
+            video = GlossVideo(gloss=self)
+            # Backup the existing video objects stored in the database
+            existing_videos = GlossVideo.objects.filter(gloss=self)
+            for video_object in existing_videos:
+                video_object.reversion(revert=False)
+
+            # Create a GlossVideoHistory object
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, get_video_file_path(video, str(videofile)))
+            glossvideohistory = GlossVideoHistory(action="import_video", gloss=self, actor=user,
+                                                  uploadfile=videofile, goal_location=video_file_full_path)
+            glossvideohistory.save()
+
+            # Save the new videofile in the video object
+            video.videofile.save(get_video_file_path(video, str(videofile)), videofile)
+
         video.save()
         # video.convert_to_mp4()
         # video.ch_own_mod_video()

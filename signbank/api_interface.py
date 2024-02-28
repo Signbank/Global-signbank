@@ -26,6 +26,7 @@ import tempfile
 import shutil
 import os
 from signbank.video.convertvideo import probe_format
+from signbank.video.models import GlossVideo
 
 
 def api_fields(dataset, advanced=False):
@@ -550,23 +551,93 @@ def upload_zipped_videos_folder_json(request, datasetid):
     return JsonResponse(videos_data)
 
 
+def remove_video_file_from_import_videos(video_file_path):
+    errors = ""
+    if not os.path.exists(video_file_path):
+        return errors
+    try:
+        os.remove(video_file_path)
+        errors = ""
+    except OSError:
+        errors = "Cannot delete the source video: " + video_file_path
+    return errors
+
+
+def import_video_file(request, gloss, video_file_path):
+    with atomic():
+        vfile = File(open(video_file_path, 'rb'))
+        video = gloss.add_video(request.user, vfile, '')
+        vfile.close()
+        print(video)
+    overwritten = GlossVideo.objects.filter(gloss=gloss).count() > 1
+    if overwritten:
+        status = 'Success (Video File Overwritten)'
+    else:
+        status = 'Success'
+
+    errors = remove_video_file_from_import_videos(video_file_path)
+
+    return status, errors
+
+
+def import_video_to_gloss(request, video_file_path):
+    import_video_data = dict()
+    filename = os.path.basename(video_file_path)
+    file_folder_path = os.path.dirname(video_file_path)
+    path_units = file_folder_path.split('/')
+    language_3_code = path_units[-1]
+    dataset_acronym = path_units[-2]
+    json_path_key = 'import_videos/' + dataset_acronym + '/' + language_3_code + '/' + filename
+    import_video_data[json_path_key] = dict()
+    (filename_without_extension, extension) = os.path.splitext(filename)
+    gloss = Gloss.objects.filter(lemma__dataset__acronym=dataset_acronym,
+                                 annotationidglosstranslation__language__language_code_3char=language_3_code,
+                                 annotationidglosstranslation__text__exact=filename_without_extension).first()
+    if not gloss:
+        errors = remove_video_file_from_import_videos(video_file_path)
+        if not errors:
+            import_video_data[json_path_key]["errors"] = ("Gloss not found for " + filename_without_extension +
+                                                          ". Video file deleted.")
+        else:
+            import_video_data[json_path_key]["errors"] = ("Gloss not found for " + filename_without_extension +
+                                                          ". " + errors)
+        return import_video_data
+    format = probe_format(video_file_path)
+    if format.startswith('h264'):
+        # the output of ffmpeg includes extra information following h264, so only check the prefix
+        status, errors = import_video_file(request, gloss, video_file_path)
+        video_path = gloss.get_video_url()
+        import_video_data[json_path_key]["gloss"] = str(gloss.id)
+        import_video_data[json_path_key]["videfile"] = filename
+        import_video_data[json_path_key]["Video"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
+        import_video_data[json_path_key]["status"] = status
+        import_video_data[json_path_key]["errors"] = errors
+    else:
+        import_video_data[json_path_key]["gloss"] = str(gloss.id)
+        import_video_data[json_path_key]["videfile"] = filename
+        import_video_data[json_path_key]["errors"] = "Video file is not h264."
+
+    return import_video_data
+
+
 class VideoGloss:
     """An object that implements just the write method of the file-like
     interface. This is based on an example in the Django 4.2 documentation
     """
     line = 0
 
-    def write(self, value):
+    def write(self, request, value):
         """Write the value by returning it, instead of storing in a buffer."""
         if value == "start":
-            value_json = "{ \"glosses\": ["
+            value_json = "{ \"import_videos_status\": ["
         elif value == "finish":
             value_json = "]}"
         else:
+            video_data = import_video_to_gloss(request, value)
             if self.line > 1:
-                value_json = "," + json.dumps({'gloss': value})
+                value_json = "," + json.dumps(video_data)
             else:
-                value_json = json.dumps({'gloss': value})
+                value_json = json.dumps(video_data)
         self.line += 1
         return value_json
 
@@ -590,7 +661,7 @@ def upload_videos_to_glosses(request, datasetid):
     video_file_paths = uploaded_video_filepaths(dataset)
     pseudo_buffer = VideoGloss()
     return StreamingHttpResponse(
-        (pseudo_buffer.write(vg) for vg in json_start() + video_file_paths + json_finish()),
+        (pseudo_buffer.write(request, vg) for vg in json_start() + video_file_paths + json_finish()),
         content_type="application/json",
         headers={"Content-Disposition": 'attachment; filename='+'glosses.json'},
     )

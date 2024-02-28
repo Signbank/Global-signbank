@@ -68,7 +68,8 @@ from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_i
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
 from signbank.api_interface import (uploaded_video_files, get_filenames, uploaded_zip_archives,
-                                    check_gloss_existence_for_uploaded_video)
+                                    check_gloss_existence_for_uploaded_video,
+                                    import_video_to_gloss, uploaded_video_filepaths)
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
