@@ -18,7 +18,7 @@ from signbank.feedback.models import *
 from signbank.dictionary.update import (update_signlanguage, update_dialect)
 from signbank.dictionary.update_csv import (update_simultaneous_morphology, update_blend_morphology,
                                             update_sequential_morphology, subst_relations, subst_foreignrelations,
-                                            update_tags, subst_notes)
+                                            update_tags, subst_notes, subst_semanticfield)
 import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
@@ -1052,6 +1052,20 @@ def import_csv_update(request):
             if notes_radio == 'update':
                 notes_assign_toggle = 'update'
 
+        # the obtains the semantic field togggle
+        semfield_toggle = 'keep'
+        if 'toggle_semfield' in request.POST:
+            semfield_radio = request.POST['toggle_semfield']
+            if semfield_radio == 'erase':
+                semfield_toggle = 'erase'
+
+        # the obtains the semantic field assign togggle
+        semfield_assign_toggle = 'replace'
+        if 'toggle_semfield_assign' in request.POST:
+            semfield_radio = request.POST['toggle_semfield_assign']
+            if semfield_radio == 'update':
+                semfield_assign_toggle = 'update'
+
         # the obtains the tags togggle
         tags_toggle = 'keep'
         if 'toggle_tags' in request.POST:
@@ -1234,7 +1248,8 @@ def import_csv_update(request):
                 (changes_found, errors_found, earlier_updates_same_csv, earlier_updates_lemmaidgloss) = \
                             compare_valuedict_to_gloss(value_dict, gloss.id, user_datasets_names, nl,
                                                        earlier_updates_same_csv, earlier_updates_lemmaidgloss,
-                                                       notes_toggle, notes_assign_toggle, tags_toggle)
+                                                       notes_toggle, notes_assign_toggle,
+                                                       semfield_toggle, semfield_assign_toggle, tags_toggle)
                 changes += changes_found
 
                 if len(errors_found):
@@ -1392,6 +1407,12 @@ def import_csv_update(request):
                 new_human_value_list = [v.strip() for v in new_value.split(',')]
 
                 update_blend_morphology(gloss, new_human_value_list)
+
+                continue
+            if fieldname == 'Semantic Field':
+                new_human_value_list = [v.strip() for v in new_value.split(',')]
+
+                subst_semanticfield(gloss, new_human_value_list)
 
                 continue
 
@@ -2230,15 +2251,17 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = 0
 
+    if not inWebSet and 'extended_fields' in request.GET and request.GET['extended_fields'] in [1, True, 'true']:
+        extended_fields = True
+    else:
+        extended_fields = False
+
+    # these actually do nothing
     video_folder_name = 'glossvideo'
     image_folder_name = 'glossimage'
 
-    try:
-        if request.GET['small_videos'] not in [0, False, 'false']:
-            video_folder_name += '_small'
-    except KeyError:
-        print('key error on small videos')
-        pass
+    if 'small_videos' in request.GET and request.GET['small_videos'] not in [0, False, 'false']:
+        video_folder_name += '_small'
 
     archive_file_name = '.'.join([first_part_of_file_name, timestamp_part_of_file_name, 'zip'])
     archive_file_path = settings.SIGNBANK_PACKAGES_FOLDER + archive_file_name
@@ -2256,7 +2279,7 @@ def package(request):
 
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
-                      'glosses': signbank.tools.get_gloss_data(since_timestamp, dataset, inWebSet)}
+                      'glosses': signbank.tools.get_gloss_data(since_timestamp, dataset, inWebSet, extended_fields)}
 
     if since_timestamp != 0:
         collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss', since_timestamp)
