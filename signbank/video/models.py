@@ -315,12 +315,15 @@ class ExampleVideo(models.Model):
         # then move it into place
 
         (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext == '.mov' or ext == '.webm' or ext == '.m4v':
+        from signbank.video.convertvideo import find_codec_name
+        if find_codec_name(self.videofile.path) != 'h264' or ext in ['.m4v', '.mov', '.webm']:
             oldloc = self.videofile.path
             newloc = basename + ".mp4"
+            print("Converting video from ", oldloc, " to ", newloc)
             err = convert_video(oldloc, newloc, force=False)
             self.videofile.name = get_sentence_video_file_path(self, os.path.basename(newloc))
-            os.remove(oldloc)
+            if oldloc != newloc:
+                os.remove(oldloc)
 
     def ch_own_mod_video(self):
         """Change owner and permissions"""

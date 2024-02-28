@@ -606,7 +606,7 @@ class ExampleSentence(models.Model):
 
     def get_video_path_prefix(self):
         try:
-            examplesentence = self.examplesentence_set.get(version=0)
+            examplesentence = self.examplevideo_set.get(version=0)
             prefix, extension = os.path.splitext(str(examplesentence))
             return prefix
         except ObjectDoesNotExist:

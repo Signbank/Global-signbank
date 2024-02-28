@@ -18,7 +18,30 @@ import glob
 import ffmpeg
 from subprocess import Popen, PIPE
 import re
+import subprocess
+import json
 
+def ffprobe_info(file_path):
+    command = [
+        'ffprobe',
+        '-show_format',
+        '-show_streams',
+        '-loglevel', 'quiet',
+        '-print_format', 'json',
+        file_path
+    ]
+    try:
+        result = subprocess.run(command, capture_output=True, text=True)
+        if result.returncode == 0:
+            output = result.stdout.strip()
+            return json.loads(output)
+        else:
+            print("Error:", result.stderr)
+            return None
+    except Exception as e:
+        print("Exception:", str(e))
+        return None
+    
 
 def parse_ffmpeg_output(text):
     """Get relevant info from the ffmpeg output"""
@@ -162,37 +185,89 @@ def make_thumbnail_video(sourcefile, targetfile):
     os.remove(temp_target)
 
 
+def find_codec_name(file_path):
+    """
+    Find the codec name of the video file
+    """
+    info = ffprobe_info(file_path)
+    if info:
+        for stream in info['streams']:
+            if stream['codec_type'] == 'video':
+                return stream['codec_name']
+    return None
+
+def find_frame_rate(file_path):
+    """
+    Find the frame rate of the video file
+    """
+    info = ffprobe_info(file_path)
+    if info:
+        for stream in info['streams']:
+            if stream['codec_type'] == 'video':
+                return stream['r_frame_rate']
+    return None
+
+def fraction_to_float(fraction_str):
+    """
+    Convert a string representing a fraction (e.g. "61/4") to a float (25.15)
+    """
+
+    print("Frame rate fraction: ", fraction_str)
+
+    if fraction_str == None:
+        return None
+    
+    if fraction_str == "1000/1":
+        return 25.0
+    
+    if '/' not in fraction_str:
+        return float(fraction_str)
+    
+    # Split the string into numerator and denominator
+    numerator_str, denominator_str = fraction_str.split('/')
+
+    # Convert numerator and denominator to integers
+    numerator = int(numerator_str)
+    denominator = int(denominator_str)
+
+    # Perform the division to get the float value
+    result = numerator / denominator
+    return result
+
 def convert_video(sourcefile, targetfile, force=False):
     """convert a video to h264 format
     if force=True, do the conversion even if the video is already
     h264 encoded, if False, then just copy the file in this case"""
     
+    # print("video codec", find_codec_name(sourcefile))
+    # print("frame rate", fraction_to_float(find_frame_rate(sourcefile)))
+    
     if not force:
-        format = probe_format(sourcefile)
+        format = find_codec_name(sourcefile)
     else:
         format = 'force'
 
+    RAW_OPTIONS = []
     if format == "h264":
-        # just do a copy of the file
+        # print("---Video already in h264 format---")  # just do a copy of the file
         shutil.copy(sourcefile, targetfile)
-    elif "h264" in format:
-        # ffmpeg copy video channel to new file with .mp4 extension
-        FFMPEG_COPY_OPTIONS = ["-c", "copy", "-an"]
-        b = run_ffmpeg(sourcefile, targetfile, options=FFMPEG_COPY_OPTIONS)
-    else: 
-        # convert the video
-        RAW_OPTIONS = ["-vcodec", "h264"]
-        # RAW_OPTIONS = ["-vcodec", "libx264", "-an"]
-        # print('convert small video: ', RAW_OPTIONS)
-        b = run_ffmpeg(sourcefile, targetfile, options=RAW_OPTIONS)
-        # print(b)
-
-    format = probe_format(targetfile)
-    if format.startswith('h264'):
-        # the output of ffmpeg includes extra information following h264, so only check the prefix
         return True
-    else:
-        return False
+    elif format == "prores":
+        # print("---Converting prores to h264---")
+        RAW_OPTIONS = ["-vcodec", "h264"]
+    else: # format == "vp8": 
+        # print("---Other codec found: converting to h264---")
+        RAW_OPTIONS = ["-vcodec", "h264", "-b:v", "5M"]
+    run_ffmpeg(sourcefile, targetfile, options=RAW_OPTIONS)
+
+    # print("video codec", find_codec_name(targetfile))
+    # print("frame rate", fraction_to_float(find_frame_rate(targetfile)))
+
+    # Check if the file was converted to h264
+    format = find_codec_name(targetfile)
+    if format == "h264":
+        return True
+    return False
 
 
 if __name__ == '__main__':
