@@ -119,6 +119,9 @@ urlpatterns = [
     re_path(r'upload_zipped_videos_folder_json/(?P<datasetid>\d+)/$',
             signbank.api_interface.upload_zipped_videos_folder_json, name='upload_zipped_videos_folder_json'),
 
+    re_path(r'upload_videos_to_glosses/(?P<datasetid>\d+)/$',
+            signbank.api_interface.upload_videos_to_glosses, name='upload_videos_to_glosses'),
+
     re_path(r'upload_zipped_videos_folder/$',
             signbank.api_interface.upload_zipped_videos_folder, name='upload_zipped_videos_folder'),
 

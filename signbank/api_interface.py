@@ -1,3 +1,4 @@
+import json
 
 from signbank.dictionary.models import *
 from tagging.models import Tag, TaggedItem
@@ -390,6 +391,22 @@ def uploaded_video_files(dataset):
     return list_of_videos
 
 
+def uploaded_video_filepaths(dataset):
+
+    dataset_acronym = str(dataset.acronym)
+    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset_acronym)
+    list_of_video_paths = []
+
+    if os.path.isdir(goal_directory):
+        for language3char in os.listdir(goal_directory):
+            language_subfolder = os.path.join(goal_directory, language3char)
+            if os.path.isdir(language_subfolder):
+                for file in os.listdir(language_subfolder):
+                    video_path = os.path.join(goal_directory, language3char, file)
+                    list_of_video_paths.append(video_path)
+    return list_of_video_paths
+
+
 def get_unzipped_video_files_json(request, datasetid):
 
     sequence_of_digits = True
@@ -532,3 +549,48 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     return JsonResponse(videos_data)
 
+
+class VideoGloss:
+    """An object that implements just the write method of the file-like
+    interface. This is based on an example in the Django 4.2 documentation
+    """
+    line = 0
+
+    def write(self, value):
+        """Write the value by returning it, instead of storing in a buffer."""
+        if value == "start":
+            value_json = "{ \"glosses\": ["
+        elif value == "finish":
+            value_json = "]}"
+        else:
+            if self.line > 1:
+                value_json = "," + json.dumps({'gloss': value})
+            else:
+                value_json = json.dumps({'gloss': value})
+        self.line += 1
+        return value_json
+
+
+# json.dumps( {key: val} {key: val}, separators=('}', ':'))
+def json_start():
+    return ["start"]
+
+
+def json_finish():
+    return ["finish"]
+
+
+def upload_videos_to_glosses(request, datasetid):
+
+    dataset_id = int(datasetid)
+    dataset = Dataset.objects.filter(id=dataset_id).first()
+
+    from django.http import StreamingHttpResponse
+
+    video_file_paths = uploaded_video_filepaths(dataset)
+    pseudo_buffer = VideoGloss()
+    return StreamingHttpResponse(
+        (pseudo_buffer.write(vg) for vg in json_start() + video_file_paths + json_finish()),
+        content_type="application/json",
+        headers={"Content-Disposition": 'attachment; filename='+'glosses.json'},
+    )
