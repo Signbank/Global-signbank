@@ -257,6 +257,9 @@ class GlossSearchForm(forms.ModelForm):
                               widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
     excludeFromEcv = forms.ChoiceField(label=_('Exclude from ECV'), choices=[(0, '-')],
                                        widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    tags = forms.ChoiceField(label=_('Tags'),
+                             choices=[(0, '-')],
+                             widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
     definitionRole = forms.ChoiceField(label=_('Note Type'),
                                        choices=[(0, '-')],
@@ -941,6 +944,10 @@ class LemmaUpdateForm(forms.ModelForm):
 
 
 class KeyMappingSearchForm(forms.ModelForm):
+
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    createdBy = forms.CharField(label=_('Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
 
     class Meta:
 

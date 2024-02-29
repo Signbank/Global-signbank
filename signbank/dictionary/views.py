@@ -1839,7 +1839,7 @@ def recently_added_glosses(request):
     recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
     recent_glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets).filter(
         creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
-        'creationDate').reverse()
+        'creationDate')
 
     items = construct_scrollbar(recent_glosses, 'sign', lang_attr_name)
     request.session['search_results'] = items

@@ -25,7 +25,8 @@ from signbank.dictionary.adminviews import (GlossListView, MorphemeListView, Dat
                                             DatasetDetailView, FrequencyListView, DatasetFieldChoiceView,
                                             dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView,
                                             QueryListView, SemanticFieldListView, DerivationHistoryListView,
-                                            SearchHistoryView, SenseListView, LemmaListView, DatasetMediaView)
+                                            SearchHistoryView, SenseListView, LemmaListView, ToggleListView,
+                                            DatasetMediaView)
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -80,6 +81,7 @@ urlpatterns = [
     re_path(r'^analysis/frequencies/$', FrequencyListView.as_view(), name='admin_frequency_list'),
     re_path(r'^analysis/queries/$', QueryListView.as_view(), name='admin_query_list'),
     re_path(r'^analysis/search_history/$', SearchHistoryView.as_view(), name='admin_search_history'),
+    re_path(r'^analysis/toggle_view/$', ToggleListView.as_view(), name='admin_toggle_list'),
 
     re_path(r'^signs/recently_added/$', login_required(signbank.dictionary.views.recently_added_glosses),
             name='recently_added_glosses'),
