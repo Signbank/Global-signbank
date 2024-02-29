@@ -1,0 +1,454 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Annotation Toggle View{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+
+<script type='text/javascript'>
+var url = '{{ PREFIX_URL }}';
+var saving_str = '{{saving_str|escapejs}}';
+var csrf_token = '{{csrf_token}}';
+var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+var query_parameters_keys = {{query_parameters_keys|safe}};
+var query_parameters_dict = {{query_parameters|safe}};
+</script>
+
+<script type='text/javascript' src="{{ STATIC_URL }}js/glosses_toggle_edit.js"></script>
+
+<script type='text/javascript'>
+$(document).ready(function() {
+
+    function makeMultipleSelect(fieldId,fieldVar) {
+        var target_pulldown = document.getElementById(fieldId);
+        if (!target_pulldown) { return; }
+        target_pulldown.setAttribute('multiple','multiple');
+        target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+        target_pulldown.setAttribute('name',fieldVar);
+        target_pulldown.style.width = '100%';
+    }
+
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = 'id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        makeMultipleSelect(this_id, this_var);
+     }
+
+     $('.js-example-basic-multiple').each(function() {
+         var thisId = this.id;
+         $(this).select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve',
+            placeholder: '',
+         });
+     });
+
+     $('.js-example-basic-multiple').val(null).trigger('change');
+
+     // initialize query parameters in multiple select fields
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = '#id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        if (query_parameters_keys.includes(this_var)) {
+            var query_initial = query_parameters_dict[this_var];
+            $(this_id).val(query_initial);
+            $(this_id).trigger('change');
+        };
+     }
+     $('.hover-shows-video').each(function() {
+        ready_videos(this);
+     });
+
+});
+</script>
+
+<script type='text/javascript'>
+
+function clearForm() {
+      $('input').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio' || this_type == 'button') { return; };
+        if (this_type == 'date') {
+            $(this).attr('value', "");
+        } else {
+            $(this).val('');
+        };
+      });
+     $('.js-example-basic-multiple').val(null).trigger('change');
+}
+
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            $(this).find('img').hide();
+            video.show();
+            video.get(0).play();
+        }
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            video.hide();
+            video.get(0).pause();
+            video.get(0).currentTime = 0;
+        }
+    });
+}
+</script>
+
+{% endblock %}
+
+{% block extrahead %}
+<style>
+.actions {
+    color: white !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.actionLabel {
+    border: 1px solid;
+    text-align: center;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: white;
+    margin: 0 0 0 0;
+}
+.actionLabel:hover {
+    text-decoration: none;
+}
+.actionLabel:active:focus {
+    text-decoration: none;
+    outline: none;
+}
+.actionButton {
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-color: Grey;
+    border-radius: 8px;
+    text-align: center;
+    color: Black;
+    background-color: white;
+}
+.actionButton:hover {
+    text-decoration: none;
+    background-color: LightGrey;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
+.tags-cell {
+    overflow-y: visible;
+    width: 255px;
+    box-sizing: inherit;
+    white-space: nowrap;
+}
+input {
+    height: 26px;
+    font-size: 14px;
+    padding: 0;
+}
+.span-cell {
+    padding: 1px;
+    height: auto;
+}
+.table-condensed {
+    border-collapse: no-collapse;
+    overflow-y: scroll;
+}
+.table-condensed td {
+    height: auto;
+}
+.modal-dialog {
+    width: 1200px;
+}
+.table.collapse.in {
+   display: table;
+}
+.panel-body {
+    display: table;
+}
+.table-toggles {
+    table-layout:fixed;
+    overflow:auto;
+}
+.panel-toggles {
+    margin: 0 important!;
+    width: inherit;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock" style="padding-top: 30px;">
+
+    <div id="keywordsSenses">
+    <h3>{% trans "Annotation Toggle View" %}</h3>
+        <h4>{% trans "On initial view, prior to searching, recently added glosses are shown below." %}</h4>
+
+        <div id='searchform_outer' class='well '>
+        <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/toggle_view/'>
+        {% csrf_token %}
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
+            </div>
+                <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+                <div id='searchformwell' class='well'>
+
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='' >
+                    <input name='search_type' class='form-control' value='filter'>
+                </div>
+
+                <div class="panel panel-default">
+                  <div class="panel-heading" data-toggle="collapse"
+                           data-target="#pub_search">{% trans "Search by Attributes" %}</div>
+
+                      <div id='pub_search' class='collapse'>
+                      <table class='table table-condensed' style="width:65%;">
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
+                          <td style="width:600px;">{{searchform.tags}}</td>
+                      </tr>
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_createdBy'>{% trans "Created By" %}</label></td>
+                          <td style="width:600px;">{{searchform.createdBy}}</td>
+                      </tr>
+                      </table>
+                      </div>
+                    </div>
+                </div>
+        <div class='btn-group' style="margin-bottom: 20px">
+        <input class='btn btn-primary' type='submit' name="filter" value='Apply Filter'>
+        <input class='btn btn-primary' type='reset' onclick="clearForm();"
+                       value='{% trans "Reset" %}'>
+        </div>
+        </div>
+        </div>
+
+        </form>
+        </div>
+
+<div>
+<table class='table table-condensed table-toggles'
+       style="width:100%; overflow-y:scroll;">
+    <thead>
+      <tr>
+          <th></th>
+          <th style="width:250px;">{% trans "Gloss" %}</th>
+          <th style="width:240px;">{% trans "Creator" %}</th>
+          <th style="width:500px;">{% trans "Quick Toggles" %}</th>
+          <th style="width:300px;">{% trans "Tags" %}</th>
+          <th style="width:200px;">{% trans "Semantic Fields" %}</th>
+          <th style="width:100px;">{% trans "Word Class" %}</th>
+          <th style="width:150px;">{% trans "Named Entity" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% load underscore_to_space %}
+    {% for gloss in page_obj %}
+        <tr style="height:auto;">
+            <td>{% if gloss.get_image_path %}
+            {% url 'dictionary:protected_media' '' as protected_media_url %}
+            <div class="thumbnail_container">
+            <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
+            <div id='glossvideo_{{gloss.id}}' class="hover-shows-video">
+                <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_url}}">
+
+                {% if gloss.has_video %}
+                <video id="videoplayer" class="thumbnail-video"
+                       src="{{protected_media_url}}{{gloss.get_video_url}}"  type="video/mp4" muted="muted"></video>
+                {% endif %}
+            </div>
+            </a>
+            </div>
+            {% endif %}
+            </td>
+            <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
+                {{gloss|get_default_annotation_idgloss_translation}}</a></td>
+            <td>
+                <table>
+                    <tr>
+                        <td>
+                        {% for creator in gloss.creator.all %}
+                            {% if forloop.last %}
+                                {{creator.first_name}} {{creator.last_name}}
+                            {% else %}
+                                {{creator.first_name}} {{creator.last_name}},
+                            {% endif %}
+                        {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>{{gloss.creationDate}}</td>
+                    </tr>
+            </table>
+            </td>
+            <td style="width:500px;">
+                <div id="toggles" class='panel-group'>
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_tags_panel_{{gloss.id}}'>{% trans "Toggle Tags" %}
+                </div>
+                <div id='toggle_tags_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <span>
+                {% for tag in available_tags %}
+                <button id='quick_tag_btn_{{gloss.id}}' class="quick_tag btn actionButton"
+                        name='quick_tag_{{gloss.id}}'
+                        value='{{gloss.id}}' data-tagname='{{tag.id}}' style="height:36px;"
+                        type="submit" >{{tag.name|underscore_to_space}}
+                </button>
+                {% endfor %}
+                </span>
+                </div>
+                </div>
+                </div>
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_semantics_panel_{{gloss.id}}'>{% trans "Toggle Semantic Fields" %}
+                </div>
+                <div id='toggle_semantics_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for semfield in available_semanticfields %}
+                <button id='quick_semantics_btn_{{gloss.id}}' class="quick_semantics btn actionButton"
+                        name='quick_semantics_{{gloss.id}}'
+                        value='{{gloss.id}}' data-semanticfield='{{semfield.machine_value}}' style="height:36px;"
+                        type="submit" >{{semfield.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_wordclass_panel_{{gloss.id}}'>{% trans "Set Word Class" %}
+                </div>
+                <div id='toggle_wordclass_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_wordclass %}
+                <button id='quick_wordclass_btn_{{gloss.id}}' class="quick_wordclass btn actionButton"
+                        name='quick_wordclass_{{gloss.id}}'
+                        value='{{gloss.id}}' data-wordclass='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_namedentity_panel_{{gloss.id}}'>{% trans "Set Named Entity" %}
+                </div>
+                <div id='toggle_namedentity_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for ne in available_namedentity %}
+                <button id='quick_namedentity_btn_{{gloss.id}}' class="quick_namedentity btn actionButton"
+                        name='quick_namedentity_{{gloss.id}}'
+                        value='{{gloss.id}}' data-namedentity='{{ne.machine_value}}' style="height:36px;"
+                        type="submit" >{{ne.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+                </div>
+            </td>
+            {% tags_for_object gloss as tag_list %}
+            <td class="field_tags" style="width:300px;padding-left:10px;">
+                <div class="tags-cell"
+                     id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
+            </td>
+            {% with gloss.semField.all as semantic_fields_list %}
+            <td class="field_semantics" style="width:200px;">
+                <div class="semantics-cell"
+                     id="semantics_cell_{{gloss.id}}">{% for sf in semantic_fields_list %}<span class='semanticfield'>{{sf.name}}</span>
+                            {% if not forloop.last %}, {% endif %}{% endfor %}
+                </div>
+            </td>
+            {% endwith %}
+            <td class="field_wordclass" style="width:100px;">
+                <div class="wordclass-cell"
+                     id="wordclass_cell_{{gloss.id}}"><span class='wordclass'>{% if gloss.wordClass %}{{gloss.wordClass.name}}{% endif %}</span>
+                </div>
+            </td>
+            <td class="field_namedentity" style="width:150px;">
+                <div class="namedentity-cell"
+                     id="namedentity_cell_{{gloss.id}}"><span class='namedentity'>{% if gloss.namEnt %}{{gloss.namEnt.name}}{% endif %}</span>
+                </div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+
+<div class="pagination">
+    <span class="step-links">
+        <ul class='pagination pagination-sm'>
+        {% if page_obj.has_previous %}
+            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
+        {% endif %}
+
+          {% if  page_obj.number > 10 %}
+            <li><a>...</a></li>
+          {% endif %}
+
+          {% for p in page_obj.paginator.page_range %}
+
+             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
+             <li {% if p == page_obj.number %}class='active'{% endif %}>
+             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+             </li>
+             {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
+            <li><a>...</a></li>
+            <li>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+            </li>
+          {% endif %}
+
+        {% if page_obj.has_next %}
+            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
+
+      </ul>
+        {% endif %}
+    </span>
+</div>
+</div>
+{% endblock content %}
