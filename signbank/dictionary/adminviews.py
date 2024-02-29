@@ -4302,6 +4302,15 @@ class DatasetMediaView(DetailView):
         nr_of_glosses = glosses.count()
         nr_of_public_glosses = glosses.filter(inWeb=True).count()
 
+        from signbank.video.models import GlossVideo
+        for gloss in glosses:
+            existing_videos = GlossVideo.objects.filter(gloss=gloss)
+            for glossvid in existing_videos:
+                if glossvid.videofile:
+                    print(glossvid.videofile.__dict__.keys())
+                else:
+                    print('glossvid is empty')
+
         context['nr_of_glosses'] = nr_of_glosses
         context['nr_of_public_glosses'] = nr_of_public_glosses
 

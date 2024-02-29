@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from signbank.video.models import GlossVideo
+from signbank.video.models import GlossVideo, GlossVideoHistory
 from signbank.dictionary.models import Dataset
 from signbank.settings.base import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBANK_GROUPS
@@ -169,4 +169,11 @@ class GlossVideoAdmin(admin.ModelAdmin):
         return False
 
 
+class GlossVideoHistoryAdmin(admin.ModelAdmin):
+
+    list_display = ['action', 'datestamp', 'uploadfile', 'goal_location', 'actor', 'gloss']
+
+
 admin.site.register(GlossVideo, GlossVideoAdmin)
+admin.site.register(GlossVideoHistory, GlossVideoHistoryAdmin)
+
