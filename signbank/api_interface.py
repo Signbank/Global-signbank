@@ -1,6 +1,8 @@
 import json
 
 from signbank.dictionary.models import *
+from django.db.models import FileField
+from django.core.files.base import ContentFile, File
 from tagging.models import Tag, TaggedItem
 from signbank.dictionary.forms import *
 from django.utils.translation import override, gettext_lazy as _, activate
@@ -159,12 +161,12 @@ def get_gloss_filepath(video_file_path, gloss):
     if not language:
         return "", "", ""
     # get the annotation text of the gloss
-    annotationidglosstranslation = gloss.annotationidglosstranslation_set.filter(language=language).first()
+    annotationidglosstranslation = gloss.annotationidglosstranslation_set.all().filter(language=language)
     if not annotationidglosstranslation:
         # the gloss has no annotations for the language
         return "", "", ""
-    annotation_text = annotationidglosstranslation.text
-    if annotationidglosstranslation != filename_without_extension:
+    annotation_text = annotationidglosstranslation.first().text
+    if annotation_text != filename_without_extension:
         # gloss annotation does not match zip file name
         return "", "", ""
     two_letter_dir = get_two_letter_dir(gloss.idgloss)
@@ -643,15 +645,17 @@ def import_video_file(request, gloss, video_file_path):
         if success:
             # make new GlossVideo object for new video
             video = GlossVideo(gloss=gloss,
-                               videofile=File(goal_gloss_file_path),
                                version=0)
+            with open(goal_gloss_file_path, 'rb') as f:
+                f.seek(0)
+                video.videofile.save(os.path.basename(goal_gloss_file_path), File(f), save=False)
             video.save()
-
+            video.make_poster_image()
             glossvideohistory = GlossVideoHistory(action="import",
                                                   gloss=gloss,
                                                   actor=request.user,
-                                                  uploadfile=video_file_name,
-                                                  goal_location=video_path)
+                                                  uploadfile=video_file_path,
+                                                  goal_location=goal_gloss_file_path)
             glossvideohistory.save()
             status = 'Success'
         else:
@@ -668,6 +672,9 @@ def import_video_file(request, gloss, video_file_path):
 
 
 def import_video_to_gloss(request, video_file_path):
+
+    # get file as a url parameter: /dictionary/upload_videos_to_glosses/5
+
     import_video_data = dict()
     filename = os.path.basename(video_file_path)
     file_folder_path = os.path.dirname(video_file_path)
