@@ -3,9 +3,11 @@ from django import forms
 from django.db import models
 from signbank.video.models import GlossVideo, GlossVideoHistory
 from signbank.dictionary.models import Dataset
+from django.contrib.auth.models import User
 from signbank.settings.base import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBANK_GROUPS
 from django.utils.translation import override, gettext_lazy as _
+from django.db.models import Q, Count, CharField, TextField, Value as V
 
 
 class GlossVideoDatasetFilter(admin.SimpleListFilter):
@@ -169,9 +171,46 @@ class GlossVideoAdmin(admin.ModelAdmin):
         return False
 
 
+class GlossVideoHistoryDatasetFilter(admin.SimpleListFilter):
+
+    title = _('Dataset')
+    parameter_name = 'videos_per_dataset'
+
+    def lookups(self, request, model_admin):
+        datasets = Dataset.objects.all()
+        return (tuple(
+            (dataset.id, dataset.acronym) for dataset in datasets
+        ))
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(gloss__lemma__dataset_id=self.value())
+        return queryset.all()
+
+
+class GlossVideoHistoryActorFilter(admin.SimpleListFilter):
+
+    title = _('Actor')
+    parameter_name = 'videos_per_actor'
+
+    def lookups(self, request, model_admin):
+        users = User.objects.all().distinct().order_by('first_name')
+        return (tuple(
+            (user.id, user.username) for user in users
+        ))
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(actor__id=self.value())
+        return queryset.all()
+
+
 class GlossVideoHistoryAdmin(admin.ModelAdmin):
 
     list_display = ['action', 'datestamp', 'uploadfile', 'goal_location', 'actor', 'gloss']
+    list_filter = (GlossVideoHistoryDatasetFilter, GlossVideoHistoryActorFilter)
+
+    search_fields = ['^gloss__annotationidglosstranslation__text']
 
 
 admin.site.register(GlossVideo, GlossVideoAdmin)
