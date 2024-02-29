@@ -29,6 +29,8 @@ import shutil
 import os
 from signbank.video.convertvideo import probe_format
 from signbank.video.models import GlossVideo, GlossVideoHistory
+from django.http import StreamingHttpResponse
+from django.contrib.auth.models import Group, User
 
 
 def api_fields(dataset, advanced=False):
@@ -486,8 +488,6 @@ def upload_zipped_videos_folder_json(request, datasetid):
         return JsonResponse(status_request)
 
     # check if the user can manage this dataset
-    from django.contrib.auth.models import Group, User
-
     try:
         group_manager = Group.objects.get(name='Dataset_Manager')
     except ObjectDoesNotExist:
@@ -629,7 +629,7 @@ def save_video(video_file_path, goal):
 
 
 def import_video_file(request, gloss, video_file_path):
-
+    # request is included as a parameter to add to the GlossVideoHistory
     with atomic():
         goal_gloss_file_path, video_file_name, video_path = get_gloss_filepath(video_file_path, gloss)
         if not goal_gloss_file_path:
@@ -672,8 +672,7 @@ def import_video_file(request, gloss, video_file_path):
 
 
 def import_video_to_gloss(request, video_file_path):
-
-    # get file as a url parameter: /dictionary/upload_videos_to_glosses/5
+    # request is included as a parameter to add to the GlossVideoHistory in the called functions
 
     import_video_data = dict()
     filename = os.path.basename(video_file_path)
@@ -746,13 +745,37 @@ def json_finish():
 
 
 def upload_videos_to_glosses(request, datasetid):
+    # get file as a url parameter: /dictionary/upload_videos_to_glosses/5
 
-    dataset_id = int(datasetid)
-    dataset = Dataset.objects.filter(id=dataset_id).first()
+    has_permission = True
+    errors = ""
 
-    from django.http import StreamingHttpResponse
+    if not request.user.is_authenticated:
+        has_permission = False
+        errors = 'Please login to use the requested functionality.'
 
-    video_file_paths = uploaded_video_filepaths(dataset)
+    # check if the user can manage this dataset
+    try:
+        group_manager = Group.objects.get(name='Dataset_Manager')
+    except ObjectDoesNotExist:
+        group_manager = None
+        has_permission = False
+        errors = 'No group Dataset_Manager found.'
+
+    groups_of_user = request.user.groups.all()
+    if has_permission and group_manager not in groups_of_user:
+        has_permission = False
+        errors = 'You must be in group Dataset Manager to upload a zip video archive.'
+
+    if has_permission and not errors:
+        dataset_id = int(datasetid)
+        dataset = Dataset.objects.filter(id=dataset_id).first()
+        # get paths of uploaded videos to import
+        video_file_paths = uploaded_video_filepaths(dataset)
+    else:
+        # if the user does not have permission, an empty file is generated
+        video_file_paths = []
+
     pseudo_buffer = VideoGloss()
     return StreamingHttpResponse(
         (pseudo_buffer.write(request, vg) for vg in json_start() + video_file_paths + json_finish()),
