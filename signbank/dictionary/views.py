@@ -2296,18 +2296,18 @@ def package(request):
 
 def info(request):
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     # Put the default dataset in first position
     if settings.DEFAULT_DATASET_ACRONYM in user_datasets_names:
         user_datasets_names.insert(0, user_datasets_names.pop(user_datasets_names.index(settings.DEFAULT_DATASET_ACRONYM)))
 
-    if user_datasets_names:
-        return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
-    else:
-        return HttpResponse(json.dumps([settings.LANGUAGE_NAME, settings.COUNTRY_NAME]),
-                            content_type='application/json')
+    if not request.user.is_authenticated:
+        # anonymous users are allowed to read the default dataset
+        user_datasets_names = [settings.DEFAULT_DATASET_ACRONYM]
+
+    return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
 
 
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
