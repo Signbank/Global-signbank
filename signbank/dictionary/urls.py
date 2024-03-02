@@ -17,6 +17,7 @@ import signbank.dictionary.views
 import signbank.dictionary.tagviews
 import signbank.dictionary.adminviews
 import signbank.api_interface
+import signbank.manage_videos
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -134,7 +135,9 @@ urlpatterns = [
             signbank.api_interface.upload_videos_to_glosses, name='upload_videos_to_glosses'),
 
     re_path(r'upload_zipped_videos_folder/$',
-            signbank.api_interface.upload_zipped_videos_folder, name='upload_zipped_videos_folder'),
+            signbank.manage_videos.upload_zipped_videos_folder, name='upload_zipped_videos_folder'),
+    re_path(r'import_video_to_gloss_json/$',
+            signbank.manage_videos.import_video_to_gloss_json, name='import_video_to_gloss_json'),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),

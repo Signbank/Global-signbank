@@ -8,8 +8,6 @@ from signbank.dictionary.forms import *
 from django.utils.translation import override, gettext_lazy as _, activate
 from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
 
-from django.contrib import messages
-
 from django.core.exceptions import ObjectDoesNotExist
 
 from django.shortcuts import get_object_or_404
@@ -31,6 +29,7 @@ from signbank.video.convertvideo import probe_format
 from signbank.video.models import GlossVideo, GlossVideoHistory
 from django.http import StreamingHttpResponse
 from django.contrib.auth.models import Group, User
+from signbank.zip_interface import *
 
 
 def api_fields(dataset, advanced=False):
@@ -190,190 +189,6 @@ def get_gloss_filepath(video_file_path, gloss):
                               dataset_acronym,
                               two_letter_dir)
     return goal, video_file_name, video_path
-
-
-def get_target_filepath(dataset, lang3charcodes, filepath_in_zip_archive):
-
-    acronym = dataset.acronym
-    lang3char = dataset.default_language.language_code_3char
-
-    filepath_units = filepath_in_zip_archive.split('/')
-    filename = filepath_units[-1]
-    for unit in filepath_units:
-        if unit in lang3charcodes:
-            lang3char = unit
-    target_path = os.path.join(acronym, lang3char, filename)
-    return target_path
-
-
-def get_filenames(path_to_zip):
-    """ return list of filenames inside of the zip folder"""
-    with zipfile.ZipFile(path_to_zip, 'r') as zipped:
-        return zipped.namelist()
-
-
-def get_filenames_with_filetype(path_to_zip):
-    """ return list of filenames inside of the zip folder"""
-    files_in_zip_archive = dict()
-    with zipfile.ZipFile(path_to_zip, 'r') as zipped:
-        for entry in zipped.infolist():
-            if not entry.filename.endswith('.mp4'):
-                # this can be an Apple .DS_Store file
-                files_in_zip_archive[entry.filename] = False
-                continue
-            files_in_zip_archive[entry.filename] = True
-        return files_in_zip_archive
-
-
-def check_subfolders_for_unzipping(acronym, lang3charcodes, filenames):
-    # the zip file possibly has an outer folder container
-    # include both possible structures in the allowed structural paths
-    commonprefix = os.path.commonprefix(filenames)
-    subfolders = ([commonprefix] +
-                  [commonprefix + acronym + '/' + lang3char + '/' for lang3char in lang3charcodes] +
-                  [acronym + '/' + lang3char + '/' for lang3char in lang3charcodes])
-    video_files = []
-    for zipfilename in filenames:
-        if zipfilename in subfolders:
-            # skip directory nesting structures
-            continue
-        if '/' not in zipfilename:
-            # this is not a path
-            continue
-        file_dirname = os.path.dirname(zipfilename)
-        if file_dirname + '/' not in subfolders:
-            # this path not an allowed nesting structure, ignore this
-            continue
-        video_files.append(zipfilename)
-    return video_files
-
-
-def unzip_video_files(dataset, zipped_videos_file, destination):
-    with zipfile.ZipFile(zipped_videos_file, "r") as zf:
-        for name in zf.namelist():
-            if not name.endswith('.mp4'):
-                # this can be an Apple .DS_Store file
-                continue
-            # this is a video
-            localfilepath = zf.extract(name, destination)
-            path_units = localfilepath.split('/')
-            filename = path_units[-1]
-            lang3code = path_units[-2]
-            new_location = os.path.join(destination, dataset.acronym, lang3code, filename)
-            shutil.move(localfilepath, new_location)
-
-    unzipped_filename = os.path.basename(zipped_videos_file)
-    folder_name, extension = os.path.splitext(unzipped_filename)
-    unzipped_folder = os.path.join(destination, folder_name)
-    if os.path.exists(unzipped_folder):
-        shutil.rmtree(unzipped_folder)
-
-    return
-
-
-def upload_zipped_videos_folder(request):
-
-    if not request.user.is_authenticated:
-        messages.add_message(request, messages.ERROR, _('Please login to use this functionality.'))
-        return HttpResponseRedirect('/')
-
-    # check if the user can manage this dataset
-    from django.contrib.auth.models import Group, User
-
-    try:
-        group_manager = Group.objects.get(name='Dataset_Manager')
-    except ObjectDoesNotExist:
-        messages.add_message(request, messages.ERROR, _('No group Dataset_Manager found.'))
-        return HttpResponseRedirect('/')
-
-    groups_of_user = request.user.groups.all()
-    if group_manager not in groups_of_user:
-        messages.add_message(request, messages.ERROR,
-                             _('You must be in group Dataset Manager to upload a zip video archive.'))
-        return HttpResponseRedirect('/')
-
-    if 'dataset' in request.POST and request.POST['dataset'] is not None:
-        datasetid = request.POST['dataset']
-    else:
-        datasetid = settings.DEFAULT_DATASET_PK
-
-    try:
-        dataset_id = int(datasetid)
-    except TypeError:
-        return HttpResponseRedirect('/')
-
-    dataset = Dataset.objects.filter(id=dataset_id).first()
-    if not dataset or not request.user.is_authenticated:
-        return HttpResponseRedirect('/')
-
-    lang3charcodes = [language.language_code_3char for language in dataset.translation_languages.all()]
-
-    # make sure the user can write to this dataset
-    from guardian.shortcuts import get_objects_for_user
-    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset,
-                                                accept_global_perms=False)
-    if not user_change_datasets or dataset not in user_change_datasets:
-        messages.add_message(request, messages.ERROR, _('No change dataset permission.'))
-        return HttpResponseRedirect('/')
-
-    import_folder_exists = os.path.exists(VIDEOS_TO_IMPORT_FOLDER)
-    if not import_folder_exists:
-        messages.add_message(request, messages.ERROR,
-                             _("Upload zip archive: The folder VIDEOS_TO_IMPORT_FOLDER is missing."))
-        return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
-
-    zipped_file = request.FILES.get('file')
-    filename = zipped_file.name
-    filetype = zipped_file.content_type
-
-    if not filetype:
-        # unrecognised file type has been uploaded
-        messages.add_message(request, messages.ERROR, _("Upload zip archive: The file has an unknown type."))
-        return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
-
-    if not zipfile.is_zipfile(zipped_file):
-        # unrecognised file type has been uploaded
-        messages.add_message(request, messages.ERROR, _("Upload zip archive: The file is not a zip file."))
-        return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
-
-    norm_filename = os.path.normpath(filename)
-    split_norm_filename = norm_filename.split('.')
-
-    if len(split_norm_filename) == 1:
-        # file has no extension
-        messages.add_message(request, messages.ERROR, _("Upload zip archive: The file has no extension."))
-        return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
-
-    # Create the folder if needed
-    temp_goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP')
-    if not os.path.isdir(temp_goal_directory):
-        os.mkdir(temp_goal_directory, mode=0o777)
-
-    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym)
-    if not os.path.isdir(goal_directory):
-        os.mkdir(temp_goal_directory, mode=0o777)
-    goal_zipped_file = temp_goal_directory + os.sep + norm_filename
-
-    with open(goal_zipped_file, "wb+") as destination:
-        for chunk in zipped_file.chunks():
-            destination.write(chunk)
-        destination.close()
-
-    for lang3char in lang3charcodes:
-        dataset_subfolder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym, lang3char)
-        if not os.path.isdir(dataset_subfolder):
-            os.mkdir(dataset_subfolder, mode=0o777)
-
-    filenames = get_filenames(goal_zipped_file)
-    video_paths_okay = check_subfolders_for_unzipping(dataset.acronym, lang3charcodes, filenames)
-    if not video_paths_okay:
-        messages.add_message(request, messages.ERROR, _("Upload zip archive: The zip archive has the wrong structure."))
-        return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
-
-    unzip_video_files(dataset, goal_zipped_file, VIDEOS_TO_IMPORT_FOLDER)
-
-    messages.add_message(request, messages.INFO, _("Upload zipped videos media was successful."))
-    return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
 
 
 def check_gloss_existence_for_uploaded_video(dataset):
@@ -666,8 +481,8 @@ def import_video_file(request, gloss, video_file_path):
             status = 'Failed'
 
         # errors are if the import_videos video can not be removed
-        errors = remove_video_file_from_import_videos(video_file_path)
-
+        # errors = remove_video_file_from_import_videos(video_file_path)
+        errors = ""
         return status, errors
 
 
@@ -701,19 +516,20 @@ def import_video_to_gloss(request, video_file_path):
         status, errors = import_video_file(request, gloss, video_file_path)
         video_path = gloss.get_video_url()
         import_video_data[json_path_key]["gloss"] = str(gloss.id)
-        import_video_data[json_path_key]["videfile"] = filename
+        import_video_data[json_path_key]["videofile"] = filename
         import_video_data[json_path_key]["Video"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
         import_video_data[json_path_key]["status"] = status
         import_video_data[json_path_key]["errors"] = errors
     else:
         import_video_data[json_path_key]["gloss"] = str(gloss.id)
-        import_video_data[json_path_key]["videfile"] = filename
+        import_video_data[json_path_key]["videofile"] = filename
+        import_video_data[json_path_key]["status"] = "Wrong video format."
         import_video_data[json_path_key]["errors"] = "Video file is not h264."
 
     return import_video_data
 
 
-class VideoGloss:
+class VideoImporter:
     """An object that implements just the write method of the file-like
     interface. This is based on an example in the Django 4.2 documentation
     """
@@ -776,9 +592,10 @@ def upload_videos_to_glosses(request, datasetid):
         # if the user does not have permission, an empty file is generated
         video_file_paths = []
 
-    pseudo_buffer = VideoGloss()
+    pseudo_buffer = VideoImporter()
     return StreamingHttpResponse(
         (pseudo_buffer.write(request, vg) for vg in json_start() + video_file_paths + json_finish()),
         content_type="application/json",
         headers={"Content-Disposition": 'attachment; filename='+'glosses.json'},
     )
+

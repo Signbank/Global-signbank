@@ -12,7 +12,6 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-
     <script type='text/javascript'>
     var url = '{{ PREFIX_URL }}';
 
@@ -20,6 +19,45 @@
     var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
     var saving_str = '{% trans "Saving..." %}'
     var csrf_token = '{{csrf_token}}';
+
+    function update_video_file_display(data) {
+        // this success function is called for a specific language
+        // it updates all relevant html for the specific gloss
+        if ($.isEmptyObject(data)) {
+            return;
+        };
+        var videopath = data.videopath;
+        var glossid = data.gloss;
+        var videofile = data.videofile;
+        var uploadstatus = data.uploadstatus;
+        var videolink = data.videolink;
+        var errors = data.errors;
+        var lookup = '#importstatus_' + glossid;
+        $(lookup).html(uploadstatus);
+        var import_table = $('#imported_videos');
+        var row = $("<tr/>");
+        row.append("<td>"+glossid+"<td>");
+        row.append("<td>"+videolink+"<td>");
+        row.append("</tr>");
+        $(import_table).append(row);
+    }
+
+    async function import_videos() {
+        $('.video_path').each(function() {
+            var videofile = $(this).attr('data-path');
+            $.ajax({
+                url : url + "/dictionary/import_video_to_gloss_json/",
+                datatype: "json",
+                async: false,
+                type: 'POST',
+                timeout: 30000,
+                data: { 'videofile': videofile,
+                        'dataset': {{dataset.id}},
+                        'csrfmiddlewaretoken': csrf_token },
+                success : update_video_file_display
+            });
+        });
+    };
     </script>
 <style>
 list {
@@ -48,7 +86,6 @@ dd {
     color: #000;
 }
 .list-group-item {
-    justify-content: space-between;
     display: flex;
     color: black;
     overflow: visible;
@@ -57,6 +94,9 @@ dd {
 }
 .list-group-item:hover {
     color: #428bca;
+}
+.list-group-2col {
+    justify-content: space-between;
 }
 .check {
     height: 14px;
@@ -77,20 +117,9 @@ dd {
 <div>
 <h3>{% trans "Dataset Media Manager" %}</h3>
 
-    <div class='pull-right'>
-        {% get_obj_perms request.user for dataset as "dataset_perms" %}
-        {% if "change_dataset" in dataset_perms %}
-        {% if request.user|has_group:"Dataset_Manager" %}
-         <span id='edit_message' style="padding-right: 1.8em;"></span>
-         <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
-         {% endif %}
-         {% endif %}
-    </div>
-
     <table class='table table-responsive'>
-        <tr><th style="width:200px;">{% trans "Dataset name" %}</th><td style="width:600px;">{{dataset.name}}</td></tr>
-        <tr><th>{% trans "Acronym" %}</th><td class='edit edit_text' align="left" id='acronym' name='acronym'
-                value="{{datasetform.acronym.value|default:'-'}}">{{dataset.acronym}}</td></tr>
+        <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:800px;">{{dataset.name}}</td></tr>
+        <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
         <tr><th>Number of glosses</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
         <tr><th>{% trans "Accessible by others" %}</th>
             <td id='is_public'>{% if dataset.is_public %}True{% else %}False{% endif %}
@@ -100,7 +129,7 @@ dd {
         <th>
           <div class="text-container"><p>{% trans "Videos Archive" %}</p></div>
         </th>
-        <td>
+        <td colspan="2">
             <form id="upload_zipped_videos_{{dataset.acronym}}"
                   action="{{PREFIX_URL}}/dictionary/upload_zipped_videos_folder/"
                   method="POST" enctype="multipart/form-data">
@@ -116,20 +145,20 @@ dd {
         <th>
           <div class="text-container"><p>{% trans "Zipped Archives" %}</p></div>
         </th>
-        <td>
+        <td colspan="2">
           <div name="zipped_archives"
-                style="height:250px; overflow-y:auto;display:block; width:600px;">
+                style="height:250px; overflow-y:auto;display:block; width:800px;">
               <ul class="list-group-hover" style="padding: 0;">
                   {% for zipfilename, zipcontents in zipped_archives.items %}
-                  <li class="list-group-item active" style="padding: 0;">
-                      <span>{{zipfilename}}</span><span>{% trans "IMPORT STATUS" %}</span></li>
+                  <li class="list-group-item list-group-2col active" style="padding: 0;">
+                      <span>{{zipfilename}}</span><span>{% trans "VIDEO" %}</span></li>
                   <ul>
                     {% for struct, status in zipcontents.items %}
-                    <li class="list-group-item" style="padding: 0;">
+                    <li class="list-group-item list-group-2col" style="padding: 0;">
                         {% if status %}
                         <span>{{struct}}</span><span class="check"></span>
                         {% else %}
-                        <span>{{struct}}</span><span>&#10060;</span>
+                        <span>{{struct}}</span><span></span>
                         {% endif %}
                     </li>
                     {% endfor %}
@@ -141,30 +170,37 @@ dd {
         </tr>
         <tr>
             <th>{% trans "Status Video Files in Import Folder" %}</th>
-            <td>
+            <td colspan="2">
               <div name="status_uploaded_video_files"
-                    style="height:250px; overflow-y:auto;display:block; width:600px;">
+                    style="height:250px; overflow-y:auto;display:block; width:800px;">
                   <list class="list-group-hover" style="padding:0;">
-                      {% for lang3char, status_files in status_uploaded_files.items %}
+                      {% for lang3char, status_files in uploaded_video_files.items %}
                       {% if status_files %}
                       <li class="list-group-item active" style="padding: 0;">
-                          <span>import_videos/{{dataset.acronym}}/{{lang3char}}/</span>
-                          <span>{% trans "GLOSS IDENTIFIED" %}</span>
+
+                              <div style="width:200px;">{% trans "FILE" %}</div>
+                              <div style="width:200px;">{% trans "GLOSS" %}</div>
+                              <div>{% trans "IMPORT STATUS" %}</div>
+
                       </li>
-                      {% for videofile, video_format_okay, gloss in status_files %}
+                      {% for videopath, videofile, filename, video_format_okay, gloss in status_files %}
                       {% if video_format_okay and gloss %}
                       <li class="list-group-item" style="padding:0;">
-                          <span>import_videos/{{dataset.acronym}}/{{lang3char}}/{{videofile}}</span>
-                          <span>{{gloss|get_default_annotation_idgloss_translation}}</span></li>
+                          <div style="width:200px;">{{videofile}}</div>
+                          <div style="width:200px;">{{gloss|get_default_annotation_idgloss_translation}}</div>
+                          <div class="video_path" data-path="{{videopath}}"
+                               id="importstatus_{{gloss.id}}"></div></li>
                       {% elif gloss %}
                     <li class="list-group-item" style="padding: 0;">
-                        <span>import_videos/{{dataset.acronym}}/{{lang3char}}/{{videofile}}</span>
-                        <span style="color:red">(video is not mp4)</span>
+                        <div style="width:200px;">{{videofile}}</div>
+                        <div style="color:red;width:200px;">(video is not mp4)</div>
+                        <div id="importstatus_{{gloss.id}}"></div>
                     </li>
                     {% else %}
                     <li class="list-group-item" style="padding: 0;">
-                        <span>import_videos/{{dataset.acronym}}/{{lang3char}}/{{videofile}}</span>
-                        <span style="color:red"><span>&#10060;</span></span>
+                        <div style="width:200px;">{{videofile}}</div>
+                        <div style="color:red;width:200px;">&#10060;</div>
+                        <div></div>
                     </li>
                     {% endif %}
                     {% endfor %}
@@ -174,8 +210,40 @@ dd {
               </div>
             </td>
         </tr>
-    </table>
+        <tr>
+        <th>
+          <div class="text-container"><p>{% trans "Import Videos to Glosses" %}</p></div>
+        </th>
+        <td colspan="2">
+            <form id="import_videos_{{dataset.acronym}}"
+                  method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type='hidden' name='dataset' value='{{dataset.id}}'>
+                <input onclick="import_videos();"
+                       value="Import Videos to Glosses" class="btn btn-primary">
+            </form>
+        </td>
+        </tr>
 
+        <tr><th><div class="text-container"><p>{% trans "Imported Videos" %}</p></div></th>
+            <td colspan="2"></td>
+        </tr>
+        <tr>
+            <th></th>
+            <td colspan="2">
+                <div>
+                    <table class="table table-responsive" style="width:800px;">
+                        <thead>
+                        <tr><th style="width:300px;">{% trans "Gloss" %}</th><th style="width:600px;">{% trans "Video Link" %}</th></tr>
+                        </thead>
+                        <tbody id="imported_videos">
+
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
 </div>
 
 {% endblock %}

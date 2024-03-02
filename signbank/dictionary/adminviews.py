@@ -69,9 +69,9 @@ from signbank.dictionary.context_data import (get_context_data_for_list_view, ge
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to, gloss_related_objects,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
-from signbank.api_interface import (uploaded_video_files, get_filenames, uploaded_zip_archives,
-                                    check_gloss_existence_for_uploaded_video,
-                                    import_video_to_gloss, uploaded_video_filepaths)
+from signbank.api_interface import (uploaded_video_files, uploaded_zip_archives,
+                                    uploaded_video_filepaths, import_folder)
+from signbank.manage_videos import listing_uploaded_videos
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -4284,11 +4284,8 @@ class DatasetMediaView(DetailView):
         zippedvideosform = ZippedVideosForm()
         context['zippedvideosform'] = zippedvideosform
 
-        uploaded_videos = uploaded_video_files(dataset)
-        context['uploaded_video_files'] = uploaded_videos
-
-        status_uploaded_files = check_gloss_existence_for_uploaded_video(dataset)
-        context['status_uploaded_files'] = status_uploaded_files
+        uploaded_video_files = listing_uploaded_videos(dataset)
+        context['uploaded_video_files'] = uploaded_video_files
 
         zipped_archives = uploaded_zip_archives(dataset)
         context['zipped_archives'] = zipped_archives

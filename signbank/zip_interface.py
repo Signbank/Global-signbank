@@ -1,0 +1,129 @@
+import json
+
+from signbank.dictionary.models import *
+from django.db.models import FileField
+from django.core.files.base import ContentFile, File
+from tagging.models import Tag, TaggedItem
+from signbank.dictionary.forms import *
+from django.utils.translation import override, gettext_lazy as _, activate
+from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
+
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
+from signbank.settings.server_specific import VIDEOS_TO_IMPORT_FOLDER
+import zipfile
+from django.urls import reverse, reverse_lazy
+import urllib.request
+import tempfile
+import shutil
+import os
+from signbank.video.convertvideo import probe_format
+from signbank.video.models import GlossVideo, GlossVideoHistory
+from django.http import StreamingHttpResponse
+from django.contrib.auth.models import Group, User
+
+
+def import_folder(video_file_path):
+    video_folder = os.path.dirname(video_file_path)
+    path_units = video_folder.split('/')
+    # import_path of form import_videos/NGT/nld
+    import_path = os.path.join(path_units[-3], path_units[-2], path_units[-1])
+    return import_path
+
+
+def get_target_filepath(dataset, lang3charcodes, filepath_in_zip_archive):
+    acronym = dataset.acronym
+    lang3char = dataset.default_language.language_code_3char
+
+    filepath_units = filepath_in_zip_archive.split('/')
+    filename = filepath_units[-1]
+    for unit in filepath_units:
+        if unit in lang3charcodes:
+            lang3char = unit
+    target_path = os.path.join(acronym, lang3char, filename)
+    return target_path
+
+
+def get_filenames(path_to_zip):
+    """ return list of filenames inside of the zip folder"""
+    with zipfile.ZipFile(path_to_zip, 'r') as zipped:
+        return zipped.namelist()
+
+
+def get_filenames_with_filetype(path_to_zip):
+    """ return list of filenames inside of the zip folder"""
+    files_in_zip_archive = dict()
+    with zipfile.ZipFile(path_to_zip, 'r') as zipped:
+        for entry in zipped.infolist():
+            if not entry.filename.endswith('.mp4'):
+                # this can be an Apple .DS_Store file
+                files_in_zip_archive[entry.filename] = False
+                continue
+            files_in_zip_archive[entry.filename] = True
+        return files_in_zip_archive
+
+
+def check_subfolders_for_unzipping(acronym, lang3charcodes, filenames):
+    # the zip file possibly has an outer folder container
+    # include both possible structures in the allowed structural paths
+    commonprefix = os.path.commonprefix(filenames)
+    subfolders = ([commonprefix] +
+                  [commonprefix + acronym + '/' + lang3char + '/' for lang3char in lang3charcodes] +
+                  [acronym + '/' + lang3char + '/' for lang3char in lang3charcodes])
+    video_files = []
+    for zipfilename in filenames:
+        if zipfilename in subfolders:
+            # skip directory nesting structures
+            continue
+        if '/' not in zipfilename:
+            # this is not a path
+            continue
+        file_dirname = os.path.dirname(zipfilename)
+        if file_dirname + '/' not in subfolders:
+            # this path not an allowed nesting structure, ignore this
+            continue
+        video_files.append(zipfilename)
+    return video_files
+
+
+def unzip_video_files(dataset, zipped_videos_file, destination):
+    with zipfile.ZipFile(zipped_videos_file, "r") as zf:
+        for name in zf.namelist():
+            if not name.endswith('.mp4'):
+                # this can be an Apple .DS_Store file
+                continue
+            # this is a video
+            localfilepath = zf.extract(name, destination)
+            path_units = localfilepath.split('/')
+            filename = path_units[-1]
+            lang3code = path_units[-2]
+            new_location = os.path.join(destination, dataset.acronym, lang3code, filename)
+            shutil.move(localfilepath, new_location)
+
+    unzipped_filename = os.path.basename(zipped_videos_file)
+    folder_name, extension = os.path.splitext(unzipped_filename)
+    unzipped_folder = os.path.join(destination, folder_name)
+    if os.path.exists(unzipped_folder):
+        shutil.rmtree(unzipped_folder)
+
+    return
+
+
+def uploaded_zip_archives(dataset):
+    # find the uploaded zip archives in TEMP that include the dataset
+    zip_archive = dict()
+    zipped_archive_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP')
+    if os.path.isdir(zipped_archive_directory):
+        for file_or_folder in os.listdir(zipped_archive_directory):
+            file_or_folder_path = os.path.join(zipped_archive_directory, file_or_folder)
+            if os.path.isdir(file_or_folder_path):
+                continue
+            if not zipfile.is_zipfile(file_or_folder_path):
+                continue
+            archive_contents = get_filenames(file_or_folder_path)
+            common_prefix = os.path.commonprefix(archive_contents)
+            if dataset.acronym not in common_prefix:
+                continue
+            zipfilename = os.path.basename(file_or_folder_path)
+            zip_archive[zipfilename] = get_filenames_with_filetype(file_or_folder_path)
+    return zip_archive
+
