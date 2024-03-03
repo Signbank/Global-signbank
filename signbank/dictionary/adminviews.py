@@ -69,9 +69,8 @@ from signbank.dictionary.context_data import (get_context_data_for_list_view, ge
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to, gloss_related_objects,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
-from signbank.api_interface import (uploaded_video_files, uploaded_zip_archives,
-                                    uploaded_video_filepaths, import_folder)
 from signbank.manage_videos import listing_uploaded_videos
+from signbank.zip_interface import *
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):

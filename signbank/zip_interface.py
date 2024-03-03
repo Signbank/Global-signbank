@@ -23,6 +23,7 @@ from django.contrib.auth.models import Group, User
 
 
 def import_folder(video_file_path):
+    # this removes the settings.WRITABLE_FOLDER from the path, so as not to show to user
     video_folder = os.path.dirname(video_file_path)
     path_units = video_folder.split('/')
     # import_path of form import_videos/NGT/nld
@@ -126,4 +127,123 @@ def uploaded_zip_archives(dataset):
             zipfilename = os.path.basename(file_or_folder_path)
             zip_archive[zipfilename] = get_filenames_with_filetype(file_or_folder_path)
     return zip_archive
+
+
+def get_two_letter_dir(idgloss):
+    foldername = idgloss[:2]
+
+    if len(foldername) == 1:
+        foldername += '-'
+
+    return foldername
+
+
+def get_gloss_filepath(video_file_path, gloss):
+
+    filename = os.path.basename(video_file_path)
+    filename_without_extension, _ = os.path.splitext(filename)
+    filepath, extension = os.path.splitext(video_file_path)
+    file_folder_path = os.path.dirname(video_file_path)
+    path_units = file_folder_path.split('/')
+    language_code_3char = path_units[-1]
+    dataset_acronym = path_units[-2]
+
+    # get language of import_videos path
+    language = Language.objects.filter(language_code_3char=language_code_3char).first()
+    if not language:
+        return "", "", ""
+    # get the annotation text of the gloss
+    annotationidglosstranslation = gloss.annotationidglosstranslation_set.all().filter(language=language)
+    if not annotationidglosstranslation:
+        # the gloss has no annotations for the language
+        return "", "", ""
+    annotation_text = annotationidglosstranslation.first().text
+    if annotation_text != filename_without_extension:
+        # gloss annotation does not match zip file name
+        return "", "", ""
+    two_letter_dir = get_two_letter_dir(gloss.idgloss)
+    destination_folder = os.path.join(
+        settings.WRITABLE_FOLDER,
+        settings.GLOSS_VIDEO_DIRECTORY,
+        dataset_acronym,
+        two_letter_dir
+    )
+
+    if not os.path.isdir(destination_folder):
+        os.mkdir(destination_folder)
+
+    glossid = str(gloss.id)
+
+    video_file_name = annotation_text + '-' + glossid + extension
+    goal = os.path.join(destination_folder, video_file_name)
+    video_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
+                              dataset_acronym,
+                              two_letter_dir)
+    return goal, video_file_name, video_path
+
+
+def remove_video_file_from_import_videos(video_file_path):
+    errors = ""
+    if not os.path.exists(video_file_path):
+        return errors
+    try:
+        os.remove(video_file_path)
+        errors = ""
+    except OSError:
+        errors = "Cannot delete the source video: " + video_file_path
+    return errors
+
+
+def save_video(video_file_path, goal):
+    # this is called inside an atomic block
+
+    try:
+        shutil.copyfile(video_file_path, goal)
+        return True
+    except IOError:
+        return False
+
+
+def import_video_file(request, gloss, video_file_path):
+    # request is needed as a parameter to the GlossVideoHistory
+    with atomic():
+        goal_gloss_file_path, video_file_name, video_path = get_gloss_filepath(video_file_path, gloss)
+        if not goal_gloss_file_path:
+            return "Failed", "Incorrect gloss path for import"
+        existing_videos = GlossVideo.objects.filter(gloss=gloss)
+        if existing_videos.count():
+            for video_object in existing_videos:
+                video_object.reversion(revert=False)
+
+        # overwritten should not happen because we already backed up the original videos
+        success = save_video(video_file_path, goal_gloss_file_path)
+
+        if success:
+            # make new GlossVideo object for new video
+            video = GlossVideo(gloss=gloss,
+                               version=0)
+            with open(goal_gloss_file_path, 'rb') as f:
+                f.seek(0)
+                video.videofile.save(os.path.basename(goal_gloss_file_path), File(f), save=False)
+            video.save()
+            video.make_poster_image()
+            glossvideohistory = GlossVideoHistory(action="import",
+                                                  gloss=gloss,
+                                                  actor=request.user,
+                                                  uploadfile=video_file_path,
+                                                  goal_location=goal_gloss_file_path)
+            glossvideohistory.save()
+            status = 'Success'
+        else:
+            # import failed to copy new video, put originals back
+            if existing_videos.count():
+                for video_object in existing_videos:
+                    video_object.reversion(revert=True)
+            status = 'Failed'
+
+        # errors are if the import_videos video can not be removed
+        # errors = remove_video_file_from_import_videos(video_file_path)
+        errors = ""
+        return status, errors
+
 
