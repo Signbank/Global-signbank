@@ -191,13 +191,14 @@ dd {
                     <li class="list-group-item" style="padding: 0;">
                         <div style="width:300px;">{{videofile}}</div>
                         <div style="color:red;width:300px;">(video is not mp4)</div>
-                        <div id="importstatus_{{gloss.id}}"></div>
+                        <div class="video_path" data-path="{{videopath}}"
+                             id="importstatus_{{gloss.id}}"></div>
                     </li>
                     {% else %}
                     <li class="list-group-item" style="padding: 0;">
                         <div style="width:300px;">{{videofile}}</div>
                         <div style="color:red;width:300px;">&#10060;</div>
-                        <div></div>
+                        <div class="video_path" data-path="{{videopath}}"></div>
                     </li>
                     {% endif %}
                     {% endfor %}

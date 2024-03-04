@@ -15,6 +15,9 @@ function update_video_file_display(data) {
     var uploadstatus = data.uploadstatus;
     var videolink = data.videolink;
     var errors = data.errors;
+    if (!glossid) {
+        return;
+    }
     var lookup = '#importstatus_' + glossid;
     $(lookup).html(uploadstatus);
     var import_table = $('#imported_videos');
