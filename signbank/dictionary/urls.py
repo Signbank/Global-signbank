@@ -109,12 +109,10 @@ urlpatterns = [
 
     re_path(r'^missingvideo.html$', signbank.dictionary.views.missing_video_view),
 
-    re_path(r'^import_images/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_media),{'video':False}),
-    re_path(r'^import_videos/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_media),{'video':True}),
     re_path(r'update_corpus_document_counts/(?P<dataset_id>.*)/(?P<document_id>.*)/$',
-        permission_required('dictionary.change_gloss')(signbank.frequency.update_document_counts)),
+            permission_required('dictionary.change_gloss')(signbank.frequency.update_document_counts)),
     re_path(r'update_corpora/$',
-        permission_required('dictionary.change_gloss')(signbank.frequency.update_corpora)),
+            permission_required('dictionary.change_gloss')(signbank.frequency.update_corpora)),
 
     re_path(r'find_and_save_variants/$',login_required(signbank.dictionary.views.find_and_save_variants), name='find_and_save_variants'),
     re_path(r'export_csv_template/$', signbank.csv_interface.export_csv_template,
