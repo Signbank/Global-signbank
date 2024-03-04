@@ -210,12 +210,13 @@ def import_video_file(request, gloss, video_file_path):
         goal_gloss_file_path, video_file_name, video_path = get_gloss_filepath(video_file_path, gloss)
         if not goal_gloss_file_path:
             return "Failed", "Incorrect gloss path for import"
-        existing_videos = GlossVideo.objects.filter(gloss=gloss)
+        existing_videos = GlossVideo.objects.filter(gloss=gloss, version=0)
         if existing_videos.count():
             # overwrite existing video using shutil
             success = save_video(video_file_path, goal_gloss_file_path)
             if success:
-                # video.make_poster_image()
+                # refresh poster image
+                existing_videos.first().make_poster_image()
                 glossvideohistory = GlossVideoHistory(action="import",
                                                       gloss=gloss,
                                                       actor=request.user,
@@ -233,7 +234,7 @@ def import_video_file(request, gloss, video_file_path):
             with open(video_file_path, 'rb') as f:
                 video.videofile.save(os.path.basename(video_file_path), File(f), save=True)
             video.save()
-            # video.make_poster_image()
+            video.make_poster_image()
             glossvideohistory = GlossVideoHistory(action="import",
                                                   gloss=gloss,
                                                   actor=request.user,

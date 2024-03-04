@@ -13,7 +13,7 @@
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
 <script type='text/javascript'>
-var url = '{{ PREFIX_URL }}';
+var url = '{{PREFIX_URL}}';
 
 var edit_mode_str = '{% trans "Edit" %}';
 var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
@@ -21,7 +21,38 @@ var saving_str = '{% trans "Saving..." %}'
 var csrf_token = '{{csrf_token}}';
 var datasetid = {{dataset.id}};
 var gloss_column_header = '{% trans "Gloss" %}';
-var video_column_header = '{% trans "Video" %}';
+var video_column_header = '{% trans "Imported Video" %}';
+var gloss_dictionary_url = '{{PREFIX_URL}}/dictionary/gloss/';
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+var protected_media_url = '{{protected_media_url}}';
+var protected_media_video = '{{protected_media_url}}glossvideo/';
+var protected_media_image = '{{protected_media_url}}glossimage/';
+
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            $(this).find('img').hide();
+            video.show();
+            video.get(0).play();
+        }
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            video.hide();
+            video.get(0).pause();
+            video.get(0).currentTime = 0;
+        }
+    });
+}
 </script>
 <script type='text/javascript' src="{{ STATIC_URL }}js/import_videos.js"></script>
 
@@ -124,7 +155,7 @@ dd {
                         {% if status %}
                         <span>{{struct}}</span><span class="check"></span>
                         {% else %}
-                        <span>{{struct}}</span><span></span>
+                        <span>{{struct}}</span><span>&#10060;</span>
                         {% endif %}
                     </li>
                     {% endfor %}
@@ -144,28 +175,28 @@ dd {
                       {% if status_files %}
                       <li class="list-group-item active" style="padding: 0;">
 
-                              <div style="width:200px;">{% trans "FILE" %}</div>
-                              <div style="width:200px;">{% trans "GLOSS" %}</div>
+                              <div style="width:300px;">{% trans "FILE" %}</div>
+                              <div style="width:300px;">{% trans "GLOSS" %}</div>
                               <div>{% trans "IMPORT STATUS" %}</div>
 
                       </li>
                       {% for videopath, videofile, filename, video_format_okay, gloss in status_files %}
                       {% if video_format_okay and gloss %}
                       <li class="list-group-item" style="padding:0;">
-                          <div style="width:200px;">{{videofile}}</div>
-                          <div style="width:200px;">{{gloss|get_default_annotation_idgloss_translation}}</div>
+                          <div style="width:300px;">{{videofile}}</div>
+                          <div style="width:300px;">{{gloss|get_default_annotation_idgloss_translation}}</div>
                           <div class="video_path" data-path="{{videopath}}"
                                id="importstatus_{{gloss.id}}"></div></li>
                       {% elif gloss %}
                     <li class="list-group-item" style="padding: 0;">
-                        <div style="width:200px;">{{videofile}}</div>
-                        <div style="color:red;width:200px;">(video is not mp4)</div>
+                        <div style="width:300px;">{{videofile}}</div>
+                        <div style="color:red;width:300px;">(video is not mp4)</div>
                         <div id="importstatus_{{gloss.id}}"></div>
                     </li>
                     {% else %}
                     <li class="list-group-item" style="padding: 0;">
-                        <div style="width:200px;">{{videofile}}</div>
-                        <div style="color:red;width:200px;">&#10060;</div>
+                        <div style="width:300px;">{{videofile}}</div>
+                        <div style="color:red;width:300px;">&#10060;</div>
                         <div></div>
                     </li>
                     {% endif %}

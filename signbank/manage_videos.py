@@ -186,8 +186,10 @@ def import_video_to_gloss_manager(request, video_file_path):
     if not gloss:
         errors = "Gloss not found. for " + filename_without_extension
         import_video_data["gloss"] = ""
+        import_video_data["annotation"] = filename_without_extension
         import_video_data["videopath"] = videopath
         import_video_data["videofile"] = filename
+        import_video_data["imagelink"] = ""
         import_video_data["videolink"] = ""
         import_video_data["uploadstatus"] = "Gloss not found."
         errors_deleting = remove_video_file_from_import_videos(video_file_path)
@@ -202,16 +204,21 @@ def import_video_to_gloss_manager(request, video_file_path):
         # the output of ffmpeg includes extra information following h264, so only check the prefix
         status, errors = import_video_file(request, gloss, video_file_path)
         video_path = gloss.get_video_url()
+        image_path = gloss.get_image_url()
         import_video_data["gloss"] = str(gloss.id)
+        import_video_data["annotation"] = filename_without_extension
         import_video_data["videopath"] = videopath
         import_video_data["videofile"] = filename
+        import_video_data["imagelink"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + image_path
         import_video_data["videolink"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
         import_video_data["uploadstatus"] = "Success"
         import_video_data["errors"] = errors
     else:
         import_video_data["gloss"] = str(gloss.id)
+        import_video_data["annotation"] = filename_without_extension
         import_video_data["videopath"] = videopath
         import_video_data["videofile"] = filename
+        import_video_data["imagelink"] = ""
         import_video_data["videolink"] = ""
         import_video_data["uploadstatus"] = "Wrong video format."
         import_video_data["errors"] = "Video file is not h264."

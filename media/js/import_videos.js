@@ -9,7 +9,9 @@ function update_video_file_display(data) {
     };
     var videopath = data.videopath;
     var glossid = data.gloss;
+    var annotation = data.annotation;
     var videofile = data.videofile;
+    var imagelink = data.imagelink;
     var uploadstatus = data.uploadstatus;
     var videolink = data.videolink;
     var errors = data.errors;
@@ -17,13 +19,27 @@ function update_video_file_display(data) {
     $(lookup).html(uploadstatus);
     var import_table = $('#imported_videos');
     var row = $("<tr/>");
-    row.append("<td>"+glossid+"</td>");
-    row.append("<td>"+videolink+"</td>");
+    row.append("<td><a href='"+gloss_dictionary_url+glossid+"'>"+annotation+"</a></td>");
+    var column_elt = $("<td/>");
+    var video_container_html = "<div class='thumbnail_container'>";
+    video_container = $(video_container_html);
+    var video_elt_html = "<div id='glossvideo_"+glossid+"'>";
+    video_elt_html += "<img class='thumbnail' src='"+imagelink+"'>";
+    video_elt_html += "<video id='videoplayer' class='thumbnail-video hover-shows-video' src='"
+                    +videolink+"' type='video/mp4' muted='muted'></video>";
+    video_elt_html += "</div>";
+    var video_elt = $(video_elt_html);
+    video_container.append(video_elt);
+    video_container.append("</div>");
+    column_elt.append(video_container);
+    column_elt.append("</td>");
+    row.append(column_elt);
     row.append("</tr>");
     $(import_table).append(row);
+    ready_videos(video_elt);
 }
 
-async function import_videos() {
+function import_videos() {
     var import_table_header = $('#imported_videos_header');
     var row = $("<tr/>");
     row.append("<th style='width:300px;'>"+gloss_column_header+"</th>");
