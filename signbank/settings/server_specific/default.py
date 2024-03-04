@@ -116,9 +116,9 @@ FIELDS['main'] = ['useInstr','wordClass']
 # followed by etymology and articulation
 FIELDS['phonology'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
                        'contType', 'movSh', 'movDir',
+                       'repeat', 'altern',
                        'relOriMov', 'relOriLoc', 'oriCh',
                        'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
-                       'repeat', 'altern',
                        'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
                        'weakdrop', 'weakprop']
 
