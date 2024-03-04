@@ -9,56 +9,22 @@
 
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
-    <script type='text/javascript'>
-    var url = '{{ PREFIX_URL }}';
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+<script type='text/javascript'>
+var url = '{{ PREFIX_URL }}';
 
-    var edit_mode_str = '{% trans "Edit" %}';
-    var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
-    var saving_str = '{% trans "Saving..." %}'
-    var csrf_token = '{{csrf_token}}';
+var edit_mode_str = '{% trans "Edit" %}';
+var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
+var saving_str = '{% trans "Saving..." %}'
+var csrf_token = '{{csrf_token}}';
+var datasetid = {{dataset.id}};
+var gloss_column_header = '{% trans "Gloss" %}';
+var video_column_header = '{% trans "Video" %}';
+</script>
+<script type='text/javascript' src="{{ STATIC_URL }}js/import_videos.js"></script>
 
-    function update_video_file_display(data) {
-        // this success function is called for a specific language
-        // it updates all relevant html for the specific gloss
-        if ($.isEmptyObject(data)) {
-            return;
-        };
-        var videopath = data.videopath;
-        var glossid = data.gloss;
-        var videofile = data.videofile;
-        var uploadstatus = data.uploadstatus;
-        var videolink = data.videolink;
-        var errors = data.errors;
-        var lookup = '#importstatus_' + glossid;
-        $(lookup).html(uploadstatus);
-        var import_table = $('#imported_videos');
-        var row = $("<tr/>");
-        row.append("<td>"+glossid+"<td>");
-        row.append("<td>"+videolink+"<td>");
-        row.append("</tr>");
-        $(import_table).append(row);
-    }
-
-    async function import_videos() {
-        $('.video_path').each(function() {
-            var videofile = $(this).attr('data-path');
-            $.ajax({
-                url : url + "/dictionary/import_video_to_gloss_json/",
-                datatype: "json",
-                async: false,
-                type: 'POST',
-                timeout: 30000,
-                data: { 'videofile': videofile,
-                        'dataset': {{dataset.id}},
-                        'csrfmiddlewaretoken': csrf_token },
-                success : update_video_file_display
-            });
-        });
-    };
-    </script>
 <style>
 list {
     overflow-y: scroll;
@@ -118,7 +84,7 @@ dd {
 <h3>{% trans "Dataset Media Manager" %}</h3>
 
     <table class='table table-responsive'>
-        <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:800px;">{{dataset.name}}</td></tr>
+        <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:900px;">{{dataset.name}}</td></tr>
         <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
         <tr><th>Number of glosses</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
         <tr><th>{% trans "Accessible by others" %}</th>
@@ -147,7 +113,7 @@ dd {
         </th>
         <td colspan="2">
           <div name="zipped_archives"
-                style="height:250px; overflow-y:auto;display:block; width:800px;">
+                style="height:250px; overflow-y:auto;display:block; width:900px;">
               <ul class="list-group-hover" style="padding: 0;">
                   {% for zipfilename, zipcontents in zipped_archives.items %}
                   <li class="list-group-item list-group-2col active" style="padding: 0;">
@@ -172,7 +138,7 @@ dd {
             <th>{% trans "Status Video Files in Import Folder" %}</th>
             <td colspan="2">
               <div name="status_uploaded_video_files"
-                    style="height:250px; overflow-y:auto;display:block; width:800px;">
+                    style="height:250px; overflow-y:auto;display:block; width:900px;">
                   <list class="list-group-hover" style="padding:0;">
                       {% for lang3char, status_files in uploaded_video_files.items %}
                       {% if status_files %}
@@ -232,9 +198,8 @@ dd {
             <th></th>
             <td colspan="2">
                 <div>
-                    <table class="table table-responsive" style="width:800px;">
-                        <thead>
-                        <tr><th style="width:300px;">{% trans "Gloss" %}</th><th style="width:600px;">{% trans "Video Link" %}</th></tr>
+                    <table class="table table-responsive" style="width:900px;">
+                        <thead id="imported_videos_header">
                         </thead>
                         <tbody id="imported_videos">
 
