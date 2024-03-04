@@ -212,38 +212,37 @@ def import_video_file(request, gloss, video_file_path):
             return "Failed", "Incorrect gloss path for import"
         existing_videos = GlossVideo.objects.filter(gloss=gloss)
         if existing_videos.count():
-            for video_object in existing_videos:
-                video_object.reversion(revert=False)
+            # overwrite existing video using shutil
+            success = save_video(video_file_path, goal_gloss_file_path)
+            if success:
+                # video.make_poster_image()
+                glossvideohistory = GlossVideoHistory(action="import",
+                                                      gloss=gloss,
+                                                      actor=request.user,
+                                                      uploadfile=video_file_name,
+                                                      goal_location=goal_gloss_file_path)
+                glossvideohistory.save()
+                status = 'Success'
+            else:
+                status = 'Failed'
 
-        # overwritten should not happen because we already backed up the original videos
-        success = save_video(video_file_path, goal_gloss_file_path)
-
-        if success:
+        else:
             # make new GlossVideo object for new video
             video = GlossVideo(gloss=gloss,
                                version=0)
-            with open(goal_gloss_file_path, 'rb') as f:
-                f.seek(0)
-                video.videofile.save(os.path.basename(goal_gloss_file_path), File(f), save=False)
+            with open(video_file_path, 'rb') as f:
+                video.videofile.save(os.path.basename(video_file_path), File(f), save=True)
             video.save()
-            video.make_poster_image()
+            # video.make_poster_image()
             glossvideohistory = GlossVideoHistory(action="import",
                                                   gloss=gloss,
                                                   actor=request.user,
-                                                  uploadfile=video_file_path,
+                                                  uploadfile=video_file_name,
                                                   goal_location=goal_gloss_file_path)
             glossvideohistory.save()
             status = 'Success'
-        else:
-            # import failed to copy new video, put originals back
-            if existing_videos.count():
-                for video_object in existing_videos:
-                    video_object.reversion(revert=True)
-            status = 'Failed'
 
         # errors are if the import_videos video can not be removed
         # errors = remove_video_file_from_import_videos(video_file_path)
         errors = ""
         return status, errors
-
-
