@@ -114,12 +114,13 @@ FIELDS['main'] = ['useInstr','wordClass']
 
 # fields are ordered per kind: Field Choice Lists, Text, Boolean
 # followed by etymology and articulation
-FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','relOriMov',
-                       'relOriLoc','oriCh','contType','movSh','movDir',
-                       'locVirtObj','phonOth', 'mouthG','mouthing', 'phonetVar',
-                       'repeat','altern',
-                       'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number',
-                       'weakdrop','weakprop']
+FIELDS['phonology'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                       'contType', 'movSh', 'movDir',
+                       'relOriMov', 'relOriLoc', 'oriCh',
+                       'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                       'repeat', 'altern',
+                       'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
+                       'weakdrop', 'weakprop']
 
 FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','valence','iconImg','concConcSet']
 
