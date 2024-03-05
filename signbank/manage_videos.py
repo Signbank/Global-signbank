@@ -107,11 +107,11 @@ def upload_zipped_videos_folder(request):
         return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
 
     # Create the folder if needed
-    temp_goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP')
+    temp_goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP') + os.sep
     if not os.path.exists(temp_goal_directory):
         os.mkdir(temp_goal_directory, mode=0o777)
 
-    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym)
+    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, str(dataset.acronym)) + os.sep
     if not os.path.exists(goal_directory):
         os.mkdir(temp_goal_directory, mode=0o777)
     goal_zipped_file = temp_goal_directory + os.sep + norm_filename
@@ -122,7 +122,7 @@ def upload_zipped_videos_folder(request):
         destination.close()
 
     for lang3char in lang3charcodes:
-        dataset_subfolder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym, lang3char)
+        dataset_subfolder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym, lang3char) + os.sep
         if not os.path.exists(dataset_subfolder):
             os.mkdir(dataset_subfolder, mode=0o777)
 

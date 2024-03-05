@@ -170,7 +170,7 @@ def get_gloss_filepath(video_file_path, gloss):
     )
 
     if not os.path.exists(destination_folder):
-        os.mkdir(destination_folder)
+        os.mkdir(destination_folder, mode=0o777)
 
     glossid = str(gloss.id)
 
