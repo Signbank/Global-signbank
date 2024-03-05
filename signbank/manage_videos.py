@@ -106,25 +106,14 @@ def upload_zipped_videos_folder(request):
         messages.add_message(request, messages.ERROR, _("Upload zip archive: The file has no extension."))
         return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
 
-    # Create the folder if needed
-    temp_goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP') + os.sep
-    if not os.path.exists(temp_goal_directory):
-        os.mkdir(temp_goal_directory, mode=0o777)
+    temp_goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP')
 
-    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, str(dataset.acronym)) + os.sep
-    if not os.path.exists(goal_directory):
-        os.mkdir(temp_goal_directory, mode=0o777)
     goal_zipped_file = temp_goal_directory + os.sep + norm_filename
 
     with open(goal_zipped_file, "wb+") as destination:
         for chunk in zipped_file.chunks():
             destination.write(chunk)
         destination.close()
-
-    for lang3char in lang3charcodes:
-        dataset_subfolder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym, lang3char) + os.sep
-        if not os.path.exists(dataset_subfolder):
-            os.mkdir(dataset_subfolder, mode=0o777)
 
     filenames = get_filenames(goal_zipped_file)
     video_paths_okay = check_subfolders_for_unzipping(dataset.acronym, lang3charcodes, filenames)
