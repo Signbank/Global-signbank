@@ -198,8 +198,8 @@ def import_video_to_gloss_manager(request, video_file_path):
         import_video_data["annotation"] = filename_without_extension
         import_video_data["videopath"] = videopath
         import_video_data["videofile"] = filename
-        import_video_data["imagelink"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + image_path
-        import_video_data["videolink"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
+        import_video_data["imagelink"] = '/dictionary/protected_media/' + image_path
+        import_video_data["videolink"] = '/dictionary/protected_media/' + video_path
         import_video_data["uploadstatus"] = "Success"
         import_video_data["errors"] = errors
     else:
@@ -258,5 +258,4 @@ def import_video_to_gloss_json(request):
         return JsonResponse({})
 
     video_data = import_video_to_gloss_manager(request, videofile)
-    print(video_data)
     return JsonResponse(video_data)
