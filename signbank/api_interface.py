@@ -275,7 +275,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     # Create the TEMP folder if needed
     temp_goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP')
-    if not os.path.isdir(temp_goal_directory):
+    if not os.path.exists(temp_goal_directory):
         os.mkdir(temp_goal_directory, mode=0o777)
 
     dataset_folder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym)
@@ -285,7 +285,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     for lang3char in lang3charcodes:
         dataset_lang3char_folder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym, lang3char)
-        if not os.path.isdir(dataset_lang3char_folder):
+        if not os.path.exists(dataset_lang3char_folder):
             os.mkdir(dataset_lang3char_folder, mode=0o777)
 
     # get file as a url parameter: /dictionary/upload_zipped_videos_folder_json/5/?file=file:///path/to/zipfile.zip

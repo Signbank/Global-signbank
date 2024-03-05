@@ -108,11 +108,11 @@ def upload_zipped_videos_folder(request):
 
     # Create the folder if needed
     temp_goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP')
-    if not os.path.isdir(temp_goal_directory):
+    if not os.path.exists(temp_goal_directory):
         os.mkdir(temp_goal_directory, mode=0o777)
 
     goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym)
-    if not os.path.isdir(goal_directory):
+    if not os.path.exists(goal_directory):
         os.mkdir(temp_goal_directory, mode=0o777)
     goal_zipped_file = temp_goal_directory + os.sep + norm_filename
 
@@ -123,7 +123,7 @@ def upload_zipped_videos_folder(request):
 
     for lang3char in lang3charcodes:
         dataset_subfolder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym, lang3char)
-        if not os.path.isdir(dataset_subfolder):
+        if not os.path.exists(dataset_subfolder):
             os.mkdir(dataset_subfolder, mode=0o777)
 
     filenames = get_filenames(goal_zipped_file)
