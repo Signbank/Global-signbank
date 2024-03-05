@@ -190,11 +190,11 @@ msgstr "Wijzig"
 
 #: signbank/dictionary/admin.py:1336
 msgid "Change Title of Saved Query"
-msgstr ""
+msgstr "Bewerk naam query"
 
 #: signbank/dictionary/adminviews.py:203
 msgid "Error in search field "
-msgstr ""
+msgstr "Fout in zoekveld "
 
 #: signbank/dictionary/adminviews.py:205
 msgid ": A regular expression is expected due to special characters. "
@@ -224,27 +224,27 @@ msgstr "Geen dataset gevonden."
 
 #: signbank/dictionary/adminviews.py:408 signbank/dictionary/adminviews.py:3592
 msgid "No permission to export dataset."
-msgstr ""
+msgstr "Geen toestemming om dataset te exporteren."
 
 #: signbank/dictionary/adminviews.py:415 signbank/dictionary/adminviews.py:3605
 msgid "ECV successfully updated."
-msgstr ""
+msgstr "ECV met succes bijgewerkt."
 
 #: signbank/dictionary/adminviews.py:417
 msgid "No ECV created for dataset."
-msgstr ""
+msgstr "Geen ECV aangemaakt voor dataset."
 
 #: signbank/dictionary/adminviews.py:817 signbank/dictionary/adminviews.py:1406
 #: signbank/dictionary/adminviews.py:1519
 #: signbank/dictionary/adminviews.py:2823
 msgid "The requested gloss does not exist."
-msgstr ""
+msgstr "Aangevraagd glos bestaat niet."
 
 #: signbank/dictionary/adminviews.py:821 signbank/dictionary/adminviews.py:1410
 #: signbank/dictionary/adminviews.py:1523
 #: signbank/dictionary/adminviews.py:2827
 msgid "Requested gloss has no lemma or dataset."
-msgstr ""
+msgstr "Aangevraagd glos heeft geen lemma nog dataset."
 
 #: signbank/dictionary/adminviews.py:835 signbank/dictionary/adminviews.py:1424
 #: signbank/dictionary/adminviews.py:1537
@@ -265,15 +265,15 @@ msgstr "Je moet superuser zijn om deze functionaliteit te gebruiken."
 
 #: signbank/dictionary/adminviews.py:1352
 msgid "The target dataset has different translation languages."
-msgstr ""
+msgstr "De doel-dataset heeft andere vertaaltalen."
 
 #: signbank/dictionary/adminviews.py:1358
 msgid "A similar gloss already exists in the target dataset: "
-msgstr ""
+msgstr "Een vergelijkbare glos bestaat al in de doel-dataset: "
 
 #: signbank/dictionary/adminviews.py:1365
 msgid "A related gloss already exists in the target dataset: "
-msgstr ""
+msgstr "Een verwant gebaar bestaat al in de doel-dataset: "
 
 #: signbank/dictionary/adminviews.py:1382
 msgid "Error moving the gloss and related glosses to the requested dataset."
@@ -297,7 +297,7 @@ msgstr ""
 
 #: signbank/dictionary/adminviews.py:2322
 msgid "Please select a single dataset to view minimal pairs."
-msgstr ""
+msgstr "Selecteer een enkel dataset om minimale paren te bekijken."
 
 #: signbank/dictionary/adminviews.py:2574
 msgid "Query View Save"
@@ -475,11 +475,11 @@ msgstr ""
 #: signbank/dictionary/adminviews.py:4129
 #: signbank/dictionary/adminviews.py:4479
 msgid "The requested dataset does not exist."
-msgstr ""
+msgstr "Aangevraagd dataset bestaat niet."
 
 #: signbank/dictionary/adminviews.py:4226
 msgid "Username must be non-empty."
-msgstr ""
+msgstr "Gebruikersnaam is leeg."
 
 #: signbank/dictionary/adminviews.py:4242
 msgid "User successfully made (co-)owner of this dataset."
@@ -2466,7 +2466,7 @@ msgstr "Vertalingen"
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:203
 msgid "Quick Tag Toggle"
-msgstr ""
+msgstr "Label schakelaar"
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:205
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:297
@@ -2483,7 +2483,7 @@ msgstr "Details"
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:216
 msgid "Senses Matrix"
-msgstr ""
+msgstr "Betekenis matrix"
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:230
 #: signbank/feedback/templates/feedback/show_feedback_missing_signs.html:82
@@ -2518,7 +2518,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:335
 msgid "Gloss Detail View"
-msgstr "Glos-details"
+msgstr "Glos-details weergave"
 
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:336
 msgid "for this gloss."
@@ -2957,7 +2957,7 @@ msgstr "Signbank: Annotatie-schakelaars"
 
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:211
 msgid "Annotation Toggle View"
-msgstr "Weergave annotatie-schakelaars"
+msgstr "Annotatie-schakelaars"
 
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:212
 msgid ""
@@ -2977,7 +2977,7 @@ msgstr "Toegevoegd door"
 
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:265
 msgid "Quick Toggles"
-msgstr "Snel schakelaars"
+msgstr "Vlotte schakelaars"
 
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:267
 msgid "Semantic Fields"
