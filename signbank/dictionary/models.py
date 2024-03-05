@@ -3707,3 +3707,112 @@ CATEGORY_MODELS_MAPPING = {
     'derivHist': DerivationHistory,
     'Handshape': Handshape
 }
+
+
+class AnnotatedGloss(models.Model):
+    """An annotated gloss belongs to one annotated sentences"""
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
+    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE)
+    isRepresentative = models.BooleanField(default=False)
+    starttime = models.FloatField()
+    endtime = models.FloatField()
+
+
+class AnnotatedSentenceTranslation(models.Model):
+    """An annotated sentence translation belongs to one annotated sentence"""
+    
+    text = models.TextField()
+    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
+
+class AnnotatedSentence(models.Model):
+    """An annotated sentence belongs to one or more glosses"""
+
+    def get_dataset(self):
+        return self.annotatedgloss.gloss.lemma.dataset
+
+    def get_examplestc_translations_dict_with(self):
+        translations = {}
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
+            if self.examplesentencetranslations.filter(language = dataset_translation_language).count() == 1:
+                translations[str(dataset_translation_language)] = str(self.examplesentencetranslations.all().get(language = dataset_translation_language))
+            else:
+                translations[str(dataset_translation_language)] = ""
+        return translations
+
+    def get_examplestc_translations_dict_without(self):
+        return {k: v for k, v in self.get_examplestc_translations_dict_with().items() if v}
+
+    def get_examplestc_translations(self):
+        return [k+": "+v for k,v in self.get_examplestc_translations_dict_without().items()]
+
+    def get_type(self):
+        return self.sentenceType.name if self.sentenceType else ''
+
+    def get_video_path(self):
+        try:
+            examplevideo = self.examplevideo_set.get(version=0)
+            return str(examplevideo.videofile)
+        except ObjectDoesNotExist:
+            return ''
+        except MultipleObjectsReturned:
+            # Just return the first
+            examplevideos = self.examplevideo_set.filter(version=0)
+            return str(examplevideos[0].videofile)
+
+    def get_video_path_prefix(self):
+        try:
+            examplesentence = self.examplesentence_set.get(version=0)
+            prefix, extension = os.path.splitext(str(examplesentence))
+            return prefix
+        except ObjectDoesNotExist:
+            return ''
+        
+    def get_video(self):
+        """Return the video object for this gloss or None if no video available"""
+
+        video_path = self.get_video_path()
+        filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
+        if os.path.exists(filepath.encode('utf-8')):
+            return video_path
+        else:
+            return ''
+    
+    def has_video(self):
+        """Test to see if the video for this sign is present"""
+        
+        return self.get_video() not in ['', None]
+
+    def add_video(self, user, videofile, recorded):
+        # Preventing circular import
+        from signbank.video.models import ExampleVideo, ExampleVideoHistory, get_sentence_video_file_path
+
+        # Create a new ExampleVideo object
+        if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
+            video = ExampleVideo(examplesentence=self)
+
+            # Backup the existing video objects stored in the database
+            existing_videos = ExampleVideo.objects.filter(examplesentence=self)
+            for video_object in existing_videos:
+                video_object.reversion(revert=False)
+
+            # Create a ExampleVideoHistory object
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, get_sentence_video_file_path(video, str(videofile)))
+            examplevideohistory = ExampleVideoHistory(action="upload", examplesentence=self, actor=user,
+                                                uploadfile=videofile, goal_location=video_file_full_path)
+            examplevideohistory.save()
+            video.videofile.save(get_sentence_video_file_path(video, str(videofile)), videofile)
+        else:
+            return ExampleVideo(examplesentence=self)
+        video.save()
+        video.ch_own_mod_video()
+        # video.make_small_video()
+
+        return video
+
+    
+    def __str__(self):
+        return " | ".join(self.get_examplestc_translations())
