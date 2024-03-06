@@ -241,6 +241,9 @@ SHOW_FIELD_CHOICE_COLORS = True
 #Whether the dataset functionality should be present in the interface
 SHOW_DATASET_INTERFACE_OPTIONS = True
 
+# Used in Toggle View to hide
+SHOW_NAMED_ENTITY = False
+
 #Settings for the default dataset
 DEFAULT_DATASET = 'Your Dataset'
 DEFAULT_DATASET_ACRONYM = 'YDS'
