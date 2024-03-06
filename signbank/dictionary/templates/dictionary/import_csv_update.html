@@ -105,7 +105,7 @@
                         <div class='panel-title'>{% trans "Notes Column" %}
                         </div>
                     </div>
-                <div id='notes_column_settings' class='collapse'>
+            <div id='notes_column_settings' class='collapse'>
             <div class="col-xs-offset-1 col-xs-9">
                 <h5>{% trans "Select the semantics of an empty cell" %}</h5>
             </div>
@@ -127,6 +127,39 @@
                 <input type="radio" name="toggle_notes_assign" id="notes_assign_update" value="update">
                 <label for="notes_assign_update">{% trans "Plus Equal" %}</label>
                 <p>{% trans "A notes column value will be added to existing notes." %}</p>
+            </div>
+            </div>
+            </div>
+            </div>
+            <br>
+            <div class="row" id="semfield_settings">
+                <div class="panel panel-default col-xs-offset-2 col-xs-8">
+                    <div class='panel-heading' data-toggle='collapse' data-target='#semfield_column_settings'>
+                        <div class='panel-title'>{% trans "Semantic Field Column" %}
+                        </div>
+                    </div>
+            <div id='semfield_column_settings' class='collapse'>
+            <div class="col-xs-offset-1 col-xs-9">
+                <h5>{% trans "Select the semantics of an empty cell" %}</h5>
+            </div>
+            <div class="col-xs-offset-1 col-xs-9">
+                <input type="radio" name="toggle_semfield" id="toggle_semfield_keep" value="keep" checked>
+                <label for="toggle_semfield_keep">{% trans "Keep" %}</label>
+                <p>{% trans "An empty cell does nothing. This is used for import that adds new semantic fields and keeps the existing semantic fields." %}</p>
+                <input type="radio" name="toggle_semfield" id="toggle_semfield_erase" value="erase">
+                <label for="toggle_semfield_erase">{% trans "Erase" %}</label>
+                <p>{% trans "An empty cell will erase the existing semantic fields." %}</p>
+            </div>
+            <div class="col-xs-offset-1 col-xs-9">
+                <h5>{% trans "Select the semantics of a non-empty cell" %}</h5>
+            </div>
+            <div class="col-xs-offset-1 col-xs-9">
+                <input type="radio" name="toggle_semfield_assign" id="semfield_assign_replace" value="replace" checked>
+                <label for="semfield_assign_replace">{% trans "Overwrite" %}</label>
+                <p>{% trans "Semantic Field column values will replace the existing semantic fields." %}</p>
+                <input type="radio" name="toggle_semfield_assign" id="semfield_assign_update" value="update">
+                <label for="semfield_assign_update">{% trans "Plus Equal" %}</label>
+                <p>{% trans "A semantic field column value will be added to existing semantic fields." %}</p>
             </div>
             </div>
             </div>

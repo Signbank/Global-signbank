@@ -70,6 +70,17 @@ urlpatterns = [
     re_path(r'^update/toggle_sense_tag/(?P<glossid>\d+)$', signbank.dictionary.update.toggle_sense_tag,
             name='toggle_sense_tag'),
 
+    re_path(r'^update/toggle_tag/(?P<glossid>\d+)/(?P<tagid>.*)$', signbank.dictionary.update.toggle_tag,
+            name='toggle_tag'),
+    re_path(r'^update/toggle_semantics/(?P<glossid>\d+)/(?P<semanticfield>.*)$', signbank.dictionary.update.toggle_semantic_field,
+            name='toggle_semantic_field'),
+    re_path(r'^update/toggle_wordclass/(?P<glossid>\d+)/(?P<wordclass>.*)$',
+            signbank.dictionary.update.toggle_wordclass,
+            name='toggle_wordclass'),
+    re_path(r'^update/toggle_namedentity/(?P<glossid>\d+)/(?P<namedentity>.*)$',
+            signbank.dictionary.update.toggle_namedentity,
+            name='toggle_namedentity'),
+
     # The next one does not have a permission check because it should be accessible from a cronjob
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
     re_path(r'^update/variants_of_gloss/$', signbank.dictionary.update.variants_of_gloss, name='variants_of_gloss'),
@@ -110,9 +121,9 @@ urlpatterns = [
 
     re_path(r'get_unused_videos/$',permission_required('dictionary.change_gloss')(signbank.dictionary.views.get_unused_videos)),
     re_path(r'package/$', signbank.dictionary.views.package),
-    re_path(r'get_gloss_data/(?P<datasetid>.*)/(?P<glossid>.*)/$',
+    re_path(r'get_gloss_data/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.api_interface.get_gloss_data_json, name='get_gloss_data_json'),
-    re_path(r'get_fields_data/(?P<datasetid>.*)/$',
+    re_path(r'get_fields_data/(?P<datasetid>\d+)/$',
             signbank.api_interface.get_fields_data_json, name='get_fields_data_json'),
 
     re_path(r'info/$', signbank.dictionary.views.info),
