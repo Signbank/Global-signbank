@@ -907,7 +907,7 @@ msgstr "Alle definities gepubliceerd"
 
 #: signbank/dictionary/forms.py:206 signbank/dictionary/models.py:3590
 msgid "Has Multiple Senses"
-msgstr ""
+msgstr "Heeft meerdere betekenissen"
 
 #: signbank/dictionary/forms.py:221 signbank/dictionary/forms.py:405
 #: signbank/dictionary/models.py:1178
@@ -1142,7 +1142,7 @@ msgstr ""
 #: signbank/dictionary/templates/dictionary/senselist_headerrow.html:54
 #: signbank/query_parameters.py:401 signbank/query_parameters.py:597
 msgid "Negative"
-msgstr ""
+msgstr "Negatief"
 
 #: signbank/dictionary/forms.py:1363
 msgid "Sentence Contains"
@@ -1250,7 +1250,7 @@ msgstr "ISO 639-3 taalcode (3 karakters) van een geschreven taal."
 #: signbank/dictionary/templates/dictionary/import_csv_create_sentences.html:134
 #: signbank/query_parameters.py:595
 msgid "Sentence Type"
-msgstr "Soort zin"
+msgstr "Zintype"
 
 #: signbank/dictionary/models.py:699
 msgid "Example sentences"
@@ -2721,7 +2721,7 @@ msgstr "Bevestig verwijderen"
 
 #: signbank/dictionary/templates/dictionary/admin_lemma_list.html:371
 msgid "No lemmas found. Please enter a query."
-msgstr ""
+msgstr "Geen lemmata gevonden. Voer een zoekopdracht in."
 
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:9
 msgid "Signbank: Minimal Pairs list"
@@ -2747,7 +2747,7 @@ msgstr "Filtreer focus-glos op semantiek"
 
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:315
 msgid "Apply Filter and Show Results"
-msgstr ""
+msgstr "Filter toepassen en resultaten tonen"
 
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:320
 msgid "Show All Minimal Pairs"
@@ -2755,7 +2755,7 @@ msgstr "Toon alle minimale paren"
 
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:325
 msgid "Apply Filter and Export to CSV"
-msgstr ""
+msgstr "Filter toepassen en exporteer naar CSV"
 
 #: signbank/dictionary/templates/dictionary/admin_minimalpairs_list.html:341
 msgid "Glosses Per Page"
@@ -2943,13 +2943,13 @@ msgstr "Signbank: Zoek betekenissen"
 
 #: signbank/dictionary/templates/dictionary/admin_senses_list.html:691
 msgid "Search Sentences"
-msgstr "Zoek zinnen"
+msgstr "Zoek Voorbeeldzinnen"
 
 #: signbank/dictionary/templates/dictionary/admin_senses_list.html:746
 #: templates/ASL-templates/menu.html:48
 #: templates/global-templates/menu.html:106
 msgid "Search Sense"
-msgstr "Zoek betekenis"
+msgstr "Zoek Betekenis"
 
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:11
 msgid "Signbank: Annotation Toggle View"
@@ -3840,7 +3840,7 @@ msgstr "Ga naar de resultatenlijst:"
 #: signbank/dictionary/templates/dictionary/gloss_revision_history.html:8
 #, python-format
 msgid "Revision History for %(gloss)s"
-msgstr "Revisie-geschiedenis voor %(gloss)en"
+msgstr "Revisie-geschiedenis voor %(gloss)s"
 
 #: signbank/dictionary/templates/dictionary/gloss_revision_history.html:62
 msgid "Time"
