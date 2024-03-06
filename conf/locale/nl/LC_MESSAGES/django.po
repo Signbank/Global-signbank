@@ -2962,7 +2962,7 @@ msgstr "Annotatie-schakelaars"
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:212
 msgid ""
 "On initial view, prior to searching, recently added glosses are shown below."
-msgstr ""
+msgstr "Voorafgaand nieuwe zoekopdrachten worden recent toegevoegd gebaren hieronder weergegeven."
 
 #: signbank/dictionary/templates/dictionary/admin_toggle_view.html:230
 msgid "Search by Attributes"
@@ -3482,7 +3482,7 @@ msgstr ""
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:593
 msgid "This gloss is related to other glosses:"
-msgstr ""
+msgstr "Deze glos is gerelateerd aan andere glossen:"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:602
 msgid "Related Glosses"
@@ -3503,7 +3503,7 @@ msgstr "Gebaar"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:667
 msgid "This sign is related to other signs:"
-msgstr ""
+msgstr "Dit gebaar is gerelateerd aan andere gebaren:"
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:679
 msgid ""
@@ -3840,7 +3840,7 @@ msgstr "Ga naar de resultatenlijst:"
 #: signbank/dictionary/templates/dictionary/gloss_revision_history.html:8
 #, python-format
 msgid "Revision History for %(gloss)s"
-msgstr ""
+msgstr "Revisie-geschiedenis voor %(gloss)en"
 
 #: signbank/dictionary/templates/dictionary/gloss_revision_history.html:62
 msgid "Time"
