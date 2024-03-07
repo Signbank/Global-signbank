@@ -118,7 +118,10 @@ def upload_zipped_videos_folder(request):
     filenames = get_filenames(goal_zipped_file)
     video_paths_okay = check_subfolders_for_unzipping(dataset.acronym, lang3charcodes, filenames)
     if not video_paths_okay:
-        messages.add_message(request, messages.ERROR, _("Upload zip archive: The zip archive has the wrong structure."))
+        default_language_3char = dataset.default_language.language_code_3char
+        feedback = _("The zip archive has the wrong structure. It should be: "
+                     + str(dataset.acronym) + '/' + default_language_3char + '/annotation.mp4')
+        messages.add_message(request, messages.ERROR, feedback)
         return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
 
     with atomic():

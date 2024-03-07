@@ -331,8 +331,11 @@ def upload_zipped_videos_folder_json(request, datasetid):
     filenames = get_filenames(goal_zipped_file)
     video_paths_okay = check_subfolders_for_unzipping(dataset.acronym, lang3charcodes, filenames)
     if not video_paths_okay:
+        default_language_3char = dataset.default_language.language_code_3char
+        error_feedback = ("The zip archive has the wrong structure. It should be: "
+                          + str(dataset.acronym) + '/' + default_language_3char + "/annotation.mp4")
         status_request['filename'] = file_name
-        status_request['errors'] = "The zip archive has the wrong structure."
+        status_request['errors'] = error_feedback
         status_request['zippedfiles'] = filenames
         return JsonResponse(status_request)
 

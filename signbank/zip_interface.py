@@ -67,19 +67,24 @@ def check_subfolders_for_unzipping(acronym, lang3charcodes, filenames):
     # the zip file possibly has an outer folder container
     # include both possible structures in the allowed structural paths
     commonprefix = os.path.commonprefix(filenames)
-    subfolders = ([commonprefix] +
-                  [commonprefix + acronym + '/' + lang3char + '/' for lang3char in lang3charcodes] +
-                  [acronym + '/' + lang3char + '/' for lang3char in lang3charcodes])
+    common_prefix_paths = [acronym + '/' + lang3char + '/' for lang3char in lang3charcodes]
+    if commonprefix != acronym + '/':
+        # if the user has put the zip files inside another folder, e.g., NGT_videos/NGT/nld/
+        subfolders = ([commonprefix] + [commonprefix + acronym + '/'] +
+                      [commonprefix + acronym + '/' + lang3char + '/' for lang3char in lang3charcodes])
+    else:
+        subfolders = ([acronym + '/'] + common_prefix_paths)
     video_files = []
     for zipfilename in filenames:
         if zipfilename in subfolders:
             # skip directory nesting structures
             continue
         if '/' not in zipfilename:
-            # this is not a path
+            # this is not a path, for example, .DS_Store as for Apple
             continue
         file_dirname = os.path.dirname(zipfilename)
-        if file_dirname + '/' not in subfolders:
+        # this is the path to the media file
+        if file_dirname + '/' not in common_prefix_paths:
             # this path not an allowed nesting structure, ignore this
             continue
         video_files.append(zipfilename)
