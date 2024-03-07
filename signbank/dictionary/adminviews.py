@@ -46,10 +46,14 @@ from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, 
                                     csv_header_row_minimalpairslist, csv_focusgloss_to_minimalpairs)
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
-from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get, \
-    set_up_fieldchoice_translations, set_up_language_fields, set_up_signlanguage_dialects_fields, \
-    queryset_glosssense_from_get, query_parameters_from_get, queryset_sentences_from_get, query_parameters_toggle_fields
+from signbank.query_parameters import (convert_query_parameters_to_filter, pretty_print_query_fields,
+                                       pretty_print_query_values, query_parameters_this_gloss,
+                                       apply_language_filters_to_results, apply_video_filters_to_results,
+                                       search_fields_from_get, queryset_from_get,
+                                       set_up_fieldchoice_translations, set_up_language_fields,
+                                       set_up_signlanguage_dialects_fields,
+                                       queryset_glosssense_from_get, query_parameters_from_get,
+                                       queryset_sentences_from_get, query_parameters_toggle_fields)
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -519,6 +523,7 @@ class GlossListView(ListView):
 
             qs = apply_language_filters_to_results(qs, self.query_parameters)
             qs = qs.distinct()
+            qs = apply_video_filters_to_results('Gloss', qs, self.query_parameters)
 
             query = convert_query_parameters_to_filter(self.query_parameters)
             if query:
@@ -587,6 +592,7 @@ class GlossListView(ListView):
 
         qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
         query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        qs = apply_video_filters_to_results('Gloss', qs, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -757,6 +763,7 @@ class SenseListView(ListView):
         elif self.query_parameters and 'query' in self.request.GET:
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
             gloss_query = apply_language_filters_to_results(gloss_query, self.query_parameters)
+            gloss_query = apply_video_filters_to_results('GlossSense', gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
 
             query = convert_query_parameters_to_filter(self.query_parameters)
@@ -777,6 +784,7 @@ class SenseListView(ListView):
         query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
         query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        qs = apply_video_filters_to_results('GlossSense', qs, query_parameters)
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type

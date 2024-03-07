@@ -17,6 +17,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.html import escape
 
 from signbank.dictionary.models import *
+from signbank.video.models import GlossVideo
 from django.db.models.functions import Concat
 from signbank.dictionary.forms import *
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
@@ -80,6 +81,7 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
             query_parameters[field_key] = field_value
     return query_parameters
 
+
 def apply_language_filters_to_results(qs, query_parameters):
     # Evaluate all gloss/language search fields
     # this needs to be done explicitly so the respective filters are applied in sequence
@@ -115,6 +117,51 @@ def apply_language_filters_to_results(qs, query_parameters):
             qs = qs.filter(**{query_filter_sense_text: get_value,
                               'translation__language': language})
     return qs
+
+
+def matching_file_exists(videofile):
+    from pathlib import Path
+    video_file_full_path = Path(WRITABLE_FOLDER, videofile)
+    if video_file_full_path.exists():
+        return True
+    else:
+        return False
+
+
+def matching_file__does_not_exist(videofile):
+    from pathlib import Path
+    video_file_full_path = Path(WRITABLE_FOLDER, videofile)
+    if video_file_full_path.exists():
+        return False
+    else:
+        return True
+
+
+def apply_video_filters_to_results(model, qs, query_parameters):
+    gloss_prefix = 'gloss__' if model in ['GlossSense'] else ''
+    filter_id = gloss_prefix + 'id__in'
+    gloss_ids = [gl.id if model == 'Gloss' else gl.gloss.id for gl in qs]
+    if 'hasvideo' not in query_parameters.keys():
+        return qs
+    elif query_parameters['hasvideo'] == '2':
+        glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids)
+        queryset_res = glossvideo_queryset.values('id', 'videofile')
+        results = [qv['id'] for qv in queryset_res
+                   if matching_file_exists(qv['videofile'])]
+        glosses_with_videofile = GlossVideo.objects.filter(id__in=results)
+        gloss_ids = [gv.gloss.id for gv in glosses_with_videofile]
+        return qs.filter(Q(**{filter_id: gloss_ids}))
+    else:
+        null_videos = qs.filter(Q(**{gloss_prefix + 'glossvideo__isnull': True}))
+        gloss_ids_without_video = [gl.id if model == 'Gloss' else gl.gloss.id for gl in null_videos]
+        glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids)
+        queryset_res = glossvideo_queryset.values('id', 'videofile')
+        results = [qv['id'] for qv in queryset_res
+                   if matching_file__does_not_exist(qv['videofile'])]
+        glosses_with_missing_videofile = GlossVideo.objects.filter(id__in=results)
+        gloss_ids_missing_videos = [gv.gloss.id for gv in glosses_with_missing_videofile]
+        filter_no_video = Q(**{filter_id: gloss_ids_without_video}) | Q(**{filter_id: gloss_ids_missing_videos})
+        return qs.filter(Q(**{filter_id: filter_no_video}))
 
 
 def convert_query_parameters_to_filter(query_parameters):
@@ -164,8 +211,8 @@ def convert_query_parameters_to_filter(query_parameters):
             query_list.append(Q(excludeFromEcv__exact=val))
 
         elif get_key == 'hasvideo' and get_value != '':
-            val = get_value != '2'
-            query_list.append(Q(glossvideo__isnull=val))
+            # this is done in a separate function
+            continue
 
         elif get_key in ['hasothermedia'] and get_value != '':
 
@@ -731,8 +778,8 @@ def queryset_from_get(formclass, searchform, GET, qs):
                 val = get_value == '2'
                 key = get_key + '__exact'
             elif get_key in ['hasvideo']:
-                val = get_value != '2'
-                key = 'glossvideo__isnull'
+                # this is done in a separate function
+                continue
             elif get_key in ['defspublished']:
                 val = get_value == '2'
                 key = 'definition__published'
@@ -1030,8 +1077,8 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 val = get_value == '2'
                 key = gloss_prefix + get_key + '__exact'
             elif get_key in ['hasvideo']:
-                val = get_value != '2'
-                key = gloss_prefix + 'glossvideo__isnull'
+                # this is done in a separate function
+                continue
             elif get_key in ['defspublished']:
                 val = get_value == '2'
                 key = gloss_prefix + 'definition__published'
