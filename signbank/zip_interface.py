@@ -57,9 +57,10 @@ def get_filenames_with_filetype(path_to_zip):
         for entry in zipped.infolist():
             if not entry.filename.endswith('.mp4'):
                 # this can be an Apple .DS_Store file
-                files_in_zip_archive[entry.filename] = False
+                files_in_zip_archive[entry.filename] = (False, False)
                 continue
-            files_in_zip_archive[entry.filename] = True
+            unique_gloss_match = check_zipfile_video_for_gloss_matche(entry.filename)
+            files_in_zip_archive[entry.filename] = (True, unique_gloss_match)
         return files_in_zip_archive
 
 
@@ -89,6 +90,23 @@ def check_subfolders_for_unzipping(acronym, lang3charcodes, filenames):
             continue
         video_files.append(zipfilename)
     return video_files
+
+
+def check_zipfile_video_for_gloss_matche(zipvideo):
+    path_units = zipvideo.split('/')
+    if len(path_units) < 3:
+        # the pathname is not long enough
+        return False
+    filename = path_units[-1]
+    filename_without_extension, _ = os.path.splitext(filename)
+    lang3code = path_units[-2]
+    acronym = path_units[-3]
+    glosses = Gloss.objects.filter(lemma__dataset__acronym=acronym,
+                                   annotationidglosstranslation__language__language_code_3char=lang3code,
+                                   annotationidglosstranslation__text__exact=filename_without_extension)
+
+    # return False if there is either no gloss found or multiple glosses found
+    return glosses.count() == 1
 
 
 def unzip_video_files(dataset, zipped_videos_file, destination):
