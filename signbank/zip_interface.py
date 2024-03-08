@@ -110,17 +110,27 @@ def check_zipfile_video_for_gloss_matche(zipvideo):
 
 
 def unzip_video_files(dataset, zipped_videos_file, destination):
+    lang3charcodes = [language.language_code_3char for language in dataset.translation_languages.all()]
     with zipfile.ZipFile(zipped_videos_file, "r") as zf:
         for name in zf.namelist():
             if not name.endswith('.mp4'):
                 # this can be an Apple .DS_Store file
                 continue
             # this is a video
+            # check that the path is correct before extracting
+            filename = os.path.basename(name)
+            folder_name = os.path.dirname(name)
+            path_units = folder_name.split('/')
+            if len(path_units) != 2:
+                # path does not have form dataset/lang3char/annotation.mp4
+                continue
+            lang3code = path_units[-1]
+            acronym = path_units[-2]
+            if acronym != str(dataset.acronym) or lang3code not in lang3charcodes:
+                # path is not correct, ignore
+                continue
             localfilepath = zf.extract(name, destination)
-            path_units = localfilepath.split('/')
-            filename = path_units[-1]
-            lang3code = path_units[-2]
-            new_location = os.path.join(destination, dataset.acronym, lang3code, filename)
+            new_location = os.path.join(destination, str(dataset.acronym), lang3code, filename)
             shutil.move(localfilepath, new_location)
 
     unzipped_filename = os.path.basename(zipped_videos_file)
