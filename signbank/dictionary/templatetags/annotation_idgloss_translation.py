@@ -7,7 +7,7 @@ register = Library()
 
 
 @register.filter
-def get_annotation_idgloss_translation(gloss, language):
+def get_annotation_idgloss_translation(gloss, language='en'):
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
 
     if annotationidglosstranslations is not None and len(annotationidglosstranslations) > 0:

@@ -76,6 +76,9 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_gloss_list.html
     Its value is changed by clicking the up/down buttons in the second row of the search result table
     """
+	
+    #Wrong order with special chars is this is empty, not sure why this line is here in the first place	
+    #queryset_language_codes = []
 
     # Helper: order a queryset on field [sOrder], which is a number from a list of tuples named [sListName]
     def order_queryset_by_tuple_list(qs, sOrder, sListName, bReversed):
@@ -153,6 +156,7 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     # The ordering method depends on the kind of field:
     # (1) text fields are ordered straightforwardly
     # (2) fields made from a choice_list need special treatment
+
     if (sOrder.endswith('handedness')):
         bText = False
         ordered = order_queryset_by_tuple_list(qs, sOrder, "Handedness", bReversed)
@@ -172,9 +176,16 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
         # Use straightforward ordering on field [sOrder]
         if default_sort_order:
             lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+
+            #This is giving problems, let's try without
+            #from signbank.tools import convert_language_code_to_language_minus_locale
+            #lang_attr_name = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+
             sort_language = 'annotationidglosstranslation__language__language_code_2char'
             if len(queryset_language_codes) == 0:
                 ordered = qs
+
+                print('no language choices')
             else:
                 if lang_attr_name not in queryset_language_codes:
                     lang_attr_name = queryset_language_codes[0]
@@ -188,10 +199,15 @@ def order_queryset_by_sort_order(get, qs, queryset_language_codes):
                 ordered = list(qs_letters) #.order_by(sort_key))
                 ordered += list(qs_special) #.order_by(sort_key))
                 ordered += list(qs_empty)
+
+                print(len(qs_letters),len(qs_special),len(qs_empty))
         else:
             ordered = qs
+
     if bReversed and bText:
         ordered.reverse()
+		
+    print(get, queryset_language_codes, bReversed, bText, len(ordered))
 
     # return the ordered list
     return ordered
@@ -649,14 +665,22 @@ class GlossListView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
-        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
-                                               for language in dataset_languages]
-        lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+        
+        if settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            lang_attr_name = 'name_' + settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+            annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in dataset_languages]
+        
+            lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
                                           for language in dataset_languages]
 
-        keyword_fields = ["Keywords" + " (" + getattr(language, lang_attr_name) + ")"
+            keyword_fields = ["Keywords" + " (" + getattr(language, lang_attr_name) + ")"
                                                for language in dataset_languages]
+
+        else:
+            annotationidglosstranslation_fields = ["Annotation ID Gloss"]
+            lemmaidglosstranslation_fields = ["Lemma ID Gloss"]
+            keyword_fields = ["Keywords"]
+
         writer = csv.writer(response)
 
         # CSV should be the first language in the settings
@@ -1091,6 +1115,8 @@ class GlossListView(ListView):
                 else:
                     qs = qs.filter(**{ fieldnameQuery: vals })
 
+        print('qs 10 size',len(qs))
+
         ## phonology and semantics field filters
         fieldnames = [ f for f in fieldnames if f not in fields_with_choices.keys() ]
         for fieldname in fieldnames:
@@ -1129,6 +1155,8 @@ class GlossListView(ListView):
             qs = qs & tqs
 
         qs = qs.distinct()
+
+        print('qs 11 size',len(qs))
 
         if 'nottags' in get and get['nottags'] != '':
             query_parameters['nottags'] = get.getlist('nottags')
@@ -1259,7 +1287,7 @@ class GlossListView(ListView):
                 created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
                 .filter(created_by__icontains=created_by_search_string)
 
-        # save the query parameters to a session variable
+        # save the query parameters to a sessin variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
         self.request.session.modified = True
         self.query_parameters = query_parameters
@@ -1271,8 +1299,12 @@ class GlossListView(ListView):
         self.request.session['search_type'] = self.search_type
         self.request.session['web_search'] = self.web_search
 
+        print('sqs 13 size',len(sorted_qs))
+
         if not 'last_used_dataset' in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
+
+        print('sqs 14 size',len(sorted_qs))
 
         # Return the resulting filtered and sorted queryset
         return sorted_qs
@@ -2541,6 +2573,8 @@ class MorphemeListView(ListView):
 
             return qs
 
+        print('qs 2 size',len(qs))
+
         # Evaluate all morpheme/language search fields
         for get_key, get_value in get.items():
             if get_key.startswith(MorphemeSearchForm.morpheme_search_field_prefix) and get_value != '':
@@ -2589,7 +2623,7 @@ class MorphemeListView(ListView):
 
             qs = qs.filter(definition__published=val)
 
-        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew']
+        fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+['inWeb', 'isNew', 'mrpType']
         if not settings.USE_DERIVATIONHISTORY and 'derivHist' in fieldnames:
             fieldnames.remove('derivHist')
 
@@ -2635,6 +2669,8 @@ class MorphemeListView(ListView):
                 else:
                     qs = qs.filter(**{ fieldnameQuery: vals })
 
+        print('qs 4 size',len(qs))
+        
         ## phonology and semantics field filters
         fieldnames = [ f for f in fieldnames if f not in multiple_select_morpheme_fields ]
         for fieldname in fieldnames:
@@ -2695,6 +2731,8 @@ class MorphemeListView(ListView):
 
         qs = qs.distinct()
 
+        print('qs 5 size',len(qs))
+        
         if 'nottags' in get and get['nottags'] != '':
             vals = get.getlist('nottags')
 
@@ -2742,6 +2780,7 @@ class MorphemeListView(ListView):
                 .filter(created_by__iregex=created_by_search_string)
 
 
+        print('qs 6 size',len(qs)) 
 
         # Sort the queryset by the parameters given
         qs = order_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
@@ -2751,6 +2790,9 @@ class MorphemeListView(ListView):
         if not ('last_used_dataset' in self.request.session.keys()):
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
+        
+        print('qs 7 size',len(qs)) 
+        
         # Return the resulting filtered and sorted queryset
         return qs
 
@@ -2788,9 +2830,12 @@ class MorphemeListView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
-        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-        annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in
-                                               dataset_languages]
+
+        if settings.SHOW_DATASET_INTERFACE_OPTIONS:
+            lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+            annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in dataset_languages]
+        else:
+            annotationidglosstranslation_fields = ["Annotation ID Gloss"]
 
         writer = csv.writer(response)
 
@@ -5161,7 +5206,7 @@ class DatasetManagerView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
-        lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+        lang_attr_name = 'name_' + settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
 
         annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")" for language in
                                                dataset_languages]

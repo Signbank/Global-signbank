@@ -21,4 +21,6 @@ if not SWITCH_TO_MYSQL:
     DATABASES['default']['NAME'] = WRITABLE_FOLDER + DATABASES['default']['NAME']
     DATABASES['default']['TEST']['NAME'] = WRITABLE_FOLDER + DATABASES['default']['TEST']['NAME']
 
+print(DATABASES)
+
 WSGI_FILE = ROOT+WSGI_FILE

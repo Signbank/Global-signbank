@@ -1,27 +1,41 @@
 from signbank.settings.server_specific.default import *
 
-ROOT = '/var/www/signbank/'
-ADMINS = [('Wessel Stoop', 'w.stoop@let.ru.nl')]
+ROOT = '/var/www/'
+BASE_DIR = 'repo/'
+WRITABLE_FOLDER = 'writable/'
+
+DATABASES = {'default':
+                {
+                    'ENGINE': 'django.db.backends.sqlite3',
+                    'NAME': 'database/signbank.db',
+                    'TEST': {
+                        'NAME': 'database/test-signbank.db',
+                    }
+                }
+            }
+
+ADMINS = [('Wessel Stoop', 'wessel.stoop@ru.nl')]
 LANGUAGE_NAME = "ASL"
 COUNTRY_NAME = "United States of America"
 SIGNBANK_VERSION_CODE = 'ASL'
 URL = 'https://aslsignbank.haskins.yale.edu/'
-ALLOWED_HOSTS = ['spinup-000691.yu.yale.edu','10.5.34.251','aslsignbank.haskins.yale.edu']
+ALLOWED_HOSTS = ['localhost','spinup-000691.yu.yale.edu','10.5.32.144','aslsignbank.haskins.yale.edu','aslsignbank-test.haskins.yale.edu']
+PREFIX_URL = ''
 
 LANGUAGES = (
-  ('en_US', 'American English'),
+  ('en_us', 'American English'),
 )
 
-MODELTRANSLATION_LANGUAGES = ['en-us']
+MODELTRANSLATION_LANGUAGES = ['en']
 
 # Documented to be 'eng'. Use 'ame' to be unique in multilingual database.
 LANGUAGES_LANGUAGE_CODE_3CHAR = (
-    ('en-us', 'ame'),
+    ('en-us', 'eng'),
 )
 
 LANGUAGE_CODE = "en-us"
 
-DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en_US'}
+DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en'}
 DEFAULT_LANGUAGE_HEADER_COLUMN = {'English': 'name'}
 
 SEPARATE_ENGLISH_IDGLOSS_FIELD = False
@@ -32,8 +46,9 @@ FIELDS['phonology'] = ['handedness','locPrimLH','initial_secondary_loc','final_s
                        'oriChAbd','oriChFlex','subhndsh','movSh']
 FIELDS['semantics'] = ['wordClass','wordClass2','lexCatNotes','derivHist','iconType']
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
+FIELDS['publication'] = ['inWeb','isNew']
 
-MORPHEME_DISPLAY_FIELDS = []
+GLOSS_LIST_DISPLAY_FIELDS = ['handedness','domhndsh','subhndsh','locPrimLH']
 
 HANDSHAPE_ETYMOLOGY_FIELDS = []
 HANDEDNESS_ARTICULATION_FIELDS = []
@@ -69,7 +84,9 @@ USE_DERIVATIONHISTORY = True
 SHOW_LETTER_NUMBER_PHONOLOGY = False
 DEFAULT_DATASET = 'ASL'
 DEFAULT_DATASET_ACRONYM = 'ASL'
+DEFAULT_DATASET_LANGUAGE_ID = 1
 DEFAULT_DATASET_PK = 2
+DEFAULT_KEYWORDS_LANGUAGE = {'language_code_2char': 'en_US'}
 
 EAF_FILES_LOCATION = ''
 METADATA_LOCATION = ''
@@ -79,3 +96,8 @@ SPEED_UP_RETRIEVING_ALL_SIGNS =	False
 
 import datetime
 RECENTLY_ADDED_SIGNS_PERIOD = datetime.timedelta(days=7)
+DEFAULT_DATASET_PK = 2
+
+SWITCH_TO_MYSQL = False
+
+SECRET_KEY = 'f2w3fkjv'

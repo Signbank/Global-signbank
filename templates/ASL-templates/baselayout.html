@@ -5,103 +5,100 @@
 
 <html>
   <head>
-    <title>{% block bootstrap3_title %}ASL Signbank{% endblock %}</title>
+      <title>{% block bootstrap3_title %}ASL Signbank{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+    <link href="https://fonts.googleapis.com/css?family=Nunito:700" rel="stylesheet">
+
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/style.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}{% primary_css %}">
 
-    <link rel="stylesheet" href="{{STATIC_URL}}css/minimalistic_language_picker.css">
-
     <link rel="icon" type="image/png" href="{{ STATIC_URL }}images/favicon.png">
+
     {% block extrahead %}{% endblock %}
   </head>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-112012037-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-112012037-1');
+  </script>
+
   <body>
 
-    <div id='wrap'>
-        <div class="container">
-            
-            <div id="leftcontentborder"></div>
-            <div id="rightcontentborder"></div>
-            <div id='header'><h1>ASL Signbank</h1>
-                <!--<div id='logoholder' class='visible-lg visible-md visible-sm'></div>-->
-            </div>
+  {% include 'menu.html' %}
 
-            <div id='bslstripe'></div>
-        {% include 'menu.html' %}  
-    
+    <div id='wrap' class="container-fluid" style="box-sizing:content-box;background:white;">
+
         {% bootstrap_messages %}
 
-        <div role='main'>
+        <div role='main' id="maincontent" style="background:white;">
         {% block content %}(no content){% endblock %}
-        </div>
-        
         </div>
     </div>
 
-    <div id="footer"> 
-       <div class='container'>
-          <div id="copyright">
-              <!--
-              <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">
-                  
-                  <img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />
-                  -->
-                  <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Dataset" property="dct:title" rel="dct:type">{% trans "The ASL Signbank</span> is licensed under a " %}<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/">{% trans "Creative Commons BY-NC-SA 4.0 International License" %}</a>.
-              
-              
-              <a href="{% url 'general_feedback' %}">{% trans "Provide feedback on the site" %}</a>
-          </div>
-       </div>
-    </div>
+
     
     <script src='{{ STATIC_URL}}js/jquery-3.6.2.min.js'></script>
     <script src='{{ STATIC_URL}}bootstrap/js/bootstrap.min.js'></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/minimalistic_language_picker.js"></script>
 
     {% block extrajs %}{% endblock %}
 
     <script type="text/javascript">
+        function focusFunction() {
+            var search_text = document.getElementById("tooltip-search").value;
+            if (!search_text) {
+                document.getElementById("tooltip-search").style.background = "lightgray";
+            }
+        }
+        function focusFunction2() {
+            var search_text = document.getElementById("tooltip-translation").value;
+            if (!search_text) {
+                document.getElementById("tooltip-translation").style.background = "lightgray";
+            }
+        }
+        function blurFunction() {
+            document.getElementById("tooltip-search").style.background = "white";
+        }
+        function blurFunction2() {
+            document.getElementById("tooltip-translation").style.background = "white";
+        }
+    </script>
+
+    <script type="text/javascript">
     $(window).ready(function()
     {
-    	{% get_current_language as WEBSITE_LANGUAGE %}
+
+        {% get_current_language as WEBSITE_LANGUAGE %}
 
         //Use the form below to update the language when logging in (if needed)
         {% if user.is_authenticated and user.user_profile_user.last_used_language != WEBSITE_LANGUAGE %}
-
+            <!--console.log("This check stops the loop.");-->
+            {% if chosen_language %}
             $('#change_language_form').submit();
-
+            {% endif %}
         {% endif %}
 
-    	$('#minimalistic_language_picker').minimalistic_language_picker(['en','nl','zh-hans'],'{{WEBSITE_LANGUAGE}}','{{ STATIC_URL }}images/languages/',function(chosen_language)
-    	{
-            {% if user.is_authenticated and user.user_profile_user.last_used_language != chosen_language %}
+        navbarHeight = Math.round($('#signbank-bar').outerHeight());
+        $('#wrap').css({'padding-top': navbarHeight});
+        $('[data-toggle="tooltip-menubar"]').tooltip();
+    })
 
-                //When the user is logged in, we don't want to submit the form, but instead save
-                //the user preference and reload
-
-                $.ajax('/dictionary/switch_to_language/'+chosen_language,'html');
-
-                //The reload is on a timeout, because it happened to fast on Firefox
-                setTimeout(function()
-                {
-                    $("#change_language_input_field").val(chosen_language);
-                    $("#change_language_form").submit();
-
-                },500);
-
-            {% else %}
-
-                $("#change_language_input_field").val(chosen_language);
-                $("#change_language_form").submit();
-
-            {% endif %}
-
-    	});
+    $(window).on('resize', function() {
+        navbarHeight3 = Math.round($('#signbank-bar').height());
+        $('#searchresults').css({'top': navbarHeight3 });
+        $('#signinfo').css({'top': navbarHeight3 + Math.round($('#searchresults').height())});
+        $('#wrap').css({'padding-top': navbarHeight3 });
     })
 
     </script>
-    <form id="change_language_form" method="post" action="/i18n/setlang/">
+
+    <form id="change_language_form" method="post" action="{{PREFIX_URL}}/i18n/setlang/">
         {% csrf_token %}
         <input id="change_language_input_field" type="hidden" name="language" value="{{ user.user_profile_user.last_used_language }}">
 
@@ -109,6 +106,4 @@
 
   </body>
 </html>
-    
 
-  

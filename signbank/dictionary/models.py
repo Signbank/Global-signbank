@@ -31,6 +31,7 @@ import signbank.settings
 # -*- coding: utf-8 -*-
 
 def get_default_language_id():
+
     language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
     if language is not None:
         return language.id
@@ -79,10 +80,13 @@ class FieldChoice(models.Model):
     RELORILOC = 'RelOriLoc'
     RELORIMOV = 'RelOriMov'
     RELATARTIC = 'RelatArtic'
+    SEMFIELD = 'SemField'   
     SPREADING = 'Spreading'
     THUMB = 'Thumb'
     VALENCE = 'Valence'
     WORDCLASS = 'WordClass'
+    WORDCLASS1 = 'wordclass1'
+    WORDCLASS2 = 'wordclass2'
 
     FIELDCHOICE_FIELDS = [
         (ABSORIFING, 'AbsOriFing'),
@@ -112,10 +116,13 @@ class FieldChoice(models.Model):
         (RELORILOC, 'RelOriLoc'),
         (RELORIMOV, 'RelOriMov'),
         (RELATARTIC, 'RelatArtic'),
+        (SEMFIELD, 'SemField'),
         (SPREADING, 'Spreading'),
         (THUMB, 'Thumb'),
         (VALENCE, 'Valence'),
-        (WORDCLASS, 'WordClass')
+        (WORDCLASS, 'WordClass'),
+        (WORDCLASS1, 'wordclass1'),
+        (WORDCLASS2, 'wordclass2')
     ]
 
     field = models.CharField(max_length=50, choices=FIELDCHOICE_FIELDS)

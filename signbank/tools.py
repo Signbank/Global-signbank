@@ -2117,7 +2117,12 @@ def strip_control_characters(input):
 def searchform_panels(searchform, searchfields) :
     search_by_fields = []
     for field in searchfields:
-        form_field_parameters = (field,searchform.fields[field].label,searchform[field])
+
+        try:
+            form_field_parameters = (field,searchform.fields[field].label,searchform[field])
+        except KeyError:
+            continue
+
         search_by_fields.append(form_field_parameters)
     return search_by_fields
 

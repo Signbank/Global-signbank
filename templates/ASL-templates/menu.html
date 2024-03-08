@@ -1,62 +1,121 @@
+
+
 {% load i18n %}
-{% get_current_language as LANGUAGE %}
+<!-- This was commented out, WEBSITE_LANGUAGE is already defined in baselayout.html -->
+<!--{% get_current_language as LANGUAGE %}-->
 
-<nav id='navbar' class="navbar navbar-default" role="navigation">
+<style>
+  #affix-bar.affix {
+    position:fixed;
+    top: 0;
+    z-index: 1000 !important;
+    background: white;
+  }
+</style>
 
-  <!-- Brand and toggle get grouped for better mobile display -->
-  <div class="navbar-header">
-    <button type="button" class="navbar-toggle hamburger_button" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-      <span class="sr-only">Toggle navigation</span>
-      <span class="icon-bar"></span>
-      <span class="icon-bar"></span>
-      <span class="icon-bar"></span>
-    </button>
-  </div>
+<div id="signbank-bar" class="navbar navbar-fixed-top" style="box-sizing:content-box;">
 
+<div id='header' class="navbar-header">
+    <h1>ASL <br/><span id="second-title-part">signbank</span></h1>
+
+</div>
+{% get_current_language as WEBSITE_LANGUAGE %}
+<div id='navbar-menus' class="collapse navbar-collapse navbar-upper navbar-default" role="navigation" style="display:inline;box-sizing:content-box;padding:0;">
 
   <!-- Collect the nav links, forms, and other content for toggling -->
-  <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+  <div class="nav navbar-upper" id="menu-pull-downs" style="display:inline;padding-left:0px;box-sizing:content-box;">
 
-    <ul class="nav navbar-nav">
+    <nav class="nav navbar-upper">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#signbank-menus">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+    <div class="collapse navbar-collapse" id="signbank-menus">
+    <ul class="nav navbar-left navbar-nav" style="margin-left:15px;box-sizing:content-box;">
     {# add in the top level menu items from pages #}
     {% for item in menu %}
 
-        {% if item.children %} 
+        {% if item.children %}
         <li class='dropdown'>
-             <a href="{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
+             <a href="{{PREFIX_URL}}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
+             	{% if WEBSITE_LANGUAGE == "nl" %}
+                 {{item.title_dutch}}
+             	{% elif WEBSITE_LANGUAGE == "zh-hans" %}
+                 {{item.title_chinese}}
+             	{% else %}
                  {{item.title}}
+             	{% endif %}
                  <b class="caret"></b></a>
              <ul class="dropdown-menu">
              {% for subitem in item.children %}
-                <li {% if subitem.current %}class='active'{% endif %}><a href="{{subitem.url}}">
+                <li {% if subitem.current %}class='active'{% endif %}><a href="{{PREFIX_URL}}{{subitem.url}}">
+             	{% if WEBSITE_LANGUAGE == "nl" %}
+                 {{subitem.title_dutch}}
+             	{% elif WEBSITE_LANGUAGE == "zh-hans" %}
+                 {{subitem.title_chinese}}
+             	{% else %}
                  {{subitem.title}}
+             	{% endif %}
                 </a></li>
-             {% endfor %} 
-             </ul> 
+             {% endfor %}
+             </ul>
         </li>
       {% else %}
-        <li><a href="{{item.url}}">{{item.title}}</a></li>
+        <li><a style="padding-left: 0px;" href="{{PREFIX_URL}}{{item.url}}">
+            {% if WEBSITE_LANGUAGE == "nl" %}
+                 {{item.title_dutch}}
+             	{% elif WEBSITE_LANGUAGE == "zh-hans" %}
+                 {{item.title_chinese}}
+             	{% else %}
+                 {{item.title}}
+             	{% endif %}
+        </a></li>
       {% endif %}
     {% endfor %}
 
     </ul>
+    <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search">
+            <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search Gloss" %}' type="Text" name="search" id="tooltip-search"
+                                               onfocus="focusFunction()" onblur="blurFunction()"
+                                               value="{{ glossQuery }}" maxlength="60" size="36" />
+				{% include "tooltip.html" with include_tags=True %}
+            </div>
+            <div class="text-container hasTooltip"><input class='form-control' placeholder='{% trans "Search Translation" %}' type="Text" name="translation" id="tooltip-translation"
+                                               onfocus="focusFunction2()" onblur="blurFunction2()"
+                                               value="{{ query }}" maxlength="60" size="36" />
+				{% include "tooltip.html" with include_tags=True %}
+            </div>
+          <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
+    </form>
+    <div class="nav navbar-left navbar-nav" id="user-menu" style="height: 10px;box-sizing:content-box;">
+        {% if user.is_authenticated %}
+        <div class='navbar-text'>
+            <a href="{% url 'registration:user_profile' %}">{% trans "Profile" %}</a>
+        </div>
+        {% endif %}
+    </div>
+      <div class="nav navbar-right" style="height: 10px;box-sizing:content-box;">
+        {% if user.is_authenticated %}
+            <div class='navbar-text'>
+                <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
+        {% else %}
+            <div class='navbar-text'><a href="{{PREFIX_URL}}/accounts/login/">{% trans "Login" %}</a></div>
+        {% endif %}
+		<div class='navbar-text' id="minimalistic_language_picker"></div>
 
-    <form class="navbar-form navbar-right" role="search" id="frmSearch" name="frmSearch" method="get" action="/signs/search">
-       <div class="form-group">
-          <input class='form-control' placeholder='{% trans "Search Gloss" %}' type="Text" name="search" value="{{ glossQuery }}" maxlength="50">
-       </div>
-          <input class='form-control' placeholder='{% trans "Search Translation" %}' type="Text" name="translation" value="{{ query }}" maxlength="50">
-       
-       <button type="submit" class="btn btn-default">{% trans "Sign search" %}</button>
-    </form> 
+	</div>
+    </div>
+    </div>
+  </nav>
 
-    <ul class='nav navbar-nav navbar-right'>
-    {% if user.is_authenticated %}
-      <li><a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></li>
-    {% else %}
-       <li><a href="/accounts/login/?next=/">{% trans "Login" %}</a></li>
-    {% endif %} 
-    </ul>
+  </div>
 
-  </div><!-- /.navbar-collapse -->
-</nav>
+</div>
+
+</div>
+<div id='bslstripe'></div>
+
