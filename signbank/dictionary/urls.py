@@ -17,6 +17,7 @@ import signbank.dictionary.views
 import signbank.dictionary.tagviews
 import signbank.dictionary.adminviews
 import signbank.api_interface
+import signbank.abstract_machine
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -125,6 +126,11 @@ urlpatterns = [
             signbank.api_interface.get_gloss_data_json, name='get_gloss_data_json'),
     re_path(r'get_fields_data/(?P<datasetid>\d+)/$',
             signbank.api_interface.get_fields_data_json, name='get_fields_data_json'),
+
+    re_path(r'api_create_gloss/(?P<datasetid>\d+)/$',
+            signbank.abstract_machine.api_create_gloss, name='api_create_gloss'),
+    re_path(r'test_abstract_machine/(?P<datasetid>\d+)/$',
+            signbank.dictionary.views.test_abstract_machine, name='test_abstract_machine'),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
