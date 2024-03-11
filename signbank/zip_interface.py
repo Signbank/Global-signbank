@@ -239,49 +239,57 @@ def save_video(video_file_path, goal):
 
 def import_video_file(request, gloss, video_file_path):
     # request is needed as a parameter to the GlossVideoHistory
-    with atomic():
-        goal_gloss_file_path, video_file_name, video_path = get_gloss_filepath(video_file_path, gloss)
-        if not goal_gloss_file_path:
-            errors = "Incorrect gloss path for import."
-            # errors_deleting = remove_video_file_from_import_videos(video_file_path)
-            # if errors_deleting:
-            #     errors = errors + errors_deleting
-            return "Failed", errors
-        existing_videos = GlossVideo.objects.filter(gloss=gloss, version=0)
-        if existing_videos.count():
-            # overwrite existing video using shutil
-            success = save_video(video_file_path, goal_gloss_file_path)
-            if success:
-                # refresh poster image
-                existing_videos.first().make_poster_image()
+    try:
+        with atomic():
+            goal_gloss_file_path, video_file_name, video_path = get_gloss_filepath(video_file_path, gloss)
+            if not goal_gloss_file_path:
+                errors = "Incorrect gloss path for import."
+                # errors_deleting = remove_video_file_from_import_videos(video_file_path)
+                # if errors_deleting:
+                #     errors = errors + errors_deleting
+                return "Failed", errors
+            existing_videos = GlossVideo.objects.filter(gloss=gloss, version=0)
+            if existing_videos.count():
+                # overwrite existing video using shutil
+                success = save_video(video_file_path, goal_gloss_file_path)
+                if success:
+                    # make sure the video name stored in GlossVideo matches the uploaded video
+                    existing_glossvideo = existing_videos.first()
+                    vidfile_folder = os.path.dirname(existing_glossvideo.videofile.name)
+                    new_glossvideo_name = os.path.join(vidfile_folder, video_file_name)
+                    existing_glossvideo.videofile.name = new_glossvideo_name
+                    existing_glossvideo.save()
+                    # refresh poster image
+                    existing_videos.first().make_poster_image()
+                    glossvideohistory = GlossVideoHistory(action="import",
+                                                          gloss=gloss,
+                                                          actor=request.user,
+                                                          uploadfile=video_file_name,
+                                                          goal_location=goal_gloss_file_path)
+                    glossvideohistory.save()
+                    status, errors = 'Success', ""
+                else:
+                    status, errors = 'Failed', "Failed"
+
+            else:
+                # make new GlossVideo object for new video
+                video = GlossVideo(gloss=gloss,
+                                   version=0)
+                with open(video_file_path, 'rb') as f:
+                    video.videofile.save(os.path.basename(video_file_path), File(f), save=True)
+                video.save()
+                video.make_poster_image()
                 glossvideohistory = GlossVideoHistory(action="import",
                                                       gloss=gloss,
                                                       actor=request.user,
                                                       uploadfile=video_file_name,
                                                       goal_location=goal_gloss_file_path)
                 glossvideohistory.save()
-                status = 'Success'
-            else:
-                status = 'Failed'
-
-        else:
-            # make new GlossVideo object for new video
-            video = GlossVideo(gloss=gloss,
-                               version=0)
-            with open(video_file_path, 'rb') as f:
-                video.videofile.save(os.path.basename(video_file_path), File(f), save=True)
-            video.save()
-            video.make_poster_image()
-            glossvideohistory = GlossVideoHistory(action="import",
-                                                  gloss=gloss,
-                                                  actor=request.user,
-                                                  uploadfile=video_file_name,
-                                                  goal_location=goal_gloss_file_path)
-            glossvideohistory.save()
-            status = 'Success'
-
+                status, errors = 'Success', ""
+    except (DatabaseError, TransactionManagementError, OSError):
+        status, errors = "Failed", "Failed"
         # errors are if the import_videos video can not be removed
         # errors = remove_video_file_from_import_videos(video_file_path)
-        errors = ""
+        # errors = ""
 
-        return status, errors
+    return status, errors

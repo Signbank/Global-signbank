@@ -18,6 +18,12 @@ function update_video_file_display(data) {
     if (!glossid) {
         return;
     }
+    if (!videolink) {
+        return;
+    }
+    if (!imagelink) {
+        return;
+    }
     var lookup = '#importstatus_' + glossid;
     $(lookup).html(uploadstatus);
     var import_table = $('#imported_videos');
@@ -27,9 +33,9 @@ function update_video_file_display(data) {
     var video_container_html = "<div class='thumbnail_container'>";
     video_container = $(video_container_html);
     var video_elt_html = "<div id='glossvideo_"+glossid+"'>";
-    video_elt_html += "<img class='thumbnail' src='"+imagelink+"'>";
+    video_elt_html += "<img class='thumbnail' src='"+protected_media_url+imagelink+"'>";
     video_elt_html += "<video id='videoplayer' class='thumbnail-video hover-shows-video' src='"
-                    +videolink+"' type='video/mp4' muted='muted'></video>";
+                    +protected_media_url+videolink+"' type='video/mp4' muted='muted'></video>";
     video_elt_html += "</div>";
     var video_elt = $(video_elt_html);
     video_container.append(video_elt);

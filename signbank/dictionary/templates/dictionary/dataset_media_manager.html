@@ -25,8 +25,6 @@ var video_column_header = '{% trans "Imported Video" %}';
 var gloss_dictionary_url = '{{PREFIX_URL}}/dictionary/gloss/';
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 var protected_media_url = '{{protected_media_url}}';
-var protected_media_video = '{{protected_media_url}}glossvideo/';
-var protected_media_image = '{{protected_media_url}}glossimage/';
 
 function ready_videos(el) {
     $(el).find('video').hide();

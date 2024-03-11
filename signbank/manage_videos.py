@@ -196,16 +196,26 @@ def import_video_to_gloss_manager(request, video_file_path):
     if format.startswith('h264'):
         # the output of ffmpeg includes extra information following h264, so only check the prefix
         status, errors = import_video_file(request, gloss, video_file_path)
-        video_path = gloss.get_video_url()
-        image_path = gloss.get_image_url()
-        import_video_data["gloss"] = str(gloss.id)
-        import_video_data["annotation"] = filename_without_extension
-        import_video_data["videopath"] = videopath
-        import_video_data["videofile"] = filename
-        import_video_data["imagelink"] = '/dictionary/protected_media/' + image_path
-        import_video_data["videolink"] = '/dictionary/protected_media/' + video_path
-        import_video_data["uploadstatus"] = "Success"
-        import_video_data["errors"] = errors
+        if not errors:
+            videolink = gloss.get_video_url()
+            imagelink = gloss.get_image_url()
+            import_video_data["gloss"] = str(gloss.id)
+            import_video_data["annotation"] = filename_without_extension
+            import_video_data["videopath"] = videopath
+            import_video_data["videofile"] = filename
+            import_video_data["imagelink"] = imagelink
+            import_video_data["videolink"] = videolink
+            import_video_data["uploadstatus"] = "Success"
+            import_video_data["errors"] = errors
+        else:
+            import_video_data["gloss"] = str(gloss.id)
+            import_video_data["annotation"] = filename_without_extension
+            import_video_data["videopath"] = videopath
+            import_video_data["videofile"] = filename
+            import_video_data["imagelink"] = ""
+            import_video_data["videolink"] = ""
+            import_video_data["uploadstatus"] = "Failure."
+            import_video_data["errors"] = "Error saving video file."
     else:
         import_video_data["gloss"] = str(gloss.id)
         import_video_data["annotation"] = filename_without_extension
@@ -258,6 +268,7 @@ def import_video_to_gloss_json(request):
         return JsonResponse({})
 
     videofile = request.POST.get('videofile', '')
+    print(videofile)
     if not videofile:
         return JsonResponse({})
 
