@@ -3028,3 +3028,28 @@ def import_csv_create_sentences(request):
                           'seen_datasets': seen_datasets,
                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+
+def test_abstract_machine(request, datasetid):
+    # used to test api method since PyCharm runserver does not support CORS
+    dataset_id = int(datasetid)
+    dataset = Dataset.objects.filter(id=dataset_id).first()
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+    if not dataset or not (request.user.is_staff or request.user.is_superuser):
+        translated_message = _('You do not have permission to use the test command.')
+        return render(request, 'dictionary/warning.html',
+                      {'warning': translated_message,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
+
+    language_2chars = [str(language.language_code_2char) for language in dataset.translation_languages.all()]
+    return render(request, 'dictionary/virtual_machine_api.html',
+                  {'selected_datasets': selected_datasets,
+                   'dataset': dataset,
+                   'language_2chars': language_2chars,
+                   'dataset_languages': dataset_languages,
+                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
+                   })

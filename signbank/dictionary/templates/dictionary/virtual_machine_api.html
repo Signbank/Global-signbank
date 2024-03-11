@@ -1,0 +1,167 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank API: Create Gloss{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var url = '{{ PREFIX_URL }}';
+    var language_code = '{{LANGUAGE_CODE}}';
+    var datasetid = '{{dataset.id}}';
+    var csrf_token = '{{csrf_token}}';
+    var language_2chars = {{language_2chars|safe}};
+</script>
+
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/gloss_add.js"></script>
+
+<script type="text/javascript">
+function show_creation_results(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var errorsElt = $('#errors');
+    var glossidElt = $('#glossid');
+    var statusElt = $('#status');
+    var errors = data.errors;
+    var createstatus = data.createstatus;
+    var glossid = data.glossid;
+    if (errors.length) {
+        var glossCell = "ERRORS <ul>";
+        for (var inx in errors) {
+            glossCell = glossCell + "<li>"+errors[inx]+"</li>";
+        }
+        glossCell = glossCell + "</ul>";
+        errorsElt.html(glossCell);
+    }
+    if (createstatus) {
+        statusCell = "<span>STATUS "+createstatus+"</span>";
+        statusElt.html(statusCell);
+    }
+    if (glossid) {
+        glossCell = "<span>GLOSS ID "+glossid+"</span>";
+        glossidElt.html(glossCell);
+    }
+}
+function create_gloss() {
+     var dataset = $('#dataset').val();
+     var creation = { 'Dataset': dataset }
+     for (var i=0; i < language_2chars.length; i++) {
+        var lang2char = language_2chars[i];
+        var lemma_field = 'lemma_id_gloss_' + lang2char;
+        var lemma_field_lookup = '#'+lemma_field;
+        var lemma_field_key = $(lemma_field_lookup).attr("name");
+        var lemma_field_value = $(lemma_field_lookup).val();
+        creation[lemma_field_key] = lemma_field_value;
+        var annotation_field = 'annotation_id_gloss_' + lang2char;
+        var annotation_field_lookup = '#'+annotation_field;
+        var annotation_field_key = $(annotation_field_lookup).attr("name");
+        var annotation_field_value = $(annotation_field_lookup).val();
+        creation[annotation_field_key] = annotation_field_value;
+     }
+     $.ajax({
+        url : url + "/dictionary/api_create_gloss/" + datasetid + '/',
+        type: 'POST',
+        data: creation,
+        datatype: "json",
+        async: false,
+        success : show_creation_results
+     });
+}
+$(document).ready(function(){
+    // setup required for Ajax POST
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    $.ajaxSetup({
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrf_token);
+            }
+        }
+    });
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+<div>
+    <div>
+    <h3>{% trans "Gloss Fields" %}</h3>
+     <div>
+         <table class='table' style='width: 1200px;'>
+             <tr>
+                 <th id="add_gloss_dataset_header">
+                     {% trans "Dataset" %}
+                 </th>
+                 <td id="add_gloss_dataset_value">
+                     <input id="dataset"
+                            name="Dataset"
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             {% for dataset_lang in dataset_languages %}
+             {% with dataset_lang.name as language_name %}
+             {% with "Lemma ID Gloss ("|add:language_name|add:")" as lemma_field_name %}
+             <tr>
+                 <th id="add_gloss_lemma_header_{{dataset_lang.language_code_2char}}">
+                     {{lemma_field_name}}
+                 </th>
+                 <td id="add_gloss_lemma_value_{{dataset_lang.language_code_2char}}">
+                     <input id="lemma_id_gloss_{{dataset_lang.language_code_2char}}"
+                            name='{{lemma_field_name}}'
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             {% endwith %}
+             {% endwith %}
+             {% endfor %}
+             {% for dataset_lang in dataset_languages %}
+             {% with dataset_lang.name as language_name %}
+             {% with "Annotation ID Gloss ("|add:language_name|add:")" as annotation_field_name %}
+             <tr>
+                 <th id="add_gloss_annotation_header_{{dataset_lang.language_code_2char}}">
+                     {{annotation_field_name}}
+                 </th>
+                 <td id="add_gloss_annotation_value_{{dataset_lang.language_code_2char}}">
+                     <input id="annotation_id_gloss_{{dataset_lang.language_code_2char}}"
+                            name="{{annotation_field_name}}"
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             {% endwith %}
+             {% endwith %}
+             {% endfor %}
+         </table>
+
+     <input class='btn btn-primary' type='submit'
+            onclick="create_gloss();"
+            value='{% trans "Create Gloss" %}'>
+
+     <br><br>
+     </div>
+    </div>
+<div>
+<h3>{% trans "Created Gloss" %}</h3>
+ <p id="glossid"></p>
+ <p id="errors"></p>
+ <p id="status"></p>
+</div>
+</div>
+{% endblock %}
