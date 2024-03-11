@@ -71,6 +71,25 @@ def get_value_dict(request, dataset):
     return value_dict
 
 
+def get_human_readable_value_dict(request, dataset):
+    required_fields = required_fields_create_gloss_columns(dataset)
+    value_dict = dict()
+    for field in required_fields:
+        if field in request.POST.keys():
+            value = request.POST.get(field, '')
+            value_dict[field] = value.strip()
+    return value_dict
+
+
+def translate_human_readable_value_dict_to_keys(dataset, value_dict):
+    translate_value_dict_lookup = create_gloss_columns_to_value_dict_keys(dataset)
+    translated_value_dict = dict()
+    for field, value in value_dict.items():
+        value_dict_key = translate_value_dict_lookup[field]
+        translated_value_dict[value_dict_key] = value
+    return translated_value_dict
+
+
 def check_value_dict_create_gloss(request, dataset, value_dict):
     errors = []
     dataset_acronym = value_dict['dataset']
@@ -163,7 +182,7 @@ def create_gloss(request, dataset, value_dict):
                 annotationidglosstranslation.text = annotationidgloss_text
                 annotationidglosstranslation.save()
             results['glossid'] = str(new_gloss.pk)
-            results['errors'] = [""]
+            results['errors'] = []
             results['createstatus'] = "Success"
             return results
     except (DatabaseError, KeyError, TransactionManagementError):
@@ -171,6 +190,34 @@ def create_gloss(request, dataset, value_dict):
         results['createstatus'] = "Failed"
         results['glossid'] = ""
         return results
+
+
+def csv_create_gloss(request, datasetid):
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset or not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    value_dict = get_value_dict(request, dataset)
+    errors = check_value_dict_create_gloss(request, dataset, value_dict)
+    if errors:
+        results = dict()
+        results['errors'] = errors
+        results['createstatus'] = "Failed"
+        results['glossid'] = ""
+        return JsonResponse(results)
+
+    creation_results = create_gloss(request, dataset, value_dict)
+
+    results = dict()
+    for key in creation_results:
+        results[key] = creation_results[key]
+    return JsonResponse(results)
 
 
 def api_create_gloss(request, datasetid):
@@ -184,7 +231,8 @@ def api_create_gloss(request, datasetid):
     if not request.user.has_perm('dictionary.change_gloss'):
         return JsonResponse({})
 
-    value_dict = get_value_dict(request, dataset)
+    human_readable_value_dict = get_human_readable_value_dict(request, dataset)
+    value_dict = translate_human_readable_value_dict_to_keys(dataset, human_readable_value_dict)
     errors = check_value_dict_create_gloss(request, dataset, value_dict)
     if errors:
         results = dict()

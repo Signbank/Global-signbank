@@ -55,7 +55,7 @@ function show_creation_results(data) {
 }
 function create_gloss() {
      var dataset = $('#dataset').val();
-     var creation = { 'dataset': dataset }
+     var creation = { 'Dataset': dataset }
      for (var i=0; i < language_2chars.length; i++) {
         var lang2char = language_2chars[i];
         var lemma_field = 'lemma_id_gloss_' + lang2char;
@@ -109,36 +109,44 @@ $(document).ready(function(){
                  </th>
                  <td id="add_gloss_dataset_value">
                      <input id="dataset"
-                            name="dataset"
+                            name="Dataset"
                             maxlength="30" type="text"
                             size="50" >
                  </td>
              </tr>
              {% for dataset_lang in dataset_languages %}
+             {% with dataset_lang.name as language_name %}
+             {% with "Lemma ID Gloss ("|add:language_name|add:")" as lemma_field_name %}
              <tr>
-                 <th id="add_gloss_lemma_header_{{ dataset_lang.language_code_2char }}">
-                     {% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})
+                 <th id="add_gloss_lemma_header_{{dataset_lang.language_code_2char}}">
+                     {{lemma_field_name}}
                  </th>
                  <td id="add_gloss_lemma_value_{{dataset_lang.language_code_2char}}">
                      <input id="lemma_id_gloss_{{dataset_lang.language_code_2char}}"
-                            name="lemma_id_gloss_{{dataset_lang.language_code_2char}}"
+                            name='{{lemma_field_name}}'
                             maxlength="30" type="text"
                             size="50" >
                  </td>
              </tr>
+             {% endwith %}
+             {% endwith %}
              {% endfor %}
              {% for dataset_lang in dataset_languages %}
+             {% with dataset_lang.name as language_name %}
+             {% with "Annotation ID Gloss ("|add:language_name|add:")" as annotation_field_name %}
              <tr>
                  <th id="add_gloss_annotation_header_{{dataset_lang.language_code_2char}}">
-                     {% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})
+                     {{annotation_field_name}}
                  </th>
                  <td id="add_gloss_annotation_value_{{dataset_lang.language_code_2char}}">
                      <input id="annotation_id_gloss_{{dataset_lang.language_code_2char}}"
-                            name="annotation_id_gloss_{{dataset_lang.language_code_2char}}"
+                            name="{{annotation_field_name}}"
                             maxlength="30" type="text"
                             size="50" >
                  </td>
              </tr>
+             {% endwith %}
+             {% endwith %}
              {% endfor %}
          </table>
 
