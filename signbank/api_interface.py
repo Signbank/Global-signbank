@@ -367,13 +367,14 @@ def import_video_to_gloss(request, video_file_path):
                                  annotationidglosstranslation__language__language_code_3char=language_3_code,
                                  annotationidglosstranslation__text__exact=filename_without_extension).first()
     if not gloss:
-        errors = remove_video_file_from_import_videos(video_file_path)
-        if not errors:
-            import_video_data[json_path_key]["errors"] = ("Gloss not found for " + filename_without_extension +
-                                                          ". Video file deleted.")
-        else:
-            import_video_data[json_path_key]["errors"] = ("Gloss not found for " + filename_without_extension +
-                                                          ". " + errors)
+        # errors = remove_video_file_from_import_videos(video_file_path)
+        # if not errors:
+        #     import_video_data[json_path_key]["errors"] = ("Gloss not found for " + filename_without_extension +
+        #                                                   ". Video file deleted.")
+        # else:
+        #     import_video_data[json_path_key]["errors"] = ("Gloss not found for " + filename_without_extension +
+        #                                                   ". " + errors)
+        import_video_data[json_path_key]["errors"] = "Gloss not found for " + filename_without_extension + ". "
         return import_video_data
     format = probe_format(video_file_path)
     if format.startswith('h264'):
