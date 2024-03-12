@@ -56,9 +56,7 @@ function ready_videos(el) {
 
 <style>
 list {
-    overflow-y: scroll;
     overflow-x: auto;
-    scrollbar-width: thin;
 }
 dl:after {
     content: none;
@@ -93,14 +91,6 @@ dd {
 .list-group-2col {
     justify-content: space-between;
 }
-.check {
-    height: 14px;
-    width: 7px;
-    border-bottom: 2px solid green;
-    border-right: 2px solid green;
-    transform: rotate(45deg);
-    margin: 3px;
-}
 </style>
 {% endblock %}
 
@@ -113,7 +103,7 @@ dd {
 <h3>{% trans "Dataset Media Manager" %}</h3>
 
     <table class='table table-responsive'>
-        <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:900px;">{{dataset.name}}</td></tr>
+        <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:1200px;">{{dataset.name}}</td></tr>
         <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
         <tr><th>Number of glosses</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
         <tr><th>{% trans "Accessible by others" %}</th>
@@ -142,36 +132,34 @@ dd {
         </th>
         <td colspan="2">
           <div name="zipped_archives"
-                style="height:250px; overflow-y:auto;display:block; width:900px;">
-              <ul class="list-group-hover" style="padding: 0;">
+                style="display:block; width:1200px;">
+              <table class="list-group-hover" style="padding: 0;">
                   {% for zipfilename, zipcontents in zipped_archives.items %}
-                  <li class="list-group-item active" style="padding: 0;">
-                      <div style="width:300px;"><span><bold>{{zipfilename}}</bold></span></div>
-                      <div style="width:300px;"><span>{% trans "VIDEO" %}</span></div>
-                      <div style="width:100px;"><span>{% trans "INFO" %}</span></div>
-                  </li>
-                  <ul style="padding: 0;">
+                  <tr class="list-group-item active" style="padding: 0;">
+                      <th style="width:600px;"><span><bold>{{zipfilename}}</bold></span></th>
+                      <th style="width:400px;"><span>{% trans "VIDEO" %}</span></th>
+                      <th style="width:200px;"><span>{% trans "INFO" %}</span></th>
+                  </tr>
                     {% for struct, status in zipcontents.items %}
-                    <li class="list-group-item" style="padding: 0;">
+                    <tr class="list-group-item" style="padding: 0;">
                         {% if status.0 and status.1 %}
-                        <div style="width:300px;">{{struct}}</div>
-                        <div style="width:300px;"><span style="color:green;font-size:16px;">&#x2713;</span></div>
-                        <div style="width:100px;"></div>
+                        <td style="width:600px;">{{struct}}</td>
+                        <td style="width:400px;"><span style="color:green;font-size:16px;">&#x2713;</span></td>
+                        <td style="width:200px;"></td>
                         {% elif not status.0 %}
-                        <div style="width:300px;"><span>{{struct}}</span></div>
-                        <div style="width:300px;"><span style="color:red;font-size:10px;">&#10060;</span></div>
-                        <div style="width:100px;"></div>
+                        <td style="width:600px;"><span>{{struct}}</span></td>
+                        <td style="width:400px;"><span style="color:red;font-size:10px;">&#10060;</span></td>
+                        <td style="width:200px;"></td>
                         {% else %}
-                        <div style="width:300px;"><span>{{struct}}</span></div>
-                        <div style="width:300px;"><span style="color:red;font-size:12px;">&#10060;</span></div>
-                        <div style="width:100px;"><span>{% trans "gloss not found" %}</span></div>
+                        <td style="width:600px;"><span>{{struct}}</span></td>
+                        <td style="width:400px;"><span style="color:red;font-size:12px;">&#10060;</span></td>
+                        <td style="width:200px;"><span>{% trans "gloss not found" %}</span></td>
                         {% endif %}
-                    </li>
+                    </tr>
                     {% endfor %}
-                  </ul>
                   <br>
                   {% endfor %}
-            </ul>
+            </table>
           </div>
         </td>
         </tr>
@@ -179,42 +167,42 @@ dd {
             <th>{% trans "Status Video Files in Import Folder" %}</th>
             <td colspan="2">
               <div name="status_uploaded_video_files"
-                    style="height:250px; overflow-y:auto;display:block; width:900px;">
-                  <list class="list-group-hover" style="padding:0;">
+                    style="display:block; width:1200px;">
+                  <table class="list-group-hover" style="padding:0;">
                       {% for lang3char, status_files in uploaded_video_files.items %}
                       {% if status_files %}
-                      <li class="list-group-item active" style="padding: 0;">
+                      <tr class="list-group-item active" style="padding: 0;">
 
-                              <div style="width:300px;">{% trans "FILE" %}</div>
-                              <div style="width:300px;">{% trans "GLOSS" %}</div>
-                              <div>{% trans "IMPORT STATUS" %}</div>
+                              <th style="width:600px;">{% trans "FILE" %}</th>
+                              <th style="width:400px;">{% trans "GLOSS" %}</th>
+                              <th style="width:200px;">{% trans "IMPORT STATUS" %}</th>
 
-                      </li>
+                      </tr>
                       {% for videopath, videofile, filename, video_format_okay, gloss in status_files %}
                       {% if video_format_okay and gloss %}
-                      <li class="list-group-item" style="padding:0;">
-                          <div style="width:300px;">{{videofile}}</div>
-                          <div style="width:300px;">{{gloss|get_default_annotation_idgloss_translation}}</div>
-                          <div class="video_path" data-path="{{videopath}}"
-                               id="importstatus_{{gloss.id}}"></div></li>
+                      <tr class="list-group-item" style="padding:0;">
+                          <td style="width:600px;">{{videofile}}</td>
+                          <td style="width:400px;">{{gloss|get_default_annotation_idgloss_translation}}</td>
+                          <td style="width:200px;" class="video_path" data-path="{{videopath}}"
+                              id="importstatus_{{gloss.id}}"></td></tr>
                       {% elif gloss %}
-                    <li class="list-group-item" style="padding: 0;">
-                        <div style="width:300px;">{{videofile}}</div>
-                        <div style="color:red;width:300px;">(video is not mp4)</div>
-                        <div class="video_path" data-path="{{videopath}}"
-                             id="importstatus_{{gloss.id}}"></div>
-                    </li>
+                    <tr class="list-group-item" style="padding: 0;">
+                        <td style="width:600px;">{{videofile}}</td>
+                        <td style="color:red;width:400px;">(video is not mp4)</td>
+                        <td style="width:200px;" class="video_path" data-path="{{videopath}}"
+                            id="importstatus_{{gloss.id}}"></td>
+                    </tr>
                     {% else %}
-                    <li class="list-group-item" style="padding: 0;">
-                        <div style="width:300px;">{{videofile}}</div>
-                        <div style="color:red;width:300px;">&#10060;</div>
-                        <div class="video_path" data-path="{{videopath}}"></div>
-                    </li>
+                    <tr class="list-group-item" style="padding: 0;">
+                        <td style="width:600px;">{{videofile}}</td>
+                        <td style="color:red;width:400px;">&#10060;</td>
+                        <td style="width:200px;" class="video_path" data-path="{{videopath}}"></td>
+                    </tr>
                     {% endif %}
                     {% endfor %}
                     {% endif %}
                     {% endfor %}
-                </list>
+                </table>
               </div>
             </td>
         </tr>
@@ -240,7 +228,7 @@ dd {
             <th></th>
             <td colspan="2">
                 <div>
-                    <table class="table table-responsive" style="width:900px;">
+                    <table class="table table-responsive" style="width:1200px;">
                         <thead id="imported_videos_header">
                         </thead>
                         <tbody id="imported_videos">
