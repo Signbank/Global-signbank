@@ -244,9 +244,7 @@ def import_video_file(request, gloss, video_file_path):
             goal_gloss_file_path, video_file_name, video_path = get_gloss_filepath(video_file_path, gloss)
             if not goal_gloss_file_path:
                 errors = "Incorrect gloss path for import."
-                # errors_deleting = remove_video_file_from_import_videos(video_file_path)
-                # if errors_deleting:
-                #     errors = errors + errors_deleting
+                errors_deleting = remove_video_file_from_import_videos(video_file_path)
                 return "Failed", errors
             existing_videos = GlossVideo.objects.filter(gloss=gloss, version=0)
             if existing_videos.count():
@@ -288,8 +286,7 @@ def import_video_file(request, gloss, video_file_path):
                 status, errors = 'Success', ""
     except (DatabaseError, TransactionManagementError, OSError):
         status, errors = "Failed", "Failed"
-        # errors are if the import_videos video can not be removed
-        # errors = remove_video_file_from_import_videos(video_file_path)
-        # errors = ""
+
+    errors_deleting = remove_video_file_from_import_videos(video_file_path)
 
     return status, errors

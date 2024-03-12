@@ -184,12 +184,7 @@ def import_video_to_gloss_manager(request, video_file_path):
         import_video_data["imagelink"] = ""
         import_video_data["videolink"] = ""
         import_video_data["uploadstatus"] = "Gloss not found."
-        # errors_deleting = remove_video_file_from_import_videos(video_file_path)
-        # if errors_deleting:
-        #     errors = errors + errors_deleting
-        #     import_video_data["errors"] = errors + errors_deleting
-        # else:
-        #     import_video_data["errors"] = errors
+        errors_deleting = remove_video_file_from_import_videos(video_file_path)
         import_video_data["errors"] = errors
         return import_video_data
     format = probe_format(video_file_path)
