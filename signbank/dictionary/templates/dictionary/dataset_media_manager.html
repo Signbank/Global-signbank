@@ -23,8 +23,6 @@ var datasetid = {{dataset.id}};
 var gloss_column_header = '{% trans "Gloss" %}';
 var video_column_header = '{% trans "Imported Video" %}';
 var gloss_dictionary_url = '{{PREFIX_URL}}/dictionary/gloss/';
-{% url 'dictionary:protected_media' '' as protected_media_url %}
-var protected_media_url = '{{protected_media_url}}';
 
 function ready_videos(el) {
     $(el).find('video').hide();
@@ -183,20 +181,23 @@ dd {
                       <tr class="list-group-item" style="padding:0;">
                           <td style="width:600px;">{{videofile}}</td>
                           <td style="width:400px;">{{gloss|get_default_annotation_idgloss_translation}}</td>
-                          <td style="width:200px;" class="video_path" data-path="{{videopath}}"
+                          <td style="width:200px;" class="video_path"
+                              data-path="{{videopath}}" data-imported="False"
                               id="importstatus_{{gloss.id}}"></td></tr>
                       {% elif gloss %}
                     <tr class="list-group-item" style="padding: 0;">
                         <td style="width:600px;">{{videofile}}</td>
                         <td style="color:red;width:400px;">(video is not mp4)</td>
-                        <td style="width:200px;" class="video_path" data-path="{{videopath}}"
+                        <td style="width:200px;" class="video_path"
+                            data-path="{{videopath}}" data-imported="False"
                             id="importstatus_{{gloss.id}}"></td>
                     </tr>
                     {% else %}
                     <tr class="list-group-item" style="padding: 0;">
                         <td style="width:600px;">{{videofile}}</td>
                         <td style="color:red;width:400px;">&#10060;</td>
-                        <td style="width:200px;" class="video_path" data-path="{{videopath}}"></td>
+                        <td style="width:200px;" class="video_path"
+                            data-path="{{videopath}}" data-imported=""></td>
                     </tr>
                     {% endif %}
                     {% endfor %}
@@ -216,7 +217,7 @@ dd {
                 {% csrf_token %}
                 <input type='hidden' name='dataset' value='{{dataset.id}}'>
                 <input onclick="import_videos();"
-                       value="Import Videos to Glosses" class="btn btn-primary">
+                       value="Import Next 10 Videos" class="btn btn-primary">
             </form>
         </td>
         </tr>

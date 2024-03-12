@@ -25,6 +25,7 @@ function update_video_file_display(data) {
         return;
     }
     var lookup = '#importstatus_' + glossid;
+    $(lookup).attr('data-imported', "True");
     $(lookup).html(uploadstatus);
     var import_table = $('#imported_videos');
     var row = $("<tr/>");
@@ -33,9 +34,9 @@ function update_video_file_display(data) {
     var video_container_html = "<div class='thumbnail_container'>";
     video_container = $(video_container_html);
     var video_elt_html = "<div id='glossvideo_"+glossid+"'>";
-    video_elt_html += "<img class='thumbnail' src='"+protected_media_url+imagelink+"'>";
+    video_elt_html += "<img class='thumbnail' src='"+imagelink+"'>";
     video_elt_html += "<video id='videoplayer' class='thumbnail-video hover-shows-video' src='"
-                    +protected_media_url+videolink+"' type='video/mp4' muted='muted'></video>";
+                    +videolink+"' type='video/mp4' muted='muted'></video>";
     video_elt_html += "</div>";
     var video_elt = $(video_elt_html);
     video_container.append(video_elt);
@@ -50,12 +51,23 @@ function update_video_file_display(data) {
 
 function import_videos() {
     var import_table_header = $('#imported_videos_header');
-    var row = $("<tr/>");
-    row.append("<th style='width:300px;'>"+gloss_column_header+"</th>");
-    row.append("<th style='width:600px;'>"+video_column_header+"</th>");
-    row.append("</tr>");
-    $(import_table_header).append(row);
+    if (!import_table_header.html()) {
+        var row = $("<tr/>");
+        row.append("<th style='width:300px;'>"+gloss_column_header+"</th>");
+        row.append("<th style='width:600px;'>"+video_column_header+"</th>");
+        row.append("</tr>");
+        $(import_table_header).append(row);
+    }
+    var count_imported = 10;
     $('.video_path').each(function() {
+        var already_imported = $(this).attr('data-imported');
+        if (already_imported == "True") {
+            return;
+        }
+        if (!count_imported) {
+            return;
+        }
+        count_imported = count_imported - 1;
         var videofile = $(this).attr('data-path');
         $.ajax({
             url : url + "/dictionary/import_video_to_gloss_json/",

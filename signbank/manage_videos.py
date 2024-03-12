@@ -203,8 +203,8 @@ def import_video_to_gloss_manager(request, video_file_path):
             import_video_data["annotation"] = filename_without_extension
             import_video_data["videopath"] = videopath
             import_video_data["videofile"] = filename
-            import_video_data["imagelink"] = imagelink
-            import_video_data["videolink"] = videolink
+            import_video_data["imagelink"] = '/dictionary/protected_media/' + imagelink
+            import_video_data["videolink"] = '/dictionary/protected_media/' + videolink
             import_video_data["uploadstatus"] = "Success"
             import_video_data["errors"] = errors
         else:
