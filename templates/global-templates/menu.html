@@ -15,13 +15,58 @@ function toggle_dark_mode(e) {
             $(this).addClass("dark-mode");
         }
   });
+  $(".panel-default").each(function () {
+        if ($(this).hasClass("panel-light")) {
+            $(this).removeClass("panel-light");
+            $(this).addClass("panel-default-dark");
+        } else if ($(this).hasClass("panel-default-dark")) {
+            $(this).removeClass("panel-default-dark");
+            $(this).addClass("panel-light");
+        }
+  });
   $(".panel-heading").each(function () {
         if ($(this).hasClass("panel-light")) {
             $(this).removeClass("panel-light");
-            $(this).addClass("panel-dark");
-        } else if ($(this).hasClass("panel-dark")) {
-            $(this).removeClass("panel-dark");
+            $(this).addClass("panel-heading-dark");
+        } else if ($(this).hasClass("panel-heading-dark")) {
+            $(this).removeClass("panel-heading-dark");
             $(this).addClass("panel-light");
+        }
+  });
+  $(".collapse").each(function () {
+        if ($(this).hasClass("collapse-light")) {
+            $(this).removeClass("collapse-light");
+            $(this).addClass("collapse-dark");
+        } else if ($(this).hasClass("collapse-dark")) {
+            $(this).removeClass("collapse-dark");
+            $(this).addClass("collapse-light");
+        }
+  });
+  $(".well").each(function () {
+        if ($(this).hasClass("well-light")) {
+            $(this).removeClass("well-light");
+            $(this).addClass("well-dark");
+        } else if ($(this).hasClass("well-dark")) {
+            $(this).removeClass("well-dark");
+            $(this).addClass("well-light");
+        }
+  });
+  $(".td").each(function () {
+        if ($(this).hasClass("td-light")) {
+            $(this).removeClass("td-light");
+            $(this).addClass("td-dark");
+        } else if ($(this).hasClass("td-dark")) {
+            $(this).removeClass("td-dark");
+            $(this).addClass("td-light");
+        }
+  });
+  $(".th").each(function () {
+        if ($(this).hasClass("th-light")) {
+            $(this).removeClass("th-light");
+            $(this).addClass("th-dark");
+        } else if ($(this).hasClass("th-dark")) {
+            $(this).removeClass("th-dark");
+            $(this).addClass("th-light");
         }
   });
 }

@@ -644,7 +644,7 @@ function do_toggle_language(el) {
 
 <form id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/search'>
 {% csrf_token %}
-<div class="panel panel-default">
+<div class="panel panel-default panel-light">
     <input type='hidden' id='export_format' name='export_format' value="">
 
     <!-- The element below adds an invisible submit option, so the 'button' above also works when enter is pressed -->
@@ -660,17 +660,15 @@ function do_toggle_language(el) {
             {% endif %}
     </div>
 
-    <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
-        <div id='searchformwell' class='well search-results-collapsable'>
+    <div id='query-area' class='collapse-light collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+        <div id='searchformwell' class='well well-light search-results-collapsable'>
 
                 <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
                         <!-- this is empty as an initial value because the view python code sets it -->
                 <div class="hidden">
                     <input name='sortOrder' class='form-control' value='' type='hidden'>
                     <input name='search_type' class='form-control' value='{{search_type}}' type='hidden'>
-                </div>
-                <div>
-                    <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{menu_bar_search}}"/>
+                    <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{menu_bar_search}}">
                 </div>
                 <div>
                     <table class='table' id='searchfields'>
@@ -678,7 +676,7 @@ function do_toggle_language(el) {
 
                         <tr>
                             {% with searchform|get_annotation_search_field_for_language:dataset_lang as search_field %}
-                            <td>
+                            <td class='td-light'>
                                 <div class='input-group'>
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
                                     {{search_field.label}}
@@ -692,7 +690,7 @@ function do_toggle_language(el) {
                             {% endwith %}
 
                             {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
-                            <td><div class='input-group'>
+                            <td class='td-light'><div class='input-group'>
 
                                 <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
                                     {{lemma_field.label}}
@@ -705,7 +703,7 @@ function do_toggle_language(el) {
                             {% endwith %}
 
                             {% with searchform|get_senses_form_field_for_language:dataset_lang as keyword_field %}
-                            <td><div class='input-group'>
+                            <td class='td-light'><div class='input-group'>
                                 <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>
                                     {{keyword_field.label}}</label>
                                 <input name='keyword_{{dataset_lang.language_code_2char}}'
@@ -720,26 +718,26 @@ function do_toggle_language(el) {
                 </div>
 
                 <div class="panel-group" id="searchpanels">
-                    <div  class="panel panel-default">
+                    <div  class="panel panel-default panel-light">
                         <div class="panel-heading panel-light" data-toggle="collapse" data-target="#searchbasic">{% trans "Search by Language and Basic Properties" %}</div>
 
-                        <div id='searchbasic' class='collapse'>
+                        <div id='searchbasic' class='collapse-light collapse'>
                         <table class='table table-condensed' style="width:65%;">
                             <tr id='signlanguage_selection'>
-                                <td style="padding-left:30px;"><label>{{searchform.signLanguage.label}}</label></td>
-                                <td style="width:600px;">{{ searchform.signLanguage }}</td>
+                                <td class='td-light' style="padding-left:30px;"><label>{{searchform.signLanguage.label}}</label></td>
+                                <td class='td-light' style="width:600px;">{{ searchform.signLanguage }}</td>
                             </tr>
                             <tr id='dialect_selection'>
-                                <td style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
-                                <td style="width:600px;">{{ searchform.dialects }}</td>
+                                <td class='td-light' style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
+                                <td class='td-light' style="width:600px;">{{ searchform.dialects }}</td>
                             </tr>
                         </table>
 
                         <table class='table table-condensed' style="width:65%;">
                             {% for fieldname,field,label in input_names_fields_and_labels.main %}
 
-                                <tr><td style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
-                                    <td style="width:600px;">{{field}}</td></tr>
+                                <tr><td class='td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                    <td class='td-light' style="width:600px;">{{field}}</td></tr>
 
                             {% endfor %}
 
@@ -748,17 +746,17 @@ function do_toggle_language(el) {
                         </div>
                       </div>
 
-                    <div  class="panel panel-default">
+                    <div  class="panel panel-default panel-light">
                       <div class="panel-heading panel-light" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
 
-                      <div id='morph_search' class='collapse'>
+                      <div id='morph_search' class='collapse-light collapse'>
                       <table class='table table-condensed' style="width:65%;">
                         <tr>
-                          <td>
+                          <td class='td-light'>
                             <table class='table table-condensed'>
                                 <tr>
-                                    <td style="padding-left:30px;"><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
-                                    <td style="width:600px;">
+                                    <td class='td-light' style="padding-left:30px;"><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
+                                    <td class='td-light' style="width:600px;">
                                         <input class='form-control morphtypeahead'
                                                id="morphemeidgloss"
                                                placeholder='{% trans "Morpheme Gloss" %}'
@@ -766,14 +764,14 @@ function do_toggle_language(el) {
                                         <input type="hidden" name='morpheme' id='morpheme_id' value=""/>
                                     </td>
                                 </tr>
-                                <tr><td style="padding-left:30px;"><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td>
-                                    <td style="width:600px;">{{searchform.hasComponentOfType}}</td></tr>
-                                <tr><td style="padding-left:30px;"><label for='id_mrpType'>{{searchform.mrpType.label}}</label></td>
-                                    <td style="width:600px;">{{searchform.mrpType}}</td></tr>
-                                <tr><td style="padding-left:30px;"><label for='id_isablend'>{{searchform.isablend.label}}</label></td>
-                                    <td style="width:600px;">{{searchform.isablend}}</td></tr>
-                                <tr><td style="padding-left:30px;"><label for='id_ispartofablend'>{{searchform.ispartofablend.label}}</label></td>
-                                    <td style="width:600px;">{{searchform.ispartofablend}}</td></tr>
+                                <tr><td class='td-light' style="padding-left:30px;"><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td>
+                                    <td class='td-light' style="width:600px;">{{searchform.hasComponentOfType}}</td></tr>
+                                <tr><td class='td-light' style="padding-left:30px;"><label for='id_mrpType'>{{searchform.mrpType.label}}</label></td>
+                                    <td class='td-light' style="width:600px;">{{searchform.mrpType}}</td></tr>
+                                <tr><td class='td-light' style="padding-left:30px;"><label for='id_isablend'>{{searchform.isablend.label}}</label></td>
+                                    <td class='td-light' style="width:600px;">{{searchform.isablend}}</td></tr>
+                                <tr><td class='td-light' style="padding-left:30px;"><label for='id_ispartofablend'>{{searchform.ispartofablend.label}}</label></td>
+                                    <td class='td-light' style="width:600px;">{{searchform.ispartofablend}}</td></tr>
                             </table>
 
                           </td>
@@ -782,30 +780,30 @@ function do_toggle_language(el) {
                       </div>
                     </div>
 
-                    <div  class="panel panel-default">
+                    <div  class="panel panel-default panel-light">
                       <div class="panel-heading panel-light" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>
 
-                      <div id='phon_search' class='collapse'>
+                      <div id='phon_search' class='collapse-light collapse'>
                       <table class='table table-condensed'>
                         <tr>
 
-                          <td>
+                          <td class='td-light'>
                             <table class='table table-condensed'>
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
 
                                     <tr>
-                                        <td style="padding-left:30px;"><label>{{label}}</label></td><td>{{field}}</td>
+                                        <td class='td-light' style="padding-left:30px;"><label>{{label}}</label></td><td class='td-light'>{{field}}</td>
                                         {% if fieldname == 'handedness' %}
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
-                                                <td><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td>{{handednessfield}}</td>
+                                                <td class='td-light'><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td class='td-light'>{{handednessfield}}</td>
                                             {% endfor %}
                                         {% elif fieldname == 'domhndsh' %}
                                             {% for domhndshfieldname,domhndshfield,domhndshlabel in input_names_fields_labels_domhndsh %}
-                                                <td><label for='id_{{domhndshfieldname}}'>{{domhndshlabel}}</label></td><td>{{domhndshfield}}</td>
+                                                <td class='td-light'><label for='id_{{domhndshfieldname}}'>{{domhndshlabel}}</label></td><td class='td-light'>{{domhndshfield}}</td>
                                             {% endfor %}
                                         {% elif fieldname == 'subhndsh' %}
                                             {% for subhndshfieldname,subhndshfield,subhndshlabel in input_names_fields_labels_subhndsh %}
-                                                <td><label for='id_{{subhndshfieldname}}'>{{subhndshlabel}}</label></td><td>{{subhndshfield}}</td>
+                                                <td class='td-light'><label for='id_{{subhndshfieldname}}'>{{subhndshlabel}}</label></td><td class='td-light'>{{subhndshfield}}</td>
                                             {% endfor %}
                                         {% endif %}
                                     </tr>
@@ -819,19 +817,19 @@ function do_toggle_language(el) {
                       </div>
                     </div>
 
-                    <div  class="panel panel-default">
+                    <div  class="panel panel-default panel-light">
                       <div class="panel-heading panel-light" data-toggle="collapse" data-target="#sem_search">{% trans "Search by Semantics" %}</div>
 
-                      <div id='sem_search' class='collapse'>
+                      <div id='sem_search' class='collapse-light collapse'>
                       <table class='table table-condensed'>
                         <tr>
 
-                          <td>
+                          <td class='td-light'>
                             <table class='table table-condensed' style="width:65%;">
                                 {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
 
-                                    <tr><td style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
-                                        <td style="width:600px;">{{field}}</td></tr>
+                                    <tr><td class='td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                        <td class='td-light' style="width:600px;">{{field}}</td></tr>
 
                                 {% endfor %}
 
@@ -844,33 +842,33 @@ function do_toggle_language(el) {
                       </table>
                       </div>
                     </div>
-
-                    <div  class="panel panel-default">
+                    {% if not user.is_anonymous %}
+                    <div  class="panel panel-default panel-light">
                       <div class="panel-heading panel-light" data-toggle="collapse"
                            data-target="#rel_search">{% trans "Search by Relation" %}</div>
 
-                      <div id='rel_search' class='collapse'>
+                      <div id='rel_search' class='collapse-light collapse'>
                       <table class='table table-condensed' style="width:65%;">
                       {% for relation_id, relation_label, relation_field in search_by_relation_fields %}
                       <tr>
-                          <td style="padding-left:30px;"><label for='id_{{relation_id}}'>{{relation_label}}</label></td>
-                          <td style="width:600px;">{{relation_field}}</td>
+                          <td class='td-light' style="padding-left:30px;"><label for='id_{{relation_id}}'>{{relation_label}}</label></td>
+                          <td class='td-light' style="width:600px;">{{relation_field}}</td>
                       </tr>
                       {% endfor %}
                       </table>
                       </div>
                     </div>
-                    {% if not user.is_anonymous %}
-                    <div  class="panel panel-default">
+
+                    <div  class="panel panel-default panel-light">
                       <div class="panel-heading panel-light" data-toggle="collapse"
                            data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
 
-                      <div id='pub_search' class='collapse'>
+                      <div id='pub_search' class='collapse-light collapse'>
                       <table class='table table-condensed' style="width:65%;">
                       {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
                       <tr>
-                          <td style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
-                          <td style="width:600px;">{{publication_field}}</td>
+                          <td class='td-light' style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
+                          <td class='td-light' style="width:600px;">{{publication_field}}</td>
                       </tr>
                       {% endfor %}
                       </table>
@@ -971,26 +969,26 @@ function do_toggle_language(el) {
 <div></div>
 
 {% if perms.dictionary.add_gloss %}
-<div  class="panel panel-default">
+<div  class="panel panel-default panel-light">
   <div class="panel-heading panel-light" data-toggle="collapse"  data-target='#add_gloss_form'>{% trans "Add New Sign" %}</div>
 
-     <div id='add_gloss_form' class='collapse'>
+     <div id='add_gloss_form' class='collapse-light collapse'>
          <form action='{% url "dictionary:add_gloss" %}' method='post'>
              {% csrf_token %}
              <table class='table'>
                  <tr>
-                     {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th><label for='dataset'>{% trans "Dataset" %}</label></th>
+                     {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th class='th th-light'><label for='dataset'>{% trans "Dataset" %}</label></th>
                      {% else %}
-                     <th></th>
+                     <th class='th th-light'></th>
                      {% endif %}
-                     <th><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
+                     <th class='th th-light'><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
                      {% for dataset_lang in dataset_languages %}
-                     <th id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
+                     <th class='th th-light' id="add_gloss_dataset_header_{{ dataset_lang.language_code_2char }}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
                      {% endfor %}
-                     <th></th>
+                     <th class='th th-light'></th>
                  </tr>
                  <tr>
-                      <td>
+                      <td class='td-light'>
                       <select id="id_dataset" name="dataset" required="">
                      {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
                          {% for s_dataset in selected_datasets %}
@@ -1017,7 +1015,7 @@ function do_toggle_language(el) {
                      {% endif %}
                      </select>
                      </td>
-                     <td>
+                     <td class='td-light'>
                          <div id="lemma_select">
 
                              <label for="id_lemma_language_select">
@@ -1052,11 +1050,11 @@ function do_toggle_language(el) {
                          <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
                      </td>
                      {% for dataset_lang in dataset_languages %}
-                     <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
+                     <td class='td-light' id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
                          <input id="glosscreate_{{ dataset_lang.language_code_2char }}" name="glosscreate_{{ dataset_lang.language_code_2char }}" maxlength="30" type="text"/>
                      </td>
                      {% endfor %}
-                     <td><input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'></td>
+                     <td class='td-light'><input class='btn btn-primary' type='submit' value='{% trans "Add New Sign" %}'></td>
                  </tr>
              </table>
 
@@ -1117,15 +1115,15 @@ function do_toggle_language(el) {
 <table class='table table-condensed' id = 'lemmalist_table'>
 <thead id = 'lemmalist_table_header'>
 <tr>
-    <th>{% trans "Lemma ID Gloss" %}</th>
-    {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
+    <th class='th th-light'>{% trans "Lemma ID Gloss" %}</th>
+    {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th class='th th-light'>{% trans "Dataset" %}</th>{% endif %}
 
     {% for dataset_lang in dataset_languages %}
-    <th>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
+    <th class='th th-light'>{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</th>
     {% endfor %}
 
     {% for dataset_lang in dataset_languages %}
-    <th>{% trans "Senses" %}
+    <th class='th th-light'>{% trans "Senses" %}
       {% if SHOW_DATASET_INTERFACE_OPTIONS %}
         ({{ dataset_lang.name }})
       {% endif %}
@@ -1133,11 +1131,11 @@ function do_toggle_language(el) {
     {% endfor %}
 
     {% for field, column in column_headers %}
-    <th>{{column}}</th>
+    <th class='th th-light'>{{column}}</th>
     {% endfor %}
 
     {% if not user.is_anonymous %}
-    <th style="width:255px;">{% trans "Tags" %}</th>
+    <th class='th th-light' style="width:255px;">{% trans "Tags" %}</th>
     {% endif %}
 </tr>
 

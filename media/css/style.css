@@ -816,7 +816,7 @@ tr th {
 
 .dark-mode {
   background-color: black !important;
-  color: white !important;
+  color: #FAEBD7 !important;
 }
 @media screen body {
   background: inherit;
@@ -896,9 +896,57 @@ input {
     background-color: inherit;
     color: inherit !important;
 }
-.panel-dark {
-    background-color: black !important;
-    color: white !important;
+.panel-heading-dark {
+    background-color: #000914 !important;
+    color: #e6ddee !important;
+    border-bottom-width: 0;
+}
+.panel-default-dark {
+    border: solid 1px #361650 !important;
+    border-bottom-color: #3616504;
+    background-color: #000914;
+    color: #e6ddee;
+    margin-bottom: 0;
+    box-shadow: #050014;
+}
+.collapse-dark {
+    border: solid 1px #361650 !important;
+    border-top-width: 1px !important;
+}
+.collapse-light {
+    border: solid 1px inherit !important;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+}
+.well-dark {
+    border: solid 1px #361650 !important;
+}
+.well-light {
+    border: solid 1px inherit !important;
+}
+/* .nav-bar {
+    border: solid 1px purple !important;
+} */
+.hidden {
+    color: transparent;
+    background-color: transparent;
+}
+/* .panel {
+    background-color: inherit;
+    border: solid 2px purple;
+    box-shadow: purple 0px 1px 1px 0px;
+} */
+.td-dark {
+    border-top-color: #361650 !important;
+}
+.td-light {
+    border-top-color: inherit;
+}
+.th-dark {
+    border-bottom-color: #361650 !important;
+}
+.th-light {
+    border-bottom-color: inherit;
 }
 
 

@@ -38,11 +38,11 @@ function select_no_datasets() {
 <table class='table table-condensed'>
     <thead>
       <tr>
-          <th width="5%">{% trans "Selected" %}</th>
-          <th width="10%">{% trans "Dataset Acronym" %}</th>
-          <th width="15%">{% trans "Dataset Name" %}</th>
-          <th width="35%">{% trans "Description" %}</th>
-          <th width="35%">{% trans "Copyright" %}</th>
+          <th class='th th-light' width="5%">{% trans "Selected" %}</th>
+          <th class='th th-light' width="10%">{% trans "Dataset Acronym" %}</th>
+          <th class='th th-light' width="15%">{% trans "Dataset Name" %}</th>
+          <th class='th th-light' width="35%">{% trans "Description" %}</th>
+          <th class='th th-light' width="35%">{% trans "Copyright" %}</th>
 
       </tr>
     </thead>
@@ -52,13 +52,13 @@ function select_no_datasets() {
           {% get_obj_perms request.user for dataset as "dataset_perms" %}
             {% if "view_dataset" in dataset_perms or "can_view_dataset" in dataset_perms %}
             <tr>
-                <td><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.user.0.user %}checked{% endif %}/></td>
-                <td>
+                <td class='td td-light'><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.user.0.user %}checked{% endif %}/></td>
+                <td class='td td-light'>
                     <a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.acronym }}</a>
                 </td>
-                <td>{{ dataset.name }}</td>
-                <td>{{ dataset.description }}</td>
-                <td>{{ dataset.copyright }}</td>
+                <td class='td td-light'>{{ dataset.name }}</td>
+                <td class='td td-light'>{{ dataset.description }}</td>
+                <td class='td td-light'>{{ dataset.copyright }}</td>
             </tr>
             {% endif %}
       {% endfor %}
@@ -67,13 +67,13 @@ function select_no_datasets() {
     <tbody>
         {% for dataset in object_list %}
             <tr>
-                <td><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.checked %}checked{% endif %}/></td>
-                <td>
+                <td class='td td-light'><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.checked %}checked{% endif %}/></td>
+                <td class='td td-light'>
                     <a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.acronym }}</a>
                 </td>
-                <td>{{ dataset.name }}</td>
-                <td>{{ dataset.description }}</td>
-                <td>{{ dataset.copyright }}</td>
+                <td class='td td-light'>{{ dataset.name }}</td>
+                <td class='td td-light'>{{ dataset.description }}</td>
+                <td class='td td-light'>{{ dataset.copyright }}</td>
             </tr>
         {% endfor %}
     </tbody>
