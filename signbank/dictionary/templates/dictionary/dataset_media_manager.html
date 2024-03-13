@@ -1,0 +1,241 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load has_group %}
+{% load bootstrap3 %}
+
+{% load guardian_tags %}
+
+
+{% block extrajs %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+<script type='text/javascript'>
+var url = '{{PREFIX_URL}}';
+
+var edit_mode_str = '{% trans "Edit" %}';
+var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
+var saving_str = '{% trans "Saving..." %}'
+var csrf_token = '{{csrf_token}}';
+var datasetid = {{dataset.id}};
+var gloss_dictionary_url = '{{PREFIX_URL}}/dictionary/gloss/';
+
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            $(this).find('img').hide();
+            video.show();
+            video.get(0).play();
+        }
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            video.hide();
+            video.get(0).pause();
+            video.get(0).currentTime = 0;
+        }
+    });
+}
+</script>
+<script type='text/javascript' src="{{ STATIC_URL }}js/import_videos.js"></script>
+
+<style>
+.zip-group-item.active {
+    background-color: #fff;
+    color: #000;
+}
+.zip-group-item.active:hover {
+    color: #000;
+}
+.zip-group-item {
+    display: flex;
+    color: black;
+    overflow: visible;
+}
+.zip-group-item:hover {
+    color: #428bca;
+}
+</style>
+{% endblock %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Manage Dataset Media{% endblocktrans %}
+{% endblock %}
+
+{% block content %}
+<div>
+<h3>{% trans "Manage Dataset Media" %}</h3>
+
+    <table class='table table-condensed'>
+        <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:1200px;">{{dataset.name}}</td></tr>
+        <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
+        <tr><th>{% trans "Number of glosses" %}</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
+        <tr><th>{% trans "Accessible by others" %}</th>
+            <td id='is_public'>{% if dataset.is_public %}True{% else %}False{% endif %}
+            </td>
+        </tr>
+        <tr>
+        <th>
+          <div class="text-container"><p>{% trans "Videos Archive" %}</p></div>
+        </th>
+        <td colspan="2">
+            <form id="upload_zipped_videos_{{dataset.acronym}}"
+                  action="{{PREFIX_URL}}/dictionary/upload_zipped_videos_folder/"
+                  method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <label for="id_file">{{zippedvideosform.label}}</label>
+                <span>{{zippedvideosform.file}}</span>
+                <input type='hidden' name='dataset' value='{{dataset.id}}'>
+                <input type="submit" value="{% trans 'Upload Zipped File' %}" class="btn btn-primary">
+            </form>
+        </td>
+        </tr>
+        <tr>
+        <th>
+          <div class="text-container"><p>{% trans "Zipped Archives" %}</p></div>
+        </th>
+        <td colspan="2">
+          <div name="zipped_archives"
+                style="width:1200px;">
+               {% load underscore_to_space %}
+               {% for zipfilename, zipcontents in zipped_archives.items %}
+               {% with zipfilename|dot_to_underscore as zipfileid %}
+                <div class="panel panel-default">
+                  <div class='panel-heading' data-toggle='collapse' style="padding: 0;"
+                       data-target='#zipfile_{{zipfileid}}'>
+                       <span style='font-size:24px;'>&#128194;</span>&nbsp;&nbsp;&nbsp;
+                       <span><bold>{{zipfilename}}</bold></span>
+                  </div>
+                  <div id='zipfile_{{zipfileid}}' class='collapse'>
+                  <table class="table table-condensed zip-group-hover" style="padding: 0;">
+                  <tr class="zip-group-item active" style="padding: 0;">
+                      <th style="width:600px;"><span>{% trans "PATH" %}</span></th>
+                      <th style="width:400px;"><span>{% trans "VIDEO" %}</span></th>
+                      <th style="width:200px;"><span>{% trans "INFO" %}</span></th>
+                  </tr>
+                    {% for struct, status in zipcontents.items %}
+                    <tr class="zip-group-item" style="padding: 0;">
+                        {% if status.0 and status.1 %}
+                        <td style="width:600px;">{{struct}}</td>
+                        <td style="width:400px;"><span style="color:green;font-size:16px;">&#x2713;</span></td>
+                        <td style="width:200px;"></td>
+                        {% elif not status.0 %}
+                        <td style="width:600px;"><span>{{struct}}</span></td>
+                        <td style="width:400px;"><span style="color:red;font-size:10px;">&#10060;</span></td>
+                        <td style="width:200px;"></td>
+                        {% else %}
+                        <td style="width:600px;"><span>{{struct}}</span></td>
+                        <td style="width:400px;"><span style="color:red;font-size:12px;">&#10060;</span></td>
+                        <td style="width:200px;"><span>{% trans "gloss not found" %}</span></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                  </table>
+                  </div>
+                </div>
+                {% endwith %}
+                {% endfor %}
+          </div>
+        </td>
+        </tr>
+        <tr>
+            <th>{% trans "Status Video Files in Import Folder" %}</th>
+            <td colspan="2">
+              <div name="status_uploaded_video_files"
+                    style="display:block; width:1200px;">
+                  <table class="zip-group-hover" style="padding:0;">
+                      {% for lang3char, status_files in uploaded_video_files.items %}
+                      {% if status_files %}
+                      <tr class="zip-group-item active" style="padding: 0;">
+
+                              <th style="width:600px;">{% trans "FILE" %}</th>
+                              <th style="width:400px;">{% trans "GLOSS" %}</th>
+                              <th style="width:200px;">{% trans "IMPORT STATUS" %}</th>
+
+                      </tr>
+                      {% for videopath, videofile, filename, video_format_okay, gloss in status_files %}
+                      {% if video_format_okay and gloss %}
+                      <tr class="zip-group-item" style="padding:0;">
+                          <td style="width:600px;">{{videofile}}</td>
+                          <td style="width:400px;">{{gloss|get_default_annotation_idgloss_translation}}</td>
+                          <td style="width:200px;" class="video_path"
+                              data-path="{{videopath}}" data-imported="False"
+                              id="importstatus_{{gloss.id}}"></td></tr>
+                      {% elif gloss %}
+                    <tr class="zip-group-item" style="padding: 0;">
+                        <td style="width:600px;">{{videofile}}</td>
+                        <td style="color:red;width:400px;">(video is not mp4)</td>
+                        <td style="width:200px;" class="video_path"
+                            data-path="{{videopath}}" data-imported="False"
+                            id="importstatus_{{gloss.id}}"></td>
+                    </tr>
+                    {% else %}
+                    <tr class="zip-group-item" style="padding: 0;">
+                        <td style="width:600px;">{{videofile}}</td>
+                        <td style="color:red;width:400px;">&#10060;</td>
+                        <td style="width:200px;" class="video_path"
+                            data-path="{{videopath}}" data-imported=""></td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    {% endfor %}
+                </table>
+              </div>
+            </td>
+        </tr>
+        <tr>
+        <th>
+          <div class="text-container"><p>{% trans "Import Videos to Glosses" %}</p></div>
+        </th>
+        <td colspan="2">
+            <form id="import_videos_{{dataset.acronym}}"
+                  method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type='hidden' name='dataset' value='{{dataset.id}}'>
+                <input onclick="import_videos();" type="button"
+                       value='{% trans "Import Next 10 Videos" %}' class="btn btn-primary">
+            </form>
+        </td>
+        </tr>
+
+        <tr><th><div class="text-container"><p>{% trans "Imported Videos" %}</p></div></th>
+            <td colspan="2"></td>
+        </tr>
+        <tr>
+            <th></th>
+            <td colspan="2">
+                <div>
+                    <table class="table table-responsive" style="width:1200px;">
+                        <thead id="imported_videos_header">
+                        <tr>
+                            <th style='width:300px;'>
+                                {% trans "GLOSS" %}
+                            </th>
+                            <th style='width:600px;'>
+                                {% trans "VIDEO" %}
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody id="imported_videos">
+
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+{% endblock %}
