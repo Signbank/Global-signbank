@@ -53,41 +53,20 @@ function ready_videos(el) {
 <script type='text/javascript' src="{{ STATIC_URL }}js/import_videos.js"></script>
 
 <style>
-list {
-    overflow-x: auto;
-}
-dl:after {
-    content: none;
-}
-dl {
-    margin-bottom: 0px;
-}
-dt {
-    margin-left: 0px;
-}
-dd {
-    margin-left: 0px;
-}
-
-.list-group-item.active {
+.zip-group-item.active {
     background-color: #fff;
     color: #000;
 }
-.list-group-item.active:hover {
+.zip-group-item.active:hover {
     color: #000;
 }
-.list-group-item {
+.zip-group-item {
     display: flex;
     color: black;
     overflow: visible;
-    margin-right: 10px;
-    scrollbar-gutter: auto;
 }
-.list-group-item:hover {
+.zip-group-item:hover {
     color: #428bca;
-}
-.list-group-2col {
-    justify-content: space-between;
 }
 </style>
 {% endblock %}
@@ -100,7 +79,7 @@ dd {
 <div>
 <h3>{% trans "Dataset Media Manager" %}</h3>
 
-    <table class='table table-responsive'>
+    <table class='table table-condensed'>
         <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:1200px;">{{dataset.name}}</td></tr>
         <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
         <tr><th>Number of glosses</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
@@ -130,16 +109,25 @@ dd {
         </th>
         <td colspan="2">
           <div name="zipped_archives"
-                style="display:block; width:1200px;">
-              <table class="list-group-hover" style="padding: 0;">
-                  {% for zipfilename, zipcontents in zipped_archives.items %}
-                  <tr class="list-group-item active" style="padding: 0;">
-                      <th style="width:600px;"><span><bold>{{zipfilename}}</bold></span></th>
+                style="width:1200px;">
+               {% load underscore_to_space %}
+               {% for zipfilename, zipcontents in zipped_archives.items %}
+               {% with zipfilename|dot_to_underscore as zipfileid %}
+                <div class="panel panel-default">
+                  <div class='panel-heading' data-toggle='collapse' style="padding: 0;"
+                       data-target='#zipfile_{{zipfileid}}'>
+                       <span style='font-size:24px;'>&#128194;</span>&nbsp;&nbsp;&nbsp;
+                       <span><bold>{{zipfilename}}</bold></span>
+                  </div>
+                  <div id='zipfile_{{zipfileid}}' class='collapse'>
+                  <table class="table table-condensed zip-group-hover" style="padding: 0;">
+                  <tr class="zip-group-item active" style="padding: 0;">
+                      <th style="width:600px;"><span>{% trans "PATH" %}</span></th>
                       <th style="width:400px;"><span>{% trans "VIDEO" %}</span></th>
                       <th style="width:200px;"><span>{% trans "INFO" %}</span></th>
                   </tr>
                     {% for struct, status in zipcontents.items %}
-                    <tr class="list-group-item" style="padding: 0;">
+                    <tr class="zip-group-item" style="padding: 0;">
                         {% if status.0 and status.1 %}
                         <td style="width:600px;">{{struct}}</td>
                         <td style="width:400px;"><span style="color:green;font-size:16px;">&#x2713;</span></td>
@@ -155,9 +143,11 @@ dd {
                         {% endif %}
                     </tr>
                     {% endfor %}
-                  <br>
-                  {% endfor %}
-            </table>
+                  </table>
+                  </div>
+                </div>
+                {% endwith %}
+                {% endfor %}
           </div>
         </td>
         </tr>
@@ -166,10 +156,10 @@ dd {
             <td colspan="2">
               <div name="status_uploaded_video_files"
                     style="display:block; width:1200px;">
-                  <table class="list-group-hover" style="padding:0;">
+                  <table class="zip-group-hover" style="padding:0;">
                       {% for lang3char, status_files in uploaded_video_files.items %}
                       {% if status_files %}
-                      <tr class="list-group-item active" style="padding: 0;">
+                      <tr class="zip-group-item active" style="padding: 0;">
 
                               <th style="width:600px;">{% trans "FILE" %}</th>
                               <th style="width:400px;">{% trans "GLOSS" %}</th>
@@ -178,14 +168,14 @@ dd {
                       </tr>
                       {% for videopath, videofile, filename, video_format_okay, gloss in status_files %}
                       {% if video_format_okay and gloss %}
-                      <tr class="list-group-item" style="padding:0;">
+                      <tr class="zip-group-item" style="padding:0;">
                           <td style="width:600px;">{{videofile}}</td>
                           <td style="width:400px;">{{gloss|get_default_annotation_idgloss_translation}}</td>
                           <td style="width:200px;" class="video_path"
                               data-path="{{videopath}}" data-imported="False"
                               id="importstatus_{{gloss.id}}"></td></tr>
                       {% elif gloss %}
-                    <tr class="list-group-item" style="padding: 0;">
+                    <tr class="zip-group-item" style="padding: 0;">
                         <td style="width:600px;">{{videofile}}</td>
                         <td style="color:red;width:400px;">(video is not mp4)</td>
                         <td style="width:200px;" class="video_path"
@@ -193,7 +183,7 @@ dd {
                             id="importstatus_{{gloss.id}}"></td>
                     </tr>
                     {% else %}
-                    <tr class="list-group-item" style="padding: 0;">
+                    <tr class="zip-group-item" style="padding: 0;">
                         <td style="width:600px;">{{videofile}}</td>
                         <td style="color:red;width:400px;">&#10060;</td>
                         <td style="width:200px;" class="video_path"
