@@ -118,6 +118,7 @@ ACTION_CHOICES = (('delete', 'delete'),
                   ('upload', 'upload'),
                   ('rename', 'rename'),
                   ('watch', 'watch'),
+                  ('import', 'import'),
                   )
 
 
