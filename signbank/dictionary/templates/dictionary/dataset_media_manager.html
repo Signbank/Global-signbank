@@ -206,8 +206,8 @@ function ready_videos(el) {
                   method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type='hidden' name='dataset' value='{{dataset.id}}'>
-                <input onclick="import_videos();"
-                       value="Import Next 10 Videos" class="btn btn-primary">
+                <input onclick="import_videos();" type="button"
+                       value='{% trans "Import Next 10 Videos" %}' class="btn btn-primary">
             </form>
         </td>
         </tr>
