@@ -20,8 +20,6 @@ var turn_off_edit_mode_str = '{% trans "Turn off edit mode" %}';
 var saving_str = '{% trans "Saving..." %}'
 var csrf_token = '{{csrf_token}}';
 var datasetid = {{dataset.id}};
-var gloss_column_header = '{% trans "Gloss" %}';
-var video_column_header = '{% trans "Imported Video" %}';
 var gloss_dictionary_url = '{{PREFIX_URL}}/dictionary/gloss/';
 
 function ready_videos(el) {
@@ -72,17 +70,17 @@ function ready_videos(el) {
 {% endblock %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Dataset Media{% endblocktrans %}
+{% blocktrans %}Manage Dataset Media{% endblocktrans %}
 {% endblock %}
 
 {% block content %}
 <div>
-<h3>{% trans "Dataset Media Manager" %}</h3>
+<h3>{% trans "Manage Dataset Media" %}</h3>
 
     <table class='table table-condensed'>
         <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:1200px;">{{dataset.name}}</td></tr>
         <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
-        <tr><th>Number of glosses</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
+        <tr><th>{% trans "Number of glosses" %}</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
         <tr><th>{% trans "Accessible by others" %}</th>
             <td id='is_public'>{% if dataset.is_public %}True{% else %}False{% endif %}
             </td>
@@ -99,7 +97,7 @@ function ready_videos(el) {
                 <label for="id_file">{{zippedvideosform.label}}</label>
                 <span>{{zippedvideosform.file}}</span>
                 <input type='hidden' name='dataset' value='{{dataset.id}}'>
-                <input type="submit" value="Upload Zipped File" class="btn btn-primary">
+                <input type="submit" value="{% trans 'Upload Zipped File' %}" class="btn btn-primary">
             </form>
         </td>
         </tr>
@@ -221,6 +219,14 @@ function ready_videos(el) {
                 <div>
                     <table class="table table-responsive" style="width:1200px;">
                         <thead id="imported_videos_header">
+                        <tr>
+                            <th style='width:300px;'>
+                                {% trans "GLOSS" %}
+                            </th>
+                            <th style='width:600px;'>
+                                {% trans "VIDEO" %}
+                            </th>
+                        </tr>
                         </thead>
                         <tbody id="imported_videos">
 

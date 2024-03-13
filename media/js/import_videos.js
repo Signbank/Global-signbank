@@ -50,14 +50,6 @@ function update_video_file_display(data) {
 }
 
 function import_videos() {
-    var import_table_header = $('#imported_videos_header');
-    if (!import_table_header.html()) {
-        var row = $("<tr/>");
-        row.append("<th style='width:300px;'>"+gloss_column_header+"</th>");
-        row.append("<th style='width:600px;'>"+video_column_header+"</th>");
-        row.append("</tr>");
-        $(import_table_header).append(row);
-    }
     var count_imported = 10;
     $('.video_path').each(function() {
         var already_imported = $(this).attr('data-imported');

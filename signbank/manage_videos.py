@@ -118,9 +118,10 @@ def upload_zipped_videos_folder(request):
     filenames = get_filenames(goal_zipped_file)
     video_paths_okay = check_subfolders_for_unzipping(dataset.acronym, lang3charcodes, filenames)
     if not video_paths_okay:
+        errors_deleting = remove_zip_file_from_archive(goal_zipped_file)
         default_language_3char = dataset.default_language.language_code_3char
-        feedback = _("The zip archive has the wrong structure. It should be: "
-                     + str(dataset.acronym) + '/' + default_language_3char + '/annotation.mp4')
+        feedback = (_("The zip archive has the wrong structure. It should be: ")
+                    + str(dataset.acronym) + '/' + default_language_3char + '/annotation.mp4')
         messages.add_message(request, messages.ERROR, feedback)
         return HttpResponseRedirect(reverse('admin_dataset_media', args=[dataset.id]))
 
@@ -183,7 +184,7 @@ def import_video_to_gloss_manager(request, video_file_path):
         import_video_data["videofile"] = filename
         import_video_data["imagelink"] = ""
         import_video_data["videolink"] = ""
-        import_video_data["uploadstatus"] = "Gloss not found."
+        import_video_data["uploadstatus"] = _("Gloss not found.")
         errors_deleting = remove_video_file_from_import_videos(video_file_path)
         import_video_data["errors"] = errors
         return import_video_data
@@ -200,7 +201,7 @@ def import_video_to_gloss_manager(request, video_file_path):
             import_video_data["videofile"] = filename
             import_video_data["imagelink"] = '/dictionary/protected_media/' + imagelink
             import_video_data["videolink"] = '/dictionary/protected_media/' + videolink
-            import_video_data["uploadstatus"] = "Success"
+            import_video_data["uploadstatus"] = _("Success")
             import_video_data["errors"] = errors
         else:
             import_video_data["gloss"] = str(gloss.id)
@@ -209,8 +210,8 @@ def import_video_to_gloss_manager(request, video_file_path):
             import_video_data["videofile"] = filename
             import_video_data["imagelink"] = ""
             import_video_data["videolink"] = ""
-            import_video_data["uploadstatus"] = "Failure."
-            import_video_data["errors"] = "Error saving video file."
+            import_video_data["uploadstatus"] = _("Failure.")
+            import_video_data["errors"] = _("Error saving video file.")
     else:
         import_video_data["gloss"] = str(gloss.id)
         import_video_data["annotation"] = filename_without_extension
@@ -218,8 +219,8 @@ def import_video_to_gloss_manager(request, video_file_path):
         import_video_data["videofile"] = filename
         import_video_data["imagelink"] = ""
         import_video_data["videolink"] = ""
-        import_video_data["uploadstatus"] = "Wrong video format."
-        import_video_data["errors"] = "Video file is not h264."
+        import_video_data["uploadstatus"] = _("Wrong video format.")
+        import_video_data["errors"] = _("Video file is not h264.")
     return import_video_data
 
 

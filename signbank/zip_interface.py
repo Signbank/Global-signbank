@@ -227,6 +227,18 @@ def remove_video_file_from_import_videos(video_file_path):
     return errors
 
 
+def remove_zip_file_from_archive(path_to_zip):
+    errors = ""
+    if not os.path.exists(path_to_zip):
+        return errors
+    try:
+        os.remove(path_to_zip)
+        errors = ""
+    except OSError:
+        errors = "Cannot delete the zip file: " + path_to_zip
+    return errors
+
+
 def save_video(video_file_path, goal):
     # this is called inside an atomic block
 
