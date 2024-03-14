@@ -815,8 +815,8 @@ tr th {
 }
 
 .dark-mode {
-  background-color: black !important;
-  color: #FAEBD7 !important;
+  background-color: rgb(1, 4, 9) !important;
+  color: rgb(132, 141, 151) !important;
 }
 @media screen body {
   background: inherit;
@@ -897,20 +897,20 @@ input {
     color: inherit !important;
 }
 .panel-heading-dark {
-    background-color: #000914 !important;
-    color: #e6ddee !important;
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
     border-bottom-width: 0;
 }
 .panel-default-dark {
-    border: solid 1px #361650 !important;
-    border-bottom-color: #3616504;
-    background-color: #000914;
-    color: #e6ddee;
+    border: solid 1px rgb(28, 65, 112) !important;
+    border-bottom-color: rgb(28, 65, 112);
+    background-color: rgb(13, 17, 23);
+    color: rgb(132, 141, 151);
     margin-bottom: 0;
     box-shadow: #050014;
 }
 .collapse-dark {
-    border: solid 1px #361650 !important;
+    border: solid 1px rgb(28, 65, 112) !important;
     border-top-width: 1px !important;
 }
 .collapse-light {
@@ -919,7 +919,7 @@ input {
     padding: 0 0 0 0;
 }
 .well-dark {
-    border: solid 1px #361650 !important;
+    border: solid 1px rgb(28, 65, 112) !important;
 }
 .well-light {
     border: solid 1px inherit !important;
@@ -937,16 +937,105 @@ input {
     box-shadow: purple 0px 1px 1px 0px;
 } */
 .td-dark {
-    border-top-color: #361650 !important;
+    border-top-color: rgb(28, 65, 112) !important;
 }
 .td-light {
     border-top-color: inherit;
 }
 .th-dark {
-    border-bottom-color: #361650 !important;
+    border-bottom-color: rgb(28, 65, 112) !important;
 }
 .th-light {
     border-bottom-color: inherit;
+}
+
+.navbar-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.navbar-nav-dark > li > a {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.navbar-nav-dark > li > a:hover {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+}
+.navbar-nav-dark > ul {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+}
+.btn-default-dark {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+    border-color: rgb(28, 65, 112) !important;
+}
+.btn-default-light {
+}
+.navbar-form-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(28, 65, 112) !important;
+}
+.dropdown-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.dropdown-dark > ul {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.dropdown-menu-dark > ul {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.dropdown-menu-dark > li > a {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.dropdown-menu-dark > li > a:hover {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+}
+.text-container-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+    border: solid 1px rgb(22, 27, 34) !important;
+}
+.text-container-dark > input {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+    border: solid 1px rgb(28, 65, 112) !important;
+}
+
+.navbar-text-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: white !important;
+}
+.navbar-text-dark > a:hover {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+}
+.interface-language-light > input {
+    background-color: inherit !important;
+    color: inherit !important;
+    border: solid 1px inherit !important;
+}
+.interface-language-dark {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+    border: solid 1px rgb(28, 65, 112) !important;
+}
+.input-group-dark > label {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+    border: solid 1px rgb(28, 65, 112) !important;
+}
+.input-group-dark > input {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+    border: solid 1px rgb(28, 65, 112) !important;
 }
 
 
