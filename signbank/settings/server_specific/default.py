@@ -115,12 +115,13 @@ FIELDS['main'] = ['useInstr','wordClass']
 
 # fields are ordered per kind: Field Choice Lists, Text, Boolean
 # followed by etymology and articulation
-FIELDS['phonology'] = ['handedness','domhndsh','subhndsh','handCh','relatArtic','locprim','relOriMov',
-                       'relOriLoc','oriCh','contType','movSh','movDir',
-                       'locVirtObj','phonOth', 'mouthG','mouthing', 'phonetVar',
-                       'repeat','altern',
-                       'domhndsh_letter','domhndsh_number','subhndsh_letter','subhndsh_number',
-                       'weakdrop','weakprop']
+FIELDS['phonology'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                       'contType', 'movSh', 'movDir',
+                       'repeat', 'altern',
+                       'relOriMov', 'relOriLoc', 'oriCh',
+                       'locVirtObj', 'phonOth', 'mouthG', 'mouthing', 'phonetVar',
+                       'domhndsh_letter', 'domhndsh_number', 'subhndsh_letter', 'subhndsh_number',
+                       'weakdrop', 'weakprop']
 
 FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','valence','iconImg','concConcSet']
 
@@ -240,6 +241,9 @@ SHOW_FIELD_CHOICE_COLORS = True
 
 #Whether the dataset functionality should be present in the interface
 SHOW_DATASET_INTERFACE_OPTIONS = True
+
+# Used in Toggle View to hide
+SHOW_NAMED_ENTITY = False
 
 #Settings for the default dataset
 DEFAULT_DATASET = 'Your Dataset'

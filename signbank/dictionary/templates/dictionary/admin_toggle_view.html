@@ -244,7 +244,7 @@ input {
                     </div>
                 </div>
         <div class='btn-group' style="margin-bottom: 20px">
-        <input class='btn btn-primary' type='submit' name="filter" value='Apply Filter'>
+        <input class='btn btn-primary' type='submit' name="filter" value='{% trans "Apply Filter" %}'>
         <input class='btn btn-primary' type='reset' onclick="clearForm();"
                        value='{% trans "Reset" %}'>
         </div>
@@ -266,7 +266,9 @@ input {
           <th style="width:300px;">{% trans "Tags" %}</th>
           <th style="width:200px;">{% trans "Semantic Fields" %}</th>
           <th style="width:100px;">{% trans "Word Class" %}</th>
+          {% if settings.SHOW_NAMED_ENTITY %}
           <th style="width:150px;">{% trans "Named Entity" %}</th>
+          {% endif %}
       </tr>
     </thead>
     <tbody>
@@ -365,6 +367,7 @@ input {
                 </div>
                 </div>
                 </div>
+                {% if settings.SHOW_NAMED_ENTITY %}
                 <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_namedentity_panel_{{gloss.id}}'>{% trans "Set Named Entity" %}
@@ -383,6 +386,7 @@ input {
                 </div>
                 </div>
                 </div>
+                {% endif %}
                 </div>
             </td>
             {% tags_for_object gloss as tag_list %}
@@ -403,11 +407,13 @@ input {
                      id="wordclass_cell_{{gloss.id}}"><span class='wordclass'>{% if gloss.wordClass %}{{gloss.wordClass.name}}{% endif %}</span>
                 </div>
             </td>
+            {% if settings.SHOW_NAMED_ENTITY %}
             <td class="field_namedentity" style="width:150px;">
                 <div class="namedentity-cell"
                      id="namedentity_cell_{{gloss.id}}"><span class='namedentity'>{% if gloss.namEnt %}{{gloss.namEnt.name}}{% endif %}</span>
                 </div>
             </td>
+            {% endif %}
         </tr>
     {% endfor %}
     </tbody>

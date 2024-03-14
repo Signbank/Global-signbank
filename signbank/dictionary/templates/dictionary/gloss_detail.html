@@ -263,7 +263,6 @@ select option {
 
 .dropdown-menu {
     display: visible !important;
-    z-index: 5;
     box-shadow: 0 10px 10px #333;
 }
 
@@ -1381,6 +1380,7 @@ option:not(:checked) {
                     <td class="edit edit_{{kind}}" id='{{name}}'
                         value='{{value}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}
                     </td>
+                    <td style="width:200px;"></td>
                 </tr>
             {% endfor %}
 
@@ -1655,7 +1655,6 @@ option:not(:checked) {
         </div>
 
     </div>
-
     <!-- Phonology -->
 	<div class="panel panel-default">
         <div class='panel-heading' id='phonology_heading'
@@ -1804,6 +1803,7 @@ option:not(:checked) {
 		    {% endfor %}
 
             </table>
+            <br><br><br>
         </div>
     </div>
 

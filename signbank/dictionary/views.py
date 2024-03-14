@@ -335,7 +335,7 @@ def import_media(request,video):
                 glosses = Gloss.objects.filter(lemma__dataset=dataset, annotationidglosstranslation__language=language,
                                              annotationidglosstranslation__text__exact=filename_without_extension)
                 if glosses:
-                    gloss = glosses[0]
+                    gloss = glosses.first()
                     if glosses.count() > 1:
                         # not sure if this can happen
                         status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Warning: Duplicate gloss found.')
@@ -366,7 +366,7 @@ def import_media(request,video):
                 else:
                     video_file_path = os.path.join(lang3code_folder_path, filename)
                     vfile = File(open(video_file_path, 'rb'))
-                    video = gloss.add_video(request.user, vfile)
+                    video = gloss.add_video(request.user, vfile, '')
                     vfile.close()
                     overwritten = GlossVideo.objects.filter(gloss=gloss).count() > 1
                     if overwritten:
@@ -378,6 +378,7 @@ def import_media(request,video):
                         os.remove(video_file_path)
                     except OSError as oserror:
                         errors.append("OSError: {}".format(oserror))
+                        errors.append("Cannot delete the source video: " + video_file_path)
 
                 if overwritten:
                     overwritten_files.append(filename)
@@ -2295,18 +2296,18 @@ def package(request):
 
 def info(request):
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     # Put the default dataset in first position
     if settings.DEFAULT_DATASET_ACRONYM in user_datasets_names:
         user_datasets_names.insert(0, user_datasets_names.pop(user_datasets_names.index(settings.DEFAULT_DATASET_ACRONYM)))
 
-    if user_datasets_names:
-        return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
-    else:
-        return HttpResponse(json.dumps([settings.LANGUAGE_NAME, settings.COUNTRY_NAME]),
-                            content_type='application/json')
+    if not request.user.is_authenticated:
+        # anonymous users are allowed to read the default dataset
+        user_datasets_names = [settings.DEFAULT_DATASET_ACRONYM]
+
+    return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
 
 
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
@@ -3027,3 +3028,28 @@ def import_csv_create_sentences(request):
                           'seen_datasets': seen_datasets,
                           'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
+
+def test_abstract_machine(request, datasetid):
+    # used to test api method since PyCharm runserver does not support CORS
+    dataset_id = int(datasetid)
+    dataset = Dataset.objects.filter(id=dataset_id).first()
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+    if not dataset or not (request.user.is_staff or request.user.is_superuser):
+        translated_message = _('You do not have permission to use the test command.')
+        return render(request, 'dictionary/warning.html',
+                      {'warning': translated_message,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
+
+    language_2chars = [str(language.language_code_2char) for language in dataset.translation_languages.all()]
+    return render(request, 'dictionary/virtual_machine_api.html',
+                  {'selected_datasets': selected_datasets,
+                   'dataset': dataset,
+                   'language_2chars': language_2chars,
+                   'dataset_languages': dataset_languages,
+                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
+                   })

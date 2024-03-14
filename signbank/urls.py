@@ -25,7 +25,8 @@ from signbank.dictionary.adminviews import (GlossListView, MorphemeListView, Dat
                                             DatasetDetailView, FrequencyListView, DatasetFieldChoiceView,
                                             dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView,
                                             QueryListView, SemanticFieldListView, DerivationHistoryListView,
-                                            SearchHistoryView, SenseListView, LemmaListView, ToggleListView)
+                                            SearchHistoryView, SenseListView, LemmaListView, ToggleListView,
+                                            DatasetMediaView)
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -127,6 +128,7 @@ urlpatterns = [
     re_path(r'^datasets/change_selection', signbank.dictionary.update.change_dataset_selection, name='change_dataset_selection'),
     re_path(r'^datasets/unassigned_glosses', signbank.dictionary.views.show_unassigned_glosses, name="show_unassigned_glosses"),
     re_path(r'^datasets/show_glosses_with_no_lemma', signbank.dictionary.views.show_glosses_with_no_lemma, name="show_glosses_with_no_lemma"),
+    re_path(r'^datasets/manage_media/(?P<pk>\d+)$', login_required(DatasetMediaView.as_view()), name='admin_dataset_media'),
     re_path(r'^datasets/manager', login_required(DatasetManagerView.as_view()), name='admin_dataset_manager'),
     re_path(r'^datasets/detail/(?P<pk>\d+)$', DatasetDetailView.as_view(), name='admin_dataset_detail'),
     re_path(r'^datasets/frequency/(?P<pk>\d+)$', DatasetFrequencyView.as_view(), name='admin_dataset_frequency'),

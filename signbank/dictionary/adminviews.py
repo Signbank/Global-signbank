@@ -46,10 +46,14 @@ from signbank.csv_interface import (csv_gloss_to_row, csv_header_row_glosslist, 
                                     csv_header_row_minimalpairslist, csv_focusgloss_to_minimalpairs)
 from signbank.dictionary.consistency_senses import consistent_senses, check_consistency_senses, \
     reorder_sensetranslations, reorder_senses
-from signbank.query_parameters import convert_query_parameters_to_filter, pretty_print_query_fields, pretty_print_query_values, \
-    query_parameters_this_gloss, apply_language_filters_to_results, search_fields_from_get, queryset_from_get, \
-    set_up_fieldchoice_translations, set_up_language_fields, set_up_signlanguage_dialects_fields, \
-    queryset_glosssense_from_get, query_parameters_from_get, queryset_sentences_from_get, query_parameters_toggle_fields
+from signbank.query_parameters import (convert_query_parameters_to_filter, pretty_print_query_fields,
+                                       pretty_print_query_values, query_parameters_this_gloss,
+                                       apply_language_filters_to_results, apply_video_filters_to_results,
+                                       search_fields_from_get, queryset_from_get,
+                                       set_up_fieldchoice_translations, set_up_language_fields,
+                                       set_up_signlanguage_dialects_fields,
+                                       queryset_glosssense_from_get, query_parameters_from_get,
+                                       queryset_sentences_from_get, query_parameters_toggle_fields)
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -69,6 +73,8 @@ from signbank.dictionary.context_data import (get_context_data_for_list_view, ge
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to, gloss_related_objects,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
+from signbank.manage_videos import listing_uploaded_videos
+from signbank.zip_interface import *
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -517,6 +523,7 @@ class GlossListView(ListView):
 
             qs = apply_language_filters_to_results(qs, self.query_parameters)
             qs = qs.distinct()
+            qs = apply_video_filters_to_results('Gloss', qs, self.query_parameters)
 
             query = convert_query_parameters_to_filter(self.query_parameters)
             if query:
@@ -585,6 +592,7 @@ class GlossListView(ListView):
 
         qs = queryset_glosssense_from_get('Gloss', GlossSearchForm, self.search_form, get, qs)
         query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        qs = apply_video_filters_to_results('Gloss', qs, query_parameters)
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
@@ -755,6 +763,7 @@ class SenseListView(ListView):
         elif self.query_parameters and 'query' in self.request.GET:
             gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
             gloss_query = apply_language_filters_to_results(gloss_query, self.query_parameters)
+            gloss_query = apply_video_filters_to_results('GlossSense', gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
 
             query = convert_query_parameters_to_filter(self.query_parameters)
@@ -775,6 +784,7 @@ class SenseListView(ListView):
         query_parameters = dict()
         # it is saved to self.query_parameters after the parameters are processed
         query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        qs = apply_video_filters_to_results('GlossSense', qs, query_parameters)
 
         if self.search_type != 'sign':
             query_parameters['search_type'] = self.search_type
@@ -4262,6 +4272,61 @@ def dataset_detail_view_by_acronym(request, acronym):
         dataset = get_object_or_404(Dataset, acronym=acronym)
         return DatasetDetailView.as_view()(request, pk=dataset.pk)
     raise Http404()
+
+
+class DatasetMediaView(DetailView):
+    model = Dataset
+    context_object_name = 'dataset'
+    template_name = 'dictionary/dataset_media_manager.html'
+
+    # set the default dataset, this should not be empty
+    dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
+
+    # Overriding the get method get permissions right
+    def get(self, request, *args, **kwargs):
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        try:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
+            translated_message = _('The requested dataset does not exist.')
+            return show_warning(request, translated_message, selected_datasets)
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(DatasetMediaView, self).get_context_data(**kwargs)
+
+        dataset = context['dataset']
+
+        zippedvideosform = ZippedVideosForm()
+        context['zippedvideosform'] = zippedvideosform
+
+        uploaded_video_files = listing_uploaded_videos(dataset)
+        context['uploaded_video_files'] = uploaded_video_files
+
+        zipped_archives = uploaded_zip_archives(dataset)
+        context['zipped_archives'] = zipped_archives
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+        glosses = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None)
+        nr_of_glosses = glosses.count()
+        nr_of_public_glosses = glosses.filter(inWeb=True).count()
+
+        context['nr_of_glosses'] = nr_of_glosses
+        context['nr_of_public_glosses'] = nr_of_public_glosses
+
+        context['messages'] = messages.get_messages(self.request)
+
+        return context
 
 
 class DatasetFieldChoiceView(ListView):

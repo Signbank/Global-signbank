@@ -17,6 +17,8 @@ import signbank.dictionary.views
 import signbank.dictionary.tagviews
 import signbank.dictionary.adminviews
 import signbank.api_interface
+import signbank.manage_videos
+import signbank.abstract_machine
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -109,12 +111,10 @@ urlpatterns = [
 
     re_path(r'^missingvideo.html$', signbank.dictionary.views.missing_video_view),
 
-    re_path(r'^import_images/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_media),{'video':False}),
-    re_path(r'^import_videos/$', permission_required('dictionary.change_gloss')(signbank.dictionary.views.import_media),{'video':True}),
     re_path(r'update_corpus_document_counts/(?P<dataset_id>.*)/(?P<document_id>.*)/$',
-        permission_required('dictionary.change_gloss')(signbank.frequency.update_document_counts)),
+            permission_required('dictionary.change_gloss')(signbank.frequency.update_document_counts)),
     re_path(r'update_corpora/$',
-        permission_required('dictionary.change_gloss')(signbank.frequency.update_corpora)),
+            permission_required('dictionary.change_gloss')(signbank.frequency.update_corpora)),
 
     re_path(r'find_and_save_variants/$',login_required(signbank.dictionary.views.find_and_save_variants), name='find_and_save_variants'),
     re_path(r'export_csv_template/$', signbank.csv_interface.export_csv_template,
@@ -126,6 +126,23 @@ urlpatterns = [
             signbank.api_interface.get_gloss_data_json, name='get_gloss_data_json'),
     re_path(r'get_fields_data/(?P<datasetid>\d+)/$',
             signbank.api_interface.get_fields_data_json, name='get_fields_data_json'),
+    re_path(r'get_unzipped_video_files_json/(?P<datasetid>\d+)/$',
+            signbank.api_interface.get_unzipped_video_files_json, name='get_unzipped_video_files_json'),
+    re_path(r'upload_zipped_videos_folder_json/(?P<datasetid>\d+)/$',
+            signbank.api_interface.upload_zipped_videos_folder_json, name='upload_zipped_videos_folder_json'),
+
+    re_path(r'upload_videos_to_glosses/(?P<datasetid>\d+)/$',
+            signbank.api_interface.upload_videos_to_glosses, name='upload_videos_to_glosses'),
+
+    re_path(r'upload_zipped_videos_folder/$',
+            signbank.manage_videos.upload_zipped_videos_folder, name='upload_zipped_videos_folder'),
+    re_path(r'import_video_to_gloss_json/$',
+            signbank.manage_videos.import_video_to_gloss_json, name='import_video_to_gloss_json'),
+
+    re_path(r'api_create_gloss/(?P<datasetid>\d+)/$',
+            signbank.abstract_machine.api_create_gloss, name='api_create_gloss'),
+    re_path(r'test_abstract_machine/(?P<datasetid>\d+)/$',
+            signbank.dictionary.views.test_abstract_machine, name='test_abstract_machine'),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
