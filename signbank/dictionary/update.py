@@ -22,7 +22,7 @@ from django.conf import settings
 
 from signbank.video.forms import VideoUploadForObjectForm
 
-from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
+from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES, ANNOTATEDSENTENCE_VIDEO_DIRECTORY
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, get_default_annotationidglosstranslation
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
@@ -1836,6 +1836,16 @@ def update_handshape(request, handshapeid):
 
     return HttpResponse(str(original_value) + '\t' + str(newvalue) + '\t' + str(category_value) + '\t' + str(newPattern),
                         {'content-type': 'text/plain'})
+
+
+def add_annotated_media(request, glossid):
+    template = 'dictionary/add_annotated_sentence.html'
+    gloss = Gloss.objects.get(id=glossid)
+    context = {
+        'gloss': gloss,
+        'videoform': VideoUploadForObjectForm(),
+    }
+    return render(request, template, context)
 
 
 def add_othermedia(request):

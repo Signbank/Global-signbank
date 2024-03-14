@@ -5,11 +5,13 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from signbank.video.models import Video, GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
-from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme
+from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence
 from signbank.video.forms import VideoUploadForObjectForm
+from django.http import JsonResponse
 # from django.contrib.auth.models import User
 # from datetime import datetime as DT
 import os
+import json
 
 from signbank.settings.base import WRITABLE_FOLDER
 from signbank.tools import generate_still_image, get_default_annotationidglosstranslation
@@ -44,6 +46,25 @@ def addvideo(request):
                 if not morpheme:
                     redirect(redirect_url)
                 morpheme.add_video(request.user, vfile, recorded)
+            elif object_type == 'a': 
+                # make an annotated sentence
+                eaf_file = form.cleaned_data['eaffile']
+                annotatedSentence = AnnotatedSentence.objects.create()
+                
+                gloss = Gloss.objects.filter(id=object_id).first()
+                annotations = form.cleaned_data['feedbackdata']
+                annotatedSentence.add_annotations(annotations, gloss)
+                
+                translations = form.cleaned_data['translations']
+                if translations:
+                    annotatedSentence.add_translations(json.loads(translations))
+
+                contexts = form.cleaned_data['contexts']
+                if contexts:
+                    annotatedSentence.add_contexts(json.loads(contexts))
+
+                annotatedSentence.add_video(request.user, vfile, eaf_file)    
+                annotatedSentence.save()
 
             return redirect(redirect_url)
 
@@ -56,6 +77,44 @@ def addvideo(request):
     else:
         url = '/'
     return redirect(url)
+
+
+def process_eaffile(request):
+    glosses, sentences = {}, {}
+
+    if request.method == 'POST':
+        uploaded_file = request.FILES['eaffile']
+        if not uploaded_file.name.endswith('.eaf'):
+            return JsonResponse({'error': 'Invalid file. Please try again.'})
+
+        # check file type
+        # import magic
+        # print(magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True))
+
+        from pympi.Elan import Eaf
+        eaf = Eaf(uploaded_file.temporary_file_path())
+        for annotation_i, annotation in enumerate(eaf.tiers['Glosses'][0].values()):
+            gloss_label = annotation[2]
+            start = int(eaf.timeslots[annotation[0]])
+            end = int(eaf.timeslots[annotation[1]])
+            glosses[annotation_i] = [gloss_label, start, end]
+        
+        if 'Sentences' in eaf.tiers:
+            for annotation_i, annotation in enumerate(eaf.tiers['Sentences'][0].values()):
+                print(annotation)
+                sentences[annotation_i] = annotation[2]
+        
+        # if no annotations found, file cannot be used
+        if glosses == {}:
+            return JsonResponse({'error': 'No annotations found. Please try again.'})
+
+    # Convert dictionaries to JSON strings
+    glosses_json = json.dumps(glosses)
+    sentences_json = json.dumps(sentences)
+
+    # Return JSON response with annotations and sentence
+    return JsonResponse({'glosses': glosses_json, 'sentences': sentences_json})
+
 
 @login_required
 def deletesentencevideo(request, videoid):

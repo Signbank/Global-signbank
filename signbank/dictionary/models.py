@@ -3717,6 +3717,12 @@ class AnnotatedGloss(models.Model):
     starttime = models.FloatField()
     endtime = models.FloatField()
 
+    def get_start(self):
+        return self.starttime/1000
+    
+    def get_end(self):
+        return self.endtime/1000
+
 
 class AnnotatedSentenceTranslation(models.Model):
     """An annotated sentence translation belongs to one annotated sentence"""
@@ -3728,49 +3734,96 @@ class AnnotatedSentenceTranslation(models.Model):
     def __str__(self):
         return self.text
 
+class AnnotatedSentenceContext(models.Model):
+    """An annotated sentence context belongs to one annotated sentence"""
+    
+    text = models.TextField()
+    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE)
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
+
 class AnnotatedSentence(models.Model):
-    """An annotated sentence belongs to one or more glosses"""
+    """An annotated sentence is linked to an annotatedvideo, annotatedgloss, annotatedsentencetranslation(s), and annotatedsentencecontext(s)"""
 
     def get_dataset(self):
-        return self.annotatedgloss.gloss.lemma.dataset
+        return self.annotatedgloss_set.first().gloss.lemma.dataset
+    
+    def has_translations(self):
+        if self.annotatedsentencetranslation_set.count() > 0:
+            return True
+        return False
 
-    def get_examplestc_translations_dict_with(self):
+    def has_contexts(self):
+        if self.annotatedsentencecontext_set.count() > 0:
+            return True
+        return False
+
+    def add_annotations(self, annotations, gloss):
+        dataset = gloss.lemma.dataset
+
+        arrays = []
+        # Split the string into segments using semicolons
+        segments = annotations.split(";")
+        for segment in segments:
+            values = segment.split(":")
+            if len(values) == 4:
+                arrays.append(values)
+
+        for annotation in arrays:
+            gloss_translation = annotation[0]
+            annotationIdGlossTranslation = AnnotationIdglossTranslation.objects.filter(text__exact=gloss_translation, language__in=dataset.translation_languages.all(), gloss__lemma__dataset=dataset).first()
+            if annotationIdGlossTranslation is None:
+                print("No annotation found for: ", gloss_translation)
+                continue
+            else:
+                repr = False
+                if annotation[1] == "1":
+                    repr = True
+                AnnotatedGloss.objects.create(gloss=annotationIdGlossTranslation.gloss, annotatedsentence=self, isRepresentative=repr, starttime=annotation[2], endtime=annotation[3])
+
+    def add_translations(self, translations):
+        for language in self.get_dataset().translation_languages.all():
+            if language.language_code_3char in translations.keys():
+                text=translations[language.language_code_3char]
+                if text != "":
+                    AnnotatedSentenceTranslation.objects.create(text=text, annotatedsentence=self, language=language)
+
+    def add_contexts(self, contexts):
+        for language in self.get_dataset().translation_languages.all():
+            if language.language_code_3char in contexts.keys():
+                text=contexts[language.language_code_3char]
+                if text != "":
+                    AnnotatedSentenceContext.objects.create(text=text, annotatedsentence=self, language=language)
+
+    def get_annotatedstc_translations_dict_with(self):
         translations = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
-            if self.examplesentencetranslations.filter(language = dataset_translation_language).count() == 1:
-                translations[str(dataset_translation_language)] = str(self.examplesentencetranslations.all().get(language = dataset_translation_language))
+            annotatedSentenceTranslations = AnnotatedSentenceTranslation.objects.filter(annotatedsentence = self, language = dataset_translation_language)
+            if annotatedSentenceTranslations.count() == 1:
+                translations[str(dataset_translation_language)] = str(AnnotatedSentenceTranslation.objects.get(annotatedsentence = self, language = dataset_translation_language))
             else:
                 translations[str(dataset_translation_language)] = ""
         return translations
 
-    def get_examplestc_translations_dict_without(self):
-        return {k: v for k, v in self.get_examplestc_translations_dict_with().items() if v}
+    def get_annotatedstc_translations_dict_without(self):
+        return {k: v for k, v in self.get_annotatedstc_translations_dict_with().items() if v}
 
-    def get_examplestc_translations(self):
-        return [k+": "+v for k,v in self.get_examplestc_translations_dict_without().items()]
-
-    def get_type(self):
-        return self.sentenceType.name if self.sentenceType else ''
+    def get_annotatedstc_translations(self):
+        return [k+": "+v for k,v in self.get_annotatedstc_translations_dict_without().items()]
 
     def get_video_path(self):
         try:
-            examplevideo = self.examplevideo_set.get(version=0)
-            return str(examplevideo.videofile)
+            annotatedvideo = self.annotatedvideo
+            return str(annotatedvideo.videofile)
         except ObjectDoesNotExist:
             return ''
         except MultipleObjectsReturned:
             # Just return the first
-            examplevideos = self.examplevideo_set.filter(version=0)
-            return str(examplevideos[0].videofile)
+            annotatedvideos = self.annotatedvideo.filter(version=0)
+            return str(annotatedvideo[0].videofile)
 
-    def get_video_path_prefix(self):
-        try:
-            examplesentence = self.examplesentence_set.get(version=0)
-            prefix, extension = os.path.splitext(str(examplesentence))
-            return prefix
-        except ObjectDoesNotExist:
-            return ''
-        
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
 
@@ -3786,33 +3839,19 @@ class AnnotatedSentence(models.Model):
         
         return self.get_video() not in ['', None]
 
-    def add_video(self, user, videofile, recorded):
+
+    def add_video(self, user, videofile, eaffile):
         # Preventing circular import
-        from signbank.video.models import ExampleVideo, ExampleVideoHistory, get_sentence_video_file_path
+        from signbank.video.models import AnnotatedVideo
 
-        # Create a new ExampleVideo object
-        if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = ExampleVideo(examplesentence=self)
+        # Create a new AnnotatedVideo object
+        if (isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile')\
+            and eaffile.content_type == 'application/octet-stream':
 
-            # Backup the existing video objects stored in the database
-            existing_videos = ExampleVideo.objects.filter(examplesentence=self)
-            for video_object in existing_videos:
-                video_object.reversion(revert=False)
-
-            # Create a ExampleVideoHistory object
-            video_file_full_path = os.path.join(WRITABLE_FOLDER, get_sentence_video_file_path(video, str(videofile)))
-            examplevideohistory = ExampleVideoHistory(action="upload", examplesentence=self, actor=user,
-                                                uploadfile=videofile, goal_location=video_file_full_path)
-            examplevideohistory.save()
-            video.videofile.save(get_sentence_video_file_path(video, str(videofile)), videofile)
-        else:
-            return ExampleVideo(examplesentence=self)
-        video.save()
-        video.ch_own_mod_video()
-        # video.make_small_video()
-
-        return video
+            annotatedVideo = AnnotatedVideo.objects.create(annotatedsentence=self, videofile=videofile, eaffile=eaffile)
+    
+        return annotatedVideo
 
     
     def __str__(self):
-        return " | ".join(self.get_examplestc_translations())
+        return " | ".join(self.get_annotatedstc_translations())

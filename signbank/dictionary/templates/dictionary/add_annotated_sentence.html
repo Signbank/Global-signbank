@@ -1,0 +1,80 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+{% block bootstrap3_title %}
+{% endblock %}
+
+{% block extrahead %}
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dropstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/recordstyle.css">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/modalstyle.css">
+{% endblock %}
+
+{% block content %}
+
+{% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
+{% if "change_dataset" in dataset_perms %}
+<div class='editform', style="width:500px">
+    <fieldset>
+        <legend>{% trans "Upload New Annotated Sentence" %}</legend>
+        
+        For the following gloss: {{gloss}}<br><br>
+
+        <form action="{{PREFIX_URL}}/video/upload/" id="annotatedSentenceForm" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <label for="id_videofile" class="drop-container" id="drop-container-video">
+        <div id="videogallery" class="gallery"></div>
+        <span id="drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
+        <label id="drop-container-video-status", class="hide">Status here</label>
+            <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}'>
+            <input type='hidden' name='object_id' value='{{gloss.id}}'>
+            <input type='hidden' name='object_type' value='a'>
+            <input type='hidden' id='gloss_label' value='{{gloss}}'>
+            <table id="staffops">
+            <tr>
+                <td>{{videoform.videofile}}</td>
+            </tr>
+            <tr>
+                <td id="video-buttons">
+                    <br><input class='btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>   
+                </td>
+            </tr>
+          </table>
+        </label>
+
+        <br><br>
+        Choose the corresponding annotation file (.eaf) here: 
+        <input type="file" id="eaffile" name="eaffile">
+        <br>
+        <div id="feedback"></div>
+
+        <br>
+        Add context for the sentence in the following languages:<br>
+        {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+            {{dataset_lang.name}}:<input style="width:100%" id="context_{{dataset_lang.language_code_3char}}" name="context_{{dataset_lang.language_code_3char}}" value="" maxlength="150" type="text"  class="context-input"/>
+        {% endfor %}
+        <input type='hidden' name='contexts' id='contexts-hidden' value=''>
+
+        <br><br>
+        Add translations for the sentence in the following languages:<br>
+        {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+            {{dataset_lang.name}}:<input style="width:100%" id="translation_{{dataset_lang.language_code_3char}}" name="translation_{{dataset_lang.language_code_3char}}" value="" maxlength="150" type="text"  class="translation-input"/>
+        {% endfor %}
+        <input type='hidden' name='translations' id='translations-hidden' value=''>
+
+        <br><br>
+        <input class='btn btn-primary' type='submit' value='Upload' />
+
+        </form>
+  </fieldset>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_files.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_annotated_files.js"></script>
+
+{% endif %}
+{% endblock %}

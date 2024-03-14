@@ -1175,6 +1175,19 @@ class GlossDetailView(DetailView):
 
         context['sense_to_similar_senses'] = sense_to_similar_senses
 
+        annotated_sentences_1 = AnnotatedSentence.objects.filter(annotatedgloss__gloss=gl, annotatedgloss__isRepresentative=True).distinct().annotate(is_representative=V(1, output_field=IntegerField()))
+        annotated_sentences_2 = AnnotatedSentence.objects.filter(annotatedgloss__gloss=gl, annotatedgloss__isRepresentative=False).distinct().annotate(is_representative=V(0, output_field=IntegerField()))
+        annotated_sentences = annotated_sentences_1.union(annotated_sentences_2).order_by('-is_representative')
+        annotated_sentences_with_video = []
+        for annotated_sentence in annotated_sentences:
+            if annotated_sentence.has_video():
+                annotated_sentences_with_video.append(annotated_sentence)
+        annotated_sentences = annotated_sentences_with_video
+        if len(annotated_sentences) <= 3:
+            context['annotated_sentences'] = annotated_sentences
+        else:
+            context['annotated_sentences'] = annotated_sentences[0:3]
+
         bad_dialect = False
         gloss_dialects = []
 

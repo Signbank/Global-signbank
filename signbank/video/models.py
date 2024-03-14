@@ -510,7 +510,8 @@ class AnnotatedVideo(models.Model):
 
     # video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
-    # for this gloss
+    # for this gloss 
+    # THIS IS NOT IMPLEMENTED YET
     version = models.IntegerField("Version", default=0)
 
     def save(self, *args, **kwargs):
