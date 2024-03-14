@@ -59,6 +59,7 @@ MIDDLEWARE = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'auth_token.middleware.TokenAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'signbank.pages.middleware.PageFallbackMiddleware',
@@ -132,6 +133,7 @@ INSTALLED_APPS = (
     'reversion',
     'tagging',
     'guardian',
+    'auth_token'
     # 'debug_toolbar',
     # 'video_encoding'
 )

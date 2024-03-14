@@ -347,11 +347,12 @@ def user_profile(request):
                                                 Dataset, accept_global_perms=True, any_perm=True)
     change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
     user_has_queries = SearchHistory.objects.filter(user=user).count()
-
-    return render (request, 'user_profile.html', {'selected_datasets': selected_datasets,
-                                                  'view_permit_datasets': view_permit_datasets,
-                                                  'change_permit_datasets': change_permit_datasets,
-                                                  'user_has_queries': user_has_queries,
-                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                                                  'expiry': expiry,
-                                                  'delta': delta})
+    user_can_change_glosses = change_permit_datasets.count() > 0
+    return render(request, 'user_profile.html', {'selected_datasets': selected_datasets,
+                                                 'view_permit_datasets': view_permit_datasets,
+                                                 'change_permit_datasets': change_permit_datasets,
+                                                 'user_can_change_glosses': user_can_change_glosses,
+                                                 'user_has_queries': user_has_queries,
+                                                 'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                                                 'expiry': expiry,
+                                                 'delta': delta})

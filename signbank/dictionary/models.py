@@ -1,14 +1,14 @@
 from colorfield.fields import ColorField
 from django.db.models import Q
-from django.db import models, OperationalError, ProgrammingError
+from django.db import models
 from django.conf import settings
-from django.http import Http404
 from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
+from auth_token.models import AuthorizationToken
+from django.contrib.auth import models as authmodels
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, m2m_changed
-from django.utils.translation import gettext_noop, gettext_lazy as _, get_language
-from django.utils.timezone import now
+from django.utils.translation import gettext_noop, gettext_lazy as _
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -18,18 +18,17 @@ from django.core.files import File
 import tagging
 import re
 import copy
-import shutil
 
-import sys, os
+import os
 import json
-from collections import OrderedDict, Counter
+from collections import OrderedDict
 from datetime import datetime, date
 
-from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE, \
-    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, STATIC_URL, DATASET_EAF_DIRECTORY
+from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
+    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 
-import signbank.settings
+
 # -*- coding: utf-8 -*-
 
 def get_default_language_id():
@@ -1955,7 +1954,7 @@ class Gloss(models.Model):
 
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
-        from django.db.models import When, Case, BooleanField, IntegerField
+        from django.db.models import When, Case, IntegerField
 
         zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
 
@@ -2988,8 +2987,7 @@ class Dataset(models.Model):
         all_users = User.objects.all().order_by('first_name')
 
         users_who_can_view_dataset = []
-        import guardian
-        from guardian.shortcuts import get_objects_for_user, get_users_with_perms
+        from guardian.shortcuts import get_users_with_perms
         users_who_can_access_me = get_users_with_perms(self, attach_perms=True, with_superusers=False,
                                                        with_group_users=False)
         for user in all_users:
@@ -3004,8 +3002,7 @@ class Dataset(models.Model):
         all_users = User.objects.all().order_by('first_name')
 
         users_who_can_change_dataset = []
-        import guardian
-        from guardian.shortcuts import get_objects_for_user, get_users_with_perms
+        from guardian.shortcuts import get_users_with_perms
         users_who_can_access_me = get_users_with_perms(self, attach_perms=True, with_superusers=False,
                                                        with_group_users=False)
         for user in all_users:
@@ -3101,10 +3098,25 @@ class Dataset(models.Model):
         return frequency_lists_phonology_fields
 
 
+class SignbankToken(AuthorizationToken):
+    """
+    Overrides the Token model to use the
+    non-built-in user model
+    """
+    signbank_user = models.ForeignKey(
+        authmodels.User, related_name='signbank_token',
+        on_delete=models.CASCADE,
+        verbose_name=_("User")
+    )
+    signbank_dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
+                                         help_text=_("API Token to change Dataset"), null=True)
+
+
 class UserProfile(models.Model):
     # This field is required.
     user = models.OneToOneField(User, related_name="user_profile_user", on_delete=models.CASCADE)
-
+    api_token = models.ForeignKey("SignbankToken", related_name='authentication_token',
+                                  verbose_name=_("API Token"), on_delete=models.CASCADE)
     # Other fields here
     last_used_language = models.CharField(max_length=20, default=settings.LANGUAGE_CODE)
     expiry_date = models.DateField(null=True, blank=True)

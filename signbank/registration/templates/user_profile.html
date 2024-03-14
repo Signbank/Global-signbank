@@ -74,6 +74,26 @@
     </tr>
     </table>
     {% endif %}
+    {% if user_can_change_glosses %}
+    <table class="table">
+    {% for ds in change_permit_datasets %}
+    <th>{% trans "Signbank API Token " %}{{ds.acronym}}</th>
+    <tr>
+        <td>
+            {{user.user_profile.api_token}}
+        </td>
+    </tr>
+    {% endfor %}
+    </table>
+    {% endif %}
+    <table class="table">
+    <th>{% trans "Recently Saved Queries" %}</th>
+    <tr>
+        <td>
+            <a href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>
+        </td>
+    </tr>
+    </table>
     {% if user_has_queries %}
     <table class="table">
     <th>{% trans "Recently Saved Queries" %}</th>
