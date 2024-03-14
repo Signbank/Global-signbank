@@ -51,6 +51,96 @@ function toggle_dark_mode(e) {
             $(this).addClass("well-light");
         }
   });
+  $(".navbar").each(function () {
+        if ($(this).hasClass("navbar-light")) {
+            $(this).removeClass("navbar-light");
+            $(this).addClass("navbar-dark");
+        } else if ($(this).hasClass("navbar-dark")) {
+            $(this).removeClass("navbar-dark");
+            $(this).addClass("navbar-light");
+        }
+  });
+  $(".navbar-nav").each(function () {
+        if ($(this).hasClass("navbar-nav-light")) {
+            $(this).removeClass("navbar-nav-light");
+            $(this).addClass("navbar-nav-dark");
+        } else if ($(this).hasClass("navbar-nav-dark")) {
+            $(this).removeClass("navbar-nav-dark");
+            $(this).addClass("navbar-nav-light");
+        }
+  });
+  $(".navbar-form").each(function () {
+        if ($(this).hasClass("navbar-form-light")) {
+            $(this).removeClass("navbar-form-light");
+            $(this).addClass("navbar-form-dark");
+        } else if ($(this).hasClass("navbar-form-dark")) {
+            $(this).removeClass("navbar-form-dark");
+            $(this).addClass("navbar-form-light");
+        }
+  });
+  $(".navbar-text").each(function () {
+        if ($(this).hasClass("navbar-text-light")) {
+            $(this).removeClass("navbar-text-light");
+            $(this).addClass("navbar-text-dark");
+        } else if ($(this).hasClass("navbar-text-dark")) {
+            $(this).removeClass("navbar-text-dark");
+            $(this).addClass("navbar-text-light");
+        }
+  });
+  $(".dropdown").each(function () {
+        if ($(this).hasClass("dropdown-light")) {
+            $(this).removeClass("dropdown-light");
+            $(this).addClass("dropdown-dark");
+        } else if ($(this).hasClass("dropdown-dark")) {
+            $(this).removeClass("dropdown-dark");
+            $(this).addClass("dropdown-light");
+        }
+  });
+  $(".dropdown-menu").each(function () {
+        if ($(this).hasClass("dropdown-menu-light")) {
+            $(this).removeClass("dropdown-menu-light");
+            $(this).addClass("dropdown-menu-dark");
+        } else if ($(this).hasClass("dropdown-menu-dark")) {
+            $(this).removeClass("dropdown-menu-dark");
+            $(this).addClass("dropdown-menu-light");
+        }
+  });
+  $(".text-container").each(function () {
+        if ($(this).hasClass("text-container-light")) {
+            $(this).removeClass("text-container-light");
+            $(this).addClass("text-container-dark");
+        } else if ($(this).hasClass("text-container-dark")) {
+            $(this).removeClass("text-container-dark");
+            $(this).addClass("text-container-light");
+        }
+  });
+  $(".interface-language").each(function () {
+        if ($(this).hasClass("interface-language-light")) {
+            $(this).removeClass("interface-language-light");
+            $(this).addClass("interface-language-dark");
+        } else if ($(this).hasClass("interface-language-dark")) {
+            $(this).removeClass("interface-language-dark");
+            $(this).addClass("interface-language-light");
+        }
+  });
+  $(".input-group").each(function () {
+        if ($(this).hasClass("input-group-light")) {
+            $(this).removeClass("input-group-light");
+            $(this).addClass("input-group-dark");
+        } else if ($(this).hasClass("input-group-dark")) {
+            $(this).removeClass("input-group-dark");
+            $(this).addClass("input-group-light");
+        }
+  });
+  $(".btn-default").each(function () {
+        if ($(this).hasClass("btn-default-light")) {
+            $(this).removeClass("btn-default-light");
+            $(this).addClass("btn-default-dark");
+        } else if ($(this).hasClass("btn-default-dark")) {
+            $(this).removeClass("btn-default-dark");
+            $(this).addClass("btn-default-light");
+        }
+  });
   $(".td").each(function () {
         if ($(this).hasClass("td-light")) {
             $(this).removeClass("td-light");
@@ -80,7 +170,7 @@ function toggle_dark_mode(e) {
 }
 </style>
 
-<div id="signbank-bar" class="navbar navbar-fixed-top" style="box-sizing:content-box;">
+<div id="signbank-bar" class="navbar navbar-light navbar-fixed-top" style="box-sizing:content-box;">
 
 <div id='header' class="navbar-header">
     <a href="{{PREFIX_URL}}/" height="80" width="80" style="box-sizing:content-box;"><img class="global_sb_logo" src="{{STATIC_URL}}images/global/GlobalSigbank_logo_white.svg" height="80" width="80"></a>
@@ -103,7 +193,7 @@ function toggle_dark_mode(e) {
      {% endif %}
      {% else %}
         {% if viewable_datasets %}
-        <div class='navbar-text' style="left-margin: 15px;">
+        <div class='navbar-text navbar-text-light' style="left-margin: 15px;">
             <div class='taglist ribbon_list'>
                 {% load underscore_to_space %}
                 {% for ds,selected in viewable_datasets %}
@@ -136,16 +226,16 @@ function toggle_dark_mode(e) {
             </button>
         </div>
     <div class="collapse navbar-collapse" id="signbank-menus">
-    <ul class="nav navbar-left navbar-nav" style="margin-left:15px;box-sizing:content-box;">
+    <ul class="nav navbar-left navbar-nav navbar-nav-light" style="margin-left:15px;box-sizing:content-box;">
     {# add in the top level menu items from pages #}
     {% for item in menu %}
 
         {% if item.children %}
-        <li class='dropdown'>
+        <li class='dropdown dropdown-light'>
              <a href="{{PREFIX_URL}}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
                  {{item.title}}
                  <b class="caret"></b></a>
-             <ul class="dropdown-menu">
+             <ul class="dropdown-menu dropdown-menu-light">
              {% for subitem in item.children %}
                 <li {% if subitem.current %}class='active'{% endif %}><a href="{{PREFIX_URL}}{{subitem.url}}">
                  {{subitem.title}}
@@ -161,15 +251,15 @@ function toggle_dark_mode(e) {
     {% endfor %}
 
     </ul>
-    <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search/">
+    <form class="navbar-form navbar-form-light navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search/">
         {% csrf_token %}
-            <div class="text-container {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
+            <div class="text-container text-container-light {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
                 <input class='form-control' placeholder='{% trans "Search Gloss" %}' type="text" name="search" id="tooltip-search"
                                                onfocus="focusFunction()" onblur="blurFunction()" onclick="clickFunction()"
                                                value="" maxlength="60" size="36" />
 				{% if USE_REGULAR_EXPRESSIONS %}{% include "tooltip.html" with include_tags=True %}{% endif %}
             </div>
-            <div class="text-container {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
+            <div class="text-container text-container-light {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
                 <input class='form-control' placeholder='{% trans "Search Sense" %}' type="text" name="translation" id="tooltip-translation"
                                                onfocus="focusFunction2()" onblur="blurFunction2()" onclick="clickFunction2()"
                                                value="" maxlength="60" size="36" />
@@ -177,9 +267,9 @@ function toggle_dark_mode(e) {
             </div>
           <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
     </form>
-    <div class="nav navbar-left navbar-nav" id="user-menu" style="height: 10px;box-sizing:content-box;">
+    <div class="nav navbar-left navbar-nav navbar-nav-light" id="user-menu" style="height: 10px;box-sizing:content-box;">
         {% if user.is_authenticated %}
-        <div class='navbar-text'>
+        <div class='navbar-text navbar-text-light'>
             <a href="{% url 'registration:user_profile' %}">{% trans "Profile" %}</a>
         </div>
         {% endif %}
@@ -189,12 +279,12 @@ function toggle_dark_mode(e) {
               <button onclick="toggle_dark_mode()" class="btn btn-primary">{% trans "Dark Mode" %}</button>
           </div>
         {% if user.is_authenticated %}
-            <div class='navbar-text'>
+            <div class='navbar-text navbar-text-light'>
                 <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
         {% else %}
-            <div class='navbar-text'><a href="{{PREFIX_URL}}/accounts/login/">{% trans "Login" %}</a></div>
+            <div class='navbar-text navbar-text-light'><a href="{{PREFIX_URL}}/accounts/login/">{% trans "Login" %}</a></div>
         {% endif %}
-		<div class='navbar-text' id="minimalistic_language_picker"></div>
+		<div class='navbar-text navbar-text-light' id="minimalistic_language_picker"></div>
 
 	</div>
     </div>

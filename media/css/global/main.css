@@ -125,25 +125,33 @@ legend
     width: 100%;
     position: fixed;
     background-color: #ffffff;
+    color: black;
 }
 
 .navbar-nav > li > a {
     padding-top: 5px;
     padding-bottom: 5px;
+    background-color: inherit;
+    color: inherit;
 }
 
 .navbar-nav > ul {
     margin-left: 15px;
     float: left;
+    background-color: inherit;
+    color: inherit;
 }
 
 .navbar-form, .navbar-text {
     margin-top: 3px;
     margin-bottom: 3px;
+    color: inherit;
 }
 
 .navbar-collapse {
     max-height: 100% !important;
+    background-color: inherit;
+    color: inherit;
 }
 
 .btn {

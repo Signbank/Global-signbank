@@ -125,7 +125,8 @@
 
     </script>
 
-    <form id="change_language_form" method="post" action="{{PREFIX_URL}}/i18n/setlang/">
+    <form id="change_language_form" class="interface-language interface-language-light"
+          method="post" action="{{PREFIX_URL}}/i18n/setlang/">
         {% csrf_token %}
         <input id="change_language_input_field" type="hidden" name="language" value="{{ user.user_profile_user.last_used_language }}">
 

@@ -677,7 +677,7 @@ function do_toggle_language(el) {
                         <tr>
                             {% with searchform|get_annotation_search_field_for_language:dataset_lang as search_field %}
                             <td class='td-light'>
-                                <div class='input-group'>
+                                <div class='input-group input-group-light'>
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
                                     {{search_field.label}}
                                 </label>
@@ -690,7 +690,7 @@ function do_toggle_language(el) {
                             {% endwith %}
 
                             {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
-                            <td class='td-light'><div class='input-group'>
+                            <td class='td-light'><div class='input-group input-group-light'>
 
                                 <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
                                     {{lemma_field.label}}
@@ -703,7 +703,7 @@ function do_toggle_language(el) {
                             {% endwith %}
 
                             {% with searchform|get_senses_form_field_for_language:dataset_lang as keyword_field %}
-                            <td class='td-light'><div class='input-group'>
+                            <td class='td-light'><div class='input-group input-group-light'>
                                 <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>
                                     {{keyword_field.label}}</label>
                                 <input name='keyword_{{dataset_lang.language_code_2char}}'
@@ -913,7 +913,7 @@ function do_toggle_language(el) {
         {% endif %}
 
         {% if perms.dictionary.export_csv %}
-        <button class='btn btn-default' type='submit'
+        <button class='btn btn-default btn-default-light' type='submit'
                 onclick="do_export_csv(this);"
                 id='button_export_csv' value='CSV'>CSV</button>
         <input type='hidden' id='format' name='format' value="">
@@ -922,20 +922,20 @@ function do_toggle_language(el) {
 
         {% if not SHOW_DATASET_INTERFACE_OPTIONS %}
         {% if perms.dictionary.export_ecv %}
-        <button class='btn btn-default' type='submit'
+        <button class='btn btn-default btn-default-light' type='submit'
                 onclick="do_export_ecv(this);"
                 id='button_export_ecv' value='ECV'>ECV</button>
         <input type='hidden' id='export_ecv' name='export_ecv' value="">
         {% endif %}
         {% endif %}
-        <input class='btn btn-default' type='reset' onclick="clearForm();"
+        <input class='btn btn-default btn-default-light' type='reset' onclick="clearForm();"
                value='{% trans "Reset" %}'>
     </div>
 
 
 
     <div>
-        <button class="btn btn-default"
+        <button class="btn btn-default btn-default-light"
                 type="button"
                 id="view_type_left_button">
             {% if view_type == "lemma_groups" %}
@@ -1077,7 +1077,8 @@ function do_toggle_language(el) {
             <option {% if paginate_by == 10 %} selected="" {% endif %}>10</option>
         </select>
         {% csrf_token %}
-        <input type="submit" value = '{% trans "Refresh" %}' />
+        <input type="submit" value = '{% trans "Refresh" %}'
+               class="btn btn-dafault btn-default-light">
     </div>
     </form>
 
