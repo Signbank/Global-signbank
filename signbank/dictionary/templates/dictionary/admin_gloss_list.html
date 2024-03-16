@@ -25,12 +25,86 @@
 </script>
 
 <style>
+.selection {
+    background-color: inherit !important;
+    color: inherit !important;
+}
+.select2 {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-container {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-container--default {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-dropdown {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-hidden-accessible {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-search {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-search__field {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-results {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-results__options {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-results__option {
+    color: inherit !important;
+    background-color: inherit !important;
+}
 .select2-results__option--highlighted {
-    color: black !important;
+    color: inherit !important;
+    background-color: inherit !important;
     font-weight: bold;
 }
 .select2-selection__choice {
-    color: black;
+    color: black !important;
+    background-color: white !important;
+    border: solid 1px black;
+    opacity: 0.5;
+    font-weight: bold;
+    box-shadow: 0 2px 2px;
+}
+.select2-selection {
+    color: inherit !important;
+    background-color: inherit !important;
+    border-left-color: inherit !important;
+    border-right-color: inherit !important;
+    border-top-color: inherit !important;
+    border-bottom-color: inherit !important;
+}
+.select2-selection--multiple {
+    color: inherit !important;
+    background-color: inherit !important;
+    border-left-color: inherit !important;
+    border-right-color: inherit !important;
+    border-top-color: inherit !important;
+    border-bottom-color: inherit !important;
+}
+.select2-selection__rendered {
+    color: inherit !important;
+    background-color: inherit !important;
+    border-left-color: inherit !important;
+    border-right-color: inherit !important;
+    border-top-color: inherit !important;
+    border-bottom-color: inherit !important;
 }
 .pub-row tr {float: left!important; width: 50%!important;}
 </style>
@@ -84,7 +158,11 @@ $(document).ready(function() {
         $('option',target_pulldown).each(function(){
             var this_code = $(this).attr('value');
             var this_color = pulldown_lookup[this_code];
-            $(this).attr('style','color:black;background-color:#'+this_color);
+            if (this_color===undefined || this_color=='ffffff') {
+               $(this).attr('style','color:inherit;background-color:inherit;');
+            } else {
+                $(this).attr('style','color:black;background-color:#'+this_color);
+            }
         });
     }
 
@@ -118,7 +196,11 @@ $(document).ready(function() {
             var pulldown_colors_str = new String(pulldown_colors);
             var pulldown_lookup = JSON.parse(pulldown_colors_str);
             var this_color = pulldown_lookup[this_code];
-            var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:black;background-color:#"+this_color+"'>"+color_text+"</span>");
+            if (this_color===undefined || this_color=='ffffff') {
+               var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:inherit;background-color:inherit'>"+color_text+"</span>");
+            } else {
+                var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:black;background-color:#"+this_color+"'>"+color_text+"</span>");
+            }
             return $color_text_node
         } else {
             return color_text;
@@ -151,7 +233,8 @@ $(document).ready(function() {
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve',
-        placeholder: ''
+        placeholder: '',
+        templateResult: identityOption
      });
 
      if (query_parameters_keys.includes('signlanguage[]')) {
@@ -174,7 +257,8 @@ $(document).ready(function() {
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve',
-        placeholder: ''
+        placeholder: '',
+        templateResult: identityOption
      });
 
      if (query_parameters_keys.includes('dialect[]')) {
@@ -187,7 +271,7 @@ $(document).ready(function() {
 
      function identityOption(optionNode) {
         var color_text = optionNode.text;
-        var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:black;background-color:inherit'>"+color_text+"</span>");
+        var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:inherit;background-color:inherit'>"+color_text+"</span>");
         return $color_text_node
      }
      makeMultipleSelect('id_tags', 'tags[]');
@@ -220,7 +304,6 @@ $(document).ready(function() {
 
      if (query_parameters_keys.includes('morpheme')) {
         var query_initial = query_parameters_dict['morpheme'];
-        console.log('morpheme '+query_initial+' '+morpheme_idgloss);
         // special case for morpheme, the query parameter is its ID, stored in a hidden field
         var morpheme_id = '#morpheme_id';
         $(morpheme_id).attr('value', query_initial);
@@ -322,7 +405,8 @@ $(document).ready(function() {
                 success : function(result) {
                     var elem = $(result);
                     var parsed = $.parseHTML(result);
-                    $(lookup).find('#glosslist_table_header').before(result);
+                    var gloss_list_header = $(lookup).find('#glosslist_table_header')[0];
+                    $(gloss_list_header).replaceWith(result);
                 }
 
         });
@@ -642,7 +726,7 @@ function do_toggle_language(el) {
 {{ form.media.css }}
 {{ form.media.js }}
 
-<form id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/search'>
+<form id='adminsearch' class="search-form search-form-light" method='get' action='{{PREFIX_URL}}/signs/search'>
 {% csrf_token %}
 <div class="panel panel-default panel-light">
     <input type='hidden' id='export_format' name='export_format' value="">
@@ -722,7 +806,7 @@ function do_toggle_language(el) {
                         <div class="panel-heading panel-light" data-toggle="collapse" data-target="#searchbasic">{% trans "Search by Language and Basic Properties" %}</div>
 
                         <div id='searchbasic' class='collapse-light collapse'>
-                        <table class='table table-condensed' style="width:65%;">
+                        <table class='table table-condensed table-condensed-light' style="width:65%;">
                             <tr id='signlanguage_selection'>
                                 <td class='td-light' style="padding-left:30px;"><label>{{searchform.signLanguage.label}}</label></td>
                                 <td class='td-light' style="width:600px;">{{ searchform.signLanguage }}</td>
@@ -733,7 +817,7 @@ function do_toggle_language(el) {
                             </tr>
                         </table>
 
-                        <table class='table table-condensed' style="width:65%;">
+                        <table class='table table-condensed table-condensed-light' style="width:65%;">
                             {% for fieldname,field,label in input_names_fields_and_labels.main %}
 
                                 <tr><td class='td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
@@ -750,18 +834,18 @@ function do_toggle_language(el) {
                       <div class="panel-heading panel-light" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
 
                       <div id='morph_search' class='collapse-light collapse'>
-                      <table class='table table-condensed' style="width:65%;">
+                      <table class='table table-condensed table-condensed-light' style="width:65%;">
                         <tr>
                           <td class='td-light'>
-                            <table class='table table-condensed'>
+                            <table class='table table-condensed table-condensed-light'>
                                 <tr>
                                     <td class='td-light' style="padding-left:30px;"><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
                                     <td class='td-light' style="width:600px;">
                                         <input class='form-control morphtypeahead'
                                                id="morphemeidgloss"
                                                placeholder='{% trans "Morpheme Gloss" %}'
-                                               value=""/>
-                                        <input type="hidden" name='morpheme' id='morpheme_id' value=""/>
+                                               value="">
+                                        <input type="hidden" name='morpheme' id='morpheme_id' value="">
                                     </td>
                                 </tr>
                                 <tr><td class='td-light' style="padding-left:30px;"><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td>
@@ -784,11 +868,11 @@ function do_toggle_language(el) {
                       <div class="panel-heading panel-light" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>
 
                       <div id='phon_search' class='collapse-light collapse'>
-                      <table class='table table-condensed'>
+                      <table class='table table-condensed table-condensed-light'>
                         <tr>
 
                           <td class='td-light'>
-                            <table class='table table-condensed'>
+                            <table class='table table-condensed table-condensed-light'>
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
 
                                     <tr>
@@ -821,11 +905,11 @@ function do_toggle_language(el) {
                       <div class="panel-heading panel-light" data-toggle="collapse" data-target="#sem_search">{% trans "Search by Semantics" %}</div>
 
                       <div id='sem_search' class='collapse-light collapse'>
-                      <table class='table table-condensed'>
+                      <table class='table table-condensed table-condensed-light'>
                         <tr>
 
                           <td class='td-light'>
-                            <table class='table table-condensed' style="width:65%;">
+                            <table class='table table-condensed table-condensed-light' style="width:65%;">
                                 {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
 
                                     <tr><td class='td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
@@ -848,7 +932,7 @@ function do_toggle_language(el) {
                            data-target="#rel_search">{% trans "Search by Relation" %}</div>
 
                       <div id='rel_search' class='collapse-light collapse'>
-                      <table class='table table-condensed' style="width:65%;">
+                      <table class='table table-condensed table-condensed-light' style="width:65%;">
                       {% for relation_id, relation_label, relation_field in search_by_relation_fields %}
                       <tr>
                           <td class='td-light' style="padding-left:30px;"><label for='id_{{relation_id}}'>{{relation_label}}</label></td>
@@ -864,7 +948,7 @@ function do_toggle_language(el) {
                            data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
 
                       <div id='pub_search' class='collapse-light collapse'>
-                      <table class='table table-condensed' style="width:65%;">
+                      <table class='table table-condensed table-condensed-light' style="width:65%;">
                       {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
                       <tr>
                           <td class='td-light' style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
@@ -955,7 +1039,7 @@ function do_toggle_language(el) {
             {% trans "List View" %}
             {% endif %}
         </button>
-        &nbsp;&nbsp;
+&nbsp;&nbsp;      <span class="span-text span-text-light">
         {% trans "Number of Matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{glosscount}}.
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
@@ -963,6 +1047,7 @@ function do_toggle_language(el) {
         {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}.{% endif %}
         {% endfor %}
         {% endif %}
+        </span>
     </div>
 </form>
 
@@ -1095,11 +1180,11 @@ function do_toggle_language(el) {
 {% endif %}
 {% endif %}
 
-<table class='table table-condensed' id = 'glosslist_table'>
-    <thead id = 'glosslist_table_header'></thead>
-    <tbody>
+<table class='table table-condensed table-condensed-light' id='glosslist_table'>
+    <thead id='glosslist_table_header'></thead>
+    <tbody class="tbody tbody-light">
     {% for gloss in object_list %}
-    <tr id = "focusgloss_{{gloss.id}}">
+    <tr id="focusgloss_{{gloss.id}}">
         </tr>
     {% endfor %}
     </tbody>
@@ -1113,7 +1198,7 @@ function do_toggle_language(el) {
 
 {% regroup glosses_ordered_by_lemma_id by lemma as lemma_groups %}
 
-<table class='table table-condensed' id = 'lemmalist_table'>
+<table class='table table-condensed table-condensed-light' id = 'lemmalist_table'>
 <thead id = 'lemmalist_table_header'>
 <tr>
     <th class='th th-light'>{% trans "Lemma ID Gloss" %}</th>
@@ -1142,7 +1227,7 @@ function do_toggle_language(el) {
 
 </thead>
 
-<tbody>
+<tbody class="tbody tbody-light">
 {% for lemma in lemma_groups %}
 <tr>
 

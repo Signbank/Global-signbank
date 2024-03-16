@@ -141,7 +141,25 @@ function toggle_dark_mode(e) {
             $(this).addClass("btn-default-light");
         }
   });
-  $(".td").each(function () {
+  $("tbody").each(function () {
+        if ($(this).hasClass("tbody-light")) {
+            $(this).removeClass("tbody-light");
+            $(this).addClass("tbody-dark");
+        } else if ($(this).hasClass("tbody-dark")) {
+            $(this).removeClass("tbody-dark");
+            $(this).addClass("tbody-light");
+        }
+  });
+  $("thead").each(function () {
+        if ($(this).hasClass("thead-light")) {
+            $(this).removeClass("thead-light");
+            $(this).addClass("thead-dark");
+        } else if ($(this).hasClass("thead-dark")) {
+            $(this).removeClass("thead-dark");
+            $(this).addClass("thead-light");
+        }
+  });
+  $("td").each(function () {
         if ($(this).hasClass("td-light")) {
             $(this).removeClass("td-light");
             $(this).addClass("td-dark");
@@ -150,13 +168,40 @@ function toggle_dark_mode(e) {
             $(this).addClass("td-light");
         }
   });
-  $(".th").each(function () {
+  $("th").each(function () {
         if ($(this).hasClass("th-light")) {
             $(this).removeClass("th-light");
             $(this).addClass("th-dark");
         } else if ($(this).hasClass("th-dark")) {
             $(this).removeClass("th-dark");
             $(this).addClass("th-light");
+        }
+  });
+  $(".table-condensed").each(function () {
+        if ($(this).hasClass("table-condensed-light")) {
+            $(this).removeClass("table-condensed-light");
+            $(this).addClass("table-condensed-dark");
+        } else if ($(this).hasClass("table-condensed-dark")) {
+            $(this).removeClass("table-condensed-dark");
+            $(this).addClass("table-condensed-light");
+        }
+  });
+  $(".search-form").each(function () {
+        if ($(this).hasClass("search-form-light")) {
+            $(this).removeClass("search-form-light");
+            $(this).addClass("search-form-dark");
+        } else if ($(this).hasClass("search-form-dark")) {
+            $(this).removeClass("search-form-dark");
+            $(this).addClass("search-form-light");
+        }
+  });
+  $(".span-text").each(function () {
+        if ($(this).hasClass("span-text-light")) {
+            $(this).removeClass("span-text-light");
+            $(this).addClass("span-text-dark");
+        } else if ($(this).hasClass("span-text-dark")) {
+            $(this).removeClass("span-text-dark");
+            $(this).addClass("span-text-light");
         }
   });
 }
@@ -193,7 +238,7 @@ function toggle_dark_mode(e) {
      {% endif %}
      {% else %}
         {% if viewable_datasets %}
-        <div class='navbar-text navbar-text-light' style="left-margin: 15px;">
+        <div class='navbar-text' style="left-margin: 15px;">
             <div class='taglist ribbon_list'>
                 {% load underscore_to_space %}
                 {% for ds,selected in viewable_datasets %}
