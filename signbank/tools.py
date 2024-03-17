@@ -34,6 +34,7 @@ from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
 from signbank.api_interface import api_fields
+from django.views.decorators.csrf import csrf_exempt
 
 
 def get_two_letter_dir(idgloss):
@@ -1540,6 +1541,21 @@ def check_existence_foreign_relations(gloss, relations, values):
             pass
 
     return checked, errors
+
+
+@csrf_exempt
+def set_dark_mode(request):
+    # this is the toggle button in the menu bar
+    from django.http import JsonResponse
+    if 'dark_mode' not in request.session.keys():
+        # first time button is used
+        request.session['dark_mode'] = "True"
+    elif request.session['dark_mode'] == "True":
+        request.session['dark_mode'] = "False"
+    elif request.session['dark_mode'] == "False":
+        request.session['dark_mode'] = "True"
+    request.session.modified = True
+    return JsonResponse({})
 
 
 def reload_signbank(request=None):

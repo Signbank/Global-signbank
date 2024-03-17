@@ -1,3 +1,10 @@
+:root {
+    --panel-heading-background: rgb(44, 10, 10);
+    --panel-heading-text: rgb(237, 147, 156);
+    --text-input-field: rgb(40, 0, 0);
+    --text-input-border: rgb(172, 0, 0);
+    --text-input-text: rgb(250, 255, 255);
+}
 html,
 body {
   height: 100%;
@@ -7,7 +14,10 @@ body {
   color: black;
   /* The html and body elements cannot have any padding or margin. */
 }
-
+.body-dark {
+  background-color: rgb(23, 0, 0);
+  color: var(--panel-heading-text);
+}
 /* Wrapper for page content to push down footer */
 #wrap {
   min-height: calc(100% - 220px);
@@ -792,23 +802,6 @@ form {
     color: inherit;
 }
 
-tbody tr {
-    background-color: inherit;
-    color: inherit;
-}
-
-tr td {
-    background-color: inherit;
-    color: inherit;
-}
-td {
-    background-color: inherit;
-    color: inherit;
-}
-tr th {
-    background-color: inherit;
-    color: inherit;
-}
 @body-bg {
     background-color: inherit;
     color: inherit;
@@ -816,7 +809,7 @@ tr th {
 
 .dark-mode {
   background-color: rgb(9, 4, 2) !important;
-  color: rgb(250, 255, 255) !important;
+  color: var(--text-input-text) !important;
 }
 @media screen body {
   background: inherit;
@@ -897,8 +890,8 @@ input {
     color: inherit !important;
 }
 .panel-heading-dark {
-    background-color: rgb(34, 22, 22) !important;
-    color: rgb(237, 147, 156) !important;
+    background-color: var(--panel-heading-background) !important;
+    color: var(--panel-heading-text) !important;
     border-bottom-width: 0;
 }
 .panel-default-dark {
@@ -972,35 +965,37 @@ input {
 .td-dark > form {
     border-top-color: rgb(23, 0, 0) !important;
     background-color: rgb(25, 0, 0) !important;
-    color: rgb(250, 255, 255) !important;
+    color: var(--text-input-text) !important;
 }
 .td-dark > input {
-    border-top-color: rgb(40, 0, 0) !important;
-    border-color: rgb(40, 0, 0) !important;
-    background-color: rgb(40, 0, 0) !important;
-    border: solid 1px rgb(172, 0, 0) !important;
-    color: rgb(250, 255, 255) !important;
+    border-top-color: var(--text-input-field) !important;
+    border-color: var(--text-input-field) !important;
+    background-color: var(--text-input-field) !important;
+    border: solid 1px var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
 }
 .td-light {
     border-top-color: inherit;
 }
 .th-dark {
     border-bottom-color: rgb(34, 0, 0) !important;
+    color: var(--panel-heading-text) !important;
+    background-color: inherit !important;
 }
 .th-light {
-    border-bottom-color: inherit;
+    border-bottom-color: inherit !important;
 }
 
 .navbar-dark {
     background-color: rgb(22, 0, 0) !important;
-    color: rgb(172, 0, 0) !important;
+    color: var(--text-input-border) !important;
     border-bottom: solid 1px rgb(22, 0, 0) !important;
 }
 .navbar-nav-dark > li > a {
     padding-top: 5px;
     padding-bottom: 5px;
     background-color: rgb(22, 0, 0) !important;
-    color: rgb(172, 0, 0) !important;
+    color: var(--text-input-border) !important;
 }
 .navbar-nav-dark > li > a:hover {
     background-color: rgb(28, 0, 0) !important;
@@ -1019,23 +1014,23 @@ input {
 }
 .navbar-form-dark {
     background-color: rgb(40, 0, 0) !important;
-    color: rgb(172, 0, 0) !important;
+    color: var(--text-input-border) !important;
 }
 .dropdown-dark {
     background-color: rgb(112, 0, 0) !important;
-    color: rgb(172, 0, 0) !important;
+    color: var(--text-input-border) !important;
 }
 .dropdown-dark > ul {
     background-color: rgb(40, 0, 0) !important;
-    color: rgb(172, 0, 0) !important;
+    color: var(--text-input-border) !important;
 }
 .dropdown-menu-dark > ul {
     background-color: rgb(112, 0, 0) !important;
-    color: rgb(172, 0, 0) !important;
+    color: var(--text-input-border) !important;
 }
 .dropdown-menu-dark > li > a {
     background-color: rgb(40, 0, 0) !important;
-    color: rgb(172, 0, 0) !important;
+    color: var(--text-input-border) !important;
 }
 .dropdown-menu-dark > li > a:hover {
     background-color: rgb(112, 0, 0) !important;
@@ -1098,6 +1093,14 @@ input {
     border-top-color: rgb(34, 0, 0) !important;
     border-bottom-color: rgb(34, 0, 0) !important;
 }
+.table-condensed-dark > tr > th {
+    background-color: rgb(12, 0, 0) !important;
+    color: rgb(237, 147, 156) !important;
+    border-left-color: rgb(34, 0, 0) !important;
+    border-right-color: rgb(34, 0, 0) !important;
+    border-top-color: rgb(34, 0, 0) !important;
+    border-bottom-color: rgb(34, 0, 0) !important;
+}
 .table-condensed-dark > input {
     background-color: rgb(112, 0, 0) !important;
     color: white !important;
@@ -1118,18 +1121,31 @@ input {
     background-color: rgb(40, 0, 0) !important;
     color: rgb(172, 0, 0) !important;
 }
+.thead-light {
+    background-color: inherit;
+    color: inherit !important;
+}
 .thead-dark {
+    background-color: inherit !important;
+    color: inherit !important;
+}
+.thead-dark > tr > th {
     background-color: rgb(24, 0, 0) !important;
-    color: rgb(250, 255, 255) !important;
+    color: rgb(237, 147, 156) !important;
+}
+.tbody-dark {
+    background-color: rgb(12, 0, 0) !important;
+    border-color: rgb(24, 0, 0) !important;
+    color: rgb(172, 0, 0) !important;
     border-left-color: rgb(34, 0, 0) !important;
     border-right-color: rgb(34, 0, 0) !important;
     border-top-color: rgb(34, 0, 0) !important;
     border-bottom-color: rgb(34, 0, 0) !important;
 }
-.tbody-dark {
+.tbody-dark > tr > td {
     background-color: rgb(12, 0, 0) !important;
     border-color: rgb(24, 0, 0) !important;
-    color: rgb(250, 255, 255) !important;
+    color: rgb(172, 0, 0) !important;
     border-left-color: rgb(34, 0, 0) !important;
     border-right-color: rgb(34, 0, 0) !important;
     border-top-color: rgb(34, 0, 0) !important;
@@ -1146,14 +1162,14 @@ input {
     border-top-color: rgb(40, 0, 0) !important;
     border-color: rgb(40, 0, 0) !important;
     background-color: rgb(40, 0, 0) !important;
-    border: solid 1px rgb(172, 0, 0) !important;
-    color: rgb(250, 255, 255) !important;
+    border: solid 1px var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
 }
 .td-dark > label {
     color: rgb(237, 147, 156) !important;
 }
 .td-dark ::placeholder {
-    color: rgb(172, 0, 0) !important;
+    color: var(--text-input-border) !important;
 }
 .twitter-typeahead > input {
     background-color: inherit !important;
@@ -1164,3 +1180,4 @@ input {
     background-color: inherit !important;
     color: inherit !important;
 }
+

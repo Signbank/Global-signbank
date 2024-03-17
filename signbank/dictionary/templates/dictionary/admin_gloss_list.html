@@ -23,89 +23,9 @@
     // this is a default setting for the case only one dataset is available
     var js_dataset_languages = '{{js_dataset_languages|safe}}';
 </script>
+<link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
 
 <style>
-.selection {
-    background-color: inherit !important;
-    color: inherit !important;
-}
-.select2 {
-    color: inherit !important;
-    background-color: inherit !important;
-}
-.select2-container {
-    color: inherit !important;
-    background-color: inherit !important;
-}
-.select2-container--default {
-    color: inherit !important;
-    background-color: inherit !important;
-}
-.select2-dropdown {
-    color: inherit !important;
-    background-color: inherit !important;
-}
-.select2-hidden-accessible {
-    color: inherit !important;
-    background-color: inherit !important;
-}
-.select2-search {
-    color: inherit !important;
-    background-color: inherit !important;
-}
-.select2-search__field {
-    color: inherit !important;
-    background-color: inherit !important;
-}
-.select2-results {
-    color: inherit !important;
-    background-color: inherit !important;
-}
-.select2-results__options {
-    color: inherit !important;
-    background-color: inherit !important;
-}
-.select2-results__option {
-    color: inherit !important;
-    background-color: inherit !important;
-}
-.select2-results__option--highlighted {
-    color: inherit !important;
-    background-color: inherit !important;
-    font-weight: bold;
-}
-.select2-selection__choice {
-    color: black !important;
-    background-color: white !important;
-    border: solid 1px black;
-    opacity: 0.5;
-    font-weight: bold;
-    box-shadow: 0 2px 2px;
-}
-.select2-selection {
-    color: inherit !important;
-    background-color: inherit !important;
-    border-left-color: inherit !important;
-    border-right-color: inherit !important;
-    border-top-color: inherit !important;
-    border-bottom-color: inherit !important;
-}
-.select2-selection--multiple {
-    color: inherit !important;
-    background-color: inherit !important;
-    border-left-color: inherit !important;
-    border-right-color: inherit !important;
-    border-top-color: inherit !important;
-    border-bottom-color: inherit !important;
-}
-.select2-selection__rendered {
-    color: inherit !important;
-    background-color: inherit !important;
-    border-left-color: inherit !important;
-    border-right-color: inherit !important;
-    border-top-color: inherit !important;
-    border-bottom-color: inherit !important;
-}
 .pub-row tr {float: left!important; width: 50%!important;}
 </style>
 
@@ -1181,7 +1101,7 @@ function do_toggle_language(el) {
 {% endif %}
 
 <table class='table table-condensed table-condensed-light' id='glosslist_table'>
-    <thead id='glosslist_table_header'></thead>
+    <thead id='glosslist_table_header' class="thead thead-light"></thead>
     <tbody class="tbody tbody-light">
     {% for gloss in object_list %}
     <tr id="focusgloss_{{gloss.id}}">

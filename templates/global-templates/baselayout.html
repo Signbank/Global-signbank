@@ -18,7 +18,7 @@
 
     {% block extrahead %}{% endblock %}
   </head>
-  <body>
+  <body class='body body-light'>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
@@ -44,7 +44,13 @@
     <script type="text/javascript" src="{{STATIC_URL}}js/minimalistic_language_picker.js"></script>
 
     {% block extrajs %}{% endblock %}
-
+    <script type='text/javascript'>
+    var set_dark_mode_url = "{{PREFIX_URL}}/set_dark_mode/";
+    var dark_mode_setting = '{{request.session.dark_mode|safe}}';
+    if (dark_mode_setting == "True") {
+        toggle_dark_mode();
+    }
+    </script>
     <script type="text/javascript">
         function focusFunction() {
             var search_text = document.getElementById("tooltip-search").value;
