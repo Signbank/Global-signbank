@@ -14,7 +14,7 @@ from django.middleware.csrf import get_token
 from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
 from signbank.registration.models import RegistrationProfile
 from django.contrib.auth.models import User
-from signbank.dictionary.models import Dataset, UserProfile, SearchHistory
+from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedItem
 from django.contrib import messages
 from django.template.loader import render_to_string
 
@@ -348,11 +348,15 @@ def user_profile(request):
     change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
     user_has_queries = SearchHistory.objects.filter(user=user).count()
     user_can_change_glosses = change_permit_datasets.count() > 0
+    possible_affiliations = [aff.name for aff in Affiliation.objects.all()]
+    print(possible_affiliations)
+    user_affiliation = AffiliatedItem.objects.filter(users__first_name=request.user)
     return render(request, 'user_profile.html', {'selected_datasets': selected_datasets,
                                                  'view_permit_datasets': view_permit_datasets,
                                                  'change_permit_datasets': change_permit_datasets,
                                                  'user_can_change_glosses': user_can_change_glosses,
                                                  'user_has_queries': user_has_queries,
+                                                 'possible_affiliations': possible_affiliations,
                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                                                  'expiry': expiry,
                                                  'delta': delta})
