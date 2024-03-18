@@ -115,7 +115,7 @@ $(document).ready(function(){
                  </td>
              </tr>
              {% for dataset_lang in dataset_languages %}
-             {% with dataset_lang.name as language_name %}
+             {% with dataset_lang.name_en as language_name %}
              {% with "Lemma ID Gloss ("|add:language_name|add:")" as lemma_field_name %}
              <tr>
                  <th id="add_gloss_lemma_header_{{dataset_lang.language_code_2char}}">
@@ -132,7 +132,7 @@ $(document).ready(function(){
              {% endwith %}
              {% endfor %}
              {% for dataset_lang in dataset_languages %}
-             {% with dataset_lang.name as language_name %}
+             {% with dataset_lang.name_en as language_name %}
              {% with "Annotation ID Gloss ("|add:language_name|add:")" as annotation_field_name %}
              <tr>
                  <th id="add_gloss_annotation_header_{{dataset_lang.language_code_2char}}">
