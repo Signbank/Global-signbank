@@ -206,6 +206,42 @@ function toggle_dark_mode() {
             $(this).addClass("span-text-light");
         }
   });
+  $(".morphtypeahead").each(function () {
+        if ($(this).hasClass("morphtypeahead-light")) {
+            $(this).removeClass("morphtypeahead-light");
+            $(this).addClass("morphtypeahead-dark");
+        } else if ($(this).hasClass("morphtypeahead-dark")) {
+            $(this).removeClass("morphtypeahead-dark");
+            $(this).addClass("morphtypeahead-light");
+        }
+  });
+  $(".pages-form").each(function () {
+        if ($(this).hasClass("pages-form-light")) {
+            $(this).removeClass("pages-form-light");
+            $(this).addClass("pages-form-dark");
+        } else if ($(this).hasClass("pages-form-dark")) {
+            $(this).removeClass("pages-form-dark");
+            $(this).addClass("pages-form-light");
+        }
+  });
+  $(".form-group").each(function () {
+        if ($(this).hasClass("form-group-light")) {
+            $(this).removeClass("form-group-light");
+            $(this).addClass("form-group-dark");
+        } else if ($(this).hasClass("form-group-dark")) {
+            $(this).removeClass("form-group-dark");
+            $(this).addClass("form-group-light");
+        }
+  });
+  $(".form-control").each(function () {
+        if ($(this).hasClass("form-control-light")) {
+            $(this).removeClass("form-control-light");
+            $(this).addClass("form-control-dark");
+        } else if ($(this).hasClass("form-control-dark")) {
+            $(this).removeClass("form-control-dark");
+            $(this).addClass("form-control-light");
+        }
+  });
 }
 
 function set_dark_mode(){

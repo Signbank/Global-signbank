@@ -4,6 +4,10 @@
     --text-input-field: rgb(40, 0, 0);
     --text-input-border: rgb(172, 0, 0);
     --text-input-text: rgb(250, 255, 255);
+    --well-background: rgb(23, 0, 0);
+    --button-default: rgb(187, 60, 80);
+    --nav-highlight: rgb(28, 0, 0);
+    --dropdown-dark: rgb(112, 0, 0);
 }
 html,
 body {
@@ -15,7 +19,7 @@ body {
   /* The html and body elements cannot have any padding or margin. */
 }
 .body-dark {
-  background-color: rgb(23, 0, 0);
+  background-color: var(--well-background);
   color: var(--panel-heading-text);
 }
 /* Wrapper for page content to push down footer */
@@ -398,7 +402,7 @@ body {
   padding: 8px 12px;
   font-size: 24px;
   line-height: 30px;
-  border: 2px solid #ccc;
+  border: 2px solid black;
   -webkit-border-radius: 8px;
      -moz-border-radius: 8px;
           border-radius: 8px;
@@ -406,11 +410,12 @@ body {
 }
 
 .typeahead {
-  background-color: #fff;
+  background-color: white;
+  opacity: 50%;
 }
 
 .typeahead:focus {
-  border: 2px solid #0097cf;
+  border: 2px solid black;
 }
 
 .tt-query {
@@ -427,8 +432,9 @@ body {
   width: 422px;
   margin-top: 12px;
   padding: 8px 0;
-  background-color: #fff;
-  border: 1px solid #ccc;
+  background-color: white;
+  border: 1px solid black;
+  opacity: 50%;
   border: 1px solid rgba(0, 0, 0, 0.2);
   -webkit-border-radius: 8px;
      -moz-border-radius: 8px;
@@ -818,10 +824,10 @@ form {
 }
 
 option {
-    color: black;
+    color: inherit;
 }
 select {
-    color: black;
+    color: inherit;
 }
 
 input {
@@ -895,15 +901,15 @@ input {
     border-bottom-width: 0;
 }
 .panel-default-dark {
-    border: solid 1px rgb(23, 0, 0) !important;
-    border-bottom-color: rgb(23, 0, 0);
-    background-color: rgb(23, 0, 0);
-    color: rgb(237, 0, 0);
+    border: solid 1px var(--well-background) !important;
+    border-bottom-color: var(--well-background);
+    background-color: var(--well-background);
+    color: var(--text-input-border);
     margin-bottom: 0;
     box-shadow: #050014;
 }
 .collapse-dark {
-    border: solid 1px rgb(23, 0, 0) !important;
+    border: solid 1px var(--well-background) !important;
     border-top-width: 1px !important;
 }
 .collapse-light {
@@ -912,7 +918,7 @@ input {
     padding: 0 0 0 0;
 }
 .well-dark {
-    border: solid 1px rgb(23, 0, 0) !important;
+    border: solid 1px var(--well-background) !important;
 }
 .well-light {
     border: solid 1px inherit !important;
@@ -932,25 +938,25 @@ input {
     box-shadow: purple 0px 1px 1px 0px;
 } */
 .td-dark {
-    border-top-color: rgb(23, 0, 0) !important;
-    background-color: rgb(25, 0, 0) !important;
-    border: solid 1px rgb(23, 0, 0) !important;
+    border-top-color: var(--well-background) !important;
+    background-color: var(--well-background) !important;
+    border: solid 1px var(--well-background) !important;
 }
 .td-dark > select {
-    border-top-color: rgb(23, 0, 0) !important;
-    background-color: rgb(25, 0, 0) !important;
-    border: solid 1px rgb(172, 0, 0) !important;
-    color: rgb(250, 255, 255) !important;
+    border-top-color: var(--well-background) !important;
+    background-color: var(--well-background) !important;
+    border: solid 1px var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
 }
 .td-dark > select > option {
-    border-top-color: rgb(23, 0, 0) !important;
-    background-color: rgb(25, 0, 0) !important;
-    border: solid 1px rgb(172, 0, 0) !important;
-    color: rgb(250, 255, 255) !important;
+    border-top-color: var(--well-background) !important;
+    background-color: var(--well-background) !important;
+    border: solid 1px var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
 }
 .span-text-dark {
     background-color: inherit !important;
-    color: rgb(237, 147, 156) !important;
+    color: var(--panel-heading-text) !important;
 }
 /*
 .select2 {
@@ -963,8 +969,8 @@ input {
 }
 */
 .td-dark > form {
-    border-top-color: rgb(23, 0, 0) !important;
-    background-color: rgb(25, 0, 0) !important;
+    border-top-color: var(--well-background) !important;
+    background-color: var(--well-background) !important;
     color: var(--text-input-text) !important;
 }
 .td-dark > input {
@@ -973,6 +979,11 @@ input {
     background-color: var(--text-input-field) !important;
     border: solid 1px var(--text-input-border) !important;
     color: var(--text-input-text) !important;
+}
+.td-dark > .btn-default-dark {
+    background-color: var(--button-default) !important;
+    color: white !important;
+    border-color: var(--button-default) !important;
 }
 .td-light {
     border-top-color: inherit;
@@ -987,53 +998,53 @@ input {
 }
 
 .navbar-dark {
-    background-color: rgb(22, 0, 0) !important;
+    background-color: var(--well-background) !important;
     color: var(--text-input-border) !important;
-    border-bottom: solid 1px rgb(22, 0, 0) !important;
+    border-bottom: solid 1px var(--well-background) !important;
 }
 .navbar-nav-dark > li > a {
     padding-top: 5px;
     padding-bottom: 5px;
-    background-color: rgb(22, 0, 0) !important;
+    background-color: var(--well-background) !important;
     color: var(--text-input-border) !important;
 }
 .navbar-nav-dark > li > a:hover {
-    background-color: rgb(28, 0, 0) !important;
+    background-color: var(--nav-highlight) !important;
     color: white !important;
 }
 .navbar-nav-dark > ul {
-    background-color: rgb(28, 0, 0) !important;
+    background-color: var(--nav-highlight) !important;
     color: white !important;
 }
 .btn-default-dark {
-    background-color: rgb(187, 0, 0) !important;
+    background-color: var(--button-default) !important;
     color: white !important;
-    border-color: rgb(187, 0, 0) !important;
+    border-color: var(--button-default) !important;
 }
 .btn-default-light {
 }
 .navbar-form-dark {
-    background-color: rgb(40, 0, 0) !important;
+    background-color: var(--text-input-field) !important;
     color: var(--text-input-border) !important;
 }
 .dropdown-dark {
-    background-color: rgb(112, 0, 0) !important;
+    background-color: var(--dropdown-dark) !important;
     color: var(--text-input-border) !important;
 }
 .dropdown-dark > ul {
-    background-color: rgb(40, 0, 0) !important;
+    background-color: var(--text-input-field) !important;
     color: var(--text-input-border) !important;
 }
 .dropdown-menu-dark > ul {
-    background-color: rgb(112, 0, 0) !important;
+    background-color: var(--dropdown-dark) !important;
     color: var(--text-input-border) !important;
 }
 .dropdown-menu-dark > li > a {
-    background-color: rgb(40, 0, 0) !important;
+    background-color: var(--text-input-field) !important;
     color: var(--text-input-border) !important;
 }
 .dropdown-menu-dark > li > a:hover {
-    background-color: rgb(112, 0, 0) !important;
+    background-color: var(--dropdown-dark) !important;
     color: white !important;
 }
 .text-container-dark {
@@ -1054,7 +1065,7 @@ input {
     color: white !important;
 }
 .navbar-text-dark > a:hover {
-    background-color: rgb(112, 0, 0) !important;
+    background-color: var(--dropdown-dark) !important;
     color: white !important;
 }
 .interface-language-light > input {
@@ -1063,13 +1074,13 @@ input {
     border: solid 1px inherit !important;
 }
 .interface-language-dark {
-    background-color: rgb(28, 0, 0) !important;
+    background-color: var(--nav-highlight) !important;
     color: white !important;
-    border: solid 1px rgb(28, 0, 0) !important;
+    border: solid 1px var(--nav-highlight) !important;
 }
 .input-group-dark > label {
     background-color: rgb(55, 0, 0) !important;
-    color: rgb(237, 147, 156) !important;
+    color: var(--panel-heading-text) !important;
     border: solid 1px rgb(55, 0, 0) !important;
 }
 .input-group-dark > input {
@@ -1095,19 +1106,19 @@ input {
 }
 .table-condensed-dark > tr > th {
     background-color: rgb(12, 0, 0) !important;
-    color: rgb(237, 147, 156) !important;
+    color: var(--panel-heading-text) !important;
     border-left-color: rgb(34, 0, 0) !important;
     border-right-color: rgb(34, 0, 0) !important;
     border-top-color: rgb(34, 0, 0) !important;
     border-bottom-color: rgb(34, 0, 0) !important;
 }
 .table-condensed-dark > input {
-    background-color: rgb(112, 0, 0) !important;
+    background-color: var(--dropdown-dark) !important;
     color: white !important;
-    border-left-color: rgb(112, 0, 0) !important;
-    border-right-color: rgb(112, 0, 0) !important;
-    border-top-color: rgb(112, 0, 0) !important;
-    border-bottom-color: rgb(112, 0, 0) !important;
+    border-left-color: var(--dropdown-dark) !important;
+    border-right-color: var(--dropdown-dark) !important;
+    border-top-color: var(--dropdown-dark) !important;
+    border-bottom-color: var(--dropdown-dark) !important;
 }
 .table-condensed-dark > td > form {
     background-color: rgb(12, 0, 0) !important;
@@ -1118,8 +1129,8 @@ input {
     border-bottom-color: rgb(34, 0, 0) !important;
 }
 .search-form-dark {
-    background-color: rgb(40, 0, 0) !important;
-    color: rgb(172, 0, 0) !important;
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-border) !important;
 }
 .thead-light {
     background-color: inherit;
@@ -1131,12 +1142,12 @@ input {
 }
 .thead-dark > tr > th {
     background-color: rgb(24, 0, 0) !important;
-    color: rgb(237, 147, 156) !important;
+    color: var(--panel-heading-text) !important;
 }
 .tbody-dark {
     background-color: rgb(12, 0, 0) !important;
     border-color: rgb(24, 0, 0) !important;
-    color: rgb(172, 0, 0) !important;
+    color: var(--text-input-border) !important;
     border-left-color: rgb(34, 0, 0) !important;
     border-right-color: rgb(34, 0, 0) !important;
     border-top-color: rgb(34, 0, 0) !important;
@@ -1145,32 +1156,39 @@ input {
 .tbody-dark > tr > td {
     background-color: rgb(12, 0, 0) !important;
     border-color: rgb(24, 0, 0) !important;
-    color: rgb(172, 0, 0) !important;
+    color: var(--text-input-border) !important;
     border-left-color: rgb(34, 0, 0) !important;
     border-right-color: rgb(34, 0, 0) !important;
     border-top-color: rgb(34, 0, 0) !important;
     border-bottom-color: rgb(34, 0, 0) !important;
 }
-.twitter-typeahead {
-    background-color: inherit !important;
-    border-color: inherit !important;
-    color: inherit !important;
-    border: solid 1px inherit !important;
+.morphtypeahead-light {
+    background-color: white !important;
+    border-color: black !important;
+    color: black !important;
+    border: black !important;
+}
+.morphtypeahead-dark {
+    background-color: rgb(24, 0, 0) !important;
+    border-color: rgb(40, 0, 0) !important;
+    color: rgb(174, 0, 0) !important;
+    border: solid 1px rgb(40, 0, 0) !important;
 }
 
 .td-dark > span > input {
-    border-top-color: rgb(40, 0, 0) !important;
-    border-color: rgb(40, 0, 0) !important;
-    background-color: rgb(40, 0, 0) !important;
+    border-top-color: var(--text-input-field) !important;
+    border-color: var(--text-input-field) !important;
+    background-color: var(--text-input-field) !important;
     border: solid 1px var(--text-input-border) !important;
     color: var(--text-input-text) !important;
 }
 .td-dark > label {
-    color: rgb(237, 147, 156) !important;
+    color: var(--panel-heading-text) !important;
 }
 .td-dark ::placeholder {
     color: var(--text-input-border) !important;
 }
+
 .twitter-typeahead > input {
     background-color: inherit !important;
     color: inherit !important;
@@ -1180,4 +1198,26 @@ input {
     background-color: inherit !important;
     color: inherit !important;
 }
-
+.pages-form-dark {
+    background-color: var(--text-input-field) !important;
+    color: var(--panel-heading-text) !important;
+}
+/*
+.form-group-dark {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-border) !important;
+}
+.form-group-dark > select {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-border) !important;
+}
+.form-group-dark > select > option {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-border) !important;
+}
+*/
+.form-control-dark {
+    background-color: var(--button-default) !important;
+    color: white !important;
+    border-color: var(--button-default) !important;
+}

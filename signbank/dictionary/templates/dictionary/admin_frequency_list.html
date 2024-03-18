@@ -13,6 +13,7 @@
     <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
     <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
+<link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
 <script type='text/javascript'>
 var field_ids = {{all_field_labels|safe}};
 var field_ds = {{dataset_ids|safe}};
@@ -219,7 +220,8 @@ table {
 {% endblock %}
 
 {% block content %}
-
+<h3>{% trans "Frequencies" %}</h3>
+<br>
 <div id="definitionblock">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
 
@@ -250,15 +252,15 @@ table {
     </div>
 
     <button id="toggle_frequencies" value='hide_empty_frequencies' onclick="toggle_empty_frequencies(this)"
-            class="btn btn-default">{% trans "Hide Empty Frequencies" %}</button>
+            class="btn btn-default btn-default-light">{% trans "Hide Empty Frequencies" %}</button>
     <button id="sort_results" value='sort_by_frequency' onclick="sort_frequencies(this)"
-            class="btn btn-default">{% trans "Sort by Frequency" %}</button>
+            class="btn btn-default btn-default-light">{% trans "Sort by Frequency" %}</button>
 <table class='table table-condensed table-bordered'>
     <thead>
       <tr>
           <th style="width:300px;">{% trans "Dataset" %}</th>
           <th style="width:300px;">{% trans "Field Name" %}</th>
-          <th>{% trans "Frequencies" %}</th>
+          <th style="width:auto;">{% trans "Frequencies" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -275,9 +277,9 @@ table {
                     <tbody>
                     {% for key3, value3 in value2.items %}
                         {% with value3|length as length_choice %}
-                        {% with length_choice|add:"60" as display_width %}
+                        {% with length_choice|add:"300" as display_width %}
                         {% if value3 > 0 %}
-                        <tr style="height:auto;">
+                        <tr style="height:auto;width:auto;">
                         <td class="field_choice_label" value="{{key3}}"
                             nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{key3}}</td>
                         <td class="field_choice_frequency" value="{{value3}}"
