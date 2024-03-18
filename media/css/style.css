@@ -1199,13 +1199,23 @@ input {
     color: inherit !important;
 }
 .pages-form-dark {
-    background-color: var(--text-input-field) !important;
     color: var(--panel-heading-text) !important;
 }
-/*
+
 .form-group-dark {
+    color: var(--panel-heading-text) !important;
+}
+
+.form-group-dark label > span > input {
     background-color: var(--text-input-field) !important;
     color: var(--text-input-border) !important;
+    border: solid 1px var(--text-input-border) !important;
+}
+/*
+.form-group-dark > label > span > label {
+    background-color: rgb(55, 0, 0) !important;
+    color: var(--panel-heading-text) !important;
+    border: solid 1px rgb(55, 0, 0) !important;
 }
 .form-group-dark > select {
     background-color: var(--text-input-field) !important;
