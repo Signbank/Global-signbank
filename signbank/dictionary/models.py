@@ -4,8 +4,6 @@ from django.db import models
 from django.conf import settings
 from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
-from auth_token.models import AuthorizationToken
-from django.contrib.auth import models as authmodels
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.utils.translation import gettext_noop, gettext_lazy as _
@@ -3098,25 +3096,47 @@ class Dataset(models.Model):
         return frequency_lists_phonology_fields
 
 
-class SignbankToken(AuthorizationToken):
+class SignbankToken(models.Model):
     """
     Overrides the Token model to use the
     non-built-in user model
     """
-    signbank_user = models.ForeignKey(
-        authmodels.User, related_name='signbank_token',
-        on_delete=models.CASCADE,
-        verbose_name=_("User")
-    )
+    signbank_token = models.CharField(max_length=16, blank=True, verbose_name=_("Token"), null=True)
+    signbank_user = models.ForeignKey(User, verbose_name=_("Signbank User"), on_delete=models.CASCADE)
     signbank_dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
                                          help_text=_("API Token to change Dataset"), null=True)
+    created = models.DateTimeField(_("Created"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Token")
+        verbose_name_plural = _("Tokens")
+
+
+class Affiliation(models.Model):
+    name = models.CharField(max_length=35)
+
+    def __str__(self):
+        return self.name
+
+
+class AffiliatedItem(models.Model):
+
+    affiliation = models.ForeignKey(Affiliation, verbose_name=_("Affiliation"), on_delete=models.CASCADE)
+    users = models.ManyToManyField(User, verbose_name=_("Users"),
+                                   related_name='is_affiliated_with')
+    glosses = models.ManyToManyField(Gloss, verbose_name=_("Glosses"),
+                                     related_name='corpus_contains')
+
+    def __str__(self):
+        affiliated_users = [u.first_name for u in self.users.all()]
+        return self.affiliation.name + ': ' + ', '.join(affiliated_users)
 
 
 class UserProfile(models.Model):
     # This field is required.
     user = models.OneToOneField(User, related_name="user_profile_user", on_delete=models.CASCADE)
     api_token = models.ForeignKey("SignbankToken", related_name='authentication_token',
-                                  verbose_name=_("API Token"), on_delete=models.CASCADE)
+                                  verbose_name=_("API Token"), on_delete=models.CASCADE, null=True)
     # Other fields here
     last_used_language = models.CharField(max_length=20, default=settings.LANGUAGE_CODE)
     expiry_date = models.DateField(null=True, blank=True)
@@ -3165,7 +3185,6 @@ class DerivationHistoryTranslation(models.Model):
 
     class Meta:
         unique_together = (("derivHist", "language", "name"),)
-
 
 
 class AnnotationIdglossTranslation(models.Model):
