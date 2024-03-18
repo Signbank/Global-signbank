@@ -5891,7 +5891,7 @@ msgstr "Wachtwoord opnieuw ingesteld"
 
 #: templates/global-templates/menu.html:116
 msgid "Profile"
-msgstr ""
+msgstr "Profiel"
 
 #: templates/global-templates/registration/password_reset_email.html:4
 msgid ""
