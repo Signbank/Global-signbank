@@ -1174,7 +1174,21 @@ input {
     color: rgb(174, 0, 0) !important;
     border: solid 1px rgb(40, 0, 0) !important;
 }
-
+.lemmatypeahead-light {
+    background-color: white !important;
+    border-color: black !important;
+    color: black !important;
+    border: black !important;
+}
+.lemmatypeahead-dark {
+    background-color: rgb(24, 0, 0) !important;
+    border-color: rgb(40, 0, 0) !important;
+    color: white !important;
+    border: solid 1px rgb(174, 0, 0) !important;
+}
+span ::placeholder {
+    color: var(--text-input-border) !important;
+}
 .td-dark > span > input {
     border-top-color: var(--text-input-field) !important;
     border-color: var(--text-input-field) !important;
@@ -1185,11 +1199,12 @@ input {
 .td-dark > label {
     color: var(--panel-heading-text) !important;
 }
+/*
 .td-dark ::placeholder {
     color: var(--text-input-border) !important;
 }
 
-.twitter-typeahead > input {
+.twitter-typeahead {
     background-color: inherit !important;
     color: inherit !important;
     border: solid 1px inherit !important;
@@ -1198,6 +1213,7 @@ input {
     background-color: inherit !important;
     color: inherit !important;
 }
+*/
 .pages-form-dark {
     color: var(--panel-heading-text) !important;
 }
@@ -1205,10 +1221,16 @@ input {
 .form-group-dark {
     color: var(--panel-heading-text) !important;
 }
-
-.form-group-dark label > span > input {
+/*
+.form-group-dark > label {
     background-color: var(--text-input-field) !important;
     color: var(--text-input-border) !important;
+    border: solid 1px var(--text-input-border) !important;
+}
+*/
+.form-group-dark > input {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-text) !important;
     border: solid 1px var(--text-input-border) !important;
 }
 /*

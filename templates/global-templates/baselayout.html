@@ -47,9 +47,6 @@
     <script type='text/javascript'>
     var set_dark_mode_url = "{{PREFIX_URL}}/set_dark_mode/";
     var dark_mode_setting = '{{request.session.dark_mode|safe}}';
-    if (dark_mode_setting == "True") {
-        toggle_dark_mode();
-    }
     </script>
     <script type="text/javascript">
         function focusFunction() {
@@ -120,6 +117,10 @@
     	navbarHeight = Math.round($('#signbank-bar').outerHeight());
         $('#wrap').css({'padding-top': navbarHeight});
         $('[data-toggle="tooltip-menubar"]').tooltip();
+
+        if (dark_mode_setting == "True") {
+            toggle_dark_mode();
+        }
     })
 
     $(window).on('resize', function() {

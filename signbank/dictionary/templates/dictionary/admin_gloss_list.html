@@ -680,7 +680,7 @@ function do_toggle_language(el) {
 
                         <tr>
                             {% with searchform|get_annotation_search_field_for_language:dataset_lang as search_field %}
-                            <td class='td-light'>
+                            <td class='td td-light'>
                                 <div class='input-group input-group-light'>
                                 <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
                                     {{search_field.label}}
@@ -694,7 +694,7 @@ function do_toggle_language(el) {
                             {% endwith %}
 
                             {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
-                            <td class='td-light'><div class='input-group input-group-light'>
+                            <td class='td td-light'><div class='input-group input-group-light'>
 
                                 <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
                                     {{lemma_field.label}}
@@ -707,7 +707,7 @@ function do_toggle_language(el) {
                             {% endwith %}
 
                             {% with searchform|get_senses_form_field_for_language:dataset_lang as keyword_field %}
-                            <td class='td-light'><div class='input-group input-group-light'>
+                            <td class='td td-light'><div class='input-group input-group-light'>
                                 <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>
                                     {{keyword_field.label}}</label>
                                 <input name='keyword_{{dataset_lang.language_code_2char}}'
@@ -728,20 +728,20 @@ function do_toggle_language(el) {
                         <div id='searchbasic' class='collapse-light collapse'>
                         <table class='table table-condensed table-condensed-light' style="width:65%;">
                             <tr id='signlanguage_selection'>
-                                <td class='td-light' style="padding-left:30px;"><label>{{searchform.signLanguage.label}}</label></td>
-                                <td class='td-light' style="width:600px;">{{ searchform.signLanguage }}</td>
+                                <td class='td td-light' style="padding-left:30px;"><label>{{searchform.signLanguage.label}}</label></td>
+                                <td class='td td-light' style="width:600px;">{{ searchform.signLanguage }}</td>
                             </tr>
                             <tr id='dialect_selection'>
-                                <td class='td-light' style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
-                                <td class='td-light' style="width:600px;">{{ searchform.dialects }}</td>
+                                <td class='td td-light' style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
+                                <td class='td td-light' style="width:600px;">{{ searchform.dialects }}</td>
                             </tr>
                         </table>
 
                         <table class='table table-condensed table-condensed-light' style="width:65%;">
                             {% for fieldname,field,label in input_names_fields_and_labels.main %}
 
-                                <tr><td class='td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
-                                    <td class='td-light' style="width:600px;">{{field}}</td></tr>
+                                <tr><td class='td td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                    <td class='td td-light' style="width:600px;">{{field}}</td></tr>
 
                             {% endfor %}
 
@@ -756,11 +756,11 @@ function do_toggle_language(el) {
                       <div id='morph_search' class='collapse-light collapse'>
                       <table class='table table-condensed table-condensed-light' style="width:65%;">
                         <tr>
-                          <td class='td-light'>
+                          <td class='td td-light'>
                             <table class='table table-condensed table-condensed-light'>
                                 <tr>
-                                    <td class='td-light' style="padding-left:30px;"><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
-                                    <td class='td-light' style="width:600px;">
+                                    <td class='td td-light' style="padding-left:30px;"><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
+                                    <td class='td td-light' style="width:600px;">
                                         <input class='form-control morphtypeahead morphtypeahead-light'
                                                id="morphemeidgloss"
                                                placeholder='{% trans "Morpheme Gloss" %}'
@@ -768,14 +768,14 @@ function do_toggle_language(el) {
                                         <input type="hidden" name='morpheme' id='morpheme_id' value="">
                                     </td>
                                 </tr>
-                                <tr><td class='td-light' style="padding-left:30px;"><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td>
-                                    <td class='td-light' style="width:600px;">{{searchform.hasComponentOfType}}</td></tr>
-                                <tr><td class='td-light' style="padding-left:30px;"><label for='id_mrpType'>{{searchform.mrpType.label}}</label></td>
-                                    <td class='td-light' style="width:600px;">{{searchform.mrpType}}</td></tr>
-                                <tr><td class='td-light' style="padding-left:30px;"><label for='id_isablend'>{{searchform.isablend.label}}</label></td>
-                                    <td class='td-light' style="width:600px;">{{searchform.isablend}}</td></tr>
-                                <tr><td class='td-light' style="padding-left:30px;"><label for='id_ispartofablend'>{{searchform.ispartofablend.label}}</label></td>
-                                    <td class='td-light' style="width:600px;">{{searchform.ispartofablend}}</td></tr>
+                                <tr><td class='td td-light' style="padding-left:30px;"><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td>
+                                    <td class='td td-light' style="width:600px;">{{searchform.hasComponentOfType}}</td></tr>
+                                <tr><td class='td td-light' style="padding-left:30px;"><label for='id_mrpType'>{{searchform.mrpType.label}}</label></td>
+                                    <td class='td td-light' style="width:600px;">{{searchform.mrpType}}</td></tr>
+                                <tr><td class='td td-light' style="padding-left:30px;"><label for='id_isablend'>{{searchform.isablend.label}}</label></td>
+                                    <td class='td td-light' style="width:600px;">{{searchform.isablend}}</td></tr>
+                                <tr><td class='td td-light' style="padding-left:30px;"><label for='id_ispartofablend'>{{searchform.ispartofablend.label}}</label></td>
+                                    <td class='td td-light' style="width:600px;">{{searchform.ispartofablend}}</td></tr>
                             </table>
 
                           </td>
@@ -791,23 +791,23 @@ function do_toggle_language(el) {
                       <table class='table table-condensed table-condensed-light'>
                         <tr>
 
-                          <td class='td-light'>
+                          <td class='td td-light'>
                             <table class='table table-condensed table-condensed-light'>
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
 
                                     <tr>
-                                        <td class='td-light' style="padding-left:30px;"><label>{{label}}</label></td><td class='td-light'>{{field}}</td>
+                                        <td class='td td-light' style="padding-left:30px;"><label>{{label}}</label></td><td class='td td-light'>{{field}}</td>
                                         {% if fieldname == 'handedness' %}
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
-                                                <td class='td-light'><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td class='td-light'>{{handednessfield}}</td>
+                                                <td class='td td-light'><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td class='td td-light'>{{handednessfield}}</td>
                                             {% endfor %}
                                         {% elif fieldname == 'domhndsh' %}
                                             {% for domhndshfieldname,domhndshfield,domhndshlabel in input_names_fields_labels_domhndsh %}
-                                                <td class='td-light'><label for='id_{{domhndshfieldname}}'>{{domhndshlabel}}</label></td><td class='td-light'>{{domhndshfield}}</td>
+                                                <td class='td td-light'><label for='id_{{domhndshfieldname}}'>{{domhndshlabel}}</label></td><td class='td td-light'>{{domhndshfield}}</td>
                                             {% endfor %}
                                         {% elif fieldname == 'subhndsh' %}
                                             {% for subhndshfieldname,subhndshfield,subhndshlabel in input_names_fields_labels_subhndsh %}
-                                                <td class='td-light'><label for='id_{{subhndshfieldname}}'>{{subhndshlabel}}</label></td><td class='td-light'>{{subhndshfield}}</td>
+                                                <td class='td td-light'><label for='id_{{subhndshfieldname}}'>{{subhndshlabel}}</label></td><td class='td td-light'>{{subhndshfield}}</td>
                                             {% endfor %}
                                         {% endif %}
                                     </tr>
@@ -828,12 +828,12 @@ function do_toggle_language(el) {
                       <table class='table table-condensed table-condensed-light'>
                         <tr>
 
-                          <td class='td-light'>
+                          <td class='td td-light'>
                             <table class='table table-condensed table-condensed-light' style="width:65%;">
                                 {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
 
-                                    <tr><td class='td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
-                                        <td class='td-light' style="width:600px;">{{field}}</td></tr>
+                                    <tr><td class='td td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                        <td class='td td-light' style="width:600px;">{{field}}</td></tr>
 
                                 {% endfor %}
 
@@ -855,8 +855,8 @@ function do_toggle_language(el) {
                       <table class='table table-condensed table-condensed-light' style="width:65%;">
                       {% for relation_id, relation_label, relation_field in search_by_relation_fields %}
                       <tr>
-                          <td class='td-light' style="padding-left:30px;"><label for='id_{{relation_id}}'>{{relation_label}}</label></td>
-                          <td class='td-light' style="width:600px;">{{relation_field}}</td>
+                          <td class='td td-light' style="padding-left:30px;"><label for='id_{{relation_id}}'>{{relation_label}}</label></td>
+                          <td class='td td-light' style="width:600px;">{{relation_field}}</td>
                       </tr>
                       {% endfor %}
                       </table>
@@ -871,8 +871,8 @@ function do_toggle_language(el) {
                       <table class='table table-condensed table-condensed-light' style="width:65%;">
                       {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
                       <tr>
-                          <td class='td-light' style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
-                          <td class='td-light' style="width:600px;">{{publication_field}}</td>
+                          <td class='td td-light' style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
+                          <td class='td td-light' style="width:600px;">{{publication_field}}</td>
                       </tr>
                       {% endfor %}
                       </table>
@@ -981,7 +981,7 @@ function do_toggle_language(el) {
      <div id='add_gloss_form' class='collapse-light collapse'>
          <form action='{% url "dictionary:add_gloss" %}' method='post' class='pages-form pages-form-light'>
              {% csrf_token %}
-             <table class='table'>
+             <table class='table table-condensed table-condensed-light'>
                  <tr>
                      {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th class='th th-light'><label for='dataset'>{% trans "Dataset" %}</label></th>
                      {% else %}
@@ -994,7 +994,7 @@ function do_toggle_language(el) {
                      <th class='th th-light'></th>
                  </tr>
                  <tr>
-                      <td class='td-light'>
+                      <td class='td td-light'>
                       <select id="id_dataset" name="dataset" required="">
                      {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
                          {% for s_dataset in selected_datasets %}
@@ -1021,7 +1021,7 @@ function do_toggle_language(el) {
                      {% endif %}
                      </select>
                      </td>
-                     <td class='td-light'>
+                     <td class='td td-light'>
                          <div id="lemma_select" class='form-group form-group-light'>
                              <label for="id_lemma_language_select">
                              <span id="selected_lemma_language" value="{{default_dataset_lang}}">
@@ -1036,7 +1036,7 @@ function do_toggle_language(el) {
                              <span id="lemma_language_buffer">&nbsp;<br></span>
 
                              <!-- Input of the type ahead -->
-                             <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' size="30">
+                             <input class='form-control lemmatypeahead lemmatypeahead-light' placeholder='{% trans "Lemma" %}' size="30">
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
                              <input type='hidden' name='idgloss' value='confirmed' required="">
                              <a href="#" onclick="return toggleAddLemma()">{% trans "Create New" %}</a>
@@ -1055,11 +1055,11 @@ function do_toggle_language(el) {
                          <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
                      </td>
                      {% for dataset_lang in dataset_languages %}
-                     <td class='td-light' id="add_gloss_dataset_value_{{dataset_lang.language_code_2char}}">
+                     <td class='td td-light' id="add_gloss_dataset_value_{{dataset_lang.language_code_2char}}">
                          <input id="glosscreate_{{dataset_lang.language_code_2char}}" name="glosscreate_{{dataset_lang.language_code_2char}}" size="30" type="text"/>
                      </td>
                      {% endfor %}
-                     <td class='td-light'><input class='btn btn-default btn-default-light' type='submit' value='{% trans "Add New Sign" %}'></td>
+                     <td class='td td-light'><input class='btn btn-default btn-default-light' type='submit' value='{% trans "Add New Sign" %}'></td>
                  </tr>
              </table>
 
@@ -1118,8 +1118,8 @@ function do_toggle_language(el) {
 
 {% regroup glosses_ordered_by_lemma_id by lemma as lemma_groups %}
 
-<table class='table table-condensed table-condensed-light' id = 'lemmalist_table'>
-<thead id = 'lemmalist_table_header'>
+<table class='table table-condensed table-condensed-light' id='lemmalist_table'>
+<thead id='lemmalist_table_header' class="thead thead-light">
 <tr>
     <th class='th th-light'>{% trans "Lemma ID Gloss" %}</th>
     {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th class='th th-light'>{% trans "Dataset" %}</th>{% endif %}

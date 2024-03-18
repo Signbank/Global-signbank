@@ -143,7 +143,7 @@ function toggle_dark_mode() {
             $(this).addClass("btn-default-light");
         }
   });
-  $("tbody").each(function () {
+  $(".tbody").each(function () {
         if ($(this).hasClass("tbody-light")) {
             $(this).removeClass("tbody-light");
             $(this).addClass("tbody-dark");
@@ -152,7 +152,7 @@ function toggle_dark_mode() {
             $(this).addClass("tbody-light");
         }
   });
-  $("thead").each(function () {
+  $(".thead").each(function () {
         if ($(this).hasClass("thead-light")) {
             $(this).removeClass("thead-light");
             $(this).addClass("thead-dark");
@@ -161,7 +161,7 @@ function toggle_dark_mode() {
             $(this).addClass("thead-light");
         }
   });
-  $("td").each(function () {
+  $(".td").each(function () {
         if ($(this).hasClass("td-light")) {
             $(this).removeClass("td-light");
             $(this).addClass("td-dark");
@@ -213,6 +213,15 @@ function toggle_dark_mode() {
         } else if ($(this).hasClass("morphtypeahead-dark")) {
             $(this).removeClass("morphtypeahead-dark");
             $(this).addClass("morphtypeahead-light");
+        }
+  });
+  $(".lemmatypeahead").each(function () {
+        if ($(this).hasClass("lemmatypeahead-light")) {
+            $(this).removeClass("lemmatypeahead-light");
+            $(this).addClass("lemmatypeahead-dark");
+        } else if ($(this).hasClass("lemmatypeahead-dark")) {
+            $(this).removeClass("lemmatypeahead-dark");
+            $(this).addClass("lemmatypeahead-light");
         }
   });
   $(".pages-form").each(function () {
