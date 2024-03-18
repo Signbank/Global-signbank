@@ -545,7 +545,7 @@ class Language(models.Model):
     description = models.TextField(null=True, blank=True)
 
     class Meta:
-        ordering = ['name']
+        ordering = ['-id']
 
     def __str__(self):
         return self.name
@@ -732,7 +732,6 @@ class Sense(models.Model):
         sense_translations_per_language = dict()
         glosssense = GlossSense.objects.filter(sense=self).first()
         if not glosssense:
-            # this method returns a dict
             return sense_translations_per_language
 
         # languages_lookup is used in a later step to retrieve the language name
@@ -744,24 +743,18 @@ class Sense(models.Model):
         for language in glosssense.gloss.lemma.dataset.translation_languages.all():
             languages_lookup[language.id] = language.name
 
-        sense_translations = self.senseTranslations.all().order_by(
-                'translations__index')
-
-        if exclude_empty:
-            sense_translations = sense_translations.exclude(
-                translations__translation__text__isnull=True).order_by(
-                'translations__index').values('language', 'translations__translation__text')
-        else:
-            sense_translations = sense_translations.order_by(
-                'translations__index').values('language', 'translations__translation__text')
-
-        for values in sense_translations:
-            language = languages_lookup[values['language']]
-            trans = values['translations__translation__text']
+        sense_translations = self.senseTranslations.all().order_by('-language__id', 'translations').exclude(
+                translations__translation__text__isnull=True).values('language', 'translations__translation__text')
+            
+        for sense_translation in sense_translations:
+            language = languages_lookup[sense_translation['language']]
+            trans = sense_translation['translations__translation__text']
             if language not in sense_translations_per_language.keys():
-                sense_translations_per_language[language] = []
-            if not trans:
-                continue
+                if trans:
+                    sense_translations_per_language[language] = []
+                if not trans and not exclude_empty:
+                    sense_translations_per_language[language] = []
+                    continue
             sense_translations_per_language[language].append(trans)
 
         if join_char:
