@@ -916,6 +916,7 @@ class GlossDetailView(DetailView):
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
 
         context['tagform'] = TagUpdateForm()
+        context['affiliationform'] = AffiliationUpdateForm()
         context['videoform'] = VideoUploadForObjectForm()
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()

@@ -19,13 +19,21 @@ from signbank.settings.base import WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS
 from datetime import datetime
 
 from signbank.dictionary.models import *
-from signbank.tools import get_two_letter_dir
 
 
 if sys.argv[0] == 'mod_wsgi':
     from signbank.dictionary.models import *
 else:
     from signbank.dictionary.models import Gloss
+
+
+def get_two_letter_dir(idgloss):
+    foldername = idgloss[:2]
+
+    if len(foldername) == 1:
+        foldername += '-'
+
+    return foldername
 
 
 class Video(models.Model):

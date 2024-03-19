@@ -17,3 +17,13 @@ def get_affiliation_for_gloss(gloss):
 
     affiliations_for_gloss = gloss.affiliation_corpus_contains.all()
     return affiliations_for_gloss
+
+
+def get_affiliations():
+    """
+    Retrieves a list of ``Affiliation`` objects associated with a gloss and
+    stores them in a context variable.
+    """
+
+    affiliations = Affiliation.objects.all()
+    return affiliations

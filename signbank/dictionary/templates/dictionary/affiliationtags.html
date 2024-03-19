@@ -2,24 +2,24 @@
 
 {% load guardian_tags %}
 
-        <div id='tags' style="z-index: 0;opacity:.99; position: relative; background-color: white;">
+        <div id='affs' style="z-index: 0;opacity:.99; position: relative; background-color: white;">
         <fieldset>
       {% load affiliation_tags %}
-      {% affiliation_for_gloss gloss as tag_list %}
-      {% if tag_list %}
-          <ul class='taglist'>
-          {% for tag in tag_list %}
-            <li class='tagli'>
-               <div class='tag'>
+      {% with get_affiliations as aff_list %}
+      {% if aff_list %}
+          <ul class='afflist'>
+          {% for aff in aff_list %}
+            <li class='affli'>
+               <div class='aff'>
                    {% load underscore_to_space %}
-                 <span class='tagname'>{{tag.name|underscore_to_space}}</span>
+                 <span class='affname'>{{aff.name|underscore_to_space}}</span>
                 {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
                 {% if "change_dataset" in dataset_perms %}
-                 <span class='tagcount'>
-                     <a class='tagdelete editform'
-                        id='{{tag.name}}' value={{tag.id}} name='{{tag.name}}'
+                 <span class='affcount'>
+                     <a class='affdelete editform'
+                        id='{{aff.name}}' value={{aff.id}} name='{{aff.name}}'
                         href='{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}'
-                        title='{% trans "delete this tag" %}'>x</a>
+                        title='{% trans "delete this affiliation" %}'>x</a>
                  </span>
                  {% endif %}
                 </div>
@@ -27,16 +27,17 @@
           {% endfor %}
           </ul>
       {% endif %}
+      {% endwith %}
     {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
-      <div id="tagcontainer"></div>
+      <div id="affcontainer"></div>
       <div class='editform'>
-          <form id='tagaddform'
+          <form id='affaddform'
                 action="{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}"
                 method="post" enctype="multipart/form-data">
            {% csrf_token %}
            <table>
-           <tr><td>{{affiliationform.affiliation}}</td><td><input class='btn btn-primary' type='submit' value='{% trans "Add Tag" %}'></td></tr>
+           <tr><td>{{affiliationform.affiliation}}</td><td><input class='btn btn-primary' type='submit' value='{% trans "Add Affiliation" %}'></td></tr>
            </table>
           </form>
       </div>
