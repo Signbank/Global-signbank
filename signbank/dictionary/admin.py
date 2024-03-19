@@ -1364,8 +1364,8 @@ class AffiliationAdmin(admin.ModelAdmin):
     search_fields = ['name']
 
 
-class AffiliatedItemAdmin(admin.ModelAdmin):
-    list_display = ("affiliation", '__str__', )
+class AffiliatedUserAdmin(admin.ModelAdmin):
+    list_display = ("affiliation", "user", )
 
 
 admin.site.register(Dialect, DialectAdmin)
@@ -1388,7 +1388,7 @@ admin.site.register(DeletedGlossOrMedia, DeletedGlossOrMediaAdmin)
 
 admin.site.register(UserProfile)
 admin.site.register(Affiliation, AffiliationAdmin)
-admin.site.register(AffiliatedItem, AffiliatedItemAdmin)
+admin.site.register(AffiliatedUser, AffiliatedUserAdmin)
 
 admin.site.register(Language, LanguageAdmin)
 admin.site.register(Dataset, DatasetAdmin)

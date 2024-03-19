@@ -1,0 +1,45 @@
+{% load i18n %}
+
+{% load guardian_tags %}
+
+        <div id='tags' style="z-index: 0;opacity:.99; position: relative; background-color: white;">
+        <fieldset>
+      {% load affiliation_tags %}
+      {% affiliation_for_gloss gloss as tag_list %}
+      {% if tag_list %}
+          <ul class='taglist'>
+          {% for tag in tag_list %}
+            <li class='tagli'>
+               <div class='tag'>
+                   {% load underscore_to_space %}
+                 <span class='tagname'>{{tag.name|underscore_to_space}}</span>
+                {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                {% if "change_dataset" in dataset_perms %}
+                 <span class='tagcount'>
+                     <a class='tagdelete editform'
+                        id='{{tag.name}}' value={{tag.id}} name='{{tag.name}}'
+                        href='{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}'
+                        title='{% trans "delete this tag" %}'>x</a>
+                 </span>
+                 {% endif %}
+                </div>
+            </li>
+          {% endfor %}
+          </ul>
+      {% endif %}
+    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+    {% if "change_dataset" in dataset_perms %}
+      <div id="tagcontainer"></div>
+      <div class='editform'>
+          <form id='tagaddform'
+                action="{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}"
+                method="post" enctype="multipart/form-data">
+           {% csrf_token %}
+           <table>
+           <tr><td>{{affiliationform.affiliation}}</td><td><input class='btn btn-primary' type='submit' value='{% trans "Add Tag" %}'></td></tr>
+           </table>
+          </form>
+      </div>
+      {% endif %}
+      </fieldset>
+    </div>

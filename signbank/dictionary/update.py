@@ -3351,3 +3351,50 @@ def toggle_namedentity(request, glossid, namedentity):
     result = mapping_toggle_namedentity(request, glossid, namedentity)
 
     return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def add_affiliation(request, glossid):
+    """View to add an affiliation to a gloss"""
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Add gloss affiliation method must be POST")
+
+    thisgloss = get_object_or_404(Gloss, id=glossid)
+    tags_label = 'Affiliation'
+    form = AffiliationUpdateForm(request.POST)
+
+    if not form.is_valid():
+        # fallback to the requesting page
+        return HttpResponseRedirect('/')
+
+    tag = form.cleaned_data['affiliation']
+
+    if form.cleaned_data['delete']:
+        old_tags_string = tag
+
+        # get the relevant AffiliatedGloss
+        ti = get_object_or_404(AffiliatedGloss, gloss__id=thisgloss.id, affiliation__name=tag)
+        ti.delete()
+        new_tags_string = ''
+
+        revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+        revision.save()
+        response = HttpResponse('deleted', {'content-type': 'text/plain'})
+    else:
+        old_tags_string = ''
+
+        # we need to wrap the tag name in quotes since it might contain spaces
+        affiliation = Affiliation.objects.get(name=tag)
+        new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=affiliation, gloss=thisgloss)
+        new_tags_string = tag
+        revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+        revision.save()
+        # response is new HTML for the tag list and form
+        response = render(request, 'dictionary/affiliationtags.html',
+                          {'gloss': thisgloss,
+                           'affiliationform': AffiliationUpdateForm()})
+
+    return response

@@ -3112,17 +3112,26 @@ class Affiliation(models.Model):
         return self.name
 
 
-class AffiliatedItem(models.Model):
+class AffiliatedUser(models.Model):
 
     affiliation = models.ForeignKey(Affiliation, verbose_name=_("Affiliation"), on_delete=models.CASCADE)
-    users = models.ManyToManyField(User, verbose_name=_("Users"),
-                                   related_name='is_affiliated_with')
-    glosses = models.ManyToManyField(Gloss, verbose_name=_("Glosses"),
-                                     related_name='corpus_contains')
+    user = models.ForeignKey(User, verbose_name=_("User"),
+                             related_name='user_is_affiliated_with', on_delete=models.CASCADE)
 
     def __str__(self):
-        affiliated_users = [u.first_name for u in self.users.all()]
-        return self.affiliation.name + ': ' + ', '.join(affiliated_users)
+        affiliated_user = self.user.first_name + ': ' + self.affiliation.name
+        return affiliated_user
+
+
+class AffiliatedGloss(models.Model):
+
+    affiliation = models.ForeignKey(Affiliation, verbose_name=_("Affiliation"), on_delete=models.CASCADE)
+    gloss = models.ForeignKey(Gloss, verbose_name=_("Gloss"),
+                              related_name='affiliation_corpus_contains', on_delete=models.CASCADE)
+
+    def __str__(self):
+        affiliated_gloss = str(self.gloss.id) + ': ' + self.affiliation.name
+        return affiliated_gloss
 
 
 class UserProfile(models.Model):

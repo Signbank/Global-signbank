@@ -19,6 +19,8 @@ from signbank.settings.base import WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS
 from datetime import datetime
 
 from signbank.dictionary.models import *
+from signbank.tools import get_two_letter_dir
+
 
 if sys.argv[0] == 'mod_wsgi':
     from signbank.dictionary.models import *
@@ -213,7 +215,7 @@ def get_video_file_path(instance, filename, version=0):
         dataset_dir = instance.gloss.lemma.dataset.acronym
     except KeyError:
         dataset_dir = ""
-    two_letter_dir = signbank.tools.get_two_letter_dir(idgloss)
+    two_letter_dir = get_two_letter_dir(idgloss)
     filename = idgloss + '-' + str(instance.gloss.id) + ext + (version * ".bak")
 
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)

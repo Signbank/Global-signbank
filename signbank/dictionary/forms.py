@@ -11,7 +11,7 @@ from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Rel
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, \
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter, \
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation, \
-                                        ExampleSentence
+                                        ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
@@ -184,6 +184,26 @@ class TagUpdateForm(forms.Form):
             tag.refresh_from_db()
             refreshed_tags.append(tag)
         self.fields['tag'] = forms.ChoiceField(label=_('Tags'),
+                                               choices=[(tag.name, tag.name.replace('_', ' '))
+                                                        for tag in refreshed_tags],
+                                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+
+class AffiliationUpdateForm(forms.Form):
+    """Form to add a new tag to a gloss"""
+
+    delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
+
+    def __init__(self, *args, **kwargs):
+        super(AffiliationUpdateForm, self).__init__(*args, **kwargs)
+
+        # get and refresh tags from database in case anything has been updated
+        tags_objects = Affiliation.objects.all()
+        refreshed_tags = []
+        for tag in tags_objects:
+            tag.refresh_from_db()
+            refreshed_tags.append(tag)
+        self.fields['affiliation'] = forms.ChoiceField(label=_('Affiliation'),
                                                choices=[(tag.name, tag.name.replace('_', ' '))
                                                         for tag in refreshed_tags],
                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
@@ -483,10 +503,10 @@ class DefinitionForm(forms.ModelForm):
 
 
 class RelationForm(forms.ModelForm):
-    
+
     sourceid = forms.CharField(label=_('Source Gloss'))
     targetid = forms.CharField(label=_('Target Gloss'))
-    
+
     class Meta:
         model = Relation
         fields = ['role']
@@ -501,14 +521,14 @@ class VariantsForm(forms.Form):
 
     class Meta:
         model = Relation
-        
+
 
 class RelationToForeignSignForm(forms.ModelForm):
 
     sourceid = forms.CharField(label=_('Source Gloss'))
     other_lang = forms.CharField(label=_('Related Language'))
     other_lang_gloss = forms.CharField(label=_('Gloss in Related Language'), required=False)
-    
+
     class Meta:
         model = RelationToForeignSign
         fields = ['loan','other_lang','other_lang_gloss']
