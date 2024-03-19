@@ -231,19 +231,25 @@ def csv_create_gloss(request, datasetid):
 
 @csrf_exempt
 def api_create_gloss(request, datasetid):
-    if not request.user.is_authenticated:
-        return JsonResponse({})
+    results = dict()
+
+    if not request.user.is_staff:
+        results['errors'] = "User is not Staff."
+        return JsonResponse(results)
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
-    if not dataset or not request.user.is_authenticated:
-        return JsonResponse({})
+    if not dataset:
+        results['errors'] = "Dataset ID does not exist."
+        return JsonResponse(results)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        return JsonResponse({})
+        results['errors'] = "No change permission for dataset."
+        return JsonResponse(results)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
+        results['errors'] = "No change gloss permission."
+        return JsonResponse(results)
 
     human_readable_value_dict = get_human_readable_value_dict(request, dataset)
     value_dict = translate_human_readable_value_dict_to_keys(dataset, human_readable_value_dict)
@@ -257,7 +263,4 @@ def api_create_gloss(request, datasetid):
 
     creation_results = create_gloss(request, dataset, value_dict)
 
-    results = dict()
-    for key in creation_results:
-        results[key] = creation_results[key]
-    return JsonResponse(results)
+    return JsonResponse(creation_results)
