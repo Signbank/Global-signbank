@@ -890,7 +890,28 @@ input {
     background-color: inherit;
     color: inherit !important;
 }
-
+.view-tabs-dark {
+    background-color: var(--panel-heading-background) !important;
+    color: var(--panel-heading-text) !important;
+}
+.nav-tabs-dark {
+    background-color: var(--panel-heading-background) !important;
+    color: var(--panel-heading-text) !important;
+    border-bottom: 1px solid var(--panel-heading-background);
+}
+.nav-tabs-dark > li > .nav-link:hover {
+    background-color: var(--dropdown-dark) !important;
+    color: white !important;
+    border-bottom: 1px solid var(--nav-highlight);
+    border-color: var(--panel-heading-background) var(--panel-heading-background) var(--panel-heading-background);
+}
+.nav-tabs-dark .nav-item.show .nav-link, .nav-tabs .nav-link.active
+{
+    color: var(--panel-heading-text);
+    background-color: inherit;
+    border-color: var(--panel-heading-background);
+    border-top-width: 2px;
+}
 .panel-light {
     background-color: inherit;
     color: inherit !important;
@@ -1147,7 +1168,7 @@ input {
 .tbody-dark {
     background-color: rgb(12, 0, 0) !important;
     border-color: rgb(24, 0, 0) !important;
-    color: var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
     border-left-color: rgb(34, 0, 0) !important;
     border-right-color: rgb(34, 0, 0) !important;
     border-top-color: rgb(34, 0, 0) !important;
@@ -1156,7 +1177,7 @@ input {
 .tbody-dark > tr > td {
     background-color: rgb(12, 0, 0) !important;
     border-color: rgb(24, 0, 0) !important;
-    color: var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
     border-left-color: rgb(34, 0, 0) !important;
     border-right-color: rgb(34, 0, 0) !important;
     border-top-color: rgb(34, 0, 0) !important;
@@ -1252,4 +1273,8 @@ span ::placeholder {
     background-color: var(--button-default) !important;
     color: white !important;
     border-color: var(--button-default) !important;
+}
+.btn-group-dark {
+    color: inherit !important;
+    background-color: inherit !important;
 }

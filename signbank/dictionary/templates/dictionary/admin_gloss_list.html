@@ -326,7 +326,8 @@ $(document).ready(function() {
                     var elem = $(result);
                     var parsed = $.parseHTML(result);
                     var gloss_list_header = $(lookup).find('#glosslist_table_header')[0];
-                    $(gloss_list_header).replaceWith(result);
+                    var gloss_list_header_dummy = $(gloss_list_header).find('#glosslist_table_header_dummy')[0];
+                    $(gloss_list_header_dummy).replaceWith(result);
                 }
 
         });
@@ -971,103 +972,7 @@ function do_toggle_language(el) {
     </div>
 </form>
 
-<div></div>
-
-{% if perms.dictionary.add_gloss %}
 <div><br><br></div>
-<div  class="panel panel-default panel-light">
-  <div class="panel-heading panel-light" data-toggle="collapse"  data-target='#add_gloss_form'>{% trans "Add New Sign" %}</div>
-
-     <div id='add_gloss_form' class='collapse-light collapse'>
-         <form action='{% url "dictionary:add_gloss" %}' method='post' class='pages-form pages-form-light'>
-             {% csrf_token %}
-             <table class='table table-condensed table-condensed-light'>
-                 <tr>
-                     {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th class='th th-light'><label for='dataset'>{% trans "Dataset" %}</label></th>
-                     {% else %}
-                     <th class='th th-light'></th>
-                     {% endif %}
-                     <th class='th th-light'><label for='id_idgloss'>{% trans "Lemma ID Gloss" %}</label></th>
-                     {% for dataset_lang in dataset_languages %}
-                     <th class='th th-light' id="add_gloss_dataset_header_{{dataset_lang.language_code_2char}}"><label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label></th>
-                     {% endfor %}
-                     <th class='th th-light'></th>
-                 </tr>
-                 <tr>
-                      <td class='td td-light'>
-                      <select id="id_dataset" name="dataset" required="">
-                     {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
-                         {% for s_dataset in selected_datasets %}
-
-                         {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
-                         {% if "change_dataset" in dataset_perms %}
-                         {% if last_used_dataset and last_used_dataset == s_dataset.acronym %}
-                         <option value="{{s_dataset.id}}" selected="selected"
-                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{dataset_lang.language_code_2char}}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
-                         {% else %}
-                         <option value="{{s_dataset.id}}"
-                                 dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{dataset_lang.language_code_2char}}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>
-                         {% endif %}
-                         {% endif %}
-
-                          {% endfor %}
-                     {% else %}
-                         <option value="{{selected_datasets.0.id}}"
-                                 dataset_languages="{% for dataset_lang in selected_datasets.0.translation_languages.all %}{{dataset_lang.language_code_2char}}{% if not forloop.last %},{% endif %}{% endfor %}">{{ selected_datasets.0.acronym }}</option>
-                     <script type='text/javascript'>
-                     gloss_dataset_id = {{selected_datasets.0.id}};
-                     language_code = '{{selected_datasets.0.default_language.language_code_2char}}';
-                     </script>
-                     {% endif %}
-                     </select>
-                     </td>
-                     <td class='td td-light'>
-                         <div id="lemma_select" class='form-group form-group-light'>
-                             <label for="id_lemma_language_select">
-                             <span id="selected_lemma_language" value="{{default_dataset_lang}}">
-                             {% for dataset_lang in dataset_languages %}
-                                 <input id="lemma_language_{{dataset_lang.language_code_2char}}"
-                                        type="radio" name="lemma_language" onclick="do_set_lemma_language(this)"
-                                        value="{{dataset_lang.language_code_2char}}"/>
-                                 <label id="lemma_language_label_{{dataset_lang.language_code_2char}}">{{dataset_lang.name}}</label>
-                             {% endfor %}
-                             </span>
-                             </label>
-                             <span id="lemma_language_buffer">&nbsp;<br></span>
-
-                             <!-- Input of the type ahead -->
-                             <input class='form-control lemmatypeahead lemmatypeahead-light' placeholder='{% trans "Lemma" %}' size="30">
-                             <!-- Input that holds the lemma id the user chose from the type ahead -->
-                             <input type='hidden' name='idgloss' value='confirmed' required="">
-                             <a href="#" onclick="return toggleAddLemma()">{% trans "Create New" %}</a>
-                         </div>
-                         <div id="lemma_add" class='form-group form-group-light'>
-                            {% for dataset_lang in dataset_languages %}
-                            <label id="{{lemma_create_field_prefix}}_header_{{dataset_lang.language_code_2char}}">{{dataset_lang.name}}:</label>
-                            <input id="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
-                                   name="{{lemma_create_field_prefix}}{{dataset_lang.language_code_2char}}"
-                                   type="text" size="30">
-
-                            {% endfor %}
-
-                            <a href="#" onclick="return toggleAddLemma()">{% trans "Select" %}</a>
-                         </div>
-                         <input type="hidden" id="select_or_new_lemma" name="select_or_new_lemma" value="select"/>
-                     </td>
-                     {% for dataset_lang in dataset_languages %}
-                     <td class='td td-light' id="add_gloss_dataset_value_{{dataset_lang.language_code_2char}}">
-                         <input id="glosscreate_{{dataset_lang.language_code_2char}}" name="glosscreate_{{dataset_lang.language_code_2char}}" size="30" type="text"/>
-                     </td>
-                     {% endfor %}
-                     <td class='td td-light'><input class='btn btn-default btn-default-light' type='submit' value='{% trans "Add New Sign" %}'></td>
-                 </tr>
-             </table>
-
-         </form>
-     </div>
-  </div>
-{% endif %}
-
 
 {% if view_type == "gloss_list" %}
 
@@ -1101,7 +1006,9 @@ function do_toggle_language(el) {
 {% endif %}
 
 <table class='table table-condensed table-condensed-light' id='glosslist_table'>
-    <thead id='glosslist_table_header' class="thead thead-light"></thead>
+    <thead id='glosslist_table_header' class="thead thead-light">
+    <tr id='glosslist_table_header_dummy'></tr>
+    </thead>
     <tbody class="tbody tbody-light">
     {% for gloss in object_list %}
     <tr id="focusgloss_{{gloss.id}}">

@@ -251,6 +251,33 @@ function toggle_dark_mode() {
             $(this).addClass("form-control-light");
         }
   });
+   $(".btn-group").each(function () {
+        if ($(this).hasClass("btn-group-light")) {
+            $(this).removeClass("btn-group-light");
+            $(this).addClass("btn-group-dark");
+        } else if ($(this).hasClass("btn-group-dark")) {
+            $(this).removeClass("btn-group-dark");
+            $(this).addClass("btn-group-light");
+        }
+  });
+  $(".view-tabs").each(function () {
+        if ($(this).hasClass("view-tabs-light")) {
+            $(this).removeClass("view-tabs-light");
+            $(this).addClass("view-tabs-dark");
+        } else if ($(this).hasClass("view-tabs-dark")) {
+            $(this).removeClass("view-tabs-dark");
+            $(this).addClass("view-tabs-light");
+        }
+  });
+  $(".nav-tabs").each(function () {
+        if ($(this).hasClass("nav-tabs-light")) {
+            $(this).removeClass("nav-tabs-light");
+            $(this).addClass("nav-tabs-dark");
+        } else if ($(this).hasClass("nav-tabs-dark")) {
+            $(this).removeClass("nav-tabs-dark");
+            $(this).addClass("nav-tabs-light");
+        }
+  });
 }
 
 function set_dark_mode(){
