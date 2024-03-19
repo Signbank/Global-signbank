@@ -78,21 +78,7 @@ function create_gloss() {
         success : show_creation_results
      });
 }
-$(document).ready(function(){
-    // setup required for Ajax POST
-    function csrfSafeMethod(method) {
-        // these HTTP methods do not require CSRF protection
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    }
-    $.ajaxSetup({
-        crossDomain: false, // obviates need for sameOrigin test
-        beforeSend: function(xhr, settings) {
-            if (!csrfSafeMethod(settings.type)) {
-                xhr.setRequestHeader("X-CSRFToken", csrf_token);
-            }
-        }
-    });
-});
+
 </script>
 
 {% endblock %}
