@@ -274,7 +274,6 @@ function do_sort_column(field_name, action, frmName) {
     </script>
 {% endblock %}
 {% block extrahead %}
-    <link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
     <link rel="stylesheet" href="{{STATIC_URL}}css/query-buttons.css">
 
@@ -286,7 +285,34 @@ function do_sort_column(field_name, action, frmName) {
             position:fixed;
         }
     </style>
+<style>
+.table-bordered-light > thead > tr > th {
+    border: 1px solid inherit !important;
+}
 
+.table-bordered-light > tbody > tr > td {
+    border: 1px solid inherit !important;
+}
+
+.table-bordered-dark > thead > tr > th {
+    border: 1px solid var(--well-border) !important;
+    background-color: var(--well-background) !important;
+    color: var(--panel-heading-text) !important;
+}
+
+.table-bordered-dark > tbody > tr > td {
+    border: 1px solid var(--well-border) !important;
+    background-color: var(--well-background) !important;
+    color: var(--panel-heading-text) !important;
+}
+table {
+    margin: 0px 0px 0px 0px important!;
+}
+
+.table-bordered {
+    margin-top: 20px;
+}
+</style>
 <!--The tagQP css overrides the colour of tag to match that of disabled buttons, used for the display of other query parameters-->
 <style>
 .form-group {
@@ -358,8 +384,9 @@ option:not(:checked) {
 .gloss-row {
     overflow-y: scroll;
 }
+
 thead tr th {
-    border-bottom: 1px solid grey;
+    border-bottom: 1px solid inherit;
     border-spacing: 0px;
     border-collapse: separate;
 }
@@ -395,32 +422,26 @@ thead tr th {
 
     {% else %}
     <h3>{% trans "Query Parameters" %}</h3>
-    <table class="table table-condensed table-condensed-light" style="z-index:0;padding-top: 100px;width:1000px;">
-        <thead id='query_table_header' class="thead thead-light">
-                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
-                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
-        </thead>
-        <tbody>
+    <table class="table table-bordered table-bordered-light" style="z-index:0;padding-top: 100px;width:1000px;">
+        <thead id='query_table_header'>
+                <th >{% trans "Field" %}</th>
+                <th >{% trans "Value" %}</th>
+        </thead >
+        <tbody >
         {% for key, value in query_parameters.items %}
-        <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_mapping|get_item:key}}</td>
+        <tr><td >{{query_parameters_mapping|get_item:key}}</td>
             {% if key == 'tags[]' %}
-                <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
+                <td >{% for qv in query_parameters_values_mapping|get_item:key %}
                    <div class='tagQP' >
                    {% load underscore_to_space %}
                         <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
                    </div>
                     {% if not forloop.last %} {% endif %}{% endfor %}</td>
             {% elif '[]' in key %}
-            <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
+            <td >{% for qv in query_parameters_values_mapping|get_item:key %}<button
                 class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
             {% else %}
-                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                    border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_values_mapping|get_item:key}}</td>
+                    <td >{{query_parameters_values_mapping|get_item:key}}</td>
             {% endif %}
         </tr>
         {% endfor %}
@@ -473,7 +494,7 @@ thead tr th {
         <span id="info_query_toggle" class="glyphicon glyphicon-th-list"></span>
     </div>
     <div id="query_toggle_panel" class='collapse'>
-    <table class="table table-bordered" style="border-left: 2px solid grey; border-spacing: 15px 30px; width: auto;">
+    <table class="table table-bordered table-bordered-light query-toggles query-toggles-light">
     <tr>
     <td><span>{% trans "Annotation ID Gloss" %}</span>
     {% for dataset_lang in dataset_languages %}

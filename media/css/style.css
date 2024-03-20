@@ -5,6 +5,7 @@
     --text-input-border: rgb(172, 0, 0);
     --text-input-text: rgb(250, 255, 255);
     --well-background: rgb(23, 0, 0);
+    --well-border: rgb(60, 0, 0);
     --button-default: rgb(187, 60, 80);
     --nav-highlight: rgb(28, 0, 0);
     --dropdown-dark: rgb(112, 0, 0);
@@ -1109,8 +1110,37 @@ input {
     color: white !important;
     border: solid 1px rgb(110, 0, 0) !important;
 }
+.query-toggles {
+    border-left: 2px solid grey;
+    border-spacing: 15px 30px;
+    width: auto;
+}
+.query-toggles-dark {
+    border-left: 2px solid var(--well-border);
+    color: var(--panel-heading-text) !important;
+}
+.query-toggles-dark > tbody > tr > td {
+    border-left: 2px solid var(--well-border);
+    color: var(--panel-heading-text) !important;
+    border: 1px solid var(--well-border) !important;
+}
+.query-toggles-dark > tbody > tr > td > button {
+    color: white !important;
+    border: 1px solid var(--button-default) !important;
+    background-color: var(--button-default) !important;
+    border-radius: 6px;
+}
+.table-bordered-dark {
+    background-color: var(--well-background) !important;
+    color: rgb(151, 0, 0) !important;
+    border: 1px solid var(--well-border) !important;
+    border-left-color: rgb(34, 0, 0) !important;
+    border-right-color: rgb(34, 0, 0) !important;
+    border-top-color: rgb(34, 0, 0) !important;
+    border-bottom-color: rgb(34, 0, 0) !important;
+}
 .table-condensed-dark {
-    background-color: rgb(12, 0, 0) !important;
+    background-color: var(--well-background) !important;
     color: rgb(151, 0, 0) !important;
     border-left-color: rgb(34, 0, 0) !important;
     border-right-color: rgb(34, 0, 0) !important;
@@ -1118,7 +1148,7 @@ input {
     border-bottom-color: rgb(34, 0, 0) !important;
 }
 .table-condensed-dark > td > span {
-    background-color: rgb(12, 0, 0) !important;
+    background-color: var(--well-background) !important;
     color: rgb(151, 0, 0) !important;
     border-left-color: rgb(34, 0, 0) !important;
     border-right-color: rgb(34, 0, 0) !important;
@@ -1126,7 +1156,7 @@ input {
     border-bottom-color: rgb(34, 0, 0) !important;
 }
 .table-condensed-dark > tr > th {
-    background-color: rgb(12, 0, 0) !important;
+    background-color: var(--well-background) !important;
     color: var(--panel-heading-text) !important;
     border-left-color: rgb(34, 0, 0) !important;
     border-right-color: rgb(34, 0, 0) !important;
@@ -1162,7 +1192,7 @@ input {
     color: inherit !important;
 }
 .thead-dark > tr > th {
-    background-color: rgb(24, 0, 0) !important;
+    background-color: var(--well-background) !important;
     color: var(--panel-heading-text) !important;
 }
 .tbody-dark {
