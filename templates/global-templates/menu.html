@@ -110,14 +110,14 @@
             </div>
           <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
     </form>
-    <div class="nav navbar-left navbar-nav navbar-nav-light" id="user-menu" style="height: 10px;box-sizing:content-box;">
+    <div class="nav navbar-left navbar-nav navbar-nav-light" id="user-menu" style="height: 20px;box-sizing:content-box;">
         {% if user.is_authenticated %}
         <div class='navbar-text navbar-text-light'>
             <a href="{% url 'registration:user_profile' %}">{% trans "Profile" %}</a>
         </div>
         {% endif %}
     </div>
-      <div class="nav navbar-right" style="height: 10px;box-sizing:content-box;">
+      <div class="nav navbar-right" style="height:20px;box-sizing:content-box;">
           <div id="toggle_dark_mode">
               <button onclick="set_dark_mode()" class="btn btn-primary">{% trans "Dark Mode" %}</button>
           </div>

@@ -261,9 +261,12 @@ function do_sort_column(field_name, action, frmName) {
 };
     </script>
     <script type='text/javascript'>
-
         $('#signinfo').css({'margin-bottom': 30});
-        $('#definitionblock').css({'padding-top': $('#signinfo').height() + 30});
+        $('#view_tabs').css({'padding-top': 10, 'margin-top': 10});
+
+        $('#definitionblock').css({'padding-top': Math.round($('#searchquery').height() + $('#signinfo').height() + 10)});
+   //     $('#definitionblock').css({'padding-top': Math.round($('#signinfo').height() + 10)});
+   //     $('#definitionblock').css({'padding-top': $('#signinfo').height() + 30});
 
          $('#panel-expand-collapse-btn-toolbar').css({
             'height': $('#panel-expand-collapse-btn-group').css('height'),
@@ -276,7 +279,10 @@ function do_sort_column(field_name, action, frmName) {
     <link rel="stylesheet" href="{{STATIC_URL}}css/query-buttons.css">
 
     <style>
-        #panel-expand-collapse-btn-group.affix {
+        #signinfo.affix {
+            position:fixed;
+        }
+        #searchquery.affix {
             position:fixed;
         }
     </style>
@@ -365,21 +371,24 @@ thead tr th {
 {% endblock %}
 
 {% block content %}
+<div class="navbar" id="searchquery" style="background-color:inherit;z-index: 50;">
 
-<div id="signinfo" class='navbar navbar-collapse navbar-collapse-light'>
-    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+
+</div>
+<div id="signinfo" class='navbar navbar-collapse navbar-collapse-light' style="margin-right:15px;z-index:100;">
+    <div id="view_tabs" style="margin-right:15px;z-index:100;" class='view-tabs view-tabs-light'>
     <ul class='nav nav-tabs nav-tabs-light'>
-        <li class="nav-item">
-            <a class='nav-link active' href="{{PREFIX_URL}}/analysis/queries/">{% trans "Query View" %}</a>
+        <li class="nav-item nav-item-light">
+            <a class='nav-link nav-link-light active' href="{{PREFIX_URL}}/analysis/queries/">{% trans "Query View" %}</a>
         </li>
-        <li class="nav-item">
-            <a class='nav-link' href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>
+        <li class="nav-item nav-item-light">
+            <a class='nav-link nav-link-light' href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>
         </li>
     </ul>
     </div>
 </div>
 
-<div id="definitionblock" style="padding-top: 30px;">
+<div id="definitionblock">
     {% if not query_parameters.items %}
     <br>
     <p>{% trans "No active search or query parameters." %}</p>
