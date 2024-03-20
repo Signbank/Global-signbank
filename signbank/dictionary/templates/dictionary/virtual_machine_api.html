@@ -78,21 +78,7 @@ function create_gloss() {
         success : show_creation_results
      });
 }
-$(document).ready(function(){
-    // setup required for Ajax POST
-    function csrfSafeMethod(method) {
-        // these HTTP methods do not require CSRF protection
-        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-    }
-    $.ajaxSetup({
-        crossDomain: false, // obviates need for sameOrigin test
-        beforeSend: function(xhr, settings) {
-            if (!csrfSafeMethod(settings.type)) {
-                xhr.setRequestHeader("X-CSRFToken", csrf_token);
-            }
-        }
-    });
-});
+
 </script>
 
 {% endblock %}
@@ -115,7 +101,7 @@ $(document).ready(function(){
                  </td>
              </tr>
              {% for dataset_lang in dataset_languages %}
-             {% with dataset_lang.name as language_name %}
+             {% with dataset_lang.name_en as language_name %}
              {% with "Lemma ID Gloss ("|add:language_name|add:")" as lemma_field_name %}
              <tr>
                  <th id="add_gloss_lemma_header_{{dataset_lang.language_code_2char}}">
@@ -132,7 +118,7 @@ $(document).ready(function(){
              {% endwith %}
              {% endfor %}
              {% for dataset_lang in dataset_languages %}
-             {% with dataset_lang.name as language_name %}
+             {% with dataset_lang.name_en as language_name %}
              {% with "Annotation ID Gloss ("|add:language_name|add:")" as annotation_field_name %}
              <tr>
                  <th id="add_gloss_annotation_header_{{dataset_lang.language_code_2char}}">

@@ -1,5 +1,7 @@
 import json
 
+from django.views.decorators.csrf import csrf_exempt
+
 from signbank.dictionary.models import *
 from tagging.models import Tag, TaggedItem
 from signbank.dictionary.forms import *
@@ -8,6 +10,7 @@ from django.utils.translation import override, gettext_lazy as _, activate
 from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
+from guardian.shortcuts import get_objects_for_user
 
 
 def required_fields_create_gloss_columns(dataset):
@@ -200,6 +203,10 @@ def csv_create_gloss(request, datasetid):
     if not dataset or not request.user.is_authenticated:
         return JsonResponse({})
 
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        return JsonResponse({})
+
     if not request.user.has_perm('dictionary.change_gloss'):
         return JsonResponse({})
 
@@ -220,16 +227,27 @@ def csv_create_gloss(request, datasetid):
     return JsonResponse(results)
 
 
+@csrf_exempt
 def api_create_gloss(request, datasetid):
-    if not request.user.is_authenticated:
-        return JsonResponse({})
+    results = dict()
+
+    if not request.user.is_staff:
+        results['errors'] = "User is not Staff."
+        return JsonResponse(results)
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
-    if not dataset or not request.user.is_authenticated:
-        return JsonResponse({})
+    if not dataset:
+        results['errors'] = "Dataset ID does not exist."
+        return JsonResponse(results)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        results['errors'] = "No change permission for dataset."
+        return JsonResponse(results)
 
     if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
+        results['errors'] = "No change gloss permission."
+        return JsonResponse(results)
 
     human_readable_value_dict = get_human_readable_value_dict(request, dataset)
     value_dict = translate_human_readable_value_dict_to_keys(dataset, human_readable_value_dict)
@@ -243,7 +261,4 @@ def api_create_gloss(request, datasetid):
 
     creation_results = create_gloss(request, dataset, value_dict)
 
-    results = dict()
-    for key in creation_results:
-        results[key] = creation_results[key]
-    return JsonResponse(results)
+    return JsonResponse(creation_results)
