@@ -348,10 +348,14 @@ def user_profile(request):
     change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
     user_has_queries = SearchHistory.objects.filter(user=user).count()
     user_can_change_glosses = change_permit_datasets.count() > 0
-    possible_affiliations = [aff.name for aff in Affiliation.objects.all()]
+    possible_affiliations = [aff for aff in Affiliation.objects.all()]
     print(possible_affiliations)
-    user_affiliation = [au.affiliation.name for au in AffiliatedUser.objects.filter(user=request.user)]
+    for pa in possible_affiliations:
+        print(pa.__dict__)
+    user_affiliation = [au for au in AffiliatedUser.objects.filter(user=request.user)]
     print(user_affiliation)
+    for ua in user_affiliation:
+        print(ua.__dict__)
     return render(request, 'user_profile.html', {'selected_datasets': selected_datasets,
                                                  'view_permit_datasets': view_permit_datasets,
                                                  'change_permit_datasets': change_permit_datasets,

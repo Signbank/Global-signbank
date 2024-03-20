@@ -501,6 +501,44 @@ function configure_edit() {
 			 callback : update_view_and_remember_original_value
 		 });
      });
+    // ajax form submission for affiliation addition and deletion
+    $('.affdelete').click(function() {
+        var action = $(this).attr('href');
+        var affid = $(this).attr('id');
+        var affelement = $(this).parents('.affli');
+
+        $.ajax({url: action,
+                data: {'affiliation': affid, 'delete': 'True' },
+                type: 'POST',
+                async: false,
+                callback: function(data) {
+                            if (data == 'deleted') {
+                               affelement.remove();
+                            }
+                         }
+               });
+
+        return false;
+    });
+
+    $('#affaddform').click(function(){
+
+        var newaff = $('#affaddform select').val();
+        if (newaff) {
+            $.ajax({url: $(this).attr('action'),
+                    type: 'POST',
+                    async: false,
+                    data: { 'affiliation': newaff, 'delete': 'False'},
+                    callback: function(data) {
+                       $('#affs').replaceWith(data);
+                       }
+                    });
+        } else {
+            alert("Please select an affiliation value.");
+        }
+
+        return false;
+    });
 };
 
 function hide_other_forms(focus_field) {

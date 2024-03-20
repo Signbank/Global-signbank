@@ -3356,45 +3356,53 @@ def toggle_namedentity(request, glossid, namedentity):
 @permission_required('dictionary.change_gloss')
 def add_affiliation(request, glossid):
     """View to add an affiliation to a gloss"""
-
-    if not request.method == "POST":
-        return HttpResponseForbidden("Add gloss affiliation method must be POST")
+    form = AffiliationUpdateForm(request.POST)
 
     thisgloss = get_object_or_404(Gloss, id=glossid)
     tags_label = 'Affiliation'
-    form = AffiliationUpdateForm(request.POST)
 
-    if not form.is_valid():
+    deletetag = request.POST.get('delete', '')
+    affiliation_id = request.POST.get('affiliation', '')
+
+    if not deletetag or not affiliation_id:
         # fallback to the requesting page
-        return HttpResponseRedirect('/')
-
-    tag = form.cleaned_data['affiliation']
-
-    if form.cleaned_data['delete']:
-        old_tags_string = tag
-
-        # get the relevant AffiliatedGloss
-        ti = get_object_or_404(AffiliatedGloss, gloss__id=thisgloss.id, affiliation__name=tag)
-        ti.delete()
-        new_tags_string = ''
-
-        revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
-        revision.save()
-        response = HttpResponse('deleted', {'content-type': 'text/plain'})
-    else:
-        old_tags_string = ''
-
-        # we need to wrap the tag name in quotes since it might contain spaces
-        affiliation = Affiliation.objects.get(name=tag)
-        new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=affiliation, gloss=thisgloss)
-        new_tags_string = tag
-        revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
-                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
-        revision.save()
-        # response is new HTML for the tag list and form
+        response = render(request, 'dictionary/affiliationtags.html',
+                          {'gloss': thisgloss,
+                           'affiliationform': form})
+        return response
+    try:
+        affiliationid = int(affiliation_id)
+        affiliation = Affiliation.objects.get(id=affiliationid)
+        old_tags_string = affiliation.name
+    except (ValueError, ObjectDoesNotExist, MultipleObjectsReturned):
+        # fallback to the requesting page
         response = render(request, 'dictionary/affiliationtags.html',
                           {'gloss': thisgloss,
                            'affiliationform': AffiliationUpdateForm()})
+        return response
+    if deletetag == "True":
+        # get the relevant AffiliatedGloss
+        with atomic():
+            aff = get_object_or_404(AffiliatedGloss, gloss__id=thisgloss.id, affiliation=affiliation)
+            aff.delete()
+            new_tags_string = ''
 
+            revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                     gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+            revision.save()
+        response = HttpResponse('deleted', {'content-type': 'text/plain'})
+        return response
+
+    old_tags_string = ''
+    with atomic():
+        affiliation = Affiliation.objects.get(id=affiliationid)
+        new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=affiliation, gloss=thisgloss)
+        new_tags_string = affiliation.name
+        revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+        revision.save()
+    # response is new HTML for the tag list and form
+    response = render(request, 'dictionary/affiliationtags.html',
+                      {'gloss': thisgloss,
+                       'affiliationform': form})
     return response

@@ -77,7 +77,7 @@
     <table class="table">
         <tr>
         <th style="width:200px;">{% trans "Affiliation" %}</th>
-        <td>{% for aff in user_affiliation %}{{aff}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        <td>{% for aff in user_affiliation %}{{aff.affiliation.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
         </tr>
     </table>
     {% if user_can_change_glosses %}

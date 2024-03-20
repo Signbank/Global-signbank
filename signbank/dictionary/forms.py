@@ -189,24 +189,22 @@ class TagUpdateForm(forms.Form):
                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
-class AffiliationUpdateForm(forms.Form):
-    """Form to add a new tag to a gloss"""
+class AffiliationUpdateForm(forms.ModelForm):
+    """Form to add a new affiliation to a gloss"""
 
     delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
+
+    class Meta:
+
+        model = AffiliatedGloss
+        fields = ['affiliation']
 
     def __init__(self, *args, **kwargs):
         super(AffiliationUpdateForm, self).__init__(*args, **kwargs)
 
-        # get and refresh tags from database in case anything has been updated
-        tags_objects = Affiliation.objects.all()
-        refreshed_tags = []
-        for tag in tags_objects:
-            tag.refresh_from_db()
-            refreshed_tags.append(tag)
-        self.fields['affiliation'] = forms.ChoiceField(label=_('Affiliation'),
-                                               choices=[(tag.name, tag.name.replace('_', ' '))
-                                                        for tag in refreshed_tags],
-                                               widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+        self.fields['affiliation'] = forms.ModelChoiceField(label=_('Affiliation'),
+                                                            queryset=Affiliation.objects.all(), empty_label=None,
+                                                            widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
 class GlossSearchForm(forms.ModelForm):
