@@ -3358,28 +3358,26 @@ def add_affiliation(request, glossid):
     """View to add an affiliation to a gloss"""
     form = AffiliationUpdateForm(request.POST)
 
+    if not form.is_valid():
+        return JsonResponse({})
+
     thisgloss = get_object_or_404(Gloss, id=glossid)
     tags_label = 'Affiliation'
 
     deletetag = request.POST.get('delete', '')
     affiliation_id = request.POST.get('affiliation', '')
-
     if not deletetag or not affiliation_id:
         # fallback to the requesting page
-        response = render(request, 'dictionary/affiliationtags.html',
-                          {'gloss': thisgloss,
-                           'affiliationform': form})
-        return response
+        return JsonResponse({})
+
     try:
         affiliationid = int(affiliation_id)
         affiliation = Affiliation.objects.get(id=affiliationid)
         old_tags_string = affiliation.name
     except (ValueError, ObjectDoesNotExist, MultipleObjectsReturned):
         # fallback to the requesting page
-        response = render(request, 'dictionary/affiliationtags.html',
-                          {'gloss': thisgloss,
-                           'affiliationform': AffiliationUpdateForm()})
-        return response
+        return JsonResponse({})
+
     if deletetag == "True":
         # get the relevant AffiliatedGloss
         with atomic():
@@ -3390,8 +3388,9 @@ def add_affiliation(request, glossid):
             revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
                                      gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
             revision.save()
-        response = HttpResponse('deleted', {'content-type': 'text/plain'})
-        return response
+        # response = HttpResponse('deleted', {'content-type': 'text/plain'})
+        result = {'affiliation': affiliation_id}
+        return JsonResponse(result)
 
     old_tags_string = ''
     with atomic():
@@ -3401,8 +3400,6 @@ def add_affiliation(request, glossid):
         revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
                                  gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
         revision.save()
-    # response is new HTML for the tag list and form
-    response = render(request, 'dictionary/affiliationtags.html',
-                      {'gloss': thisgloss,
-                       'affiliationform': form})
-    return response
+
+    result = {'affiliation': affiliation_id}
+    return JsonResponse(result)

@@ -9,16 +9,15 @@
       {% if aff_list %}
           <ul class='afflist'>
           {% for aff in aff_list %}
-            <li class='affli'>
-               <div class='aff'>
-                   {% load underscore_to_space %}
-                 <span class='affname'>{{aff.name}}</span>
+            <li class='affli' id="gloss_affiliation_{{aff.id}}">
+               <div class='aff tagAFF' style="background:{{aff.field_color}};border-color:{{aff.field_color}};">
+                 <span class='affname'>{{aff.acronym}}</span>
                 {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
                 {% if "change_dataset" in dataset_perms %}
                  <span class='affcount'>
-                     <a class='affdelete editaffiliation'
-                        id='{{aff.id}}' value='{{aff.id}}' name='{{aff.name}}'
-                        href='{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}'
+                     <a class='affdelete editform'
+                        id='{{aff.id}}' value='{{aff.id}}' name='{{aff.acronym}}'
+                        data-href='{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}'
                         title='{% trans "delete this affiliation" %}'>x</a>
                  </span>
                  {% endif %}
@@ -33,7 +32,7 @@
       <div id="affcontainer"></div>
       <div class='editform'>
           <form id='affaddform'
-                action="{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}"
+                data-action="{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}"
                 method="post" enctype="multipart/form-data">
            {% csrf_token %}
            <table>

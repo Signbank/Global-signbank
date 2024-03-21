@@ -1286,7 +1286,7 @@ class GlossDetailView(DetailView):
 
     def post(self, request, *args, **kwargs):
         if request.method != "POST" or not request.POST or request.POST.get('use_default_query_parameters') != 'default_parameters':
-            return redirect(reverse('admin_gloss_view'))
+            return redirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(kwargs['pk']))
         # set up gloss details default parameters here
         default_parameters = request.POST.get('default_parameters')
         request.session['query_parameters'] = default_parameters

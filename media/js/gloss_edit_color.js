@@ -503,41 +503,32 @@ function configure_edit() {
      });
     // ajax form submission for affiliation addition and deletion
     $('.affdelete').click(function() {
-        var action = $(this).attr('href');
+        var action = $(this).attr('data-href');
         var affid = $(this).attr('id');
         var affelement = $(this).parents('.affli');
 
         $.ajax({url: action,
+                datatype: "json",
                 data: {'affiliation': affid, 'delete': 'True' },
                 type: 'POST',
                 async: false,
-                callback: function(data) {
-                            if (data == 'deleted') {
-                               affelement.remove();
-                            }
-                         }
-               });
-
-        return false;
+                callback: update_affiliation_delete
+        });
+        delayed_reload(100);
     });
 
     $('#affaddform').click(function(){
-
+        var action = $(this).attr('data-action');
         var newaff = $('#affaddform select').val();
-        if (newaff) {
-            $.ajax({url: $(this).attr('action'),
-                    type: 'POST',
-                    async: false,
-                    data: { 'affiliation': newaff, 'delete': 'False'},
-                    callback: function(data) {
-                       $('#affs').replaceWith(data);
-                       }
-                    });
-        } else {
-            alert("Please select an affiliation value.");
-        }
-
-        return false;
+        $.ajax({url: action,
+                datatype: "json",
+                type: 'POST',
+                async: false,
+                data: { 'affiliation': newaff, 'delete': 'False'},
+                callback: function(data) {
+                   $('#affs').replaceWith(data);
+                }
+        });
     });
 };
 
@@ -900,6 +891,17 @@ function update_relation_delete(change_summary)
     $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
   	$(this).html('');
   	$('#relations').addClass('in');
+}
+
+function update_affiliation_delete(data)
+{
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var affiliation_id = data.affiliation;
+    console.log('update affiliation after delete: '+affiliation_id)
+    var gloss_affilication_tag = '#gloss_affiliation_' + affiliation_id;
+    $(gloss_affilication_tag).remove();
 }
 
 function getCookie(name) {

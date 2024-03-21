@@ -3107,6 +3107,8 @@ class SignbankToken(models.Model):
 
 class Affiliation(models.Model):
     name = models.CharField(max_length=35)
+    acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the affiliation")
+    field_color = ColorField(default='64cf00')
 
     def __str__(self):
         return self.name
