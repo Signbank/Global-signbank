@@ -2345,7 +2345,8 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
         quoted_path = os.path.join(dir_path, head, quoted_filename)
         exists = os.path.exists(quoted_path)
         if not exists:
-            raise Http404("File does not exist.")
+            response = HttpResponse()
+            return response
         else:
             filename = quoted_filename
             path = quoted_path
