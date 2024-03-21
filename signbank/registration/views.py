@@ -331,10 +331,9 @@ def user_profile(request):
 
     from datetime import date
     from signbank.tools import get_selected_datasets_for_user
-    from guardian.shortcuts import get_objects_for_user
+    from guardian.shortcuts import get_objects_for_user, get_user_perms
 
-    user = request.user
-    user_object = User.objects.get(username=user)
+    user_object = User.objects.get(username=request.user)
     user_profile = UserProfile.objects.get(user=user_object)
     expiry = getattr(user_profile, 'expiry_date')
     today = date.today()
@@ -342,11 +341,14 @@ def user_profile(request):
         delta = expiry - today
     else:
         delta = None
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets_for_user(request.user)
     view_permit_datasets = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
                                                 Dataset, accept_global_perms=True, any_perm=True)
-    change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
-    user_has_queries = SearchHistory.objects.filter(user=user).count()
+    change_permit_datasets = []
+    for dataset_user_can_view in view_permit_datasets:
+        if 'change_dataset' in get_user_perms(request.user, dataset_user_can_view):
+            change_permit_datasets.append(dataset_user_can_view)
+    user_has_queries = SearchHistory.objects.filter(user=request.user).count()
 
     return render (request, 'user_profile.html', {'selected_datasets': selected_datasets,
                                                   'view_permit_datasets': view_permit_datasets,
