@@ -342,8 +342,11 @@ def user_profile(request):
     else:
         delta = None
     selected_datasets = get_selected_datasets_for_user(request.user)
-    view_permit_datasets = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
-                                                Dataset, accept_global_perms=True, any_perm=True)
+    view_permit_datasets = []
+    for dataset in Dataset.objects.all():
+        permissions_for_dataset = get_user_perms(request.user, dataset)
+        if 'view_dataset' in permissions_for_dataset or 'can_view_dataset' in permissions_for_dataset:
+            view_permit_datasets.append(dataset)
     change_permit_datasets = []
     for dataset_user_can_view in view_permit_datasets:
         if 'change_dataset' in get_user_perms(request.user, dataset_user_can_view):
