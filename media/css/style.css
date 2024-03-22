@@ -16,7 +16,7 @@
     --nav-highlight: rgb(28, 0, 0);
     --dropdown-dark: rgb(112, 0, 0);
     --text-container-dark-input-border: rgb(110, 0, 0);
-    --text-container-dark-input-fill: rgb(110, 34, 34);
+    --text-container-dark-input-fill: rgb(110, 0, 0);
     --text-container-dark-border: rgb(34, 0, 0);
     --text-container-dark-placeholder: rgb(255, 0, 0);
     --table-dark-color: rgb(151, 0, 0);
@@ -940,7 +940,6 @@ input {
     background-color: var(--well-background);
     color: var(--text-input-border);
     margin-bottom: 0;
-    box-shadow: #050014;
 }
 .collapse-dark {
     border: solid 1px var(--well-background) !important;
@@ -1025,7 +1024,12 @@ input {
 .navbar-dark {
     background-color: var(--well-background) !important;
     color: var(--text-input-border) !important;
-    border-bottom: solid 1px var(--well-background) !important;
+}
+.navbar-nav-dark {
+    background-color: var(--well-background) !important;
+    color: var(--text-input-border) !important;
+    margin-bottom: 3px;
+    padding-top: 3px;
 }
 .navbar-nav-dark > li > a {
     padding-top: 5px;
@@ -1049,7 +1053,8 @@ input {
 .btn-default-light {
 }
 .navbar-form-dark {
-    background-color: var(--text-input-field) !important;
+    background-color: var(--well-background) !important;
+    border: solid 1px var(--well-background) !important;
     color: var(--text-input-border) !important;
 }
 .dropdown-dark {
@@ -1075,7 +1080,6 @@ input {
 .text-container-dark {
     background-color: var(--text-container-dark-border) !important;
     color: var(--table-dark-color) !important;
-    border: solid 1px var(--text-container-dark-border) !important;
 }
 .text-container-dark > input {
     background-color: var(--text-container-dark-input-fill) !important;
