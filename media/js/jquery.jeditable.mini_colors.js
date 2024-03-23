@@ -264,9 +264,16 @@
 									form.submit();
 								}
 							});
-							submit.css({
-                                'display': 'inline-block', 'position': 'absolute', 'left': settings.submitleft
-                            });
+							if (settings.type == "text" || settings.type == "multiselect") {
+							    var submitlefttext = settings.width + 150;
+                                submit.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': submitlefttext
+                                });
+							} else {
+                                submit.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': settings.submitleft
+                                });
+                            }
 						} else {
 							var submit = $('<button type="submit" />');
 							submit.html(settings.submit);
@@ -276,9 +283,16 @@
 					if (settings.cancel) {
 						if (settings.cancel.match(/>$/)) {
 							var cancel = $(settings.cancel);
-							cancel.css({
-                                'display': 'inline-block', 'position': 'absolute', 'left': settings.canelleft
-                            });
+							if (settings.type == "text" || settings.type == "multiselect") {
+							    var cancellefttext = settings.width + 50;
+                                cancel.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': cancellefttext
+                                });
+							} else {
+                                cancel.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': settings.canelleft
+                                });
+                            }
 						} else {
 							var cancel = $('<button type="cancel" />');
 							cancel.html(settings.cancel);
