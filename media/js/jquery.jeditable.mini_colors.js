@@ -265,7 +265,7 @@
 								}
 							});
 							submit.css({
-                                'display': 'inline-block', 'position': 'absolute', 'left': settings.width-150
+                                'display': 'inline-block', 'position': 'absolute', 'left': settings.submitleft
                             });
 						} else {
 							var submit = $('<button type="submit" />');
@@ -277,7 +277,7 @@
 						if (settings.cancel.match(/>$/)) {
 							var cancel = $(settings.cancel);
 							cancel.css({
-                                'display': 'inline-block', 'position': 'absolute', 'left': settings.width-50
+                                'display': 'inline-block', 'position': 'absolute', 'left': settings.canelleft
                             });
 						} else {
 							var cancel = $('<button type="cancel" />');
