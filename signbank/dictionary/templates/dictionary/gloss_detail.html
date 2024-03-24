@@ -1378,7 +1378,7 @@ option:not(:checked) {
             {% for value,name,label,kind in main_fields %}
                 <tr><th>{{label}}</th>
                     <td class="edit edit_{{kind}}" id='{{name}}'
-                        value='{{value}}'>{% if kind == "check" and value %}{% trans "Yes" %}{% elif kind == "check" %}{% trans "No" %}{% else %}{% value value %}{% endif %}
+                        value='{{value}}'>{% value value %}
                     </td>
                     <td style="width:200px;"></td>
                 </tr>
@@ -1676,7 +1676,8 @@ option:not(:checked) {
                     {% if value == '-' or value == ' ' or value == '' or value == None %}
                     <tr class="empty_row">
                         <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
+                        <td class="edit edit_list" id='{{name}}'
+                            value='{{value}}' >{% value value %}</td>
                         {% for value,name,label,kind in handedness_fields %}
                             {% if name == 'weakdrop' %}
                             <td class="edit edit_WD" id='{{name}}'
@@ -1690,7 +1691,8 @@ option:not(:checked) {
                     {% else %}
                     <tr >
                         <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
+                        <td class="edit edit_list" id='{{name}}'
+                            value='{{value}}' >{% value value %}</td>
                         {% for value,name,label,kind in handedness_fields %}
                             {% if name == 'weakdrop' %}
                             <td class="edit edit_WD" id='{{name}}'
@@ -1709,7 +1711,8 @@ option:not(:checked) {
                     {% if value == '-' or value == ' ' or value == '' or value == None %}
                     <tr class="empty_row">
                         <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
+                        <td class="edit edit_list" id='{{name}}'
+                            value='{{value}}' >{% value value %}</td>
                         {% for value,name,label,kind in etymology_fields_dom %}
                             {% if name == 'domhndsh_letter' %}
                             <td class="edit edit_letter" id='{{name}}'
@@ -1747,7 +1750,8 @@ option:not(:checked) {
                     {% if value == '-' or value == ' ' or value == '' or value == None %}
                     <tr class="empty_row">
                         <th>{{label}}</th>
-                        <td class="edit edit_list" id='{{name}}' value='{{value}}' >{% value value %}</td>
+                        <td class="edit edit_list" id='{{name}}'
+                            value='{{value}}' >{% value value %}</td>
                         {% for value,name,label,kind in etymology_fields_sub %}
                             {% if name == 'subhndsh_letter' %}
                             <td class="edit edit_letter" id='{{name}}'
@@ -1901,7 +1905,8 @@ option:not(:checked) {
                              colspan="2">{% value value %}</td>
                     <td/>
                     {% else %}
-                    <td class="edit edit_{{kind}}" id='{{name}}' style="width:500px;" value='{{value}}'>{% value value %}</td>
+                    <td class="edit edit_{{kind}}" id='{{name}}' style="width:500px;"
+                        value='{{value}}'>{% value value %}</td>
                     <td/>
                     {% endif %}
 
@@ -1909,6 +1914,7 @@ option:not(:checked) {
             {% endfor %}
             
             </table>
+            <br><br><br>
         </div>
     </div>
 

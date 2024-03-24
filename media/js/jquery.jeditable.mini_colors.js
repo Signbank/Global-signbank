@@ -257,6 +257,8 @@
 				},
 				buttons: function (settings, original) {
 					var form = this;
+                    var td_value = $('#' + settings.params.field).attr('value');
+                    var td_value_width = (td_value === undefined) ? settings.width : td_value.length * 16;
 					if (settings.submit) {
 						if (settings.submit.match(/>$/)) {
 							var submit = $(settings.submit).click(function () {
@@ -265,9 +267,13 @@
 								}
 							});
 							if (settings.type == "text" || settings.type == "multiselect") {
-							    var submitlefttext = settings.width + 150;
+							    var submitlefttext = settings.width + 100;
                                 submit.css({
                                     'display': 'inline-block', 'position': 'absolute', 'left': submitlefttext
+                                });
+							} else if (settings.type == 'select') {
+                                submit.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': td_value_width+150
                                 });
 							} else {
                                 submit.css({
@@ -284,13 +290,17 @@
 						if (settings.cancel.match(/>$/)) {
 							var cancel = $(settings.cancel);
 							if (settings.type == "text" || settings.type == "multiselect") {
-							    var cancellefttext = settings.width + 50;
+							    var cancellefttext = settings.width;
                                 cancel.css({
                                     'display': 'inline-block', 'position': 'absolute', 'left': cancellefttext
                                 });
+							} else if (settings.type == 'select') {
+                                cancel.css({
+                                    'display': 'inline-block', 'position': 'absolute', 'left': td_value_width+50
+                                });
 							} else {
                                 cancel.css({
-                                    'display': 'inline-block', 'position': 'absolute', 'left': settings.canelleft
+                                    'display': 'inline-block', 'position': 'absolute', 'left': settings.cancelleft
                                 });
                             }
 						} else {

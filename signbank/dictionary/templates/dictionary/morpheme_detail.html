@@ -439,7 +439,7 @@ function checkKey(e)
                     {% trans "Annotation ID Gloss" %} ({{ lang }})
                 </th>
                 <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}'>{{annotation_idgloss_translation}}</td>
-
+                <td style="width:200px;"></td>
             </tr>
             {% endfor %}
 
@@ -451,17 +451,21 @@ function checkKey(e)
                 <td class='edit edit_text'
                     id='keyword_{{lang.language_code_2char}}'>{% for trn in translations %}{{ trn.translation.text|safe }}
                                                                 {% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                <td style="width:200px;"></td>
             </tr>
             {% endfor %}
 
             <tr {%if morpheme_type == '-' %} class="empty_row"{% endif %}>
                 <th>{% trans "Morpheme Type" %}</th>
                 <td class='edit edit_mrptype' id='mrpType' value='{{morpheme_type}}'>{{morpheme_type}}</td>
+                <td style="width:200px;"></td>
             </tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
             <tr {%if morpheme_dialects|length == 0 %} class="empty_row"{% endif %}>
                 <th>{% trans "Dialect" %}</th>
-                <td class='edit edit_dialect' id='dialect'>{% for dia in morpheme_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+                <td class='edit edit_dialect' id='dialect'>{% for dia in morpheme_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                <td style="width:200px;"></td>
+            </tr>
             {% endif %}
         </table>
 
@@ -572,7 +576,7 @@ function checkKey(e)
                     <td class="edit edit_{{kind}}" data-value=""
                         id='{{name}}' value='{{value}}' >{% value value %}</td>
                     {% endif %}
-                <td></td>
+                <td style="width:200px;"></td>
                 </tr>
 
 		{% endfor %}
@@ -592,6 +596,7 @@ function checkKey(e)
                     <td class='edit edit_semanticfield'
                         id='semanticfield'>{% for sf in gloss_semanticfields %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
                     <td/>
+                    <td style="width:200px;"></td>
                 </tr>
                 {% if USE_DERIVATIONHISTORY %}
                 <tr {%if not gloss_derivationhistory %} class="empty_row"{% endif %}>
@@ -599,16 +604,19 @@ function checkKey(e)
                     <td class='edit edit_derivationhistory'
                         id='derivationhistory'>{% for sf in gloss_derivationhistory %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
                     <td/>
+                    <td style="width:200px;"></td>
                 </tr>
                 {% endif %}
 		{% for value,name,label,kind in semantics_fields %}
 		    <tr {%if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %}>
                 <th>{{label}}</th>
                 <td class="edit edit_{{kind}}" id='{{name}}' value='{{value}}' >{% value value %}</td>
+                <td style="width:200px;"></td>
             </tr>
 		{% endfor %}
             
             </table>
+            <br><br><br>
         </div>
     </div>
 
