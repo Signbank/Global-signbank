@@ -2138,7 +2138,7 @@ option:not(:checked) {
                   <th style='width:1em'></th>
                   <th style='width:3em'>{% trans "Published" %}</th>
                   <th style='width:20em'>{% trans "Index" %}</th>
-                  <th style='width:10em'>{% trans "Type" %}</th>
+                  <th style='width:20em'>{% trans "Type" %}</th>
                   <th>{% trans "Text" %}</th>
               </tr>
                 {% for role_id, note_list in notes_groupedby_role.items %}
@@ -2182,7 +2182,7 @@ option:not(:checked) {
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
                 <td id='definitionrole_{{def.id}}'
                     data-field='definitionrole'>{{role_id.1}}</td>
-                <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
+                <td class='edit edit_area' id='definition_{{def.id}}' style="height:80;">{{def.text}}</td>
               </tr>
               {% endfor %}
             {% endfor %}
@@ -2197,8 +2197,8 @@ option:not(:checked) {
                         <td style="width:2em"></td>
                         <td style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
                         <td style='width:5em'><input class='form-control' name='count' id='id_count' type='number' value=3></td>
-                        <td style='width:10em'>{{definitionform.note}}</td>
-                        <td><input class='form-control' name='text' id='id_text' placeholder='{% trans "Enter New Note" %}'></td>
+                        <td style='width:20em'>{{definitionform.note}}</td>
+                        <td>{{definitionform.text}}</td>
                     </tr>
                      <tr>
                         <td></td>

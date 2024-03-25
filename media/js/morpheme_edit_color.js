@@ -316,7 +316,11 @@ function configure_edit() {
 		 callback : update_view_and_remember_original_value
      });
      $('.edit_role').editable(edit_post_url, {
-         params : { a: swap(definition_role_choices)[$(this).attr('value')] },
+         params : { a: definition_role_choices_reverse_json[$(this).attr('value')],
+                    field: $(this).attr('id'),
+                    display: $(this).attr('value'),
+                    colors: definition_role_choices_colors,
+                    choices: definition_role_choices },
          type      : 'select',
          data      : definition_role_choices,
 		 callback : update_view_and_remember_original_value

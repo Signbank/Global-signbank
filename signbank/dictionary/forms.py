@@ -467,9 +467,12 @@ class MorphemeSearchForm(forms.ModelForm):
 
 
 class DefinitionForm(forms.ModelForm):
+
+    text = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 5, 'placeholder': _('Enter New Note')}))
+
     class Meta:
         model = Definition
-        fields = ('published','count', 'text')
+        fields = ('published', 'count', 'text')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
