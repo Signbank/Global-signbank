@@ -338,7 +338,8 @@ function toggle_edit(redirect_to_next) {
 
 $.editable.addInputType('positiveinteger', {
     element : function(settings, original) {
-        var input = $('<input type="number" min="0">');
+        $(this).first().first().addClass('preview-number');
+        var input = $('<input type="number" min="1" max="20" style="width:3em;">');
         $(this).append(input);
         return(input);
     }
@@ -350,9 +351,11 @@ function configure_edit() {
     $.fn.editable.defaults['indicator'] = saving_str;
     $.fn.editable.defaults['tooltip'] = 'Click to edit...';
     $.fn.editable.defaults['placeholder'] = '-';
-    $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">OK</button>';
-    $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" type="cancel">Cancel</button>';
+    $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" style="" type="cancel">Cancel</button>';
+    $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" style="" type="submit">OK</button>';
     $.fn.editable.defaults['cssclass'] = 'preview';
+    $.fn.editable.defaults['cancelleft'] = '100px';
+    $.fn.editable.defaults['submitleft'] = '200px';
     $.fn.editable.defaults['width'] = 'auto';
     $.fn.editable.defaults['height'] = 'auto';
     $.fn.editable.defaults['submitdata'] = {'csrfmiddlewaretoken': csrf_token};

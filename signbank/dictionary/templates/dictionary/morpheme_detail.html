@@ -105,6 +105,11 @@ option:not(:checked) {
 
     var edit_post_url = '{% url 'dictionary:update_morpheme' morpheme.id %}';
     var definition_role_choices = {{morpheme.definition_role_choices_json|safe}};
+    var definition_role_choices_colors = {};
+    for (var key in definition_role_choices) {
+        definition_role_choices_colors[key] = 'ffffff';
+    };
+    var definition_role_choices_reverse_json = {{morpheme.definition_role_choices_reverse_json|safe}};
     var relation_role_choices = {{morpheme.relation_role_choices_json|safe}};
     var relation_delete_choices = '{ "delete" : "Delete" }';
     var relation_delete_choices_colors = '{ "delete" : "ffffff" }';
@@ -178,7 +183,8 @@ document.onkeydown = checkKey;
 function checkKey(e)
 {
     // No shortcut if your typing
-    if (document.activeElement.tagName == 'INPUT') {return;}
+    var inputs = ['input', 'select', 'button', 'textarea'];
+    if (document.activeElement && inputs.indexOf(document.activeElement.tagName.toLowerCase()) !== -1) {return;}
 
     e = e || window.event;
 
@@ -439,7 +445,7 @@ function checkKey(e)
                     {% trans "Annotation ID Gloss" %} ({{ lang }})
                 </th>
                 <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}'>{{annotation_idgloss_translation}}</td>
-
+                <td style="width:200px;"></td>
             </tr>
             {% endfor %}
 
@@ -451,17 +457,21 @@ function checkKey(e)
                 <td class='edit edit_text'
                     id='keyword_{{lang.language_code_2char}}'>{% for trn in translations %}{{ trn.translation.text|safe }}
                                                                 {% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                <td style="width:200px;"></td>
             </tr>
             {% endfor %}
 
             <tr {%if morpheme_type == '-' %} class="empty_row"{% endif %}>
                 <th>{% trans "Morpheme Type" %}</th>
                 <td class='edit edit_mrptype' id='mrpType' value='{{morpheme_type}}'>{{morpheme_type}}</td>
+                <td style="width:200px;"></td>
             </tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
             <tr {%if morpheme_dialects|length == 0 %} class="empty_row"{% endif %}>
                 <th>{% trans "Dialect" %}</th>
-                <td class='edit edit_dialect' id='dialect'>{% for dia in morpheme_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+                <td class='edit edit_dialect' id='dialect'>{% for dia in morpheme_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                <td style="width:200px;"></td>
+            </tr>
             {% endif %}
         </table>
 
@@ -572,7 +582,7 @@ function checkKey(e)
                     <td class="edit edit_{{kind}}" data-value=""
                         id='{{name}}' value='{{value}}' >{% value value %}</td>
                     {% endif %}
-                <td></td>
+                <td style="width:200px;"></td>
                 </tr>
 
 		{% endfor %}
@@ -592,6 +602,7 @@ function checkKey(e)
                     <td class='edit edit_semanticfield'
                         id='semanticfield'>{% for sf in gloss_semanticfields %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
                     <td/>
+                    <td style="width:200px;"></td>
                 </tr>
                 {% if USE_DERIVATIONHISTORY %}
                 <tr {%if not gloss_derivationhistory %} class="empty_row"{% endif %}>
@@ -599,16 +610,19 @@ function checkKey(e)
                     <td class='edit edit_derivationhistory'
                         id='derivationhistory'>{% for sf in gloss_derivationhistory %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
                     <td/>
+                    <td style="width:200px;"></td>
                 </tr>
                 {% endif %}
 		{% for value,name,label,kind in semantics_fields %}
 		    <tr {%if value == '-' or value == ' ' or value == '' or value == None or value == False %} class="empty_row"{% endif %}>
                 <th>{{label}}</th>
                 <td class="edit edit_{{kind}}" id='{{name}}' value='{{value}}' >{% value value %}</td>
+                <td style="width:200px;"></td>
             </tr>
 		{% endfor %}
             
             </table>
+            <br><br><br>
         </div>
     </div>
 
@@ -663,8 +677,8 @@ function checkKey(e)
               <tr>
                   <th style='width:1em'></th>
                   <th style='width:3em'>{% trans "Published" %}</th>
-                  <th style='width:3em'>{% trans "Index" %}</th>
-                  <th style='width:10em'>{% trans "Type" %}</th>
+                  <th style='width:20em'>{% trans "Index" %}</th>
+                  <th style='width:20em'>{% trans "Type" %}</th>
                   <th>{% trans "Text" %}</th>
               </tr>
               {% for role_id, note_list in notes_groupedby_role.items %}
@@ -708,7 +722,7 @@ function checkKey(e)
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
                 <td id='definitionrole_{{def.id}}'
                     data-field='definitionrole'>{{role_id.1}}</td>
-                <td class='edit edit_area' id='definition_{{def.id}}'>{{def.text}}</td>
+                <td class='edit edit_area' id='definition_{{def.id}}' style="height:80;">{{def.text}}</td>
               </tr>
               {% endfor %}
 
@@ -724,8 +738,8 @@ function checkKey(e)
                         <td style="width:2em"></td>
                         <td style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
                         <td style='width:5em'><input class='form-control' name='count' id='id_count' type='number'></td>
-                        <td style='width:10em'>{{definitionform.note}}</td>
-                        <td><input class='form-control' name='text' id='id_text' placeholder='{% trans "Enter New Note" %}'></td>
+                        <td style='width:20em'>{{definitionform.note}}</td>
+                        <td>{{definitionform.text}}</td>
                     </tr>
                      <tr>
                         <td></td>
