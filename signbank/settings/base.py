@@ -131,7 +131,7 @@ INSTALLED_APPS = (
     'signbank.video',
     'reversion',
     'tagging',
-    'guardian',
+    'guardian'
     # 'debug_toolbar',
     # 'video_encoding'
 )

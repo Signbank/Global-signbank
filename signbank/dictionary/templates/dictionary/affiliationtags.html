@@ -1,0 +1,47 @@
+{% load i18n %}
+
+{% load guardian_tags %}
+
+        <div id='affs' style="z-index: 0;opacity:.99; position: relative; background-color: white;">
+        <fieldset>
+      {% load affiliation_tags %}
+      {% with gloss|get_affiliations_for_gloss as aff_list %}
+      {% if aff_list %}
+          <ul class='afflist'>
+          {% for aff in aff_list %}
+            <li class='affli' id="gloss_affiliation_{{aff.id}}">
+               <div class='aff tagAFF' style="background:{{aff.field_color}};border-color:{{aff.field_color}};">
+                 <span class='affname'>{{aff.acronym}}</span>
+                {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+                {% if "change_dataset" in dataset_perms %}
+                 <span class='affcount'>
+                     <a class='affdelete editform'
+                        id='{{aff.id}}' value='{{aff.id}}' name='{{aff.acronym}}'
+                        data-href='{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}'
+                        title='{% trans "delete this affiliation" %}'>x</a>
+                 </span>
+                 {% endif %}
+                </div>
+            </li>
+          {% endfor %}
+          </ul>
+      {% endif %}
+      {% endwith %}
+    {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
+    {% if "change_dataset" in dataset_perms %}
+      <div id="affcontainer"></div>
+      <div class='editform'>
+          <form id='affaddform'
+                data-action="{{PREFIX_URL}}/dictionary/update/affiliation/{{gloss.id}}"
+                method="post" enctype="multipart/form-data">
+           {% csrf_token %}
+           <table>
+           <tr><td>{{affiliationform.affiliation}}</td>
+               <td><input class='btn btn-primary' type='submit' value='{% trans "Add Affiliation" %}'></td>
+           </tr>
+           </table>
+          </form>
+      </div>
+      {% endif %}
+      </fieldset>
+    </div>

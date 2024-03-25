@@ -766,6 +766,7 @@ class SignLanguageAdmin(VersionAdmin):
 # which acts a bit like a singleton
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
+    readonly_fields = ['api_token']
     can_delete = False
     verbose_name_plural = 'profile'
 
@@ -1007,7 +1008,6 @@ class FieldChoiceAdmin(VersionAdmin, TranslationAdmin):
                 print('Constraint violated, FieldChoice not saved: ', obj.field, obj.machine_value, obj.id, e)
 
 
-
 class LanguageAdmin(TranslationAdmin):
 
     def get_actions(self, request):
@@ -1015,6 +1015,7 @@ class LanguageAdmin(TranslationAdmin):
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
+
 
 class LemmaIdglossAdminForm(forms.ModelForm):
 
@@ -1359,6 +1360,15 @@ class ExampleSentenceTranslationAdmin(admin.ModelAdmin):
     list_filter = ['language']
 
 
+class AffiliationAdmin(admin.ModelAdmin):
+    list_display = ("name", )
+    search_fields = ['name']
+
+
+class AffiliatedUserAdmin(admin.ModelAdmin):
+    list_display = ("affiliation", "user", )
+
+
 admin.site.register(Dialect, DialectAdmin)
 admin.site.register(SignLanguage, SignLanguageAdmin)
 admin.site.register(Gloss, GlossAdmin)
@@ -1378,6 +1388,9 @@ admin.site.register(GlossRevision,GlossRevisionAdmin)
 admin.site.register(DeletedGlossOrMedia, DeletedGlossOrMediaAdmin)
 
 admin.site.register(UserProfile)
+admin.site.register(Affiliation, AffiliationAdmin)
+admin.site.register(AffiliatedUser, AffiliatedUserAdmin)
+
 admin.site.register(Language, LanguageAdmin)
 admin.site.register(Dataset, DatasetAdmin)
 

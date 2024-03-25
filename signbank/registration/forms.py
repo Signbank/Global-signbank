@@ -14,7 +14,7 @@ from django.utils.functional import lazy
 from django.db.utils import OperationalError, ProgrammingError
 
 
-from signbank.registration.models import RegistrationProfile, UserProfile
+from signbank.registration.models import RegistrationProfile
 
 from signbank.dictionary.models import Dataset
 from django_select2 import *

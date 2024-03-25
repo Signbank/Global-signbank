@@ -225,6 +225,7 @@ function checkKey(e)
 
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/tagmanager.css">
+    <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/affiliation_tags.css">
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/dropstyle.css">
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/recordstyle.css">
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
@@ -885,6 +886,7 @@ option:not(:checked) {
     <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background: white;">
 
         {% include "dictionary/glosstags.html" %}
+        {% include "dictionary/affiliationtags.html" %}
 
         <table class='table table-condensed' style="width:100%;">
             <tr {% if gloss_dialects|length == 0 %} class="empty_row" {% endif %}>

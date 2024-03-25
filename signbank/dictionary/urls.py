@@ -33,6 +33,7 @@ urlpatterns = [
     re_path(r'^update/handshape/(?P<handshapeid>\d+)$', signbank.dictionary.update.update_handshape, name='update_handshape'),
     re_path(r'^update/morpheme/(?P<morphemeid>\d+)$', signbank.dictionary.update.update_morpheme, name='update_morpheme'),
     re_path(r'^update/tag/(?P<glossid>\d+)$', signbank.dictionary.update.add_tag, name='add_tag'),
+    re_path(r'^update/affiliation/(?P<glossid>\d+)$', signbank.dictionary.update.add_affiliation, name='add_affiliation'),
     re_path(r'^update/morphemetag/(?P<morphemeid>\d+)$', signbank.dictionary.update.add_morphemetag, name='add_morphemetag'),
     re_path(r'^update/definition/(?P<glossid>\d+)$', signbank.dictionary.update.add_definition, name='add_definition'),
     re_path(r'^update/relation/$', signbank.dictionary.update.add_relation, name='add_relation'),

@@ -3351,3 +3351,55 @@ def toggle_namedentity(request, glossid, namedentity):
     result = mapping_toggle_namedentity(request, glossid, namedentity)
 
     return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def add_affiliation(request, glossid):
+    """View to add an affiliation to a gloss"""
+    form = AffiliationUpdateForm(request.POST)
+
+    if not form.is_valid():
+        return JsonResponse({})
+
+    thisgloss = get_object_or_404(Gloss, id=glossid)
+    tags_label = 'Affiliation'
+
+    deletetag = request.POST.get('delete', '')
+    affiliation_id = request.POST.get('affiliation', '')
+    if not deletetag or not affiliation_id:
+        # fallback to the requesting page
+        return JsonResponse({})
+
+    try:
+        affiliationid = int(affiliation_id)
+        affiliation = Affiliation.objects.get(id=affiliationid)
+        old_tags_string = affiliation.name
+    except (ValueError, ObjectDoesNotExist, MultipleObjectsReturned):
+        # fallback to the requesting page
+        return JsonResponse({})
+
+    if deletetag == "True":
+        # get the relevant AffiliatedGloss
+        with atomic():
+            aff = get_object_or_404(AffiliatedGloss, gloss__id=thisgloss.id, affiliation=affiliation)
+            aff.delete()
+            new_tags_string = ''
+
+            revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                     gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+            revision.save()
+        # response = HttpResponse('deleted', {'content-type': 'text/plain'})
+        result = {'affiliation': affiliation_id}
+        return JsonResponse(result)
+
+    old_tags_string = ''
+    with atomic():
+        affiliation = Affiliation.objects.get(id=affiliationid)
+        new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=affiliation, gloss=thisgloss)
+        new_tags_string = affiliation.name
+        revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+        revision.save()
+
+    result = {'affiliation': affiliation_id}
+    return JsonResponse(result)

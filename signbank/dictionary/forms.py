@@ -11,7 +11,7 @@ from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Rel
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, \
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter, \
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation, \
-                                        ExampleSentence
+                                        ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
@@ -187,6 +187,24 @@ class TagUpdateForm(forms.Form):
                                                choices=[(tag.name, tag.name.replace('_', ' '))
                                                         for tag in refreshed_tags],
                                                widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+
+class AffiliationUpdateForm(forms.ModelForm):
+    """Form to add a new affiliation to a gloss"""
+
+    delete = forms.BooleanField(required=False, widget=forms.HiddenInput)
+
+    class Meta:
+
+        model = AffiliatedGloss
+        fields = ['affiliation']
+
+    def __init__(self, *args, **kwargs):
+        super(AffiliationUpdateForm, self).__init__(*args, **kwargs)
+
+        self.fields['affiliation'] = forms.ModelChoiceField(label=_('Affiliation'),
+                                                            queryset=Affiliation.objects.all(), empty_label=None,
+                                                            widget=forms.Select(attrs=ATTRS_FOR_FORMS))
 
 
 class GlossSearchForm(forms.ModelForm):
@@ -486,10 +504,10 @@ class DefinitionForm(forms.ModelForm):
 
 
 class RelationForm(forms.ModelForm):
-    
+
     sourceid = forms.CharField(label=_('Source Gloss'))
     targetid = forms.CharField(label=_('Target Gloss'))
-    
+
     class Meta:
         model = Relation
         fields = ['role']
@@ -504,14 +522,14 @@ class VariantsForm(forms.Form):
 
     class Meta:
         model = Relation
-        
+
 
 class RelationToForeignSignForm(forms.ModelForm):
 
     sourceid = forms.CharField(label=_('Source Gloss'))
     other_lang = forms.CharField(label=_('Related Language'))
     other_lang_gloss = forms.CharField(label=_('Gloss in Related Language'), required=False)
-    
+
     class Meta:
         model = RelationToForeignSign
         fields = ['loan','other_lang','other_lang_gloss']
