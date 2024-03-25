@@ -11,14 +11,14 @@
        <DESCRIPTION LANG_REF="{{ language.language_code_3char }}">{{ dataset.description }}</DESCRIPTION>
        {% endfor %}
        {% for gloss in glosses %}
-       <CV_ENTRY_ML CVE_ID="{{ gloss.id }}" EXT_REF="signbank-ecv">
+       <CV_ENTRY_ML CVE_ID="{{ gloss.id }}" EXT_REF="er{{ gloss.id }}">
            {% for language in languages %}
            {% with gloss|get_annotation_idgloss_translation:language as annotationidglosstranslation %}
            <CVE_VALUE DESCRIPTION="{{ gloss|get_gloss_description:language.language_code_2char }}" LANG_REF="{{ language.language_code_3char }}">{{ annotationidglosstranslation}}</CVE_VALUE>
            {% endwith %}
            {% endfor %}
        </CV_ENTRY_ML>
+       <EXTERNAL_REF EXT_REF_ID="er{{ gloss.id }}" TYPE="resource_url" VALUE="{{ resource_url }}{{ gloss.id }}"/>
        {% endfor %}
    </CONTROLLED_VOCABULARY>
-   <EXTERNAL_REF EXT_REF_ID="signbank-ecv" TYPE="resource_url" VALUE="{{ resource_url }}"/>
 </CV_RESOURCE>
