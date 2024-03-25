@@ -157,6 +157,8 @@ def check_value_dict_create_gloss(request, dataset, value_dict):
 
 
 def create_gloss(request, dataset, value_dict):
+    # assumes all guardian permissions have already been checked
+    # the request argument is used to add the creator to the new gloss
     dataset_languages = dataset.translation_languages.all()
     results = dict()
     try:
@@ -230,10 +232,6 @@ def csv_create_gloss(request, datasetid):
 @csrf_exempt
 def api_create_gloss(request, datasetid):
     results = dict()
-
-    if not request.user.is_staff:
-        results['errors'] = "User is not Staff."
-        return JsonResponse(results)
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:

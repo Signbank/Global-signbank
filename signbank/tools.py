@@ -1970,7 +1970,12 @@ def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies
     if desc:
         desc += ", "
 
-    trans = [t.translation.text for t in gloss.translation_set.all()]
+    lang = Language.objects.get(language_code_2char=lang)
+    trans = []
+    for sense in gloss.senses.all():
+        for st in sense.senseTranslations.filter(language=lang).order_by('sense'):
+            if str(st) != "":
+                trans.append(str(st))
     desc += ", ".join(
         # The next line was adapted from an older version of this code,
         # that happened to do nothing. I left this for future usage.
