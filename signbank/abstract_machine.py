@@ -233,10 +233,6 @@ def csv_create_gloss(request, datasetid):
 def api_create_gloss(request, datasetid):
     results = dict()
 
-    if not request.user.is_staff:
-        results['errors'] = "User is not Staff."
-        return JsonResponse(results)
-
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
         results['errors'] = "Dataset ID does not exist."

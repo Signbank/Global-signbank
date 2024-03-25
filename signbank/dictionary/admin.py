@@ -766,6 +766,7 @@ class SignLanguageAdmin(VersionAdmin):
 # which acts a bit like a singleton
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
+    readonly_fields = ['api_token']
     can_delete = False
     verbose_name_plural = 'profile'
 
