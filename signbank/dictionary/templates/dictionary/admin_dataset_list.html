@@ -11,13 +11,13 @@
 
 
 {% block content %}
-
+<div class='well well-light'>
 <h3>{% trans "Available Datasets" %}</h3>
 
 {% if object_list %}
 
-<table class='table table-condensed'>
-    <thead>
+<table class='table table-condensed table-condensed-light'>
+    <thead class="thead thead-light">
       <tr>
           <th style="width:150px;">{% trans "Dataset Acronym" %}</th>
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
@@ -34,7 +34,7 @@
           {% endif %}
       </tr>
     </thead>
-    <tbody>
+    <tbody class="tbody tbody-light">
       {% for dataset in object_list %}
         <tr>
             <td>
@@ -123,5 +123,5 @@
 {% else %}
 {% trans "No datasets found." %}
 {% endif %}
-
+</div>
 {% endblock content %}

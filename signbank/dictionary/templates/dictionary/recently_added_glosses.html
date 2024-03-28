@@ -15,26 +15,22 @@
 <h3>{% trans "Recently Added Signs" %}</h3>
 
     {% if glosses %}
+    <br>
     <table class="table table-condensed">
+        <thead class="thead thead-light">
         <tr>
             {%if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
             <th style="width:300px;">{% trans "Lemma ID Gloss" %}</th>
             <th>{% trans "Annotation ID Gloss" %}</th>
             <th style="width:180px;">{% trans "Creator" %}</th>
-            <th style="width:180px">{% trans "Creation Date" %}</th></tr>
-
+            <th style="width:180px">{% trans "Creation Date" %}</th>
+        </tr>
+        <tr></tr>
+        </thead>
+        <br>
+        <tbody class="tbody tbody-light">
         {% for gloss in glosses %}
-        <!-- Apply three-way coloring: (1) tag for wrong sign, (2) availability of video, and (3) gloss database value for 'isNew' -->
-        {% tags_for_object gloss as tag_list %}
-        {% if tag_list|wrong_sign %}
-            <tr class="danger">
-        {% elif not gloss.has_video %}
-            <tr class="warning">
-        {% elif gloss.isNew %}
-            <tr class="info">
-        {% else %}
-            <tr>
-        {% endif %}
+        <tr>
         {%if SHOW_DATASET_INTERFACE_OPTIONS %}<td>{% value gloss.dataset %}</td>{% endif %}
          <td id='idgloss'>
              {% value gloss.idgloss %}
@@ -62,6 +58,7 @@
             <td>{{gloss.creationDate}}</td>
         </tr>
         {% endfor %}
+    </tbody>
     </table>
 
     {% else %}

@@ -1,0 +1,83 @@
+/* these styles are to allow inheritance of the styles for dark mode */
+
+.selection {
+    background-color: inherit !important;
+    color: inherit !important;
+}
+.select2 {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-container {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-container--default {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-dropdown {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-hidden-accessible {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-search {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-search__field {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-results {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-results__options {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-results__option {
+    color: inherit !important;
+    background-color: inherit !important;
+}
+.select2-results__option--highlighted {
+    color: inherit !important;
+    background-color: inherit !important;
+    font-weight: bold;
+}
+.select2-selection__choice {
+    color: black !important;
+    background-color: white !important;
+    border: solid 1px black;
+    opacity: 0.5;
+    font-weight: bold;
+    box-shadow: 0 2px 2px;
+}
+.select2-selection {
+    color: inherit !important;
+    background-color: inherit !important;
+    border-left-color: inherit !important;
+    border-right-color: inherit !important;
+    border-top-color: inherit !important;
+    border-bottom-color: inherit !important;
+}
+.select2-selection--multiple {
+    color: inherit !important;
+    background-color: inherit !important;
+    border-left-color: inherit !important;
+    border-right-color: inherit !important;
+    border-top-color: inherit !important;
+    border-bottom-color: inherit !important;
+}
+.select2-selection__rendered {
+    color: inherit !important;
+    background-color: inherit !important;
+    border-left-color: inherit !important;
+    border-right-color: inherit !important;
+    border-top-color: inherit !important;
+    border-bottom-color: inherit !important;
+}

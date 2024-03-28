@@ -1,0 +1,1041 @@
+html,
+body {
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+  background-color: white;
+  color: black;
+  /* The html and body elements cannot have any padding or margin. */
+}
+
+/* Wrapper for page content to push down footer */
+#wrap {
+  min-height: calc(100% - 220px);
+  height: auto;
+  /* Negative indent footer by its height */
+  margin: auto auto -45px auto;
+  /* Pad bottom by footer height */
+  padding: auto 0 45px auto;
+  position: auto;
+  /* Pad bottom to put space between footer and this wraper */
+}
+
+.footer {
+  margin-top: 25px;
+  margin-right: 15px;
+}
+
+.nav-wrapper {
+    height: auto;
+    width: 100%;
+    margin-right: 9px;
+}
+
+.container {
+    width: 100%;
+    margin-right: 9px;
+    margin-bottom: 15px;
+    margin-top: 0px;
+    background-color: inherit;
+    color: inherit;
+}
+
+#content {
+    background-color: inherit;
+    color: inherit;
+}
+
+#signinfo {
+    background-color: inherit;
+    color: inherit;
+    margin-bottom: 0px;
+    margin-top: 10px;
+    padding-left: 0px;
+}
+
+#signinfo .navbar-text {
+    color: inherit;
+    background-color: inherit;
+}
+#signinfo #editbutton {
+    margin-right: 15px;
+}
+
+
+#signs {
+   margin-right: 0em;
+   text-align: left;
+   float: left;
+   width: 338px;  /* to match rh edge of video container */
+}
+
+
+#definitionblock {
+   margin-top: 0px;
+   background-color: inherit;
+   color: inherit;
+}
+
+@media (min-width: 992px) {
+
+    #definitionblock .col-md-8 {
+        padding-left: 60px;
+    }
+
+}
+
+
+#leftblock {
+   float: left;
+   margin-left: 6px;
+   width: 450px;
+
+}
+
+#videocontainer #player #videoplayer {
+   margin: 0;
+   width:450px;
+   height:259px;
+   background-color: inherit;
+   color: inherit;
+}
+
+#novideo
+{
+    border: 0;
+    width:450px;
+    height:259px;
+    display: block;
+}
+
+#videoframe {
+	width:450px;
+    height:259px;
+    margin: 0;
+}
+
+#imageframe {
+    margin: 0;
+    border: 0;
+    width:450px;
+    height:259px;
+}
+
+/* style for the answer in the fingerspelling practice page */
+#answerpara {
+   font-size: larger;
+   font-weight: bold;
+}
+#answer {
+   color: #FF0000;
+}
+
+/* replay for both video and fingerspelling images */
+#replay {
+   text-align: right;
+   padding-right: 1em;
+   margin-bottom: 1em;
+   background-color: #000000;
+   color: #ffffff;
+}
+
+#keywords {
+
+}
+#definition {
+   margin-left: 475px;
+   padding-left: 6px;
+}
+#staffinfo {
+   margin-left: 338px;
+   padding-left: 6px;
+}
+
+#staffinfo .helptext {
+    font-size: smaller;
+    font-style: italic;
+    color: #ccc;
+}
+
+/* numbersigns */
+
+#numsigntable {
+    margin-left: 400px;
+}
+
+
+#exclude-field-choices .collapse.in {
+    display: table-row !important;
+}
+
+
+/* admin search form */
+
+#searchformwell {
+    background-color: inherit;
+    color: inherit;
+}
+
+#adminsearch td input {
+    width: 100%;
+}
+
+#adminsearch #searchpanels > td {
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+}
+
+#adminsearch #searchfields td {
+    width: 33%;
+    border-top: 0px;
+}
+
+#adminsearch .table
+{
+	margin-bottom: 5px;
+}
+
+#adminsearch .table-condensed .table-condensed
+{
+	margin-bottom: 0px;
+}
+
+#adminsearch #searchpanels {
+    width: 100%;
+}
+
+
+#adminsearch #searchpanels select {
+    width: 100%;
+}
+
+#paginate_by select {
+    width: 100px;
+}
+
+#paginate_by {
+    float: right;
+}
+
+#paginate_by label {
+    display: inline;
+}
+
+#paginate_by select {
+    display: inline-block;
+}
+
+/* editing gloss */
+
+.edit_enabled {
+    background-color: red;
+    color: inherit;
+}
+
+#definition .table th {
+    width: 20em;
+}
+
+
+/* styles for finger spelling pages */
+
+#fingerspellblock {
+   border-top: 10px solid black;
+}
+
+#handcontainer {
+   margin-top: -2px;
+   width: 320px;
+}
+
+#handcontainer #handimage {
+   margin: auto;
+   width:320px;
+   height:240px;
+   border-left: 6px solid black;
+   border-right: 6px solid black;
+}
+
+
+/* this will be the same size as our videos */
+#handimage {
+  position: relative;
+  height: 240px;
+  width:  300px;
+  background-color: #4b62ae;
+  border-left: 10px solid black;
+  border-right: 10px solid black;
+}
+
+
+/* images are 192x144 centre them in the above div */
+#mainimg {
+  position: absolute;
+  top: 49px; /* (240 - 144)/2  */
+  left: 54px;  /* (300 - 192)/2 */
+  display: block;
+  margin: auto;
+}
+
+#fingerspellright {
+   width: 470px; /* 847 - 320 - 20 - fiddle factor */
+   float: left;
+   padding-left: 20px;or
+}
+
+#fstable td {
+  margin-right: -1em;
+}
+#fstable img {
+  width: 75px;
+  height: 56px;
+}
+#fstable td div {
+  margin-top: -1.4em;
+  font-size: large;
+  color: #fff;
+  text-align: center;
+}
+#info {
+   clear: both;
+}
+
+
+
+/* tag code adapted from http://cssglobe.com/pure-css3-post-tags/ */
+
+.taglist {
+    margin:0;
+    padding:0;
+    list-style:none;
+}
+
+
+.tag {
+    float:left;
+    height:24px;
+    line-height:24px;
+    position:relative;
+    z-index: 0 !important;
+    opacity: .99;
+    margin-left:20px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding:0 10px 0 12px;
+    background:#0089e0;
+    color:#fff;
+    text-decoration:none;
+    -moz-border-radius-bottomright:4px;
+    -webkit-border-bottom-right-radius:4px;
+    border-bottom-right-radius:4px;
+    -moz-border-radius-topright:4px;
+    -webkit-border-top-right-radius:4px;
+    border-top-right-radius:4px;
+
+
+    }
+
+.tag:before {
+    content:"";
+    float:left;
+    position:absolute;
+    top:0;
+    left:-12px;
+    width:0;
+    height:0;
+    border-color:transparent #0089e0 transparent transparent;
+    border-style:solid;
+    border-width:12px 12px 12px 0;
+}
+
+.tag:after{
+    content:"";
+    position:absolute;
+    top:10px;
+    left:0;
+    float:left;
+    width:4px;
+    height:4px;
+    -moz-border-radius:2px;
+    -webkit-border-radius:2px;
+    border-radius:2px;
+    background:#fff;
+    -moz-box-shadow:-1px -1px 2px #004977;
+    -webkit-box-shadow:-1px -1px 2px #004977;
+    box-shadow:-1px -1px 2px #004977;
+    }
+
+
+
+.tagdelete {
+    color: red;
+}
+
+#tagaddform {
+    clear: both;
+    padding: 20px;
+}
+
+
+
+// typeahead dropdown styling
+
+.typeahead,
+.tt-query,
+.tt-hint {
+  width: 396px;
+  height: 30px;
+  padding: 8px 12px;
+  font-size: 24px;
+  line-height: 30px;
+  border: 2px solid #ccc;
+  -webkit-border-radius: 8px;
+     -moz-border-radius: 8px;
+          border-radius: 8px;
+  outline: none;
+}
+
+.typeahead {
+  background-color: #fff;
+}
+
+.typeahead:focus {
+  border: 2px solid #0097cf;
+}
+
+.tt-query {
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+     -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+          box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+}
+
+.tt-hint {
+  color: #999
+}
+
+.tt-dropdown-menu {
+  width: 422px;
+  margin-top: 12px;
+  padding: 8px 0;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  -webkit-border-radius: 8px;
+     -moz-border-radius: 8px;
+          border-radius: 8px;
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+     -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+          box-shadow: 0 5px 10px rgba(0,0,0,.2);
+}
+
+.tt-suggestion {
+  padding: 3px 20px;
+  line-height: 20px;
+}
+
+.tt-suggestion.tt-cursor {
+  color: #fff;
+  background-color: #0097cf;
+
+}
+
+.tt-suggestion p {
+  margin: 0;
+}
+
+.col-md-4
+{
+	width: 100%
+}
+
+.thumbnail
+{
+  height:115px;
+  margin: auto;
+  padding: 0px;
+  max-width: 115px;
+  object-fit: cover;
+}
+
+.thumbnail_handshape
+{
+  height:115px;
+  margin: auto;
+  padding: 0px;
+  max-width: auto;
+  object-fit: cover;
+}
+
+.cropped_thumbnail
+{
+  margin: -4px -50px -8px -50px
+}
+
+.thumbnail_container
+{
+    float: left;
+    margin: .5px 10px .5px 0;
+    overflow: hidden;
+
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.search-results-collapsable
+{
+    border: 0px;
+    box-shadow: 0;
+}
+
+.formbutton
+{
+    display: inline;
+}
+
+/* How a clickable reference to a morpheme looks in the Gloss List View */
+.morpheme_style {
+  color: black;
+}
+/* How a clickable reference to a morpheme looks in the Gloss List View - hovering */
+.morpheme_style:hover {
+  color: darkred;
+}
+
+/* Special background for morpheme in the combined Gloss+Morpheme list view */
+.morpheme_gloss {
+    background: lightgray;
+    border-radius: 0.5em;
+}
+
+/* Appearance of morphemes and compound parts in details */
+.gloss_detail_morpheme {
+    font-style: italic;
+}
+.gloss_detail_component {
+    /* No special matters */
+    font-size: smaller;
+    color: black;
+}
+
+.gloss_detail_component:hover {
+  color: darkred;
+}
+
+tr.rotated th {
+    -webkit-transform: rotate(-45deg);
+  -moz-transform: rotate(-45deg);
+  -ms-transform: rotate(-45deg);
+  -o-transform: rotate(-45deg);
+  transform: rotate(-45deg);
+}
+
+#searchresults
+{
+    min-height: 30px;
+}
+
+.search_result
+{
+    margin-right: 30px;
+    color: hsla(0, 0%, 0%, 0.35);
+}
+
+.search_result:hover, search_result:active, a.active
+{
+    color: hsla(0, 0%, 0%, 0.7);
+    text-decoration: none;
+}
+
+#searchresults a.active
+{
+    font-weight: 800;
+}
+
+//Tabs taken from a new version of bootstrap
+.nav-tabs
+{
+    border-bottom: 1px solid #dee2e6;
+}
+
+.nav-tabs .nav-item
+{
+    margin-bottom: -1px;
+}
+
+.nav-tabs .nav-link
+{
+    border: 1px solid transparent;
+        border-top-color: transparent;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+    border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem;
+}
+
+.nav-tabs .nav-link:hover, .nav-tabs .nav-link:focus
+{
+  border-top-left-radius: .25rem;
+  border-top-right-radius: .25rem;
+  border-color: #e9ecef #e9ecef #dee2e6;
+  border-bottom-color: transparent;
+  background-color: white;
+}
+
+.nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active
+{
+    color: #495057;
+    background-color: inherit;
+    border-color: #BB2F2C #dee2e6 #fff;
+    border-top-width: 2px;
+}
+
+.ribbon_list
+{
+    display: flex;
+    flex-direction: column;
+    height: 100px;
+    flex-wrap: wrap;
+    margin-left: -85px;
+    margin-top: 3px;
+    justify-content: center;
+}
+
+ .ribbon
+ {
+    box-sizing: border-box;
+    position: relative;
+    min-width: 125px;
+    height: 20px;
+    width: 100px;
+    color: #ffffff80;
+    text-align: center;
+    text-decoration: none;
+    line-height: 20px;
+    margin: 0px 10px 4px 10px;
+}
+
+.ribbon:before, .ribbon:after
+{
+    position: absolute;
+    content:'';
+    width: 100%;
+    left: 0px;
+    height: 10px;
+    border-width: 2px;
+    border-style: solid;
+    border-color: #fff6;
+}
+
+.ribbon:before
+{
+    transform: perspective(3px) rotateX(3deg);
+    border-bottom: none;
+}
+
+.ribbon:after
+{
+    top: 10px;
+    transform: perspective(3px) rotateX(-3deg);
+    border-top: none;
+}
+
+.ribbon_list .selected
+{
+    color: white;
+}
+
+.ribbon_list .selected:before, .ribbon_list .selected:after
+{
+    border-color: #fffc;
+}
+
+#search_results_label
+{
+    float: left;
+    margin-right: 52px;
+    margin-top: 4px;
+    font-size: 12px;
+    margin-left: 15px;
+    color: #00000080;
+}
+
+.hover-shows-video
+{
+    width: 115px;
+}
+
+.thumbnail-video
+{
+    object-fit: cover;
+    max-width: 115px;
+    height: 115px;
+    display:block;
+}
+
+.exclude-field-choices
+{
+    overflow-y: auto;
+    height: 64vh;
+}
+
+.exclude-field-choices th
+{
+    position: sticky;
+    top: 0px;
+    background-color: white;
+}
+
+canvas{
+    width:auto !important;
+    height:auto !important;
+}
+
+.chart-container {
+    width: auto;
+    height: auto;
+}
+
+.chart-nested-container {
+    width: auto;
+    height: auto;
+}
+
+.chart-short-container {
+    width: 500px;
+    height: auto;
+}
+
+.chart-horizontal-single-bar-container {
+    width: auto;
+    height: 50px;
+}
+
+.chart-multichart-enclosure-container {
+    width: auto;
+    height: auto;
+}
+
+.btn-space {
+    margin-right: 5px;
+}
+
+.btn-color {
+    background-color: Pink;
+}
+
+.btn-toolbar {
+    background-color: inherit;
+    color: inherit;
+}
+.btn-group {
+    background-color: inherit;
+    color: inherit;
+}
+.container {
+    background-color: inherit;
+    color: inherit;
+}
+
+.container-fluid {
+    background-color: inherit;
+    color: inherit;
+}
+
+.well {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel-default {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel-heading {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel-body {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel-footer {
+    background-color: inherit;
+    color: inherit;
+}
+
+form {
+    background-color: inherit;
+    color: inherit;
+}
+
+.table .table-condensed {
+    background-color: inherit;
+    color: inherit;
+}
+
+.table-responsive {
+    background-color: inherit;
+    color: inherit;
+}
+
+.table .table-bordered {
+    background-color: inherit;
+    color: inherit;
+}
+
+tbody tr {
+    background-color: inherit;
+    color: inherit;
+}
+
+tr td {
+    background-color: inherit;
+    color: inherit;
+}
+td {
+    background-color: inherit;
+    color: inherit;
+}
+tr th {
+    background-color: inherit;
+    color: inherit;
+}
+@body-bg {
+    background-color: inherit;
+    color: inherit;
+}
+
+.dark-mode {
+  background-color: rgb(1, 4, 9) !important;
+  color: rgb(132, 141, 151) !important;
+}
+@media screen body {
+  background: inherit;
+  background-color: inherit;
+  color: inherit;
+}
+
+option {
+    color: black;
+}
+select {
+    color: black;
+}
+
+input {
+    background-color: inherit;
+    color: inherit;
+}
+
+.modal {
+    background-color: white;
+    color: black;
+}
+.modal-content {
+    background-color: inherit;
+    color: inherit;
+}
+.modal-header {
+    background-color: inherit;
+    color: inherit;
+}
+.modal-body {
+    background-color: inherit;
+    color: inherit;
+}
+.modal-footer {
+    background-color: inherit;
+    color: inherit;
+}
+
+.modal fade {
+    background-color: inherit;
+    color: inherit;
+}
+.edit .edit_list {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_text {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_area {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_int {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_check {
+    background-color: inherit;
+    color: inherit !important;
+}
+/* this is the Edit button in e.g., Gloss Detail View */
+.edit_enabled {
+    background-color: red;
+    color: white !important;
+}
+
+.pull-right {
+    background-color: inherit;
+    color: inherit !important;
+}
+
+.panel-light {
+    background-color: inherit;
+    color: inherit !important;
+}
+.panel-heading-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+    border-bottom-width: 0;
+}
+.panel-default-dark {
+    border: solid 1px rgb(28, 65, 112) !important;
+    border-bottom-color: rgb(28, 65, 112);
+    background-color: rgb(13, 17, 23);
+    color: rgb(132, 141, 151);
+    margin-bottom: 0;
+    box-shadow: #050014;
+}
+.collapse-dark {
+    border: solid 1px rgb(28, 65, 112) !important;
+    border-top-width: 1px !important;
+}
+.collapse-light {
+    border: solid 1px inherit !important;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+}
+.well-dark {
+    border: solid 1px rgb(28, 65, 112) !important;
+}
+.well-light {
+    border: solid 1px inherit !important;
+}
+/* .nav-bar {
+    border: solid 1px purple !important;
+} */
+.hidden {
+    color: transparent;
+    background-color: transparent;
+}
+/* .panel {
+    background-color: inherit;
+    border: solid 2px purple;
+    box-shadow: purple 0px 1px 1px 0px;
+} */
+.td-dark {
+    border-top-color: rgb(28, 65, 112) !important;
+}
+.td-light {
+    border-top-color: inherit;
+}
+.th-dark {
+    border-bottom-color: rgb(28, 65, 112) !important;
+}
+.th-light {
+    border-bottom-color: inherit;
+}
+
+.navbar-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.navbar-nav-dark > li > a {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.navbar-nav-dark > li > a:hover {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+}
+.navbar-nav-dark > ul {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+}
+.btn-default-dark {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+    border-color: rgb(28, 65, 112) !important;
+}
+.btn-default-light {
+}
+.navbar-form-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(28, 65, 112) !important;
+}
+.dropdown-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.dropdown-dark > ul {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.dropdown-menu-dark > ul {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.dropdown-menu-dark > li > a {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+}
+.dropdown-menu-dark > li > a:hover {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+}
+.text-container-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+    border: solid 1px rgb(22, 27, 34) !important;
+}
+.text-container-dark > input {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+    border: solid 1px rgb(28, 65, 112) !important;
+}
+
+.navbar-text-dark {
+    background-color: rgb(22, 27, 34) !important;
+    color: white !important;
+}
+.navbar-text-dark > a:hover {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+}
+.interface-language-light > input {
+    background-color: inherit !important;
+    color: inherit !important;
+    border: solid 1px inherit !important;
+}
+.interface-language-dark {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+    border: solid 1px rgb(28, 65, 112) !important;
+}
+.input-group-dark > label {
+    background-color: rgb(22, 27, 34) !important;
+    color: rgb(132, 141, 151) !important;
+    border: solid 1px rgb(28, 65, 112) !important;
+}
+.input-group-dark > input {
+    background-color: rgb(28, 65, 112) !important;
+    color: white !important;
+    border: solid 1px rgb(28, 65, 112) !important;
+}
+
+

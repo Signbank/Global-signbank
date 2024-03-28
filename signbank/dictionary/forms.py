@@ -166,7 +166,7 @@ class MorphemeCreateForm(forms.ModelForm):
 
 
 ATTRS_FOR_FORMS = {'class': 'form-control'}
-ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:80px'}
+ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:90px'}
 
 
 class TagUpdateForm(forms.Form):
