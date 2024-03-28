@@ -227,7 +227,8 @@ table {
 
 {% if object_list %}
     <div id="visibility_buttons">
-         <table class='table table-condensed'>
+         <table class='table table-condensed table-condensed-light'>
+             <thead class="thead thead-light">
                 <tr id='phonology_selection'>
                     <td style="width:200px;"><label>{% trans "Phonology" %}</label></td>
                     <td>
@@ -248,6 +249,7 @@ table {
                         </select>
                     </td>
                 </tr>
+             </thead>
          </table>
     </div>
 

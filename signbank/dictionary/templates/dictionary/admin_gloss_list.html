@@ -888,14 +888,14 @@ function do_toggle_language(el) {
 
 </div>
 
-    <div class='btn-group' style="margin-bottom: 20px">
+    <div class='btn-group btn-group-light' style="margin-bottom: 20px">
         <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
         <input type="hidden" name="view_type"
                id="toggle_view_type"
                value="{{view_type}}">
 
         {% if SHOW_MORPHEME_SEARCH %}
-        <div class="btn-group">
+        <div class="btn-group btn-group-light">
             <a class='btn btn-primary dropdown-toggle' data-toggle="dropdown" type='submit' name='submit_button'>
             <span data-bind="label" onclick="do_adminsearch(this);" name="search_type" value="{{search_type}}">
                 {% if search_type == 'sign' %}

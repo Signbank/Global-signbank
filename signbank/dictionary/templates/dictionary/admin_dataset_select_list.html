@@ -36,7 +36,7 @@ function select_no_datasets() {
 <input class="btn btn-default btn-default-light" type="submit" value="{% trans 'Save selection' %}"/>
 {% csrf_token %}
 <table class='table table-condensed table-condensed-light'>
-    <thead>
+    <thead class="thead thead-light">
       <tr>
           <th class='th th-light' width="5%">{% trans "Selected" %}</th>
           <th class='th th-light' width="10%">{% trans "Dataset Acronym" %}</th>
@@ -47,7 +47,7 @@ function select_no_datasets() {
       </tr>
     </thead>
     {% if not user.is_anonymous %}
-    <tbody>
+    <tbody class="tbody tbody-light">
       {% for dataset in object_list %}
           {% get_obj_perms request.user for dataset as "dataset_perms" %}
             {% if "view_dataset" in dataset_perms or "can_view_dataset" in dataset_perms %}
@@ -64,7 +64,7 @@ function select_no_datasets() {
       {% endfor %}
     </tbody>
     {% else %}
-    <tbody>
+    <tbody class="tbody tbody-light">
         {% for dataset in object_list %}
             <tr>
                 <td class='td td-light'><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.checked %}checked{% endif %}/></td>
