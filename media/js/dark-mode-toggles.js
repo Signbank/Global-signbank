@@ -161,6 +161,15 @@ function toggle_dark_mode() {
             $(this).addClass("thead-light");
         }
   });
+  $(".tr").each(function () {
+        if ($(this).hasClass("tr-light")) {
+            $(this).removeClass("tr-light");
+            $(this).addClass("tr-dark");
+        } else if ($(this).hasClass("tr-dark")) {
+            $(this).removeClass("tr-dark");
+            $(this).addClass("tr-light");
+        }
+  });
   $(".td").each(function () {
         if ($(this).hasClass("td-light")) {
             $(this).removeClass("td-light");

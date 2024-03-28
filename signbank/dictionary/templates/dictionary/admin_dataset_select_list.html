@@ -31,11 +31,11 @@ function select_no_datasets() {
 
 {% if object_list %}
 <form name="selectdatasets" id="selectdatasets" method="post" action="{{PREFIX_URL}}/datasets/change_selection">
-<button id="select_all_top" value='select_all' onclick="select_all_datasets()" class="btn btn-default">{% trans "Select All" %}</button>
-<button id="select_none_top" value='select_none' onclick="select_no_datasets()" class="btn btn-default">{% trans "Select None" %}</button>
-<input class="btn btn-default" type="submit" value="{% trans 'Save selection' %}"/>
+<button id="select_all_top" value='select_all' onclick="select_all_datasets()" class="btn btn-default btn-default-light">{% trans "Select All" %}</button>
+<button id="select_none_top" value='select_none' onclick="select_no_datasets()" class="btn btn-default btn-default-light">{% trans "Select None" %}</button>
+<input class="btn btn-default btn-default-light" type="submit" value="{% trans 'Save selection' %}"/>
 {% csrf_token %}
-<table class='table table-condensed'>
+<table class='table table-condensed table-condensed-light'>
     <thead>
       <tr>
           <th class='th th-light' width="5%">{% trans "Selected" %}</th>
@@ -81,9 +81,9 @@ function select_no_datasets() {
 </table>
 
 
-<button id="select_all" value='select_all' onclick="select_all_datasets()" class="btn btn-default">{% trans "Select All" %}</button>
-<button id="select_none" value='select_none' onclick="select_no_datasets()" class="btn btn-default">{% trans "Select None" %}</button>
-<input class="btn btn-default" type="submit" value="{% trans 'Save selection' %}"/>
+<button id="select_all" value='select_all' onclick="select_all_datasets()" class="btn btn-default btn-default-light">{% trans "Select All" %}</button>
+<button id="select_none" value='select_none' onclick="select_no_datasets()" class="btn btn-default btn-default-light">{% trans "Select None" %}</button>
+<input class="btn btn-default btn-default-light" type="submit" value="{% trans 'Save selection' %}"/>
 </form>
 
 {% else %}

@@ -736,12 +736,11 @@ function do_toggle_language(el) {
                                 <td class='td td-light' style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
                                 <td class='td td-light' style="width:600px;">{{ searchform.dialects }}</td>
                             </tr>
-                        </table>
 
-                        <table class='table table-condensed table-condensed-light' style="width:65%;">
                             {% for fieldname,field,label in input_names_fields_and_labels.main %}
 
-                                <tr><td class='td td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                <tr><td class='td td-light' style="padding-left:30px;">
+                                    <label for='id_{{fieldname}}'>{{label}}</label></td>
                                     <td class='td td-light' style="width:600px;">{{field}}</td></tr>
 
                             {% endfor %}
@@ -797,7 +796,8 @@ function do_toggle_language(el) {
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
 
                                     <tr>
-                                        <td class='td td-light' style="padding-left:30px;"><label>{{label}}</label></td><td class='td td-light'>{{field}}</td>
+                                        <td class='td td-light' style="padding-left:30px;"><label>{{label}}</label></td>
+                                        <td class='td td-light'>{{field}}</td>
                                         {% if fieldname == 'handedness' %}
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
                                                 <td class='td td-light'><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td class='td td-light'>{{handednessfield}}</td>
