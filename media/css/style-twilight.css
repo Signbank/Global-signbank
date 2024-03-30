@@ -1,23 +1,23 @@
 :root {
     --dark-mode-very-dark: rgb(9, 4, 2);
-    --tbody-dark-border: rgb(24, 0, 0);
-    --tbody-dark-background: rgb(12, 0, 0);
+    --tbody-dark-border: rgb(9, 4, 2);
+    --tbody-dark-background: rgb(9, 4, 2);
     --typeahead-dark-background: rgb(24, 0, 0);
     --typeahead-dark-border: rgb(40, 0, 0);
     --typeahead-dark-color: rgb(174, 0, 0);
-    --panel-heading-background: rgb(44, 10, 10);
-    --panel-heading-text: rgb(237, 147, 156);
+    --panel-heading-background: rgb(44, 18, 18);
+    --panel-heading-text: rgb(200, 156, 156);
     --text-input-field: rgb(40, 0, 0);
     --text-input-border: rgb(172, 0, 0);
     --text-input-text: rgb(250, 255, 255);
-    --well-background: rgb(23, 0, 0);
+    --well-background: rgb(9, 4, 2);
     --well-border: rgb(60, 0, 0);
     --button-default: rgb(187, 60, 80);
     --nav-highlight: rgb(28, 0, 0);
     --dropdown-dark: rgb(112, 0, 0);
     --text-container-dark-input-border: rgb(112, 0, 0);
     --text-container-dark-input-fill: rgb(9, 4, 2);
-    --text-container-dark-border: rgb(34, 0, 0);
+    --text-container-dark-border: rgb(28, 0, 0);
     --text-container-dark-placeholder: rgb(255, 0, 0);
     --table-dark-color: rgb(151, 0, 0);
     --dark-label-background: rgb(55, 0, 0);
@@ -952,6 +952,7 @@ input {
 }
 .well-dark {
     border: solid 1px var(--well-background) !important;
+    background-color:  var(--well-background) !important;
 }
 .well-light {
     border: solid 1px inherit !important;
@@ -991,7 +992,10 @@ input {
     background-color: inherit !important;
     color: var(--panel-heading-text) !important;
 }
-
+.span-text-content-dark {
+    background-color: inherit !important;
+    color: var(--text-input-text) !important;
+}
 .td-dark > form {
     border-top-color: var(--well-background) !important;
     background-color: var(--well-background) !important;
@@ -1000,7 +1004,7 @@ input {
 .td-dark > input {
     border-top-color: var(--text-input-field) !important;
     border-color: var(--text-input-field) !important;
-    background-color: var(--text-input-field) !important;
+    background-color: var(--text-container-dark-input-fill) !important;
     border: solid 1px var(--text-input-border) !important;
     color: var(--text-input-text) !important;
 }
@@ -1049,6 +1053,7 @@ input {
     background-color: var(--button-default) !important;
     color: white !important;
     border-color: var(--button-default) !important;
+    border-radius: 6px;
 }
 .btn-default-light {
 }
@@ -1108,7 +1113,7 @@ input {
     border: solid 1px var(--nav-highlight) !important;
 }
 .input-group-dark > label {
-    background-color: var(--dark-label-background) !important;
+    background-color: var(--panel-heading-background) !important;
     color: var(--panel-heading-text) !important;
     border: solid 1px var(--dark-label-background) !important;
 }
@@ -1146,7 +1151,7 @@ input {
     border-top-color: var(--text-container-dark-border) !important;
     border-bottom-color: var(--text-container-dark-border) !important;
 }
-.table-condensed-dark {
+.table .table-condensed-dark {
     background-color: var(--well-background) !important;
     color: var(--table-dark-color) !important;
     border-left-color: var(--text-container-dark-border) !important;
@@ -1162,7 +1167,7 @@ input {
     border-top-color: var(--text-container-dark-border) !important;
     border-bottom-color: var(--text-container-dark-border) !important;
 }
-.table-condensed-dark > tr > th {
+.table .table-condensed-dark > tr > th {
     background-color: var(--well-background) !important;
     color: var(--panel-heading-text) !important;
     border-left-color: var(--text-container-dark-border) !important;
@@ -1187,7 +1192,7 @@ input {
     border-bottom-color: var(--text-container-dark-border) !important;
 }
 .search-form-dark {
-    background-color: var(--text-input-field) !important;
+    background-color: var(--well-background) !important;
     color: var(--text-input-border) !important;
 }
 .thead-light {
@@ -1276,7 +1281,12 @@ span ::placeholder {
 .pages-form-dark {
     color: var(--panel-heading-text) !important;
 }
-
+.pages-form-dark > select {
+    background-color: var(--button-default) !important;
+}
+.pages-form-dark > select > option {
+    background-color: var(--button-default) !important;
+}
 .form-group-dark {
     color: var(--panel-heading-text) !important;
 }
@@ -1314,5 +1324,5 @@ span ::placeholder {
 }
 .btn-group-dark {
     color: inherit !important;
-    background-color: inherit !important;
+    background-color: var(--well-background) !important;
 }

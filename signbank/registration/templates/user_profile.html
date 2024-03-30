@@ -26,6 +26,7 @@
     </table>
     {% else %}
     <table class="table table-condensed table-condensed-light">
+    <thead class="thead thead-light">
     <tr><th>Username</th><th>Name</th><th>Email</th><th>Expiration Date</th>
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}
         <th style="white-space:nowrap;">{% trans "Selected Datasets" %}</th>
@@ -33,6 +34,8 @@
         <th style="white-space:nowrap;">{% trans "Change Permission" %}</th>
         {% endif %}
     </tr>
+    </thead>
+    <tbody class="tbody tbody-light">
     <tr class="tr tr-light"><td>{{user.username}}</td>
         <td>{{user.first_name}} {{user.last_name}}</td>
         <td>{{user.email}}</td>
@@ -59,6 +62,7 @@
         </td>
         {% endif %}
     </tr>
+    </tbody>
     {% if delta.days < 60 %}
     <tr>
     <form name='extend_account_expiry' id='extend_account_expiry' action="{{PREFIX_URL}}/update/expiry/" method='POST'>
@@ -75,33 +79,45 @@
     </table>
     {% endif %}
     <table class="table table-condensed table-condensed-light">
-        <tr>
-        <th style="width:200px;">{% trans "Affiliation" %}</th>
-        <td class="td td-light">{% for aff in user_affiliation %}{{aff.affiliation.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-        </tr>
+    <thead class="thead thead-light">
+    <tr>
+    <th class='th th-light' style="width:200px;">{% trans "Affiliation" %}</th>
+        <td>
+            <span class="span-text span-text-content-light">
+            {% for aff in user_affiliation %}{{aff.affiliation.name}}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </span>
+        </td>
+    </tr>
+    </thead>
     </table>
     {% if user_can_change_glosses %}
     <br><br>
     <table class="table table-condensed table-condensed-light">
+    <thead class="thead thead-light">
     <tr>
-    <th style="width:200px;">{% trans "Signbank API Tokens" %}</th>
+    <th class='th th-light' style="width:200px;">{% trans "Signbank API Tokens" %}</th>
     </tr>
+    </thead>
+    <tbody class="tbody tbody-light">
     {% for ds in change_permit_datasets %}
     <tr>
-    <td>{{ds.acronym}}</td>
+        <td><span class="span-text span-text-content-light">{{ds.acronym}}</span></td>
         <td>
-            {{user.user_profile.api_token}}
+            <span class="span-text span-text-content-light">{{user.user_profile.api_token}}</span>
         </td>
     </tr>
     {% endfor %}
+    </tbody>
     </table>
     {% endif %}
     {% if user_has_queries %}
     <br><br>
     <table class="table table-condensed table-condensed-light">
+    <thead class="thead thead-light">
     <tr>
-        <th>{% trans "Recently Saved Queries" %}</th>
+        <th class='th th-light'>{% trans "Recently Saved Queries" %}</th>
     </tr>
+    </thead>
     <tr>
         <td>
             <a href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>

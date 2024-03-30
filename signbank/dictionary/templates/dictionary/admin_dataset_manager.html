@@ -21,11 +21,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 
     <script type="text/javascript">
-        $(document).ready(function() {
-            $('.default-language-select').select2({
-              placeholder: 'Select an option'
-            });
-        });
 
         function selectFolder(e) {
             var theFiles = e.target.files;
@@ -61,7 +56,7 @@
 <a href="{% url 'admin_dataset_field_choices' %}"><button class="btn btn-primary" >{% trans "Exclude field choices for datasets" %}</button></a>
 
 <table class='table table-condensed table-condensed-light'>
-    <thead>
+    <thead class="thead thead-light">
       <tr>
           <th style="width:100px;">{% trans "Dataset Name" %}</th>
           <th style="width:200px;">{% trans "Users who can View Dataset (Group permissions excluded)" %}</th>
@@ -94,7 +89,7 @@
           <th style="width:270px;">{% trans "EAF Files" %}</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody class="tbody tbody-light">
       {% for dataset in object_list %}
       {% if request.user|has_group:"Dataset_Manager" %}
       {% get_obj_perms request.user for dataset as "dataset_perms" %}
@@ -238,12 +233,12 @@
                 </div>
             </td>
             <td>
-                <form method="get">
+                <form method="get" class='pages-form pages-form-light'>
                     {% csrf_token %}
                     <div class="hidden">
-                        <input name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
+                        <input name='dataset_acronym' value='{{dataset.acronym}}' >
                     </div>
-                    <select name='default_language' class="default-language-select" style="width:200px;">
+                    <select name='default_language' class="form-control form-control-light" style="width:200px;">
                         <option value="">--------</option>
                         {% for language in dataset.translation_languages.all %}
                             <option value="{{ language.id }}"

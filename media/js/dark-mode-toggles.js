@@ -224,6 +224,15 @@ function toggle_dark_mode() {
             $(this).addClass("span-text-light");
         }
   });
+  $(".span-text").each(function () {
+        if ($(this).hasClass("span-text-content-light")) {
+            $(this).removeClass("span-text-content-light");
+            $(this).addClass("span-text-content-dark");
+        } else if ($(this).hasClass("span-text-content-dark")) {
+            $(this).removeClass("span-text-content-dark");
+            $(this).addClass("span-text-content-light");
+        }
+  });
   $(".morphtypeahead").each(function () {
         if ($(this).hasClass("morphtypeahead-light")) {
             $(this).removeClass("morphtypeahead-light");
