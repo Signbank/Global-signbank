@@ -32,13 +32,20 @@ class Command(BaseCommand):
 
         dataset_NGT = Dataset.objects.get(acronym=DEFAULT_DATASET_ACRONYM)
         cngt_affiliation, created = Affiliation.objects.get_or_create(acronym='CNGT', name='Corpus CNGT')
-        # Radboud Red: #B22E27
-        dataset_glosses = Gloss.objects.filter(lemma__dataset=dataset_NGT)
-        corpus_gloss_frequencies = GlossFrequency.objects.filter(gloss__lemma__dataset=dataset_NGT)
-        for cgf in corpus_gloss_frequencies:
-            corpus_gloss = cgf.gloss
-            cngt_affiliated_gloss = AffiliatedGloss(affiliation=cngt_affiliation, gloss=corpus_gloss)
-            cngt_affiliated_gloss.save()
-        affiliation_glosses = AffiliatedGloss.obects.filter(affilation=cngt_affiliation)
-        print('Affiliated glosses: '+str(affiliation_glosses.count()) + ' out of ', str(dataset_glosses.count()))
+        if created:
+            # Radboud Red: #B22E27
+            cngt_affiliation.color = '#B22E27'
+            cngt_affiliation.save()
+        dataset_glosses = Gloss.objects.filter(lemma__dataset=dataset_NGT).distinct()
+        gloss_frequencies = GlossFrequency.objects.all().prefetch_related('gloss')
+        corpus_gloss_frequencies = gloss_frequencies.filter(gloss__lemma__dataset=dataset_NGT).distinct()
+
+        corpus_glosses = [gf.gloss for gf in corpus_gloss_frequencies]
+        unique_corpus_glosses = list(set(corpus_glosses))
+
+        for corpus_gloss in unique_corpus_glosses:
+            cngt_affiliated_gloss, created = AffiliatedGloss.objects.get_or_create(affiliation=cngt_affiliation,
+                                                                                   gloss=corpus_gloss)
+        affiliation_glosses = AffiliatedGloss.objects.filter(affiliation=cngt_affiliation)
+        print('Affiliated CNGT glosses: '+str(affiliation_glosses.count()) + ' out of ', str(dataset_glosses.count()))
 
