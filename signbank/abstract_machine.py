@@ -237,7 +237,8 @@ def create_gloss(request, dataset, value_dict):
             # Find the number of senses in the gloss
             nr_senses = 0
             for language in dataset_languages:
-                nr_senses_in_lang = len(convert_string_to_list_of_lists(value_dict['sense_' + language.language_code_2char]))
+                sensetranslations, _ = convert_string_to_list_of_lists(value_dict['sense_' + language.language_code_2char])
+                nr_senses_in_lang = len(sensetranslations)
                 if nr_senses_in_lang > nr_senses:
                     nr_senses = nr_senses_in_lang
 
@@ -247,6 +248,8 @@ def create_gloss(request, dataset, value_dict):
                     new_sense = Sense.objects.create()
                     new_gloss.senses.add(new_sense, through_defaults={'order':sense_n+1})
                     for language in dataset_languages:
+                        if value_dict['sense_' + language.language_code_2char] == '':
+                            continue
                         sensetranslations, _ = convert_string_to_list_of_lists(value_dict['sense_' + language.language_code_2char])
                         if sensetranslations[sense_n]:
                             sensetranslation = SenseTranslation.objects.create(language=language)
@@ -266,16 +269,16 @@ def create_gloss(request, dataset, value_dict):
                                 translation.save()
                                 sensetranslation.translations.add(translation)
 
-            # add create sense to revision history, indicated by empty old_value
-            sense_new_value = str(new_sense)
-            sense_label = 'Sense'
-            revision = GlossRevision(old_value="",
-                                    new_value=sense_new_value,
-                                    field_name=sense_label,
-                                    gloss=new_gloss,
-                                    user=request.user,
-                                    time=datetime.now(tz=get_current_timezone()))
-            revision.save()
+                # add create sense to revision history, indicated by empty old_value
+                sense_new_value = str(new_sense)
+                sense_label = 'Sense'
+                revision = GlossRevision(old_value="",
+                                        new_value=sense_new_value,
+                                        field_name=sense_label,
+                                        gloss=new_gloss,
+                                        user=request.user,
+                                        time=datetime.now(tz=get_current_timezone()))
+                revision.save()
 
             results['glossid'] = str(new_gloss.pk)
             results['errors'] = []
