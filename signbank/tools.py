@@ -1555,7 +1555,10 @@ def reload_signbank(request=None):
         return render(request, 'reload_signbank.html')
 
 
-def get_gloss_data(since_timestamp=0, dataset=None, inWebSet=False, extended_fields=False):
+def get_gloss_data(since_timestamp=0, language_code='en', dataset=None, inWebSet=False, extended_fields=False):
+
+    if not dataset:
+        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
     if inWebSet:
         glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True)
@@ -1563,12 +1566,12 @@ def get_gloss_data(since_timestamp=0, dataset=None, inWebSet=False, extended_fie
         glosses = Gloss.objects.filter(lemma__dataset=dataset)
 
     # settings.API_FIELDS
-    api_fields_2023 = api_fields(dataset, extended_fields)
+    api_fields_2023 = api_fields(dataset, language_code, extended_fields)
 
     gloss_data = {}
     for gloss in glosses:
         if int(format(gloss.lastUpdated, 'U')) > since_timestamp:
-            gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023)
+            gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023, language_code)
 
     return gloss_data
 
