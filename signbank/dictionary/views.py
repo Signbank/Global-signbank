@@ -2252,7 +2252,7 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = 0
 
-    if not inWebSet and 'extended_fields' in request.GET and request.GET['extended_fields'] in [1, True, 'true']:
+    if 'extended_fields' in request.GET and request.GET['extended_fields'] in [1, True, 'true', 'True']:
         extended_fields = True
     else:
         extended_fields = False
@@ -2278,9 +2278,13 @@ def package(request):
                   if os.path.exists(str(gv.videofile.path))
                      and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
 
+    (interface_language, interface_language_code,
+     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
-                      'glosses': signbank.tools.get_gloss_data(since_timestamp, dataset, inWebSet, extended_fields)}
+                      'glosses': signbank.tools.get_gloss_data(since_timestamp, interface_language_code,
+                                                               dataset, inWebSet, extended_fields)}
 
     if since_timestamp != 0:
         collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss', since_timestamp)
