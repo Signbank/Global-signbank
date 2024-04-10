@@ -21,8 +21,9 @@ from signbank.dictionary.forms import *
 from django.conf import settings
 
 from signbank.video.forms import VideoUploadForObjectForm
+from signbank.video.models import AnnotatedVideo
 
-from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES, ANNOTATEDSENTENCE_VIDEO_DIRECTORY
+from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
 from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, get_default_annotationidglosstranslation
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
@@ -1847,6 +1848,24 @@ def add_annotated_media(request, glossid):
     }
     return render(request, template, context)
 
+
+def delete_annotated_sentence(request, glossid):
+    """View to delete an annotated sentence model from the editable modal"""
+    if not request.method == "POST":
+        return HttpResponseForbidden("Annotated Sentence Deletion method must be POST")
+
+    if not request.user.has_perm('dictionary.annotated_sentence_sense'):
+        messages.add_message(request, messages.ERROR, _('Annotated Sentence Deletion Not Allowed'))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+
+    annotated_sentence = AnnotatedSentence.objects.get(id=request.POST['annotatedsentenceid'])
+    annotated_videos = AnnotatedVideo.objects.filter(annotatedsentence=annotated_sentence)
+    for annotated_video in annotated_videos:
+        annotated_video.delete_files()
+        annotated_video.delete()
+    annotated_sentence.delete()
+
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
 def add_othermedia(request):
 

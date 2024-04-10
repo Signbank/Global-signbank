@@ -18,8 +18,7 @@ from signbank.tools import generate_still_image, get_default_annotationidglosstr
 
 
 def addvideo(request):
-    """View to present a video upload form and process
-    the upload"""
+    """View to present a video upload form and process the upload"""
 
     if request.method == 'POST':
         form = VideoUploadForObjectForm(request.POST, request.FILES)
@@ -78,41 +77,71 @@ def addvideo(request):
         url = '/'
     return redirect(url)
 
+def find_non_overlapping_annotated_glosses(timeslots, annotations_tier_1, annotations_tier_2):
+    non_overlapping_glosses = []
+
+    for annotation_2 in annotations_tier_2:
+        is_overlapping = False
+        for annotation_1 in annotations_tier_1:
+            # timecode to time in ms
+            start_1 = int(timeslots[annotation_1[0]])
+            end_1 = int(timeslots[annotation_1[1]])
+            start_2 = int(timeslots[annotation_2[0]])
+            end_2 = int(timeslots[annotation_2[1]])
+            if (start_2 >= start_1 and start_2 <= end_1) or (end_2 >= start_1 and end_2 <= end_1):
+                is_overlapping = True
+                break
+        if not is_overlapping:
+            non_overlapping_glosses.append(annotation_2)
+
+    return non_overlapping_glosses
 
 def process_eaffile(request):
-    glosses, sentences = {}, {}
+    import magic
+    from pympi.Elan import Eaf
+    glosses, sentences = [], []
+    gloss_dict, sentence_dict = {}, {}
 
     if request.method == 'POST':
         uploaded_file = request.FILES['eaffile']
-        if not uploaded_file.name.endswith('.eaf'):
+        file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
+        if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
             return JsonResponse({'error': 'Invalid file. Please try again.'})
 
-        # check file type
-        # import magic
-        # print(magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True))
-
-        from pympi.Elan import Eaf
         eaf = Eaf(uploaded_file.temporary_file_path())
-        for annotation_i, annotation in enumerate(eaf.tiers['Glosses'][0].values()):
+        
+        # Add glosses from the right hand
+        for annotation in eaf.tiers['Glosses R'][0].values():
             gloss_label = annotation[2]
             start = int(eaf.timeslots[annotation[0]])
             end = int(eaf.timeslots[annotation[1]])
-            glosses[annotation_i] = [gloss_label, start, end]
+            glosses.append([gloss_label, start, end])
+
+        # Add glosses from the left hand, if they don't overlap with the right hand
+        for annotation in find_non_overlapping_annotated_glosses(eaf.timeslots, eaf.tiers['Glosses R'][0].values(), eaf.tiers['Glosses L'][0].values()):
+            gloss_label = annotation[2]
+            start = int(eaf.timeslots[annotation[0]])
+            end = int(eaf.timeslots[annotation[1]])
+            glosses.append([gloss_label, start, end])
+        
+        # Sort the list of glosses by the "start" value
+        glosses = sorted(glosses, key=lambda x: x[1])
+
+        if glosses == []:
+            return JsonResponse({'error': 'No annotations found. Please try again.'})
         
         if 'Sentences' in eaf.tiers:
-            for annotation_i, annotation in enumerate(eaf.tiers['Sentences'][0].values()):
-                print(annotation)
-                sentences[annotation_i] = annotation[2]
+            for annotation in eaf.tiers['Sentences'][0].values():
+                sentences.append(annotation[2])
         
-        # if no annotations found, file cannot be used
-        if glosses == {}:
-            return JsonResponse({'error': 'No annotations found. Please try again.'})
+        for gloss_i, gloss in enumerate(glosses):
+            gloss_dict[gloss_i] = gloss
+        for sentence_i, sentence in enumerate(sentences):
+            sentence_dict[sentence_i] = sentence
 
-    # Convert dictionaries to JSON strings
-    glosses_json = json.dumps(glosses)
-    sentences_json = json.dumps(sentences)
+    glosses_json = json.dumps(gloss_dict)
+    sentences_json = json.dumps(sentence_dict)
 
-    # Return JSON response with annotations and sentence
     return JsonResponse({'glosses': glosses_json, 'sentences': sentences_json})
 
 

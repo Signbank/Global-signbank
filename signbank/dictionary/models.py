@@ -3814,7 +3814,7 @@ class AnnotatedSentence(models.Model):
         except MultipleObjectsReturned:
             # Just return the first
             annotatedvideos = self.annotatedvideo.filter(version=0)
-            return str(annotatedvideo[0].videofile)
+            return str(annotatedvideos[0].videofile)
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""

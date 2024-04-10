@@ -304,17 +304,15 @@ def get_annotated_video_file_path(instance, filename, version=0):
 
     (base, ext) = os.path.splitext(filename)
     video_dir = settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY
-    try:
-        dataset_dir = os.path.join(instance.annotatedsentence.get_dataset().acronym, str(instance.annotatedsentence.id))
-    except ObjectDoesNotExist:
-        dataset_dir = ""
-    
+    dataset = instance.annotatedsentence.get_dataset().acronym
+    dataset_dir = os.path.join(dataset, str(instance.annotatedsentence.id))    
     filename = str(instance.annotatedsentence.id) + ext + (version * ".bak")
 
     path = os.path.join(video_dir, dataset_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
         from django.utils.encoding import escape_uri_path
         path = escape_uri_path(path)
+
     return path
 
 
@@ -344,7 +342,6 @@ class ExampleVideo(models.Model):
         # self.ensure_mp4()
 
     def get_absolute_url(self):
-
         return self.videofile.url
 
     def ensure_mp4(self):
@@ -420,8 +417,6 @@ class ExampleVideo(models.Model):
         small_video_path = self.small_video()
         try:
             os.unlink(self.videofile.path)
-            if small_video_path:
-                os.unlink(small_video_path)
         except OSError:
             pass
 
@@ -543,7 +538,10 @@ class AnnotatedVideo(models.Model):
     def delete_files(self):
         """Delete the files associated with this object"""
         try:
-            os.unlink(self.videofile.path)
+            os.remove(self.videofile.path)
+            os.remove(self.eaffile.path)
+            video_path = os.path.join(settings.WRITABLE_FOLDER, settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY, self.annotatedsentence.get_dataset().acronym, str(self.annotatedsentence.id))
+            os.rmdir(video_path)
         except OSError:
             pass
 
