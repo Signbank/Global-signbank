@@ -1491,7 +1491,7 @@ class LemmaTests(TestCase):
 
         # search for the lemma without glosses: test_lemma_without_gloss
         response = client.get('/dictionary/lemma/?lemma_en=without', follow=True)
-        self.assertEqual(len(response.context['search_results']), 1)
+        self.assertEqual(len(response.context['object_list']), 1)
 
         # Search lemmas with no glosses (no_glosses=1 is set to true aka 1), there are 2
         response = client.get('/dictionary/lemma/?no_glosses=1', follow=True)
