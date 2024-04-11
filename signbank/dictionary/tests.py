@@ -1495,11 +1495,11 @@ class LemmaTests(TestCase):
 
         # Search lemmas with no glosses (no_glosses=1 is set to true aka 1), there are 2
         response = client.get('/dictionary/lemma/?no_glosses=1', follow=True)
-        self.assertEqual(len(response.context['search_results']), 2)
+        self.assertEqual(len(response.context['object_list']), 2)
 
         # Search lemmas that have glosses, there is only one
         response = client.get('/dictionary/lemma/?has_glosses=1', follow=True)
-        self.assertEqual(len(response.context['search_results']), 1)
+        self.assertEqual(len(response.context['object_list']), 1)
 
         response = client.post('/dictionary/lemma/', {'delete_lemmas': 'confirmed'}, follow=True)
 
@@ -1521,17 +1521,17 @@ class LemmaTests(TestCase):
         self.assertEqual(response.status_code,200)
 
         response = client.get('/dictionary/lemma/?lemma_en=without', follow=True)
-        self.assertEqual(len(response.context['search_results']), 0)
+        self.assertEqual(len(response.context['object_list']), 0)
 
         response = client.get('/dictionary/lemma/?lemma_en=does_not_match', follow=True)
-        self.assertEqual(len(response.context['search_results']), 1)
+        self.assertEqual(len(response.context['object_list']), 1)
 
         # delete the remaining lemma without glosses
         response = client.post('/lemmas/show_all/', {'delete_lemmas': 'delete_lemmas'}, follow=True)
         self.assertEqual(response.status_code, 200)
 
         response = client.get('/dictionary/lemma/?no_glosses=1', follow=True)
-        self.assertEqual(len(response.context['search_results']), 0)
+        self.assertEqual(len(response.context['object_list']), 0)
 
         all_lemmas = LemmaIdgloss.objects.all()
         print('LemmaTests lemmas after delete: ', all_lemmas)
