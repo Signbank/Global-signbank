@@ -1848,6 +1848,59 @@ def add_annotated_media(request, glossid):
     }
     return render(request, template, context)
 
+def edit_annotated_sentence(request, glossid, annotatedsentenceid):
+    template = 'dictionary/edit_annotated_sentence.html'
+    gloss = Gloss.objects.get(id=glossid)
+    annotated_sentences, annotated_contexts = {}, {}
+    annotated_sentence = None
+    if AnnotatedSentence.objects.filter(id=annotatedsentenceid).count() == 1:
+        annotated_sentence = AnnotatedSentence.objects.get(id=annotatedsentenceid)
+        annotated_sentences = annotated_sentence.get_annotatedstc_translations_dict_with()
+        annotated_contexts = annotated_sentence.get_annotatedstc_contexts_dict_with()
+
+    context = {
+        'gloss': gloss,
+        'annotated_sentence': annotated_sentence,
+        'annotated_sentences': annotated_sentences,
+        'annotated_contexts': annotated_contexts,
+    }
+    return render(request, template, context)
+
+
+def save_edit_annotated_sentence(request):
+    """View to edit an annotated sentence from the edit page"""
+    if not request.method == "POST":
+        return HttpResponseForbidden("Annotated Sentence Edit method must be POST")
+    
+    redirect_url = request.POST.get('redirect')
+    gloss = Gloss.objects.get(id=request.POST.get('glossid'))
+    annotated_sentence = AnnotatedSentence.objects.get(id=request.POST.get('annotatedsentenceid'))
+    for language in gloss.lemma.dataset.translation_languages.all():
+        context_key = 'context_' + language.language_code_3char
+        if context_key in request.POST:
+            context_in_lang = request.POST[context_key]
+            if context_in_lang != '':
+                annotated_sentence_context, _ = AnnotatedSentenceContext.objects.get_or_create(annotatedsentence=annotated_sentence, language=language)
+                annotated_sentence_context.text = context_in_lang
+                annotated_sentence_context.save()
+            else:
+                annotated_sentence_context = AnnotatedSentenceContext.objects.filter(annotatedsentence=annotated_sentence, language=language)
+                if annotated_sentence_context:
+                    annotated_sentence_context.delete()
+        translation_key = 'translation_' + language.language_code_3char
+        if translation_key in request.POST:
+            translation_in_lang = request.POST[translation_key]
+            if translation_in_lang != '':
+                annotated_sentence_translation, _ = AnnotatedSentenceTranslation.objects.get_or_create(annotatedsentence=annotated_sentence, language=language)
+                annotated_sentence_translation.text = translation_in_lang
+                annotated_sentence_translation.save()
+            else:
+                annotated_sentence_translation = AnnotatedSentenceTranslation.objects.filter(annotatedsentence=annotated_sentence, language=language)
+                if annotated_sentence_translation:
+                    annotated_sentence_translation.delete()
+
+    return redirect(redirect_url)
+
 
 def delete_annotated_sentence(request, glossid):
     """View to delete an annotated sentence model from the editable modal"""

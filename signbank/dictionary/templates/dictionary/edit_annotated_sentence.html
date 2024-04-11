@@ -1,0 +1,52 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+{% block bootstrap3_title %}
+{% endblock %}
+
+{% block content %}
+
+{% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
+{% if "change_dataset" in dataset_perms %}
+<div class='editform', style="width:500px">
+    <fieldset>
+        <legend>{% trans "Edit Annotated Sentence" %}</legend>
+        
+        For the following gloss: {{gloss}}<br><br>
+
+        For the following sentence: <br>
+        {% url 'dictionary:protected_media' '' as protected_media_url %}
+        <video id="sentenceVideo" controls width="500px">
+            <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video> 
+
+        <form action="{{PREFIX_URL}}/dictionary/update/saveeditannotatedsentence/" id="editAnnotatedSentenceForm" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}'>
+        <input type='hidden' name='annotatedsentenceid' value='{{annotated_sentence.id}}'>
+        <input type='hidden' name='glossid' value='{{gloss.id}}'>
+        <br>
+        Edit context for the sentence in the following languages:<br>
+        {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+            {{dataset_lang.name}}:<input style="width:100%" id="context_{{dataset_lang.language_code_3char}}" name="context_{{dataset_lang.language_code_3char}}" value="{% if dataset_lang.language_code_3char in annotated_contexts %}{{ annotated_contexts|get_item:dataset_lang.language_code_3char }}{% endif %}" maxlength="150" type="text"/>
+        {% endfor %}
+
+        <br><br>
+        Add translations for the sentence in the following languages:<br>
+        {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+            {{dataset_lang.name}}:<input style="width:100%" id="translation_{{dataset_lang.language_code_3char}}" name="translation_{{dataset_lang.language_code_3char}}" value="{% if dataset_lang.language_code_3char in annotated_sentences %}{{ annotated_sentences|get_item:dataset_lang.language_code_3char }}{% endif %}" maxlength="150" type="text"/>
+        {% endfor %}
+
+        <br><br>
+        <input class='btn btn-primary' type='submit' value='Save' />
+
+        </form>
+  </fieldset>
+</div>
+
+{% endif %}
+{% endblock %}

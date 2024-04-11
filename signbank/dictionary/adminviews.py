@@ -1190,7 +1190,7 @@ class GlossDetailView(DetailView):
         annotated_sentences = annotated_sentences_1.union(annotated_sentences_2).order_by('-is_representative')
         annotated_sentences_with_video = []
         for annotated_sentence in annotated_sentences:
-            if annotated_sentence.has_video():
+            if annotated_sentence.has_video() and annotated_sentence not in annotated_sentences_with_video:
                 annotated_sentences_with_video.append(annotated_sentence)
         annotated_sentences = annotated_sentences_with_video
         if len(annotated_sentences) <= 3:

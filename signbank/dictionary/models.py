@@ -3792,11 +3792,11 @@ class AnnotatedSentence(models.Model):
     def get_annotatedstc_translations_dict_with(self):
         translations = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
-            annotatedSentenceTranslations = AnnotatedSentenceTranslation.objects.filter(annotatedsentence = self, language = dataset_translation_language)
-            if annotatedSentenceTranslations.count() == 1:
-                translations[str(dataset_translation_language)] = str(AnnotatedSentenceTranslation.objects.get(annotatedsentence = self, language = dataset_translation_language))
+            annotatedSentenceTranslation = AnnotatedSentenceTranslation.objects.filter(annotatedsentence = self, language = dataset_translation_language)
+            if annotatedSentenceTranslation.count() == 1:
+                translations[str(dataset_translation_language.language_code_3char)] = annotatedSentenceTranslation[0].text
             else:
-                translations[str(dataset_translation_language)] = ""
+                translations[str(dataset_translation_language.language_code_3char)] = ""
         return translations
 
     def get_annotatedstc_translations_dict_without(self):
@@ -3804,6 +3804,22 @@ class AnnotatedSentence(models.Model):
 
     def get_annotatedstc_translations(self):
         return [k+": "+v for k,v in self.get_annotatedstc_translations_dict_without().items()]
+
+    def get_annotatedstc_contexts_dict_with(self):
+        contexts = {}
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
+            annotatedSentenceContext = AnnotatedSentenceContext.objects.filter(annotatedsentence = self, language = dataset_translation_language)
+            if annotatedSentenceContext.count() == 1:
+                contexts[str(dataset_translation_language.language_code_3char)] = annotatedSentenceContext[0].text
+            else:
+                contexts[str(dataset_translation_language.language_code_3char)] = ""
+        return contexts
+
+    def get_annotatedstc_contexts_dict_without(self):
+        return {k: v for k, v in self.get_annotatedstc_contexts_dict_with().items() if v}
+
+    def get_annotatedstc_contexts(self):
+        return [k+": "+v for k,v in self.get_annotatedstc_contexts_dict_without().items()]
 
     def get_video_path(self):
         try:
