@@ -3259,6 +3259,10 @@ class LemmaIdgloss(models.Model):
                 translations.append("{}".format(translation.text))
         return ", ".join(translations)
 
+    def num_gloss(self):
+        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk)
+        return glosses_with_this_lemma.count()
+
 
 class LemmaIdglossTranslation(models.Model):
     """A Lemma ID Gloss"""
