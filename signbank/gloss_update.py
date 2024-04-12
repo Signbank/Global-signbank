@@ -1,6 +1,6 @@
 import json
 
-from django.utils.translation import activate
+from django.utils.translation import gettext_lazy as _, activate
 from signbank.dictionary.models import *
 from signbank.api_interface import api_fields
 from django.db.transaction import atomic
@@ -31,7 +31,6 @@ def get_gloss_update_human_readable_value_dict(request):
 
 
 def update_semantic_field(gloss, new_values, language_code):
-    errors = []
     new_semanticfields_to_save = []
 
     activate(language_code)
@@ -42,22 +41,14 @@ def update_semantic_field(gloss, new_values, language_code):
     for value in new_values:
         if value in semanticfield_choices.keys():
             new_semanticfields_to_save.append(semanticfield_choices[value])
-        else:
-            errors.append('Semantic field not found: '+value)
-
-    if errors:
-        return errors
 
     gloss.semField.clear()
     for sf in new_semanticfields_to_save:
         gloss.semField.add(sf)
     gloss.save()
 
-    return errors
-
 
 def update_derivation_history_field(gloss, new_values, language_code):
-    errors = []
     new_derivationhistory_to_save = []
 
     activate(language_code)
@@ -68,35 +59,64 @@ def update_derivation_history_field(gloss, new_values, language_code):
     for value in new_values:
         if value in derivationhistory_choices.keys():
             new_derivationhistory_to_save.append(derivationhistory_choices[value])
-        else:
-            errors.append('Derivation history field not found: '+value)
-
-    if errors:
-        return errors
 
     gloss.derivHist.clear()
     for dh in new_derivationhistory_to_save:
         gloss.derivHist.add(dh)
     gloss.save()
 
+
+def type_check_multiselect(category, new_values, language_code):
+    activate(language_code)
+
+    if category not in CATEGORY_MODELS_MAPPING.keys():
+        return True
+
+    multiselect_model = CATEGORY_MODELS_MAPPING[category]
+
+    for value in new_values:
+        try:
+            field_value = multiselect_model.objects.get(name=value)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            return False
+    return True
+
+
+def gloss_update_typecheck(request, gloss, changes, language_code):
+
+    errors = dict()
+    for field, (original_value, new_value) in changes.items():
+        if isinstance(field, FieldChoiceForeignKey):
+            field_choice_category = field.field_choice_category
+            try:
+                fieldchoice = FieldChoice.objects.get(field=field_choice_category, name=new_value)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                errors[field.verbose_name] = _('Value not found')
+        elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
+            try:
+                handshape = Handshape.objects.get(name=new_value)
+            except (ObjectDoesNotExist, MultipleObjectsReturned):
+                errors[field.verbose_name] = _('Value not found')
+        elif field.name == 'semanticfield':
+            type_check = type_check_multiselect('SemField', new_value, language_code)
+            if not type_check:
+                errors[field.verbose_name] = _('Value not found')
+        elif field.name == 'derivationhistory':
+            type_check = type_check_multiselect('derivHist', new_value, language_code)
+            if not type_check:
+                errors[field.verbose_name] = _('Value not found')
     return errors
 
 
 def gloss_update_do_changes(request, gloss, changes, language_code):
 
     changes_done = []
-    errors = []
     activate(language_code)
     with atomic():
         for field, (original_value, new_value) in changes.items():
             if isinstance(field, FieldChoiceForeignKey):
                 field_choice_category = field.field_choice_category
-                try:
-                    fieldchoice = FieldChoice.objects.get(field=field_choice_category, name=new_value)
-                except ObjectDoesNotExist:
-                    print(field_choice_category, ' value ', new_value, ' not found.')
-                    errors.append(field.verbose_name + ' value not found for ' + new_value)
-                    continue
+                fieldchoice = FieldChoice.objects.get(field=field_choice_category, name=new_value)
                 setattr(gloss, field.name, fieldchoice)
                 changes_done.append((field.name, original_value, new_value))
             elif field.__class__.__name__ == 'BooleanField':
@@ -110,25 +130,15 @@ def gloss_update_do_changes(request, gloss, changes, language_code):
                 setattr(gloss, field.name, new_value)
                 changes_done.append((field.name, original_value, new_value))
             elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
-                try:
-                    handshape = Handshape.objects.get(name=new_value)
-                except ObjectDoesNotExist:
-                    print('Handshape value ', new_value, ' not found.')
-                    errors.append(field.verbose_name + ' value not found for ' + new_value)
+                handshape = Handshape.objects.get(name=new_value)
                 setattr(gloss, field.name, handshape)
                 changes_done.append((field.name, original_value, new_value))
             elif field.name == 'semanticfield':
-                semantic_fields_errors = update_semantic_field(gloss, new_value, language_code)
-                if semantic_fields_errors:
-                    errors += semantic_fields_errors
-                else:
-                    changes_done.append((field.name, original_value, new_value))
+                update_semantic_field(gloss, new_value, language_code)
+                changes_done.append((field.name, original_value, new_value))
             elif field.name == 'derivationhistory':
-                derivationhistory_errors = update_derivation_history_field(gloss, new_value, language_code)
-                if derivationhistory_errors:
-                    errors += derivationhistory_errors
-                else:
-                    changes_done.append((field.name, original_value, new_value))
+                update_derivation_history_field(gloss, new_value, language_code)
+                changes_done.append((field.name, original_value, new_value))
             else:
                 # text field
                 setattr(gloss, field.name, new_value)
@@ -142,8 +152,6 @@ def gloss_update_do_changes(request, gloss, changes, language_code):
                                      user=request.user,
                                      time=datetime.now(tz=get_current_timezone()))
             revision.save()
-
-    return errors
 
 
 def gloss_update(request, glossid):
