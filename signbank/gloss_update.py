@@ -1,10 +1,30 @@
-import json
 
 from django.utils.translation import gettext_lazy as _, activate
 from signbank.dictionary.models import *
-from signbank.api_interface import api_fields
 from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+from guardian.shortcuts import get_objects_for_user
+from signbank.tools import get_interface_language_and_default_language_codes
+
+
+def api_update_gloss_fields(language_code='en'):
+    activate(language_code)
+
+    api_fields_2024 = []
+
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
+    gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
+
+    # TO DO
+    extra_columns = ['Sign Languages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
+                     'Blend Morphology', 'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']
+
+    for field in gloss_fields:
+        api_fields_2024.append(field.verbose_name.title())
+
+    return api_fields_2024
 
 
 def update_gloss_columns_to_value_dict_keys(language_code):
@@ -28,6 +48,15 @@ def get_gloss_update_human_readable_value_dict(request):
         value = request.POST.get(field, '')
         value_dict[field] = value.strip()
     return value_dict
+
+
+def gloss_update_fields_check(value_dict, language_code):
+    api_fields_2024 = api_update_gloss_fields(language_code)
+    errors = dict()
+    for field in value_dict.keys():
+        if field not in api_fields_2024:
+            errors[field] = "Field update not allowed"
+    return errors
 
 
 def update_semantic_field(gloss, new_values, language_code):
@@ -154,33 +183,12 @@ def gloss_update_do_changes(request, gloss, changes, language_code):
             revision.save()
 
 
-def gloss_update(request, glossid):
+def gloss_update(request, gloss, update_fields_dict, language_code):
 
-    if not request.user.is_authenticated:
-        return {}
+    api_fields_2024 = api_update_gloss_fields(language_code)
 
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
-
-    from signbank.tools import get_interface_language_and_default_language_codes
-    (interface_language, interface_language_code,
-     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
-
-    api_fields_2023 = api_fields(gloss.lemma.dataset, interface_language_code, advanced=True)
-
-    gloss_data_dict = gloss.get_fields_dict(api_fields_2023, interface_language_code)
-    update_fields_dict = get_gloss_update_human_readable_value_dict(request)
-    fields_mapping_dict, human_values_dict = update_gloss_columns_to_value_dict_keys(interface_language_code)
+    gloss_data_dict = gloss.get_fields_dict(api_fields_2024, language_code)
+    fields_mapping_dict, human_values_dict = update_gloss_columns_to_value_dict_keys(language_code)
 
     fields_to_update = dict()
     for human_readable_field, new_field_value in update_fields_dict.items():
@@ -195,3 +203,92 @@ def gloss_update(request, glossid):
             gloss_field = human_values_dict[human_readable_field]
             fields_to_update[gloss_field] = (original_value, new_field_value)
     return fields_to_update
+
+
+@csrf_exempt
+def api_update_gloss(request, datasetid, glossid):
+
+    (interface_language, interface_language_code,
+     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+
+    results = dict()
+    results['glossid'] = glossid
+
+    errors = dict()
+
+    if not request.user.is_authenticated:
+        errors[_("User")] = _("You must be logged in to use this functionality.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        errors[_("Dataset")] = _("Dataset ID does not exist.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        errors[_("Dataset")] = _("No change permission for dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        # the glossid in the url is a sequence of digits
+        # this error can occur if it begins with a 0
+        errors[_("Gloss")] = _("Gloss ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+
+    if not gloss:
+        errors[_("Gloss")] = _("Gloss not found.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not gloss.lemma:
+        errors[_("Gloss")] = _("Gloss does not have a lemma.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if gloss.lemma.dataset != dataset:
+        errors[_("Gloss")] = _("Gloss not found in the dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        errors[_("Gloss")] = _("No change gloss permission.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    value_dict = get_gloss_update_human_readable_value_dict(request)
+    errors = gloss_update_fields_check(value_dict, interface_language_code)
+    if errors:
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    fields_to_update = gloss_update(request, gloss, value_dict, interface_language_code)
+    errors = gloss_update_typecheck(request, gloss, fields_to_update, interface_language_code)
+    if errors:
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    gloss_update_do_changes(request, gloss, fields_to_update, interface_language_code)
+
+    results['errors'] = {}
+    results['updatestatus'] = "Success"
+
+    return JsonResponse(results)
