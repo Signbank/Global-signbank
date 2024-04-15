@@ -18,6 +18,7 @@ var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"tr
 var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};
 var paginate_by = '{{paginate_by}}';
+var page_number = {{page_obj.number}};
 var populate_fields_keys = {{populate_fields_keys|safe}};
 var populate_fields = {{populate_fields|safe}};
 
@@ -220,7 +221,7 @@ function do_export_csv(e1) {
 </form>
 
 
-{% if search_results %}
+{% if object_list %}
 
 <table class='table table-condensed'>
     <thead>
@@ -234,7 +235,7 @@ function do_export_csv(e1) {
       </tr>
     </thead>
     <tbody>
-      {% for lemma in search_results %}
+      {% for lemma in object_list %}
         <tr>
             {% if SHOW_DATASET_INTERFACE_OPTIONS %}
             <td>
@@ -276,7 +277,7 @@ function do_export_csv(e1) {
 
         <ul class='pagination pagination-sm'>
         {% if page_obj.has_previous %}
-            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
+            <li><a href="?page={{page_obj.previous_page_number}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">&laquo;</a></li>
         {% endif %}
 
           {% if  page_obj.number > 10 %}
@@ -284,30 +285,33 @@ function do_export_csv(e1) {
           {% endif %}
 
           {% for p in page_obj.paginator.page_range %}
-
-             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
-             <li {% if p == page_obj.number %}class='active'{% endif %}>
-             <a href='?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}'>{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+            {% if p < page_obj.number|add:"10" and p > page_obj.number|add:"-10" %}
+            {% if p == page_obj.number %}
+             <li class='active'>
+             <a href="?page={{p}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">{{p}}</a>
              </li>
-             {% endif %}
+            {% else %}
+             <li>
+             <a href="?page={{p}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">{{p}}</a>
+             </li>
+            {% endif %}
+            {% endif %}
 
           {% endfor %}
 
-          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
+          {% if page_obj.paginator.num_pages > page_obj.number|add:10 %}
             <li><a>...</a></li>
             <li>
-            <a href='?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}'>{{page_obj.paginator.num_pages}}</a>
+            <a href="?page={{page_obj.paginator.num_pages}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
             </li>
           {% endif %}
 
         {% if page_obj.has_next %}
-            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
-
-
-      </ul>
-
-
+            <li><a href="?page={{page_obj.next_page_number}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">&raquo;</a></li>
         {% endif %}
+
+        </ul>
+
     </span>
 </div>
 {% endif %}
