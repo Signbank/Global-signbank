@@ -1,5 +1,5 @@
 
-from django.utils.translation import gettext_lazy as _, activate
+from django.utils.translation import gettext_lazy as _, activate, gettext
 from signbank.dictionary.models import *
 from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
@@ -55,7 +55,7 @@ def gloss_update_fields_check(value_dict, language_code):
     errors = dict()
     for field in value_dict.keys():
         if field not in api_fields_2024:
-            errors[field] = "Field update not allowed"
+            errors[field] = _("Field update not allowed")
     return errors
 
 
@@ -67,7 +67,9 @@ def update_semantic_field(gloss, new_values, language_code):
     for sf in SemanticField.objects.all():
         semanticfield_choices[sf.name] = sf
 
-    for value in new_values:
+    new_human_value_list = [v.strip() for v in new_values.split(',')]
+
+    for value in new_human_value_list:
         if value in semanticfield_choices.keys():
             new_semanticfields_to_save.append(semanticfield_choices[value])
 
@@ -85,7 +87,9 @@ def update_derivation_history_field(gloss, new_values, language_code):
     for dh in DerivationHistory.objects.all():
         derivationhistory_choices[dh.name] = dh
 
-    for value in new_values:
+    new_human_value_list = [v.strip() for v in new_values.split(',')]
+
+    for value in new_human_value_list:
         if value in derivationhistory_choices.keys():
             new_derivationhistory_to_save.append(derivationhistory_choices[value])
 
@@ -103,7 +107,9 @@ def type_check_multiselect(category, new_values, language_code):
 
     multiselect_model = CATEGORY_MODELS_MAPPING[category]
 
-    for value in new_values:
+    new_human_value_list = [v.strip() for v in new_values.split(',')]
+
+    for value in new_human_value_list:
         try:
             field_value = multiselect_model.objects.get(name=value)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
@@ -115,25 +121,30 @@ def gloss_update_typecheck(request, gloss, changes, language_code):
 
     errors = dict()
     for field, (original_value, new_value) in changes.items():
+        if not new_value:
+            continue
         if isinstance(field, FieldChoiceForeignKey):
             field_choice_category = field.field_choice_category
             try:
                 fieldchoice = FieldChoice.objects.get(field=field_choice_category, name=new_value)
             except (ObjectDoesNotExist, MultipleObjectsReturned):
-                errors[field.verbose_name] = _('Value not found')
+                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
         elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
             try:
                 handshape = Handshape.objects.get(name=new_value)
             except (ObjectDoesNotExist, MultipleObjectsReturned):
-                errors[field.verbose_name] = _('Value not found')
-        elif field.name == 'semanticfield':
+                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+        elif field.__class__.__name__ == 'BooleanField':
+            if new_value not in ['true', 'True', 'TRUE']:
+                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+        elif field.name == 'semField':
             type_check = type_check_multiselect('SemField', new_value, language_code)
             if not type_check:
-                errors[field.verbose_name] = _('Value not found')
-        elif field.name == 'derivationhistory':
+                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+        elif field.name == 'derivHist':
             type_check = type_check_multiselect('derivHist', new_value, language_code)
             if not type_check:
-                errors[field.verbose_name] = _('Value not found')
+                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
     return errors
 
 
@@ -149,7 +160,6 @@ def gloss_update_do_changes(request, gloss, changes, language_code):
                 setattr(gloss, field.name, fieldchoice)
                 changes_done.append((field.name, original_value, new_value))
             elif field.__class__.__name__ == 'BooleanField':
-
                 if new_value in ['true', 'True', 'TRUE']:
                     new_value = True
                 elif new_value == 'None' or new_value == 'Neutral':
@@ -162,10 +172,10 @@ def gloss_update_do_changes(request, gloss, changes, language_code):
                 handshape = Handshape.objects.get(name=new_value)
                 setattr(gloss, field.name, handshape)
                 changes_done.append((field.name, original_value, new_value))
-            elif field.name == 'semanticfield':
+            elif field.name == 'semField':
                 update_semantic_field(gloss, new_value, language_code)
                 changes_done.append((field.name, original_value, new_value))
-            elif field.name == 'derivationhistory':
+            elif field.name == 'derivHist':
                 update_derivation_history_field(gloss, new_value, language_code)
                 changes_done.append((field.name, original_value, new_value))
             else:
@@ -192,13 +202,20 @@ def gloss_update(request, gloss, update_fields_dict, language_code):
 
     fields_to_update = dict()
     for human_readable_field, new_field_value in update_fields_dict.items():
+        if not new_field_value:
+            continue
         if human_readable_field not in gloss_data_dict.keys():
-            print(human_readable_field, ' not found.')
+            # new value
+            original_value = ''
+            gloss_field = human_values_dict[human_readable_field]
+            fields_to_update[gloss_field] = (original_value, new_field_value)
             continue
         if human_readable_field in human_values_dict.keys():
             original_value = gloss_data_dict[human_readable_field]
+            if original_value in ['False'] and new_field_value in ['', 'False']:
+                # treat empty as False
+                continue
             if new_field_value == original_value:
-                print('not changed')
                 continue
             gloss_field = human_values_dict[human_readable_field]
             fields_to_update[gloss_field] = (original_value, new_field_value)
