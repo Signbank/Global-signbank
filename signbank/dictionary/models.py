@@ -3260,8 +3260,8 @@ class LemmaIdgloss(models.Model):
         return ", ".join(translations)
 
     def num_gloss(self):
-        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk)
-        return glosses_with_this_lemma.count()
+        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk).count()
+        return glosses_with_this_lemma
 
 
 class LemmaIdglossTranslation(models.Model):

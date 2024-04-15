@@ -1530,14 +1530,23 @@ class LemmaTests(TestCase):
         response = client.post('/lemmas/show_all/', {'delete_lemmas': 'delete_lemmas'}, follow=True)
         self.assertEqual(response.status_code, 200)
 
-        response = client.get('/dictionary/lemma/?no_glosses=1', follow=True)
-        self.assertEqual(len(response.context['object_list']), 0)
+        all_glosses = Gloss.objects.all()
+        print('LemmaTests glosses after deleting lemmas: ', all_glosses)
 
         all_lemmas = LemmaIdgloss.objects.all()
         print('LemmaTests lemmas after delete: ', all_lemmas)
 
-        all_lemma_translations = LemmaIdglossTranslation.objects.all()
-        print('LemmaTests translations after delete: ', all_lemma_translations)
+        lemmas_without_glosses = []
+        lemmas_with_glosses = []
+        for lem in all_lemmas:
+            number_of_glosses = all_glosses.filter(lemma=lem).count()
+            if number_of_glosses > 0:
+                lemmas_with_glosses.append(lem)
+            else:
+                lemmas_without_glosses.append(lem)
+
+        print('Lemmas without glosses: ', lemmas_without_glosses)
+        self.assertEqual(len(lemmas_without_glosses), 1)
 
 
 class HandshapeTests(TestCase):

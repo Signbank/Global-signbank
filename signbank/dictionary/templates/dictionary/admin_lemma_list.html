@@ -18,9 +18,7 @@ var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"tr
 var csrf_token = '{{csrf_token}}';
 var page_number = {{ page_number }};
 var paginate_by = '{{paginate_by}}';
-console.log('paginate by: '+paginate_by);
 var page_number = {{page_obj.number}};
-console.log('page number: '+page_number);
 var populate_fields_keys = {{populate_fields_keys|safe}};
 var populate_fields = {{populate_fields|safe}};
 
