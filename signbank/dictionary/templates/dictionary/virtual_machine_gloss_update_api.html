@@ -55,6 +55,9 @@ function update_gloss() {
         var field_lookup = '#field_input_'+field;
         var field_key = $(field_lookup).attr("name");
         var field_value = $(field_lookup).val();
+        if (field_value == '') {
+            continue;
+        }
         update[field_key] = field_value;
      }
      $.ajax({

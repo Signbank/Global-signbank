@@ -63,15 +63,12 @@ def update_semantic_field(gloss, new_values, language_code):
     new_semanticfields_to_save = []
 
     activate(language_code)
-    semanticfield_choices = {}
-    for sf in SemanticField.objects.all():
-        semanticfield_choices[sf.name] = sf
 
     new_human_value_list = [v.strip() for v in new_values.split(',')]
 
     for value in new_human_value_list:
-        if value in semanticfield_choices.keys():
-            new_semanticfields_to_save.append(semanticfield_choices[value])
+        field_value = SemanticField.objects.get(name__iexact=value)
+        new_semanticfields_to_save.append(field_value)
 
     gloss.semField.clear()
     for sf in new_semanticfields_to_save:
@@ -83,15 +80,12 @@ def update_derivation_history_field(gloss, new_values, language_code):
     new_derivationhistory_to_save = []
 
     activate(language_code)
-    derivationhistory_choices = {}
-    for dh in DerivationHistory.objects.all():
-        derivationhistory_choices[dh.name] = dh
 
     new_human_value_list = [v.strip() for v in new_values.split(',')]
 
     for value in new_human_value_list:
-        if value in derivationhistory_choices.keys():
-            new_derivationhistory_to_save.append(derivationhistory_choices[value])
+        field_value = DerivationHistory.objects.get(name__iexact=value)
+        new_derivationhistory_to_save.append(field_value)
 
     gloss.derivHist.clear()
     for dh in new_derivationhistory_to_save:
@@ -111,13 +105,13 @@ def type_check_multiselect(category, new_values, language_code):
 
     for value in new_human_value_list:
         try:
-            field_value = multiselect_model.objects.get(name=value)
+            field_value = multiselect_model.objects.get(name__iexact=value)
         except (ObjectDoesNotExist, MultipleObjectsReturned):
             return False
     return True
 
 
-def gloss_update_typecheck(request, gloss, changes, language_code):
+def gloss_update_typecheck(changes, language_code):
 
     errors = dict()
     for field, (original_value, new_value) in changes.items():
@@ -126,12 +120,12 @@ def gloss_update_typecheck(request, gloss, changes, language_code):
         if isinstance(field, FieldChoiceForeignKey):
             field_choice_category = field.field_choice_category
             try:
-                fieldchoice = FieldChoice.objects.get(field=field_choice_category, name=new_value)
+                fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=new_value)
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
         elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
             try:
-                handshape = Handshape.objects.get(name=new_value)
+                handshape = Handshape.objects.get(name__iexact=new_value)
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
         elif field.__class__.__name__ == 'BooleanField':
@@ -156,7 +150,7 @@ def gloss_update_do_changes(request, gloss, changes, language_code):
         for field, (original_value, new_value) in changes.items():
             if isinstance(field, FieldChoiceForeignKey):
                 field_choice_category = field.field_choice_category
-                fieldchoice = FieldChoice.objects.get(field=field_choice_category, name=new_value)
+                fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=new_value)
                 setattr(gloss, field.name, fieldchoice)
                 changes_done.append((field.name, original_value, new_value))
             elif field.__class__.__name__ == 'BooleanField':
@@ -169,7 +163,7 @@ def gloss_update_do_changes(request, gloss, changes, language_code):
                 setattr(gloss, field.name, new_value)
                 changes_done.append((field.name, original_value, new_value))
             elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
-                handshape = Handshape.objects.get(name=new_value)
+                handshape = Handshape.objects.get(name__iexact=new_value)
                 setattr(gloss, field.name, handshape)
                 changes_done.append((field.name, original_value, new_value))
             elif field.name == 'semField':
@@ -193,7 +187,7 @@ def gloss_update_do_changes(request, gloss, changes, language_code):
             revision.save()
 
 
-def gloss_update(request, gloss, update_fields_dict, language_code):
+def gloss_update(gloss, update_fields_dict, language_code):
 
     api_fields_2024 = api_update_gloss_fields(language_code)
 
@@ -296,8 +290,8 @@ def api_update_gloss(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    fields_to_update = gloss_update(request, gloss, value_dict, interface_language_code)
-    errors = gloss_update_typecheck(request, gloss, fields_to_update, interface_language_code)
+    fields_to_update = gloss_update(gloss, value_dict, interface_language_code)
+    errors = gloss_update_typecheck(fields_to_update, interface_language_code)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
