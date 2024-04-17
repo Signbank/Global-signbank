@@ -2,13 +2,13 @@
     --dark-mode-very-dark: rgb(9, 4, 2);
     --tbody-dark-border: rgb(9, 4, 2);
     --tbody-dark-background: rgb(9, 4, 2);
-    --typeahead-dark-background: rgb(24, 0, 0);
+    --typeahead-dark-background: rgb(9, 4, 2);
     --typeahead-dark-border: rgb(40, 0, 0);
     --typeahead-dark-color: rgb(174, 0, 0);
     --panel-heading-background: rgb(44, 18, 18);
     --panel-heading-text: rgb(200, 156, 156);
     --text-input-field: rgb(40, 0, 0);
-    --text-input-border: rgb(172, 0, 0);
+    --text-input-border: rgb(200, 156, 156);
     --text-input-text: rgb(250, 255, 255);
     --well-background: rgb(9, 4, 2);
     --well-border: rgb(60, 0, 0);
@@ -17,10 +17,11 @@
     --dropdown-dark: rgb(112, 0, 0);
     --text-container-dark-input-border: rgb(112, 0, 0);
     --text-container-dark-input-fill: rgb(9, 4, 2);
-    --text-container-dark-border: rgb(28, 0, 0);
-    --text-container-dark-placeholder: rgb(255, 0, 0);
-    --table-dark-color: rgb(151, 0, 0);
-    --dark-label-background: rgb(55, 0, 0);
+    --text-container-dark-border: rgb(34, 0, 0);
+    --text-container-dark-placeholder: rgb(200, 156, 156);
+    --table-dark-color: rgb(151, 100, 100);
+    --table-dark-border: rgb(34, 0, 0);
+    --dark-label-background: rgb(55, 40, 40);
 }
 html,
 body {
