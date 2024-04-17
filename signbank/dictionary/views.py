@@ -46,6 +46,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
 
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
+from signbank.gloss_update import api_update_gloss_fields
+from django.utils.translation import gettext_lazy as _, activate
 
 
 def login_required_config(f):
@@ -917,6 +919,11 @@ def import_csv_create(request):
             new_gloss.creator.add(request.user)
             new_gloss.excludeFromEcv = False
             new_gloss.save()
+            user_affiliations = AffiliatedUser.objects.filter(user=request.user)
+            if user_affiliations.count() > 0:
+                for ua in user_affiliations:
+                    new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
+                                                                                     gloss=new_gloss)
 
             for language in dataset_languages:
                 annotation_id_gloss = glosses_to_create[row]['annotation_id_gloss_' + language.language_code_2char]
@@ -2252,7 +2259,7 @@ def package(request):
         first_part_of_file_name += 'ckage'
         since_timestamp = 0
 
-    if not inWebSet and 'extended_fields' in request.GET and request.GET['extended_fields'] in [1, True, 'true']:
+    if 'extended_fields' in request.GET and request.GET['extended_fields'] in [1, True, 'true', 'True']:
         extended_fields = True
     else:
         extended_fields = False
@@ -2278,9 +2285,13 @@ def package(request):
                   if os.path.exists(str(gv.videofile.path))
                      and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
 
+    (interface_language, interface_language_code,
+     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
-                      'glosses': signbank.tools.get_gloss_data(since_timestamp, dataset, inWebSet, extended_fields)}
+                      'glosses': signbank.tools.get_gloss_data(since_timestamp, interface_language_code,
+                                                               dataset, inWebSet, extended_fields)}
 
     if since_timestamp != 0:
         collected_data['deleted_glosses'] = signbank.tools.get_deleted_gloss_or_media_data('gloss', since_timestamp)
@@ -3050,6 +3061,43 @@ def test_abstract_machine(request, datasetid):
                   {'selected_datasets': selected_datasets,
                    'dataset': dataset,
                    'language_2chars': language_2chars,
+                   'dataset_languages': dataset_languages,
+                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
+                   })
+
+
+def test_am_update_gloss(request, datasetid, glossid):
+    # used to test api method since PyCharm runserver does not support CORS
+    dataset_id = int(datasetid)
+    dataset = Dataset.objects.filter(id=dataset_id).first()
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+    if not dataset or not (request.user.is_staff or request.user.is_superuser):
+        translated_message = _('You do not have permission to use the test command.')
+        return render(request, 'dictionary/warning.html',
+                      {'warning': translated_message,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
+
+    gloss_id = int(glossid)
+    gloss = Gloss.objects.filter(id=gloss_id, lemma__dataset=dataset).first()
+
+    (interface_language, interface_language_code,
+     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+
+    activate(interface_language_code)
+
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
+    gloss_fields = { fname: Gloss.get_field(fname).verbose_name.title()
+                    for fname in fieldnames if fname in Gloss.get_field_names() }
+
+    return render(request, 'dictionary/virtual_machine_gloss_update_api.html',
+                  {'selected_datasets': selected_datasets,
+                   'dataset': dataset,
+                   'gloss': gloss,
+                   'gloss_fields': gloss_fields,
                    'dataset_languages': dataset_languages,
                    'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS

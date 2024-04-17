@@ -68,6 +68,11 @@ function create_gloss() {
         var annotation_field_key = $(annotation_field_lookup).attr("name");
         var annotation_field_value = $(annotation_field_lookup).val();
         creation[annotation_field_key] = annotation_field_value;
+        var sense_field = 'sense_id_gloss_' + lang2char;
+        var sense_field_lookup = '#'+sense_field;
+        var sense_field_key = $(sense_field_lookup).attr("name");
+        var sense_field_value = $(sense_field_lookup).val();
+        creation[sense_field_key] = sense_field_value;
      }
      $.ajax({
         url : url + "/dictionary/api_create_gloss/" + datasetid + '/',
@@ -129,6 +134,23 @@ function create_gloss() {
                             name="{{annotation_field_name}}"
                             maxlength="30" type="text"
                             size="50" >
+                 </td>
+             </tr>
+             {% endwith %}
+             {% endwith %}
+             {% endfor %}
+             {% for dataset_lang in dataset_languages %}
+             {% with dataset_lang.name_en as language_name %}
+             {% with "Senses ("|add:language_name|add:")" as sense_field_name %}
+             <tr>
+                 <th id="add_gloss_sense_header_{{dataset_lang.language_code_2char}}">
+                     {{sense_field_name}}
+                 </th>
+                 <td id="add_gloss_sense_value_{{dataset_lang.language_code_2char}}">
+                     <input id="sense_id_gloss_{{dataset_lang.language_code_2char}}"
+                            name="{{sense_field_name}}"
+                            maxlength="130" type="text"
+                            size="130" >
                  </td>
              </tr>
              {% endwith %}

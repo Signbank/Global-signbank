@@ -1387,7 +1387,10 @@ class Gloss(models.Model):
                 other_media_paths.append(other_media_filename)
         return ", ".join(other_media_paths)
 
-    def get_fields_dict(self, fieldnames):
+    def get_fields_dict(self, fieldnames, language_code='en'):
+
+        from django.utils import translation
+        translation.activate(language_code)
 
         # TO DO include other gloss relations in the fieldnames (e.g., simultaneous morphology, below)
         # a way to determine w/o hard-coding if a fieldname is for a related model
@@ -3255,6 +3258,10 @@ class LemmaIdgloss(models.Model):
             else:
                 translations.append("{}".format(translation.text))
         return ", ".join(translations)
+
+    def num_gloss(self):
+        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk).count()
+        return glosses_with_this_lemma
 
 
 class LemmaIdglossTranslation(models.Model):
