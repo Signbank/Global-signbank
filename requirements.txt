@@ -26,7 +26,7 @@ python-dateutil==2.8.2
 python-magic==0.4.27
 pytz==2022.7
 six==1.16.0
-sqlparse==0.4.4
+sqlparse==0.5.0
 typing-extensions==3.10.0.0
 unicodecsv==0.14.1
 uWSGI==2.0.23
