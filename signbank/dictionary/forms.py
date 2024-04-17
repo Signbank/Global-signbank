@@ -102,6 +102,11 @@ class GlossCreateForm(forms.ModelForm):
         gloss.creator.add(self.user)
         gloss.creationDate = DT.datetime.now()
         gloss.save()
+        user_affiliations = AffiliatedUser.objects.filter(user=self.user)
+        if user_affiliations.count() > 0:
+            for ua in user_affiliations:
+                new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
+                                                                                 gloss=gloss)
 
         return gloss
 

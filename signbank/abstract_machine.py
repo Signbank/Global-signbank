@@ -225,6 +225,11 @@ def create_gloss(request, dataset, value_dict):
             new_gloss.creationDate = DT.datetime.now()
             new_gloss.creator.add(request.user)
             new_gloss.save()
+            user_affiliations = AffiliatedUser.objects.filter(user=request.user)
+            if user_affiliations.count() > 0:
+                for ua in user_affiliations:
+                    new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
+                                                                                     gloss=new_gloss)
 
             for language in dataset_languages:
                 annotationidgloss_text = value_dict['annotation_id_gloss_' + language.language_code_2char]

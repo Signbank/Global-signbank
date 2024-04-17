@@ -147,6 +147,12 @@ def add_gloss(request):
 
         gloss.save()
         gloss.creator.add(request.user)
+        user_affiliations = AffiliatedUser.objects.filter(user=request.user)
+        if user_affiliations.count() > 0:
+            for ua in user_affiliations:
+                new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
+                                                                                 gloss=gloss)
+
     except ValidationError as ve:
         return show_error(request, ve.message, form, dataset_languages)
 
