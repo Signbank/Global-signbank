@@ -46,6 +46,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
 
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
+from signbank.gloss_update import api_update_gloss_fields
+from django.utils.translation import gettext_lazy as _, activate
 
 
 def login_required_config(f):
@@ -3059,6 +3061,43 @@ def test_abstract_machine(request, datasetid):
                   {'selected_datasets': selected_datasets,
                    'dataset': dataset,
                    'language_2chars': language_2chars,
+                   'dataset_languages': dataset_languages,
+                   'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
+                   })
+
+
+def test_am_update_gloss(request, datasetid, glossid):
+    # used to test api method since PyCharm runserver does not support CORS
+    dataset_id = int(datasetid)
+    dataset = Dataset.objects.filter(id=dataset_id).first()
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+    if not dataset or not (request.user.is_staff or request.user.is_superuser):
+        translated_message = _('You do not have permission to use the test command.')
+        return render(request, 'dictionary/warning.html',
+                      {'warning': translated_message,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
+
+    gloss_id = int(glossid)
+    gloss = Gloss.objects.filter(id=gloss_id, lemma__dataset=dataset).first()
+
+    (interface_language, interface_language_code,
+     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+
+    activate(interface_language_code)
+
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
+    gloss_fields = { fname: Gloss.get_field(fname).verbose_name.title()
+                    for fname in fieldnames if fname in Gloss.get_field_names() }
+
+    return render(request, 'dictionary/virtual_machine_gloss_update_api.html',
+                  {'selected_datasets': selected_datasets,
+                   'dataset': dataset,
+                   'gloss': gloss,
+                   'gloss_fields': gloss_fields,
                    'dataset_languages': dataset_languages,
                    'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS
