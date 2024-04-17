@@ -737,7 +737,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     continue
 
                 # make sure all fields exist
-                new_values_sorted_lookup = SemanticField.objects.filter(name__in=new_human_value_list).order_by('machine_value')
+                new_values_sorted_lookup = lookup_semantic_fields(new_human_value_list)
                 if new_values_sorted_lookup.count() != len(new_human_value_list):
                     error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
                         gloss_id) + '), could not parse ' + new_human_value + ' for ' + human_key
@@ -750,8 +750,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if new_semanticfield_value != original_semanticfield_value:
                     if semfield_assign_toggle == 'update':
                         combined_semfield = original_sorted_semfield_values + new_semfield_sorted_lookup_values
-                        compined_values_sorted_lookup = SemanticField.objects.filter(name__in=combined_semfield).order_by(
-                            'machine_value')
+                        compined_values_sorted_lookup = lookup_semantic_fields(combined_semfield)
                         new_semanticfield_value = ', '.join([str(sf.name) for sf in compined_values_sorted_lookup])
 
                     differences.append({'pk': gloss_id,
@@ -797,7 +796,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     new_human_value = '-'
 
                 try:
-                    field_choice = FieldChoice.objects.get(name=new_human_value, field=field.field_choice_category)
+                    field_choice = FieldChoice.objects.get(name__iexact=new_human_value, field=field.field_choice_category)
                     new_machine_value = field_choice.machine_value
                 except ObjectDoesNotExist:
                     error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
@@ -811,7 +810,7 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     new_human_value = '-'
 
                 try:
-                    handshape = Handshape.objects.get(name=new_human_value)
+                    handshape = Handshape.objects.get(name__iexact=new_human_value)
                     new_machine_value = handshape.machine_value
                 except ObjectDoesNotExist:
                     error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
@@ -1043,7 +1042,7 @@ def check_existence_dialect(gloss, values):
 
     for new_value in values:
         dialect_signlanguage, dialect_name = new_value.split('/')
-        if Dialect.objects.filter(name=dialect_name, signlanguage__name=dialect_signlanguage):
+        if Dialect.objects.filter(name_iexact=dialect_name, signlanguage__name__iexact=dialect_signlanguage):
             if new_value not in found:
                 found += [new_value]
         else:
@@ -1064,7 +1063,7 @@ def check_existence_signlanguage(gloss, values):
     not_found = []
 
     for new_value in values:
-        if SignLanguage.objects.filter(name=new_value):
+        if SignLanguage.objects.filter(name__iexact=new_value):
             if new_value in found:
                 error_string = 'WARNING: For gloss ' + default_annotationidglosstranslation + ' (' + str(
                     gloss.pk) + '), new Sign Language value ' + str(new_value) + ' is duplicate.'
@@ -1540,6 +1539,18 @@ def check_existence_foreign_relations(gloss, relations, values):
             pass
 
     return checked, errors
+
+
+def lookup_semantic_fields(values):
+    # case insensitive lookup of values for semantic fields
+    semantic_fields_machine_values = []
+    for value in values:
+        semfields = SemanticField.objects.filter(name__iexact=value)
+        if not semfields or semfields.count() > 1:
+            continue
+        semantic_fields_machine_values.append(semfields.first().machine_value)
+    semantic_fields = SemanticField.objects.filter(machine_value__in=semantic_fields_machine_values).order_by('machine_value')
+    return semantic_fields
 
 
 def reload_signbank(request=None):
