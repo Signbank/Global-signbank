@@ -19,6 +19,7 @@ import signbank.dictionary.adminviews
 import signbank.api_interface
 import signbank.manage_videos
 import signbank.abstract_machine
+import signbank.gloss_update
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -143,6 +144,10 @@ urlpatterns = [
             signbank.abstract_machine.api_create_gloss, name='api_create_gloss'),
     re_path(r'test_abstract_machine/(?P<datasetid>\d+)/$',
             signbank.dictionary.views.test_abstract_machine, name='test_abstract_machine'),
+    re_path(r'api_update_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
+            signbank.gloss_update.api_update_gloss, name='api_update_gloss'),
+    re_path(r'test_am_update_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
+            signbank.dictionary.views.test_am_update_gloss, name='test_am_update_gloss'),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
