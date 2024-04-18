@@ -337,16 +337,17 @@ option:not(:checked) {
 {% endblock %}
 
 {% block content %}
-    <div class="navbar" id="searchquery" style="background-color:inherit;z-index: 50;">
+    <div class="navbar navbar-light" id="searchquery" style="background-color:inherit; color:inherit;z-index: 50;">
 
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
     <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'
-            style="z-index: 50;">{% trans "QUERY" %}</span></button>
+            style="z-index: 100;">{% trans "QUERY" %}</span></button>
     {% endif %}
-    <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:inherit;border:0;box-sizing:content-box; z-index: 50;">
+    <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;background-color:inherit;color:inherit;border:0;box-sizing:content-box; z-index: 500;">
         {% if request.session.search_results %}{# See if search_results in sessions is empty #}
 
-        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:inherit;">
+        <div id="results-inline" class="btn-group btn-group-light" role="group" aria-label="search results"
+             style="white-space:nowrap;background-color:inherit;color:inherit;">
         </div>
         {% endif %}
     </div>
@@ -889,7 +890,7 @@ option:not(:checked) {
         {% include "dictionary/glosstags.html" %}
         {% include "dictionary/affiliationtags.html" %}
 
-        <table class='table table-condensed' style="width:100%;">
+        <table class='table table-condensed table-condensed-light' style="width:100%;">
             <tr {% if gloss_dialects|length == 0 %} class="empty_row" {% endif %}>
                 <th>{% trans "Dialect" %}</th>
                 <td class='edit edit_dialect' id='dialect'>{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
@@ -1410,12 +1411,13 @@ option:not(:checked) {
         </div>
 
    <!-- Morphology -->
-   <div class="panel panel-default">
+   <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#morphology'>{% trans "Morphology" %}
         </div>
         <div id='morphology' class='collapse'>
-               <table class='table table-condensed'>
+               <table class='table table-condensed table-condensed-light'>
+                   <tbody class="tbody tbody-light">
                    <tr>
                        <th colspan="3">{% trans "Sequential Morphology" %}</th>
                    </tr>
@@ -1468,6 +1470,7 @@ option:not(:checked) {
             {% else %}
             <tr><td><i>({% trans "If this is a compound, use [Edit] to define its components" %})</i></td></tr>
             {% endif %}
+           </tbody>
            </table>
 
             {% if "change_dataset" in dataset_perms %}
@@ -1665,7 +1668,7 @@ option:not(:checked) {
 
     </div>
     <!-- Phonology -->
-	<div class="panel panel-default">
+	<div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' id='phonology_heading'
              data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
                     {% if handedness and domhndsh %}
@@ -1822,7 +1825,7 @@ option:not(:checked) {
 
     <!-- Minimal Pairs -->
  {% if homonyms_but_not_saved %}
-  <div class="panel panel-default">
+  <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              style="color:red" data-target='#identicalphonology'>{% trans "Identical phonology but not marked as homonym" %}
         </div>
@@ -1839,7 +1842,7 @@ option:not(:checked) {
   </div>
  {% endif %}
  {% if homonyms_different_phonology %}
- <div class="panel panel-default">
+ <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              style="color:red" data-target='#differentphonology'>{% trans "Marked as homonym but different phonology" %}
         </div>
@@ -1855,7 +1858,7 @@ option:not(:checked) {
         </div>
   </div>
 {% endif %}
-<div class="panel panel-default">
+<div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
         </div>
@@ -1875,7 +1878,7 @@ option:not(:checked) {
 </div>
 
     <!-- Semantics -->
-    <div class="panel panel-default">
+    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
                     {% if SemanticFieldDefined %}
                     <div class="pull-right">
@@ -1928,7 +1931,7 @@ option:not(:checked) {
     </div>
 
     <!-- Relations to other signs -->
-    <div class="panel panel-default">
+    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relations'>{% trans "Relations to Other Signs" %}
                     {% if gloss.relations_count %}
@@ -2012,7 +2015,7 @@ option:not(:checked) {
     </div>
 
     <!-- Relations to foreign signs -->
-    <div class="panel panel-default">
+    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relationsforeign'>{% trans "Relations to Foreign Signs" %}
                     {% if gloss.relationtoforeignsign_set.all %}
@@ -2095,7 +2098,7 @@ option:not(:checked) {
     </div>
 
     <!-- Publication status -->
-    <div class="panel panel-default">
+    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#pubStatus'>{% trans "Publication Status" %}
         </div>
@@ -2131,7 +2134,7 @@ option:not(:checked) {
     
    
     <!-- Notes -->
-    <div class="panel panel-default">
+    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
                     {% if notes_groupedby_role.items %}
                     <div class="pull-right">
@@ -2227,7 +2230,7 @@ option:not(:checked) {
     </div>
 
      <!-- Other media -->
-    <div class="panel panel-default">
+    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#othermedia'>{% trans "Other Media" %}
                     {% if other_media %}

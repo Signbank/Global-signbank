@@ -22,6 +22,9 @@
     --table-dark-color: rgb(151, 100, 100);
     --table-dark-border: rgb(34, 0, 0);
     --dark-label-background: rgb(55, 40, 40);
+    --search-results-color: rgb(70, 70,70);
+    --search-results-luminosity: 0.35%;
+    --search-results-luminosity-hover: 0.7%;
 }
 html,
 body {
@@ -567,12 +570,12 @@ tr.rotated th {
 .search_result
 {
     margin-right: 30px;
-    color: hsla(0, 0%, 0%, 0.35);
+    color: rgba(var(--search-results-color),var(--search-results-luminosity));
 }
 
 .search_result:hover, search_result:active, a.active
 {
-    color: hsla(0, 0%, 0%, 0.7);
+    color: rgba(var(--search-results-color), var(--search-results-luminosity-hover));
     text-decoration: none;
 }
 
@@ -1008,6 +1011,27 @@ input {
     background-color: var(--text-container-dark-input-fill) !important;
     border: solid 1px var(--text-input-border) !important;
     color: var(--text-input-text) !important;
+    box-shadow: var(--text-container-dark-input-fill) 0px 0px 0px 0px;
+}
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+    outline: none !important;
+}
+input:active,
+select:active,
+textarea:active,
+button:active {
+    outline: none !important;
+}
+input:focus, input.form-control:focus {
+
+    outline:none !important;
+    outline-width: 0 !important;
+    box-shadow: none;
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
 }
 .td-dark > .btn-default-dark {
     background-color: var(--button-default) !important;
@@ -1122,6 +1146,7 @@ input {
     background-color: var(--text-container-dark-input-fill) !important;
     color: white !important;
     border: solid 1px var(--text-container-dark-input-border) !important;
+    box-shadow: var(--text-container-dark-input-fill) 0px 1px 1px 0px;
 }
 .query-toggles {
     border-left: 2px solid grey;
@@ -1155,34 +1180,24 @@ input {
 .table .table-condensed-dark {
     background-color: var(--well-background) !important;
     color: var(--table-dark-color) !important;
-    border-left-color: var(--text-container-dark-border) !important;
-    border-right-color: var(--text-container-dark-border) !important;
-    border-top-color: var(--text-container-dark-border) !important;
-    border-bottom-color: var(--text-container-dark-border) !important;
+    border-color: var(--text-container-dark-border) !important;
+    outline: none;
 }
 .table-condensed-dark > td > span {
     background-color: var(--well-background) !important;
     color: var(--table-dark-color) !important;
-    border-left-color: var(--text-container-dark-border) !important;
-    border-right-color: var(--text-container-dark-border) !important;
-    border-top-color: var(--text-container-dark-border) !important;
-    border-bottom-color: var(--text-container-dark-border) !important;
+    border-color: var(--text-container-dark-border) !important;
 }
 .table .table-condensed-dark > tr > th {
     background-color: var(--well-background) !important;
     color: var(--panel-heading-text) !important;
-    border-left-color: var(--text-container-dark-border) !important;
-    border-right-color: var(--text-container-dark-border) !important;
-    border-top-color: var(--text-container-dark-border) !important;
-    border-bottom-color: var(--text-container-dark-border) !important;
+    border-color: var(--text-container-dark-border) !important;
 }
 .table-condensed-dark > input {
-    background-color: var(--dropdown-dark) !important;
+    background-color: var(--text-container-dark-input-fill) !important;
     color: white !important;
-    border-left-color: var(--dropdown-dark) !important;
-    border-right-color: var(--dropdown-dark) !important;
-    border-top-color: var(--dropdown-dark) !important;
-    border-bottom-color: var(--dropdown-dark) !important;
+    border-color: var(--dropdown-dark) !important;
+    border-radius: 4px;
 }
 .table-condensed-dark > td > form {
     background-color: var(--tbody-dark-background) !important;
@@ -1201,7 +1216,7 @@ input {
     color: inherit !important;
 }
 .thead-dark {
-    background-color: inherit !important;
+    background-color: var(--well-background) !important;
     color: inherit !important;
 }
 .thead-dark > tr > th {
@@ -1212,19 +1227,18 @@ input {
     background-color: var(--tbody-dark-background) !important;
     border-color: var(--tbody-dark-border) !important;
     color: var(--text-input-text) !important;
-    border-left-color: var(--text-container-dark-border) !important;
-    border-right-color: var(--text-container-dark-border) !important;
-    border-top-color: var(--text-container-dark-border) !important;
-    border-bottom-color: var(--text-container-dark-border) !important;
+    border-color: var(--text-container-dark-border) !important;
+    border-width: 0 0 0 0;
+}
+.tbody-dark > tr > th {
+    border-width: 0 0 0 0;
+
 }
 .tbody-dark > tr > td {
     background-color: var(--tbody-dark-background) !important;
     border-color: var(--tbody-dark-border) !important;
     color: var(--text-input-text) !important;
-    border-left-color: var(--text-container-dark-border) !important;
-    border-right-color: var(--text-container-dark-border) !important;
-    border-top-color: var(--text-container-dark-border) !important;
-    border-bottom-color: var(--text-container-dark-border) !important;
+    border-color: var(--text-container-dark-border) !important;
 }
 .morphtypeahead-light {
     background-color: white !important;
@@ -1325,5 +1339,8 @@ span ::placeholder {
 }
 .btn-group-dark {
     color: inherit !important;
+    --search-results-color: white important!;
+    --search-results-luminosity: 0.35%
+    --search-results-luminosity-hover: 0.7%;
     background-color: var(--well-background) !important;
 }
