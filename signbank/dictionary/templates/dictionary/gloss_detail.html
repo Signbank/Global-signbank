@@ -343,11 +343,11 @@ option:not(:checked) {
     <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'
             style="z-index: 100;">{% trans "QUERY" %}</span></button>
     {% endif %}
-    <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;background-color:inherit;color:inherit;border:0;box-sizing:content-box; z-index: 500;">
+    <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 500;">
         {% if request.session.search_results %}{# See if search_results in sessions is empty #}
 
         <div id="results-inline" class="btn-group btn-group-light" role="group" aria-label="search results"
-             style="white-space:nowrap;background-color:inherit;color:inherit;">
+             style="white-space:nowrap;">
         </div>
         {% endif %}
     </div>
@@ -476,7 +476,7 @@ option:not(:checked) {
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
 
     <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
-    <ul class='nav nav-tabs'>
+    <ul class='nav nav-tabs nav-tabs-light'>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
         </li>
