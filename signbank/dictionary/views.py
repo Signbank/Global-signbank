@@ -3088,8 +3088,7 @@ def test_am_update_gloss(request, datasetid, glossid):
      default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
 
     activate(interface_language_code)
-
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
     gloss_fields = { fname: Gloss.get_field(fname).verbose_name.title()
                     for fname in fieldnames if fname in Gloss.get_field_names() }
 

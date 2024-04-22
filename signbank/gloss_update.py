@@ -8,13 +8,15 @@ from django.http import JsonResponse
 from guardian.shortcuts import get_objects_for_user
 from signbank.tools import get_interface_language_and_default_language_codes
 
+import ast
+
 
 def api_update_gloss_fields(language_code='en'):
     activate(language_code)
 
     api_fields_2024 = []
 
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
     gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
     # TO DO
@@ -32,7 +34,7 @@ def update_gloss_columns_to_value_dict_keys(language_code):
     value_dict_reverse = dict()
 
     activate(language_code)
-    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
+    fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
     gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
     for field in gloss_fields:
@@ -58,6 +60,101 @@ def gloss_update_fields_check(value_dict, language_code):
             errors[field] = _("Field update not allowed")
     return errors
 
+def convert_string_to_dict_of_list_of_lists(input_string):
+    """
+    Convert a string to a dictionary of lists of lists.
+    """
+    try:
+        dict_of_lists = ast.literal_eval(input_string)
+    except (ValueError, SyntaxError):
+        return {}, "Sense input if not in the expected format. \nTry: '{\"en\":[[\"sense 1 keyword1\", \"sense 1 keyword2\"],[\"sense 2 keyword1\"]], \"nl\":[[\"sense 1 keyword1\"],[\"sense 2 keyword1\", \"sense 2 keyword2\"]]}'"
+
+    # Verify if the result is a dictionary
+    if isinstance(dict_of_lists, dict):
+        lengths = set()
+        for key, value in dict_of_lists.items():
+            if not isinstance(value, list):
+                return {}, f"The value associated with key '{key}' is not a list."
+            lengths.add(len(value))
+            for item in value:
+                if not isinstance(item, list):
+                    return {}, f"The value associated with key '{key}' contains a non-list element."
+        if len(lengths) > 1:
+            return {}, "Lists within the dictionary have different lengths."
+        return dict_of_lists, None
+    else:
+        return {}, "Input is not a dictionary."
+
+
+def update_senses(gloss, new_value): 
+    """"
+    new_value is a string of comma separated senses, where each sense is a string of comma separated translations
+    """
+    new_senses, _ = convert_string_to_dict_of_list_of_lists(new_value)
+
+    dataset = gloss.lemma.dataset
+    dataset_languages = dataset.translation_languages.all()
+
+    # First remove the senses from the gloss
+    old_senses = gloss.senses.all()
+    for old_sense in old_senses:
+        
+        gloss.senses.remove(old_sense)
+
+        # if this sense is part of another gloss, don't delete it
+        other_glosses_for_sense = GlossSense.objects.filter(sense=old_sense).exclude(gloss=gloss).count()
+        if not other_glosses_for_sense:
+            # If this is this only gloss this sense was in, delete the sense
+            for sense_translation in old_sense.senseTranslations.all():
+                # iterate over a list because the objects will be removed
+                for translation in sense_translation.translations.all():
+                    sense_translation.translations.remove(translation)
+                    translation.delete()
+                old_sense.senseTranslations.remove(sense_translation)
+                sense_translation.delete()
+            # also remove its examplesentences if they are not in another sense
+            example_sentences = old_sense.exampleSentences.all()
+            for example_sentence in example_sentences:
+                old_sense.exampleSentences.remove(example_sentence)
+                if Sense.objects.filter(exampleSentences=example_sentence).count() == 0:
+                    example_sentence.delete()
+            old_sense.delete()
+
+    # Then add the new senses
+    for dataset_language in dataset_languages:
+        if dataset_language.language_code_2char in new_senses:
+            for new_sense_i, new_sense in enumerate(new_senses[dataset_language.language_code_2char], 1):
+                # Make a new sense object or get the existing one
+                if gloss.senses.count() < new_sense_i:
+                    sense = Sense.objects.create()
+                    gloss.senses.add(sense, through_defaults={'order':new_sense_i})
+                else:
+                    sense = gloss.senses.get(glosssense__order=new_sense_i)
+
+                try:
+                    sensetranslation = sense.senseTranslations.get(language=dataset_language)
+                except ObjectDoesNotExist:
+                    # there should only be one per language
+                    sensetranslation = SenseTranslation.objects.create(language=dataset_language)
+                    sense.senseTranslations.add(sensetranslation)
+                for inx, kw in enumerate(new_sense, 1):
+                    # this is a new sense so it has no translations yet
+                    # the combination with gloss, language, orderIndex does not exist yet
+                    # the index is the order the keyword was entered by the user
+                    if not kw:
+                        continue
+                    keyword = Keyword.objects.get_or_create(text=kw)[0]
+                    translation = Translation(translation=keyword,
+                                                language=dataset_language,
+                                                gloss=gloss,
+                                                orderIndex=new_sense_i,
+                                                index=inx)
+                    translation.save()
+                    sensetranslation.translations.add(translation)
+                sensetranslation.save()
+                sense.save()
+    gloss.save()
+    
 
 def update_semantic_field(gloss, new_values, language_code):
     new_semanticfields_to_save = []
@@ -171,6 +268,9 @@ def gloss_update_do_changes(request, gloss, changes, language_code):
                 changes_done.append((field.name, original_value, new_value))
             elif field.name == 'derivHist':
                 update_derivation_history_field(gloss, new_value, language_code)
+                changes_done.append((field.name, original_value, new_value))
+            elif field.name == "senses" and isinstance(field, models.ManyToManyField):
+                update_senses(gloss, new_value)
                 changes_done.append((field.name, original_value, new_value))
             else:
                 # text field
@@ -296,6 +396,13 @@ def api_update_gloss(request, datasetid, glossid):
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
+    
+    if 'Senses' in value_dict:
+        _, errors = convert_string_to_dict_of_list_of_lists(value_dict['Senses'])
+        if errors:
+            results['errors'] = [errors]
+            results['updatestatus'] = "Failed"
+            return JsonResponse(results)
 
     gloss_update_do_changes(request, gloss, fields_to_update, interface_language_code)
 
