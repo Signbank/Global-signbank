@@ -195,22 +195,65 @@ function sort_frequencies(e) {
 
 </script>
 <style>
-.table-bordered > thead > tr > th {
+.table-frequency-light > thead > tr > th {
     border: 1px solid black !important;
 }
-
-.table-bordered > tbody > tr > td {
+.table-frequency-light > tbody > tr {
     border: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-frequency-light > tbody > tr > td {
+    border: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-frequency-dark > thead > tr > th {
+    border: 1px solid white !important;
+}
+.table-frequency-dark > tbody > tr {
+    border: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.table-frequency-dark > tbody > tr > td {
+    border: 1px solid white !important;
+    border-bottom: 1px solid white !important;
 }
 
 table {
     margin: 0px 0px 0px 0px important!;
 }
-
+.frequency-table-light {
+    border: 1px solid black !important;
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.frequency-cell-light {
+    border: 1px solid black !important;
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.frequency-table-dark {
+    border: 1px solid white !important;
+    border-top: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.frequency-cell-dark {
+    border: 1px solid white !important;
+    border-top: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
 .table-bordered {
     margin-top: 20px;
+    border: 1px solid black !important;
 }
-
+.table-bordered > thead > tr {
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-bordered > tbody > tr {
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+    border: 1px solid black !important;
+}
 </style>
 
 <script type='text/javascript'>
@@ -257,7 +300,8 @@ table {
             class="btn btn-default btn-default-light">{% trans "Hide Empty Frequencies" %}</button>
     <button id="sort_results" value='sort_by_frequency' onclick="sort_frequencies(this)"
             class="btn btn-default btn-default-light">{% trans "Sort by Frequency" %}</button>
-<table class='table table-condensed table-bordered'>
+<div>
+<table class='table table-condensed table-bordered table-frequency table-frequency-light'>
     <thead>
       <tr>
           <th style="width:300px;">{% trans "Dataset" %}</th>
@@ -275,20 +319,22 @@ table {
         <td nowrap>{{ all_field_labels|keyvalue:key2 }}</td>
             <td>
             <div>
-                <table id="{{ds.id}}_results_{{key2}}" style="border:1px solid;table-layout:fixed;">
+                <table class="frequency-table frequency-table-light" id="{{ds.id}}_results_{{key2}}"
+                       style="border:1px solid;table-layout:fixed;">
                     <tbody>
                     {% for key3, value3 in value2.items %}
                         {% with value3|length as length_choice %}
                         {% with length_choice|add:"300" as display_width %}
                         {% if value3 > 0 %}
-                        <tr style="height:auto;width:auto;">
+                        <tr style="height:auto;width:auto;" class="frequency-cell frequency-cell-light">
                         <td class="field_choice_label" value="{{key3}}"
                             nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{key3}}</td>
                         <td class="field_choice_frequency" value="{{value3}}"
                             style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{value3}}</td>
                         </tr>
                         {% else %}
-                        <tr id="{{ds.id}}_field_{{key2}}_{{key3}}_empty_frequency" style="height:auto;">
+                        <tr id="{{ds.id}}_field_{{key2}}_{{key3}}_empty_frequency" class="frequency-cell frequency-cell-light"
+                            style="height:auto;">
                         <td class="field_choice_label" value="{{key3}}"
                             nowrap style="border:1px solid;padding:6px;text-align:left;width:{{display_width}}px;">{{key3}}</td>
                         <td class="field_choice_frequency" value="{{value3}}"
@@ -311,6 +357,7 @@ table {
 {% else %}
 {% trans "No frequency data available." %}
 {% endif %}
+</div>
 
 </div>
 

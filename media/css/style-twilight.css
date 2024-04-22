@@ -5,8 +5,8 @@
     --typeahead-dark-background: rgb(9, 4, 2);
     --typeahead-dark-border: rgb(40, 0, 0);
     --typeahead-dark-color: rgb(174, 0, 0);
-    --panel-heading-background: rgb(44, 18, 18);
-    --panel-heading-text: rgb(200, 156, 156);
+    --panel-heading-background: rgb(34, 28, 28);
+    --panel-heading-text: rgb(200, 186, 186);
     --text-input-field: rgb(40, 0, 0);
     --text-input-border: rgb(200, 156, 156);
     --text-input-text: rgb(250, 255, 255);
@@ -17,7 +17,7 @@
     --dropdown-dark: rgb(112, 0, 0);
     --text-container-dark-input-border: rgb(112, 0, 0);
     --text-container-dark-input-fill: rgb(9, 4, 2);
-    --text-container-dark-border: rgb(34, 0, 0);
+    --text-container-dark-border: rgb(9, 4, 2);
     --text-container-dark-placeholder: rgb(200, 156, 156);
     --table-dark-color: rgb(151, 100, 100);
     --table-dark-border: rgb(34, 0, 0);
@@ -202,9 +202,15 @@ body {
 
 tr {
     border-bottom: hidden;
+    border-top: hidden;
+    border-left: hidden;
+    border-right: hidden;
 }
 table {
     border-top: hidden;
+    border-bottom: hidden;
+    border-left: hidden;
+    border-right: hidden;
 }
 
 /* admin search form */
@@ -827,9 +833,15 @@ form {
     color: inherit;
 }
 
+table .table-bordered {
+    background-color: inherit;
+    color: inherit;
+    border: 1px solid black;
+}
 .table .table-bordered {
     background-color: inherit;
     color: inherit;
+    border: 1px solid black;
 }
 
 @body-bg {
@@ -917,6 +929,7 @@ input {
 .view-tabs-dark {
     background-color: var(--dark-mode-very-dark) !important;
     color: var(--panel-heading-text) !important;
+    border-bottom: 1px solid var(--panel-heading-background);
 }
 
 .view-tabs-dark .nav-tabs-dark {
@@ -924,17 +937,23 @@ input {
     color: var(--panel-heading-text) !important;
     border-bottom: 1px solid var(--panel-heading-background);
 }
+.view-tabs-dark .nav-tabs-dark:hover {
+    background-color: var(--dark-mode-very-dark) !important;
+    color: var(--panel-heading-text) !important;
+    border-bottom: 1px solid var(--button-default);
+}
 .view-tabs-dark .nav-tabs-dark > li > .nav-link:hover {
     background-color: var(--dark-mode-very-dark) !important;
     color: white !important;
-    border-bottom: 1px solid var(--nav-highlight);
-    border-color: var(--panel-heading-background) var(--panel-heading-background) var(--panel-heading-background);
+    border: 1px solid;
+    border-color: var(--button-default) var(--button-default) transparent var(--button-default);
 }
 .view-tabs-dark .nav-tabs-dark .nav-item.show .nav-link, .view-tabs-dark .nav-tabs-dark .nav-link.active
 {
     color: var(--button-default);
     background-color: var(--dark-mode-very-dark) !important;
-    border-color: var(--panel-heading-background);
+    border: 1px solid;
+    border-color: var(--panel-heading-background) var(--panel-heading-background) var(--panel-heading-background) var(--panel-heading-background);
     border-top-width: 2px;
 }
 
@@ -964,7 +983,6 @@ input {
     padding: 0 0 0 0;
 }
 .well-dark {
-    border: solid 1px var(--well-background) !important;
     background-color:  var(--well-background) !important;
 }
 .well-light {
@@ -1133,18 +1151,16 @@ input:focus, input.form-control:focus {
     color: white !important;
 }
 .navbar-text-dark > a:hover {
-    background-color: var(--dropdown-dark) !important;
+    background-color: var(--text-container-dark-border) !important;
     color: white !important;
 }
 .interface-language-light > input {
     background-color: inherit !important;
     color: inherit !important;
-    border: solid 1px inherit !important;
 }
 .interface-language-dark {
     background-color: var(--nav-highlight) !important;
     color: white !important;
-    border: solid 1px var(--nav-highlight) !important;
 }
 .input-group-dark > label {
     background-color: var(--panel-heading-background) !important;
@@ -1180,11 +1196,13 @@ input:focus, input.form-control:focus {
 .table-bordered-dark {
     background-color: var(--well-background) !important;
     color: var(--table-dark-color) !important;
-    border: 1px solid var(--well-border) !important;
+    border: 1px solid var(--text-container-dark-border) !important;
     border-left-color: var(--text-container-dark-border) !important;
     border-right-color: var(--text-container-dark-border) !important;
+    border-right: 1px solid var(--text-container-dark-border) !important;
     border-top-color: var(--text-container-dark-border) !important;
     border-bottom-color: var(--text-container-dark-border) !important;
+    border-bottom: 1px solid var(--text-container-dark-border) !important;
 }
 .table .table-condensed-dark {
     background-color: var(--well-background) !important;
@@ -1351,5 +1369,5 @@ span ::placeholder {
     --search-results-color: white important!;
     --search-results-luminosity: 0.35%
     --search-results-luminosity-hover: 0.7%;
-    background-color: var(--well-background) !important;
+    background-color: inherit !important;
 }

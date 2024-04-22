@@ -285,34 +285,7 @@ function do_sort_column(field_name, action, frmName) {
             position:fixed;
         }
     </style>
-<style>
-.table-bordered-light > thead > tr > th {
-    border: 1px solid inherit !important;
-}
 
-.table-bordered-light > tbody > tr > td {
-    border: 1px solid inherit !important;
-}
-
-.table-bordered-dark > thead > tr > th {
-    border: 1px solid var(--well-border) !important;
-    background-color: var(--well-background) !important;
-    color: var(--panel-heading-text) !important;
-}
-
-.table-bordered-dark > tbody > tr > td {
-    border: 1px solid var(--well-border) !important;
-    background-color: var(--well-background) !important;
-    color: var(--panel-heading-text) !important;
-}
-table {
-    margin: 0px 0px 0px 0px important!;
-}
-
-.table-bordered {
-    margin-top: 20px;
-}
-</style>
 <!--The tagQP css overrides the colour of tag to match that of disabled buttons, used for the display of other query parameters-->
 <style>
 .form-group {
@@ -394,7 +367,72 @@ thead tr th {
     color: #004977;
 }
 </style>
+<style>
+.table-frequency-light > thead > tr > th {
+    border: 1px solid black !important;
+}
+.table-frequency-light > tbody > tr {
+    border: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-frequency-light > tbody > tr > td {
+    border: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-frequency-dark > thead > tr > th {
+    border: 1px solid white !important;
+}
+.table-frequency-dark > tbody > tr {
+    border: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.table-frequency-dark > tbody > tr > td {
+    border: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
 
+table {
+    margin: 0px 0px 0px 0px important!;
+}
+.frequency-table-light {
+    border: 1px solid black !important;
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.frequency-cell-light {
+    border: 1px solid black !important;
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.frequency-table-dark {
+    border: 1px solid white !important;
+    border-top: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.frequency-cell-dark {
+    border: 1px solid white !important;
+    border-top: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.table-bordered {
+    margin-top: 20px;
+    border: 1px solid black !important;
+}
+.table-bordered > thead > tr {
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-bordered > tbody > tr {
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+    border: 1px solid black !important;
+}
+</style>
+
+<script type='text/javascript'>
+    navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    $('#wrap').css({'padding-top': navbarHeight});
+</script>
 {% endblock %}
 
 {% block content %}
@@ -405,11 +443,11 @@ thead tr th {
 <div id="signinfo" class='navbar navbar-collapse navbar-collapse-light' style="margin-right:15px;z-index:100;">
     <div id="view_tabs" style="margin-right:15px;z-index:100;" class='view-tabs view-tabs-light'>
     <ul class='nav nav-tabs nav-tabs-light'>
-        <li class="nav-item nav-item-light">
-            <a class='nav-link nav-link-light active' href="{{PREFIX_URL}}/analysis/queries/">{% trans "Query View" %}</a>
+        <li class="nav-item">
+            <a class='nav-link active' href="{{PREFIX_URL}}/analysis/queries/">{% trans "Query View" %}</a>
         </li>
-        <li class="nav-item nav-item-light">
-            <a class='nav-link nav-link-light' href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>
         </li>
     </ul>
     </div>
@@ -422,10 +460,13 @@ thead tr th {
 
     {% else %}
     <h3>{% trans "Query Parameters" %}</h3>
-    <table class="table table-bordered table-bordered-light" style="z-index:0;padding-top: 100px;width:1000px;">
+    <table class="table table-bordered table-frequency table-frequency-light"
+           style="z-index:0;padding-top: 100px;width:1000px;">
         <thead id='query_table_header'>
+            <tr class="frequency-cell frequency-cell-light">
                 <th >{% trans "Field" %}</th>
                 <th >{% trans "Value" %}</th>
+            </tr>
         </thead >
         <tbody >
         {% for key, value in query_parameters.items %}
@@ -447,20 +488,25 @@ thead tr th {
         {% endfor %}
         </tbody>
     </table>
-    <div class="btn-group btn-group-light">
+    <div class="btn-group">
+    <div class="btn-group">
     <button class="btn queryButton" type='submit' style="height:40px;"><a href="{{PREFIX_URL}}/signs/search/?query" class="runQuery"
                                                                           type="button">{% trans "Run Query" %}</a></button>
+    </div>
     {% if all_parameters_available_to_save %}
+    <div class="btn-group">
     <button class="btn queryButton">
     <form name='save_query_parameters' id='save_query_parameters' method='get'>
     <input id="save_query_button" name='save_query_button' value='{% trans "Save Query" %}' type="submit" class="btn btn-primary" />
         <input type='hidden' name='save_query' value="Save">
     </form>
     </button>
+    </div>
     {% else %}
+    <div class="btn-group">
         <button class="btn querySaveInfo" data-toggle='modal' data-target='#save_not_available'
             type="button">{% trans "Save Query" %}</button>
-
+    </div>
     {% endif %}
     </div>
 

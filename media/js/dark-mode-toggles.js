@@ -206,6 +206,33 @@ function toggle_dark_mode() {
             $(this).addClass("table-bordered-light");
         }
   });
+  $(".table-frequency").each(function () {
+        if ($(this).hasClass("table-frequency-light")) {
+            $(this).removeClass("table-frequency-light");
+            $(this).addClass("table-frequency-dark");
+        } else if ($(this).hasClass("table-frequency-dark")) {
+            $(this).removeClass("table-frequency-dark");
+            $(this).addClass("table-frequency-light");
+        }
+  });
+  $(".frequency-table").each(function () {
+        if ($(this).hasClass("frequency-table-light")) {
+            $(this).removeClass("frequency-table-light");
+            $(this).addClass("frequency-table-dark");
+        } else if ($(this).hasClass("frequency-table-dark")) {
+            $(this).removeClass("frequency-table-dark");
+            $(this).addClass("frequency-table-light");
+        }
+  });
+  $(".frequency-cell").each(function () {
+        if ($(this).hasClass("frequency-cell-light")) {
+            $(this).removeClass("frequency-cell-light");
+            $(this).addClass("frequency-cell-dark");
+        } else if ($(this).hasClass("frequency-cell-dark")) {
+            $(this).removeClass("frequency-cell-dark");
+            $(this).addClass("frequency-cell-light");
+        }
+  });
   $(".search-form").each(function () {
         if ($(this).hasClass("search-form-light")) {
             $(this).removeClass("search-form-light");

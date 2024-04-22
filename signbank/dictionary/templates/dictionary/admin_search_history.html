@@ -11,6 +11,7 @@
 
 {% block extrajs %}
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+<link rel="stylesheet" href="{{STATIC_URL}}css/query-buttons.css">
 
 <script type='text/javascript'>
 var url = '{{ PREFIX_URL }}';
@@ -31,7 +32,7 @@ var csrf_token = '{{csrf_token}}';
     -moz-appearance: none;
 }
 .actions {
-    color: white !important;
+    color: inherit !important;
     background-color: inherit !important;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -41,11 +42,10 @@ var csrf_token = '{{csrf_token}}';
     text-align: center;
     padding: 6px 12px;
     border-radius: 6px;
-    background-color: white;
+    background-color: var(--button-default);
     margin: 0 0 0 0;
 }
 .runQuery:hover {
-    text-decoration: none;
     background-color: none;
 }
 .queryButton {
@@ -69,18 +69,18 @@ var csrf_token = '{{csrf_token}}';
     border: none;
     padding-left: 5px;
     padding-right: 5px;
-    background-color: none;
+    background-color: inherit;
     -webkit-appearance: none;
     -moz-appearance: none;
 }
 .runQueryForm:hover {
-    background-color: white;
+    background-color: none;
     text-decoration: none;
 }
 .runQueryInput {
-    border: 1px solid #428bca;;
-    color: #428bca;
-    background-color: white;
+    border: 1px solid var(--button-default);;
+    color: white;
+    background-color: var(--button-default);
     text-align: center;
     padding: 4px 8px;
     border-radius: 6px;
@@ -97,8 +97,8 @@ var csrf_token = '{{csrf_token}}';
 {% block content %}
 
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
-
-    <ul class='nav nav-tabs'>
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+    <ul class='nav nav-tabs nav-tabs-light'>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/analysis/queries/">{% trans "Query View" %}</a>
         </li>
@@ -106,8 +106,10 @@ var csrf_token = '{{csrf_token}}';
             <a class='nav-link active' href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>
         </li>
     </ul>
+    </div>
 </div>
 
+<br><br>
 <div id="definitionblock" style="padding-top: 30px;">
     {% if not object_list %}
     <br>
@@ -131,14 +133,18 @@ var csrf_token = '{{csrf_token}}';
             <td class="queryname_{{query.id}}" id="queryname_{{query.id}}">{{ query.queryName }}</td>
             <td>{% for lang in query.query_languages %}{{lang}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
             <td class="actions">
-                <div class="btn-group">
+                <div class="btn-group btn-group-light">
                 {% spaceless %}
+                <div class="btn-group">
                 <button id='edit_query_btn_{{query.id}}' class="btn queryButton" type="button" name='edit_{{query.id}}'
                         value='edit_{{query.id}}'
                         data-toggle='modal' data-target='#edit_query_modal_{{query.id}}'>
                     <a class="runQuery">{% trans "Edit" %}</a></button>
+                </div>
                 {% if selected_datasets_contain_query_languages|get_item:query %}
-                <button class="btn runQueryForm" style="border-box:content-box;background-color:inherit;">
+                <div class="btn-group">
+                <button class="btn runQueryForm" type="button"
+                        style="border-box:content-box;background-color:inherit;">
                 <form name='run_query_parameters' id='run_query_parameters' class="runQueryForm"
                       method='get' style="border-box:content-box;">
                 <input id="run_query_button" name='run_query_button' value='{% trans "Run" %}'
@@ -147,10 +153,13 @@ var csrf_token = '{{csrf_token}}';
                     <input type="hidden" name="queryid" value="{{query.id}}">
                 </form>
                 </button>
+                </div>
                 {% endif %}
+                <div class="btn-group">
                 <button id='delete_query_btn_{{query.id}}' class='btn queryButton'
                         data-toggle='modal' data-target='#delete_query_modal_{{query.id}}'>
                     <a class="runQuery">{% trans "Delete" %}</a></button>
+                </div>
                 {% endspaceless %}
                 </div>
             </td>
