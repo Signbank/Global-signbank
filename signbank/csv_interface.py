@@ -1151,16 +1151,16 @@ def choice_fields_choices():
     for f in fields:
         if hasattr(f, 'field_choice_category'):
             fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
-                [fc.name for fc in FieldChoice.objects.filter(field__iexact=f.field_choice_category)]
+                [fc.name for fc in FieldChoice.objects.filter(field__iexact=f.field_choice_category).order_by('name')]
         elif f.name in ['domhndsh', 'subhndsh']:
             fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
-                [hs.name for hs in Handshape.objects.all()]
+                [hs.name for hs in Handshape.objects.all().order_by('name')]
         elif f.name == 'semField':
             fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
-                [sf.name for sf in SemanticField.objects.all()]
+                [sf.name for sf in SemanticField.objects.all().order_by('name')]
         elif f.name == 'derivHist':
             fields_choices[f.verbose_name.encode('ascii', 'ignore').decode()] = \
-                [dh.name for dh in DerivationHistory.objects.all()]
+                [dh.name for dh in DerivationHistory.objects.all().order_by('name')]
         elif f.name in ['repeat', 'altern',
                         'domhndsh_letter', 'domhndsh_number',
                         'subhndsh_letter', 'subhndsh_number',
