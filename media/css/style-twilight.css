@@ -11,8 +11,9 @@
     --text-input-border: rgb(200, 156, 156);
     --text-input-text: rgb(250, 255, 255);
     --well-background: rgb(9, 4, 2);
-    --well-border: rgb(60, 0, 0);
+    --well-border: rgb(9, 4, 2);
     --button-default: rgb(187, 60, 80);
+    --action-button: rgb(147, 80, 120);
     --nav-highlight: rgb(28, 0, 0);
     --dropdown-dark: rgb(112, 0, 0);
     --text-container-dark-input-border: rgb(112, 0, 0);
@@ -811,6 +812,7 @@ canvas{
 .panel-body {
     background-color: inherit;
     color: inherit;
+    border: hidden;
 }
 
 .panel-footer {
@@ -976,6 +978,7 @@ input {
 .collapse-dark {
     border: solid 1px var(--well-background) !important;
     border-top-width: 1px !important;
+    border-bottom-color: var(--well-background);
 }
 .collapse-light {
     border: solid 1px inherit !important;
@@ -983,7 +986,8 @@ input {
     padding: 0 0 0 0;
 }
 .well-dark {
-    background-color:  var(--well-background) !important;
+    background-color: var(--well-background) !important;
+    border: solid 1px inherit !important;
 }
 .well-light {
     border: solid 1px inherit !important;
@@ -1108,6 +1112,15 @@ input:focus, input.form-control:focus {
     border-radius: 6px;
 }
 .btn-default-light {
+}
+.btn-action-dark {
+    border: 1px solid var(--action-button);
+    border-color: var(--action-button);
+    border-radius: 8px;
+    color: white;
+    background-color: var(--action-button);
+}
+.btn-action-light {
 }
 .navbar-form-dark {
     background-color: var(--well-background) !important;

@@ -143,6 +143,15 @@ function toggle_dark_mode() {
             $(this).addClass("btn-default-light");
         }
   });
+  $(".btn-action").each(function () {
+        if ($(this).hasClass("btn-action-light")) {
+            $(this).removeClass("btn-action-light");
+            $(this).addClass("btn-action-dark");
+        } else if ($(this).hasClass("btn-action-dark")) {
+            $(this).removeClass("btn-action-dark");
+            $(this).addClass("btn-action-light");
+        }
+  });
   $(".tbody").each(function () {
         if ($(this).hasClass("tbody-light")) {
             $(this).removeClass("tbody-light");
