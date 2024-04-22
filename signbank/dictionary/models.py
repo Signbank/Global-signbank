@@ -1,14 +1,12 @@
 from colorfield.fields import ColorField
 from django.db.models import Q
-from django.db import models, OperationalError, ProgrammingError
+from django.db import models
 from django.conf import settings
-from django.http import Http404
 from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, m2m_changed
-from django.utils.translation import gettext_noop, gettext_lazy as _, get_language
-from django.utils.timezone import now
+from django.utils.translation import gettext_noop, gettext_lazy as _
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -18,18 +16,17 @@ from django.core.files import File
 import tagging
 import re
 import copy
-import shutil
 
-import sys, os
+import os
 import json
-from collections import OrderedDict, Counter
+from collections import OrderedDict
 from datetime import datetime, date
 
-from signbank.settings.base import FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, DEFAULT_KEYWORDS_LANGUAGE, \
-    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, STATIC_URL, DATASET_EAF_DIRECTORY
+from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
+    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 
-import signbank.settings
+
 # -*- coding: utf-8 -*-
 
 def get_default_language_id():
@@ -1390,7 +1387,10 @@ class Gloss(models.Model):
                 other_media_paths.append(other_media_filename)
         return ", ".join(other_media_paths)
 
-    def get_fields_dict(self, fieldnames):
+    def get_fields_dict(self, fieldnames, language_code='en'):
+
+        from django.utils import translation
+        translation.activate(language_code)
 
         # TO DO include other gloss relations in the fieldnames (e.g., simultaneous morphology, below)
         # a way to determine w/o hard-coding if a fieldname is for a related model
@@ -1948,7 +1948,7 @@ class Gloss(models.Model):
 
         minimal_pairs_fields = settings.MINIMAL_PAIRS_FIELDS
 
-        from django.db.models import When, Case, BooleanField, IntegerField
+        from django.db.models import When, Case, IntegerField
 
         zipped_tuples = zip(minimal_pairs_fields, focus_gloss_values_tuple)
 
@@ -2981,8 +2981,7 @@ class Dataset(models.Model):
         all_users = User.objects.all().order_by('first_name')
 
         users_who_can_view_dataset = []
-        import guardian
-        from guardian.shortcuts import get_objects_for_user, get_users_with_perms
+        from guardian.shortcuts import get_users_with_perms
         users_who_can_access_me = get_users_with_perms(self, attach_perms=True, with_superusers=False,
                                                        with_group_users=False)
         for user in all_users:
@@ -2997,8 +2996,7 @@ class Dataset(models.Model):
         all_users = User.objects.all().order_by('first_name')
 
         users_who_can_change_dataset = []
-        import guardian
-        from guardian.shortcuts import get_objects_for_user, get_users_with_perms
+        from guardian.shortcuts import get_users_with_perms
         users_who_can_access_me = get_users_with_perms(self, attach_perms=True, with_superusers=False,
                                                        with_group_users=False)
         for user in all_users:
@@ -3094,10 +3092,58 @@ class Dataset(models.Model):
         return frequency_lists_phonology_fields
 
 
+class SignbankToken(models.Model):
+    """
+    Overrides the Token model to use the
+    non-built-in user model
+    """
+    signbank_token = models.CharField(max_length=16, blank=True, verbose_name=_("Token"), null=True)
+    signbank_user = models.ForeignKey(User, verbose_name=_("Signbank User"), on_delete=models.CASCADE)
+    signbank_dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
+                                         help_text=_("API Token to change Dataset"), null=True)
+    created = models.DateTimeField(_("Created"), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Token")
+        verbose_name_plural = _("Tokens")
+
+
+class Affiliation(models.Model):
+    name = models.CharField(max_length=35)
+    acronym = models.CharField(max_length=10, blank=True, help_text="Abbreviation for the affiliation")
+    field_color = ColorField(default='64cf00')
+
+    def __str__(self):
+        return self.name
+
+
+class AffiliatedUser(models.Model):
+
+    affiliation = models.ForeignKey(Affiliation, verbose_name=_("Affiliation"), on_delete=models.CASCADE)
+    user = models.ForeignKey(User, verbose_name=_("User"),
+                             related_name='user_is_affiliated_with', on_delete=models.CASCADE)
+
+    def __str__(self):
+        affiliated_user = self.user.first_name + ': ' + self.affiliation.name
+        return affiliated_user
+
+
+class AffiliatedGloss(models.Model):
+
+    affiliation = models.ForeignKey(Affiliation, verbose_name=_("Affiliation"), on_delete=models.CASCADE)
+    gloss = models.ForeignKey(Gloss, verbose_name=_("Gloss"),
+                              related_name='affiliation_corpus_contains', on_delete=models.CASCADE)
+
+    def __str__(self):
+        affiliated_gloss = str(self.gloss.id) + ': ' + self.affiliation.name
+        return affiliated_gloss
+
+
 class UserProfile(models.Model):
     # This field is required.
     user = models.OneToOneField(User, related_name="user_profile_user", on_delete=models.CASCADE)
-
+    api_token = models.ForeignKey("SignbankToken", related_name='authentication_token',
+                                  verbose_name=_("API Token"), on_delete=models.CASCADE, null=True)
     # Other fields here
     last_used_language = models.CharField(max_length=20, default=settings.LANGUAGE_CODE)
     expiry_date = models.DateField(null=True, blank=True)
@@ -3146,7 +3192,6 @@ class DerivationHistoryTranslation(models.Model):
 
     class Meta:
         unique_together = (("derivHist", "language", "name"),)
-
 
 
 class AnnotationIdglossTranslation(models.Model):
@@ -3213,6 +3258,10 @@ class LemmaIdgloss(models.Model):
             else:
                 translations.append("{}".format(translation.text))
         return ", ".join(translations)
+
+    def num_gloss(self):
+        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk).count()
+        return glosses_with_this_lemma
 
 
 class LemmaIdglossTranslation(models.Model):

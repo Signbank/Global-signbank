@@ -1,6 +1,7 @@
 
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
+from django.core.paginator import Paginator
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django.db.models import F, ExpressionWrapper, IntegerField, Count
 from django.db.models import OuterRef, Subquery
@@ -916,6 +917,7 @@ class GlossDetailView(DetailView):
         context['query_parameters_values_mapping'] = query_parameters_values_mapping
 
         context['tagform'] = TagUpdateForm()
+        context['affiliationform'] = AffiliationUpdateForm()
         context['videoform'] = VideoUploadForObjectForm()
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
@@ -1298,7 +1300,7 @@ class GlossDetailView(DetailView):
 
     def post(self, request, *args, **kwargs):
         if request.method != "POST" or not request.POST or request.POST.get('use_default_query_parameters') != 'default_parameters':
-            return redirect(reverse('admin_gloss_view'))
+            return redirect(settings.PREFIX_URL + '/dictionary/gloss/' + str(kwargs['pk']))
         # set up gloss details default parameters here
         default_parameters = request.POST.get('default_parameters')
         request.session['query_parameters'] = default_parameters
@@ -1346,6 +1348,11 @@ class GlossDetailView(DetailView):
         new_gloss.creator.add(self.request.user)
         new_gloss.creationDate = DT.datetime.now()
         new_gloss.save()
+        user_affiliations = AffiliatedUser.objects.filter(user=self.request.user)
+        if user_affiliations.count() > 0:
+            for ua in user_affiliations:
+                new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
+                                                                                 gloss=new_gloss)
         annotationidglosstranslations = gl.annotationidglosstranslation_set.all()
         for annotation in annotationidglosstranslations:
             new_annotation_text = annotation.text+'-duplicate'
@@ -5765,7 +5772,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
 class LemmaListView(ListView):
     model = LemmaIdgloss
     template_name = 'dictionary/admin_lemma_list.html'
-    paginate_by = 50
+    paginate_by = 100
     show_all = False
     search_type = 'lemma'
     search_form = LemmaSearchForm()
@@ -5783,12 +5790,12 @@ class LemmaListView(ListView):
 
         get = self.request.GET
 
+        page_number = self.request.GET.get("page", 1)
+
         # this view accommodates both Show All Lemmas and Lemma Search
         # the show_all argument is True for Show All Lemmas
         # if it is missing, a Lemma Search is being done and starts with no results
         self.show_all = self.kwargs.get('show_all', False)
-
-        queryset = super(LemmaListView, self).get_queryset()
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -5800,7 +5807,7 @@ class LemmaListView(ListView):
             qs = LemmaIdgloss.objects.none()
             return qs
 
-        qs = queryset.filter(dataset__in=selected_datasets)
+        qs = LemmaIdgloss.objects.filter(dataset__in=selected_datasets).order_by('id')
 
         if 'show_all_lemmas' in get and get['show_all_lemmas']:
             self.show_all = True
@@ -5824,18 +5831,9 @@ class LemmaListView(ListView):
                 language = Language.objects.get(language_code_2char=language_code_2char)
                 qs = qs.filter(lemmaidglosstranslation__text__icontains=get_value,
                                lemmaidglosstranslation__language=language)
-        return qs
-
-    def get_annotated_queryset(self, **kwargs):
-        # this method adds a gloss count column to the results for display
-        get = self.request.GET
-
-        qs = self.get_queryset()
 
         if len(get) == 0:
-            results = qs.annotate(num_gloss=Count('gloss'))
-            num_gloss_zero_matches = results.filter(num_gloss=0).count()
-            return results, num_gloss_zero_matches
+            return qs
 
         only_show_no_glosses = False
         only_show_has_glosses = False
@@ -5849,14 +5847,10 @@ class LemmaListView(ListView):
         results = qs.annotate(num_gloss=Count('gloss'))
         if only_show_no_glosses and not only_show_has_glosses:
             results = results.filter(num_gloss=0)
-            num_gloss_zero_matches = results.count()
         elif only_show_has_glosses and not only_show_no_glosses:
             results = results.filter(num_gloss__gt=0)
-            num_gloss_zero_matches = 0
-        else:
-            num_gloss_zero_matches = results.filter(num_gloss=0).count()
 
-        return results, num_gloss_zero_matches
+        return results
 
     def get_context_data(self, **kwargs):
         context = super(LemmaListView, self).get_context_data(**kwargs)
@@ -5876,26 +5870,28 @@ class LemmaListView(ListView):
         context['populate_fields'] = json.dumps(populate_fields)
         context['populate_fields_keys'] = json.dumps(populate_keys)
 
-        context['page_number'] = context['page_obj'].number
+        context['paginate_by'] = self.paginate_by
 
-        context['paginate_by'] = self.request.GET.get('paginate_by', self.paginate_by)
-
-        (results, num_gloss_zero_matches) = self.get_annotated_queryset()
-
-        # this is set to avoid showing page numbers for non-existent pages after annotation filtering
+        results = self.get_queryset()
         context['is_paginated'] = results.count() > self.paginate_by
 
-        context['search_results'] = results
+        page_number = self.request.GET.get("page", 1)
+
+        paginator = Paginator(results, self.paginate_by)
+        context['page_obj'] = paginator.get_page(page_number)
+
+        context['page_number'] = page_number
+
+        lemmas_zero_glosses = [lem for lem in results if lem.num_gloss == 0]
+        num_gloss_zero_matches = len(lemmas_zero_glosses)
         context['num_gloss_zero_matches'] = num_gloss_zero_matches
         context['lemma_count'] = LemmaIdgloss.objects.filter(dataset__in=selected_datasets).count()
 
-        context['search_matches'] = context['search_results'].count()
+        context['search_matches'] = results.count()
 
         context['searchform'] = self.search_form
         context['search_type'] = 'lemma'
         context['show_all'] = self.show_all
-
-        list_of_objects = self.object_list
 
         # to accommodate putting lemma's in the scroll bar in the LemmaUpdateView (aka LemmaDetailView),
         # look at available translations, choose the Interface language if it is a Dataset language
@@ -5918,7 +5914,7 @@ class LemmaListView(ListView):
             # so the sorting of the scroll bar matches the default sorting of the results in Lemma List View
             lang_attr_name = default_language_code
 
-        items = construct_scrollbar(list_of_objects, self.search_type, lang_attr_name)
+        items = construct_scrollbar(results, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
         return context
@@ -5940,7 +5936,7 @@ class LemmaListView(ListView):
         header = csv_header_row_lemmalist(dataset_languages)
         csv_rows = [header]
 
-        (queryset, num_gloss_zero_matches) = self.get_annotated_queryset()
+        queryset = self.get_queryset()
         for lemma in queryset:
             safe_row = csv_lemma_to_row(lemma, dataset_languages)
             csv_rows.append(safe_row)
@@ -5974,12 +5970,11 @@ class LemmaListView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
-        (queryset, num_gloss_zero_matches) = self.get_annotated_queryset()
+        queryset = self.get_queryset()
 
         # check permissions, if fails, do nothing and show error message
         for lemma in queryset:
             if lemma.num_gloss == 0:
-                # the get_annotated_queryset which in turn calls get_queryset has already filtered on lemma's in the selected dataset
                 dataset_of_requested_lemma = lemma.dataset
                 if dataset_of_requested_lemma not in datasets_user_can_change:
                     messages.add_message(request, messages.WARNING,

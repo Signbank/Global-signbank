@@ -183,7 +183,7 @@ def get_context_data_for_gloss_search_form(request, listview, search_form, kwarg
 
         context['morpheme_idgloss'] = get_morpheme_idgloss(query_parameters)
         context['default_dataset_lang'] = context['dataset_languages'].first().language_code_2char \
-            if context['dataset_languages'] else LANGUAGE_CODE
+            if context['dataset_languages'] else settings.LANGUAGE_CODE
         context['add_gloss_form'] = GlossCreateForm(request.GET, languages=context['dataset_languages'],
                                                     user=request.user, last_used_dataset=context['last_used_dataset'])
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix

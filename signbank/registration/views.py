@@ -14,7 +14,7 @@ from django.middleware.csrf import get_token
 from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
 from signbank.registration.models import RegistrationProfile
 from django.contrib.auth.models import User
-from signbank.dictionary.models import Dataset, UserProfile, SearchHistory
+from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser
 from django.contrib import messages
 from django.template.loader import render_to_string
 
@@ -331,10 +331,9 @@ def user_profile(request):
 
     from datetime import date
     from signbank.tools import get_selected_datasets_for_user
-    from guardian.shortcuts import get_objects_for_user
+    from guardian.shortcuts import get_objects_for_user, get_user_perms
 
-    user = request.user
-    user_object = User.objects.get(username=user)
+    user_object = User.objects.get(username=request.user)
     user_profile = UserProfile.objects.get(user=user_object)
     expiry = getattr(user_profile, 'expiry_date')
     today = date.today()
@@ -342,16 +341,28 @@ def user_profile(request):
         delta = expiry - today
     else:
         delta = None
-    selected_datasets = get_selected_datasets_for_user(user)
-    view_permit_datasets = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
-                                                Dataset, accept_global_perms=True, any_perm=True)
-    change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
-    user_has_queries = SearchHistory.objects.filter(user=user).count()
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    view_permit_datasets = []
+    for dataset in Dataset.objects.all():
+        permissions_for_dataset = get_user_perms(request.user, dataset)
+        if 'view_dataset' in permissions_for_dataset or 'can_view_dataset' in permissions_for_dataset:
+            view_permit_datasets.append(dataset)
+    change_permit_datasets = []
+    for dataset_user_can_view in view_permit_datasets:
+        if 'change_dataset' in get_user_perms(request.user, dataset_user_can_view):
+            change_permit_datasets.append(dataset_user_can_view)
+    user_has_queries = SearchHistory.objects.filter(user=request.user).count()
+    user_can_change_glosses = len(change_permit_datasets) > 0
+    possible_affiliations = [aff for aff in Affiliation.objects.all()]
+    user_affiliation = [au for au in AffiliatedUser.objects.filter(user=request.user)]
+    return render(request, 'user_profile.html', {'selected_datasets': selected_datasets,
+                                                 'view_permit_datasets': view_permit_datasets,
+                                                 'change_permit_datasets': change_permit_datasets,
+                                                 'user_can_change_glosses': user_can_change_glosses,
+                                                 'user_has_queries': user_has_queries,
+                                                 'possible_affiliations': possible_affiliations,
+                                                 'user_affiliation': user_affiliation,
+                                                 'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                                                 'expiry': expiry,
+                                                 'delta': delta})
 
-    return render (request, 'user_profile.html', {'selected_datasets': selected_datasets,
-                                                  'view_permit_datasets': view_permit_datasets,
-                                                  'change_permit_datasets': change_permit_datasets,
-                                                  'user_has_queries': user_has_queries,
-                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                                                  'expiry': expiry,
-                                                  'delta': delta})

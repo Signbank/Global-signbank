@@ -148,6 +148,12 @@ def add_gloss(request):
 
         gloss.save()
         gloss.creator.add(request.user)
+        user_affiliations = AffiliatedUser.objects.filter(user=request.user)
+        if user_affiliations.count() > 0:
+            for ua in user_affiliations:
+                new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
+                                                                                 gloss=gloss)
+
     except ValidationError as ve:
         return show_error(request, ve.message, form, dataset_languages)
 
@@ -204,7 +210,7 @@ def update_examplesentence(request, examplesentenceid):
         # Check if input was not empty and if both sentences already existed together
         if len(vals) == 0 or vals == examplesentence.get_examplestc_translations_dict_without():
             messages.add_message(request, messages.INFO, _('This example sentence was not changed.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
         
         # Update the examplesentence with examplesentencetranslations
         for dataset_language in dataset_languages:
@@ -232,7 +238,7 @@ def update_examplesentence(request, examplesentenceid):
                                      time=datetime.now(tz=get_current_timezone()))
             revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
 
 
 def create_examplesentence(request, senseid):
@@ -265,7 +271,7 @@ def create_examplesentence(request, senseid):
     # Check if input was not empty and if both sentences already existed together
     if len(vals) == 0:
         messages.add_message(request, messages.ERROR, _('No input sentence given.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
     
     with atomic():
         stype = FieldChoice.objects.filter(field='SentenceType').get(machine_value = request.POST['sentenceType'])
@@ -287,7 +293,7 @@ def create_examplesentence(request, senseid):
                                      time=datetime.now(tz=get_current_timezone()))
             revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
 
 
 def delete_examplesentence(request, senseid):
@@ -319,7 +325,7 @@ def delete_examplesentence(request, senseid):
                                  time=datetime.now(tz=get_current_timezone()))
         revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']}))
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': request.POST['glossid']})+'?edit')
 
 
 def sort_sense(request, glossid, order, direction):
@@ -329,7 +335,7 @@ def sort_sense(request, glossid, order, direction):
     if gloss_senses_matching_order != 1:
         print('sort_sense: multiple or no match for order: ', glossid, str(order))
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
     glosssense = GlossSense.objects.get(gloss=gloss, order=order)
     swaporder = 0
@@ -338,7 +344,7 @@ def sort_sense(request, glossid, order, direction):
     elif direction == "down":
         swaporder = order + 1
     else:
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
     
     try:
         glosssensetoswap = GlossSense.objects.get(gloss=gloss, order=swaporder)
@@ -352,7 +358,7 @@ def sort_sense(request, glossid, order, direction):
         print('sort_sense ', direction.upper(), ': multiple or no match for order: ', glossid, str(swaporder))
         messages.add_message(request, messages.ERROR, _('Could not sort this sense.'))
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
 def sort_examplesentence(request, senseid, glossid, order, direction):
     order = int(order)
@@ -369,7 +375,7 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
     elif direction == "down":
         swaporder = order + 1
     else:
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
     try:
         senseexamplesentencetoswap = SenseExamplesentence.objects.get(sense=sense, order=swaporder)
@@ -381,7 +387,7 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
         print('sort_examplesentence ', direction.upper(), ': multiple or no match for order: ', senseid, str(swaporder))
         messages.add_message(request, messages.ERROR, _('Could not sort this examplesentence.'))
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
 
 def add_sentence_video(request, glossid, examplesentenceid):
@@ -413,7 +419,7 @@ def update_sense(request, senseid):
 
     if not request.user.has_perm('dictionary.change_sense'):
         messages.add_message(request, messages.ERROR, _('Sense Update Not Allowed'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
     # Make a dict of new values
     gloss = Gloss.objects.all().get(id=glossid)
@@ -430,7 +436,7 @@ def update_sense(request, senseid):
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, _('No keywords given for edited sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
     
     # Check if this sense changed at all
     sense = Sense.objects.get(id=senseid)
@@ -442,16 +448,16 @@ def update_sense(request, senseid):
 
     if sensetranslation_dict == vals:
         messages.add_message(request, messages.ERROR, _('Sense did not change.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
     gloss_senses = GlossSense.objects.filter(gloss_id=gloss.id, sense=sense)
 
     if not gloss_senses.count():
         messages.add_message(request, messages.ERROR, _('GlossSense not found for gloss.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
     if gloss_senses.count() > 1:
         messages.add_message(request, messages.ERROR, _('GlossSense duplicate found for gloss.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
     # Check if sense already exists in this gloss
     for existing_sense in gloss.senses.all():
@@ -459,7 +465,7 @@ def update_sense(request, senseid):
             continue
         if vals == existing_sense.get_sense_translations_dict_without_list():
             messages.add_message(request, messages.ERROR, _('This sense was already in this gloss.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
     # Update sensetranslations
     this_sense_order = gloss_senses.first().order
@@ -558,7 +564,7 @@ def update_sense(request, senseid):
     revision.save()
 
     messages.add_message(request, messages.INFO, _('Given sense was updated.'))
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?edit')
 
 
 def create_sense(request, glossid):
@@ -569,7 +575,7 @@ def create_sense(request, glossid):
 
     if not request.user.has_perm('dictionary.add_sense'):
         messages.add_message(request, messages.ERROR, _('Sense Creation Not Allowed'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
     # Make a dict of new values
     gloss = Gloss.objects.get(id=glossid)
@@ -589,13 +595,13 @@ def create_sense(request, glossid):
     # Check if input given is empty
     if vals == {}:
         messages.add_message(request, messages.ERROR, _('No keywords given for new sense.'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
     # Check if sense already exists in this gloss
     for existing_sense in gloss.senses.all():
         if vals == existing_sense.get_sense_translations_dict_without_list():
             messages.add_message(request, messages.ERROR, _('This sense was already in this gloss.'))
-            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
     # Make a new sense object
     sense = Sense.objects.create()
@@ -638,7 +644,7 @@ def create_sense(request, glossid):
                              time=datetime.now(tz=get_current_timezone()))
     revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
 
 def delete_sense(request, glossid):
@@ -649,7 +655,7 @@ def delete_sense(request, glossid):
 
     if not request.user.has_perm('dictionary.delete_sense'):
         messages.add_message(request, messages.ERROR, _('Sense Deletion Not Allowed'))
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
     
     sense = Sense.objects.get(id=request.POST['senseid'])
     gloss = Gloss.objects.get(id=glossid)
@@ -696,7 +702,7 @@ def delete_sense(request, glossid):
                              time=datetime.now(tz=get_current_timezone()))
     revision.save()
 
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
 
 def update_gloss(request, glossid):
@@ -3432,4 +3438,56 @@ def toggle_namedentity(request, glossid, namedentity):
 
     result = mapping_toggle_namedentity(request, glossid, namedentity)
 
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def add_affiliation(request, glossid):
+    """View to add an affiliation to a gloss"""
+    form = AffiliationUpdateForm(request.POST)
+
+    if not form.is_valid():
+        return JsonResponse({})
+
+    thisgloss = get_object_or_404(Gloss, id=glossid)
+    tags_label = 'Affiliation'
+
+    deletetag = request.POST.get('delete', '')
+    affiliation_id = request.POST.get('affiliation', '')
+    if not deletetag or not affiliation_id:
+        # fallback to the requesting page
+        return JsonResponse({})
+
+    try:
+        affiliationid = int(affiliation_id)
+        affiliation = Affiliation.objects.get(id=affiliationid)
+        old_tags_string = affiliation.name
+    except (ValueError, ObjectDoesNotExist, MultipleObjectsReturned):
+        # fallback to the requesting page
+        return JsonResponse({})
+
+    if deletetag == "True":
+        # get the relevant AffiliatedGloss
+        with atomic():
+            aff = get_object_or_404(AffiliatedGloss, gloss__id=thisgloss.id, affiliation=affiliation)
+            aff.delete()
+            new_tags_string = ''
+
+            revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                     gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+            revision.save()
+        # response = HttpResponse('deleted', {'content-type': 'text/plain'})
+        result = {'affiliation': affiliation_id}
+        return JsonResponse(result)
+
+    old_tags_string = ''
+    with atomic():
+        affiliation = Affiliation.objects.get(id=affiliationid)
+        new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=affiliation, gloss=thisgloss)
+        new_tags_string = affiliation.name
+        revision = GlossRevision(old_value=old_tags_string, new_value=new_tags_string, field_name=tags_label,
+                                 gloss=thisgloss, user=request.user, time=datetime.now(tz=get_current_timezone()))
+        revision.save()
+
+    result = {'affiliation': affiliation_id}
     return JsonResponse(result)

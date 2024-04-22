@@ -335,7 +335,8 @@ function toggle_edit(redirect_to_next) {
 
 $.editable.addInputType('positiveinteger', {
     element : function(settings, original) {
-        var input = $('<input type="number" min="0">');
+        $(this).first().first().addClass('preview-number');
+        var input = $('<input type="number" min="1" max="20" style="width:3em;">');
         $(this).append(input);
         return(input);
     }
@@ -347,9 +348,11 @@ function configure_edit() {
     $.fn.editable.defaults['indicator'] = saving_str;
     $.fn.editable.defaults['tooltip'] = 'Click to edit...';
     $.fn.editable.defaults['placeholder'] = '-';
-    $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">OK</button>';
-    $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" type="cancel">Cancel</button>';
+    $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" style="" type="cancel">Cancel</button>';
+    $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" style="" type="submit">OK</button>';
     $.fn.editable.defaults['cssclass'] = 'preview';
+    $.fn.editable.defaults['cancelleft'] = '100px';
+    $.fn.editable.defaults['submitleft'] = '200px';
     $.fn.editable.defaults['width'] = 'auto';
     $.fn.editable.defaults['height'] = 'auto';
     $.fn.editable.defaults['submitdata'] = {'csrfmiddlewaretoken': csrf_token};
@@ -501,6 +504,35 @@ function configure_edit() {
 			 callback : update_view_and_remember_original_value
 		 });
      });
+    // ajax form submission for affiliation addition and deletion
+    $('.affdelete').click(function() {
+        var action = $(this).attr('data-href');
+        var affid = $(this).attr('id');
+        var affelement = $(this).parents('.affli');
+
+        $.ajax({url: action,
+                datatype: "json",
+                data: {'affiliation': affid, 'delete': 'True' },
+                type: 'POST',
+                async: false,
+                callback: update_affiliation_delete
+        });
+        delayed_reload(100);
+    });
+
+    $('#affaddform').click(function(){
+        var action = $(this).attr('data-action');
+        var newaff = $('#affaddform select').val();
+        $.ajax({url: action,
+                datatype: "json",
+                type: 'POST',
+                async: false,
+                data: { 'affiliation': newaff, 'delete': 'False'},
+                callback: function(data) {
+                   $('#affs').replaceWith(data);
+                }
+        });
+    });
 };
 
 function hide_other_forms(focus_field) {
@@ -862,6 +894,17 @@ function update_relation_delete(change_summary)
     $(document.getElementById(search_id)).replaceWith("<tr id='" + search_id + "' class='empty_row' style='display: none;'>" + "</tr>");
   	$(this).html('');
   	$('#relations').addClass('in');
+}
+
+function update_affiliation_delete(data)
+{
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var affiliation_id = data.affiliation;
+    console.log('update affiliation after delete: '+affiliation_id)
+    var gloss_affilication_tag = '#gloss_affiliation_' + affiliation_id;
+    $(gloss_affilication_tag).remove();
 }
 
 function getCookie(name) {

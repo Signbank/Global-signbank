@@ -19,6 +19,7 @@ import signbank.dictionary.adminviews
 import signbank.api_interface
 import signbank.manage_videos
 import signbank.abstract_machine
+import signbank.gloss_update
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -33,6 +34,7 @@ urlpatterns = [
     re_path(r'^update/handshape/(?P<handshapeid>\d+)$', signbank.dictionary.update.update_handshape, name='update_handshape'),
     re_path(r'^update/morpheme/(?P<morphemeid>\d+)$', signbank.dictionary.update.update_morpheme, name='update_morpheme'),
     re_path(r'^update/tag/(?P<glossid>\d+)$', signbank.dictionary.update.add_tag, name='add_tag'),
+    re_path(r'^update/affiliation/(?P<glossid>\d+)$', signbank.dictionary.update.add_affiliation, name='add_affiliation'),
     re_path(r'^update/morphemetag/(?P<morphemeid>\d+)$', signbank.dictionary.update.add_morphemetag, name='add_morphemetag'),
     re_path(r'^update/definition/(?P<glossid>\d+)$', signbank.dictionary.update.add_definition, name='add_definition'),
     re_path(r'^update/relation/$', signbank.dictionary.update.add_relation, name='add_relation'),
@@ -146,6 +148,10 @@ urlpatterns = [
             signbank.abstract_machine.api_create_gloss, name='api_create_gloss'),
     re_path(r'test_abstract_machine/(?P<datasetid>\d+)/$',
             signbank.dictionary.views.test_abstract_machine, name='test_abstract_machine'),
+    re_path(r'api_update_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
+            signbank.gloss_update.api_update_gloss, name='api_update_gloss'),
+    re_path(r'test_am_update_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
+            signbank.dictionary.views.test_am_update_gloss, name='test_am_update_gloss'),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),

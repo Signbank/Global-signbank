@@ -32,7 +32,7 @@ from django.contrib.auth.models import Group, User
 from signbank.zip_interface import *
 
 
-def api_fields(dataset, advanced=False):
+def api_fields(dataset, language_code='en', advanced=False):
 
     api_fields_2023 = []
     if not dataset:
@@ -49,20 +49,20 @@ def api_fields(dataset, advanced=False):
         api_fields_2023.append(language_field)
 
     if not advanced:
-        api_fields_2023.append("Handedness")
-        api_fields_2023.append("Strong Hand")
-        api_fields_2023.append("Weak Hand")
-        api_fields_2023.append("Location")
-        api_fields_2023.append("Semantic Field")
-        api_fields_2023.append("Word Class")
-        api_fields_2023.append("Named Entity")
-        api_fields_2023.append("Link")
-        api_fields_2023.append("Video")
+        api_fields_2023.append(_("Handedness"))
+        api_fields_2023.append(_("Strong Hand"))
+        api_fields_2023.append(_("Weak Hand"))
+        api_fields_2023.append(_("Location"))
+        api_fields_2023.append(_("Semantic Field"))
+        api_fields_2023.append(_("Word Class"))
+        api_fields_2023.append(_("Named Entity"))
+        api_fields_2023.append(_("Link"))
+        api_fields_2023.append(_("Video"))
     else:
-        api_fields_2023.append("Link")
-        api_fields_2023.append("Video")
+        api_fields_2023.append(_("Link"))
+        api_fields_2023.append(_("Video"))
 
-        activate(LANGUAGES[0][0])
+        activate(language_code)
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
@@ -78,6 +78,10 @@ def api_fields(dataset, advanced=False):
 
 
 def get_fields_data_json(request, datasetid):
+
+    from signbank.tools import get_interface_language_and_default_language_codes
+    (interface_language, interface_language_code,
+     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -95,9 +99,9 @@ def get_fields_data_json(request, datasetid):
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
     if request.user.has_perm('dictionary.change_gloss'):
-        api_fields_2023 = api_fields(dataset, advanced=True)
+        api_fields_2023 = api_fields(dataset, interface_language_code, advanced=True)
     else:
-        api_fields_2023 = api_fields(dataset, advanced=False)
+        api_fields_2023 = api_fields(dataset, interface_language_code, advanced=False)
 
     result = {'fields': api_fields_2023}
 
@@ -105,6 +109,10 @@ def get_fields_data_json(request, datasetid):
 
 
 def get_gloss_data_json(request, datasetid, glossid):
+
+    from signbank.tools import get_interface_language_and_default_language_codes
+    (interface_language, interface_language_code,
+     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -137,12 +145,12 @@ def get_gloss_data_json(request, datasetid, glossid):
         return JsonResponse({})
 
     if request.user.has_perm('dictionary.change_gloss'):
-        api_fields_2023 = api_fields(dataset, advanced=True)
+        api_fields_2023 = api_fields(dataset, interface_language_code, advanced=True)
     else:
-        api_fields_2023 = api_fields(dataset, advanced=False)
+        api_fields_2023 = api_fields(dataset, interface_language_code, advanced=False)
 
     gloss_data = dict()
-    gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023)
+    gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023, interface_language_code)
 
     return JsonResponse(gloss_data)
 

@@ -20,10 +20,20 @@ from datetime import datetime
 
 from signbank.dictionary.models import *
 
+
 if sys.argv[0] == 'mod_wsgi':
     from signbank.dictionary.models import *
 else:
     from signbank.dictionary.models import Gloss
+
+
+def get_two_letter_dir(idgloss):
+    foldername = idgloss[:2]
+
+    if len(foldername) == 1:
+        foldername += '-'
+
+    return foldername
 
 
 class Video(models.Model):
@@ -213,7 +223,7 @@ def get_video_file_path(instance, filename, version=0):
         dataset_dir = instance.gloss.lemma.dataset.acronym
     except KeyError:
         dataset_dir = ""
-    two_letter_dir = signbank.tools.get_two_letter_dir(idgloss)
+    two_letter_dir = get_two_letter_dir(idgloss)
     filename = idgloss + '-' + str(instance.gloss.id) + ext + (version * ".bak")
 
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)

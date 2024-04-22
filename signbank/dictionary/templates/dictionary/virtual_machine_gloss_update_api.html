@@ -1,0 +1,112 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank API: Update Gloss{% endblocktrans %}
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var url = '{{ PREFIX_URL }}';
+    var language_code = '{{LANGUAGE_CODE}}';
+    var datasetid = '{{dataset.id}}';
+    var glossid = '{{gloss.id}}';
+    var csrf_token = '{{csrf_token}}';
+    var gloss_fields = {{gloss_fields|safe}};
+</script>
+
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+
+<script type="text/javascript">
+function show_update_results(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var errorsElt = $('#errors');
+    var glossidElt = $('#glossid');
+    var statusElt = $('#status');
+    var errors = data.errors;
+    var updatestatus = data.updatestatus;
+    var glossid = data.glossid;
+    var glossCell = "ERRORS <ul>";
+    for (var err in errors) {
+        glossCell = glossCell + "<li>"+err+": "+errors[err]+"</li>";
+    }
+    glossCell = glossCell + "</ul>";
+    errorsElt.html(glossCell);
+    if (updatestatus) {
+        statusCell = "<span>STATUS "+updatestatus+"</span>";
+        statusElt.html(statusCell);
+    }
+    if (glossid) {
+        glossCell = "<span>GLOSS ID "+glossid+"</span>";
+        glossidElt.html(glossCell);
+    }
+}
+function update_gloss() {
+     var update = { };
+     for (var field in gloss_fields) {
+        var field_lookup = '#field_input_'+field;
+        var field_key = $(field_lookup).attr("name");
+        var field_value = $(field_lookup).val();
+        if (field_value == '') {
+            continue;
+        }
+        update[field_key] = field_value;
+     }
+     $.ajax({
+        url : url + "/dictionary/api_update_gloss/" + datasetid + '/' + glossid + '/',
+        type: 'POST',
+        data: update,
+        datatype: "json",
+        async: false,
+        success : show_update_results
+     });
+}
+
+</script>
+
+{% endblock %}
+
+{% block content %}
+<div>
+    <div>
+    <h3>{% trans "Gloss Fields" %}</h3>
+     <div>
+         <table class='table' style='width: 1200px;'>
+             {% for field, field_verbose in gloss_fields.items %}
+             <tr>
+                 <th id="field_label_{{field}}">
+                     {{field_verbose}}
+                 </th>
+                 <td id="field_value_{{field}}">
+                     <input name='{{field_verbose}}' id="field_input_{{field}}"
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             {% endfor %}
+
+         </table>
+
+     <input class='btn btn-primary' type='submit'
+            onclick="update_gloss();"
+            value='{% trans "Update Gloss" %}'>
+
+     <br><br>
+     </div>
+    </div>
+<div>
+<h3>{% trans "Updated Gloss" %}</h3>
+ <p id="glossid"></p>
+ <p id="errors"></p>
+ <p id="status"></p>
+</div>
+</div>
+{% endblock %}

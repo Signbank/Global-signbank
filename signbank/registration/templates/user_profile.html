@@ -74,6 +74,27 @@
     </tr>
     </table>
     {% endif %}
+    <table class="table">
+        <tr>
+        <th style="width:200px;">{% trans "Affiliation" %}</th>
+        <td>{% for aff in user_affiliation %}{{aff.affiliation.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+    </table>
+    {% if user_can_change_glosses %}
+    <table class="table">
+    <tr>
+    <th style="width:200px;">{% trans "Signbank API Tokens" %}</th>
+    </tr>
+    {% for ds in change_permit_datasets %}
+    <th>{{ds.acronym}}</th>
+    <tr>
+        <td>
+            {{user.user_profile.api_token}}
+        </td>
+    </tr>
+    {% endfor %}
+    </table>
+    {% endif %}
     {% if user_has_queries %}
     <table class="table">
     <th>{% trans "Recently Saved Queries" %}</th>
