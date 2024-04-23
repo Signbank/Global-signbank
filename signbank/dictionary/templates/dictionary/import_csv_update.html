@@ -31,6 +31,7 @@
 {% endblock %}
 
 {% block extrahead %}
+<link rel="stylesheet" href="{{STATIC_URL}}css/bordered-table-dark-mode.css">
 <style>
 .panel-heading:hover {
     background-color: #D2D2D2;
@@ -39,6 +40,7 @@
 {% endblock %}
 
 {% block content %}
+<div>
 <h3>{% trans "Import CSV Update Existing Glosses" %}</h3>
 
 {% if stage == 0 %}
@@ -48,7 +50,7 @@
     <div>
     <form action="" method="post" enctype="multipart/form-data" role="form">
         {% csrf_token %}
-        <div class="form-group">
+        <div class="form-group form-group-light">
             <div class="row">
                 <div class="col-xs-offset-2 col-xs-10">
                     <h4>{% trans "Input File" %}</h4>
@@ -56,7 +58,8 @@
             </div>
             <div class="row">
                 <div class="col-xs-offset-2 col-sm-7">
-                    <input type="file" required="" name="file" class="filestyle" data-icon="false"
+                    <input type="file" required="" name="file"
+                           class="form-control form-control-light" data-icon="false"
                            accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv, application/vnd.ms-excel"
                            data-buttonText='{% trans "Browse&hellip;"%}' data-buttonBefore="true">
                 </div>
@@ -66,8 +69,8 @@
             </div>
             <br>
             <div class="row" id="senses_settings">
-                <div class="panel panel-default col-xs-offset-2 col-xs-8">
-                    <div class='panel-heading' data-toggle='collapse' data-target='#senses_column_settings'>
+                <div class="panel panel-default panel-light col-xs-offset-2 col-xs-8">
+                    <div class='panel-heading panel-light' data-toggle='collapse' data-target='#senses_column_settings'>
                         <div class='panel-title'>{% trans "Senses Column" %}
                         </div>
                     </div>
@@ -100,8 +103,8 @@
             </div>
             <br>
             <div class="row" id="notes_settings">
-                <div class="panel panel-default col-xs-offset-2 col-xs-8">
-                    <div class='panel-heading' data-toggle='collapse' data-target='#notes_column_settings'>
+                <div class="panel panel-default panel-light col-xs-offset-2 col-xs-8">
+                    <div class='panel-heading panel-light' data-toggle='collapse' data-target='#notes_column_settings'>
                         <div class='panel-title'>{% trans "Notes Column" %}
                         </div>
                     </div>
@@ -133,8 +136,8 @@
             </div>
             <br>
             <div class="row" id="semfield_settings">
-                <div class="panel panel-default col-xs-offset-2 col-xs-8">
-                    <div class='panel-heading' data-toggle='collapse' data-target='#semfield_column_settings'>
+                <div class="panel panel-default panel-light col-xs-offset-2 col-xs-8">
+                    <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semfield_column_settings'>
                         <div class='panel-title'>{% trans "Semantic Field Column" %}
                         </div>
                     </div>
@@ -166,8 +169,8 @@
             </div>
             <br>
             <div class="row" id="tags_settings">
-                <div class="panel panel-default col-xs-offset-2 col-xs-8">
-                    <div class='panel-heading' data-toggle='collapse' data-target='#tags_column_settings'>
+                <div class="panel panel-default panel-light col-xs-offset-2 col-xs-8">
+                    <div class='panel-heading panel-light' data-toggle='collapse' data-target='#tags_column_settings'>
                         <div class='panel-title'>{% trans "Tags Column" %}
                         </div>
                     </div>
@@ -197,7 +200,7 @@
         {% for dataset in selected_datasets %}
         {% trans "For Dataset " %}{{dataset.acronym}}:
         <div style="overflow-x:auto;">
-        <table class="table table-bordered center" style="width:80%;margin-left:50px;">
+        <table class="table table-bordered table-frequency table-frequency-light" style="width:80%;margin-left:50px;">
             <thead>
             <tr>
                 <th style="width:150px;">Signbank ID</th>
@@ -293,7 +296,7 @@
             {% if changes %}
             <div>{% blocktrans %}The following changes were detected:{% endblocktrans %}</div>
         <br>
-        <table class="table table-bordered">
+        <table class="table table-bordered table-bordered-light">
             <tr>
                 <th style="width:10em; text-align:left;">{% trans "Dataset" %}</th>
                 <th style="width:25em; text-align:left;">{% trans "Annotation ID Gloss" %} ({% trans "Signbank ID" %})</th>
@@ -353,5 +356,5 @@
     {% endif %}
 
 {% endif %}
-
+</div>
 {% endblock %}

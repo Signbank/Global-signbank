@@ -14,6 +14,7 @@
     <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 <link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
+<link rel="stylesheet" href="{{STATIC_URL}}css/bordered-table-dark-mode.css">
 <script type='text/javascript'>
 var field_ids = {{all_field_labels|safe}};
 var field_ds = {{dataset_ids|safe}};
@@ -194,67 +195,6 @@ function sort_frequencies(e) {
 }
 
 </script>
-<style>
-.table-frequency-light > thead > tr > th {
-    border: 1px solid black !important;
-}
-.table-frequency-light > tbody > tr {
-    border: 1px solid black !important;
-    border-bottom: 1px solid black !important;
-}
-.table-frequency-light > tbody > tr > td {
-    border: 1px solid black !important;
-    border-bottom: 1px solid black !important;
-}
-.table-frequency-dark > thead > tr > th {
-    border: 1px solid white !important;
-}
-.table-frequency-dark > tbody > tr {
-    border: 1px solid white !important;
-    border-bottom: 1px solid white !important;
-}
-.table-frequency-dark > tbody > tr > td {
-    border: 1px solid white !important;
-    border-bottom: 1px solid white !important;
-}
-
-table {
-    margin: 0px 0px 0px 0px important!;
-}
-.frequency-table-light {
-    border: 1px solid black !important;
-    border-top: 1px solid black !important;
-    border-bottom: 1px solid black !important;
-}
-.frequency-cell-light {
-    border: 1px solid black !important;
-    border-top: 1px solid black !important;
-    border-bottom: 1px solid black !important;
-}
-.frequency-table-dark {
-    border: 1px solid white !important;
-    border-top: 1px solid white !important;
-    border-bottom: 1px solid white !important;
-}
-.frequency-cell-dark {
-    border: 1px solid white !important;
-    border-top: 1px solid white !important;
-    border-bottom: 1px solid white !important;
-}
-.table-bordered {
-    margin-top: 20px;
-    border: 1px solid black !important;
-}
-.table-bordered > thead > tr {
-    border-top: 1px solid black !important;
-    border-bottom: 1px solid black !important;
-}
-.table-bordered > tbody > tr {
-    border-top: 1px solid black !important;
-    border-bottom: 1px solid black !important;
-    border: 1px solid black !important;
-}
-</style>
 
 <script type='text/javascript'>
     navbarHeight = Math.round($('#signbank-bar').outerHeight());

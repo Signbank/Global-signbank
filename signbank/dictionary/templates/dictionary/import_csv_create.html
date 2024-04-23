@@ -31,6 +31,9 @@
    </script>
 {% endblock %}
 
+{% block extrahead %}
+<link rel="stylesheet" href="{{STATIC_URL}}css/bordered-table-dark-mode.css">
+{% endblock %}
 
 {% block content %}
 <h3>{% trans "Import CSV Create New Glosses" %}</h3>
@@ -42,12 +45,13 @@
     <div>
     <form id='upload_csv' action="" method="post" enctype="multipart/form-data" role="form">
         {% csrf_token %}
-        <div class="form-group">
+        <div class="form-group form-group-light">
             <div class="row">
                 <div class="col-sm-1">
                 </div>
-                <div class="col-sm-10">
-                    <input type="file" required="" name="file" class="filestyle" data-icon="false"
+                <div class="col-sm-7">
+                    <input type="file" required="" name="file"
+                           class="form-control form-control-light" data-icon="false"
                            accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, text/csv, application/vnd.ms-excel"
                            data-buttonText='{% trans "Browse&hellip;"%}' data-buttonBefore="true">
                 </div>
@@ -59,14 +63,12 @@
     </form>
     </div>
     <br>
-    <div>
-
-
+    <div style="overflow-x:auto;">
         <p>{% trans "To create new glosses, the CSV file must include the columns:" %}</p>
         <br>
         {% for dataset in selected_datasets %}
         {% trans "For Dataset " %}{{dataset.acronym}}:
-        <table class="table table-bordered center" style="width:80%;margin-left:50px;">
+        <table class="table table-bordered table-frequency table-frequency-light center" style="width:80%;margin-left:50px;">
             <thead>
             <tr>
                 <th style="width:150px;">Dataset</th>
@@ -90,6 +92,7 @@
             </tr>
             </tbody>
         </table>
+        <br><br>
         <form id="generate_template" action='{{PREFIX_URL}}/dictionary/export_csv_template/'
               method="get">
         <button class='btn btn-primary' type='submit'
