@@ -60,6 +60,15 @@ def gloss_update_fields_check(value_dict, language_code):
             errors[field] = _("Field update not allowed")
     return errors
 
+def remove_duplicates_preserve_order(translation_list):
+    unique_list = []
+    seen = set()
+    for item in translation_list:
+        if item not in seen:
+            unique_list.append(item)
+            seen.add(item)
+    return unique_list
+
 def convert_string_to_dict_of_list_of_lists(input_string):
     """
     Convert a string to a dictionary of lists of lists.
@@ -137,18 +146,21 @@ def update_senses(gloss, new_value):
                     # there should only be one per language
                     sensetranslation = SenseTranslation.objects.create(language=dataset_language)
                     sense.senseTranslations.add(sensetranslation)
-                for inx, kw in enumerate(new_sense, 1):
+                new_sense_translations = remove_duplicates_preserve_order(new_sense)
+                for inx, kw in enumerate(new_sense_translations, 1):
                     # this is a new sense so it has no translations yet
                     # the combination with gloss, language, orderIndex does not exist yet
                     # the index is the order the keyword was entered by the user
                     if not kw:
                         continue
                     keyword = Keyword.objects.get_or_create(text=kw)[0]
+                    
                     translation = Translation(translation=keyword,
                                                 language=dataset_language,
                                                 gloss=gloss,
                                                 orderIndex=new_sense_i,
                                                 index=inx)
+                    print(translation.translation, translation.language, translation.gloss, translation.orderIndex, translation.index)
                     translation.save()
                     sensetranslation.translations.add(translation)
                 sensetranslation.save()
