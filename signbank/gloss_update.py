@@ -154,13 +154,11 @@ def update_senses(gloss, new_value):
                     if not kw:
                         continue
                     keyword = Keyword.objects.get_or_create(text=kw)[0]
-                    
                     translation = Translation(translation=keyword,
                                                 language=dataset_language,
                                                 gloss=gloss,
                                                 orderIndex=new_sense_i,
                                                 index=inx)
-                    print(translation.translation, translation.language, translation.gloss, translation.orderIndex, translation.index)
                     translation.save()
                     sensetranslation.translations.add(translation)
                 sensetranslation.save()
