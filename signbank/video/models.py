@@ -249,10 +249,6 @@ def validate_file_extension(value):
     if value.file.content_type not in ['video/mp4', 'video/quicktime']:
         raise ValidationError(u'Error message')
     
-def validate_eaf_file_extension(value):
-    if value.file.content_type != 'eaf': #???
-        raise ValidationError(u'Error message')
-
 
 # VIDEO PATH FOR AN EXAMPLESENTENCE #
 #
@@ -511,8 +507,7 @@ class AnnotatedVideo(models.Model):
     annotatedsentence = models.OneToOneField(AnnotatedSentence, on_delete=models.CASCADE)
     videofile = models.FileField("video file", upload_to=get_annotated_video_file_path, storage=storage,
                                  validators=[validate_file_extension])
-    eaffile = models.FileField("eaf file", upload_to=get_annotated_video_file_path, storage=storage,
-                                 validators=[validate_eaf_file_extension])
+    eaffile = models.FileField("eaf file", upload_to=get_annotated_video_file_path, storage=storage)
 
     # video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
