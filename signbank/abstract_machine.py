@@ -20,7 +20,7 @@ def convert_string_to_list_of_lists(input_string):
     try:
         list_of_lists = ast.literal_eval(input_string)
     except (ValueError, SyntaxError):
-        return [], 'Sense input if not in the expected format. \nTry: "[[\'sense 1 keyword1\', \'sense 1 keyword2\'],[\'sense 2 keyword1\', \'sense 2 keyword2\'],[\'sense 3 keyword1\', \'sense 3 keyword2\']]"'
+        return [], "Sense input if not in the expected format. \nTry: '[[\"sense 1 keyword1\", \"sense 1 keyword2\"],[\"sense 2 keyword1\", \"sense 2 keyword2\"],[\"sense 3 keyword1\", \"sense 3 keyword2\"]]'"
         
     # Verify if the result is a list of lists
     if isinstance(list_of_lists, list):
