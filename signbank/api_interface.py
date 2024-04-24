@@ -33,7 +33,7 @@ from signbank.zip_interface import *
 
 
 def api_fields(dataset, language_code='en', advanced=False):
-
+    activate(language_code)
     api_fields_2023 = []
     if not dataset:
         dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
@@ -61,8 +61,8 @@ def api_fields(dataset, language_code='en', advanced=False):
     else:
         api_fields_2023.append(_("Link"))
         api_fields_2023.append(_("Video"))
+        api_fields_2023.append(_("Tags"))
 
-        activate(language_code)
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
@@ -152,7 +152,7 @@ def get_gloss_data_json(request, datasetid, glossid):
     gloss_data = dict()
     gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023, interface_language_code)
 
-    return JsonResponse(gloss_data)
+    return JsonResponse(gloss_data, safe=False)
 
 
 def check_gloss_existence_for_uploaded_video(dataset):

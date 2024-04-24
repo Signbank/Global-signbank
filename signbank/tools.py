@@ -1598,7 +1598,8 @@ def get_gloss_data(since_timestamp=0, language_code='en', dataset=None, inWebSet
     gloss_data = {}
     for gloss in glosses:
         if int(format(gloss.lastUpdated, 'U')) > since_timestamp:
-            gloss_data[str(gloss.pk)] = gloss.get_fields_dict(api_fields_2023, language_code)
+            data = gloss.get_fields_dict(api_fields_2023, language_code)
+            gloss_data[str(gloss.pk)] = data
 
     return gloss_data
 
