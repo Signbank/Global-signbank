@@ -350,6 +350,24 @@ function toggle_dark_mode() {
             $(this).addClass("query-toggles-light");
         }
   });
+  $(".preview").each(function () {
+        if ($(this).hasClass("preview-light")) {
+            $(this).removeClass("preview-light");
+            $(this).addClass("preview-dark");
+        } else if ($(this).hasClass("preview-dark")) {
+            $(this).removeClass("preview-dark");
+            $(this).addClass("preview-light");
+        }
+  });
+  $(".color-form").each(function () {
+        if ($(this).hasClass("color-form-light")) {
+            $(this).removeClass("color-form-light");
+            $(this).addClass("color-form-dark");
+        } else if ($(this).hasClass("color-form-dark")) {
+            $(this).removeClass("color-form-dark");
+            $(this).addClass("color-form-light");
+        }
+  });
 }
 
 function set_dark_mode(){

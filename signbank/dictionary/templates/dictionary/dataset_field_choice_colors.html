@@ -11,18 +11,23 @@
     height: 40;
     padding: 0 0 0 0 !important;
 }
-
+.preview-dark {
+    background-color: var(--well-dark) !important;
+    color: white;
+    height: 40;
+    padding: 0 0 0 0 !important;
+}
 select option {
-    background-color: '#FFFFFF';
-    -webkit-appearance: none;
-    -moz-appearance: none;
+    background-color: inherit;  //'#FFFFFF';
+    ::-webkit-appearance: none;
+    ::-moz-appearance: none;
 }
 
 .hasTooltip:hover .isTooltip {
     display: block;
-    background-color: white;
+    background-color: inherit;
     border-radius: 5px;
-    color: black;
+    color: inherit;
     box-shadow: 1px 1px 3px gray;
     position: absolute;
     padding: 5px;
@@ -32,22 +37,22 @@ select option {
     min-width: 300px;
     font-size: 12px;
     z-index: 9999;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+    ::-webkit-appearance: none;
+    ::-moz-appearance: none;
 }
 
 .bootstrap-select.btn-group .dropdown-menu li a:hover {
     color: blue !important;
-    background-color: #ffffff !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+    background-color: inherit !important;  //#ffffff !important;
+    ::-webkit-appearance: none;
+    ::-moz-appearance: none;
 }
 
 .btn-default:hover, .btn-default:focus, .btn-default:active, .btn-default.active, .open .dropdown-toggle.btn-default {
 
 background-color: #2F3E48;
--webkit-appearance: none;
--moz-appearance: none;
+::-webkit-appearance: none;
+::-moz-appearance: none;
 color:#FFF;
 
 border-color: #31347B;
@@ -57,10 +62,14 @@ border-color: #31347B;
 input[type="color"] {
     width: 4rem;
     height: 4rem;
-    padding: .4rem;
-    background-color: #ffffff !important;
-    border: solid 1px #ddd !important;
+    padding: 0;
+    background-color: inherit !important;  //#ffffff !important;
+    border: solid 1px inherit !important;
     border-radius: 0;
+    box-shadow: none;
+    outline: none;
+    ::-webkit-appearance: none;
+    ::-moz-appearance: none;
 }
 </style>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
@@ -74,6 +83,7 @@ input[type="color"] {
 
 .custom-select option {
     ::-moz-appearance: none;
+    ::-webkit-appearance: none;
     appearance: none;
 }
 
@@ -98,22 +108,22 @@ input[type="color"] {
  // width: 0;
  // height: 0;
   border: 6px solid transparent;
-  border-color: Black transparent transparent transparent;
+  border-color: inherit transparent transparent transparent;
 }
 
 /* Point the arrow upwards when the select box is open (active): */
 .select-selected.select-arrow-active:after {
-  border-color: transparent transparent Black transparent;
+  border-color: transparent transparent inherit transparent;
   top: 7px;
 }
 
 /* style the items (options), including the selected item: */
 .select-items div,.select-selected {
-  color: Black; //#ffffff;
+  color: inherit; //#ffffff;
   padding: 8px 16px;
   border: 1px solid transparent;
 //  border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
-  border-color: Black Black Black Black;
+  border-color: inherit inherit inherit inherit;
   cursor: pointer;
 }
 
@@ -162,12 +172,13 @@ input[type="color"] {
 .color-field-choices table
 {
     border-spacing: 0px;
+    background-color: inherit;
 }
 
 .color-field-choices table th
 {
     position: sticky;
-    background-color: white;
+    background-color: inherit;
     text-align: left;
     padding: 0 0 0 0 !important;
     height: 40px;
@@ -179,7 +190,7 @@ input[type="color"] {
 {
     position: static; //sticky;
     top: 0px;
-    background-color: white;
+    background-color: inherit;
     padding: 0 0 0 0 !important;
     height: 40px;
     line-height: 20px;
@@ -204,11 +215,30 @@ input[type="color"] {
 .table table-extra-condensed > thead > tr > th,
 .table table-extra-condensed > tbody > tr > td {
      padding: 0 0 0 0 !important;
+     background-color: inherit;
 }
 
 #color-field-choices select {
-    background-color: white;
-    color: black;
+    background-color: inherit;
+    color: inherit;
+}
+.color-form-dark {
+    color: white !important;
+    background-color: var(--dark-mode-very-dark) !important;
+}
+.color-form-dark > input[type="submit"] {
+    background-color: #337AB7 !important;
+    color: inherit;
+    border: none;
+    border-radius: 4px;
+    box-shadow: none;
+    ::-webkit-appearance: none;
+}
+.color-form-dark > select {
+    background-color: var(--button-default) !important;
+}
+.color-form-dark > select > option {
+    background-color: var(--button-default) !important;
 }
 </style>
 {% endblock %}
@@ -231,8 +261,8 @@ input[type="color"] {
         <table id="color-field-choices" class='table table-extra-condensed' >
             <thead>
                 <tr class="accordian" >
-                    <th class="preview">{% trans "Field Choice Category" %}</th>
-                    <th class="preview">{% trans "Preview" %}</th>
+                    <th class="preview preview-light">{% trans "Field Choice Category" %}</th>
+                    <th class="preview preview-light">{% trans "Preview" %}</th>
                     <th style="width:600px;">{% trans "Field Choice" %}</th>
                     <th style="width:200px;">{% trans "Color" %}</th>
                 </tr>
@@ -240,17 +270,20 @@ input[type="color"] {
             <tbody>
             {% for category in field_choices.keys %}
             <tr style="width:1600px;">
-                <td class="preview"><button class="collapse" type="button" data-toggle='collapse'
+                <td class="preview preview-light">
+                    <button class="btn btn-default btn-default-light collapse"
+                            type="button" data-toggle='collapse'
                             data-target=".collapse-{{category}}"
                             data-parent="#accordian" value="{{category}}"
-                            onclick="toggle_preview(this)">{{category}}</button></td>
-                <td class="preview"></td>
+                            onclick="toggle_preview(this)">{{category}}</button>
+                </td>
+                <td class="preview preview-light"></td>
                 <td></td>
                 <td></td>
             </tr>
             <tr class='collapse collapse-{{category}}' >
-                <td class="preview"></td>
-                <td class="preview preview_{{category}} collapse collapse-{{category}}" >
+                <td class="preview preview-light"></td>
+                <td class="preview preview-light preview_{{category}} collapse collapse-{{category}}" >
                         <div class="custom-select" id="{{category}}" data-style="btn btn-color">
                         <select class="color-picker" >
                         {% with static_choice_list_colors|keyvalue:category as choice_display_list_colors %}
@@ -269,7 +302,7 @@ input[type="color"] {
                         </div>
                 </td>
                 <td colspan="2" style="width:600px !important;" >
-                <div class="preview preview_{{category}} collapse collapse-{{category}}" >
+                <div class="preview preview-light preview_{{category}} collapse collapse-{{category}}" >
                 <table class='table table-extra-condensed'>
                 <tbody style="display:block; max-height: 400px; overflow-y:scroll;">
                 {% with field_choices|keyvalue:category as choice_display_list %}
@@ -283,15 +316,15 @@ input[type="color"] {
                     <td style="width:200px;">
 
                         <form id="update_color_{{category}}_{{choice.pk}}"
-                            name="update_color_{{category}}_{{choice.pk}}"
-                            method='post' action="{% url 'dictionary:update_field_choice_color' category choice.pk %}"
-                        >
+                              name="update_color_{{category}}_{{choice.pk}}"
+                              class="color-form color-form-light"
+                              method='post' action="{% url 'dictionary:update_field_choice_color' category choice.pk %}">
                         {% csrf_token %}
 
                         <input name="field_color"
                                type='color' value=#{{choice.field_color}}>
                         <input type='hidden' name='id' value='{{category}}_color_{{choice.pk}}'>
-                        <input type="submit" value="Ok" >
+                        <input type="submit" value="OK" >
                         </form>
                     </td>
                 </tr>
