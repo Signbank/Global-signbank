@@ -6,14 +6,15 @@ from django.utils.encoding import escape_uri_path
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_delete, m2m_changed
-from django.utils.translation import gettext_noop, gettext_lazy as _
+from django.utils.translation import gettext_noop, gettext_lazy as _, gettext
 from django.forms.utils import ValidationError
 from django.forms.models import model_to_dict
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
 from django.core.files import File
-import tagging
+from tagging.models import TaggedItem, Tag
+
 import re
 import copy
 
@@ -1428,12 +1429,6 @@ class Gloss(models.Model):
                     if field_name in fieldnames:
                         fields[field_name] = annotationidglosstranslation.first().text
 
-        # Get the keywords associated with this sign
-        allkwds = ", ".join([x.translation.text for x in self.translation_set.all()])
-        field_name = Translation.__name__ + "s"
-        if field_name in fieldnames and allkwds:
-            fields[field_name] = allkwds
-
         # Get the Senses associated with this sign
         if self.dataset:
             for language in self.dataset.translation_languages.all():
@@ -1443,9 +1438,11 @@ class Gloss(models.Model):
                         sensetranslation = sense.senseTranslations.get(language=language)
                         translations = sensetranslation.translations.all().order_by('index')
                         if translations:
-                            keywords_list = [trans.translation.text for trans in translations if
+                            keywords_list = [str(trans.translation.text) for trans in translations if
                                              trans.translation.text != '']
-                            sensetranslations_for_this_language[sensei] = ', '.join(keywords_list)
+                            if keywords_list:
+                                joined_keywords = ', '.join(keywords_list)
+                                sensetranslations_for_this_language[str(sensei)] = joined_keywords
                 if sensetranslations_for_this_language.keys():
                     field_name = _("Senses") + ": %s" % language.name
                     if field_name in fieldnames:
@@ -1476,13 +1473,26 @@ class Gloss(models.Model):
             if field_verbose_name in fieldnames and field_value not in ['', '-', "None"]:
                 fields[field_verbose_name] = field_value
 
-        if "Link" in fieldnames:
-            fields["Link"] = settings.URL + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
+        link_fieldname = gettext("Link")
+        if link_fieldname in fieldnames:
+            fields[link_fieldname] = str(settings.URL) + settings.PREFIX_URL + '/dictionary/gloss/' + str(self.pk)
 
-        if "Video" in fieldnames:
+        video_fieldname = gettext("Video")
+        if video_fieldname in fieldnames:
             video_path = self.get_video_url()
             if video_path:
-                fields["Video"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
+                fields[video_fieldname] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
+
+        tags_fieldname = gettext("Tags")
+        tags_of_gloss = TaggedItem.objects.filter(object_id=self.id)
+        if tags_fieldname in fieldnames and tags_of_gloss:
+            tag_names_of_gloss = []
+            for t_obj in tags_of_gloss:
+                tag_id = t_obj.tag_id
+                tag_name = Tag.objects.get(id=tag_id)
+                tag_names_of_gloss += [str(tag_name)]
+            tag_names_of_gloss = sorted(tag_names_of_gloss)
+            fields[tags_fieldname] = tag_names_of_gloss
 
         return fields
 
