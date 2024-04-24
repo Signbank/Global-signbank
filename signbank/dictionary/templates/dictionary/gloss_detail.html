@@ -2261,12 +2261,11 @@ option:not(:checked) {
 
                                 <video id="myVideo_{{ forloop.counter }}" controls>
                                     <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile }}" type="video/mp4">
-                                    Your browser does not support the video tag.
                                 </video>                               
                             
                                 <br><br><i>Glosses</i><br>
                                 <div id="glossContainer_{{ forloop.counter }}">
-                                    {% for annotated_gloss in annotated_sentence.annotatedgloss_set.all %}
+                                    {% for annotated_gloss in annotated_sentence.annotated_glosses.all %}
                                         <span data-start="{{ annotated_gloss.get_start }}" data-end="{{ annotated_gloss.get_end }}">
                                             <a href="{{ PREFIX_URL }}/dictionary/gloss/{{ annotated_gloss.gloss.id }}">{{ annotated_gloss.gloss }}</a>
                                         </span>
@@ -2291,7 +2290,7 @@ option:not(:checked) {
                                 <p>
                                     {% if annotated_sentence.has_contexts %}
                                     <i>Sentence context</i><br>
-                                    {% for annotated_sentence_context in annotated_sentence.annotatedsentencecontext_set.all %}
+                                    {% for annotated_sentence_context in annotated_sentence.annotated_sentence_contexts.all %}
                                         {{ annotated_sentence_context.language }}: {{ annotated_sentence_context.text }}{% if not forloop.last %}<br>{% endif %}
                                     {% endfor %}
                                     {% endif %}
@@ -2299,7 +2298,7 @@ option:not(:checked) {
                                 <p>
                                     {% if annotated_sentence.has_translations %}
                                     <i>Sentence translation</i><br>
-                                    {% for annotated_sentence_translation in annotated_sentence.annotatedsentencetranslation_set.all %}
+                                    {% for annotated_sentence_translation in annotated_sentence.annotated_sentence_translations.all %}
                                         {{ annotated_sentence_translation.language }}: {{ annotated_sentence_translation.text }}{% if not forloop.last %}<br>{% endif %}
                                     {% endfor %}
                                     {% endif %}

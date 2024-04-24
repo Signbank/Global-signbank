@@ -3753,7 +3753,7 @@ CATEGORY_MODELS_MAPPING = {
 class AnnotatedGloss(models.Model):
     """An annotated gloss belongs to one annotated sentences"""
     gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
-    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE)
+    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE, related_name='annotated_glosses')
     isRepresentative = models.BooleanField(default=False)
     starttime = models.FloatField()
     endtime = models.FloatField()
@@ -3769,7 +3769,7 @@ class AnnotatedSentenceTranslation(models.Model):
     """An annotated sentence translation belongs to one annotated sentence"""
     
     text = models.TextField()
-    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE)
+    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE, related_name='annotated_sentence_translations')
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
     def __str__(self):
@@ -3779,7 +3779,7 @@ class AnnotatedSentenceContext(models.Model):
     """An annotated sentence context belongs to one annotated sentence"""
     
     text = models.TextField()
-    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE)
+    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE, related_name='annotated_sentence_contexts')
     language = models.ForeignKey("Language", on_delete=models.CASCADE)
 
     def __str__(self):
@@ -3789,23 +3789,23 @@ class AnnotatedSentence(models.Model):
     """An annotated sentence is linked to an annotatedvideo, annotatedgloss, annotatedsentencetranslation(s), and annotatedsentencecontext(s)"""
 
     def get_dataset(self):
-        return self.annotatedgloss_set.first().gloss.lemma.dataset
+        return self.annotated_glosses.first().gloss.lemma.dataset
     
     def has_translations(self):
-        if self.annotatedsentencetranslation_set.count() > 0:
+        if self.annotated_sentence_translations.count() > 0:
             return True
         return False
 
     def has_contexts(self):
-        if self.annotatedsentencecontext_set.count() > 0:
+        if self.annotated_sentence_contexts.count() > 0:
             return True
         return False
 
     def add_annotations(self, annotations, gloss):
+        """Add annotations to the annotated sentence"""
         dataset = gloss.lemma.dataset
 
         arrays = []
-        # Split the string into segments using semicolons
         segments = annotations.split(";")
         for segment in segments:
             values = segment.split(":")
@@ -3825,6 +3825,7 @@ class AnnotatedSentence(models.Model):
                 AnnotatedGloss.objects.create(gloss=annotationIdGlossTranslation.gloss, annotatedsentence=self, isRepresentative=repr, starttime=annotation[2], endtime=annotation[3])
 
     def add_translations(self, translations):
+        """Add translations to the annotated sentence"""
         for language in self.get_dataset().translation_languages.all():
             if language.language_code_3char in translations.keys():
                 text=translations[language.language_code_3char]
@@ -3832,6 +3833,7 @@ class AnnotatedSentence(models.Model):
                     AnnotatedSentenceTranslation.objects.create(text=text, annotatedsentence=self, language=language)
 
     def add_contexts(self, contexts):
+        """Add contexts to the annotated sentence"""
         for language in self.get_dataset().translation_languages.all():
             if language.language_code_3char in contexts.keys():
                 text=contexts[language.language_code_3char]
@@ -3839,11 +3841,12 @@ class AnnotatedSentence(models.Model):
                     AnnotatedSentenceContext.objects.create(text=text, annotatedsentence=self, language=language)
 
     def get_annotatedstc_translations_dict_with(self):
+        """Return a dictionary of translations for this annotated sentence with the language code as key"""
         translations = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
-            annotatedSentenceTranslation = AnnotatedSentenceTranslation.objects.filter(annotatedsentence = self, language = dataset_translation_language)
-            if annotatedSentenceTranslation.count() == 1:
-                translations[str(dataset_translation_language.language_code_3char)] = annotatedSentenceTranslation[0].text
+            annotated_sentence_translation = self.annotated_sentence_translations.filter(annotatedsentence = self, language = dataset_translation_language)
+            if annotated_sentence_translation.count() == 1:
+                translations[str(dataset_translation_language.language_code_3char)] = annotated_sentence_translation[0].text
             else:
                 translations[str(dataset_translation_language.language_code_3char)] = ""
         return translations
@@ -3855,11 +3858,12 @@ class AnnotatedSentence(models.Model):
         return [k+": "+v for k,v in self.get_annotatedstc_translations_dict_without().items()]
 
     def get_annotatedstc_contexts_dict_with(self):
+        """Return a dictionary of contexts for this annotated sentence with the language code as key"""
         contexts = {}
         for dataset_translation_language in self.get_dataset().translation_languages.all():
-            annotatedSentenceContext = AnnotatedSentenceContext.objects.filter(annotatedsentence = self, language = dataset_translation_language)
-            if annotatedSentenceContext.count() == 1:
-                contexts[str(dataset_translation_language.language_code_3char)] = annotatedSentenceContext[0].text
+            annotated_sentence_context = self.annotated_sentence_contexts.filter(language = dataset_translation_language)
+            if annotated_sentence_context.count() == 1:
+                contexts[str(dataset_translation_language.language_code_3char)] = annotated_sentence_context[0].text
             else:
                 contexts[str(dataset_translation_language.language_code_3char)] = ""
         return contexts
@@ -3871,6 +3875,7 @@ class AnnotatedSentence(models.Model):
         return [k+": "+v for k,v in self.get_annotatedstc_contexts_dict_without().items()]
 
     def get_video_path(self):
+        """Return the path to the video for this gloss or an empty string if no video available"""
         try:
             annotatedvideo = self.annotatedvideo
             return str(annotatedvideo.videofile)
@@ -3898,13 +3903,11 @@ class AnnotatedSentence(models.Model):
 
 
     def add_video(self, user, videofile, eaffile):
-        # Preventing circular import
+        """Add a video to the annotated sentence"""
         from signbank.video.models import AnnotatedVideo
 
-        # Create a new AnnotatedVideo object
         if (isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile')\
             and eaffile.content_type == 'application/octet-stream':
-
             annotatedVideo = AnnotatedVideo.objects.create(annotatedsentence=self, videofile=videofile, eaffile=eaffile)
     
         return annotatedVideo

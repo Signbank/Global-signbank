@@ -1855,26 +1855,27 @@ def add_annotated_media(request, glossid):
     return render(request, template, context)
 
 def edit_annotated_sentence(request, glossid, annotatedsentenceid):
+    """View to pass context variables to the annotated sentence edit page"""
     template = 'dictionary/edit_annotated_sentence.html'
     gloss = Gloss.objects.get(id=glossid)
-    annotated_sentences, annotated_contexts = {}, {}
+    annotated_translations, annotated_contexts = {}, {}
     annotated_sentence = None
     if AnnotatedSentence.objects.filter(id=annotatedsentenceid).count() == 1:
         annotated_sentence = AnnotatedSentence.objects.get(id=annotatedsentenceid)
-        annotated_sentences = annotated_sentence.get_annotatedstc_translations_dict_with()
+        annotated_translations = annotated_sentence.get_annotatedstc_translations_dict_with()
         annotated_contexts = annotated_sentence.get_annotatedstc_contexts_dict_with()
 
     context = {
         'gloss': gloss,
         'annotated_sentence': annotated_sentence,
-        'annotated_sentences': annotated_sentences,
+        'annotated_translations': annotated_translations,
         'annotated_contexts': annotated_contexts,
     }
     return render(request, template, context)
 
 
 def save_edit_annotated_sentence(request):
-    """View to edit an annotated sentence from the edit page"""
+    """Save the edits made for an annotated sentence from the edit page"""
     if not request.method == "POST":
         return HttpResponseForbidden("Annotated Sentence Edit method must be POST")
     

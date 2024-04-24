@@ -38,7 +38,7 @@
         <br><br>
         Add translations for the sentence in the following languages:<br>
         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
-            {{dataset_lang.name}}:<input style="width:100%" id="translation_{{dataset_lang.language_code_3char}}" name="translation_{{dataset_lang.language_code_3char}}" value="{% if dataset_lang.language_code_3char in annotated_sentences %}{{ annotated_sentences|get_item:dataset_lang.language_code_3char }}{% endif %}" maxlength="150" type="text"/>
+            {{dataset_lang.name}}:<input style="width:100%" id="translation_{{dataset_lang.language_code_3char}}" name="translation_{{dataset_lang.language_code_3char}}" value="{% if dataset_lang.language_code_3char in annotated_translations %}{{ annotated_translations|get_item:dataset_lang.language_code_3char }}{% endif %}" maxlength="150" type="text"/>
         {% endfor %}
 
         <br><br>

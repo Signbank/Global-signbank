@@ -1187,8 +1187,8 @@ class GlossDetailView(DetailView):
 
         context['sense_to_similar_senses'] = sense_to_similar_senses
 
-        annotated_sentences_1 = AnnotatedSentence.objects.filter(annotatedgloss__gloss=gl, annotatedgloss__isRepresentative=True).distinct().annotate(is_representative=V(1, output_field=IntegerField()))
-        annotated_sentences_2 = AnnotatedSentence.objects.filter(annotatedgloss__gloss=gl, annotatedgloss__isRepresentative=False).distinct().annotate(is_representative=V(0, output_field=IntegerField()))
+        annotated_sentences_1 = AnnotatedSentence.objects.filter(annotated_glosses__gloss=gl, annotated_glosses__isRepresentative=True).distinct().annotate(is_representative=V(1, output_field=IntegerField()))
+        annotated_sentences_2 = AnnotatedSentence.objects.filter(annotated_glosses__gloss=gl, annotated_glosses__isRepresentative=False).distinct().annotate(is_representative=V(0, output_field=IntegerField()))
         annotated_sentences = annotated_sentences_1.union(annotated_sentences_2).order_by('-is_representative')
         annotated_sentences_with_video = []
         for annotated_sentence in annotated_sentences:

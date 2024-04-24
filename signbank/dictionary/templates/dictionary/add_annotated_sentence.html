@@ -8,8 +8,6 @@
 
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/dropstyle.css">
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/recordstyle.css">
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/modalstyle.css">
 {% endblock %}
 
 {% block content %}
@@ -74,7 +72,7 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_files.js"></script>
-<script type="text/javascript" src="{{ STATIC_URL }}js/drag_drop_annotated_files.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/process_annotated_eaf_files.js"></script>
 
 {% endif %}
 {% endblock %}
