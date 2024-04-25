@@ -64,6 +64,8 @@ MIDDLEWARE = (
     'signbank.pages.middleware.PageFallbackMiddleware',
 #    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware'
 )
 
 TEMPLATES = [
@@ -131,7 +133,8 @@ INSTALLED_APPS = (
     'signbank.video',
     'reversion',
     'tagging',
-    'guardian'
+    'guardian',
+    'corsheaders'
     # 'debug_toolbar',
     # 'video_encoding'
 )
