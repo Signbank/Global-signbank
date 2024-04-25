@@ -3125,7 +3125,7 @@ class SignbankToken(models.Model):
 
 def create_signbank_token(sender, instance, created, **kwargs):
     if created:
-        SignbankToken.objects.create(user=instance)
+        SignbankToken.objects.create(signbank_user=instance)
 
 
 post_save.connect(create_signbank_token, sender=User)
