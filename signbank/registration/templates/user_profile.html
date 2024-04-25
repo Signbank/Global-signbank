@@ -3,6 +3,53 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 
+
+{% block extrajs %}
+
+<script type='text/javascript'>
+var url = '{{PREFIX_URL}}';
+var csrf_token = '{{csrf_token}}';
+
+function display_token(data) {
+    console.log(data);
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var new_token = data.new_token;
+    var tokenCell = $("#api_token");
+    tokenCell.html(new_token);
+}
+
+$(document).ready(function() {
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    $.ajaxSetup({
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrf_token);
+            }
+        }
+    });
+    $('.auth_token').click(function(e)
+    {
+         e.preventDefault();
+         var datasetid = $(this).attr("data-dataset");
+         $.ajax({
+            url : url + "/accounts/auth_token/" + datasetid + "/" ,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : display_token
+         });
+    });
+});
+</script>
+{% endblock %}
+
 {% block content %}
 
 <h2>User Profile</h2>
@@ -88,8 +135,20 @@
     {% for ds in change_permit_datasets %}
     <th>{{ds.acronym}}</th>
     <tr>
-        <td>
-            {{user.user_profile.api_token}}
+        <td>{% if not user_has_api_token %}
+            <form name='request_api_token' id='request_api_token' action="{{PREFIX_URL}}/accounts/auth_token/" method='POST'>
+            {% csrf_token %}
+            <input type="hidden" name="username" value="{{user.username}}">
+            <button class='auth_token btn btn-primary' data-dataset="{{ds.id}}"
+                    type='submit'>
+                {% trans "Generate Signbank API Token" %}
+            </button>
+            </form>
+            <br><br>
+            <span id='api_token' name='api_token' style="width:100px;outline:1px;"></span>
+            {% else %}
+            <span>{% trans "A Signbank API Token was created on" %} {{user_api_token}}</span>
+            {% endif %}
         </td>
     </tr>
     {% endfor %}

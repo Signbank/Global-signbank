@@ -12,6 +12,8 @@ from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTE
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from guardian.shortcuts import get_objects_for_user
+from signbank.api_token import generate_auth_token, hash_token
+
 
 def convert_string_to_list_of_lists(input_string):
     """
@@ -121,7 +123,7 @@ def translate_human_readable_value_dict_to_keys(dataset, value_dict):
     return translated_value_dict
 
 
-def check_value_dict_create_gloss(request, dataset, value_dict):
+def check_value_dict_create_gloss(dataset, value_dict):
     errors = []
     dataset_acronym = value_dict['dataset']
 
@@ -203,7 +205,8 @@ def check_value_dict_create_gloss(request, dataset, value_dict):
 
     return errors
 
-def create_gloss(request, dataset, value_dict):
+
+def create_gloss(user, dataset, value_dict):
     # assumes all guardian permissions have already been checked
     # the request argument is used to add the creator to the new gloss
     dataset_languages = dataset.translation_languages.all()
@@ -223,9 +226,9 @@ def create_gloss(request, dataset, value_dict):
             # Save the new gloss before updating it
             new_gloss.save()
             new_gloss.creationDate = DT.datetime.now()
-            new_gloss.creator.add(request.user)
+            new_gloss.creator.add(user)
             new_gloss.save()
-            user_affiliations = AffiliatedUser.objects.filter(user=request.user)
+            user_affiliations = AffiliatedUser.objects.filter(user=user)
             if user_affiliations.count() > 0:
                 for ua in user_affiliations:
                     new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
@@ -278,11 +281,11 @@ def create_gloss(request, dataset, value_dict):
                 sense_new_value = str(new_sense)
                 sense_label = 'Sense'
                 revision = GlossRevision(old_value="",
-                                        new_value=sense_new_value,
-                                        field_name=sense_label,
-                                        gloss=new_gloss,
-                                        user=request.user,
-                                        time=datetime.now(tz=get_current_timezone()))
+                                         new_value=sense_new_value,
+                                         field_name=sense_label,
+                                         gloss=new_gloss,
+                                         user=user,
+                                         time=datetime.now(tz=get_current_timezone()))
                 revision.save()
 
             results['glossid'] = str(new_gloss.pk)
@@ -312,7 +315,7 @@ def csv_create_gloss(request, datasetid):
         return JsonResponse({})
 
     value_dict = get_value_dict(request, dataset)
-    errors = check_value_dict_create_gloss(request, dataset, value_dict)
+    errors = check_value_dict_create_gloss(dataset, value_dict)
     if errors:
         results = dict()
         results['errors'] = errors
@@ -320,7 +323,7 @@ def csv_create_gloss(request, datasetid):
         results['glossid'] = ""
         return JsonResponse(results)
 
-    creation_results = create_gloss(request, dataset, value_dict)
+    creation_results = create_gloss(request.user, dataset, value_dict)
 
     results = dict()
     for key in creation_results:
@@ -330,25 +333,44 @@ def csv_create_gloss(request, datasetid):
 
 @csrf_exempt
 def api_create_gloss(request, datasetid):
+
     results = dict()
+    auth_token_request = request.headers.get('Authorization', '')
+    # this is commented out to allow to check via the test template rather than an api
+    # if not auth_token_request:
+    #     results['errors'] = ["Missing Authorization in request."]
+    #     return JsonResponse(results)
+    if auth_token_request:
+        auth_token = auth_token_request.split('Bearer ')[-1]
+        hashed_token = hash_token(auth_token)
+        signbank_token = SignbankToken.objects.filter(signbank_token=hashed_token).first()
+        if not signbank_token:
+            results['errors'] = ["Your Authorization Token does not match."]
+            return JsonResponse(results)
+        user = signbank_token.signbank_user
+    elif request.user:
+        user = request.user
+    else:
+        results['errors'] = ["User not found in request."]
+        return JsonResponse(results)
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
-        results['errors'] = "Dataset ID does not exist."
+        results['errors'] = ["Dataset ID does not exist."]
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        results['errors'] = "No change permission for dataset."
+        results['errors'] = ["No change permission for dataset."]
         return JsonResponse(results)
 
-    if not request.user.has_perm('dictionary.change_gloss'):
-        results['errors'] = "No change gloss permission."
+    if not user.has_perm('dictionary.change_gloss'):
+        results['errors'] = ["No change gloss permission."]
         return JsonResponse(results)
 
     human_readable_value_dict = get_human_readable_value_dict(request, dataset)
     value_dict = translate_human_readable_value_dict_to_keys(dataset, human_readable_value_dict)
-    errors = check_value_dict_create_gloss(request, dataset, value_dict)
+    errors = check_value_dict_create_gloss(dataset, value_dict)
     if errors:
         results = dict()
         results['errors'] = errors
@@ -356,6 +378,6 @@ def api_create_gloss(request, datasetid):
         results['glossid'] = ""
         return JsonResponse(results)
 
-    creation_results = create_gloss(request, dataset, value_dict)
+    creation_results = create_gloss(user, dataset, value_dict)
 
     return JsonResponse(creation_results)

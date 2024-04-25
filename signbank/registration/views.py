@@ -5,7 +5,7 @@ Views which allow users to create and activate accounts.
 
 
 from django.conf import settings
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.template import RequestContext
 from django.utils.translation import gettext_lazy as _
@@ -14,7 +14,7 @@ from django.middleware.csrf import get_token
 from signbank.registration.forms import RegistrationForm, EmailAuthenticationForm
 from signbank.registration.models import RegistrationProfile
 from django.contrib.auth.models import User
-from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser
+from signbank.dictionary.models import Dataset, UserProfile, SearchHistory, Affiliation, AffiliatedUser, SignbankToken
 from django.contrib import messages
 from django.template.loader import render_to_string
 
@@ -355,6 +355,9 @@ def user_profile(request):
     user_can_change_glosses = len(change_permit_datasets) > 0
     possible_affiliations = [aff for aff in Affiliation.objects.all()]
     user_affiliation = [au for au in AffiliatedUser.objects.filter(user=request.user)]
+    user_has_api_token = user_profile.api_token is not None
+    user_api_token = str(user_profile.api_token) if user_has_api_token else ""
+
     return render(request, 'user_profile.html', {'selected_datasets': selected_datasets,
                                                  'view_permit_datasets': view_permit_datasets,
                                                  'change_permit_datasets': change_permit_datasets,
@@ -362,7 +365,34 @@ def user_profile(request):
                                                  'user_has_queries': user_has_queries,
                                                  'possible_affiliations': possible_affiliations,
                                                  'user_affiliation': user_affiliation,
+                                                 'user_has_api_token': user_has_api_token,
+                                                 'user_api_token': user_api_token,
                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
                                                  'expiry': expiry,
                                                  'delta': delta})
 
+
+def auth_token(request, datasetid):
+
+    import datetime as DT
+    from django.utils.timezone import get_current_timezone
+
+    user_object = User.objects.get(username=request.user)
+    dataset = Dataset.objects.get(id=datasetid)
+    user_profile = UserProfile.objects.get(user=user_object)
+    user_auth_token = user_profile.api_token
+    today = DT.datetime.now(tz=get_current_timezone())
+    from signbank.api_token import generate_auth_token, hash_token
+    if user_auth_token and user_auth_token.created < today:
+        # not expired
+        return JsonResponse({})
+    else:
+        # generate a token and create a SignbankToken for it
+        new_token = generate_auth_token()
+        hashed_token = hash_token(new_token)
+        signbankToken = SignbankToken.objects.create(signbank_user=user_object,
+                                                     signbank_dataset=dataset,
+                                                     signbank_token=hashed_token)
+        user_profile.api_token = signbankToken
+        user_profile.save()
+        return JsonResponse({'new_token': new_token})

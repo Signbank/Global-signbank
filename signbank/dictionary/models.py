@@ -3117,6 +3117,19 @@ class SignbankToken(models.Model):
         verbose_name = _("Token")
         verbose_name_plural = _("Tokens")
 
+    def __str__(self):
+        # only show creation date when used as a string
+        creation_date = self.created.strftime("%Y-%m-%d")
+        return creation_date
+
+
+def create_signbank_token(sender, instance, created, **kwargs):
+    if created:
+        SignbankToken.objects.create(user=instance)
+
+
+post_save.connect(create_signbank_token, sender=User)
+
 
 class Affiliation(models.Model):
     name = models.CharField(max_length=35)

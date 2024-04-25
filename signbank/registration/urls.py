@@ -14,7 +14,7 @@ from django.contrib.auth import views as auth_views
 from django.urls import re_path, path, include
 
 # local imports
-from signbank.registration.views import activate, register, mylogin, users_without_dataset, user_profile
+from signbank.registration.views import activate, register, mylogin, users_without_dataset, user_profile, auth_token
 from signbank.registration.forms import RegistrationForm
 
 #It's weird that I have to set the correct success url by hand, but it doesn't work any other way
@@ -72,5 +72,6 @@ urlpatterns = [
 
                         re_path(r'^users_without_dataset/$',users_without_dataset, name='users_without_dataset'),
 
-                        re_path(r'^user_profile/$',user_profile, name='user_profile')
+                        re_path(r'^user_profile/$',user_profile, name='user_profile'),
+                        re_path(r'^auth_token/(?P<datasetid>\d+)/$', auth_token, name='auth_token')
                        ]
