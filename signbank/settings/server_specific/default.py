@@ -306,3 +306,5 @@ DEBUG_SENSES = False
 GUARDED_GLOSS_DELETE = False
 
 GUARDED_MORPHEME_DELETE = True
+
+FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler',]
