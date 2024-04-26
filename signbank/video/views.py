@@ -100,9 +100,10 @@ def process_eaffile(request):
     import magic
     from pympi.Elan import Eaf
     glosses, sentences = [], []
-    gloss_dict, sentence_dict = {}, {}
+    sentence_dict = {}
 
     if request.method == 'POST':
+        check_gloss_label = request.POST.get('check_gloss_label', '')
         uploaded_file = request.FILES['eaffile']
         file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
         if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
@@ -134,15 +135,14 @@ def process_eaffile(request):
             for annotation in eaf.tiers['Sentences'][0].values():
                 sentences.append(annotation[2])
         
-        for gloss_i, gloss in enumerate(glosses):
-            gloss_dict[gloss_i] = gloss
         for sentence_i, sentence in enumerate(sentences):
             sentence_dict[sentence_i] = sentence
 
-    glosses_json = json.dumps(gloss_dict)
+    # Create the annotations table
+    annotations_table_html = render(request, 'annotations_table.html', {'glosses_list': glosses, 'check_gloss_label': check_gloss_label}).content.decode('utf-8')
     sentences_json = json.dumps(sentence_dict)
 
-    return JsonResponse({'glosses': glosses_json, 'sentences': sentences_json})
+    return JsonResponse({'annotations_table_html': annotations_table_html, 'sentences': sentences_json})
 
 
 @login_required

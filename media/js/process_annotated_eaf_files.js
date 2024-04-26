@@ -1,8 +1,10 @@
 $(document).ready(function () {
+
     $('#eaffile').change(function () {
         var formData = new FormData();
-        formData.append('eaffile', $('#eaffile')[0].files[0]);
-        formData.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val()); // Include the CSRF token
+        formData.append('eaffile', $('#eaffile')[0].files[0]); // Add the file input to the FormData object
+        formData.append('check_gloss_label', $('#check_gloss_label').val()); // Add the gloss label to check in checkbox
+        formData.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val()); // Include the CSRF token in the FormData object
 
         $.ajax({
             url: '/video/process_eaffile/',
@@ -21,24 +23,7 @@ $(document).ready(function () {
                 }
 
                 // Iterate over the JSON data and create rows in the table dynamically
-                var glossesData = JSON.parse(response.glosses);
-                var tableHtml = '<table>';
-                tableHtml += '<thead><tr><th style="width:200px">Gloss</th><th style="width:200px">Representative</th><th style="width:200px">starttime</th><th style="width:200px">endtime</th></tr></thead>';
-                tableHtml += '<tbody>';
-                for (var key in glossesData) {
-                    if (glossesData.hasOwnProperty(key)) {
-                        var item = glossesData[key];
-
-                        if (item[0] == $('#gloss_label').val()){
-                            tableHtml += '<tr><td>' + item[0] + '</td><td><input type="checkbox" checked></td><td>'+item[1]+'</td><td>'+item[2]+'</td></tr>';
-                        }
-                        else{
-                            tableHtml += '<tr><td>' + item[0] + '</td><td><input type="checkbox"></td><td>'+item[1]+'</td><td>'+item[2]+'</td></tr>';
-                        }
-                    }
-                }                
-                tableHtml += '</tbody></table>';
-                $('#feedback').html(tableHtml);
+                $('#feedback').html(response.annotations_table_html);
 
                 // Add the sentence data to the input field where name = translation_nld
                 var sentenceData = JSON.parse(response.sentences);
