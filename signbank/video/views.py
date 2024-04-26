@@ -30,22 +30,22 @@ def addvideo(request):
             redirect_url = form.cleaned_data['redirect']
             recorded = form.cleaned_data['recorded']
             # Get the object, either a gloss or an example sentences
-            if object_type == 's':
+            if object_type == 'examplesentence_video':
                 sentence = ExampleSentence.objects.filter(id=object_id).first()
                 if not sentence:
                     redirect(redirect_url)
                 sentence.add_video(request.user, vfile, recorded)
-            elif object_type == 'g':
+            elif object_type == 'gloss_video':
                 gloss = Gloss.objects.filter(id=object_id).first()
                 if not gloss:
                     redirect(redirect_url)
                 gloss.add_video(request.user, vfile, recorded)
-            elif object_type == 'm':
+            elif object_type == 'morpheme_video':
                 morpheme = Morpheme.objects.filter(id=object_id).first()
                 if not morpheme:
                     redirect(redirect_url)
                 morpheme.add_video(request.user, vfile, recorded)
-            elif object_type == 'a': 
+            elif object_type == 'annotated_video': 
                 # make an annotated sentence
                 eaf_file = form.cleaned_data['eaffile']
                 annotatedSentence = AnnotatedSentence.objects.create()

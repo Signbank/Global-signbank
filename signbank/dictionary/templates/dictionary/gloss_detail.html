@@ -732,7 +732,7 @@ option:not(:checked) {
               <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
                 {% csrf_token %}
                 <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
-                <input type='hidden' name='object_type' value='g'>
+                <input type='hidden' name='object_type' value='gloss_video'>
                 <table>
                   <tr>
                     <td>{{videoform.videofile}}</td>
@@ -794,7 +794,7 @@ option:not(:checked) {
                                 <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
                                     {% csrf_token %}
                                     <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
-                                    <input type='hidden' name='object_type' value='g'>
+                                    <input type='hidden' name='object_type' value='gloss_video'>
                                     <input type='hidden' name='object_id' value='{{gloss.pk}}'>
                                     <input type='file' name="videofile" id="videofile">
                                     <input type='hidden' name='recorded' value='True'>
