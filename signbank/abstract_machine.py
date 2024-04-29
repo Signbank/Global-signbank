@@ -359,14 +359,14 @@ def api_create_gloss(request, datasetid):
         results['errors'] = ["Dataset ID does not exist."]
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
-    if dataset not in change_permit_datasets:
-        results['errors'] = ["No change permission for dataset."]
-        return JsonResponse(results)
-
-    if not user.has_perm('dictionary.change_gloss'):
-        results['errors'] = ["No change gloss permission."]
-        return JsonResponse(results)
+    # change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
+    # if dataset not in change_permit_datasets:
+    #     results['errors'] = ["No change permission for dataset."]
+    #     return JsonResponse(results)
+    #
+    # if not user.has_perm('dictionary.change_gloss'):
+    #     results['errors'] = ["No change gloss permission."]
+    #     return JsonResponse(results)
 
     human_readable_value_dict = get_human_readable_value_dict(request, dataset)
     value_dict = translate_human_readable_value_dict_to_keys(dataset, human_readable_value_dict)
