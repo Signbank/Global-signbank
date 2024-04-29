@@ -1141,6 +1141,20 @@ def csv_focusgloss_to_minimalpairs(focusgloss, dataset, language_code, csv_rows)
     return csv_rows
 
 
+def normalize_field_choice(field_choice):
+    # add spaces around > and +
+
+    split_gt = field_choice.split('>')
+    trimmed_gt = [elt.strip() for elt in split_gt]
+    joined_gt = ' > '.join(trimmed_gt)
+
+    split_plus = joined_gt.split('+')
+    trimmed_plus = [elt.strip() for elt in split_plus]
+    joined_plus = ' + '.join(trimmed_plus)
+
+    return joined_plus
+
+
 def choice_fields_choices():
     fields_choices = dict()
 

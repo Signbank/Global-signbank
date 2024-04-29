@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from guardian.shortcuts import get_objects_for_user
 from signbank.tools import get_interface_language_and_default_language_codes
+from signbank.csv_interface import normalize_field_choice
 
 import ast
 
@@ -229,7 +230,11 @@ def gloss_update_typecheck(changes, language_code):
             try:
                 fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=new_value)
             except (ObjectDoesNotExist, MultipleObjectsReturned):
-                errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+                normalised_choice = normalize_field_choice(new_value)
+                try:
+                    fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=normalised_choice)
+                except (ObjectDoesNotExist, MultipleObjectsReturned):
+                    errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
         elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
             try:
                 handshape = Handshape.objects.get(name__iexact=new_value)
@@ -257,7 +262,8 @@ def gloss_update_do_changes(request, gloss, changes, language_code):
         for field, (original_value, new_value) in changes.items():
             if isinstance(field, FieldChoiceForeignKey):
                 field_choice_category = field.field_choice_category
-                fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=new_value)
+                normalised_choice = normalize_field_choice(new_value)
+                fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=normalised_choice)
                 setattr(gloss, field.name, fieldchoice)
                 changes_done.append((field.name, original_value, new_value))
             elif field.__class__.__name__ == 'BooleanField':
