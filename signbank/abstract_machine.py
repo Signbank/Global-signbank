@@ -105,11 +105,15 @@ def get_value_dict(request, dataset):
 
 
 def get_human_readable_value_dict(request, dataset):
+    if 'headers' in request.POST:
+        post_data = json.loads(request.body)
+    else:
+        post_data = request.POST
     required_fields = required_fields_create_gloss_columns(dataset)
     value_dict = dict()
     for field in required_fields:
-        if field in request.POST.keys():
-            value = request.POST.get(field, '')
+        if field in post_data.keys():
+            value = post_data.get(field, '')
             value_dict[field] = value.strip()
     return value_dict
 
@@ -376,6 +380,10 @@ def api_create_gloss(request, datasetid):
         results['errors'] = ["No change gloss permission."]
         return JsonResponse(results)
 
+    if 'headers' in request.POST:
+        post_data = json.loads(request.body)
+    else:
+        post_data = request.POST
     human_readable_value_dict = get_human_readable_value_dict(request, dataset)
     value_dict = translate_human_readable_value_dict_to_keys(dataset, human_readable_value_dict)
     errors = check_value_dict_create_gloss(dataset, value_dict)
@@ -383,6 +391,7 @@ def api_create_gloss(request, datasetid):
         results = dict()
         results['errors'] = errors
         results['arguments'] = request.POST
+        results['humanreadable'] = post_data
         results['createstatus'] = "Failed"
         results['glossid'] = ""
         return JsonResponse(results)
