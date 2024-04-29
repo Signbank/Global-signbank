@@ -52,8 +52,8 @@ STATICFILES_FINDERS = (
 )
 
 MIDDLEWARE = (
-#    'debug_toolbar.middleware.DebugToolbarMiddleware',
-
+    # CORS
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -62,11 +62,12 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'signbank.pages.middleware.PageFallbackMiddleware',
-#    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware'
 )
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
 TEMPLATES = [
     {
