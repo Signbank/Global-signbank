@@ -877,7 +877,7 @@ class VideoTests(TestCase):
             if test_video_file_exists:
                 response = client.post('/video/upload/', {'object_id': new_gloss.pk,
                                                           'videofile': videofile,
-                                                          'object_type': 'g',
+                                                          'object_type': 'gloss_video',
                                                           'redirect': '{{PREFIX_URL}}/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'},
                                        follow=True)
                 self.assertEqual(response.status_code, 200)
@@ -981,7 +981,7 @@ class VideoTests(TestCase):
             if test_video_file_exists:
                 response = client.post('/video/upload/', {'object_id': new_gloss.pk,
                                                           'videofile': videofile,
-                                                          'object_type': 'g',
+                                                          'object_type': 'gloss_video',
                                                           'redirect': '{{PREFIX_URL}}/dictionary/gloss/'+str(new_gloss.pk)+'/?edit'},
                                        follow=True)
                 self.assertEqual(response.status_code, 200)

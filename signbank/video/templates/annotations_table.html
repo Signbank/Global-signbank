@@ -1,0 +1,20 @@
+<table>
+    <thead>
+        <tr>
+            <th style="width:200px">Gloss</th>
+            <th style="width:200px">Representative</th>
+            <th style="width:200px">Start Time</th>
+            <th style="width:200px">End Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in glosses_list %}
+            <tr>
+                <td>{{ item.0 }}</td>
+                <td><input type="checkbox" {% if item.0 == check_gloss_label %} checked {% endif %}></td>
+                <td>{{ item.1 }}</td>
+                <td>{{ item.2 }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

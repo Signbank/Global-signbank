@@ -8,6 +8,7 @@ BASE_DIR = 'repo/'
 WRITABLE_FOLDER = 'writable/'
 GLOSS_VIDEO_DIRECTORY = 'glossvideo'
 EXAMPLESENTENCE_VIDEO_DIRECTORY = 'sensevideo'
+ANNOTATEDSENTENCE_VIDEO_DIRECTORY = 'annotatedvideo'
 GLOSS_IMAGE_DIRECTORY = 'glossimage'
 FEEDBANK_VIDEO_DIRECTORY = 'comments'
 HANDSHAPE_IMAGE_DIRECTORY = 'handshapeimage'
@@ -305,3 +306,5 @@ DEBUG_SENSES = False
 GUARDED_GLOSS_DELETE = False
 
 GUARDED_MORPHEME_DELETE = True
+
+FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler',]

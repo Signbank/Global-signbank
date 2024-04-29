@@ -36,7 +36,7 @@
             {% csrf_token %}
             <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}'>
             <input type='hidden' name='object_id' value='{{examplesentence.id}}'>
-            <input type='hidden' name='object_type' value='s'>
+            <input type='hidden' name='object_type' value='examplesentence_video'>
             <table id="staffops">
             <tr>
                 <td>{{videoform.videofile}}</td>
@@ -98,7 +98,7 @@
                               {% csrf_token %}
                               <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}'>
                               <input type='hidden' name='object_id' value='{{examplesentence.id}}'>
-                              <input type='hidden' name='object_type' value='s'>
+                              <input type='hidden' name='object_type' value='examplesentence_video'>
                               <input type='file' name='videofile' id='videofile'>
                               <input type='hidden' name='recorded' value='True'>
                               <input class='btn btn-primary' type='submit' id='uploadrecorded' value ='Upload' disabled></input>
