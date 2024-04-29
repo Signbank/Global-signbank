@@ -3758,3 +3758,170 @@ CATEGORY_MODELS_MAPPING = {
     'derivHist': DerivationHistory,
     'Handshape': Handshape
 }
+
+
+class AnnotatedGloss(models.Model):
+    """An annotated gloss belongs to one annotated sentences"""
+    gloss = models.ForeignKey("Gloss", on_delete=models.CASCADE)
+    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE, related_name='annotated_glosses')
+    isRepresentative = models.BooleanField(default=False)
+    starttime = models.FloatField()
+    endtime = models.FloatField()
+
+    def get_start(self):
+        return self.starttime/1000
+    
+    def get_end(self):
+        return self.endtime/1000
+
+
+class AnnotatedSentenceTranslation(models.Model):
+    """An annotated sentence translation belongs to one annotated sentence"""
+    
+    text = models.TextField()
+    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE, related_name='annotated_sentence_translations')
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
+
+class AnnotatedSentenceContext(models.Model):
+    """An annotated sentence context belongs to one annotated sentence"""
+    
+    text = models.TextField()
+    annotatedsentence = models.ForeignKey("AnnotatedSentence", on_delete=models.CASCADE, related_name='annotated_sentence_contexts')
+    language = models.ForeignKey("Language", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
+
+class AnnotatedSentence(models.Model):
+    """An annotated sentence is linked to an annotatedvideo, annotatedgloss, annotatedsentencetranslation(s), and annotatedsentencecontext(s)"""
+
+    def get_dataset(self):
+        return self.annotated_glosses.first().gloss.lemma.dataset
+    
+    def has_translations(self):
+        if self.annotated_sentence_translations.count() > 0:
+            return True
+        return False
+
+    def has_contexts(self):
+        if self.annotated_sentence_contexts.count() > 0:
+            return True
+        return False
+
+    def add_annotations(self, annotations, gloss):
+        """Add annotations to the annotated sentence"""
+        dataset = gloss.lemma.dataset
+
+        arrays = []
+        segments = annotations.split(";")
+        for segment in segments:
+            values = segment.split(":")
+            if len(values) == 4:
+                arrays.append(values)
+
+        for annotation in arrays:
+            gloss_translation = annotation[0]
+            annotationIdGlossTranslation = AnnotationIdglossTranslation.objects.filter(text__exact=gloss_translation, language__in=dataset.translation_languages.all(), gloss__lemma__dataset=dataset).first()
+            if annotationIdGlossTranslation is None:
+                print("No annotation found for: ", gloss_translation)
+                continue
+            else:
+                repr = False
+                if annotation[1] == "1":
+                    repr = True
+                AnnotatedGloss.objects.create(gloss=annotationIdGlossTranslation.gloss, annotatedsentence=self, isRepresentative=repr, starttime=annotation[2], endtime=annotation[3])
+
+    def add_translations(self, translations):
+        """Add translations to the annotated sentence"""
+        for language in self.get_dataset().translation_languages.all():
+            if language.language_code_3char in translations.keys():
+                text=translations[language.language_code_3char]
+                if text != "":
+                    AnnotatedSentenceTranslation.objects.create(text=text, annotatedsentence=self, language=language)
+
+    def add_contexts(self, contexts):
+        """Add contexts to the annotated sentence"""
+        for language in self.get_dataset().translation_languages.all():
+            if language.language_code_3char in contexts.keys():
+                text=contexts[language.language_code_3char]
+                if text != "":
+                    AnnotatedSentenceContext.objects.create(text=text, annotatedsentence=self, language=language)
+
+    def get_annotatedstc_translations_dict_with(self):
+        """Return a dictionary of translations for this annotated sentence with the language code as key"""
+        translations = {}
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
+            annotated_sentence_translation = self.annotated_sentence_translations.filter(annotatedsentence = self, language = dataset_translation_language)
+            if annotated_sentence_translation.count() == 1:
+                translations[str(dataset_translation_language.language_code_3char)] = annotated_sentence_translation[0].text
+            else:
+                translations[str(dataset_translation_language.language_code_3char)] = ""
+        return translations
+
+    def get_annotatedstc_translations_dict_without(self):
+        return {k: v for k, v in self.get_annotatedstc_translations_dict_with().items() if v}
+
+    def get_annotatedstc_translations(self):
+        return [k+": "+v for k,v in self.get_annotatedstc_translations_dict_without().items()]
+
+    def get_annotatedstc_contexts_dict_with(self):
+        """Return a dictionary of contexts for this annotated sentence with the language code as key"""
+        contexts = {}
+        for dataset_translation_language in self.get_dataset().translation_languages.all():
+            annotated_sentence_context = self.annotated_sentence_contexts.filter(language = dataset_translation_language)
+            if annotated_sentence_context.count() == 1:
+                contexts[str(dataset_translation_language.language_code_3char)] = annotated_sentence_context[0].text
+            else:
+                contexts[str(dataset_translation_language.language_code_3char)] = ""
+        return contexts
+
+    def get_annotatedstc_contexts_dict_without(self):
+        return {k: v for k, v in self.get_annotatedstc_contexts_dict_with().items() if v}
+
+    def get_annotatedstc_contexts(self):
+        return [k+": "+v for k,v in self.get_annotatedstc_contexts_dict_without().items()]
+
+    def get_video_path(self):
+        """Return the path to the video for this gloss or an empty string if no video available"""
+        try:
+            annotatedvideo = self.annotatedvideo
+            return str(annotatedvideo.videofile)
+        except ObjectDoesNotExist:
+            return ''
+        except MultipleObjectsReturned:
+            # Just return the first
+            annotatedvideos = self.annotatedvideo.filter(version=0)
+            return str(annotatedvideos[0].videofile)
+
+    def get_video(self):
+        """Return the video object for this gloss or None if no video available"""
+
+        video_path = self.get_video_path()
+        filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
+        if os.path.exists(filepath.encode('utf-8')):
+            return video_path
+        else:
+            return ''
+    
+    def has_video(self):
+        """Test to see if the video for this sign is present"""
+        
+        return self.get_video() not in ['', None]
+
+
+    def add_video(self, user, videofile, eaffile):
+        """Add a video to the annotated sentence"""
+        from signbank.video.models import AnnotatedVideo
+
+        if (isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile')\
+            and eaffile.content_type == 'application/octet-stream':
+            annotatedVideo = AnnotatedVideo.objects.create(annotatedsentence=self, videofile=videofile, eaffile=eaffile)
+    
+        return annotatedVideo
+
+    
+    def __str__(self):
+        return " | ".join(self.get_annotatedstc_translations())
