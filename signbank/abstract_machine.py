@@ -125,7 +125,7 @@ def translate_human_readable_value_dict_to_keys(dataset, value_dict):
 
 def check_value_dict_create_gloss(dataset, value_dict):
     errors = []
-    dataset_acronym = value_dict['dataset']
+    dataset_acronym = value_dict['Dataset']
 
     if not dataset_acronym:
         e1 = 'Dataset is empty.'
