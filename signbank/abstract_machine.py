@@ -128,7 +128,8 @@ def check_value_dict_create_gloss(dataset, value_dict):
     if 'dataset' not in value_dict.keys():
         available_keys = list(value_dict.keys())
         e0 = ', '.join(available_keys)
-        errors.append('Key dataset missing: ' + e0)
+        e00 = dataset.acronym
+        errors.append('Key dataset missing: ' + e0 + ' ' + e00)
         return errors
 
     dataset_acronym = value_dict['dataset']
@@ -381,6 +382,7 @@ def api_create_gloss(request, datasetid):
     if errors:
         results = dict()
         results['errors'] = errors
+        results['arguments'] = request.POST
         results['createstatus'] = "Failed"
         results['glossid'] = ""
         return JsonResponse(results)
