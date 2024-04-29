@@ -381,7 +381,7 @@ def api_create_gloss(request, datasetid):
         return JsonResponse(results)
 
     if 'headers' in request.POST:
-        post_data = json.loads(request.body)
+        post_data = request.body
     else:
         post_data = request.POST
     human_readable_value_dict = get_human_readable_value_dict(request, dataset)
