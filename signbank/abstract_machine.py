@@ -393,6 +393,7 @@ def api_create_gloss(request, datasetid):
         results['errors'] = errors
         results['arguments'] = request.POST
         results['humanreadable'] = post_data
+        results['username'] = user.username
         results['createstatus'] = "Failed"
         results['glossid'] = ""
         return JsonResponse(results)
