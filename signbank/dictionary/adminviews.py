@@ -4575,10 +4575,6 @@ class DatasetFrequencyView(DetailView):
             translated_message = _('You do not have permission to view this corpus.')
             return show_warning(request, translated_message, selected_datasets)
 
-        if dataset not in selected_datasets:
-            translated_message = _('Please select the dataset first to view its corpus.')
-            return show_warning(request, translated_message, selected_datasets)
-
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
 
