@@ -122,6 +122,10 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'django.contrib.staticfiles',
+    'corsheaders',
+    'reversion',
+    'tagging',
+    'guardian',
     'bootstrap3',
     'django_summernote',
     # 'django_select2',
@@ -131,11 +135,7 @@ INSTALLED_APPS = (
     #'signbank.registration',
     'signbank.pages',
     'signbank.attachments',
-    'signbank.video',
-    'reversion',
-    'tagging',
-    'guardian',
-    'corsheaders'
+    'signbank.video'
     # 'debug_toolbar',
     # 'video_encoding'
 )
