@@ -105,10 +105,8 @@ def get_value_dict(request, dataset):
 
 
 def get_human_readable_value_dict(request, dataset):
-    if 'headers' in request.POST:
-        post_data = json.loads(request.body)
-    else:
-        post_data = request.POST
+    post_data = json.loads(request.body.decode('utf-8'))
+
     required_fields = required_fields_create_gloss_columns(dataset)
     value_dict = dict()
     for field in required_fields:
