@@ -104,6 +104,7 @@ def get_value_dict(request, dataset):
     return value_dict
 
 
+@csrf_exempt
 def get_human_readable_value_dict(request, dataset):
     post_data = json.loads(request.body.decode('utf-8'))
 
@@ -214,7 +215,7 @@ def check_value_dict_create_gloss(dataset, value_dict):
 
     return errors
 
-
+@csrf_exempt
 def create_gloss(user, dataset, value_dict):
     # assumes all guardian permissions have already been checked
     # the request argument is used to add the creator to the new gloss
