@@ -37,9 +37,8 @@ $(document).ready(function() {
     $('.auth_token').click(function(e)
     {
          e.preventDefault();
-         var datasetid = $(this).attr("data-dataset");
          $.ajax({
-            url : url + "/accounts/auth_token/" + datasetid + "/" ,
+            url : url + "/accounts/auth_token/" ,
             type: 'POST',
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
@@ -132,26 +131,26 @@ $(document).ready(function() {
     <tr>
     <th style="width:200px;">{% trans "Signbank API Tokens" %}</th>
     </tr>
-    {% for ds in change_permit_datasets %}
-    <th>{{ds.acronym}}</th>
+    {% for token in user_api_tokens %}
+        <tr><td><span>{% trans "A Signbank API Token was created on" %} {{token}}</span></td></tr>
+    {% endfor %}
+
     <tr>
-        <td>{% if not user_has_api_token %}
+        <td>
             <form name='request_api_token' id='request_api_token' action="{{PREFIX_URL}}/accounts/auth_token/" method='POST'>
             {% csrf_token %}
             <input type="hidden" name="username" value="{{user.username}}">
-            <button class='auth_token btn btn-primary' data-dataset="{{ds.id}}"
+            <button class='auth_token btn btn-primary'
                     type='submit'>
                 {% trans "Generate Signbank API Token" %}
             </button>
             </form>
             <br><br>
             <span id='api_token' name='api_token' style="width:100px;outline:1px;"></span>
-            {% else %}
-            <span>{% trans "A Signbank API Token was created on" %} {{user_api_token}}</span>
-            {% endif %}
+
         </td>
     </tr>
-    {% endfor %}
+
     </table>
     {% endif %}
     {% if user_has_queries %}

@@ -215,6 +215,7 @@ def check_value_dict_create_gloss(dataset, value_dict):
 
     return errors
 
+
 @csrf_exempt
 def create_gloss(user, dataset, value_dict):
     # assumes all guardian permissions have already been checked
@@ -346,16 +347,13 @@ def api_create_gloss(request, datasetid):
 
     results = dict()
     auth_token_request = request.headers.get('Authorization', '')
-    # this is commented out to allow to check via the test template rather than an api
-    # if not auth_token_request:
-    #     results['errors'] = ["Missing Authorization in request."]
-    #     return JsonResponse(results)
+
     if auth_token_request:
         auth_token = auth_token_request.split('Bearer ')[-1]
         hashed_token = hash_token(auth_token)
-        signbank_token = SignbankToken.objects.filter(signbank_token=hashed_token).first()
+        signbank_token = SignbankAPIToken.objects.filter(signbank_token=hashed_token).first()
         if not signbank_token:
-            results['errors'] = ["Your Authorization Token does not match."]
+            results['errors'] = ["Your Authorization Token does not match anything."]
             return JsonResponse(results)
         username = signbank_token.signbank_user.username
         user = User.objects.get(username=username)
@@ -379,20 +377,12 @@ def api_create_gloss(request, datasetid):
         results['errors'] = ["No change gloss permission."]
         return JsonResponse(results)
 
-    if 'headers' in request.POST:
-        body_unicode = request.body.decode('utf-8')
-        post_data = json.loads(body_unicode)
-    else:
-        post_data = request.POST
     human_readable_value_dict = get_human_readable_value_dict(request, dataset)
     value_dict = translate_human_readable_value_dict_to_keys(dataset, human_readable_value_dict)
     errors = check_value_dict_create_gloss(dataset, value_dict)
     if errors:
         results = dict()
         results['errors'] = errors
-        results['arguments'] = request.POST
-        results['humanreadable'] = post_data
-        results['username'] = user.username
         results['createstatus'] = "Failed"
         results['glossid'] = ""
         return JsonResponse(results)

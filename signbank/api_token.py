@@ -1,7 +1,4 @@
-from django.db.models import *
 
-from django.contrib.auth.models import User
-from signbank.dictionary.models import SignbankToken
 import hashlib
 import secrets
 import string

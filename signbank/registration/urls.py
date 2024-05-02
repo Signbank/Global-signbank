@@ -73,5 +73,5 @@ urlpatterns = [
                         re_path(r'^users_without_dataset/$',users_without_dataset, name='users_without_dataset'),
 
                         re_path(r'^user_profile/$',user_profile, name='user_profile'),
-                        re_path(r'^auth_token/(?P<datasetid>\d+)/$', auth_token, name='auth_token')
+                        re_path(r'^auth_token/$', auth_token, name='auth_token')
                        ]
