@@ -48,6 +48,7 @@ from django.utils.timezone import get_current_timezone
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from signbank.gloss_update import api_update_gloss_fields
 from django.utils.translation import gettext_lazy as _, activate
+from signbank.abstract_machine import get_interface_language_api
 
 
 def login_required_config(f):
@@ -2285,8 +2286,7 @@ def package(request):
                   if os.path.exists(str(gv.videofile.path))
                      and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
 
-    (interface_language, interface_language_code,
-     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+    interface_language_code = get_interface_language_api(request, request.user)
 
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
@@ -3084,8 +3084,7 @@ def test_am_update_gloss(request, datasetid, glossid):
     gloss_id = int(glossid)
     gloss = Gloss.objects.filter(id=gloss_id, lemma__dataset=dataset).first()
 
-    (interface_language, interface_language_code,
-     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+    interface_language_code = get_interface_language_api(request, request.user)
 
     activate(interface_language_code)
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']

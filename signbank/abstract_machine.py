@@ -12,7 +12,25 @@ from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTE
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from guardian.shortcuts import get_objects_for_user
-from signbank.api_token import generate_auth_token, hash_token
+from signbank.api_token import hash_token
+
+
+def get_interface_language_api(request, user):
+
+    user_profile = UserProfile.objects.get(user=user)
+    last_used_language = getattr(user_profile, 'last_used_language')
+
+    if 'LANGUAGE_CODE' in request and request.LANGUAGE_CODE in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
+    elif last_used_language:
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[last_used_language]
+    else:
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[settings.LANGUAGE_CODE]
+
+    interface_language = Language.objects.get(language_code_3char=interface_language_3char)
+    interface_language_code = interface_language.language_code_2char
+
+    return interface_language_code
 
 
 def convert_string_to_list_of_lists(input_string):
