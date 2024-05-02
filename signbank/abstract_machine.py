@@ -351,7 +351,7 @@ def api_create_gloss(request, datasetid):
     if auth_token_request:
         auth_token = auth_token_request.split('Bearer ')[-1]
         hashed_token = hash_token(auth_token)
-        signbank_token = SignbankAPIToken.objects.filter(signbank_token=hashed_token).first()
+        signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
         if not signbank_token:
             results['errors'] = ["Your Authorization Token does not match anything."]
             return JsonResponse(results)
