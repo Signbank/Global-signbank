@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+ <meta charset="UTF-8">
 <head>
 <title>Test API Create Gloss</title>
 <script src='https://code.jquery.com/jquery-3.7.1.min.js'></script>
@@ -41,48 +42,37 @@ function show_creation_results(data) {
 }
 function create_gloss() {
      var data = {};
-     var dataset = $('#dataset').val();
-     if (dataset != '') {
-        data['Dataset'] = dataset;
-     }
+     var dataset_lookup = '#dataset_name';
+     var dataset_field_key = $(dataset_lookup).attr("name");
+     var dataset_field_value = $(dataset_lookup).val();
+     data[dataset_field_key] = dataset_field_value;
      for (var i=0; i < language_2chars.length; i++) {
         var lang2char = language_2chars[i];
         var lemma_field = 'lemma_id_gloss_' + lang2char;
         var lemma_field_lookup = '#'+lemma_field;
         var lemma_field_key = $(lemma_field_lookup).attr("name");
         var lemma_field_value = $(lemma_field_lookup).val();
-        if (lemma_field_value != '') {
-            data[lemma_field_key] = lemma_field_value;
-        }
+        data[lemma_field_key] = lemma_field_value;
         var annotation_field = 'annotation_id_gloss_' + lang2char;
         var annotation_field_lookup = '#'+annotation_field;
         var annotation_field_key = $(annotation_field_lookup).attr("name");
         var annotation_field_value = $(annotation_field_lookup).val();
-        if (annotation_field_value != '') {
-            data[annotation_field_key] = annotation_field_value;
-        }
+        data[annotation_field_key] = annotation_field_value;
         var sense_field = 'sense_id_gloss_' + lang2char;
         var sense_field_lookup = '#'+sense_field;
         var sense_field_key = $(sense_field_lookup).attr("name");
         var sense_field_value = $(sense_field_lookup).val();
-        if (sense_field_value != '') {
-            data[sense_field_key] = sense_field_value;
-        }
+        data[sense_field_key] = sense_field_value;
      }
      json_data = JSON.stringify(data);
      console.log(json_data);
      $.ajax({
         url : url + "/dictionary/api_create_gloss/" + datasetid + '/',
         type: 'POST',
-        headers: { 'Authorization': 'Bearer XXXXXXXXXXXX',
-                   'Content-Type': 'application/json',
-                   'Content-Language' : 'en',
-                   'Accept-Language': 'en',
-                   'Accept': 'application/json' },
-        body: json_data,
-        crossDomain: true,
+        headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXXXX',
+                   'Content-Type': 'application/json' },
+        data: json_data,
         dataType: "json",
-        cache: false,
         success : show_creation_results
      });
 }
@@ -101,8 +91,8 @@ function create_gloss() {
                      Dataset
                  </th>
                  <td id="add_gloss_dataset_value">
-                     <input id="dataset"
-                            name="Dataset"
+                     <input id="dataset_name"
+                            name='Dataset'
                             maxlength="30" type="text"
                             size="50" >
                  </td>
