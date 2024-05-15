@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+ <meta charset="UTF-8">
+<head>
+<title>Test API Update Gloss</title>
+<script src='https://code.jquery.com/jquery-3.7.1.min.js'></script>
+<script type="text/javascript">
+    var url = 'https://signbank-dev.cls.ru.nl/';
+    var datasetid = '1';
+    var glossid = '47961';
+    var gloss_fields =  {'useInstr': 'Annotation Instructions',
+                         'wordClass': 'Word Class',
+                         'handedness': 'Handedness',
+                         'domhndsh': 'Strong Hand',
+                         'subhndsh': 'Weak Hand',
+                         'handCh': 'Handshape Change',
+                         'relatArtic': 'Relation Between Articulators',
+                         'locprim': 'Location',
+                         'contType': 'Contact Type',
+                         'movSh': 'Movement Shape',
+                         'movDir': 'Movement Direction',
+                         'repeat': 'Repeated Movement',
+                         'altern': 'Alternating Movement',
+                         'relOriMov': 'Relative Orientation: Movement',
+                         'relOriLoc': 'Relative Orientation: Location',
+                         'oriCh': 'Orientation Change',
+                         'locVirtObj': 'Virtual Object',
+                         'phonOth': 'Phonology Other',
+                         'mouthG': 'Mouth Gesture',
+                         'mouthing': 'Mouthing',
+                         'phonetVar': 'Phonetic Variation',
+                         'domhndsh_letter': 'Strong Hand Letter',
+                         'domhndsh_number': 'Strong Hand Number',
+                         'subhndsh_letter': 'Weak Hand Letter',
+                         'subhndsh_number': 'Weak Hand Number',
+                         'weakdrop': 'Weak Drop',
+                         'weakprop': 'Weak Prop',
+                         'semField': 'Semantic Field',
+                         'derivHist': 'Derivation History',
+                         'namEnt': 'Named Entity',
+                         'valence': 'Valence',
+                         'iconImg': 'Iconic Image',
+                         'concConcSet': 'Concepticon Concept Set',
+                         'inWeb': 'In The Web Dictionary',
+                         'isNew': 'Is This A Proposed New Sign?',
+                         'excludeFromEcv': 'Exclude From Ecv',
+                         'senses': 'Senses'};
+</script>
+
+<script type="text/javascript">
+function show_update_results(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var errorsElt = $('#errors');
+    var glossidElt = $('#glossid');
+    var statusElt = $('#status');
+    var errors = data.errors;
+    var updatestatus = data.updatestatus;
+    var glossid = data.glossid;
+    var glossCell = "ERRORS <ul>";
+    for (var err in errors) {
+        glossCell = glossCell + "<li>"+err+": "+errors[err]+"</li>";
+    }
+    glossCell = glossCell + "</ul>";
+    errorsElt.html(glossCell);
+    if (updatestatus) {
+        statusCell = "<span>STATUS "+updatestatus+"</span>";
+        statusElt.html(statusCell);
+    }
+    if (glossid) {
+        glossCell = "<span>GLOSS ID "+glossid+"</span>";
+        glossidElt.html(glossCell);
+    }
+}
+function update_gloss() {
+     var update = { };
+     for (var field in gloss_fields) {
+        var field_lookup = '#field_input_'+field;
+        var field_key = $(field_lookup).attr("name");
+        var field_value = $(field_lookup).val();
+        if (field_value == '') {
+            continue;
+        }
+        update[field_key] = field_value;
+     }
+     console.log(update);
+     $.ajax({
+        url : url + "/dictionary/api_update_gloss/" + datasetid + '/' + glossid + '/',
+        type: 'POST',
+        headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXX',
+                   'Content-Type': 'application/json' },
+        data: JSON.stringify(update),
+        datatype: "json",
+        async: false,
+        success : show_update_results
+     });
+}
+
+</script>
+
+</head>
+<body>
+<div>
+    <div>
+    <h3>Test API Update Gloss</h3>
+        <p>This template is for testing the gloss update API from a local file on your own computer.</p>
+        <p>
+            <code>
+            file:///home/user/folder/virtual_machine_gloss_update_api_token.html
+            </code>
+        </p>
+        <p>It is intended for checking the multilingual translations of field choices and values.</p>
+        <p>The javascript AJAX call does not use the csrf token; your Signbank API Token goes in the headers:</p>
+        <p>
+            <code>
+                    headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXX',
+                               'Content-Type': 'application/json' }
+            </code>
+        </p>
+        <br>
+     <div>
+         <h3>Gloss Fields</h3>
+         <table class='table' style='width: 1200px;'>
+                          <tbody><tr>
+                 <th id="field_label_useInstr">
+                     Annotation Instructions
+                 </th>
+                 <td id="field_value_useInstr">
+                     <input name="Annotation Instructions" id="field_input_useInstr" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_wordClass">
+                     Word Class
+                 </th>
+                 <td id="field_value_wordClass">
+                     <input name="Word Class" id="field_input_wordClass" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_handedness">
+                     Handedness
+                 </th>
+                 <td id="field_value_handedness">
+                     <input name="Handedness" id="field_input_handedness" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_domhndsh">
+                     Strong Hand
+                 </th>
+                 <td id="field_value_domhndsh">
+                     <input name="Strong Hand" id="field_input_domhndsh" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_subhndsh">
+                     Weak Hand
+                 </th>
+                 <td id="field_value_subhndsh">
+                     <input name="Weak Hand" id="field_input_subhndsh" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_handCh">
+                     Handshape Change
+                 </th>
+                 <td id="field_value_handCh">
+                     <input name="Handshape Change" id="field_input_handCh" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_relatArtic">
+                     Relation Between Articulators
+                 </th>
+                 <td id="field_value_relatArtic">
+                     <input name="Relation Between Articulators" id="field_input_relatArtic" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_locprim">
+                     Location
+                 </th>
+                 <td id="field_value_locprim">
+                     <input name="Location" id="field_input_locprim" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_contType">
+                     Contact Type
+                 </th>
+                 <td id="field_value_contType">
+                     <input name="Contact Type" id="field_input_contType" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_movSh">
+                     Movement Shape
+                 </th>
+                 <td id="field_value_movSh">
+                     <input name="Movement Shape" id="field_input_movSh" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_movDir">
+                     Movement Direction
+                 </th>
+                 <td id="field_value_movDir">
+                     <input name="Movement Direction" id="field_input_movDir" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_repeat">
+                     Repeated Movement
+                 </th>
+                 <td id="field_value_repeat">
+                     <input name="Repeated Movement" id="field_input_repeat" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_altern">
+                     Alternating Movement
+                 </th>
+                 <td id="field_value_altern">
+                     <input name="Alternating Movement" id="field_input_altern" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_relOriMov">
+                     Relative Orientation: Movement
+                 </th>
+                 <td id="field_value_relOriMov">
+                     <input name="Relative Orientation: Movement" id="field_input_relOriMov" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_relOriLoc">
+                     Relative Orientation: Location
+                 </th>
+                 <td id="field_value_relOriLoc">
+                     <input name="Relative Orientation: Location" id="field_input_relOriLoc" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_oriCh">
+                     Orientation Change
+                 </th>
+                 <td id="field_value_oriCh">
+                     <input name="Orientation Change" id="field_input_oriCh" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_locVirtObj">
+                     Virtual Object
+                 </th>
+                 <td id="field_value_locVirtObj">
+                     <input name="Virtual Object" id="field_input_locVirtObj" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_phonOth">
+                     Phonology Other
+                 </th>
+                 <td id="field_value_phonOth">
+                     <input name="Phonology Other" id="field_input_phonOth" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_mouthG">
+                     Mouth Gesture
+                 </th>
+                 <td id="field_value_mouthG">
+                     <input name="Mouth Gesture" id="field_input_mouthG" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_mouthing">
+                     Mouthing
+                 </th>
+                 <td id="field_value_mouthing">
+                     <input name="Mouthing" id="field_input_mouthing" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_phonetVar">
+                     Phonetic Variation
+                 </th>
+                 <td id="field_value_phonetVar">
+                     <input name="Phonetic Variation" id="field_input_phonetVar" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_domhndsh_letter">
+                     Strong Hand Letter
+                 </th>
+                 <td id="field_value_domhndsh_letter">
+                     <input name="Strong Hand Letter" id="field_input_domhndsh_letter" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_domhndsh_number">
+                     Strong Hand Number
+                 </th>
+                 <td id="field_value_domhndsh_number">
+                     <input name="Strong Hand Number" id="field_input_domhndsh_number" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_subhndsh_letter">
+                     Weak Hand Letter
+                 </th>
+                 <td id="field_value_subhndsh_letter">
+                     <input name="Weak Hand Letter" id="field_input_subhndsh_letter" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_subhndsh_number">
+                     Weak Hand Number
+                 </th>
+                 <td id="field_value_subhndsh_number">
+                     <input name="Weak Hand Number" id="field_input_subhndsh_number" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_weakdrop">
+                     Weak Drop
+                 </th>
+                 <td id="field_value_weakdrop">
+                     <input name="Weak Drop" id="field_input_weakdrop" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_weakprop">
+                     Weak Prop
+                 </th>
+                 <td id="field_value_weakprop">
+                     <input name="Weak Prop" id="field_input_weakprop" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_semField">
+                     Semantic Field
+                 </th>
+                 <td id="field_value_semField">
+                     <input name="Semantic Field" id="field_input_semField" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_derivHist">
+                     Derivation History
+                 </th>
+                 <td id="field_value_derivHist">
+                     <input name="Derivation History" id="field_input_derivHist" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_namEnt">
+                     Named Entity
+                 </th>
+                 <td id="field_value_namEnt">
+                     <input name="Named Entity" id="field_input_namEnt" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_valence">
+                     Valence
+                 </th>
+                 <td id="field_value_valence">
+                     <input name="Valence" id="field_input_valence" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_iconImg">
+                     Iconic Image
+                 </th>
+                 <td id="field_value_iconImg">
+                     <input name="Iconic Image" id="field_input_iconImg" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_concConcSet">
+                     Concepticon Concept Set
+                 </th>
+                 <td id="field_value_concConcSet">
+                     <input name="Concepticon Concept Set" id="field_input_concConcSet" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_inWeb">
+                     In The Web Dictionary
+                 </th>
+                 <td id="field_value_inWeb">
+                     <input name="In The Web Dictionary" id="field_input_inWeb" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_isNew">
+                     Is This A Proposed New Sign?
+                 </th>
+                 <td id="field_value_isNew">
+                     <input name="Is This A Proposed New Sign?" id="field_input_isNew" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_excludeFromEcv">
+                     Exclude From Ecv
+                 </th>
+                 <td id="field_value_excludeFromEcv">
+                     <input name="Exclude From Ecv" id="field_input_excludeFromEcv" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_senses">
+                     Senses
+                 </th>
+                 <td id="field_value_senses">
+                     <input name="Senses" id="field_input_senses" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+
+         </tbody>
+         </table>
+
+     <input class='btn btn-primary' type='submit'
+            onclick="update_gloss();"
+            value='Update Gloss';
+
+     <br><br>
+     </div>
+    </div>
+<div>
+<h3>Updated Gloss</h3>
+ <p id="glossid"></p>
+ <p id="errors"></p>
+ <p id="status"></p>
+</div>
+</div>
+
+</body>
+</html>
