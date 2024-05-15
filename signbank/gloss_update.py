@@ -334,8 +334,6 @@ def gloss_update(gloss, update_fields_dict, language_code):
 @csrf_exempt
 def api_update_gloss(request, datasetid, glossid):
 
-
-
     results = dict()
     auth_token_request = request.headers.get('Authorization', '')
 
@@ -354,7 +352,8 @@ def api_update_gloss(request, datasetid, glossid):
         results['errors'] = ["User not found in request."]
         return JsonResponse(results)
 
-    interface_language_code = get_interface_language_api(request, user)
+    # interface_language_code = get_interface_language_api(request, user)
+    interface_language_code = 'en'
 
     activate(interface_language_code)
 
