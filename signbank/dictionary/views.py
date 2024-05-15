@@ -3067,6 +3067,7 @@ def test_abstract_machine(request, datasetid):
                    })
 
 
+@csrf_exempt
 def test_am_update_gloss(request, datasetid, glossid):
     # used to test api method since PyCharm runserver does not support CORS
     dataset_id = int(datasetid)
@@ -3083,6 +3084,13 @@ def test_am_update_gloss(request, datasetid, glossid):
 
     gloss_id = int(glossid)
     gloss = Gloss.objects.filter(id=gloss_id, lemma__dataset=dataset).first()
+    if not gloss:
+        translated_message = _('The gloss does not exist in the dataset.')
+        return render(request, 'dictionary/warning.html',
+                      {'warning': translated_message,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
     interface_language_code = get_interface_language_api(request, request.user)
 
