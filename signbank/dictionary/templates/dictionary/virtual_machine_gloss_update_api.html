@@ -61,6 +61,7 @@ function update_gloss() {
      $.ajax({
         url : url + "/dictionary/api_update_gloss/" + datasetid + '/' + glossid + '/',
         type: 'POST',
+        headers: { 'Accept-Language': language_code },
         data: JSON.stringify(update),
         datatype: "json",
         async: false,

@@ -7,7 +7,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from guardian.shortcuts import get_objects_for_user
 from signbank.api_token import hash_token
-from signbank.abstract_machine import get_interface_language_api
 
 import ast
 
@@ -64,6 +63,7 @@ def gloss_update_fields_check(value_dict, language_code):
             errors[field] = _("Field update not allowed")
     return errors
 
+
 def remove_duplicates_preserve_order(translation_list):
     unique_list = []
     seen = set()
@@ -72,6 +72,7 @@ def remove_duplicates_preserve_order(translation_list):
             unique_list.append(item)
             seen.add(item)
     return unique_list
+
 
 def convert_string_to_dict_of_list_of_lists(input_string):
     """
@@ -159,10 +160,10 @@ def update_senses(gloss, new_value):
                         continue
                     keyword = Keyword.objects.get_or_create(text=kw)[0]
                     translation = Translation(translation=keyword,
-                                                language=dataset_language,
-                                                gloss=gloss,
-                                                orderIndex=new_sense_i,
-                                                index=inx)
+                                              language=dataset_language,
+                                              gloss=gloss,
+                                              orderIndex=new_sense_i,
+                                              index=inx)
                     translation.save()
                     sensetranslation.translations.add(translation)
                 sensetranslation.save()
@@ -336,6 +337,7 @@ def api_update_gloss(request, datasetid, glossid):
 
     results = dict()
     auth_token_request = request.headers.get('Authorization', '')
+    interface_language_code = request.headers.get('Accept-Language', 'en')
 
     if auth_token_request:
         auth_token = auth_token_request.split('Bearer ')[-1]
@@ -351,9 +353,6 @@ def api_update_gloss(request, datasetid, glossid):
     else:
         results['errors'] = ["User not found in request."]
         return JsonResponse(results)
-
-    # interface_language_code = get_interface_language_api(request, user)
-    interface_language_code = 'en'
 
     activate(interface_language_code)
 

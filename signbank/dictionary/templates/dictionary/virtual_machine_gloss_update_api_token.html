@@ -89,7 +89,8 @@ function update_gloss() {
         url : url + "/dictionary/api_update_gloss/" + datasetid + '/' + glossid + '/',
         type: 'POST',
         headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXX',
-                   'Content-Type': 'application/json' },
+                   'Content-Type': 'application/json',
+                   'Accept-Language': 'en' },
         data: JSON.stringify(update),
         datatype: "json",
         async: false,
@@ -115,7 +116,8 @@ function update_gloss() {
         <p>
             <code>
                     headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXX',
-                               'Content-Type': 'application/json' }
+                               'Content-Type': 'application/json',
+                               'Accept-Language': 'en' }
             </code>
         </p>
         <br>

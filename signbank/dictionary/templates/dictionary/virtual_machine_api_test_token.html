@@ -70,7 +70,8 @@ function create_gloss() {
         url : url + "/dictionary/api_create_gloss/" + datasetid + '/',
         type: 'POST',
         headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXX',
-                   'Content-Type': 'application/json' },
+                   'Content-Type': 'application/json',
+                   'Accept-Language': 'en' },
         data: json_data,
         dataType: "json",
         success : show_creation_results

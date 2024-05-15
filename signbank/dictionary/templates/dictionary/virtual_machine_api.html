@@ -77,6 +77,7 @@ function create_gloss() {
      $.ajax({
         url : url + "/dictionary/api_create_gloss/" + datasetid + '/',
         type: 'POST',
+        headers: { 'Accept-Language': language_code },
         data: creation,
         datatype: "json",
         async: false,
