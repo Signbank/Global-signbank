@@ -1009,6 +1009,9 @@ def import_csv_update(request):
     with override(LANGUAGE_CODE):
         columns_to_skip = {field.verbose_name: field for field in gloss_fields if field.name in FIELDS['frequency']}
 
+    # this is needed to make sure the interface shows the correct language
+    activate(request.LANGUAGE_CODE)
+
     # Process Input File
     if len(request.FILES) > 0:
 

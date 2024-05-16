@@ -51,15 +51,16 @@ def convert_string_to_list_of_lists(input_string):
     else:
         return [], 'Input is not a list of lists.'
 
-def required_fields_create_gloss_columns(dataset):
+
+def required_fields_create_gloss_columns(dataset, language_code):
+    activate(language_code)
     dataset_languages = dataset.translation_languages.all()
-    lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-    annotationidglosstranslation_fields = ["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+    annotationidglosstranslation_fields = [gettext("Annotation ID Gloss") + " (" + language.name + ")"
                                            for language in dataset_languages]
-    lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
+    lemmaidglosstranslation_fields = [gettext("Lemma ID Gloss") + " (" + language.name + ")"
                                       for language in dataset_languages]
-    sensestranslation_fields = ["Senses" + " (" + getattr(language, lang_attr_name) + ")"
-                                      for language in dataset_languages]
+    sensestranslation_fields = [gettext("Senses") + " (" + language.name + ")"
+                                for language in dataset_languages]
     required_columns = ['Dataset'] + lemmaidglosstranslation_fields + annotationidglosstranslation_fields + sensestranslation_fields
     return required_columns
 
@@ -71,44 +72,43 @@ def required_fields_create_gloss_value_dict_keys(dataset):
     lemmaidglosstranslation_fields = ['lemma_id_gloss_' + getattr(language, 'language_code_2char')
                                       for language in dataset_languages]
     sensetranslation_fields = ['sense_' + getattr(language, 'language_code_2char')
-                                      for language in dataset_languages]
+                               for language in dataset_languages]
     required_columns = ['dataset'] + annotationidglosstranslation_fields + lemmaidglosstranslation_fields + sensetranslation_fields
     return required_columns
 
 
-def create_gloss_columns_to_value_dict_keys(dataset):
+def create_gloss_columns_to_value_dict_keys(dataset, language_code):
+    activate(language_code)
     required_columns = dict()
     required_columns['Dataset'] = 'dataset'
     dataset_languages = dataset.translation_languages.all()
     lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
     for language in dataset_languages:
-        required_columns["Annotation ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"] = (
+        required_columns[gettext("Annotation ID Gloss") + " (" + language.name + ")"] = (
                 'annotation_id_gloss_' + getattr(language, 'language_code_2char'))
-        required_columns["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"] = (
+        required_columns[gettext("Lemma ID Gloss") + " (" + language.name + ")"] = (
                 'lemma_id_gloss_' + getattr(language, 'language_code_2char'))
-        required_columns["Senses" + " (" + getattr(language, lang_attr_name) + ")"] = (
+        required_columns[gettext("Senses") + " (" + language.name + ")"] = (
                 'sense_' + getattr(language, 'language_code_2char'))
     return required_columns
 
 
-def create_gloss_value_dict_keys_to_columns(dataset):
+def create_gloss_value_dict_keys_to_columns(dataset, language_code):
+    activate(language_code)
     required_columns = dict()
     required_columns['dataset'] = 'Dataset'
     dataset_languages = dataset.translation_languages.all()
-    lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
+
     for language in dataset_languages:
         required_columns['annotation_id_gloss_'
                          + getattr(language,
-                                   'language_code_2char')] = ("Annotation ID Gloss"
-                                                              + " (" + getattr(language, lang_attr_name) + ")")
+                                   'language_code_2char')] = gettext("Annotation ID Gloss") + " (" + language.name + ")"
         required_columns['lemma_id_gloss_'
                          + getattr(language,
-                                   'language_code_2char')] = ("Lemma ID Gloss"
-                                                              + " (" + getattr(language, lang_attr_name) + ")")
+                                   'language_code_2char')] = gettext("Lemma ID Gloss") + " (" + language.name + ")"
         required_columns['sense_'
                          + getattr(language,
-                                   'language_code_2char')] = ("Senses"
-                                                              + " (" + getattr(language, lang_attr_name) + ")")
+                                   'language_code_2char')] = gettext("Senses") + " (" + language.name + ")"
     return required_columns
 
 
@@ -123,10 +123,10 @@ def get_value_dict(request, dataset):
 
 
 @csrf_exempt
-def get_human_readable_value_dict(request, dataset):
+def get_human_readable_value_dict(request, dataset, language_code):
     post_data = json.loads(request.body.decode('utf-8'))
 
-    required_fields = required_fields_create_gloss_columns(dataset)
+    required_fields = required_fields_create_gloss_columns(dataset, language_code)
     value_dict = dict()
     for field in required_fields:
         if field in post_data.keys():
@@ -135,8 +135,8 @@ def get_human_readable_value_dict(request, dataset):
     return value_dict
 
 
-def translate_human_readable_value_dict_to_keys(dataset, value_dict):
-    translate_value_dict_lookup = create_gloss_columns_to_value_dict_keys(dataset)
+def translate_human_readable_value_dict_to_keys(dataset, language_code, value_dict):
+    translate_value_dict_lookup = create_gloss_columns_to_value_dict_keys(dataset, language_code)
     translated_value_dict = dict()
     for field, value in value_dict.items():
         value_dict_key = translate_value_dict_lookup[field]
@@ -144,22 +144,23 @@ def translate_human_readable_value_dict_to_keys(dataset, value_dict):
     return translated_value_dict
 
 
-def check_value_dict_create_gloss(dataset, value_dict):
+def check_value_dict_create_gloss(dataset, language_code, value_dict):
+    activate(language_code)
     errors = []
     if 'dataset' not in value_dict.keys():
         available_keys = list(value_dict.keys())
         e0 = ', '.join(available_keys)
         e00 = dataset.acronym
-        errors.append('Key dataset missing: ' + e0 + ' ' + e00)
+        errors.append(gettext('Key dataset missing: ') + e0 + ' ' + e00)
         return errors
 
     dataset_acronym = value_dict['dataset']
 
     if not dataset_acronym:
-        e1 = 'Dataset is empty.'
+        e1 = gettext('Dataset is empty.')
         errors.append(e1)
     elif dataset_acronym != dataset.acronym:
-        e2 = 'Dataset acronym does not match dataset ' + dataset.acronym + '.'
+        e2 = gettext('Dataset acronym does not match dataset ') + dataset.acronym + '.'
         errors.append(e2)
 
     lemmaidglosstranslations = {}
@@ -168,7 +169,7 @@ def check_value_dict_create_gloss(dataset, value_dict):
         if lemma_id_gloss:
             lemmaidglosstranslations[language] = lemma_id_gloss
         else:
-            e3 = 'Lemma translation for ' + language.name + ' is empty.'
+            e3 = gettext('Lemma ID Gloss') + " (" + language.name + ")" + gettext(' is empty.')
             errors.append(e3)
 
     annotationidglosstranslations = {}
@@ -177,7 +178,7 @@ def check_value_dict_create_gloss(dataset, value_dict):
         if annotation_id_gloss:
             annotationidglosstranslations[language] = annotation_id_gloss
         else:
-            e4 = "Annotation translation for " + language.name + " is empty."
+            e4 = gettext("Annotation ID Gloss") + " (" + language.name + ")" + gettext(" is empty.")
             errors.append(e4)
 
     senses = {}
@@ -201,12 +202,12 @@ def check_value_dict_create_gloss(dataset, value_dict):
     existing_lemmas = []
     for language, lemmas in lemmas_per_language_translation.items():
         if lemmas.count():
-            e5 = "Lemma translation for " + language.name + " already exists."
+            e5 = gettext("Lemma ID Gloss") + " (" + language.name + ") " + gettext("already exists.")
             errors.append(e5)
             if lemmas.first().lemma.pk not in existing_lemmas:
                 existing_lemmas.append(lemmas.first().lemma.pk)
     if len(existing_lemmas) > 1:
-        e6 = "Lemma translations refer to different already existing lemmas."
+        e6 = gettext("Lemma translations refer to different already existing lemmas.")
         errors.append(e6)
 
     # check annotation translations
@@ -215,20 +216,19 @@ def check_value_dict_create_gloss(dataset, value_dict):
             gloss__lemma__dataset=dataset, language=language, text__exact=annotationidglosstranslation_text)
 
         if annotationtranslation_for_this_text_language.count():
-            e7 = ('This annotation already exists for language '
-                  + language.name + ': ' + annotationidglosstranslation_text)
+            e7 = gettext('Annotation ID Gloss') + " (" + language.name + ') ' + gettext('already exists') + ': ' + annotationidglosstranslation_text
             errors.append(e7)
 
     # check if lengths of senses is same in every language
     # senses can be left empty
-    if len(senses.keys())>1:
+    if len(senses.keys()) > 1:
         nr_senses = 0
         for language_i, language in enumerate(senses.keys()):
             if language_i == 0:
                 nr_senses = len(senses[language])
             else:
                 if nr_senses != len(senses[language]):
-                    e8 = "Sense arrays are not the same length."
+                    e8 = gettext("Sense arrays are not the same length.")
                     errors.append(e8)
 
     return errors
@@ -344,7 +344,7 @@ def csv_create_gloss(request, datasetid):
         return JsonResponse({})
 
     value_dict = get_value_dict(request, dataset)
-    errors = check_value_dict_create_gloss(dataset, value_dict)
+    errors = check_value_dict_create_gloss(dataset, language_code, value_dict)
     if errors:
         results = dict()
         results['errors'] = errors
@@ -365,39 +365,44 @@ def api_create_gloss(request, datasetid):
 
     results = dict()
     auth_token_request = request.headers.get('Authorization', '')
-
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
     if auth_token_request:
         auth_token = auth_token_request.split('Bearer ')[-1]
         hashed_token = hash_token(auth_token)
         signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
         if not signbank_token:
-            results['errors'] = ["Your Authorization Token does not match anything."]
+            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
             return JsonResponse(results)
         username = signbank_token.signbank_user.username
         user = User.objects.get(username=username)
     elif request.user:
         user = request.user
     else:
-        results['errors'] = ["User not found in request."]
+        results['errors'] = [gettext("User not found in request.")]
         return JsonResponse(results)
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
-        results['errors'] = ["Dataset ID does not exist."]
+        results['errors'] = [gettext("Dataset ID does not exist.")]
         return JsonResponse(results)
 
     change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        results['errors'] = ["No change permission for dataset for user " + str(user)]
+        results['errors'] = [gettext("No change permission for dataset for user ") + str(user)]
         return JsonResponse(results)
 
     if not user.has_perm('dictionary.change_gloss'):
-        results['errors'] = ["No change gloss permission."]
+        results['errors'] = [gettext("No change gloss permission.")]
         return JsonResponse(results)
 
-    human_readable_value_dict = get_human_readable_value_dict(request, dataset)
-    value_dict = translate_human_readable_value_dict_to_keys(dataset, human_readable_value_dict)
-    errors = check_value_dict_create_gloss(dataset, value_dict)
+    activate(interface_language_code)
+
+    human_readable_value_dict = get_human_readable_value_dict(request, dataset, interface_language_code)
+    value_dict = translate_human_readable_value_dict_to_keys(dataset, interface_language_code, human_readable_value_dict)
+    errors = check_value_dict_create_gloss(dataset, interface_language_code, value_dict)
     if errors:
         results = dict()
         results['errors'] = errors

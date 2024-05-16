@@ -78,7 +78,7 @@ function create_gloss() {
         url : url + "/dictionary/api_create_gloss/" + datasetid + '/',
         type: 'POST',
         headers: { 'Accept-Language': language_code },
-        data: creation,
+        data: JSON.stringify(creation),
         datatype: "json",
         async: false,
         success : show_creation_results
@@ -94,9 +94,10 @@ function create_gloss() {
     <div>
     <h3>{% trans "Gloss Fields" %}</h3>
      <div>
-         <table class='table' style='width: 1200px;'>
+         <table class='table'>
+             <tbody>
              <tr>
-                 <th id="add_gloss_dataset_header">
+                 <th id="add_gloss_dataset_header" style="width:300px;">
                      {% trans "Dataset" %}
                  </th>
                  <td id="add_gloss_dataset_value">
@@ -107,56 +108,45 @@ function create_gloss() {
                  </td>
              </tr>
              {% for dataset_lang in dataset_languages %}
-             {% with dataset_lang.name_en as language_name %}
-             {% with "Lemma ID Gloss ("|add:language_name|add:")" as lemma_field_name %}
              <tr>
-                 <th id="add_gloss_lemma_header_{{dataset_lang.language_code_2char}}">
-                     {{lemma_field_name}}
+                 <th id="add_gloss_lemma_header_{{dataset_lang.language_code_2char}}" style="width:200px;">
+                     {% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})
                  </th>
                  <td id="add_gloss_lemma_value_{{dataset_lang.language_code_2char}}">
                      <input id="lemma_id_gloss_{{dataset_lang.language_code_2char}}"
-                            name='{{lemma_field_name}}'
+                            name='{% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})'
                             maxlength="30" type="text"
                             size="50" >
                  </td>
              </tr>
-             {% endwith %}
-             {% endwith %}
              {% endfor %}
              {% for dataset_lang in dataset_languages %}
-             {% with dataset_lang.name_en as language_name %}
-             {% with "Annotation ID Gloss ("|add:language_name|add:")" as annotation_field_name %}
              <tr>
-                 <th id="add_gloss_annotation_header_{{dataset_lang.language_code_2char}}">
-                     {{annotation_field_name}}
+                 <th id="add_gloss_annotation_header_{{dataset_lang.language_code_2char}}" style="width:300px;">
+                     {% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})
                  </th>
                  <td id="add_gloss_annotation_value_{{dataset_lang.language_code_2char}}">
                      <input id="annotation_id_gloss_{{dataset_lang.language_code_2char}}"
-                            name="{{annotation_field_name}}"
+                            name='{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})'
                             maxlength="30" type="text"
                             size="50" >
                  </td>
              </tr>
-             {% endwith %}
-             {% endwith %}
              {% endfor %}
              {% for dataset_lang in dataset_languages %}
-             {% with dataset_lang.name_en as language_name %}
-             {% with "Senses ("|add:language_name|add:")" as sense_field_name %}
              <tr>
-                 <th id="add_gloss_sense_header_{{dataset_lang.language_code_2char}}">
-                     {{sense_field_name}}
+                 <th id="add_gloss_sense_header_{{dataset_lang.language_code_2char}}" style="width:300px;">
+                     {% trans "Senses" %} ({{ dataset_lang.name }})
                  </th>
                  <td id="add_gloss_sense_value_{{dataset_lang.language_code_2char}}">
                      <input id="sense_id_gloss_{{dataset_lang.language_code_2char}}"
-                            name="{{sense_field_name}}"
+                            name='{% trans "Senses" %} ({{ dataset_lang.name }})'
                             maxlength="130" type="text"
                             size="130" >
                  </td>
              </tr>
-             {% endwith %}
-             {% endwith %}
              {% endfor %}
+             </tbody>
          </table>
 
      <input class='btn btn-primary' type='submit'

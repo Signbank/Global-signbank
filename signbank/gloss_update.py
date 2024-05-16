@@ -338,20 +338,22 @@ def api_update_gloss(request, datasetid, glossid):
     results = dict()
     auth_token_request = request.headers.get('Authorization', '')
     interface_language_code = request.headers.get('Accept-Language', 'en')
-
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
     if auth_token_request:
         auth_token = auth_token_request.split('Bearer ')[-1]
         hashed_token = hash_token(auth_token)
         signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
         if not signbank_token:
-            results['errors'] = ["Your Authorization Token does not match anything."]
+            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
             return JsonResponse(results)
         username = signbank_token.signbank_user.username
         user = User.objects.get(username=username)
     elif request.user:
         user = request.user
     else:
-        results['errors'] = ["User not found in request."]
+        results['errors'] = [gettext("User not found in request.")]
         return JsonResponse(results)
 
     activate(interface_language_code)
