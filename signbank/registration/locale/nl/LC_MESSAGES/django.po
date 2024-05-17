@@ -1,0 +1,228 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-05-16 10:18+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: signbank/registration/forms.py:51
+msgid "Username"
+msgstr ""
+
+#: signbank/registration/forms.py:54
+msgid "First Name"
+msgstr ""
+
+#: signbank/registration/forms.py:57
+msgid "Last Name"
+msgstr ""
+
+#: signbank/registration/forms.py:59
+msgid "Your Email Address"
+msgstr ""
+
+#: signbank/registration/forms.py:61 signbank/registration/forms.py:231
+msgid "Password"
+msgstr ""
+
+#: signbank/registration/forms.py:63
+msgid "Password (again)"
+msgstr ""
+
+#: signbank/registration/forms.py:77
+msgid "Requested Datasets"
+msgstr ""
+
+#: signbank/registration/forms.py:82
+msgid "Motivation"
+msgstr ""
+
+#: signbank/registration/forms.py:89
+msgid ""
+"Please explain why you would like to get access to this dataset. What are "
+"the purposes for which you wish to use it?"
+msgstr ""
+
+#: signbank/registration/forms.py:106
+msgid "Usernames should not have special characters."
+msgstr ""
+
+#: signbank/registration/forms.py:111
+msgid "This username is already taken. Please choose another."
+msgstr ""
+
+#: signbank/registration/forms.py:121
+msgid "You must type the same password each time"
+msgstr ""
+
+#: signbank/registration/forms.py:130
+msgid "Please provide motivation for your request"
+msgstr ""
+
+#: signbank/registration/forms.py:139
+msgid "Please consider the Terms of Service."
+msgstr ""
+
+#: signbank/registration/forms.py:180
+msgid "I have read and agree to the Terms of Service"
+msgstr ""
+
+#: signbank/registration/forms.py:189
+msgid "You must agree to the terms to register"
+msgstr ""
+
+#: signbank/registration/forms.py:208
+msgid ""
+"This email address is already in use. Please supply a different email "
+"address."
+msgstr ""
+
+#: signbank/registration/forms.py:230
+msgid "Email"
+msgstr ""
+
+#: signbank/registration/forms.py:251
+msgid ""
+"Please enter a correct email and password. Note that password is case-"
+"sensitive."
+msgstr ""
+
+#: signbank/registration/forms.py:253
+msgid "This account is inactive."
+msgstr ""
+
+#: signbank/registration/forms.py:258
+msgid ""
+"Your Web browser doesn't appear to have cookies enabled. Cookies are "
+"required for logging in."
+msgstr ""
+
+#: signbank/registration/models.py:206
+msgid "user"
+msgstr ""
+
+#: signbank/registration/models.py:207
+msgid "activation key"
+msgstr ""
+
+#: signbank/registration/models.py:212
+msgid "registration profile"
+msgstr ""
+
+#: signbank/registration/models.py:213
+msgid "registration profiles"
+msgstr ""
+
+#: signbank/registration/templates/registration/registration_complete.html:8
+msgid "Signbank Registration"
+msgstr ""
+
+#: signbank/registration/templates/registration/registration_complete.html:9
+msgid "The following user registration request has been accepted:"
+msgstr ""
+
+#: signbank/registration/templates/registration/registration_complete.html:11
+msgid "Username:"
+msgstr ""
+
+#: signbank/registration/templates/registration/registration_complete.html:12
+msgid "First name:"
+msgstr ""
+
+#: signbank/registration/templates/registration/registration_complete.html:13
+msgid "Last name:"
+msgstr ""
+
+#: signbank/registration/templates/registration/registration_complete.html:14
+msgid "E-mail:"
+msgstr ""
+
+#: signbank/registration/templates/registration/registration_complete.html:15
+msgid "Requested datasets:"
+msgstr ""
+
+#: signbank/registration/templates/registration/registration_complete.html:22
+msgid "Groups:"
+msgstr ""
+
+#: signbank/registration/templates/registration/registration_complete.html:31
+msgid ""
+"An email has been sent to your nominated address. Please check your email "
+"for details of how to complete the registration process."
+msgstr ""
+
+#: signbank/registration/templates/registration/registration_form.html:54
+msgid "Registration"
+msgstr ""
+
+#: signbank/registration/templates/user_profile.html:60
+msgid "View Permission for Public Signs in Datasets"
+msgstr ""
+
+#: signbank/registration/templates/user_profile.html:77
+msgid "Selected Datasets"
+msgstr ""
+
+#: signbank/registration/templates/user_profile.html:78
+msgid "View Permission"
+msgstr ""
+
+#: signbank/registration/templates/user_profile.html:79
+msgid "Change Permission"
+msgstr ""
+
+#: signbank/registration/templates/user_profile.html:87
+msgid "days remaining"
+msgstr ""
+
+#: signbank/registration/templates/user_profile.html:117
+msgid "Extend Expiry"
+msgstr ""
+
+#: signbank/registration/templates/user_profile.html:125
+msgid "Affiliation"
+msgstr "Affiliatie"
+
+#: signbank/registration/templates/user_profile.html:132
+msgid "Signbank API Tokens"
+msgstr "Signbank API-tokens"
+
+#: signbank/registration/templates/user_profile.html:135
+msgid "A Signbank API Token was created on"
+msgstr "Een Signbank API-token is aangemaakt op"
+
+#: signbank/registration/templates/user_profile.html:145
+msgid "Generate Signbank API Token"
+msgstr "Maak een Signbank API-token aan"
+
+#: signbank/registration/templates/user_profile.html:158
+msgid "Recently Saved Queries"
+msgstr "Bewaarde zoekopdrachten"
+
+#: signbank/registration/templates/user_profile.html:161
+msgid "Search History"
+msgstr "Zoek-geschiedenis"
+
+#: signbank/registration/views.py:212
+msgid "Error processing your request."
+msgstr ""
+
+#: signbank/registration/views.py:255
+msgid "This account has expired. Please contact o.crasborn@let.ru.nl."
+msgstr ""
+
+#: signbank/registration/views.py:274
+msgid "The username or password is incorrect."
+msgstr ""

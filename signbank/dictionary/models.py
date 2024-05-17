@@ -3102,20 +3102,25 @@ class Dataset(models.Model):
         return frequency_lists_phonology_fields
 
 
-class SignbankToken(models.Model):
+class SignbankAPIToken(models.Model):
     """
     Overrides the Token model to use the
     non-built-in user model
     """
-    signbank_token = models.CharField(max_length=16, blank=True, verbose_name=_("Token"), null=True)
-    signbank_user = models.ForeignKey(User, verbose_name=_("Signbank User"), on_delete=models.CASCADE)
-    signbank_dataset = models.ForeignKey("Dataset", verbose_name=_("Dataset"), on_delete=models.CASCADE,
-                                         help_text=_("API Token to change Dataset"), null=True)
+    api_token = models.CharField(max_length=16,
+                                 verbose_name=_("Token"))
+    signbank_user = models.ForeignKey(User, verbose_name=_("Signbank User"), related_name='tokens',
+                                      on_delete=models.CASCADE)
     created = models.DateTimeField(_("Created"), auto_now_add=True)
 
     class Meta:
         verbose_name = _("Token")
         verbose_name_plural = _("Tokens")
+
+    def __str__(self):
+        # only show creation date when used as a string
+        creation_date = self.created.strftime("%Y-%m-%d")
+        return creation_date
 
 
 class Affiliation(models.Model):
@@ -3152,9 +3157,6 @@ class AffiliatedGloss(models.Model):
 class UserProfile(models.Model):
     # This field is required.
     user = models.OneToOneField(User, related_name="user_profile_user", on_delete=models.CASCADE)
-    api_token = models.ForeignKey("SignbankToken", related_name='authentication_token',
-                                  verbose_name=_("API Token"), on_delete=models.CASCADE, null=True)
-    # Other fields here
     last_used_language = models.CharField(max_length=20, default=settings.LANGUAGE_CODE)
     expiry_date = models.DateField(null=True, blank=True)
     number_of_logins = models.IntegerField(null=True, default=0)
