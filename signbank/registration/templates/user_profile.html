@@ -3,9 +3,55 @@
 {% load stylesheet %}
 {% load bootstrap3 %}
 
-{% block content %}
 
-<h2>User Profile</h2>
+{% block extrajs %}
+
+<script type='text/javascript'>
+var url = '{{PREFIX_URL}}';
+var csrf_token = '{{csrf_token}}';
+
+function display_token(data) {
+    console.log(data);
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var new_token = data.new_token;
+    var tokenCell = $("#api_token");
+    tokenCell.html(new_token);
+}
+
+$(document).ready(function() {
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    $.ajaxSetup({
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrf_token);
+            }
+        }
+    });
+    $('.auth_token').click(function(e)
+    {
+         e.preventDefault();
+         $.ajax({
+            url : url + "/accounts/auth_token/" ,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : display_token
+         });
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div>
+<h2>{% trans "User Profile" %}</h2>
 
     {% if user.is_anonymous %}
     <table class="table table-condensed table-condensed-light">
@@ -99,15 +145,27 @@
     </tr>
     </thead>
     <tbody class="tbody tbody-light">
-    {% for ds in change_permit_datasets %}
+    {% for token in user_api_tokens %}
+        <tr><td><span>{% trans "A Signbank API Token was created on" %} {{token}}</span></td></tr>
+    {% endfor %}
+
     <tr>
-        <td><span class="span-text span-text-content-light">{{ds.acronym}}</span></td>
         <td>
-            <span class="span-text span-text-content-light">{{user.user_profile.api_token}}</span>
+            <form name='request_api_token' id='request_api_token' action="{{PREFIX_URL}}/accounts/auth_token/" method='POST'>
+            {% csrf_token %}
+            <input type="hidden" name="username" value="{{user.username}}">
+            <button class='auth_token btn btn-primary'
+                    type='submit'>
+                {% trans "Generate Signbank API Token" %}
+            </button>
+            </form>
+            <br><br>
+            <span id='api_token' name='api_token' style="width:100px;outline:1px;"></span>
+
         </td>
     </tr>
-    {% endfor %}
     </tbody>
+
     </table>
     {% endif %}
     {% if user_has_queries %}
@@ -126,5 +184,5 @@
     </table>
     {% endif %}
     {% endif %}
-
+</div>
 {% endblock %}

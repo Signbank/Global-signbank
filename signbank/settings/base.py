@@ -13,7 +13,7 @@ MANAGERS = ADMINS
 
 TIME_ZONE = 'Europe/Amsterdam'
 
-LOCALE_PATHS = [BASE_DIR+'conf/locale']
+LOCALE_PATHS = [BASE_DIR+'conf/locale', BASE_DIR+'signbank/registration/locale']
 
 # in the database, SITE_ID 1 is example.com
 SITE_ID = 2
@@ -52,8 +52,8 @@ STATICFILES_FINDERS = (
 )
 
 MIDDLEWARE = (
-#    'debug_toolbar.middleware.DebugToolbarMiddleware',
-
+    # CORS
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -62,9 +62,12 @@ MIDDLEWARE = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'signbank.pages.middleware.PageFallbackMiddleware',
-#    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'reversion.middleware.RevisionMiddleware',
+    'django.middleware.common.CommonMiddleware'
 )
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
 
 TEMPLATES = [
     {
@@ -119,6 +122,10 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'django.contrib.staticfiles',
+    'corsheaders',
+    'reversion',
+    'tagging',
+    'guardian',
     'bootstrap3',
     'django_summernote',
     # 'django_select2',
@@ -128,10 +135,7 @@ INSTALLED_APPS = (
     #'signbank.registration',
     'signbank.pages',
     'signbank.attachments',
-    'signbank.video',
-    'reversion',
-    'tagging',
-    'guardian'
+    'signbank.video'
     # 'debug_toolbar',
     # 'video_encoding'
 )

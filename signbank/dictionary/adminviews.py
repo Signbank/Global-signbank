@@ -1187,6 +1187,19 @@ class GlossDetailView(DetailView):
 
         context['sense_to_similar_senses'] = sense_to_similar_senses
 
+        annotated_sentences_1 = AnnotatedSentence.objects.filter(annotated_glosses__gloss=gl, annotated_glosses__isRepresentative=True).distinct().annotate(is_representative=V(1, output_field=IntegerField()))
+        annotated_sentences_2 = AnnotatedSentence.objects.filter(annotated_glosses__gloss=gl, annotated_glosses__isRepresentative=False).distinct().annotate(is_representative=V(0, output_field=IntegerField()))
+        annotated_sentences = annotated_sentences_1.union(annotated_sentences_2).order_by('-is_representative')
+        annotated_sentences_with_video = []
+        for annotated_sentence in annotated_sentences:
+            if annotated_sentence.has_video() and annotated_sentence not in annotated_sentences_with_video:
+                annotated_sentences_with_video.append(annotated_sentence)
+        annotated_sentences = annotated_sentences_with_video
+        if len(annotated_sentences) <= 3:
+            context['annotated_sentences'] = annotated_sentences
+        else:
+            context['annotated_sentences'] = annotated_sentences[0:3]
+
         bad_dialect = False
         gloss_dialects = []
 
@@ -4560,10 +4573,6 @@ class DatasetFrequencyView(DetailView):
 
         if dataset not in datasets_user_can_view:
             translated_message = _('You do not have permission to view this corpus.')
-            return show_warning(request, translated_message, selected_datasets)
-
-        if dataset not in selected_datasets:
-            translated_message = _('Please select the dataset first to view its corpus.')
             return show_warning(request, translated_message, selected_datasets)
 
         context = self.get_context_data(object=self.object)
