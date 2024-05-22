@@ -89,25 +89,6 @@
                 {% endif %}
             </td>
         </tr>
-        {% if not user.is_anonymous %}
-        <tr><th>{% trans "Corpus" %}</th>
-            <td>
-                <a href="{{PREFIX_URL}}/datasets/frequency/{{dataset.id}}" >
-                    <button id='view_corpus' class='btn btn-primary' name='view_corpus'>{% trans "Corpus Overview" %}</button></a>
-            </td>
-        </tr>
-        {% get_obj_perms request.user for dataset as "dataset_perms" %}
-        {% if "change_dataset" in dataset_perms %}
-        {% if request.user|has_group:"Dataset_Manager" %}
-        <tr><th>{% trans "Manage Dataset Media" %}</th>
-            <td>
-                <a href="{{PREFIX_URL}}/datasets/manage_media/{{dataset.id}}" >
-                    <button id='manage_media' class='btn btn-primary' name='manage_media'>{% trans "Manage Media" %}</button></a>
-            </td>
-        </tr>
-        {% endif %}
-        {% endif %}
-        {% endif %}
         <tr><th>{% trans "Description" %}</th>
             <td class='edit edit_area' align="left" id='description' name='description'
                 placeholder='{% trans "Description" %}'

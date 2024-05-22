@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+ <meta charset="UTF-8">
+<head>
+<title>Test API Update Gloss</title>
+<script src='https://code.jquery.com/jquery-3.7.1.min.js'></script>
+<script type="text/javascript">
+    var url = 'https://signbank-dev.cls.ru.nl/';
+    var datasetid = '1';
+    var glossid = '47961';
+    var gloss_fields = {'useInstr': 'Annotatieinstructies',
+                        'wordClass': 'Woordsoort',
+                        'handedness': 'Handigheid',
+                        'domhndsh': 'Sterke Hand',
+                        'subhndsh': 'Zwakke Hand',
+                        'handCh': 'Handvormverandering',
+                        'relatArtic': 'Relatie Tussen Articulatoren',
+                        'locprim': 'Plaats',
+                        'contType': 'Type Contact',
+                        'movSh': 'Vorm Van De Beweging',
+                        'movDir': 'Richting Van De Beweging',
+                        'repeat': 'Herhaalde Beweging',
+                        'altern': 'Alternerende Beweging',
+                        'relOriMov': 'Relatieve Oriëntatie: Beweging',
+                        'relOriLoc': 'Relatieve Oriëntatie: Locatie',
+                        'oriCh': 'Oriëntatieverandering',
+                        'locVirtObj': 'Virtueel Object',
+                        'phonOth': 'Fonologie: Overig',
+                        'mouthG': 'Orale Component',
+                        'mouthing': 'Gesproken Component',
+                        'phonetVar': 'Fonetische Variatie',
+                        'domhndsh_letter': 'Sterke Hand Letter',
+                        'domhndsh_number': 'Sterke Hand Cijfer',
+                        'subhndsh_letter': 'Zwakke Hand Letter',
+                        'subhndsh_number': 'Zwakke Hand Cijfer',
+                        'weakdrop': 'Week Drop',
+                        'weakprop': 'Weak Prop',
+                        'semField': 'Semantisch Veld',
+                        'derivHist': 'Derivatieachtergrond',
+                        'namEnt': 'Naam',
+                        'valence': 'Valence',
+                        'iconImg': 'Iconisch Beeld',
+                        'concConcSet': 'Concepticon Concept Set',
+                        'inWeb': 'In Het Woordenboek',
+                        'isNew': 'Voorstel Voor Nieuw Gebaar?',
+                        'excludeFromEcv': 'Buiten Ecv Houden',
+                        'senses': 'Betekenissen'};
+</script>
+
+<script type="text/javascript">
+function show_update_results(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var errorsElt = $('#errors');
+    var glossidElt = $('#glossid');
+    var statusElt = $('#status');
+    var errors = data.errors;
+    var updatestatus = data.updatestatus;
+    var glossid = data.glossid;
+    var glossCell = "ERRORS <ul>";
+    for (var err in errors) {
+        glossCell = glossCell + "<li>"+err+": "+errors[err]+"</li>";
+    }
+    glossCell = glossCell + "</ul>";
+    errorsElt.html(glossCell);
+    if (updatestatus) {
+        statusCell = "<span>STATUS "+updatestatus+"</span>";
+        statusElt.html(statusCell);
+    }
+    if (glossid) {
+        glossCell = "<span>GLOSS ID "+glossid+"</span>";
+        glossidElt.html(glossCell);
+    }
+}
+function update_gloss() {
+     var update = { };
+     for (var field in gloss_fields) {
+        var field_lookup = '#field_input_'+field;
+        var field_key = $(field_lookup).attr("name");
+        var field_value = $(field_lookup).val();
+        if (field_value == '') {
+            continue;
+        }
+        update[field_key] = field_value;
+     }
+     console.log(update);
+     $.ajax({
+        url : url + "/dictionary/api_update_gloss/" + datasetid + '/' + glossid + '/',
+        type: 'POST',
+        headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXX',
+                   'Content-Type': 'application/json',
+                   'Accept-Language': 'nl' },
+        data: JSON.stringify(update),
+        datatype: "json",
+        async: false,
+        success : show_update_results
+     });
+}
+
+</script>
+
+</head>
+<body>
+<div>
+    <div>
+    <h3>Test API Update Gloss</h3>
+        <p>This template is for testing the gloss update API from a local file on your own computer.</p>
+        <p>
+            <code>
+            file:///home/user/folder/virtual_machine_gloss_update_api_token_nl.html
+            </code>
+        </p>
+        <p>It is intended for checking the multilingual translations of field choices and values.</p>
+        <p>The javascript AJAX call does not use the csrf token; your Signbank API Token goes in the headers:</p>
+        <p>
+            <code>
+                    headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXX',
+                               'Content-Type': 'application/json',
+                               'Accept-Language': 'nl' }
+            </code>
+        </p>
+        <br>
+     <div>
+         <h3>Gloss Fields</h3>
+         <table class='table' style='width: 1200px;'>
+             <tbody><tr>
+                 <th id="field_label_useInstr">
+                     Annotatieinstructies
+                 </th>
+                 <td id="field_value_useInstr">
+                     <input name="Annotatieinstructies" id="field_input_useInstr" maxlength="200" type="text" size="50" value="hippo">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_wordClass">
+                     Woordsoort
+                 </th>
+                 <td id="field_value_wordClass">
+                     <input name="Woordsoort" id="field_input_wordClass" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_handedness">
+                     Handigheid
+                 </th>
+                 <td id="field_value_handedness">
+                     <input name="Handigheid" id="field_input_handedness" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_domhndsh">
+                     Sterke Hand
+                 </th>
+                 <td id="field_value_domhndsh">
+                     <input name="Sterke Hand" id="field_input_domhndsh" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_subhndsh">
+                     Zwakke Hand
+                 </th>
+                 <td id="field_value_subhndsh">
+                     <input name="Zwakke Hand" id="field_input_subhndsh" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_handCh">
+                     Handvormverandering
+                 </th>
+                 <td id="field_value_handCh">
+                     <input name="Handvormverandering" id="field_input_handCh" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_relatArtic">
+                     Relatie Tussen Articulatoren
+                 </th>
+                 <td id="field_value_relatArtic">
+                     <input name="Relatie Tussen Articulatoren" id="field_input_relatArtic" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_locprim">
+                     Plaats
+                 </th>
+                 <td id="field_value_locprim">
+                     <input name="Plaats" id="field_input_locprim" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_contType">
+                     Type Contact
+                 </th>
+                 <td id="field_value_contType">
+                     <input name="Type Contact" id="field_input_contType" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_movSh">
+                     Vorm Van De Beweging
+                 </th>
+                 <td id="field_value_movSh">
+                     <input name="Vorm Van De Beweging" id="field_input_movSh" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_movDir">
+                     Richting Van De Beweging
+                 </th>
+                 <td id="field_value_movDir">
+                     <input name="Richting Van De Beweging" id="field_input_movDir" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_repeat">
+                     Herhaalde Beweging
+                 </th>
+                 <td id="field_value_repeat">
+                     <input name="Herhaalde Beweging" id="field_input_repeat" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_altern">
+                     Alternerende Beweging
+                 </th>
+                 <td id="field_value_altern">
+                     <input name="Alternerende Beweging" id="field_input_altern" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_relOriMov">
+                     Relatieve Oriëntatie: Beweging
+                 </th>
+                 <td id="field_value_relOriMov">
+                     <input name="Relatieve Oriëntatie: Beweging" id="field_input_relOriMov" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_relOriLoc">
+                     Relatieve Oriëntatie: Locatie
+                 </th>
+                 <td id="field_value_relOriLoc">
+                     <input name="Relatieve Oriëntatie: Locatie" id="field_input_relOriLoc" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_oriCh">
+                     Oriëntatieverandering
+                 </th>
+                 <td id="field_value_oriCh">
+                     <input name="Oriëntatieverandering" id="field_input_oriCh" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_locVirtObj">
+                     Virtueel Object
+                 </th>
+                 <td id="field_value_locVirtObj">
+                     <input name="Virtueel Object" id="field_input_locVirtObj" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_phonOth">
+                     Fonologie: Overig
+                 </th>
+                 <td id="field_value_phonOth">
+                     <input name="Fonologie: Overig" id="field_input_phonOth" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_mouthG">
+                     Orale Component
+                 </th>
+                 <td id="field_value_mouthG">
+                     <input name="Orale Component" id="field_input_mouthG" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_mouthing">
+                     Gesproken Component
+                 </th>
+                 <td id="field_value_mouthing">
+                     <input name="Gesproken Component" id="field_input_mouthing" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_phonetVar">
+                     Fonetische Variatie
+                 </th>
+                 <td id="field_value_phonetVar">
+                     <input name="Fonetische Variatie" id="field_input_phonetVar" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_domhndsh_letter">
+                     Sterke Hand Letter
+                 </th>
+                 <td id="field_value_domhndsh_letter">
+                     <input name="Sterke Hand Letter" id="field_input_domhndsh_letter" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_domhndsh_number">
+                     Sterke Hand Cijfer
+                 </th>
+                 <td id="field_value_domhndsh_number">
+                     <input name="Sterke Hand Cijfer" id="field_input_domhndsh_number" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_subhndsh_letter">
+                     Zwakke Hand Letter
+                 </th>
+                 <td id="field_value_subhndsh_letter">
+                     <input name="Zwakke Hand Letter" id="field_input_subhndsh_letter" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_subhndsh_number">
+                     Zwakke Hand Cijfer
+                 </th>
+                 <td id="field_value_subhndsh_number">
+                     <input name="Zwakke Hand Cijfer" id="field_input_subhndsh_number" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_weakdrop">
+                     Week Drop
+                 </th>
+                 <td id="field_value_weakdrop">
+                     <input name="Week Drop" id="field_input_weakdrop" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_weakprop">
+                     Weak Prop
+                 </th>
+                 <td id="field_value_weakprop">
+                     <input name="Weak Prop" id="field_input_weakprop" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_semField">
+                     Semantisch Veld
+                 </th>
+                 <td id="field_value_semField">
+                     <input name="Semantisch Veld" id="field_input_semField" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_derivHist">
+                     Derivatieachtergrond
+                 </th>
+                 <td id="field_value_derivHist">
+                     <input name="Derivatieachtergrond" id="field_input_derivHist" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_namEnt">
+                     Naam
+                 </th>
+                 <td id="field_value_namEnt">
+                     <input name="Naam" id="field_input_namEnt" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_valence">
+                     Valence
+                 </th>
+                 <td id="field_value_valence">
+                     <input name="Valence" id="field_input_valence" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_iconImg">
+                     Iconisch Beeld
+                 </th>
+                 <td id="field_value_iconImg">
+                     <input name="Iconisch Beeld" id="field_input_iconImg" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_concConcSet">
+                     Concepticon Concept Set
+                 </th>
+                 <td id="field_value_concConcSet">
+                     <input name="Concepticon Concept Set" id="field_input_concConcSet" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_inWeb">
+                     In Het Woordenboek
+                 </th>
+                 <td id="field_value_inWeb">
+                     <input name="In Het Woordenboek" id="field_input_inWeb" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_isNew">
+                     Voorstel Voor Nieuw Gebaar?
+                 </th>
+                 <td id="field_value_isNew">
+                     <input name="Voorstel Voor Nieuw Gebaar?" id="field_input_isNew" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_excludeFromEcv">
+                     Buiten Ecv Houden
+                 </th>
+                 <td id="field_value_excludeFromEcv">
+                     <input name="Buiten Ecv Houden" id="field_input_excludeFromEcv" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_senses">
+                     Betekenissen
+                 </th>
+                 <td id="field_value_senses">
+                     <input name="Betekenissen" id="field_input_senses" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+         </tbody>
+         </table>
+
+     <input class='btn btn-primary' type='submit'
+            onclick="update_gloss();"
+            value='Update Gloss'>
+
+     <br><br>
+     </div>
+    </div>
+<div>
+<h3>Updated Gloss</h3>
+ <p id="glossid"></p>
+ <p id="errors"></p>
+ <p id="status"></p>
+</div>
+</div>
+
+</body>
+</html>

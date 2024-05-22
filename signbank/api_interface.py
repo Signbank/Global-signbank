@@ -79,9 +79,8 @@ def api_fields(dataset, language_code='en', advanced=False):
 
 def get_fields_data_json(request, datasetid):
 
-    from signbank.tools import get_interface_language_and_default_language_codes
-    (interface_language, interface_language_code,
-     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+    from signbank.abstract_machine import get_interface_language_api
+    interface_language_code = get_interface_language_api(request, request.user)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -110,9 +109,8 @@ def get_fields_data_json(request, datasetid):
 
 def get_gloss_data_json(request, datasetid, glossid):
 
-    from signbank.tools import get_interface_language_and_default_language_codes
-    (interface_language, interface_language_code,
-     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+    from signbank.abstract_machine import get_interface_language_api
+    interface_language_code = get_interface_language_api(request, request.user)
 
     sequence_of_digits = True
     for i in datasetid:

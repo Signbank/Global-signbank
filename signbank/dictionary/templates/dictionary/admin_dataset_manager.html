@@ -101,7 +101,23 @@
       {% if "change_dataset" in dataset_perms %}
         <tr>
             <td>
-                <a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.name }}</a>
+                <table class="table table-condensed">
+                    <tr>
+                        <td><a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.name }}</a></td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <a href="{{PREFIX_URL}}/datasets/frequency/{{dataset.id}}" >
+                                <button id='view_corpus' class='btn btn-primary' name='view_corpus'>{% trans "Corpus Overview" %}</button></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <a href="{{PREFIX_URL}}/datasets/manage_media/{{dataset.id}}" >
+                                <button id='manage_media' class='btn btn-primary' name='manage_media'>{% trans "Manage Media" %}</button></a>
+                        </td>
+                    </tr>
+                </table>
             </td>
             <td>
                 <div data-toggle="collapse" href="#dataset_{{dataset.name|slugify}}_manage_view"><button>{% trans "Manage" %}</button></div>

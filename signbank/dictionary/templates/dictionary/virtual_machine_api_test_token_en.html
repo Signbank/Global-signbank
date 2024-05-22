@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+ <meta charset="UTF-8">
+<head>
+<title>Test API Create Gloss</title>
+<script src='https://code.jquery.com/jquery-3.7.1.min.js'></script>
+
+<script type="text/javascript">
+    var url = 'https://signbank-dev.cls.ru.nl/';
+    var datasetid = '1';
+    var language_2chars = ['nl', 'en'];
+
+</script>
+<script type="text/javascript">
+function show_creation_results(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    console.log(JSON.stringify(data));
+    var errorsElt = $('#errors');
+    var glossidElt = $('#glossid');
+    var statusElt = $('#status');
+    var errors = data.errors;
+    var createstatus = data.createstatus;
+    var glossid = data.glossid;
+    if (errors.length) {
+        var glossCell = "ERRORS <ul>";
+        for (var inx in errors) {
+            glossCell = glossCell + "<li>"+errors[inx]+"</li>";
+        }
+        glossCell = glossCell + "</ul>";
+        errorsElt.html(glossCell);
+    }
+    if (createstatus) {
+        statusCell = "<span>STATUS "+createstatus+"</span>";
+        statusElt.html(statusCell);
+    }
+    if (glossid) {
+        glossCell = "<span>GLOSS ID "+glossid+"</span>";
+        glossidElt.html(glossCell);
+    }
+}
+function create_gloss() {
+     var data = {};
+     var dataset_lookup = '#dataset_name';
+     var dataset_field_key = $(dataset_lookup).attr("name");
+     var dataset_field_value = $(dataset_lookup).val();
+     data[dataset_field_key] = dataset_field_value;
+     for (var i=0; i < language_2chars.length; i++) {
+        var lang2char = language_2chars[i];
+        var lemma_field = 'lemma_id_gloss_' + lang2char;
+        var lemma_field_lookup = '#'+lemma_field;
+        var lemma_field_key = $(lemma_field_lookup).attr("name");
+        var lemma_field_value = $(lemma_field_lookup).val();
+        data[lemma_field_key] = lemma_field_value;
+        var annotation_field = 'annotation_id_gloss_' + lang2char;
+        var annotation_field_lookup = '#'+annotation_field;
+        var annotation_field_key = $(annotation_field_lookup).attr("name");
+        var annotation_field_value = $(annotation_field_lookup).val();
+        data[annotation_field_key] = annotation_field_value;
+        var sense_field = 'sense_id_gloss_' + lang2char;
+        var sense_field_lookup = '#'+sense_field;
+        var sense_field_key = $(sense_field_lookup).attr("name");
+        var sense_field_value = $(sense_field_lookup).val();
+        data[sense_field_key] = sense_field_value;
+     }
+     json_data = JSON.stringify(data);
+     console.log(json_data);
+     $.ajax({
+        url : url + "/dictionary/api_create_gloss/" + datasetid + '/',
+        type: 'POST',
+        headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXX',
+                   'Content-Type': 'application/json',
+                   'Accept-Language': 'en' },
+        data: json_data,
+        dataType: "json",
+        success : show_creation_results
+     });
+}
+
+</script>
+
+</head>
+<body>
+<div>
+    <div>
+    <h3>Gloss Fields</h3>
+     <div>
+         <table class='table' style='width: 1200px;'>
+             <tr>
+                 <th id="add_gloss_dataset_header">
+                     Dataset
+                 </th>
+                 <td id="add_gloss_dataset_value">
+                     <input id="dataset_name"
+                            name='Dataset'
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             <tr>
+                 <th id="add_gloss_lemma_header_en">
+                     Lemma  ID Gloss (English)
+                 </th>
+                 <td id="add_gloss_lemma_value_en">
+                     <input id="lemma_id_gloss_en"
+                            name='Lemma ID Gloss (English)'
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             <tr>
+                 <th id="add_gloss_lemma_header_nl">
+                     Lemma  ID Gloss (Dutch)
+                 </th>
+                 <td id="add_gloss_lemma_value_nl">
+                     <input id="lemma_id_gloss_nl"
+                            name='Lemma ID Gloss (Dutch)'
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             <tr>
+                 <th id="add_gloss_annotation_header_en">
+                     Annotation ID Gloss (English)
+                 </th>
+                 <td id="add_gloss_annotation_value_en">
+                     <input id="annotation_id_gloss_en"
+                            name="Annotation ID Gloss (English)"
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             <tr>
+                 <th id="add_gloss_annotation_header_nl">
+                     Annotation ID Gloss (Dutch)
+                 </th>
+                 <td id="add_gloss_annotation_value_nl">
+                     <input id="annotation_id_gloss_nl"
+                            name="Annotation ID Gloss (Dutch)"
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             <tr>
+                 <th id="add_gloss_sense_header_en">
+                     Senses (English)
+                 </th>
+                 <td id="add_gloss_sense_value_en">
+                     <input id="sense_id_gloss_en"
+                            name="Senses (English)"
+                            maxlength="130" type="text"
+                            size="130" >
+                 </td>
+             </tr>
+             <tr>
+                 <th id="add_gloss_sense_header_nl">
+                     Senses (Dutch)
+                 </th>
+                 <td id="add_gloss_sense_value_nl">
+                     <input id="sense_id_gloss_nl"
+                            name="Senses (Dutch)"
+                            maxlength="130" type="text"
+                            size="130" >
+                 </td>
+             </tr>
+         </table>
+
+     <input class='btn btn-primary' type='submit'
+            onclick="create_gloss();"
+            value='Create Gloss'>
+
+     <br><br>
+     </div>
+    </div>
+<div>
+<h3>Created Gloss</h3>
+ <p id="glossid"></p>
+ <p id="errors"></p>
+ <p id="status"></p>
+</div>
+</div>
+
+</body>
+</html>

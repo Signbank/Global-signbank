@@ -248,7 +248,7 @@ def add_small_appendix(path, reverse=False):
 def validate_file_extension(value):
     if value.file.content_type not in ['video/mp4', 'video/quicktime']:
         raise ValidationError(u'Error message')
-
+    
 
 # VIDEO PATH FOR AN EXAMPLESENTENCE #
 #
@@ -288,6 +288,40 @@ def get_sentence_video_file_path(instance, filename, version=0):
     return path
 
 
+# VIDEO PATH FOR AN ANNOTATED SENTENCE #
+#
+# The path of a video is constructed by
+# 1. the acronym of the corresponding dataset
+# 2. the id of the annotated sentence
+#
+# That means that if the dataset acronym, the dataset default language or the lemmaidgloss for the
+# dataset default language is changed, the video path should also be changed.
+#
+# This is done by:
+# * The video path: get_annotated_video_file_path(...)
+def get_annotated_video_file_path(instance, filename, version=0):
+    """
+    Return the full path for storing an uploaded video
+    :param instance: An AnnotatedVideo instance
+    :param filename: the original file name
+    :param version: the version to determine the number of .bak extensions
+    :return: 
+    """
+
+    (base, ext) = os.path.splitext(filename)
+    video_dir = settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY
+    dataset = instance.annotatedsentence.get_dataset().acronym
+    dataset_dir = os.path.join(dataset, str(instance.annotatedsentence.id))    
+    filename = str(instance.annotatedsentence.id) + ext + (version * ".bak")
+
+    path = os.path.join(video_dir, dataset_dir, filename)
+    if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
+        from django.utils.encoding import escape_uri_path
+        path = escape_uri_path(path)
+
+    return path
+
+
 class ExampleVideo(models.Model):
     """A video that shows an example of the use of a particular sense"""
 
@@ -314,7 +348,6 @@ class ExampleVideo(models.Model):
         # self.ensure_mp4()
 
     def get_absolute_url(self):
-
         return self.videofile.url
 
     def ensure_mp4(self):
@@ -390,8 +423,6 @@ class ExampleVideo(models.Model):
         small_video_path = self.small_video()
         try:
             os.unlink(self.videofile.path)
-            if small_video_path:
-                os.unlink(small_video_path)
         except OSError:
             pass
 
@@ -469,6 +500,60 @@ class ExampleVideo(models.Model):
 
             self.videofile.name = new_path
             self.save()
+
+class AnnotatedVideo(models.Model):
+    """A video that shows an example of the use of a particular sense"""
+
+    annotatedsentence = models.OneToOneField(AnnotatedSentence, on_delete=models.CASCADE)
+    videofile = models.FileField("video file", upload_to=get_annotated_video_file_path, storage=storage,
+                                 validators=[validate_file_extension])
+    eaffile = models.FileField("eaf file", upload_to=get_annotated_video_file_path, storage=storage)
+
+    # video version, version = 0 is always the one that will be displayed
+    # we will increment the version (via reversion) if a new video is added
+    # for this gloss 
+    # THIS IS NOT IMPLEMENTED YET
+    version = models.IntegerField("Version", default=0)
+
+    def save(self, *args, **kwargs):
+        self.ensure_mp4()
+        super(AnnotatedVideo, self).save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        return self.videofile.url
+
+    def ensure_mp4(self):
+        """Ensure that the video file is an h264 format
+        video, convert it if necessary"""
+        (basename, ext) = os.path.splitext(self.videofile.path)
+        if ext == '.mov' or ext == '.webm':
+            oldloc = self.videofile.path
+            newloc = basename + ".mp4"
+            err = convert_video(oldloc, newloc, force=False)
+            self.videofile.name = get_annotated_video_file_path(self, os.path.basename(newloc))
+            os.remove(oldloc)
+
+    def ch_own_mod_video(self):
+        """Change owner and permissions"""
+        location = self.videofile.path
+        # make sure they're readable by everyone
+        # os.chown(location, 1000, 1002)
+        os.chmod(location, stat.S_IRWXU | stat.S_IRWXG)
+
+    def delete_files(self):
+        """Delete the files associated with this object"""
+        try:
+            os.remove(self.videofile.path)
+            os.remove(self.eaffile.path)
+            video_path = os.path.join(settings.WRITABLE_FOLDER, settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY, self.annotatedsentence.get_dataset().acronym, str(self.annotatedsentence.id))
+            os.rmdir(video_path)
+        except OSError:
+            pass
+
+    def __str__(self):
+        # this coercion to a string type sometimes causes special characters in the filename to be a problem
+        # code has been introduced elsewhere to make sure paths are the correct encoding
+        return self.videofile.name
 
 
 class GlossVideo(models.Model):

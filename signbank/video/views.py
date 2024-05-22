@@ -5,19 +5,20 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from signbank.video.models import Video, GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
-from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme
+from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence
 from signbank.video.forms import VideoUploadForObjectForm
+from django.http import JsonResponse
 # from django.contrib.auth.models import User
 # from datetime import datetime as DT
 import os
+import json
 
 from signbank.settings.base import WRITABLE_FOLDER
 from signbank.tools import generate_still_image, get_default_annotationidglosstranslation
 
 
 def addvideo(request):
-    """View to present a video upload form and process
-    the upload"""
+    """View to present a video upload form and process the upload"""
 
     if request.method == 'POST':
         form = VideoUploadForObjectForm(request.POST, request.FILES)
@@ -29,21 +30,40 @@ def addvideo(request):
             redirect_url = form.cleaned_data['redirect']
             recorded = form.cleaned_data['recorded']
             # Get the object, either a gloss or an example sentences
-            if object_type == 's':
+            if object_type == 'examplesentence_video':
                 sentence = ExampleSentence.objects.filter(id=object_id).first()
                 if not sentence:
                     redirect(redirect_url)
                 sentence.add_video(request.user, vfile, recorded)
-            elif object_type == 'g':
+            elif object_type == 'gloss_video':
                 gloss = Gloss.objects.filter(id=object_id).first()
                 if not gloss:
                     redirect(redirect_url)
                 gloss.add_video(request.user, vfile, recorded)
-            elif object_type == 'm':
+            elif object_type == 'morpheme_video':
                 morpheme = Morpheme.objects.filter(id=object_id).first()
                 if not morpheme:
                     redirect(redirect_url)
                 morpheme.add_video(request.user, vfile, recorded)
+            elif object_type == 'annotated_video': 
+                # make an annotated sentence
+                eaf_file = form.cleaned_data['eaffile']
+                annotatedSentence = AnnotatedSentence.objects.create()
+                
+                gloss = Gloss.objects.filter(id=object_id).first()
+                annotations = form.cleaned_data['feedbackdata']
+                annotatedSentence.add_annotations(annotations, gloss)
+                
+                translations = form.cleaned_data['translations']
+                if translations:
+                    annotatedSentence.add_translations(json.loads(translations))
+
+                contexts = form.cleaned_data['contexts']
+                if contexts:
+                    annotatedSentence.add_contexts(json.loads(contexts))
+
+                annotatedSentence.add_video(request.user, vfile, eaf_file)    
+                annotatedSentence.save()
 
             return redirect(redirect_url)
 
@@ -56,6 +76,74 @@ def addvideo(request):
     else:
         url = '/'
     return redirect(url)
+
+def find_non_overlapping_annotated_glosses(timeslots, annotations_tier_1, annotations_tier_2):
+    non_overlapping_glosses = []
+
+    for annotation_2 in annotations_tier_2:
+        is_overlapping = False
+        for annotation_1 in annotations_tier_1:
+            # timecode to time in ms
+            start_1 = int(timeslots[annotation_1[0]])
+            end_1 = int(timeslots[annotation_1[1]])
+            start_2 = int(timeslots[annotation_2[0]])
+            end_2 = int(timeslots[annotation_2[1]])
+            if (start_2 >= start_1 and start_2 <= end_1) or (end_2 >= start_1 and end_2 <= end_1):
+                is_overlapping = True
+                break
+        if not is_overlapping:
+            non_overlapping_glosses.append(annotation_2)
+
+    return non_overlapping_glosses
+
+def process_eaffile(request):
+    import magic
+    from pympi.Elan import Eaf
+    glosses, sentences = [], []
+    sentence_dict = {}
+
+    if request.method == 'POST':
+        check_gloss_label = request.POST.get('check_gloss_label', '')
+        uploaded_file = request.FILES['eaffile']
+        file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
+        if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
+            return JsonResponse({'error': 'Invalid file. Please try again.'})
+
+        eaf = Eaf(uploaded_file.temporary_file_path())
+        
+        # Add glosses from the right hand
+        for annotation in eaf.tiers['Glosses R'][0].values():
+            gloss_label = annotation[2]
+            start = int(eaf.timeslots[annotation[0]])
+            end = int(eaf.timeslots[annotation[1]])
+            glosses.append([gloss_label, start, end])
+
+        # Add glosses from the left hand, if they don't overlap with the right hand
+        for annotation in find_non_overlapping_annotated_glosses(eaf.timeslots, eaf.tiers['Glosses R'][0].values(), eaf.tiers['Glosses L'][0].values()):
+            gloss_label = annotation[2]
+            start = int(eaf.timeslots[annotation[0]])
+            end = int(eaf.timeslots[annotation[1]])
+            glosses.append([gloss_label, start, end])
+        
+        # Sort the list of glosses by the "start" value
+        glosses = sorted(glosses, key=lambda x: x[1])
+
+        if glosses == []:
+            return JsonResponse({'error': 'No annotations found. Please try again.'})
+        
+        if 'Sentences' in eaf.tiers:
+            for annotation in eaf.tiers['Sentences'][0].values():
+                sentences.append(annotation[2])
+        
+        for sentence_i, sentence in enumerate(sentences):
+            sentence_dict[sentence_i] = sentence
+
+    # Create the annotations table
+    annotations_table_html = render(request, 'annotations_table.html', {'glosses_list': glosses, 'check_gloss_label': check_gloss_label}).content.decode('utf-8')
+    sentences_json = json.dumps(sentence_dict)
+
+    return JsonResponse({'annotations_table_html': annotations_table_html, 'sentences': sentences_json})
+
 
 @login_required
 def deletesentencevideo(request, videoid):

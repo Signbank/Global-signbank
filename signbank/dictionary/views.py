@@ -48,6 +48,7 @@ from django.utils.timezone import get_current_timezone
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from signbank.gloss_update import api_update_gloss_fields
 from django.utils.translation import gettext_lazy as _, activate
+from signbank.abstract_machine import get_interface_language_api
 
 
 def login_required_config(f):
@@ -1007,6 +1008,9 @@ def import_csv_update(request):
     gloss_fields = [Gloss.get_field(fname) for fname in Gloss.get_field_names()]
     with override(LANGUAGE_CODE):
         columns_to_skip = {field.verbose_name: field for field in gloss_fields if field.name in FIELDS['frequency']}
+
+    # this is needed to make sure the interface shows the correct language
+    activate(request.LANGUAGE_CODE)
 
     # Process Input File
     if len(request.FILES) > 0:
@@ -2285,8 +2289,7 @@ def package(request):
                   if os.path.exists(str(gv.videofile.path))
                      and os.path.getmtime(str(gv.videofile.path)) > since_timestamp}
 
-    (interface_language, interface_language_code,
-     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+    interface_language_code = get_interface_language_api(request, request.user)
 
     collected_data = {'video_urls': video_urls,
                       'image_urls': image_urls,
@@ -3067,6 +3070,7 @@ def test_abstract_machine(request, datasetid):
                    })
 
 
+@csrf_exempt
 def test_am_update_gloss(request, datasetid, glossid):
     # used to test api method since PyCharm runserver does not support CORS
     dataset_id = int(datasetid)
@@ -3083,9 +3087,15 @@ def test_am_update_gloss(request, datasetid, glossid):
 
     gloss_id = int(glossid)
     gloss = Gloss.objects.filter(id=gloss_id, lemma__dataset=dataset).first()
+    if not gloss:
+        translated_message = _('The gloss does not exist in the dataset.')
+        return render(request, 'dictionary/warning.html',
+                      {'warning': translated_message,
+                       'dataset_languages': dataset_languages,
+                       'selected_datasets': selected_datasets,
+                       'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
-    (interface_language, interface_language_code,
-     default_language, default_language_code) = get_interface_language_and_default_language_codes(request)
+    interface_language_code = get_interface_language_api(request, request.user)
 
     activate(interface_language_code)
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
