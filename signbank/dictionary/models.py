@@ -1494,6 +1494,16 @@ class Gloss(models.Model):
             tag_names_of_gloss = sorted(tag_names_of_gloss)
             fields[tags_fieldname] = tag_names_of_gloss
 
+        affiliation_fieldname = gettext("Affiliation")
+        affiliations_of_gloss = AffiliatedGloss.objects.filter(gloss_id=self.id)
+        if affiliation_fieldname in fieldnames:
+            affiliation_names_of_gloss = []
+            for aff_obj in affiliations_of_gloss:
+                aff_name = Affiliation.objects.get(id=aff_obj.affiliation.id)
+                affiliation_names_of_gloss += [aff_name.acronym]
+            affiliation_names_of_gloss = sorted(affiliation_names_of_gloss)
+            fields[affiliation_fieldname] = affiliation_names_of_gloss
+
         return fields
 
     @staticmethod
