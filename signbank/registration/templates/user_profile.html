@@ -50,8 +50,8 @@ $(document).ready(function() {
 {% endblock %}
 
 {% block content %}
-
-<h2>User Profile</h2>
+<div>
+<h2>{% trans "User Profile" %}</h2>
 
     {% if user.is_anonymous %}
     <table class="table">
@@ -164,5 +164,5 @@ $(document).ready(function() {
     </table>
     {% endif %}
     {% endif %}
-
+</div>
 {% endblock %}

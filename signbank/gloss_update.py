@@ -247,7 +247,7 @@ def gloss_update_typecheck(changes, language_code):
             except (ObjectDoesNotExist, MultipleObjectsReturned):
                 errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
         elif field.__class__.__name__ == 'BooleanField':
-            if new_value not in ['true', 'True', 'TRUE']:
+            if new_value not in ['true', 'True', 'TRUE', 'false', 'False', 'FALSE', 'Neutral', 'None']:
                 errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
         elif field.name == 'semField':
             type_check = type_check_multiselect('SemField', new_value, language_code)
@@ -276,6 +276,8 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
             elif field.__class__.__name__ == 'BooleanField':
                 if new_value in ['true', 'True', 'TRUE']:
                     new_value = True
+                elif new_value in ['false', 'False', 'FALSE']:
+                    new_value = False
                 elif new_value == 'None' or new_value == 'Neutral':
                     new_value = None
                 else:
