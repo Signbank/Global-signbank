@@ -20,7 +20,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from signbank.csv_interface import (sense_translations_for_language, update_senses_parse,
                                     update_sentences_parse, sense_examplesentences_for_language, get_sense_numbers,
                                     parse_sentence_row, get_senses_to_sentences, csv_sentence_tuples_list_compare,
-                                    csv_header_row_glosslist, required_csv_columns, trim_columns_in_row)
+                                    csv_header_row_glosslist, required_csv_columns, trim_columns_in_row,
+                                    normalize_field_choice)
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from django.utils.dateformat import format
@@ -799,11 +800,17 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     field_choice = FieldChoice.objects.get(name__iexact=new_human_value, field=field.field_choice_category)
                     new_machine_value = field_choice.machine_value
                 except ObjectDoesNotExist:
-                    error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
-                        gloss_id) + '), could not find option ' + new_human_value + ' for ' + human_key
+                    normalised_choice = normalize_field_choice(new_human_value)
+                    try:
+                        field_choice = FieldChoice.objects.get(name__iexact=normalised_choice,
+                                                               field=field.field_choice_category)
+                        new_machine_value = field_choice.machine_value
+                    except ObjectDoesNotExist:
+                        error_string = 'For ' + default_annotationidglosstranslation + ' (' + str(
+                            gloss_id) + '), could not find option ' + new_human_value + ' for ' + human_key
 
-                    errors_found += [error_string]
-                    continue
+                        errors_found += [error_string]
+                        continue
 
             elif isinstance(field, models.ForeignKey) and field.related_model == Handshape:
                 if new_human_value in ['', '0', ' ', None, 'None']:
