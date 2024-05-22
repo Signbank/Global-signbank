@@ -13,7 +13,7 @@ MANAGERS = ADMINS
 
 TIME_ZONE = 'Europe/Amsterdam'
 
-LOCALE_PATHS = [BASE_DIR+'conf/locale']
+LOCALE_PATHS = [BASE_DIR+'conf/locale', BASE_DIR+'signbank/registration/locale']
 
 # in the database, SITE_ID 1 is example.com
 SITE_ID = 2
