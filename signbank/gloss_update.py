@@ -9,6 +9,7 @@ from guardian.shortcuts import get_objects_for_user
 from signbank.tools import get_interface_language_and_default_language_codes
 from signbank.csv_interface import normalize_field_choice
 from signbank.api_token import hash_token
+import datetime as DT
 
 import ast
 
@@ -114,7 +115,6 @@ def update_senses(gloss, new_value):
     # First remove the senses from the gloss
     old_senses = gloss.senses.all()
     for old_sense in old_senses:
-        
         gloss.senses.remove(old_sense)
 
         # if this sense is part of another gloss, don't delete it
@@ -170,6 +170,7 @@ def update_senses(gloss, new_value):
                     sensetranslation.translations.add(translation)
                 sensetranslation.save()
                 sense.save()
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
     
 
