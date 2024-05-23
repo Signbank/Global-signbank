@@ -2599,7 +2599,7 @@ def gloss_revision_history(request,gloss_pk):
             else:
                 # this shouldn't happen
                 field_name_qualification = ''
-        elif revision.field_name == 'Sense':
+        elif revision.field_name == 'Sense' or revision.field_name == 'senses':
             if revision.old_value and not revision.new_value:
                 # this translation exists in the interface of Gloss Edit View
                 delete_command = str(_('Delete'))

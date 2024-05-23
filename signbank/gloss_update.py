@@ -109,7 +109,7 @@ def revision_history_senses(gloss):
     gloss_senses = gloss.senses.all()
     for sense in gloss_senses:
         senses_display_list.append(str(sense))
-    return ', '.join(senses_display_list)
+    return ' ||| '.join(senses_display_list)
 
 
 def update_senses(gloss, new_value): 
@@ -372,8 +372,10 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                 update_derivation_history_field(gloss, new_value, language_code)
                 changes_done.append((field.name, original_value, new_value))
             elif field.name == "senses" and isinstance(field, models.ManyToManyField):
+                original_senses = revision_history_senses(gloss)
                 update_senses(gloss, new_value)
-                changes_done.append((field.name, original_value, new_value))
+                new_senses = revision_history_senses(gloss)
+                changes_done.append(('Senses', original_senses, new_senses))
             else:
                 # text field
                 setattr(gloss, field.name, new_value)
