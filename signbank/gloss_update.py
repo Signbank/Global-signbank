@@ -375,7 +375,7 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                 original_senses = revision_history_senses(gloss)
                 update_senses(gloss, new_value)
                 new_senses = revision_history_senses(gloss)
-                changes_done.append(('Senses', original_senses, new_senses))
+                changes_done.append((field.name, original_senses, new_senses))
             else:
                 # text field
                 setattr(gloss, field.name, new_value)
