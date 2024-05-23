@@ -103,6 +103,15 @@ def convert_string_to_dict_of_list_of_lists(input_string):
         return {}, "Input is not a dictionary."
 
 
+def revision_history_senses(gloss):
+    # implement this so it can be pretty-printed in human-readable form
+    senses_display_list = []
+    gloss_senses = gloss.senses.all()
+    for sense in gloss_senses:
+        senses_display_list.append(str(sense))
+    return ', '.join(senses_display_list)
+
+
 def update_senses(gloss, new_value): 
     """"
     new_value is a string of comma separated senses, where each sense is a string of comma separated translations
@@ -258,6 +267,73 @@ def gloss_update_typecheck(changes, language_code):
             type_check = type_check_multiselect('derivHist', new_value, language_code)
             if not type_check:
                 errors[field.verbose_name.title()] = gettext('NOT FOUND: ') + new_value
+    return errors
+
+
+def check_value_dict_update_gloss_language_fields(gloss, language_code, value_dict):
+    activate(language_code)
+    errors = []
+
+    lemma_group_glossset = Gloss.objects.filter(lemma=gloss.lemma)
+    if lemma_group_glossset.count() > 1:
+        more_than_one_gloss_in_lemma_group = gettext("More than one gloss in lemma group.")
+        errors.append(more_than_one_gloss_in_lemma_group)
+
+    dataset = gloss.lemma.dataset
+
+    lemmaidglosstranslations = {}
+    for language in dataset.translation_languages.all():
+        lemma_key = 'lemma_id_gloss_' + language.language_code_2char
+        if lemma_key in value_dict.keys():
+            lemmaidglosstranslations[language] = value_dict[lemma_key]
+
+    annotationidglosstranslations = {}
+    for language in dataset.translation_languages.all():
+        annotation_key = 'annotation_id_gloss_' + language.language_code_2char
+        if annotation_key in value_dict.keys():
+            annotationidglosstranslations[language] = value_dict[annotation_key]
+
+    if errors:
+        return errors
+
+    # check lemma translations
+    lemmas_per_language_translation = dict()
+    for language, lemmaidglosstranslation_text in lemmaidglosstranslations.items():
+        lemmatranslation_for_this_text_language = LemmaIdglossTranslation.objects.filter(
+            lemma__dataset=dataset, language=language, text__iexact=lemmaidglosstranslation_text)
+        lemmas_per_language_translation[language] = lemmatranslation_for_this_text_language
+
+    existing_lemmas = []
+    for language, lemmas in lemmas_per_language_translation.items():
+        if lemmas.count():
+            e5 = gettext("Lemma ID Gloss") + " (" + language.name + ") " + gettext("already exists.")
+            errors.append(e5)
+            if lemmas.first().lemma.pk not in existing_lemmas:
+                existing_lemmas.append(lemmas.first().lemma.pk)
+    if len(existing_lemmas) > 1:
+        e6 = gettext("Lemma translations refer to different already existing lemmas.")
+        errors.append(e6)
+
+    # check annotation translations
+    annotations_per_language_translation = dict()
+    for language, annotationidglosstranslation_text in annotationidglosstranslations.items():
+        annotationtranslation_for_this_text_language = AnnotationIdglossTranslation.objects.filter(
+            gloss__lemma__dataset=dataset, language=language, text__iexact=annotationidglosstranslation_text)
+        annotations_per_language_translation[language] = annotationtranslation_for_this_text_language
+
+    existing_glosses = []
+    for language, annotations in annotations_per_language_translation.items():
+        if annotations.count():
+            this_annotation = annotations.first()
+            if this_annotation.id not in existing_glosses and this_annotation.id != gloss.id:
+                existing_glosses.append(this_annotation.id)
+                e7 = gettext('Annotation ID Gloss') + " (" + language.name + ') ' + gettext(
+                    'already exists.')
+                errors.append(e7)
+    if len(existing_glosses) > 1:
+        e6 = gettext("Annotation translations refer to different already existing glosses.")
+        errors.append(e6)
+
     return errors
 
 
