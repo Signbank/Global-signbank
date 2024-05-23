@@ -14,11 +14,18 @@ import datetime as DT
 import ast
 
 
-def api_update_gloss_fields(language_code='en'):
+def api_update_gloss_fields(dataset, language_code='en'):
     activate(language_code)
 
-    api_fields_2024 = []
+    dataset_languages = dataset.translation_languages.all()
+    annotationidglosstranslation_fields = [gettext("Annotation ID Gloss") + " (" + language.name + ")"
+                                           for language in dataset_languages]
+    lemmaidglosstranslation_fields = [gettext("Lemma ID Gloss") + " (" + language.name + ")"
+                                      for language in dataset_languages]
 
+    language_fields = annotationidglosstranslation_fields + lemmaidglosstranslation_fields
+
+    api_fields_2024 = []
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
     gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
@@ -29,14 +36,46 @@ def api_update_gloss_fields(language_code='en'):
     for field in gloss_fields:
         api_fields_2024.append(field.verbose_name.title())
 
-    return api_fields_2024
+    return language_fields, api_fields_2024
 
 
-def update_gloss_columns_to_value_dict_keys(language_code):
+def internal_language_fields(dataset, language_code):
+    activate(language_code)
+
+    dataset_languages = dataset.translation_languages.all()
+    annotationidglosstranslation_fields = ['annotation_id_gloss_' + getattr(language, 'language_code_2char')
+                                           for language in dataset_languages]
+    lemmaidglosstranslation_fields = ['lemma_id_gloss_' + getattr(language, 'language_code_2char')
+                                      for language in dataset_languages]
+
+    language_fields = annotationidglosstranslation_fields + lemmaidglosstranslation_fields
+
+    return language_fields
+
+
+def update_gloss_columns_to_value_dict_keys(dataset, language_code):
     value_dict = dict()
     value_dict_reverse = dict()
+    gloss_dict = dict()
 
     activate(language_code)
+
+    dataset_languages = dataset.translation_languages.all()
+    for language in dataset_languages:
+        human_readable_annotation = gettext("Annotation ID Gloss") + " (" + language.name + ")"
+        internal_annotation = 'annotation_id_gloss_' + getattr(language, 'language_code_2char')
+        value_dict[internal_annotation] = human_readable_annotation
+        human_readable_lemma = gettext("Lemma ID Gloss") + " (" + language.name + ")"
+        internal_lemma = 'lemma_id_gloss_' + getattr(language, 'language_code_2char')
+        value_dict[internal_lemma] = human_readable_lemma
+        value_dict_reverse[human_readable_annotation] = internal_annotation
+        value_dict_reverse[human_readable_lemma] = internal_lemma
+
+        lemma_field_name = _("Lemma ID Gloss") + ": %s" % language.name
+        gloss_dict[human_readable_lemma] = lemma_field_name
+        annotation_field_name = _("Annotation ID Gloss") + ": %s" % language.name
+        gloss_dict[human_readable_annotation] = annotation_field_name
+
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
     gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
@@ -44,7 +83,7 @@ def update_gloss_columns_to_value_dict_keys(language_code):
         value_dict[field.name] = field.verbose_name.title()
         value_dict_reverse[field.verbose_name.title()] = field
 
-    return value_dict, value_dict_reverse
+    return value_dict, value_dict_reverse, gloss_dict
 
 
 @csrf_exempt
@@ -58,11 +97,11 @@ def get_gloss_update_human_readable_value_dict(request):
     return value_dict
 
 
-def gloss_update_fields_check(value_dict, language_code):
-    api_fields_2024 = api_update_gloss_fields(language_code)
+def gloss_update_fields_check(value_dict, dataset, language_code):
+    language_fields, api_fields_2024 = api_update_gloss_fields(dataset, language_code)
     errors = dict()
     for field in value_dict.keys():
-        if field not in api_fields_2024:
+        if field not in api_fields_2024 and field not in language_fields:
             errors[field] = _("Field update not allowed")
     return errors
 
@@ -235,11 +274,16 @@ def type_check_multiselect(category, new_values, language_code):
     return True
 
 
-def gloss_update_typecheck(changes, language_code):
+def gloss_update_typecheck(changes, dataset, language_code):
 
+    language_fields = internal_language_fields(dataset, language_code)
+    print(language_fields)
     errors = dict()
     for field, (original_value, new_value) in changes.items():
+        print(field)
         if not new_value:
+            continue
+        if field in language_fields:
             continue
         if isinstance(field, FieldChoiceForeignKey):
             field_choice_category = field.field_choice_category
@@ -274,27 +318,30 @@ def check_value_dict_update_gloss_language_fields(gloss, language_code, value_di
     activate(language_code)
     errors = []
 
-    lemma_group_glossset = Gloss.objects.filter(lemma=gloss.lemma)
-    if lemma_group_glossset.count() > 1:
-        more_than_one_gloss_in_lemma_group = gettext("More than one gloss in lemma group.")
-        errors.append(more_than_one_gloss_in_lemma_group)
-
     dataset = gloss.lemma.dataset
-
+    print('check language fields: ', value_dict)
     lemmaidglosstranslations = {}
     for language in dataset.translation_languages.all():
         lemma_key = 'lemma_id_gloss_' + language.language_code_2char
         if lemma_key in value_dict.keys():
-            lemmaidglosstranslations[language] = value_dict[lemma_key]
+            lemmaidglosstranslations[language] = value_dict[lemma_key][1]
+    print('lemma translations: ', lemmaidglosstranslations)
+
+    if lemmaidglosstranslations:
+        # the lemma translations are being updated
+        lemma_group_glossset = Gloss.objects.filter(lemma=gloss.lemma)
+        if lemma_group_glossset.count() > 1:
+            more_than_one_gloss_in_lemma_group = gettext("More than one gloss in lemma group.")
+            errors.append(more_than_one_gloss_in_lemma_group)
+
+    if errors:
+        return errors
 
     annotationidglosstranslations = {}
     for language in dataset.translation_languages.all():
         annotation_key = 'annotation_id_gloss_' + language.language_code_2char
         if annotation_key in value_dict.keys():
-            annotationidglosstranslations[language] = value_dict[annotation_key]
-
-    if errors:
-        return errors
+            annotationidglosstranslations[language] = value_dict[annotation_key][1]
 
     # check lemma translations
     lemmas_per_language_translation = dict()
@@ -302,7 +349,7 @@ def check_value_dict_update_gloss_language_fields(gloss, language_code, value_di
         lemmatranslation_for_this_text_language = LemmaIdglossTranslation.objects.filter(
             lemma__dataset=dataset, language=language, text__iexact=lemmaidglosstranslation_text)
         lemmas_per_language_translation[language] = lemmatranslation_for_this_text_language
-
+    print('lemmas found: ', lemmas_per_language_translation)
     existing_lemmas = []
     for language, lemmas in lemmas_per_language_translation.items():
         if lemmas.count():
@@ -337,14 +384,51 @@ def check_value_dict_update_gloss_language_fields(gloss, language_code, value_di
     return errors
 
 
+def update_language_field(gloss, language_field, new_value):
+    if language_field.startswith('lemma_id_gloss_'):
+        language_code_2char = language_field[-2:]
+        language = Language.objects.filter(language_code_2char=language_code_2char).first()
+        try:
+            lemma_idgloss_translation = LemmaIdglossTranslation.objects.get(lemma=gloss.lemma, language=language)
+        except ObjectDoesNotExist:
+            # create an empty annotation for this gloss and language
+            lemma_idgloss_translation = LemmaIdglossTranslation(lemma=gloss.lemma, language=language)
+
+        try:
+            lemma_idgloss_translation.text = new_value
+            lemma_idgloss_translation.save()
+        except (DatabaseError, ValidationError):
+            pass
+    elif language_field.startswith('annotation_id_gloss_'):
+        language_code_2char = language_field[-2:]
+        language = Language.objects.filter(language_code_2char=language_code_2char).first()
+        try:
+            annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
+        except ObjectDoesNotExist:
+            # create an empty annotation for this gloss and language
+            annotation_idgloss_translation = AnnotationIdglossTranslation(gloss=gloss, language=language)
+
+        try:
+            annotation_idgloss_translation.text = new_value
+            annotation_idgloss_translation.save()
+        except (DatabaseError, ValidationError):
+            pass
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
+
 @csrf_exempt
 def gloss_update_do_changes(user, gloss, changes, language_code):
-
+    dataset = gloss.lemma.dataset
+    language_fields = internal_language_fields(dataset, language_code)
     changes_done = []
     activate(language_code)
     with atomic():
         for field, (original_value, new_value) in changes.items():
-            if isinstance(field, FieldChoiceForeignKey):
+            if field in language_fields:
+                update_language_field(gloss, field, new_value)
+                changes_done.append((field, original_value, new_value))
+            elif isinstance(field, FieldChoiceForeignKey):
                 field_choice_category = field.field_choice_category
                 normalised_choice = normalize_field_choice(new_value)
                 fieldchoice = FieldChoice.objects.get(field=field_choice_category, name__iexact=normalised_choice)
@@ -392,17 +476,31 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
 
 
 def gloss_update(gloss, update_fields_dict, language_code):
+    print('gloss update update_fields_dict: ', update_fields_dict)
+    dataset = gloss.lemma.dataset
+    language_fields, api_fields_2024 = api_update_gloss_fields(dataset, language_code)
+    fields_mapping_dict, human_values_dict, gloss_dict = update_gloss_columns_to_value_dict_keys(dataset, language_code)
 
-    api_fields_2024 = api_update_gloss_fields(language_code)
+    print('gloss update language fields: ', language_fields)
+    combined_fields = api_fields_2024
+    for language_field in language_fields:
+        gloss_dict_language_field = gloss_dict[language_field]
+        combined_fields.append(gloss_dict_language_field)
 
-    gloss_data_dict = gloss.get_fields_dict(api_fields_2024, language_code)
-    fields_mapping_dict, human_values_dict = update_gloss_columns_to_value_dict_keys(language_code)
+    gloss_data_dict = gloss.get_fields_dict(combined_fields, language_code)
+    print(gloss_data_dict)
 
     fields_to_update = dict()
     for human_readable_field, new_field_value in update_fields_dict.items():
         if not new_field_value:
             continue
-        if human_readable_field not in gloss_data_dict.keys():
+        if human_readable_field in language_fields:
+            gloss_language_field = gloss_dict[human_readable_field]
+            original_value = gloss_data_dict[gloss_language_field]
+            gloss_field = human_values_dict[human_readable_field]
+            fields_to_update[gloss_field] = (original_value, new_field_value)
+            continue
+        elif human_readable_field not in gloss_data_dict.keys():
             # new value
             original_value = ''
             gloss_field = human_values_dict[human_readable_field]
@@ -507,19 +605,27 @@ def api_update_gloss(request, datasetid, glossid):
         return JsonResponse(results)
 
     value_dict = get_gloss_update_human_readable_value_dict(request)
-    errors = gloss_update_fields_check(value_dict, interface_language_code)
+    print(value_dict)
+    errors = gloss_update_fields_check(value_dict, dataset, interface_language_code)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
     fields_to_update = gloss_update(gloss, value_dict, interface_language_code)
-    errors = gloss_update_typecheck(fields_to_update, interface_language_code)
+    print('fields to update: ', fields_to_update)
+    errors = gloss_update_typecheck(fields_to_update, dataset, interface_language_code)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
-    
+
+    errors = check_value_dict_update_gloss_language_fields(gloss, interface_language_code, fields_to_update)
+    if errors:
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
     if 'Senses' in value_dict:
         _, errors = convert_string_to_dict_of_list_of_lists(value_dict['Senses'])
         if errors:

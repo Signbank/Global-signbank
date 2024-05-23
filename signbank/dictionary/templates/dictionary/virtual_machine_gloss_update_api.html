@@ -19,6 +19,7 @@
     var glossid = '{{gloss.id}}';
     var csrf_token = '{{csrf_token}}';
     var gloss_fields = {{gloss_fields|safe}};
+    var language_2chars = {{language_2chars|safe}};
 </script>
 
 <script type="text/javascript">
@@ -49,6 +50,23 @@ function show_update_results(data) {
 }
 function update_gloss() {
      var update = { };
+     for (var i=0; i < language_2chars.length; i++) {
+        var lang2char = language_2chars[i];
+        var lemma_field = 'lemma_id_gloss_' + lang2char;
+        var lemma_field_lookup = '#'+lemma_field;
+        var lemma_field_key = $(lemma_field_lookup).attr("name");
+        var lemma_field_value = $(lemma_field_lookup).val();
+        if (lemma_field_value != '') {
+            update[lemma_field_key] = lemma_field_value;
+        }
+        var annotation_field = 'annotation_id_gloss_' + lang2char;
+        var annotation_field_lookup = '#'+annotation_field;
+        var annotation_field_key = $(annotation_field_lookup).attr("name");
+        var annotation_field_value = $(annotation_field_lookup).val();
+        if (annotation_field_value != '') {
+            update[annotation_field_key] = annotation_field_value;
+        }
+     }
      for (var field in gloss_fields) {
         var field_lookup = '#field_input_'+field;
         var field_key = $(field_lookup).attr("name");
@@ -58,11 +76,13 @@ function update_gloss() {
         }
         update[field_key] = field_value;
      }
+     var update_json = JSON.stringify(update);
+     console.log(update_json);
      $.ajax({
         url : url + "/dictionary/api_update_gloss/" + datasetid + '/' + glossid + '/',
         type: 'POST',
         headers: { 'Accept-Language': language_code },
-        data: JSON.stringify(update),
+        data: update_json,
         datatype: "json",
         async: false,
         success : show_update_results
@@ -99,6 +119,32 @@ function update_gloss() {
         <p>{% trans "It makes use of the csrf token in the javascript AJAX setup." %}</p>
      <div>
          <table class='table' style='width: 1200px;'>
+             {% for dataset_lang in dataset_languages %}
+             <tr>
+                 <th id="add_gloss_lemma_header_{{dataset_lang.language_code_2char}}" style="width:200px;">
+                     {% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})
+                 </th>
+                 <td id="add_gloss_lemma_value_{{dataset_lang.language_code_2char}}">
+                     <input id="lemma_id_gloss_{{dataset_lang.language_code_2char}}"
+                            name='{% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})'
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             {% endfor %}
+             {% for dataset_lang in dataset_languages %}
+             <tr>
+                 <th id="add_gloss_annotation_header_{{dataset_lang.language_code_2char}}" style="width:300px;">
+                     {% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})
+                 </th>
+                 <td id="add_gloss_annotation_value_{{dataset_lang.language_code_2char}}">
+                     <input id="annotation_id_gloss_{{dataset_lang.language_code_2char}}"
+                            name='{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})'
+                            maxlength="30" type="text"
+                            size="50" >
+                 </td>
+             </tr>
+             {% endfor %}
              {% for field, field_verbose in gloss_fields.items %}
              <tr>
                  <th id="field_label_{{field}}">
