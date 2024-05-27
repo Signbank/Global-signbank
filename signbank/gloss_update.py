@@ -54,9 +54,27 @@ def internal_language_fields(dataset, language_code):
 
 
 def update_gloss_columns_to_value_dict_keys(dataset, language_code):
-    value_dict = dict()
-    value_dict_reverse = dict()
-    gloss_dict = dict()
+    """
+    Function to create mapping dictionaries for the different label representations
+    Called from gloss_update
+    Representations:
+    1. Human readable labels (multilingual, with language name in parentheses)
+    2. JSON keys (multilingual, with colon before language name)
+    3. Internal form field labels
+       Gloss field names or labels for language fields
+       Language fields are not Gloss fields. They are constructed,
+       contain underscores and language code at the end.
+    (1) and (3) are shared with CSV routines
+    Mappings:
+    human_readable_to_internal
+       maps human readable labels to fields of Gloss (so attributes can be retrieved)
+       or to language internal fields
+    human_readable_to_json
+       maps human readable language labels with parens to JSON keys with colons
+       only used for language labels
+    """
+    human_readable_to_internal = dict()
+    human_readable_to_json = dict()
 
     activate(language_code)
 
@@ -64,26 +82,25 @@ def update_gloss_columns_to_value_dict_keys(dataset, language_code):
     for language in dataset_languages:
         human_readable_annotation = gettext("Annotation ID Gloss") + " (" + language.name + ")"
         internal_annotation = 'annotation_id_gloss_' + getattr(language, 'language_code_2char')
-        value_dict[internal_annotation] = human_readable_annotation
+        annotation_api_field_name = _("Annotation ID Gloss") + ": %s" % language.name
+
         human_readable_lemma = gettext("Lemma ID Gloss") + " (" + language.name + ")"
         internal_lemma = 'lemma_id_gloss_' + getattr(language, 'language_code_2char')
-        value_dict[internal_lemma] = human_readable_lemma
-        value_dict_reverse[human_readable_annotation] = internal_annotation
-        value_dict_reverse[human_readable_lemma] = internal_lemma
+        lemma_api_field_name = _("Lemma ID Gloss") + ": %s" % language.name
 
-        lemma_field_name = _("Lemma ID Gloss") + ": %s" % language.name
-        gloss_dict[human_readable_lemma] = lemma_field_name
-        annotation_field_name = _("Annotation ID Gloss") + ": %s" % language.name
-        gloss_dict[human_readable_annotation] = annotation_field_name
+        human_readable_to_internal[human_readable_annotation] = internal_annotation
+        human_readable_to_internal[human_readable_lemma] = internal_lemma
+
+        human_readable_to_json[human_readable_lemma] = lemma_api_field_name
+        human_readable_to_json[human_readable_annotation] = annotation_api_field_name
 
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
     gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
     for field in gloss_fields:
-        value_dict[field.name] = field.verbose_name.title()
-        value_dict_reverse[field.verbose_name.title()] = field
+        human_readable_to_internal[field.verbose_name.title()] = field
 
-    return value_dict, value_dict_reverse, gloss_dict
+    return human_readable_to_internal, human_readable_to_json
 
 
 @csrf_exempt
@@ -479,12 +496,12 @@ def gloss_update(gloss, update_fields_dict, language_code):
     print('gloss update update_fields_dict: ', update_fields_dict)
     dataset = gloss.lemma.dataset
     language_fields, api_fields_2024 = api_update_gloss_fields(dataset, language_code)
-    fields_mapping_dict, human_values_dict, gloss_dict = update_gloss_columns_to_value_dict_keys(dataset, language_code)
+    human_readable_to_internal, human_readable_to_json = update_gloss_columns_to_value_dict_keys(dataset, language_code)
 
     print('gloss update language fields: ', language_fields)
     combined_fields = api_fields_2024
     for language_field in language_fields:
-        gloss_dict_language_field = gloss_dict[language_field]
+        gloss_dict_language_field = human_readable_to_json[language_field]
         combined_fields.append(gloss_dict_language_field)
 
     gloss_data_dict = gloss.get_fields_dict(combined_fields, language_code)
@@ -495,25 +512,25 @@ def gloss_update(gloss, update_fields_dict, language_code):
         if not new_field_value:
             continue
         if human_readable_field in language_fields:
-            gloss_language_field = gloss_dict[human_readable_field]
+            gloss_language_field = human_readable_to_json[human_readable_field]
             original_value = gloss_data_dict[gloss_language_field]
-            gloss_field = human_values_dict[human_readable_field]
+            gloss_field = human_readable_to_internal[human_readable_field]
             fields_to_update[gloss_field] = (original_value, new_field_value)
             continue
         elif human_readable_field not in gloss_data_dict.keys():
             # new value
             original_value = ''
-            gloss_field = human_values_dict[human_readable_field]
+            gloss_field = human_readable_to_internal[human_readable_field]
             fields_to_update[gloss_field] = (original_value, new_field_value)
             continue
-        if human_readable_field in human_values_dict.keys():
+        if human_readable_field in human_readable_to_internal.keys():
             original_value = gloss_data_dict[human_readable_field]
             if original_value in ['False'] and new_field_value in ['', 'False']:
                 # treat empty as False
                 continue
             if new_field_value == original_value:
                 continue
-            gloss_field = human_values_dict[human_readable_field]
+            gloss_field = human_readable_to_internal[human_readable_field]
             fields_to_update[gloss_field] = (original_value, new_field_value)
     return fields_to_update
 
