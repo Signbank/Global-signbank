@@ -3785,6 +3785,9 @@ class AnnotatedGloss(models.Model):
     
     def get_end(self):
         return self.endtime/1000
+    
+    def show_annotationidglosstranslation(self):
+        return self.gloss.annotationidglosstranslation_set.filter(language = self.annotatedsentence.get_dataset().default_language).first().text
 
 
 class AnnotatedSentenceTranslation(models.Model):
@@ -3845,6 +3848,15 @@ class AnnotatedSentence(models.Model):
                 if annotation[1] == "1":
                     repr = True
                 AnnotatedGloss.objects.create(gloss=annotationIdGlossTranslation.gloss, annotatedsentence=self, isRepresentative=repr, starttime=annotation[2], endtime=annotation[3])
+
+    def get_annotated_glosses_list(self):
+        annotated_glosses = []
+        checked_glosses = []
+        for annotated_gloss in self.annotated_glosses.all():
+            annotated_glosses.append([annotated_gloss.show_annotationidglosstranslation(), int(annotated_gloss.starttime), int(annotated_gloss.endtime)])
+            if annotated_gloss.isRepresentative and annotated_gloss.show_annotationidglosstranslation() not in checked_glosses:
+                checked_glosses.append(annotated_gloss.show_annotationidglosstranslation())
+        return annotated_glosses, checked_glosses
 
     def add_translations(self, translations):
         """Add translations to the annotated sentence"""
@@ -3924,7 +3936,7 @@ class AnnotatedSentence(models.Model):
         return self.get_video() not in ['', None]
 
 
-    def add_video(self, user, videofile, eaffile):
+    def add_video(self, user, videofile, eaffile, corpus):
         """Add a video to the annotated sentence"""
         from signbank.video.models import AnnotatedVideo
 
@@ -3932,6 +3944,9 @@ class AnnotatedSentence(models.Model):
             and eaffile.content_type == 'application/octet-stream':
             annotatedVideo = AnnotatedVideo.objects.create(annotatedsentence=self, videofile=videofile, eaffile=eaffile)
     
+        annotatedVideo.corpus = corpus
+        annotatedVideo.save()
+        
         return annotatedVideo
 
     

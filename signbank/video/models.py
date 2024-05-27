@@ -508,6 +508,7 @@ class AnnotatedVideo(models.Model):
     videofile = models.FileField("video file", upload_to=get_annotated_video_file_path, storage=storage,
                                  validators=[validate_file_extension])
     eaffile = models.FileField("eaf file", upload_to=get_annotated_video_file_path, storage=storage)
+    corpus = models.TextField(default='')
 
     # video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
@@ -540,15 +541,19 @@ class AnnotatedVideo(models.Model):
         # os.chown(location, 1000, 1002)
         os.chmod(location, stat.S_IRWXU | stat.S_IRWXG)
 
-    def delete_files(self):
+    def delete_files(self, only_eaf=False):
         """Delete the files associated with this object"""
         try:
-            os.remove(self.videofile.path)
             os.remove(self.eaffile.path)
-            video_path = os.path.join(settings.WRITABLE_FOLDER, settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY, self.annotatedsentence.get_dataset().acronym, str(self.annotatedsentence.id))
-            os.rmdir(video_path)
+            if not only_eaf:
+                os.remove(self.videofile.path)
+                video_path = os.path.join(settings.WRITABLE_FOLDER, settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY, self.annotatedsentence.get_dataset().acronym, str(self.annotatedsentence.id))
+                os.rmdir(video_path)
         except OSError:
             pass
+
+    def get_eaffile_name(self):
+        return os.path.basename(self.eaffile.name)
 
     def __str__(self):
         # this coercion to a string type sometimes causes special characters in the filename to be a problem

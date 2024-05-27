@@ -15,7 +15,7 @@
     <fieldset>
         <legend>{% trans "Edit Annotated Sentence" %}</legend>
         
-        For the following gloss: {{gloss}}<br><br>
+        For the following gloss: {{annotationidgloss}}<br><br>
 
         For the following sentence: <br>
         {% url 'dictionary:protected_media' '' as protected_media_url %}
@@ -24,12 +24,26 @@
             Your browser does not support the video tag.
         </video> 
 
-        <form action="{{PREFIX_URL}}/dictionary/update/saveeditannotatedsentence/" id="editAnnotatedSentenceForm" method="post" enctype="multipart/form-data">
+        <form action="{{PREFIX_URL}}/dictionary/update/saveeditannotatedsentence/" id="annotatedSentenceForm" method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}'>
         <input type='hidden' name='annotatedsentenceid' value='{{annotated_sentence.id}}'>
         <input type='hidden' name='glossid' value='{{gloss.id}}'>
+        <input type='hidden' id='check_gloss_label' value='{{annotationidgloss}}'>
         <br>
+
+        <br><br>
+        Download the current .eaf file here:
+        <a href="{{ annotated_sentence.annotatedvideo.eaffile.url }}" download>{{ annotated_sentence.annotatedvideo.get_eaffile_name }}</a>
+        <br><br>
+        Choose the updated annotation file (.eaf) here: 
+        <input type="file" id="eaffile" name="eaffile">
+        <br>
+        <div id="feedback">
+            {{ annotations_table_html|safe }}
+        </div>
+
+        <br><br>
         Edit context for the sentence in the following languages:<br>
         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
             {{dataset_lang.name}}:<input style="width:100%" id="context_{{dataset_lang.language_code_3char}}" name="context_{{dataset_lang.language_code_3char}}" value="{% if dataset_lang.language_code_3char in annotated_contexts %}{{ annotated_contexts|get_item:dataset_lang.language_code_3char }}{% endif %}" maxlength="150" type="text"/>
@@ -42,11 +56,17 @@
         {% endfor %}
 
         <br><br>
+        From corpus:
+        <input style="width:100%" id="corpus_name" name="corpus_name" value="{{ corpus }}" maxlength="40" type="text"/>
+        
+        <br><br>
         <input class='btn btn-primary' type='submit' value='Save' />
 
         </form>
   </fieldset>
 </div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/process_annotated_eaf_files.js"></script>
 
 {% endif %}
 {% endblock %}
