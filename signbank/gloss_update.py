@@ -114,12 +114,12 @@ def get_gloss_update_human_readable_value_dict(request):
     return value_dict
 
 
-def gloss_update_fields_check(value_dict, dataset, language_code):
+def check_fields_can_be_updated(value_dict, dataset, language_code):
     language_fields, api_fields_2024 = api_update_gloss_fields(dataset, language_code)
     errors = dict()
     for field in value_dict.keys():
         if field not in api_fields_2024 and field not in language_fields:
-            errors[field] = _("Field update not allowed")
+            errors[field] = _("Field update not available")
     return errors
 
 
@@ -140,7 +140,7 @@ def convert_string_to_dict_of_list_of_lists(input_string):
     try:
         dict_of_lists = ast.literal_eval(input_string)
     except (ValueError, SyntaxError):
-        return {}, "Sense input if not in the expected format. \nTry: '{\"en\":[[\"sense 1 keyword1\", \"sense 1 keyword2\"],[\"sense 2 keyword1\"]], \"nl\":[[\"sense 1 keyword1\"],[\"sense 2 keyword1\", \"sense 2 keyword2\"]]}'"
+        return {}, "Sense input is not in the expected format. \nTry: '{\"en\":[[\"sense 1 keyword1\", \"sense 1 keyword2\"],[\"sense 2 keyword1\"]], \"nl\":[[\"sense 1 keyword1\"],[\"sense 2 keyword1\", \"sense 2 keyword2\"]]}'"
 
     # Verify if the result is a dictionary
     if isinstance(dict_of_lists, dict):
@@ -159,8 +159,8 @@ def convert_string_to_dict_of_list_of_lists(input_string):
         return {}, "Input is not a dictionary."
 
 
-def revision_history_senses(gloss):
-    # implement this so it can be pretty-printed in human-readable form
+def collect_revision_history_for_senses(gloss):
+    # this collects the senses in pretty-printed in human-readable form
     senses_display_list = []
     gloss_senses = gloss.senses.all()
     for sense in gloss_senses:
@@ -291,13 +291,11 @@ def type_check_multiselect(category, new_values, language_code):
     return True
 
 
-def gloss_update_typecheck(changes, dataset, language_code):
+def detect_type_related_problems_for_gloss_update(changes, dataset, language_code):
 
     language_fields = internal_language_fields(dataset, language_code)
-    print(language_fields)
     errors = dict()
     for field, (original_value, new_value) in changes.items():
-        print(field)
         if not new_value:
             continue
         if field in language_fields:
@@ -331,18 +329,16 @@ def gloss_update_typecheck(changes, dataset, language_code):
     return errors
 
 
-def check_value_dict_update_gloss_language_fields(gloss, language_code, value_dict):
+def check_constraints_on_gloss_language_fields(gloss, language_code, value_dict):
     activate(language_code)
     errors = []
 
     dataset = gloss.lemma.dataset
-    print('check language fields: ', value_dict)
     lemmaidglosstranslations = {}
     for language in dataset.translation_languages.all():
         lemma_key = 'lemma_id_gloss_' + language.language_code_2char
         if lemma_key in value_dict.keys():
             lemmaidglosstranslations[language] = value_dict[lemma_key][1]
-    print('lemma translations: ', lemmaidglosstranslations)
 
     if lemmaidglosstranslations:
         # the lemma translations are being updated
@@ -366,7 +362,7 @@ def check_value_dict_update_gloss_language_fields(gloss, language_code, value_di
         lemmatranslation_for_this_text_language = LemmaIdglossTranslation.objects.filter(
             lemma__dataset=dataset, language=language, text__iexact=lemmaidglosstranslation_text)
         lemmas_per_language_translation[language] = lemmatranslation_for_this_text_language
-    print('lemmas found: ', lemmas_per_language_translation)
+
     existing_lemmas = []
     for language, lemmas in lemmas_per_language_translation.items():
         if lemmas.count():
@@ -473,9 +469,9 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
                 update_derivation_history_field(gloss, new_value, language_code)
                 changes_done.append((field.name, original_value, new_value))
             elif field.name == "senses" and isinstance(field, models.ManyToManyField):
-                original_senses = revision_history_senses(gloss)
+                original_senses = collect_revision_history_for_senses(gloss)
                 update_senses(gloss, new_value)
-                new_senses = revision_history_senses(gloss)
+                new_senses = collect_revision_history_for_senses(gloss)
                 changes_done.append((field.name, original_senses, new_senses))
             else:
                 # text field
@@ -493,19 +489,17 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
 
 
 def gloss_update(gloss, update_fields_dict, language_code):
-    print('gloss update update_fields_dict: ', update_fields_dict)
+
     dataset = gloss.lemma.dataset
     language_fields, api_fields_2024 = api_update_gloss_fields(dataset, language_code)
     human_readable_to_internal, human_readable_to_json = update_gloss_columns_to_value_dict_keys(dataset, language_code)
 
-    print('gloss update language fields: ', language_fields)
     combined_fields = api_fields_2024
     for language_field in language_fields:
         gloss_dict_language_field = human_readable_to_json[language_field]
         combined_fields.append(gloss_dict_language_field)
 
     gloss_data_dict = gloss.get_fields_dict(combined_fields, language_code)
-    print(gloss_data_dict)
 
     fields_to_update = dict()
     for human_readable_field, new_field_value in update_fields_dict.items():
@@ -622,22 +616,20 @@ def api_update_gloss(request, datasetid, glossid):
         return JsonResponse(results)
 
     value_dict = get_gloss_update_human_readable_value_dict(request)
-    print(value_dict)
-    errors = gloss_update_fields_check(value_dict, dataset, interface_language_code)
+    errors = check_fields_can_be_updated(value_dict, dataset, interface_language_code)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
     fields_to_update = gloss_update(gloss, value_dict, interface_language_code)
-    print('fields to update: ', fields_to_update)
-    errors = gloss_update_typecheck(fields_to_update, dataset, interface_language_code)
+    errors = detect_type_related_problems_for_gloss_update(fields_to_update, dataset, interface_language_code)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    errors = check_value_dict_update_gloss_language_fields(gloss, interface_language_code, fields_to_update)
+    errors = check_constraints_on_gloss_language_fields(gloss, interface_language_code, fields_to_update)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
