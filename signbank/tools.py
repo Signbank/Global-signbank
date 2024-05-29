@@ -1608,7 +1608,7 @@ def create_zip_with_json_files(data_per_file, output_path):
     for filename, data in data_per_file.items():
         if isinstance(data, list) or isinstance(data, dict):
             try:
-                output = json.dumps(data, indent=INDENTATION_CHARS)
+                output = json.dumps(data, indent=INDENTATION_CHARS, ensure_ascii=False).encode('utf8')
             except TypeError:
                 print('problem processing json.dumps on ', filename)
                 output = ''
