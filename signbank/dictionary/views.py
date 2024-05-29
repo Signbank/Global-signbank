@@ -2599,7 +2599,7 @@ def gloss_revision_history(request,gloss_pk):
             else:
                 # this shouldn't happen
                 field_name_qualification = ''
-        elif revision.field_name == 'Sense':
+        elif revision.field_name in ['Sense', 'Senses', 'senses']:
             if revision.old_value and not revision.new_value:
                 # this translation exists in the interface of Gloss Edit View
                 delete_command = str(_('Delete'))
@@ -3099,12 +3099,15 @@ def test_am_update_gloss(request, datasetid, glossid):
 
     activate(interface_language_code)
     fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv', 'senses']
-    gloss_fields = { fname: Gloss.get_field(fname).verbose_name.title()
-                    for fname in fieldnames if fname in Gloss.get_field_names() }
+    gloss_fields = {fname: Gloss.get_field(fname).verbose_name.title()
+                    for fname in fieldnames if fname in Gloss.get_field_names()}
+
+    language_2chars = [str(language.language_code_2char) for language in dataset.translation_languages.all()]
 
     return render(request, 'dictionary/virtual_machine_gloss_update_api.html',
                   {'selected_datasets': selected_datasets,
                    'dataset': dataset,
+                   'language_2chars': language_2chars,
                    'gloss': gloss,
                    'gloss_fields': gloss_fields,
                    'dataset_languages': dataset_languages,

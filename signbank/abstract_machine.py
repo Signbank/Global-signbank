@@ -82,7 +82,6 @@ def create_gloss_columns_to_value_dict_keys(dataset, language_code):
     required_columns = dict()
     required_columns['Dataset'] = 'dataset'
     dataset_languages = dataset.translation_languages.all()
-    lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
     for language in dataset_languages:
         required_columns[gettext("Annotation ID Gloss") + " (" + language.name + ")"] = (
                 'annotation_id_gloss_' + getattr(language, 'language_code_2char'))
