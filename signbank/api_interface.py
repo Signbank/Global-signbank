@@ -65,13 +65,16 @@ def api_fields(dataset, language_code='en', advanced=False):
         api_fields_2023.append(_("Video"))
         api_fields_2023.append(_("Tags"))
         api_fields_2023.append(_("Affiliation"))
+        api_fields_2023.append(_("Sequential Morphology"))
+        api_fields_2023.append(_("Simultaneous Morphology"))
+        api_fields_2023.append(_("Blend Morphology"))
 
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
         # TO DO
-        extra_columns = ['Sign Languages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
-                         'Blend Morphology', 'Relations to other signs', 'Relations to foreign signs', 'Notes']
+        extra_columns = ['Sign Languages', 'Dialects',
+                         'Relations to other signs', 'Relations to foreign signs', 'Notes']
 
         # show advanced properties
         for field in gloss_fields:

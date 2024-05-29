@@ -1504,6 +1504,21 @@ class Gloss(models.Model):
             affiliation_names_of_gloss = sorted(affiliation_names_of_gloss)
             fields[affiliation_fieldname] = affiliation_names_of_gloss
 
+        sequential_morphology_fieldname = gettext("Sequential Morphology")
+        sequential_morphology = self.get_hasComponentOfType_display()
+        if sequential_morphology:
+            fields[sequential_morphology_fieldname] = sequential_morphology
+
+        simultaneous_morphology_fieldname = gettext("Simultaneous Morphology")
+        simultaneous_morphology = self.get_morpheme_display()
+        if simultaneous_morphology:
+            fields[simultaneous_morphology_fieldname] = simultaneous_morphology
+
+        blend_morphology_fieldname = gettext("Blend Morphology")
+        blend_morphology = self.get_blendmorphology_display()
+        if blend_morphology:
+            fields[blend_morphology_fieldname] = blend_morphology
+
         return fields
 
     @staticmethod
