@@ -95,26 +95,26 @@ def gloss_update(gloss, update_fields_dict, language_code):
 
 def detect_type_related_problems_for_gloss_update(gloss, changes, language_code):
     internal_to_human_readable = internal_morphology_to_human_readable(language_code)
-    errors = dict()
+    errors_per_field = dict()
     for field, (original_value, new_value) in changes.items():
         if field == 'sequential_morphology':
             (found, not_found, errors) = check_existence_sequential_morphology(gloss, new_value)
             if len(errors):
                 morphology_field = internal_to_human_readable[field]
-                errors[morphology_field] = errors
+                errors_per_field[morphology_field] = errors
         elif field == 'simultaneous_morphology':
             new_human_value_list = [v.strip() for v in new_value.split(',')]
             (checked_new_human_value, errors) = check_existence_simultaneous_morphology(gloss, new_human_value_list)
             if len(errors):
                 morphology_field = internal_to_human_readable[field]
-                errors[morphology_field] = errors
+                errors_per_field[morphology_field] = errors
         elif field == 'blend_morphology':
             new_human_value_list = [v.strip() for v in new_value.split(',')]
             (checked_new_human_value, errors) = check_existence_blend_morphology(gloss, new_human_value_list)
             if len(errors):
                 morphology_field = internal_to_human_readable[field]
-                errors[morphology_field] = errors
-    return errors
+                errors_per_field[morphology_field] = errors
+    return errors_per_field
 
 
 def gloss_update_do_changes(user, gloss, fields_to_update, language_code):
