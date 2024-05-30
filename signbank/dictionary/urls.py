@@ -12,7 +12,7 @@ from signbank.dictionary.adminviews import GlossListView, GlossDetailView, Gloss
 
 from signbank.dictionary.views import create_citation_image
 
-#These are needed for the urls below
+# These are needed for the urls below
 import signbank.dictionary.views
 import signbank.dictionary.tagviews
 import signbank.dictionary.adminviews
@@ -20,6 +20,7 @@ import signbank.api_interface
 import signbank.manage_videos
 import signbank.abstract_machine
 import signbank.gloss_update
+import signbank.gloss_morphology_update
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -152,6 +153,8 @@ urlpatterns = [
             signbank.gloss_update.api_update_gloss, name='api_update_gloss'),
     re_path(r'test_am_update_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.dictionary.views.test_am_update_gloss, name='test_am_update_gloss'),
+    re_path(r'api_update_gloss_morphology/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
+            signbank.gloss_morphology_update.api_update_gloss_morphology, name='api_update_gloss'),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),

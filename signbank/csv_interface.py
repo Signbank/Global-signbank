@@ -877,7 +877,7 @@ def csv_header_row_morphemelist(dataset_languages, fields):
     keyword_fields = ["Keywords" + " (" + getattr(language, lang_attr_name) + ")"
                       for language in dataset_languages]
 
-    with override(LANGUAGE_CODE):
+    with override(LANGUAGES[0][0]):
         header = ['Signbank ID'] + annotationidglosstranslation_fields + keyword_fields + [f.verbose_name.title().encode('ascii', 'ignore').decode() for f in fields]
 
     for extra_column in ['Appears in signs']:
@@ -993,7 +993,7 @@ def csv_header_row_lemmalist(dataset_languages):
     lemmaidglosstranslation_fields = ["Lemma ID Gloss" + " (" + getattr(language, lang_attr_name) + ")"
                                       for language in dataset_languages]
 
-    with override(LANGUAGE_CODE):
+    with override(LANGUAGES[0][0]):
         header = ['Lemma ID', 'Dataset'] + lemmaidglosstranslation_fields + ['Number of glosses']
 
     return header
