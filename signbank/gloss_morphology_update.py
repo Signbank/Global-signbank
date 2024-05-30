@@ -119,33 +119,17 @@ def detect_type_related_problems_for_gloss_update(gloss, changes, language_code)
 
 def gloss_update_do_changes(user, gloss, fields_to_update, language_code):
     changes_done = []
-    for (field, new_value) in fields_to_update.items():
+    for field, (original_value, new_value) in fields_to_update.items():
         if field == 'sequential_morphology':
-            morphemes = [get_default_annotationidglosstranslation(morpheme.morpheme)
-                         for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
-            original_value = " + ".join(morphemes)
             new_human_value_list = [v.strip() for v in new_value.split(' + ')]
             # the new values have already been parsed at the previous stage
             update_sequential_morphology(gloss, new_human_value_list)
             changes_done.append((field, original_value, new_value))
         elif field == 'simultaneous_morphology':
-            morphemes = [(get_default_annotationidglosstranslation(m.morpheme), m.role) for m in
-                         gloss.simultaneous_morphology.all()]
-            sim_morphs = []
-            for m in morphemes:
-                sim_morphs.append(':'.join(m))
-            original_value = ','.join(sim_morphs)
             new_human_value_list = [v.strip() for v in new_value.split(',')]
             update_simultaneous_morphology(gloss, new_human_value_list)
             changes_done.append((field, original_value, new_value))
         elif field == 'blend_morphology':
-            morphemes = [(get_default_annotationidglosstranslation(m.glosses), m.role)
-                         for m in gloss.blend_morphology.all()]
-
-            ble_morphs = []
-            for m in morphemes:
-                ble_morphs.append(':'.join(m))
-            original_value = ','.join(ble_morphs)
             new_human_value_list = [v.strip() for v in new_value.split(',')]
             update_blend_morphology(gloss, new_human_value_list)
             changes_done.append((field, original_value, new_value))
