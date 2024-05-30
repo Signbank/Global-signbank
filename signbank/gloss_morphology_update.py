@@ -255,7 +255,7 @@ def api_update_gloss_morphology(request, datasetid, glossid):
         return JsonResponse(results)
 
     fields_to_update = gloss_update(gloss, value_dict, interface_language_code)
-    errors = detect_type_related_problems_for_gloss_update(gloss, fields_to_update)
+    errors = detect_type_related_problems_for_gloss_update(gloss, fields_to_update, interface_language_code)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
