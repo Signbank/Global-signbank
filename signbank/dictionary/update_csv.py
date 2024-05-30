@@ -16,7 +16,7 @@ def update_sequential_morphology(gloss, values):
     # machine value of the first component
     role = 2
 
-    morphemes = [morpheme.morpheme.id
+    morphemes = [morpheme.id
                  for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
 
     # the existence of the morphemes in parameter values has already been checked
