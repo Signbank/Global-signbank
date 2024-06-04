@@ -546,9 +546,8 @@ class AnnotatedVideo(models.Model):
         try:
             os.remove(self.eaffile.path)
             if not only_eaf:
-                os.remove(self.videofile.path)
                 video_path = os.path.join(settings.WRITABLE_FOLDER, settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY, self.annotatedsentence.get_dataset().acronym, str(self.annotatedsentence.id))
-                os.rmdir(video_path)
+                shutil.rmtree(video_path)
         except OSError:
             pass
 

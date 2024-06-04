@@ -1924,13 +1924,14 @@ def save_edit_annotated_sentence(request):
             corpus = request.POST['corpus_name']
             annotated_sentence.annotatedvideo.corpus = corpus
             annotated_sentence.annotatedvideo.delete_files(only_eaf=True)
-            eaffile = request.FILES['eaffile']
-            if isinstance(eaffile, File) or eaffile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile' or eaffile.content_type == 'django.core.files.uploadedfile.TemporaryUploadedFile':
-                from signbank.video.models import get_annotated_video_file_path
-                eaf_file_path = get_annotated_video_file_path(instance=annotated_sentence.annotatedvideo, filename=eaffile.name)
-                annotated_sentence.annotatedvideo.eaffile.save(eaf_file_path, eaffile)
-            else:
-                raise ValueError("Uploaded file is not valid")
+            if 'eaffile' in request.FILES:
+                eaffile = request.FILES['eaffile']
+                if isinstance(eaffile, File) or eaffile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile' or eaffile.content_type == 'django.core.files.uploadedfile.TemporaryUploadedFile':
+                    from signbank.video.models import get_annotated_video_file_path
+                    eaf_file_path = get_annotated_video_file_path(instance=annotated_sentence.annotatedvideo, filename=eaffile.name)
+                    annotated_sentence.annotatedvideo.eaffile.save(eaf_file_path, eaffile)
+                else:
+                    raise ValueError("Uploaded file is not valid")
 
     
     return redirect(redirect_url)
