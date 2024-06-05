@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+ <meta charset="UTF-8">
+<head>
+<title>Test API Update Gloss</title>
+<script src='https://code.jquery.com/jquery-3.7.1.min.js'></script>
+<script type="text/javascript">
+    var url = 'https://signbank-dev.cls.ru.nl/';
+    var datasetid = '1';
+    var glossid = '47961';
+    var gloss_fields =  {'sequential_morphology': 'Sequential Morphology',
+                         'simultaneous_morphology': 'Simultaneous Morphology',
+                         'blend_morphology': 'Blend Morphology'};
+</script>
+
+<script type="text/javascript">
+function show_update_results(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var errorsElt = $('#errors');
+    var glossidElt = $('#glossid');
+    var statusElt = $('#status');
+    var errors = data.errors;
+    var updatestatus = data.updatestatus;
+    var glossid = data.glossid;
+    var glossCell = "ERRORS <ul>";
+    for (var err in errors) {
+        glossCell = glossCell + "<li>"+err+": "+errors[err]+"</li>";
+    }
+    glossCell = glossCell + "</ul>";
+    errorsElt.html(glossCell);
+    if (updatestatus) {
+        statusCell = "<span>STATUS "+updatestatus+"</span>";
+        statusElt.html(statusCell);
+    }
+    if (glossid) {
+        glossCell = "<span>GLOSS ID "+glossid+"</span>";
+        glossidElt.html(glossCell);
+    }
+}
+function update_gloss() {
+     var update = { };
+     for (var field in gloss_fields) {
+        var field_lookup = '#field_input_'+field;
+        var field_key = $(field_lookup).attr("name");
+        var field_value = $(field_lookup).val();
+        if (field_value == '') {
+            continue;
+        }
+        update[field_key] = field_value;
+     }
+     console.log(update);
+     $.ajax({
+        url : url + "/dictionary/api_update_gloss_morphology/" + datasetid + '/' + glossid + '/',
+        type: 'POST',
+        headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXX',
+                   'Content-Type': 'application/json',
+                   'Accept-Language': 'en' },
+        data: JSON.stringify(update),
+        datatype: "json",
+        async: false,
+        success : show_update_results
+     });
+}
+
+</script>
+
+</head>
+<body>
+<div>
+    <div>
+    <h3>Test API Update Gloss Morphology</h3>
+        <p>This template is for testing the gloss update API from a local file on your own computer.</p>
+        <p>
+            <code>
+            file:///home/user/folder/virtual_machine_gloss_update_morphology_api_token_en.html
+            </code>
+        </p>
+        <p>It is intended for checking the multilingual translations of field choices and values.</p>
+        <p>The javascript AJAX call does not use the csrf token; your Signbank API Token goes in the headers:</p>
+        <p>
+            <code>
+                    headers: { 'Authorization': 'Bearer XXXXXXXXXXXXXXXX',
+                               'Content-Type': 'application/json',
+                               'Accept-Language': 'en' }
+            </code>
+        </p>
+        <br>
+     <div>
+         <h3>Gloss Fields</h3>
+         <table class='table' style='width: 1200px;'>
+                          <tbody><tr>
+                 <th id="field_label_sequential_morphology">
+                     Sequential Morphology
+                 </th>
+                 <td id="field_value_sequential_morphology">
+                     <input name="Sequential Morphology" id="field_input_sequential_morphology" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_simultaneous_morphology">
+                     Simultaneous Morphology
+                 </th>
+                 <td id="field_value_simultaneous_morphology">
+                     <input name="Simultaneous Morphology" id="field_input_simultaneous_morphology" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+             <tr>
+                 <th id="field_label_blend_morphology">
+                     Blend Morphology
+                 </th>
+                 <td id="field_value_blend_morphology">
+                     <input name="Blend Morphology" id="field_input_blend_morphology" maxlength="200" type="text" size="50">
+                 </td>
+             </tr>
+
+         </tbody>
+         </table>
+
+     <input class='btn btn-primary' type='submit'
+            onclick="update_gloss();"
+            value='Update Gloss'>
+
+     <br><br>
+     </div>
+    </div>
+<div>
+<h3>Updated Gloss</h3>
+ <p id="glossid"></p>
+ <p id="errors"></p>
+ <p id="status"></p>
+</div>
+</div>
+
+</body>
+</html>

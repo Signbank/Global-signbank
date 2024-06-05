@@ -7,6 +7,8 @@ from tagging.models import Tag, TaggedItem
 from signbank.dictionary.forms import *
 from django.utils.translation import override, gettext_lazy as _, activate
 from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
+from signbank.api_token import hash_token
+from signbank.abstract_machine import get_interface_language_api
 
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -39,37 +41,40 @@ def api_fields(dataset, language_code='en', advanced=False):
         dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
     if advanced:
         for language in dataset.translation_languages.all():
-            language_field = _("Lemma ID Gloss") + ": %s" % language.name
+            language_field = gettext("Lemma ID Gloss") + ": %s" % language.name
             api_fields_2023.append(language_field)
     for language in dataset.translation_languages.all():
-        language_field = _("Annotation ID Gloss") + ": %s" % language.name
+        language_field = gettext("Annotation ID Gloss") + ": %s" % language.name
         api_fields_2023.append(language_field)
     for language in dataset.translation_languages.all():
-        language_field = _("Senses") + ": %s" % language.name
+        language_field = gettext("Senses") + ": %s" % language.name
         api_fields_2023.append(language_field)
 
     if not advanced:
-        api_fields_2023.append(_("Handedness"))
-        api_fields_2023.append(_("Strong Hand"))
-        api_fields_2023.append(_("Weak Hand"))
-        api_fields_2023.append(_("Location"))
-        api_fields_2023.append(_("Semantic Field"))
-        api_fields_2023.append(_("Word Class"))
-        api_fields_2023.append(_("Named Entity"))
-        api_fields_2023.append(_("Link"))
-        api_fields_2023.append(_("Video"))
+        api_fields_2023.append(gettext("Handedness"))
+        api_fields_2023.append(gettext("Strong Hand"))
+        api_fields_2023.append(gettext("Weak Hand"))
+        api_fields_2023.append(gettext("Location"))
+        api_fields_2023.append(gettext("Semantic Field"))
+        api_fields_2023.append(gettext("Word Class"))
+        api_fields_2023.append(gettext("Named Entity"))
+        api_fields_2023.append(gettext("Link"))
+        api_fields_2023.append(gettext("Video"))
     else:
-        api_fields_2023.append(_("Link"))
-        api_fields_2023.append(_("Video"))
-        api_fields_2023.append(_("Tags"))
-        api_fields_2023.append(_("Affiliation"))
+        api_fields_2023.append(gettext("Link"))
+        api_fields_2023.append(gettext("Video"))
+        api_fields_2023.append(gettext("Tags"))
+        api_fields_2023.append(gettext("Affiliation"))
+        api_fields_2023.append(gettext("Sequential Morphology"))
+        api_fields_2023.append(gettext("Simultaneous Morphology"))
+        api_fields_2023.append(gettext("Blend Morphology"))
 
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
         # TO DO
-        extra_columns = ['Sign Languages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
-                         'Blend Morphology', 'Relations to other signs', 'Relations to foreign signs', 'Notes']
+        extra_columns = ['Sign Languages', 'Dialects',
+                         'Relations to other signs', 'Relations to foreign signs', 'Notes']
 
         # show advanced properties
         for field in gloss_fields:
@@ -80,8 +85,24 @@ def api_fields(dataset, language_code='en', advanced=False):
 
 def get_fields_data_json(request, datasetid):
 
-    from signbank.abstract_machine import get_interface_language_api
-    interface_language_code = get_interface_language_api(request, request.user)
+    results = dict()
+    auth_token_request = request.headers.get('Authorization', '')
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
+    if auth_token_request:
+        auth_token = auth_token_request.split('Bearer ')[-1]
+        hashed_token = hash_token(auth_token)
+        signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
+        if not signbank_token:
+            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
+            return JsonResponse(results)
+        username = signbank_token.signbank_user.username
+        user = User.objects.get(username=username)
+    else:
+        user = request.user
+        interface_language_code = get_interface_language_api(request, user)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -98,7 +119,7 @@ def get_fields_data_json(request, datasetid):
         # ignore the database in the url if necessary
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
-    if request.user.has_perm('dictionary.change_gloss'):
+    if user.has_perm('dictionary.change_gloss'):
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=True)
     else:
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=False)
@@ -110,8 +131,24 @@ def get_fields_data_json(request, datasetid):
 
 def get_gloss_data_json(request, datasetid, glossid):
 
-    from signbank.abstract_machine import get_interface_language_api
-    interface_language_code = get_interface_language_api(request, request.user)
+    results = dict()
+    auth_token_request = request.headers.get('Authorization', '')
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
+    if auth_token_request:
+        auth_token = auth_token_request.split('Bearer ')[-1]
+        hashed_token = hash_token(auth_token)
+        signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
+        if not signbank_token:
+            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
+            return JsonResponse(results)
+        username = signbank_token.signbank_user.username
+        user = User.objects.get(username=username)
+    else:
+        user = request.user
+        interface_language_code = get_interface_language_api(request, user)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -124,8 +161,8 @@ def get_gloss_data_json(request, datasetid, glossid):
 
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
-    if not dataset or not request.user.is_authenticated:
-        # ignore the database in the url if necessary
+    if not dataset or not user.is_authenticated:
+        # ignore the dataset in the url if necessary
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
     sequence_of_digits = True
@@ -143,7 +180,7 @@ def get_gloss_data_json(request, datasetid, glossid):
     if not gloss:
         return JsonResponse({})
 
-    if request.user.has_perm('dictionary.change_gloss'):
+    if user.has_perm('dictionary.change_gloss'):
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=True)
     else:
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=False)
