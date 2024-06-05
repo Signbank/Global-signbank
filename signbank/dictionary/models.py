@@ -1494,6 +1494,23 @@ class Gloss(models.Model):
             tag_names_of_gloss = sorted(tag_names_of_gloss)
             fields[tags_fieldname] = tag_names_of_gloss
 
+        notes_fieldname = gettext("Notes")
+        notes_of_gloss = self.definition_set.all()
+        if notes_fieldname in fieldnames and notes_of_gloss:
+            note_tuples_of_gloss = []
+            for n_obj in notes_of_gloss:
+                note_tuples_of_gloss += [n_obj.note_tuple()]
+            sorted_notes_list = sorted(note_tuples_of_gloss, key=lambda x: (x[0], x[1], x[2], x[3]))
+            notes_display = []
+            for (role, published, count, text) in sorted_notes_list:
+                tuple_dict = dict()
+                tuple_dict[gettext("Published")] = published
+                tuple_dict[gettext("Index")] = count
+                tuple_dict[gettext("Type")] = role
+                tuple_dict[gettext("Text")] = text
+                notes_display.append(tuple_dict)
+            fields[notes_fieldname] = notes_display
+
         affiliation_fieldname = gettext("Affiliation")
         affiliations_of_gloss = AffiliatedGloss.objects.filter(gloss_id=self.id)
         if affiliation_fieldname in fieldnames:
