@@ -293,7 +293,7 @@ def subst_notes(gloss, values):
 
 
 def subst_semanticfield(gloss, values):
-    # this is called by csv_import to modify the notes for a gloss
+    # this is called by csv_import to modify the semantic field for a gloss
     new_semanticfields_to_save = []
 
     # fetch all the valid semantic field choices
