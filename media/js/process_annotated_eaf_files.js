@@ -3,7 +3,8 @@ $(document).ready(function () {
     $('#eaffile').change(function () {
         var formData = new FormData();
         formData.append('eaffile', $('#eaffile')[0].files[0]); // Add the file input to the FormData object
-        formData.append('check_gloss_label', $('#check_gloss_label').val()); // Add the gloss label to check in checkbox
+        formData.append('check_gloss_label', [$('#check_gloss_label').val()]);
+        // formData.append('check_gloss_label', $('#check_gloss_label').val()); // Add the gloss label to check in checkbox
         formData.append('csrfmiddlewaretoken', $('input[name=csrfmiddlewaretoken]').val()); // Include the CSRF token in the FormData object
 
         $.ajax({
@@ -60,8 +61,6 @@ $(document).ready(function () {
             // Concatenate gloss and its attributes with a separator
             feedbackData += gloss + ':' + representative + ':' + starttime + ':' + endtime + ';';
         });
-
-        console.log(feedbackData)
 
         // Append the feedback data to a hidden input field in the form
         $('<input>').attr({

@@ -1850,6 +1850,7 @@ def add_annotated_media(request, glossid):
     gloss = Gloss.objects.get(id=glossid)
     context = {
         'gloss': gloss,
+        'annotationidgloss': gloss.annotationidglosstranslation_set.filter(language = gloss.lemma.dataset.default_language).first().text,
         'videoform': VideoUploadForObjectForm(),
     }
     return render(request, template, context)
@@ -1864,12 +1865,20 @@ def edit_annotated_sentence(request, glossid, annotatedsentenceid):
         annotated_sentence = AnnotatedSentence.objects.get(id=annotatedsentenceid)
         annotated_translations = annotated_sentence.get_annotatedstc_translations_dict_with()
         annotated_contexts = annotated_sentence.get_annotatedstc_contexts_dict_with()
+        corpus = annotated_sentence.annotatedvideo.corpus
+        annotationidgloss = gloss.annotationidglosstranslation_set.filter(language = annotated_sentence.get_dataset().default_language).first().text
+
+    annotated_glosses, checked_glosses = annotated_sentence.get_annotated_glosses_list()
+    annotations_table_html = render(request, 'annotations_table.html', {'glosses_list': annotated_glosses, 'check_gloss_label': checked_glosses, 'labels_not_found': []}).content.decode('utf-8')
 
     context = {
         'gloss': gloss,
+        'annotationidgloss': annotationidgloss,
         'annotated_sentence': annotated_sentence,
         'annotated_translations': annotated_translations,
         'annotated_contexts': annotated_contexts,
+        'corpus': corpus,
+        'annotations_table_html': annotations_table_html,
     }
     return render(request, template, context)
 
@@ -1882,32 +1891,50 @@ def save_edit_annotated_sentence(request):
     redirect_url = request.POST.get('redirect')
     gloss = Gloss.objects.get(id=request.POST.get('glossid'))
     annotated_sentence = AnnotatedSentence.objects.get(id=request.POST.get('annotatedsentenceid'))
-    for language in gloss.lemma.dataset.translation_languages.all():
-        context_key = 'context_' + language.language_code_3char
-        if context_key in request.POST:
-            context_in_lang = request.POST[context_key]
-            if context_in_lang != '':
-                annotated_sentence_context, _ = AnnotatedSentenceContext.objects.get_or_create(annotatedsentence=annotated_sentence, language=language)
-                annotated_sentence_context.text = context_in_lang
-                annotated_sentence_context.save()
-            else:
-                annotated_sentence_context = AnnotatedSentenceContext.objects.filter(annotatedsentence=annotated_sentence, language=language)
-                if annotated_sentence_context:
-                    annotated_sentence_context.delete()
-        translation_key = 'translation_' + language.language_code_3char
-        if translation_key in request.POST:
-            translation_in_lang = request.POST[translation_key]
-            if translation_in_lang != '':
-                annotated_sentence_translation, _ = AnnotatedSentenceTranslation.objects.get_or_create(annotatedsentence=annotated_sentence, language=language)
-                annotated_sentence_translation.text = translation_in_lang
-                annotated_sentence_translation.save()
-            else:
-                annotated_sentence_translation = AnnotatedSentenceTranslation.objects.filter(annotatedsentence=annotated_sentence, language=language)
-                if annotated_sentence_translation:
-                    annotated_sentence_translation.delete()
+    annotations = request.POST['feedbackdata']
 
+    with atomic():
+        annotated_sentence.annotated_glosses.all().delete()
+        annotated_sentence.add_annotations(annotations, gloss)
+
+        for language in gloss.lemma.dataset.translation_languages.all():
+            context_key = 'context_' + language.language_code_3char
+            if context_key in request.POST:
+                context_in_lang = request.POST[context_key]
+                if context_in_lang != '':
+                    annotated_sentence_context, _ = AnnotatedSentenceContext.objects.get_or_create(annotatedsentence=annotated_sentence, language=language)
+                    annotated_sentence_context.text = context_in_lang
+                    annotated_sentence_context.save()
+                else:
+                    annotated_sentence_context = AnnotatedSentenceContext.objects.filter(annotatedsentence=annotated_sentence, language=language)
+                    if annotated_sentence_context:
+                        annotated_sentence_context.delete()
+            translation_key = 'translation_' + language.language_code_3char
+            if translation_key in request.POST:
+                translation_in_lang = request.POST[translation_key]
+                if translation_in_lang != '':
+                    annotated_sentence_translation, _ = AnnotatedSentenceTranslation.objects.get_or_create(annotatedsentence=annotated_sentence, language=language)
+                    annotated_sentence_translation.text = translation_in_lang
+                    annotated_sentence_translation.save()
+                else:
+                    annotated_sentence_translation = AnnotatedSentenceTranslation.objects.filter(annotatedsentence=annotated_sentence, language=language)
+                    if annotated_sentence_translation:
+                        annotated_sentence_translation.delete()
+        if 'corpus_name' in request.POST:
+            corpus = request.POST['corpus_name']
+            annotated_sentence.annotatedvideo.corpus = corpus
+            annotated_sentence.annotatedvideo.delete_files(only_eaf=True)
+            if 'eaffile' in request.FILES:
+                eaffile = request.FILES['eaffile']
+                if isinstance(eaffile, File) or eaffile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile' or eaffile.content_type == 'django.core.files.uploadedfile.TemporaryUploadedFile':
+                    from signbank.video.models import get_annotated_video_file_path
+                    eaf_file_path = get_annotated_video_file_path(instance=annotated_sentence.annotatedvideo, filename=eaffile.name)
+                    annotated_sentence.annotatedvideo.eaffile.save(eaf_file_path, eaffile)
+                else:
+                    raise ValueError("Uploaded file is not valid")
+
+    
     return redirect(redirect_url)
-
 
 def delete_annotated_sentence(request, glossid):
     """View to delete an annotated sentence model from the editable modal"""
