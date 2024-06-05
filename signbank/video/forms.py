@@ -21,3 +21,4 @@ class VideoUploadForObjectForm(forms.Form):
     feedbackdata = forms.CharField(widget=forms.HiddenInput, required=False)
     translations = forms.CharField(widget=forms.HiddenInput, required=False)
     contexts = forms.CharField(widget=forms.HiddenInput, required=False)
+    corpus_name = forms.CharField(required=False)

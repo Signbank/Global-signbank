@@ -11,10 +11,16 @@
         {% for item in glosses_list %}
             <tr>
                 <td>{{ item.0 }}</td>
-                <td><input type="checkbox" {% if item.0 == check_gloss_label %} checked {% endif %}></td>
+                <td><input type="checkbox" {% if item.0 in check_gloss_label %} checked {% endif %}></td>
                 <td>{{ item.1 }}</td>
                 <td>{{ item.2 }}</td>
             </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<br>
+{% if labels_not_found|length > 0 %}
+    Annotations found that don't exist in Signbank:
+    {{ labels_not_found|join:", " }}
+{% endif %}

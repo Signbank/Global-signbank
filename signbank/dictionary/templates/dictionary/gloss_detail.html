@@ -2281,7 +2281,7 @@ option:not(:checked) {
                                 <div id="glossContainer_{{ forloop.counter }}">
                                     {% for annotated_gloss in annotated_sentence.annotated_glosses.all %}
                                         <span data-start="{{ annotated_gloss.get_start }}" data-end="{{ annotated_gloss.get_end }}">
-                                            <a href="{{ PREFIX_URL }}/dictionary/gloss/{{ annotated_gloss.gloss.id }}">{{ annotated_gloss.gloss }}</a>
+                                            <a href="{{ PREFIX_URL }}/dictionary/gloss/{{ annotated_gloss.gloss.id }}">{{ annotated_gloss.show_annotationidglosstranslation }}</a>
                                         </span>
                                     {% endfor %}
                                 </div><br>
@@ -2315,6 +2315,12 @@ option:not(:checked) {
                                     {% for annotated_sentence_translation in annotated_sentence.annotated_sentence_translations.all %}
                                         {{ annotated_sentence_translation.language }}: {{ annotated_sentence_translation.text }}{% if not forloop.last %}<br>{% endif %}
                                     {% endfor %}
+                                    {% endif %}
+                                </p>
+                                <p>
+                                    {% if annotated_sentence.annotatedvideo.corpus %}
+                                    <i>Corpus</i><br>
+                                    {{ annotated_sentence.annotatedvideo.corpus }}
                                     {% endif %}
                                 </p>
                             </td>

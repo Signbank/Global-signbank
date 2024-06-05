@@ -41,33 +41,33 @@ def api_fields(dataset, language_code='en', advanced=False):
         dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
     if advanced:
         for language in dataset.translation_languages.all():
-            language_field = _("Lemma ID Gloss") + ": %s" % language.name
+            language_field = gettext("Lemma ID Gloss") + ": %s" % language.name
             api_fields_2023.append(language_field)
     for language in dataset.translation_languages.all():
-        language_field = _("Annotation ID Gloss") + ": %s" % language.name
+        language_field = gettext("Annotation ID Gloss") + ": %s" % language.name
         api_fields_2023.append(language_field)
     for language in dataset.translation_languages.all():
-        language_field = _("Senses") + ": %s" % language.name
+        language_field = gettext("Senses") + ": %s" % language.name
         api_fields_2023.append(language_field)
 
     if not advanced:
-        api_fields_2023.append(_("Handedness"))
-        api_fields_2023.append(_("Strong Hand"))
-        api_fields_2023.append(_("Weak Hand"))
-        api_fields_2023.append(_("Location"))
-        api_fields_2023.append(_("Semantic Field"))
-        api_fields_2023.append(_("Word Class"))
-        api_fields_2023.append(_("Named Entity"))
-        api_fields_2023.append(_("Link"))
-        api_fields_2023.append(_("Video"))
+        api_fields_2023.append(gettext("Handedness"))
+        api_fields_2023.append(gettext("Strong Hand"))
+        api_fields_2023.append(gettext("Weak Hand"))
+        api_fields_2023.append(gettext("Location"))
+        api_fields_2023.append(gettext("Semantic Field"))
+        api_fields_2023.append(gettext("Word Class"))
+        api_fields_2023.append(gettext("Named Entity"))
+        api_fields_2023.append(gettext("Link"))
+        api_fields_2023.append(gettext("Video"))
     else:
-        api_fields_2023.append(_("Link"))
-        api_fields_2023.append(_("Video"))
-        api_fields_2023.append(_("Tags"))
-        api_fields_2023.append(_("Affiliation"))
-        api_fields_2023.append(_("Sequential Morphology"))
-        api_fields_2023.append(_("Simultaneous Morphology"))
-        api_fields_2023.append(_("Blend Morphology"))
+        api_fields_2023.append(gettext("Link"))
+        api_fields_2023.append(gettext("Video"))
+        api_fields_2023.append(gettext("Tags"))
+        api_fields_2023.append(gettext("Affiliation"))
+        api_fields_2023.append(gettext("Sequential Morphology"))
+        api_fields_2023.append(gettext("Simultaneous Morphology"))
+        api_fields_2023.append(gettext("Blend Morphology"))
 
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + ['inWeb', 'isNew', 'excludeFromEcv']
         gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
