@@ -64,6 +64,7 @@ def api_fields(dataset, language_code='en', advanced=False):
         api_fields_2023.append(gettext("Link"))
         api_fields_2023.append(gettext("Video"))
         api_fields_2023.append(gettext("Tags"))
+        api_fields_2023.append(gettext("Notes"))
         api_fields_2023.append(gettext("Affiliation"))
         api_fields_2023.append(gettext("Sequential Morphology"))
         api_fields_2023.append(gettext("Simultaneous Morphology"))

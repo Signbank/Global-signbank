@@ -30,8 +30,8 @@ def api_update_gloss_fields(dataset, language_code='en'):
     gloss_fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
     # TO DO
-    extra_columns = ['Sign Languages', 'Dialects', 'Sequential Morphology', 'Simultaneous Morphology',
-                     'Blend Morphology', 'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']
+    extra_columns = ['Sign Languages', 'Dialects',
+                     'Relations to other signs', 'Relations to foreign signs', 'Tags', 'Notes']
 
     for field in gloss_fields:
         api_fields_2024.append(field.verbose_name.title())
