@@ -107,6 +107,7 @@ def process_eaffile(request):
 
     if request.method == 'POST':
         check_gloss_label = request.POST.get('check_gloss_label', '')
+        dataset_acronym = request.POST.get('dataset', '')
         labels_not_found = []
         uploaded_file = request.FILES['eaffile']
         file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
@@ -118,7 +119,7 @@ def process_eaffile(request):
         # Add glosses from the right hand
         for annotation in eaf.tiers['Glosses R'][0].values():
             gloss_label = annotation[2]
-            if AnnotationIdglossTranslation.objects.filter(text__exact=gloss_label).exists():
+            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
                 start = int(eaf.timeslots[annotation[0]])
                 end = int(eaf.timeslots[annotation[1]])
                 glosses.append([gloss_label, start, end])
@@ -128,7 +129,7 @@ def process_eaffile(request):
         # Add glosses from the left hand, if they don't overlap with the right hand
         for annotation in find_non_overlapping_annotated_glosses(eaf.timeslots, eaf.tiers['Glosses R'][0].values(), eaf.tiers['Glosses L'][0].values()):
             gloss_label = annotation[2]
-            if AnnotationIdglossTranslation.objects.filter(text__exact=gloss_label).exists():
+            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset_acronym=dataset_acronym, text__exact=gloss_label).exists():
                 start = int(eaf.timeslots[annotation[0]])
                 end = int(eaf.timeslots[annotation[1]])
                 glosses.append([gloss_label, start, end])
