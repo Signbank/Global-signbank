@@ -30,6 +30,7 @@
         <input type='hidden' name='annotatedsentenceid' value='{{annotated_sentence.id}}'>
         <input type='hidden' name='glossid' value='{{gloss.id}}'>
         <input type='hidden' id='check_gloss_label' value='{{annotationidgloss}}'>
+        <input type='hidden' id='dataset' value='{{gloss.lemma.dataset.acronym}}'>
         <br>
 
         <br><br>
@@ -37,7 +38,7 @@
         <a href="{{ annotated_sentence.annotatedvideo.eaffile.url }}" download>{{ annotated_sentence.annotatedvideo.get_eaffile_name }}</a>
         <br><br>
         Choose the updated annotation file (.eaf) here: 
-        <input type="file" id="eaffile" name="eaffile">
+        <input type="file" id="eaffile" name="eaffile" required>
         <br>
         <div id="feedback">
             {{ annotations_table_html|safe }}
