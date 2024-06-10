@@ -919,6 +919,7 @@ class GlossDetailView(DetailView):
         context['tagform'] = TagUpdateForm()
         context['affiliationform'] = AffiliationUpdateForm()
         context['videoform'] = VideoUploadForObjectForm()
+        context['nmevideoform'] = VideoUploadForObjectForm()
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()

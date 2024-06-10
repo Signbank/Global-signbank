@@ -24,7 +24,7 @@ from signbank.dictionary.models import *
 if sys.argv[0] == 'mod_wsgi':
     from signbank.dictionary.models import *
 else:
-    from signbank.dictionary.models import Gloss
+    from signbank.dictionary.models import Gloss, Language
 
 
 def get_two_letter_dir(idgloss):
@@ -34,81 +34,6 @@ def get_two_letter_dir(idgloss):
         foldername += '-'
 
     return foldername
-
-
-class Video(models.Model):
-    """A video file stored on the site"""
-
-    # video file name relative to MEDIA_ROOT
-    videofile = models.FileField("Video file in h264 mp4 format", upload_to=settings.VIDEO_UPLOAD_LOCATION)
-
-    def __str__(self):
-        return self.videofile.name
-
-    def process(self):
-        """The clean method will try to validate the video
-        file format, optimise for streaming and generate
-        the poster image"""
-
-        self.poster_path()
-        # self.ensure_mp4()
-
-    def poster_path(self, create=True):
-        """Return the path of the poster image for this
-        video, if create=True, create the image if needed
-        Return None if create=False and the file doesn't exist"""
-
-        vidpath, ext = os.path.splitext(self.videofile.path)
-        poster_path = vidpath + ".png"
-        # replace vidpath with imagepath!
-        poster_path = str(poster_path.replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
-
-        if not os.path.exists(poster_path):
-            if create:
-                # need to create the image
-                extract_frame(self.videofile.path, poster_path)
-            else:
-                return None
-
-        return poster_path
-
-    def get_absolute_url(self):
-        return self.videofile.url
-
-    def ensure_mp4(self):
-        """Ensure that the video file is an h264 format
-        video, convert it if necessary"""
-
-        # convert video to use the right size and iphone/net friendly bitrate
-        # create a temporary copy in the new format
-        # then move it into place
-
-        print("ENSURE MP4: ", self.videofile.path)
-
-        # (basename, ext) = os.path.splitext(self.videofile.path)
-        # tmploc = basename + "-conv.mp4"
-        # err = convert_video(self.videofile.path, tmploc, force=False)
-        # # print tmploc
-        # shutil.move(tmploc, self.videofile.path)
-
-        (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext == '.mov' or ext == '.webm':
-            oldloc = self.videofile.path
-            newloc = basename + ".mp4"
-            err = convert_video(oldloc, newloc, force=False)
-            self.videofile.name = get_video_file_path(self, os.path.basename(newloc))
-            os.remove(oldloc)
-
-    def delete_files(self):
-        """Delete the files associated with this object"""
-
-        try:
-            os.unlink(self.videofile.path)
-            poster_path = self.poster_path(create=False)
-            if poster_path:
-                os.unlink(poster_path)
-        except OSError:
-            pass
 
 
 class GlossVideoStorage(FileSystemStorage):
@@ -206,16 +131,20 @@ class GlossVideoHistory(models.Model):
 # * Changes to the lemmaidglosstranslations: process_lemmaidglosstranslation_changes(...)
 
 
-def get_video_file_path(instance, filename, version=0):
+def get_video_file_path(instance, filename, nmevideo=False, offset=1, version=0):
     """
     Return the full path for storing an uploaded video
     :param instance: A GlossVideo instance
     :param filename: the original file name
+    :param nmevideo: boolean whether this is an nme video
     :param version: the version to determine the number of .bak extensions
     :return: 
     """
+    print('call to get video path with nmevideo: ', nmevideo)
     (base, ext) = os.path.splitext(filename)
 
+    if instance:
+        print(instance.__dict__)
     idgloss = instance.gloss.idgloss
 
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
@@ -223,13 +152,24 @@ def get_video_file_path(instance, filename, version=0):
         dataset_dir = instance.gloss.lemma.dataset.acronym
     except KeyError:
         dataset_dir = ""
-    two_letter_dir = get_two_letter_dir(idgloss)
-    filename = idgloss + '-' + str(instance.gloss.id) + ext + (version * ".bak")
+    if nmevideo:
+        print('instance is nme video')
+        nme_video_offset = '_nme_' + str(offset)
+    else:
+        nme_video_offset = ''
 
+    two_letter_dir = get_two_letter_dir(idgloss)
+    filename = idgloss + '-' + str(instance.gloss.id) + nme_video_offset + ext + (version * ".bak")
+    print('filename get video file path: ', filename)
+    print('video dir: ', video_dir)
+    print('dataset dir: ', dataset_dir)
+    print('two letter dir: ', two_letter_dir)
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
+    print('path inside get_video_file_path: ', path)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
         from django.utils.encoding import escape_uri_path
         path = escape_uri_path(path)
+    print('path returned by get_video_file_path: ', path)
     return path
 
 
@@ -563,7 +503,7 @@ class AnnotatedVideo(models.Model):
 class GlossVideo(models.Model):
     """A video that represents a particular idgloss"""
 
-    videofile = models.FileField("video file", upload_to=get_video_file_path, storage=storage,
+    videofile = models.FileField("video file", storage=storage,
                                  validators=[validate_file_extension])
 
     gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
@@ -572,6 +512,13 @@ class GlossVideo(models.Model):
     # we will increment the version (via reversion) if a new video is added
     # for this gloss
     version = models.IntegerField("Version", default=0)
+
+    def __init__(self, *args, **kwargs):
+        if 'upload_to' in kwargs:
+            self.upload_to = kwargs.pop('upload_to')
+        else:
+            self.upload_to = get_video_file_path
+        super().__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         self.ensure_mp4()
@@ -753,7 +700,20 @@ class GlossVideo(models.Model):
     def __str__(self):
         # this coercion to a string type sometimes causes special characters in the filename to be a problem
         # code has been introduced elsewhere to make sure paths are the correct encoding
-        return self.videofile.name
+        if hasattr(self, 'glossvideonme'):
+            name, _ = os.path.splitext(self.videofile.name)
+            glossvideonme = self.glossvideonme
+            offset = '_' + str(glossvideonme.offset) if glossvideonme.offset else ''
+            nme_name = name + '_nme' + offset + '.mp4'
+
+            glossvideoname = nme_name
+        else:
+            glossvideoname = self.videofile.name
+        return glossvideoname
+
+    def is_glossvideonme(self):
+        """Test if this instance is a NME Gloss Video"""
+        return hasattr(self, 'glossvideonme')
 
     def move_video(self, move_files_on_disk=True):
         """
@@ -761,7 +721,10 @@ class GlossVideo(models.Model):
         :return: 
         """
         old_path = str(str(self.videofile))
-        new_path = get_video_file_path(self, old_path, self.version)
+        if hasattr(self, 'glossvideonme'):
+            new_path = get_video_file_path(self, old_path, nmevideo=True, version=self.version)
+        else:
+            new_path = get_video_file_path(self, old_path, version=self.version)
         if old_path != new_path:
             if move_files_on_disk:
                 source = os.path.join(settings.WRITABLE_FOLDER, old_path)
@@ -795,6 +758,71 @@ class GlossVideo(models.Model):
 
             self.videofile.name = new_path
             self.save()
+
+
+class GlossVideoDescription(models.Model):
+    """A sentence translation belongs to one example sentence"""
+
+    text = models.TextField()
+    nmevideo = models.ForeignKey('GlossVideoNME', on_delete=models.CASCADE)
+    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.text
+
+
+class GlossVideoNME(GlossVideo):
+    offset = models.IntegerField(default=1)
+
+    class Meta:
+        verbose_name = gettext("NME Gloss Video")
+        ordering = ['offset',]
+
+    def __str__(self):
+        translations = []
+        gloss = self.gloss
+        lemma = gloss.lemma
+        count_dataset_languages = lemma.dataset.translation_languages.all().count() if lemma else 0
+        glossvideodescriptions = GlossVideoDescription.objects.filter(nmevideo=self)
+        print('str gloss video descriptions: ', glossvideodescriptions)
+        for description in glossvideodescriptions:
+            if count_dataset_languages > 1:
+                translations.append("{}: {}".format(description.language, description.text))
+            else:
+                translations.append("{}".format(description.text))
+        return ", ".join(translations)
+
+    def add_descriptions(self, descriptions):
+        """Add descriptions to the nme video"""
+        for language in self.get_dataset().translation_languages.all():
+            if language.language_code_3char in descriptions.keys():
+                text = descriptions[language.language_code_3char]
+                if text:
+                    GlossVideoDescription.objects.create(text=text, nmevideo=self, language=language)
+
+    def get_video_path(self):
+        return self.videofile.name
+
+    def ensure_mp4(self):
+        """Ensure that the video file is an h264 format
+        video, convert it if necessary"""
+
+        # convert video to use the right size and iphone/net friendly bitrate
+        # create a temporary copy in the new format
+        # then move it into place
+
+        (basename, ext) = os.path.splitext(self.videofile.path)
+        if ext == '.mov' or ext == '.webm':
+            oldloc = self.videofile.path
+            newloc = basename + ".mp4"
+            err = convert_video(oldloc, newloc, force=False)
+            self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
+                                                      nmevideo=True, offset=self.offset)
+            os.remove(oldloc)
+
+    def save(self, *args, **kwargs):
+        self.ensure_mp4()
+        super(GlossVideoNME, self).save(*args, **kwargs)
 
 
 @receiver(models.signals.post_save, sender=Dataset)

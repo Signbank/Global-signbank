@@ -1,5 +1,5 @@
 from django import forms
-from signbank.video.models import Video, GlossVideo, Gloss
+from signbank.video.models import GlossVideo, Gloss
 import json
 
 class VideoUploadForm(forms.ModelForm):
@@ -17,6 +17,8 @@ class VideoUploadForObjectForm(forms.Form):
     object_type = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
     recorded = forms.BooleanField(initial=False, required=False)
+    offset = forms.IntegerField(required=False)
+    descriptions = forms.CharField(widget=forms.HiddenInput, required=False)
     eaffile = forms.FileField(label="Upload EAF", widget=forms.FileInput(attrs={'accept':'text/xml'}), required=False)
     feedbackdata = forms.CharField(widget=forms.HiddenInput, required=False)
     translations = forms.CharField(widget=forms.HiddenInput, required=False)

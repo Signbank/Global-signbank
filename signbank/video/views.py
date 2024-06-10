@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from signbank.video.models import Video, GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
+from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
 from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence
 from signbank.video.forms import VideoUploadForObjectForm
 from django.http import JsonResponse
@@ -22,6 +22,7 @@ def addvideo(request):
 
     if request.method == 'POST':
         form = VideoUploadForObjectForm(request.POST, request.FILES)
+        print('add video')
         if form.is_valid():
             # Unpack the form
             object_id = form.cleaned_data['object_id']
@@ -29,6 +30,7 @@ def addvideo(request):
             vfile = form.cleaned_data['videofile']
             redirect_url = form.cleaned_data['redirect']
             recorded = form.cleaned_data['recorded']
+            offset = form.cleaned_data['offset']
             # Get the object, either a gloss or an example sentences
             if object_type == 'examplesentence_video':
                 sentence = ExampleSentence.objects.filter(id=object_id).first()
@@ -40,6 +42,17 @@ def addvideo(request):
                 if not gloss:
                     redirect(redirect_url)
                 gloss.add_video(request.user, vfile, recorded)
+            elif object_type == 'gloss_nmevideo':
+                gloss = Gloss.objects.filter(id=object_id).first()
+                print('nme video ', gloss)
+                if not gloss:
+                    redirect(redirect_url)
+                nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded)
+                print('nme video: ', nmevideo)
+                descriptions = form.cleaned_data['descriptions']
+                print('descriptions: ', descriptions)
+                if descriptions:
+                    nmevideo.add_descriptions(json.loads(descriptions))
             elif object_type == 'morpheme_video':
                 morpheme = Morpheme.objects.filter(id=object_id).first()
                 if not morpheme:

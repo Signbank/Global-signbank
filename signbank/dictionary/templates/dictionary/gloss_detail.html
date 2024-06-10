@@ -1402,6 +1402,85 @@ option:not(:checked) {
             </div>
         </div>
 
+   <!-- Non-manual videos -->
+   <div class="panel panel-default">
+        <div class='panel-heading' data-toggle='collapse'
+             data-target='#nmevideos'>{% trans "Videos with Non-manual Elements" %}
+        </div>
+        <div id='nmevideos' class='collapse'>
+            <div class="panel panel-default">
+            {% if gloss.has_nme_videos %}
+               <table class='table table-condensed'>
+               <tr>
+                    {% for videonme in gloss.get_nme_videos %}
+                      <td>
+                           <table>
+                           <tr><td>{{videonme.offset}}</td></tr>
+                           <tr><td>{{videonme}}</td></tr>
+                           <tr><td><div id="nmeplayer">
+                                    <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}" style="height:200px;width:auto;" controls muted></video>
+                                   </div>
+                           </td></tr>
+                           </table>
+                      </td>
+                    {% endfor %}
+               </tr>
+               </table>
+            {% endif %}
+            </div>
+
+            {% if "change_dataset" in dataset_perms %}
+            <div class='editform' style="width:800px;height:800px;">
+                <fieldset>
+                    <legend>{% trans "Upload New NME Video" %}</legend>
+                    <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
+                    {% csrf_token %}
+                    <label for="id_nmevideofile" class="drop-container" id="drop-container-nmevideo">
+                      <div id="nmevideogallery" class="gallery"></div>
+                      <span id = "drop-container-title-nmevideo" class="drop-title">Drop video here<br>or...</span>
+                      <label id="drop-container-nmevideo-status", class="hide">Status here</label>
+                        <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
+                        <input type='hidden' name='object_type' value='gloss_nmevideo'>
+                        <input type='hidden' name='recorded' value='False'>
+                        <table>
+                          <tr>
+                            <td>{{nmevideoform.videofile}}</td>
+                          </tr>
+                          <tr>
+                            <td id="nmevideo-buttons">
+                                <input type='hidden' name='object_id' value='{{gloss.pk}}'>
+                                <input class='btn btn-primary' onclick='removeVideoUploads(true)' value='Remove'>
+                                <input class='btn btn-primary' type='submit' value='Upload' />
+                            </td>
+                          </tr>
+                        </table>
+                        </label>
+                        <br><br>
+                        <div>{% trans "Add descriptions for the video:" %}</div>
+                        <table class="table table-condensed">
+                            <tr><th style="width:200px;">{% trans "Index" %}</th>
+                                <td style='width:5em'>
+                            <input class='form-control' name='offset'
+                                   id='offset' type='number' value=1></td></tr>
+                        {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                        <tr>
+                        <th style="width:200px;">{{dataset_lang.name}}</th><td><input style="width:600px;"
+                                                         id="description_{{dataset_lang.language_code_3char}}"
+                                                         name="description_{{dataset_lang.language_code_3char}}"
+                                                         value="" maxlength="200" type="text"
+                                                         class="description-input"></td>
+                        </tr>
+                        {% endfor %}
+                        </table>
+                        <input type='hidden' name='descriptions' id='descriptions-hidden' value=''>
+                      <br><br>
+                      </form>
+                </fieldset>
+            </div>
+            {% endif %}
+        </div>
+   </div>
+
    <!-- Morphology -->
    <div class="panel panel-default">
         <div class='panel-heading' data-toggle='collapse'
