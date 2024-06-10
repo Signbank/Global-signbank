@@ -2240,9 +2240,11 @@ class Gloss(models.Model):
 
     def get_image_path(self, check_existence=True):
         """Returns the path within the writable and static folder"""
-        glossvideo = self.glossvideo_set.exclude(glossvideonme=True).filter(version=0)
+        from signbank.video.models import GlossVideo
+
+        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None).filter(version=0)
         if glossvideo:
-            glossvideo = glossvideo[0]
+            glossvideo = glossvideo.first()
             videofile_path = str(glossvideo.videofile)
             videofile_path_without_extension, extension = os.path.splitext(videofile_path)
 
@@ -2261,15 +2263,16 @@ class Gloss(models.Model):
         return escape_uri_path(self.get_image_path())
 
     def get_video_path(self):
+        from signbank.video.models import GlossVideo
         try:
-            glossvideo = self.glossvideo_set.exclude(glossvideonme=True).get(version=0)
+            glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None).get(version=0)
             return str(glossvideo.videofile)
         except ObjectDoesNotExist:
             return ''
         except MultipleObjectsReturned:
             # Just return the first
-            glossvideos = self.glossvideo_set.exclude(glossvideonme=True).filter(version=0)
-            return str(glossvideos[0].videofile)
+            glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None).filter(version=0)
+            return str(glossvideos.first().videofile)
 
     def get_video_path_prefix(self):
         try:
