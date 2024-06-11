@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.translation import gettext as _
+
 from signbank.video.models import Video, GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
 from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence
 from signbank.video.forms import VideoUploadForObjectForm
@@ -112,7 +114,7 @@ def process_eaffile(request):
         uploaded_file = request.FILES['eaffile']
         file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
         if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
-            return JsonResponse({'error': 'Invalid file. Please try again.'})
+            return JsonResponse({'error': _('Invalid file. Please try again.')})
 
         eaf = Eaf(uploaded_file.temporary_file_path())
         

@@ -18,7 +18,7 @@
     <fieldset>
         <legend>{% trans "Upload New Annotated Sentence" %}</legend>
         
-        For the following gloss: {{annotationidgloss}}<br><br>
+        {% trans "For the following gloss:" %} {{annotationidgloss}}<br><br>
 
         <form action="{{PREFIX_URL}}/video/upload/" id="annotatedSentenceForm" method="post" enctype="multipart/form-data">
         {% csrf_token %}
@@ -45,27 +45,27 @@
         </label>
 
         <br><br>
-        Choose the corresponding annotation file (.eaf) here: 
+        {% trans "Choose the corresponding annotation file (.eaf) here:" %}
         <input type="file" id="eaffile" name="eaffile" required>
         <br>
         <div id="feedback"></div>
 
         <br>
-        Add context for the sentence in the following languages:<br>
+        {% trans "Add context for the sentence in the following languages:" %}<br>
         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
             {{dataset_lang.name}}:<input style="width:100%" id="context_{{dataset_lang.language_code_3char}}" name="context_{{dataset_lang.language_code_3char}}" value="" maxlength="400" type="text"  class="context-input"/>
         {% endfor %}
         <input type='hidden' name='contexts' id='contexts-hidden' value=''>
 
         <br><br>
-        Add translations for the sentence in the following languages:<br>
+        {% trans "Add translations for the sentence in the following languages:" %}<br>
         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
             {{dataset_lang.name}}:<input style="width:100%" id="translation_{{dataset_lang.language_code_3char}}" name="translation_{{dataset_lang.language_code_3char}}" value="" maxlength="400" type="text"  class="translation-input"/>
         {% endfor %}
         <input type='hidden' name='translations' id='translations-hidden' value=''>
 
         <br><br>
-        From corpus:
+        {% trans "From corpus:" %}
         <input style="width:100%" id="corpus_name" name="corpus_name" value="" maxlength="100" type="text"/>
 
         <br><br>

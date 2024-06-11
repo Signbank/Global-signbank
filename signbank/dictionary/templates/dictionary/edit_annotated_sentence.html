@@ -15,13 +15,12 @@
     <fieldset>
         <legend>{% trans "Edit Annotated Sentence" %}</legend>
         
-        For the following gloss: {{annotationidgloss}}<br><br>
+        {% trans "For the following gloss:" %} {{annotationidgloss}}<br><br>
 
-        For the following sentence: <br>
+        {% trans "For the following sentence:" %}<br>
         {% url 'dictionary:protected_media' '' as protected_media_url %}
         <video id="sentenceVideo" controls width="500px">
             <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile }}" type="video/mp4">
-            Your browser does not support the video tag.
         </video> 
 
         <form action="{{PREFIX_URL}}/dictionary/update/saveeditannotatedsentence/" id="annotatedSentenceForm" method="post" enctype="multipart/form-data">
@@ -34,10 +33,10 @@
         <br>
 
         <br><br>
-        Download the current .eaf file here:
+        {% trans "Download the current .eaf file here:" %}
         <a href="{{ annotated_sentence.annotatedvideo.eaffile.url }}" download>{{ annotated_sentence.annotatedvideo.get_eaffile_name }}</a>
         <br><br>
-        Choose the updated annotation file (.eaf) here: 
+        {% trans "Choose the updated annotation file (.eaf) here:" %} 
         <input type="file" id="eaffile" name="eaffile" required>
         <br>
         <div id="feedback">
@@ -45,19 +44,19 @@
         </div>
 
         <br><br>
-        Edit context for the sentence in the following languages:<br>
+        {% trans "Edit context for the sentence in the following languages:" %}<br>
         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
             {{dataset_lang.name}}:<input style="width:100%" id="context_{{dataset_lang.language_code_3char}}" name="context_{{dataset_lang.language_code_3char}}" value="{% if dataset_lang.language_code_3char in annotated_contexts %}{{ annotated_contexts|get_item:dataset_lang.language_code_3char }}{% endif %}" maxlength="400" type="text"/>
         {% endfor %}
 
         <br><br>
-        Add translations for the sentence in the following languages:<br>
+        {% trans "Add translations for the sentence in the following languages:" %}<br>
         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
             {{dataset_lang.name}}:<input style="width:100%" id="translation_{{dataset_lang.language_code_3char}}" name="translation_{{dataset_lang.language_code_3char}}" value="{% if dataset_lang.language_code_3char in annotated_translations %}{{ annotated_translations|get_item:dataset_lang.language_code_3char }}{% endif %}" maxlength="400" type="text"/>
         {% endfor %}
 
         <br><br>
-        From corpus:
+        {% trans "From corpus:" %}
         <input style="width:100%" id="corpus_name" name="corpus_name" value="{{ corpus }}" maxlength="100" type="text"/>
         
         <br><br>
