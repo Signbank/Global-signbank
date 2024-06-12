@@ -1430,7 +1430,7 @@ option:not(:checked) {
                             </tr>
                            {% endfor %}
                            {% endwith %}
-                           <tr><td>{% trans "Index" %}</td><td class='edit edit_int' id='nmevideo_offset_{{videonme.id}}'>{{videonme.offset}}</td></tr>
+                           <tr class="editform"><td>{% trans "Index" %}</td><td class='edit edit_int' id='nmevideo_offset_{{videonme.id}}'>{{videonme.offset}}</td></tr>
                            </table>
                       </td>
                     {% endfor %}
@@ -1482,7 +1482,6 @@ option:not(:checked) {
                         </tr>
                         {% endfor %}
                         </table>
-                        <input type='hidden' name='descriptions' id='descriptions-hidden' value=''>
                       <br><br>
                       </form>
                 </fieldset>

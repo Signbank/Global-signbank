@@ -2366,7 +2366,6 @@ class Gloss(models.Model):
             # Create a GlossVideoHistory object
             relative_path = get_video_file_path(video, str(videofile), nmevideo=True, offset=offset)
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
-            print('add nme video: ', video_file_full_path)
             glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
                                                   uploadfile=videofile, goal_location=video_file_full_path)
             glossvideohistory.save()

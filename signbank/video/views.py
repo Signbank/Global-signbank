@@ -26,7 +26,6 @@ def addvideo(request):
         last_used_dataset = request.session['last_used_dataset']
         dataset_languages = Dataset.objects.filter(acronym=last_used_dataset).first().translation_languages.all()
         form = VideoUploadForObjectForm(request.POST, request.FILES, languages=dataset_languages)
-        print('add video')
         if form.is_valid():
             # Unpack the form
             object_id = form.cleaned_data['object_id']
@@ -48,7 +47,6 @@ def addvideo(request):
                 gloss.add_video(request.user, vfile, recorded)
             elif object_type == 'gloss_nmevideo':
                 gloss = Gloss.objects.filter(id=object_id).first()
-                print('nme video ', gloss)
                 if not gloss:
                     redirect(redirect_url)
                 nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded)

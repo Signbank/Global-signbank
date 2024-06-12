@@ -1194,7 +1194,6 @@ def update_nmevideo(gloss, field, value):
             return HttpResponse(value, {'content-type': 'text/plain'})
         nmevideo.offset = new_offset
         nmevideo.save()
-        print('after saving nme after updating offset')
     return HttpResponse(value, {'content-type': 'text/plain'})
 
 
