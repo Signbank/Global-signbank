@@ -1414,10 +1414,10 @@ option:not(:checked) {
                <tr>
                     {% for videonme in gloss.get_nme_videos %}
                       <td>
-                           <table>
+                           <table class="table table-condensed">
                            <tr><td colspan="2"><div id="nmeplayer">
                                     <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}"
-                                           style="height:120px;width:auto;" controls muted></video>
+                                           style="height:200px;width:auto;" controls muted></video>
                                    </div>
                            </td></tr>
                            {% with nme_video_descriptions|get_item:videonme as nme_descriptions %}

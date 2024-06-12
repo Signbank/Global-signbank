@@ -718,7 +718,6 @@ def update_gloss(request, glossid):
         return HttpResponseForbidden("Gloss Update method must be POST")
 
     gloss = get_object_or_404(Gloss, id=glossid)
-    gloss.save()  # This updates the lastUpdated field
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
@@ -1213,7 +1212,6 @@ def update_signlanguage(gloss, field, values):
     dialects_value = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in gloss.dialect.all()])
     current_signlanguages = gloss.signlanguage.all()
     current_signlanguage_name = ''
-    print('update_signlanguage: ', current_signlanguages)
     for lang in current_signlanguages:
         # this looks strange, is this a convenience for a singleton set
         current_signlanguage_name = lang.name
@@ -1784,7 +1782,6 @@ def update_handshape(request, handshapeid):
     handshape_fields = Handshape.get_field_names()
 
     if not request.method == "POST":
-        print(request.method.GET)
         # return HttpResponseForbidden("Update handshape method must be POST")
         return HttpResponse(" \t \t \t ", {'content-type': 'text/plain'})
 

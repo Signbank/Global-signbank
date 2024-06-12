@@ -712,7 +712,6 @@ class GlossVideo(models.Model):
         :return: 
         """
         old_path = str(str(self.videofile))
-        print('move video glossvideo old path: ', old_path)
         new_path = get_video_file_path(self, old_path, version=self.version)
         if old_path != new_path:
             if move_files_on_disk:
@@ -818,9 +817,7 @@ class GlossVideoNME(GlossVideo):
         :return:
         """
         old_path = str(self.videofile)
-        print('old: ', old_path)
         new_path = get_video_file_path(self, old_path, nmevideo=True, offset=self.offset, version=self.version)
-        print('move video NME new path: ', new_path)
         if old_path != new_path:
             if move_files_on_disk:
                 source = os.path.join(settings.WRITABLE_FOLDER, old_path)
@@ -832,8 +829,8 @@ class GlossVideoNME(GlossVideo):
                     if os.path.isdir(destination_dir):
                         shutil.move(source, destination)
 
-            self.videofile.name = new_path
-            self.save()
+                    self.videofile.name = new_path
+                    self.save()
 
 
 @receiver(models.signals.post_save, sender=Dataset)
@@ -920,16 +917,26 @@ def process_gloss_changes(sender, instance, **kwargs):
     :param kwargs: 
     :return: 
     """
-    print('process gloss changes')
     gloss = instance
     glossvideos = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None)
     for glossvideo in glossvideos:
         glossvideo.move_video(move_files_on_disk=True)
     glossvideos = GlossVideoNME.objects.filter(gloss=gloss)
-    print(glossvideos)
     for glossvideo in glossvideos:
-        print(glossvideo.videofile.path)
         glossvideo.move_video(move_files_on_disk=True)
+
+
+@receiver(models.signals.post_save, sender=GlossVideoNME)
+def process_nmevideo_changes(sender, instance, **kwargs):
+    """
+    Makes changes to GlossVideoNME if an offset has changed
+    :param sender:
+    :param instance:
+    :param kwargs:
+    :return:
+    """
+    glossvideo = instance
+    glossvideo.move_video(move_files_on_disk=True)
 
 
 @receiver(models.signals.pre_delete, sender=GlossVideo)
