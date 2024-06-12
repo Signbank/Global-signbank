@@ -31,9 +31,10 @@
 
 {% block content %}
 
-<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+<div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results"
+         style="white-space:nowrap;">
     </div>
     {% endif %}
 </div>
@@ -45,14 +46,14 @@
 
     {% if caller == 'lemma_list' %}
         {% if page_in_lemma_list %}
-        <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}?page={{page_in_lemma_list}}'>{% trans "Return to Lemma List" %}</a>
+        <a class="btn btn-default btn-default-light" href='{% url "dictionary:admin_lemma_list" %}?page={{page_in_lemma_list}}'>{% trans "Return to Lemma List" %}</a>
         {% elif request_path %}
-        <a class="btn btn-default" href='{{request_path}}'>{% trans "Return to Lemma List" %}</a>
+        <a class="btn btn-default btn-default-light" href='{{request_path}}'>{% trans "Return to Lemma List" %}</a>
         {% else %}
-        <a class="btn btn-default" href='{% url "dictionary:admin_lemma_list" %}'>{% trans "Return to Lemma List" %}</a>
+        <a class="btn btn-default btn-default-light" href='{% url "dictionary:admin_lemma_list" %}'>{% trans "Return to Lemma List" %}</a>
         {% endif %}
     {% elif caller == 'gloss_detail_view' and gloss_id %}
-        <a class="btn btn-default" href='{% url "dictionary:admin_gloss_view" pk=gloss_id %}'>{% trans "Return to Gloss Details" %}</a>
+        <a class="btn btn-default btn-default-light" href='{% url "dictionary:admin_gloss_view" pk=gloss_id %}'>{% trans "Return to Gloss Details" %}</a>
     {% endif %}
      <form action='{% url "dictionary:change_lemma" object.pk %}' method='post'>
          {% csrf_token %}

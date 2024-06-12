@@ -47,7 +47,9 @@ $(document).ready(function() {
                 success : function(result) {
                     var elem = $(result);
                     var parsed = $.parseHTML(result);
-                    $(lookup).find('#glosslist_table_header').before(result);
+                    var gloss_list_header = $(lookup).find('#glosslist_table_header')[0];
+                    var gloss_list_header_dummy = $(gloss_list_header).find('#glosslist_table_header_dummy')[0];
+                    $(gloss_list_header_dummy).replaceWith(result);
                     // hide the sort arrowheads from the header
                     $(lookup).find('.col_sort_arrowheads').css('display','none');
                 }
@@ -259,9 +261,12 @@ function do_sort_column(field_name, action, frmName) {
 };
     </script>
     <script type='text/javascript'>
-
         $('#signinfo').css({'margin-bottom': 30});
-        $('#definitionblock').css({'padding-top': $('#signinfo').height() + 30});
+        $('#view_tabs').css({'padding-top': 10, 'margin-top': 10});
+
+        $('#definitionblock').css({'padding-top': Math.round($('#searchquery').height() + $('#signinfo').height() + 10)});
+   //     $('#definitionblock').css({'padding-top': Math.round($('#signinfo').height() + 10)});
+   //     $('#definitionblock').css({'padding-top': $('#signinfo').height() + 30});
 
          $('#panel-expand-collapse-btn-toolbar').css({
             'height': $('#panel-expand-collapse-btn-group').css('height'),
@@ -270,97 +275,17 @@ function do_sort_column(field_name, action, frmName) {
 {% endblock %}
 {% block extrahead %}
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+    <link rel="stylesheet" href="{{STATIC_URL}}css/query-buttons.css">
+
     <style>
-        #panel-expand-collapse-btn-group.affix {
+        #signinfo.affix {
+            position:fixed;
+        }
+        #searchquery.affix {
             position:fixed;
         }
     </style>
-<style>
-.preview {
-    background-color: white !important;
-    height: 40;
-    width: auto;
-    position: relative;
-    padding: 0 0 0 0 !important;
-}
 
-select option {
-    background-color: white;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-.bootstrap-select.btn-group .dropdown-menu li a:hover {
-    color: blue !important;
-    background-color: white !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-.dropdown-menu {
-    display: visible !important;
-    z-index: 5;
-    box-shadow: 0 10px 10px #333;
-}
-
-.dropdown-item:active{
-    color: blue;
-    background-color: darkviolet;
-}
-
-.bootstrap-select {
-    color: black !important;
-    background-color: white !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-
-.btn-group {
-    color: white !important;
-    background-color: white !important;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-}
-.btn {
-    padding: 2 2 2 2;
-}
-.runQuery {
-    border: 1px solid;
-    text-align: center;
-    padding: 6px 12px;
-    border-radius: 6px;
-    background-color: white;
-}
-.runQuery:hover {
-    text-decoration: none;
-    background-color: none;
-}
-.queryButton {
-    background-color: white;
-    padding: 6px 12px;
-}
-.queryButton:hover {
-    background-color: none;
-}
-.querySaveInfo {
-    border: 1px solid;
-    padding: 6px 12px;
-    margin-bottom: 0px;
-    margin-top: 4px;
-    white-space: normal;
-    border-radius: 6px;
-    border-bottom-left-radius: 6px !important;
-    border-top-left-radius: 6px !important;
-    color: white;
-    background-color: rgb(66, 139, 202);
-    line-height: 18px;
-}
-.querySaveInfo:hover {
-    color: white;
-    background-color: rgb(66, 139, 202);
-    text-decoration: none;
-}
-</style>
 <!--The tagQP css overrides the colour of tag to match that of disabled buttons, used for the display of other query parameters-->
 <style>
 .form-group {
@@ -432,8 +357,9 @@ option:not(:checked) {
 .gloss-row {
     overflow-y: scroll;
 }
+
 thead tr th {
-    border-bottom: 1px solid grey;
+    border-bottom: 1px solid inherit;
     border-spacing: 0px;
     border-collapse: separate;
 }
@@ -441,14 +367,82 @@ thead tr th {
     color: #004977;
 }
 </style>
+<style>
+.table-frequency-light > thead > tr > th {
+    border: 1px solid black !important;
+}
+.table-frequency-light > tbody > tr {
+    border: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-frequency-light > tbody > tr > td {
+    border: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-frequency-dark > thead > tr > th {
+    border: 1px solid white !important;
+}
+.table-frequency-dark > tbody > tr {
+    border: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.table-frequency-dark > tbody > tr > td {
+    border: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
 
+table {
+    margin: 0px 0px 0px 0px important!;
+}
+.frequency-table-light {
+    border: 1px solid black !important;
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.frequency-cell-light {
+    border: 1px solid black !important;
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.frequency-table-dark {
+    border: 1px solid white !important;
+    border-top: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.frequency-cell-dark {
+    border: 1px solid white !important;
+    border-top: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.table-bordered {
+    margin-top: 20px;
+    border: 1px solid black !important;
+}
+.table-bordered > thead > tr {
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-bordered > tbody > tr {
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+    border: 1px solid black !important;
+}
+</style>
+
+<script type='text/javascript'>
+    navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    $('#wrap').css({'padding-top': navbarHeight});
+</script>
 {% endblock %}
 
 {% block content %}
+<div class="navbar" id="searchquery" style="background-color:inherit;z-index: 50;">
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
 
-    <ul class='nav nav-tabs'>
+</div>
+<div id="signinfo" class='navbar navbar-collapse navbar-collapse-light' style="margin-right:15px;z-index:100;">
+    <div id="view_tabs" style="margin-right:15px;z-index:100;" class='view-tabs view-tabs-light'>
+    <ul class='nav nav-tabs nav-tabs-light'>
         <li class="nav-item">
             <a class='nav-link active' href="{{PREFIX_URL}}/analysis/queries/">{% trans "Query View" %}</a>
         </li>
@@ -456,60 +450,63 @@ thead tr th {
             <a class='nav-link' href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>
         </li>
     </ul>
+    </div>
 </div>
 
-<div id="definitionblock" style="padding-top: 30px;">
+<div id="definitionblock">
     {% if not query_parameters.items %}
     <br>
     <p>{% trans "No active search or query parameters." %}</p>
 
     {% else %}
     <h3>{% trans "Query Parameters" %}</h3>
-    <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
-        <thead id = 'query_table_header'>
-                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
-                <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
-        </thead>
-        <tbody>
+    <table class="table table-bordered table-frequency table-frequency-light"
+           style="z-index:0;padding-top: 100px;width:1000px;">
+        <thead id='query_table_header'>
+            <tr class="frequency-cell frequency-cell-light">
+                <th >{% trans "Field" %}</th>
+                <th >{% trans "Value" %}</th>
+            </tr>
+        </thead >
+        <tbody >
         {% for key, value in query_parameters.items %}
-        <tr><td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_mapping|get_item:key}}</td>
+        <tr><td >{{query_parameters_mapping|get_item:key}}</td>
             {% if key == 'tags[]' %}
-                <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}
+                <td >{% for qv in query_parameters_values_mapping|get_item:key %}
                    <div class='tagQP' >
                    {% load underscore_to_space %}
                         <span class='tagname' style="user-select:none;">{{qv|underscore_to_space}}</span>
                    </div>
                     {% if not forloop.last %} {% endif %}{% endfor %}</td>
             {% elif '[]' in key %}
-            <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                        border-top: 1px solid grey; border-right: 1px solid grey;">{% for qv in query_parameters_values_mapping|get_item:key %}<button
+            <td >{% for qv in query_parameters_values_mapping|get_item:key %}<button
                 class="btn btn-primary btn-sm disabled">{{qv}}</button>{% if not forloop.last %} {% endif %}{% endfor %}</td>
             {% else %}
-                    <td style="border-bottom: 1px solid grey; border-left: 1px solid grey;
-                    border-top: 1px solid grey; border-right: 1px solid grey;">{{query_parameters_values_mapping|get_item:key}}</td>
+                    <td >{{query_parameters_values_mapping|get_item:key}}</td>
             {% endif %}
         </tr>
         {% endfor %}
         </tbody>
     </table>
     <div class="btn-group">
+    <div class="btn-group">
     <button class="btn queryButton" type='submit' style="height:40px;"><a href="{{PREFIX_URL}}/signs/search/?query" class="runQuery"
                                                                           type="button">{% trans "Run Query" %}</a></button>
+    </div>
     {% if all_parameters_available_to_save %}
+    <div class="btn-group">
     <button class="btn queryButton">
     <form name='save_query_parameters' id='save_query_parameters' method='get'>
     <input id="save_query_button" name='save_query_button' value='{% trans "Save Query" %}' type="submit" class="btn btn-primary" />
         <input type='hidden' name='save_query' value="Save">
     </form>
     </button>
+    </div>
     {% else %}
+    <div class="btn-group">
         <button class="btn querySaveInfo" data-toggle='modal' data-target='#save_not_available'
             type="button">{% trans "Save Query" %}</button>
-
+    </div>
     {% endif %}
     </div>
 
@@ -543,7 +540,7 @@ thead tr th {
         <span id="info_query_toggle" class="glyphicon glyphicon-th-list"></span>
     </div>
     <div id="query_toggle_panel" class='collapse'>
-    <table class="table table-bordered" style="border-left: 2px solid grey; border-spacing: 15px 30px; width: auto;">
+    <table class="table table-bordered table-bordered-light query-toggles query-toggles-light">
     <tr>
     <td><span>{% trans "Annotation ID Gloss" %}</span>
     {% for dataset_lang in dataset_languages %}
@@ -625,8 +622,10 @@ thead tr th {
 
     <div class='table-responsive'>
     <table class='table table-condensed' id = 'glosslist_table'>
-        <thead id = 'glosslist_table_header'></thead>
-        <tbody>
+        <thead id='glosslist_table_header'>
+        <tr id='glosslist_table_header_dummy'></tr>
+        </thead>
+        <tbody class='tbody tbody-light'>
         {% for gloss in object_list %}
         <tr id = "focusgloss_{{gloss.id}}">
             </tr>

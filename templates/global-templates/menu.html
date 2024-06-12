@@ -1,19 +1,19 @@
 
 
 {% load i18n %}
-<!-- This was commented out, WEBSITE_LANGUAGE is already defined in baselayout.html -->
-<!--{% get_current_language as LANGUAGE %}-->
+
+<script type="text/javascript" src="{{ STATIC_URL }}js/dark-mode-toggles.js"></script>
 
 <style>
-  #affix-bar.affix {
+#affix-bar.affix {
     position:fixed;
     top: 0;
     z-index: 1000 !important;
-    background: white;
-  }
+    background: inherit;
+}
 </style>
 
-<div id="signbank-bar" class="navbar navbar-fixed-top" style="box-sizing:content-box;">
+<div id="signbank-bar" class="navbar navbar-light navbar-fixed-top" style="box-sizing:content-box;">
 
 <div id='header' class="navbar-header">
     <a href="{{PREFIX_URL}}/" height="80" width="80" style="box-sizing:content-box;"><img class="global_sb_logo" src="{{STATIC_URL}}images/global/GlobalSigbank_logo_white.svg" height="80" width="80"></a>
@@ -69,16 +69,16 @@
             </button>
         </div>
     <div class="collapse navbar-collapse" id="signbank-menus">
-    <ul class="nav navbar-left navbar-nav" style="margin-left:15px;box-sizing:content-box;">
+    <ul class="nav navbar-left navbar-nav navbar-nav-light" style="margin-left:15px;box-sizing:content-box;">
     {# add in the top level menu items from pages #}
     {% for item in menu %}
 
         {% if item.children %}
-        <li class='dropdown'>
+        <li class='dropdown dropdown-light'>
              <a href="{{PREFIX_URL}}{{item.url}}"  class="dropdown-toggle" data-toggle="dropdown">
                  {{item.title}}
                  <b class="caret"></b></a>
-             <ul class="dropdown-menu">
+             <ul class="dropdown-menu dropdown-menu-light">
              {% for subitem in item.children %}
                 <li {% if subitem.current %}class='active'{% endif %}><a href="{{PREFIX_URL}}{{subitem.url}}">
                  {{subitem.title}}
@@ -94,15 +94,15 @@
     {% endfor %}
 
     </ul>
-    <form class="navbar-form navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search/">
+    <form class="navbar-form navbar-form-light navbar-left" role="search" id="frmSearch" name="frmSearch" method="get" action="{{PREFIX_URL}}/signs/search/">
         {% csrf_token %}
-            <div class="text-container {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
+            <div class="text-container text-container-light {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
                 <input class='form-control' placeholder='{% trans "Search Gloss" %}' type="text" name="search" id="tooltip-search"
                                                onfocus="focusFunction()" onblur="blurFunction()" onclick="clickFunction()"
                                                value="" maxlength="60" size="36" />
 				{% if USE_REGULAR_EXPRESSIONS %}{% include "tooltip.html" with include_tags=True %}{% endif %}
             </div>
-            <div class="text-container {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
+            <div class="text-container text-container-light {% if USE_REGULAR_EXPRESSIONS %}hasTooltip{% endif %}">
                 <input class='form-control' placeholder='{% trans "Search Sense" %}' type="text" name="translation" id="tooltip-translation"
                                                onfocus="focusFunction2()" onblur="blurFunction2()" onclick="clickFunction2()"
                                                value="" maxlength="60" size="36" />
@@ -110,21 +110,24 @@
             </div>
           <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
     </form>
-    <div class="nav navbar-left navbar-nav" id="user-menu" style="height: 10px;box-sizing:content-box;">
+    <div class="nav navbar-left navbar-nav navbar-nav-light" id="user-menu" style="height: 20px;box-sizing:content-box;">
         {% if user.is_authenticated %}
-        <div class='navbar-text'>
+        <div class='navbar-text navbar-text-light'>
             <a href="{% url 'registration:user_profile' %}">{% trans "Profile" %}</a>
         </div>
         {% endif %}
     </div>
-      <div class="nav navbar-right" style="height: 10px;box-sizing:content-box;">
+      <div class="nav navbar-right" style="height:20px;box-sizing:content-box;">
+          <div id="toggle_dark_mode">
+              <button onclick="set_dark_mode()" class="btn btn-primary">{% trans "Dark Mode" %}</button>
+          </div>
         {% if user.is_authenticated %}
-            <div class='navbar-text'>
+            <div class='navbar-text navbar-text-light'>
                 <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
         {% else %}
-            <div class='navbar-text'><a href="{{PREFIX_URL}}/accounts/login/">{% trans "Login" %}</a></div>
+            <div class='navbar-text navbar-text-light'><a href="{{PREFIX_URL}}/accounts/login/">{% trans "Login" %}</a></div>
         {% endif %}
-		<div class='navbar-text' id="minimalistic_language_picker"></div>
+		<div class='navbar-text navbar-text-light' id="minimalistic_language_picker"></div>
 
 	</div>
     </div>
@@ -136,5 +139,4 @@
 </div>
 
 </div>
-<div id='bslstripe'></div>
 

@@ -242,7 +242,8 @@ function checkKey(e)
     </style>
 <style>
 .preview {
-    background-color: white !important;
+    background-color: inherit !important;
+    color: inherit !important;
     height: 40;
     width: auto;
     position: relative;
@@ -303,8 +304,8 @@ select option {
 </style>
 <style>
 .form-group {
-    background-color: white;
-    color: black;
+    background-color: inherit;
+    color: inherit;
 }
 option:not(:checked) {
     background-color: white !important;
@@ -336,16 +337,17 @@ option:not(:checked) {
 {% endblock %}
 
 {% block content %}
-    <div class="navbar" id="searchquery" style="background-color:white;z-index: 50;">
+    <div class="navbar navbar-light" id="searchquery" style="background-color:inherit; color:inherit;z-index: 50;">
 
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
     <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'
-            style="z-index: 50;">{% trans "QUERY" %}</span></button>
+            style="z-index: 500;">{% trans "QUERY" %}</span></button>
     {% endif %}
-    <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+    <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box;z-index: 500;">
         {% if request.session.search_results %}{# See if search_results in sessions is empty #}
 
-        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+        <div id="results-inline" class="btn-group" role="group" aria-label="search results"
+             style="white-space:nowrap;">
         </div>
         {% endif %}
     </div>
@@ -471,10 +473,10 @@ option:not(:checked) {
 
 {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
 
-    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;">
-    <ul class='nav nav-tabs'>
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+    <ul class='nav nav-tabs nav-tabs-light'>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
         </li>
@@ -883,12 +885,12 @@ option:not(:checked) {
     {% endif %}
 
 </div>
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background: white;">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative;">
 
         {% include "dictionary/glosstags.html" %}
         {% include "dictionary/affiliationtags.html" %}
 
-        <table class='table table-condensed' style="width:100%;">
+        <table class='table table-condensed table-condensed-light' style="width:100%;">
             <tr {% if gloss_dialects|length == 0 %} class="empty_row" {% endif %}>
                 <th>{% trans "Dialect" %}</th>
                 <td class='edit edit_dialect' id='dialect'>{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
@@ -915,8 +917,10 @@ option:not(:checked) {
                     </div>
                 </td>
             </tr>
-            <tr name="lemma_forms_row"><th></th>
-                <td name="lemma_forms_cell">
+            <tr id="lemma_forms_row">
+                <th></th>
+                <td id="lemma_forms_cell">
+                <span>
                 <form name='edit_lemma_form' id='edit_lemma_form'
                         method='post' action='{% url "dictionary:change_lemma" gloss.lemma.id %}'>
                         {% csrf_token %}
@@ -961,6 +965,7 @@ option:not(:checked) {
                     <input class='btn btn-primary' value='{% trans "Add Lemma" %}' type='submit'>
                     <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
                 </form>
+                </span>
                 </td>
             </tr>
 
@@ -970,7 +975,10 @@ option:not(:checked) {
                     {% trans "Annotation ID Gloss" %}
                     {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}' colspan="2">{{annotation_idgloss_translation}}</td>
+                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}'
+                    style="color:inherit;"
+                    colspan="2"><span>{{annotation_idgloss_translation}}</span>
+                </td>
             </tr>
             <tr>
                 <th></th>
@@ -1392,23 +1400,28 @@ option:not(:checked) {
         <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
             <div class="pull-right">
                 <div class="btn-group" id="panel-expand-collapse-btn-group">
-                    <button id="expand-panels" type="button" class="btn btn-default btn-xs">
+                    <div class="btn-group btn-group-xs">
+                    <button id="expand-panels" type="button" class="btn btn-default btn-default-light">
                             <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
                     </button>
-                    <button id="collapse-panels" type="button" class="btn btn-default btn-xs">
+                    </div>
+                    <div class="btn-group btn-group-xs">
+                    <button id="collapse-panels" type="button" class="btn btn-default btn-default-light">
                         <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
                     </button>
+                    </div>
                 </div>
             </div>
         </div>
 
    <!-- Morphology -->
-   <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#morphology'>{% trans "Morphology" %}
         </div>
         <div id='morphology' class='collapse'>
-               <table class='table table-condensed'>
+               <table class='table table-condensed table-condensed-light'>
+                   <tbody class="tbody tbody-light">
                    <tr>
                        <th colspan="3">{% trans "Sequential Morphology" %}</th>
                    </tr>
@@ -1461,6 +1474,7 @@ option:not(:checked) {
             {% else %}
             <tr><td><i>({% trans "If this is a compound, use [Edit] to define its components" %})</i></td></tr>
             {% endif %}
+           </tbody>
            </table>
 
             {% if "change_dataset" in dataset_perms %}
@@ -1658,8 +1672,8 @@ option:not(:checked) {
 
     </div>
     <!-- Phonology -->
-	<div class="panel panel-default">
-        <div class='panel-heading' id='phonology_heading'
+	<div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' id='phonology_heading'
              data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
                     {% if handedness and domhndsh %}
                     <div class="pull-right">
@@ -1729,7 +1743,7 @@ option:not(:checked) {
                     <tr >
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >
-                            <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
+                            <a id="strong_hand_link" style="color: {% if StrongHand %}blue{% else %}red{% endif %}; display: visible;"
                                             {% if StrongHand %}
                                                 href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/"
                                             {% endif %}>{{value}}</a>
@@ -1815,8 +1829,8 @@ option:not(:checked) {
 
     <!-- Minimal Pairs -->
  {% if homonyms_but_not_saved %}
-  <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+  <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              style="color:red" data-target='#identicalphonology'>{% trans "Identical phonology but not marked as homonym" %}
         </div>
         <div id='identicalphonology' class='collapse'>
@@ -1832,8 +1846,8 @@ option:not(:checked) {
   </div>
  {% endif %}
  {% if homonyms_different_phonology %}
- <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+ <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              style="color:red" data-target='#differentphonology'>{% trans "Marked as homonym but different phonology" %}
         </div>
         <div id='differentphonology' class='collapse'>
@@ -1848,8 +1862,8 @@ option:not(:checked) {
         </div>
   </div>
 {% endif %}
-<div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+<div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
         </div>
         <div id='minimalpairs' class='collapse'>
@@ -1868,8 +1882,8 @@ option:not(:checked) {
 </div>
 
     <!-- Semantics -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
                     {% if SemanticFieldDefined %}
                     <div class="pull-right">
                     <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png'
@@ -1921,8 +1935,8 @@ option:not(:checked) {
     </div>
 
     <!-- Relations to other signs -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relations'>{% trans "Relations to Other Signs" %}
                     {% if gloss.relations_count %}
                     <div class="pull-right">
@@ -2005,8 +2019,8 @@ option:not(:checked) {
     </div>
 
     <!-- Relations to foreign signs -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relationsforeign'>{% trans "Relations to Foreign Signs" %}
                     {% if gloss.relationtoforeignsign_set.all %}
                     <div class="pull-right">
@@ -2088,8 +2102,8 @@ option:not(:checked) {
     </div>
 
     <!-- Publication status -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#pubStatus'>{% trans "Publication Status" %}
         </div>
 
@@ -2124,8 +2138,8 @@ option:not(:checked) {
     
    
     <!-- Notes -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
                     {% if notes_groupedby_role.items %}
                     <div class="pull-right">
                     <span id="document-icon"><img id='document' src='{{STATIC_URL}}images/document_with_text_and_picture.png'
@@ -2319,8 +2333,8 @@ option:not(:checked) {
     </div>
 
      <!-- Other media -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#othermedia'>{% trans "Other Media" %}
                     {% if other_media %}
                     <div class="pull-right">
