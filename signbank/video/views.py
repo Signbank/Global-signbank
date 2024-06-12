@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
-from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence
+from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence, Dataset
 from signbank.video.forms import VideoUploadForObjectForm
 from django.http import JsonResponse
 # from django.contrib.auth.models import User
@@ -21,7 +21,9 @@ def addvideo(request):
     """View to present a video upload form and process the upload"""
 
     if request.method == 'POST':
-        form = VideoUploadForObjectForm(request.POST, request.FILES)
+        last_used_dataset = request.session['last_used_dataset']
+        dataset_languages = Dataset.objects.filter(acronym=last_used_dataset).first().translation_languages.all()
+        form = VideoUploadForObjectForm(request.POST, request.FILES, languages=dataset_languages)
         print('add video')
         if form.is_valid():
             # Unpack the form
@@ -48,11 +50,13 @@ def addvideo(request):
                 if not gloss:
                     redirect(redirect_url)
                 nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded)
-                print('nme video: ', nmevideo)
-                descriptions = form.cleaned_data['descriptions']
-                print('descriptions: ', descriptions)
-                if descriptions:
-                    nmevideo.add_descriptions(json.loads(descriptions))
+                translation_languages = gloss.lemma.dataset.translation_languages.all()
+                descriptions = dict()
+                for language in translation_languages:
+                    form_field = 'description_' + language.language_code_2char
+                    form_value = form.cleaned_data[form_field]
+                    descriptions[language.language_code_2char] = form_value.strip()
+                nmevideo.add_descriptions(descriptions)
             elif object_type == 'morpheme_video':
                 morpheme = Morpheme.objects.filter(id=object_id).first()
                 if not morpheme:

@@ -137,14 +137,12 @@ def get_video_file_path(instance, filename, nmevideo=False, offset=1, version=0)
     :param instance: A GlossVideo instance
     :param filename: the original file name
     :param nmevideo: boolean whether this is an nme video
+    :param offset: order in sequence of NME video
     :param version: the version to determine the number of .bak extensions
     :return: 
     """
-    print('call to get video path with nmevideo: ', nmevideo)
     (base, ext) = os.path.splitext(filename)
 
-    if instance:
-        print(instance.__dict__)
     idgloss = instance.gloss.idgloss
 
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
@@ -153,23 +151,16 @@ def get_video_file_path(instance, filename, nmevideo=False, offset=1, version=0)
     except KeyError:
         dataset_dir = ""
     if nmevideo:
-        print('instance is nme video')
         nme_video_offset = '_nme_' + str(offset)
     else:
         nme_video_offset = ''
 
     two_letter_dir = get_two_letter_dir(idgloss)
     filename = idgloss + '-' + str(instance.gloss.id) + nme_video_offset + ext + (version * ".bak")
-    print('filename get video file path: ', filename)
-    print('video dir: ', video_dir)
-    print('dataset dir: ', dataset_dir)
-    print('two letter dir: ', two_letter_dir)
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
-    print('path inside get_video_file_path: ', path)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
         from django.utils.encoding import escape_uri_path
         path = escape_uri_path(path)
-    print('path returned by get_video_file_path: ', path)
     return path
 
 
@@ -721,10 +712,8 @@ class GlossVideo(models.Model):
         :return: 
         """
         old_path = str(str(self.videofile))
-        if hasattr(self, 'glossvideonme'):
-            new_path = get_video_file_path(self, old_path, nmevideo=True, version=self.version)
-        else:
-            new_path = get_video_file_path(self, old_path, version=self.version)
+        print('move video glossvideo old path: ', old_path)
+        new_path = get_video_file_path(self, old_path, version=self.version)
         if old_path != new_path:
             if move_files_on_disk:
                 source = os.path.join(settings.WRITABLE_FOLDER, old_path)
@@ -776,7 +765,7 @@ class GlossVideoNME(GlossVideo):
 
     class Meta:
         verbose_name = gettext("NME Gloss Video")
-        ordering = ['offset',]
+        ordering = ['offset', ]
 
     def __str__(self):
         translations = []
@@ -784,7 +773,6 @@ class GlossVideoNME(GlossVideo):
         lemma = gloss.lemma
         count_dataset_languages = lemma.dataset.translation_languages.all().count() if lemma else 0
         glossvideodescriptions = GlossVideoDescription.objects.filter(nmevideo=self)
-        print('str gloss video descriptions: ', glossvideodescriptions)
         for description in glossvideodescriptions:
             if count_dataset_languages > 1:
                 translations.append("{}: {}".format(description.language, description.text))
@@ -794,9 +782,9 @@ class GlossVideoNME(GlossVideo):
 
     def add_descriptions(self, descriptions):
         """Add descriptions to the nme video"""
-        for language in self.get_dataset().translation_languages.all():
-            if language.language_code_3char in descriptions.keys():
-                text = descriptions[language.language_code_3char]
+        for language in self.gloss.lemma.dataset.translation_languages.all():
+            if language.language_code_2char in descriptions.keys():
+                text = descriptions[language.language_code_2char]
                 if text:
                     GlossVideoDescription.objects.create(text=text, nmevideo=self, language=language)
 
@@ -823,6 +811,29 @@ class GlossVideoNME(GlossVideo):
     def save(self, *args, **kwargs):
         self.ensure_mp4()
         super(GlossVideoNME, self).save(*args, **kwargs)
+
+    def move_video(self, move_files_on_disk=True):
+        """
+        Calculates the new path, moves the video file to the new path and updates the videofile field
+        :return:
+        """
+        old_path = str(self.videofile)
+        print('old: ', old_path)
+        new_path = get_video_file_path(self, old_path, nmevideo=True, offset=self.offset, version=self.version)
+        print('move video NME new path: ', new_path)
+        if old_path != new_path:
+            if move_files_on_disk:
+                source = os.path.join(settings.WRITABLE_FOLDER, old_path)
+                destination = os.path.join(settings.WRITABLE_FOLDER, new_path)
+                if os.path.exists(source):
+                    destination_dir = os.path.dirname(destination)
+                    if not os.path.exists(destination_dir):
+                        os.makedirs(destination_dir)
+                    if os.path.isdir(destination_dir):
+                        shutil.move(source, destination)
+
+            self.videofile.name = new_path
+            self.save()
 
 
 @receiver(models.signals.post_save, sender=Dataset)
@@ -909,9 +920,15 @@ def process_gloss_changes(sender, instance, **kwargs):
     :param kwargs: 
     :return: 
     """
+    print('process gloss changes')
     gloss = instance
-    glossvideos = GlossVideo.objects.filter(gloss=gloss)
+    glossvideos = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None)
     for glossvideo in glossvideos:
+        glossvideo.move_video(move_files_on_disk=True)
+    glossvideos = GlossVideoNME.objects.filter(gloss=gloss)
+    print(glossvideos)
+    for glossvideo in glossvideos:
+        print(glossvideo.videofile.path)
         glossvideo.move_video(move_files_on_disk=True)
 
 

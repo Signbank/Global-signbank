@@ -1415,12 +1415,22 @@ option:not(:checked) {
                     {% for videonme in gloss.get_nme_videos %}
                       <td>
                            <table>
-                           <tr><td>{{videonme.offset}}</td></tr>
-                           <tr><td>{{videonme}}</td></tr>
-                           <tr><td><div id="nmeplayer">
-                                    <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}" style="height:200px;width:auto;" controls muted></video>
+                           <tr><td colspan="2"><div id="nmeplayer">
+                                    <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}"
+                                           style="height:120px;width:auto;" controls muted></video>
                                    </div>
                            </td></tr>
+                           {% with nme_video_descriptions|get_item:videonme as nme_descriptions %}
+                           {% for lang, description in nme_descriptions.items %}
+                            <tr>
+                                <td>
+                                    {% if SHOW_DATASET_INTERFACE_OPTIONS %} {{lang}}: {% endif %}
+                                </td>
+                                <td class='edit edit_text' id='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'>{{description}}</td>
+                            </tr>
+                           {% endfor %}
+                           {% endwith %}
+                           <tr><td>{% trans "Index" %}</td><td class='edit edit_int' id='nmevideo_offset_{{videonme.id}}'>{{videonme.offset}}</td></tr>
                            </table>
                       </td>
                     {% endfor %}
@@ -1465,8 +1475,8 @@ option:not(:checked) {
                         {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                         <tr>
                         <th style="width:200px;">{{dataset_lang.name}}</th><td><input style="width:600px;"
-                                                         id="description_{{dataset_lang.language_code_3char}}"
-                                                         name="description_{{dataset_lang.language_code_3char}}"
+                                                         id="description_{{dataset_lang.language_code_2char}}"
+                                                         name="description_{{dataset_lang.language_code_2char}}"
                                                          value="" maxlength="200" type="text"
                                                          class="description-input"></td>
                         </tr>

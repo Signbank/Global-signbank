@@ -2349,27 +2349,31 @@ class Gloss(models.Model):
         nmevideos = GlossVideoNME.objects.filter(gloss=self)
         return nmevideos
 
-    def add_nme_video(self, user, videofile, offset, recorded):
+    def add_nme_video(self, user, videofile, new_offset, recorded):
         # Preventing circular import
         from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path
-        print('call to add nme video in gloss')
         # Create a new GlossVideo object
+        existing_nmevideos = GlossVideoNME.objects.filter(gloss=self)
+        existing_offsets = [nmev.offset for nmev in existing_nmevideos]
+        if new_offset in existing_offsets:
+            # override given offset to avoid duplicate usage
+            offset = max(existing_offsets)+1
+        else:
+            offset = new_offset
+
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideoNME(gloss=self, offset=offset, upload_to=get_video_file_path)
-            print('video nme object created')
+            video = GlossVideoNME(gloss=self, offset=offset)
             # Create a GlossVideoHistory object
             relative_path = get_video_file_path(video, str(videofile), nmevideo=True, offset=offset)
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
-            print('video full path: ', video_file_full_path)
+            print('add nme video: ', video_file_full_path)
             glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
                                                   uploadfile=videofile, goal_location=video_file_full_path)
             glossvideohistory.save()
 
             # Save the new videofile in the video object
             video.videofile.save(relative_path, videofile)
-            print('after saving: ', video.videofile.path, video.videofile.name)
         else:
-            print('else clause')
             return GlossVideoNME(gloss=self)
         video.save()
         video.make_poster_image()

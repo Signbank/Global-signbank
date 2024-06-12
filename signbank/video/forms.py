@@ -1,6 +1,8 @@
 from django import forms
 from signbank.video.models import GlossVideo, Gloss
 import json
+from django.utils.translation import gettext_lazy as _
+
 
 class VideoUploadForm(forms.ModelForm):
     """Form for video upload"""
@@ -8,6 +10,10 @@ class VideoUploadForm(forms.ModelForm):
     class Meta:
         model = GlossVideo
         fields = '__all__'
+
+
+ATTRS_FOR_FORMS = {'class': 'form-control'}
+
 
 class VideoUploadForObjectForm(forms.Form):
     """Form for video upload for a particular example sentence"""
@@ -24,3 +30,11 @@ class VideoUploadForObjectForm(forms.Form):
     translations = forms.CharField(widget=forms.HiddenInput, required=False)
     contexts = forms.CharField(widget=forms.HiddenInput, required=False)
     corpus_name = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        languages = kwargs.pop('languages')
+        super(VideoUploadForObjectForm, self).__init__(*args, **kwargs)
+        for language in languages:
+            description_field_name = 'description_' + language.language_code_2char
+            self.fields[description_field_name] = forms.CharField(label=_('Description'),
+                                                                  widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
