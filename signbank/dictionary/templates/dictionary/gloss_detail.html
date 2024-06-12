@@ -2378,7 +2378,7 @@ option:not(:checked) {
                                 </script>
                                 <p>
                                     {% if annotated_sentence.has_contexts %}
-                                    <i>Sentence context</i><br>
+                                    <i>{% trans "Sentence context" %}</i><br>
                                     {% for annotated_sentence_context in annotated_sentence.annotated_sentence_contexts.all %}
                                         {{ annotated_sentence_context.language }}: {{ annotated_sentence_context.text }}{% if not forloop.last %}<br>{% endif %}
                                     {% endfor %}
@@ -2386,7 +2386,7 @@ option:not(:checked) {
                                 </p>
                                 <p>
                                     {% if annotated_sentence.has_translations %}
-                                    <i>Sentence translation</i><br>
+                                    <i>{% trans "Sentence translation" %}</i><br>
                                     {% for annotated_sentence_translation in annotated_sentence.annotated_sentence_translations.all %}
                                         {{ annotated_sentence_translation.language }}: {{ annotated_sentence_translation.text }}{% if not forloop.last %}<br>{% endif %}
                                     {% endfor %}
@@ -2394,7 +2394,7 @@ option:not(:checked) {
                                 </p>
                                 <p>
                                     {% if annotated_sentence.annotatedvideo.corpus %}
-                                    <i>Corpus</i><br>
+                                    <i>{% trans "Corpus" %}</i><br>
                                     {{ annotated_sentence.annotatedvideo.corpus }}
                                     {% endif %}
                                 </p>
