@@ -832,6 +832,19 @@ class GlossVideoNME(GlossVideo):
                     self.videofile.name = new_path
                     self.save()
 
+    def delete_files(self):
+        """Delete the files associated with this object"""
+        try:
+            os.unlink(self.videofile.path)
+        except OSError:
+            pass
+
+    def reversion(self, revert=False):
+        """Delete the video file of this object"""
+        print("DELETE NME VIDEO", self.videofile.name)
+        self.delete_files()
+        self.delete()
+
 
 @receiver(models.signals.post_save, sender=Dataset)
 def process_dataset_changes(sender, instance, **kwargs):

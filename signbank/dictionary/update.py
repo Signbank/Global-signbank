@@ -21,7 +21,7 @@ from signbank.dictionary.forms import *
 from django.conf import settings
 
 from signbank.video.forms import VideoUploadForObjectForm
-from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription
+from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory
 
 from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
@@ -910,7 +910,7 @@ def update_gloss(request, glossid):
 
     elif field.startswith('nmevideo'):
 
-        return update_nmevideo(gloss, field, value)
+        return update_nmevideo(request.user, gloss, field, value)
 
     elif field.startswith('lemmaidgloss'):
         # Set new lemmaidgloss for this gloss
@@ -1163,27 +1163,23 @@ def update_annotation_idgloss(gloss, field, value):
     return HttpResponse(str(value), {'content-type': 'text/plain'})
 
 
-def update_nmevideo(gloss, field, value):
+def update_nmevideo(user, gloss, field, value):
     """Update the GlossVideoNME"""
     if field.startswith('nmevideo_description_'):
         nmevideoid_language_code_2char = field[len('nmevideo_description_'):]
         nmevideoid, language_code_2char = nmevideoid_language_code_2char.split('_')
         nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))
         language = Language.objects.filter(language_code_2char=language_code_2char).first()
-
         whitespace = tuple(' \n\r\t')
         if value.startswith(whitespace) or value.endswith(whitespace):
             value = value.strip()
-
         try:
             description = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language)
         except ObjectDoesNotExist:
             # if no description object exists yet, create it
             description = GlossVideoDescription.objects.create(nmevideo=nmevideo, language=language)
-
         description.text = value
         description.save()
-
     elif field.startswith('nmevideo_offset_'):
         nmevideoid = field[len('nmevideo_offset_'):]
         nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))
@@ -1194,6 +1190,21 @@ def update_nmevideo(gloss, field, value):
             return HttpResponse(value, {'content-type': 'text/plain'})
         nmevideo.offset = new_offset
         nmevideo.save()
+    elif field.startswith('nmevideo_delete_'):
+        nmevideoid = field[len('nmevideo_delete_'):]
+        nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))
+        filename = os.path.basename(nmevideo.videofile.name)
+        filepath = nmevideo.videofile.path
+        nmevideo.reversion(revert=False)
+        log_entry = GlossVideoHistory(action="delete", gloss=gloss,
+                                      actor=user,
+                                      uploadfile=filename,
+                                      goal_location=filepath)
+        log_entry.save()
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+
+    else:
+        print('unknown nme video update field: ', field)
     return HttpResponse(value, {'content-type': 'text/plain'})
 
 

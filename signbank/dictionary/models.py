@@ -2316,7 +2316,7 @@ class Gloss(models.Model):
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = GlossVideo(gloss=self, upload_to=get_video_file_path)
             # Backup the existing video objects stored in the database
-            existing_videos = GlossVideo.objects.filter(gloss=self).exclude(glossvideonme=None)
+            existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None)
             for video_object in existing_videos:
                 video_object.reversion(revert=False)
 
@@ -2362,7 +2362,7 @@ class Gloss(models.Model):
             offset = new_offset
 
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideoNME(gloss=self, offset=offset)
+            video = GlossVideoNME(gloss=self, offset=offset, upload_to=get_video_file_path)
             # Create a GlossVideoHistory object
             relative_path = get_video_file_path(video, str(videofile), nmevideo=True, offset=offset)
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
@@ -2375,7 +2375,6 @@ class Gloss(models.Model):
         else:
             return GlossVideoNME(gloss=self)
         video.save()
-        video.make_poster_image()
 
         return video
 
@@ -3990,7 +3989,6 @@ class AnnotatedSentence(models.Model):
         """Test to see if the video for this sign is present"""
         
         return self.get_video() not in ['', None]
-
 
     def add_video(self, user, videofile, eaffile, corpus):
         """Add a video to the annotated sentence"""

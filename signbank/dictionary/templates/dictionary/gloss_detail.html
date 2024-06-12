@@ -1415,7 +1415,35 @@ option:not(:checked) {
                     {% for videonme in gloss.get_nme_videos %}
                       <td>
                            <table class="table table-condensed">
-                           <tr><td colspan="2"><div id="nmeplayer">
+                           <tr>
+                           <td class="editform">
+                           <span class='glyphicon glyphicon-trash nmevideo-delete' data-toggle='modal' data-target='#delete_nmevideo_modal_{{videonme.id}}'></span>
+                             <div class="modal fade" id="delete_nmevideo_modal_{{videonme.id}}" role="dialog" aria-labelledby="#modalDeleteNME" aria-hidden="true">
+                                 <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <div class='modal-header'>
+                                            <h2 id='modalDeleteNME'>{% trans "Delete NME Video" %}</h2>
+                                        </div>
+                                        <div class='modal-body'>
+                                            <p>{% trans "Are you sure you? This cannot be undone." %}</p>
+                                         </div>
+
+                                        <form class="formbutton" action='{% url "dictionary:update_gloss" gloss.id %}'
+                                              method='post'>
+                                        {% csrf_token %}
+                                          <input type='hidden' name='id' value='nmevideo_delete_{{videonme.id}}'>
+                                          <input type='hidden' name='value' value='confirmed'>
+                                          <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                            <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
+                                          </div>
+                                        </form>
+                                    </div>
+                                  </div>
+                             </div>
+
+                           </td>
+                               <td><div id="nmeplayer">
                                     <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}"
                                            style="height:200px;width:auto;" controls muted></video>
                                    </div>
