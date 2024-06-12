@@ -3955,10 +3955,14 @@ class AnnotatedSentence(models.Model):
         """Add a video to the annotated sentence"""
         from signbank.video.models import AnnotatedVideo
 
-        if (isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile')\
-            and eaffile.content_type == 'application/octet-stream':
+        if ((isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile' \
+                or videofile.content_type == 'django.core.files.uploadedfile.TemporaryUploadedFile')\
+            and (eaffile.content_type == 'application/octet-stream' or eaffile.content_type == 'django.core.files.uploadedfile.TemporaryUploadedFile'\
+                or eaffile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile')):
             annotatedVideo = AnnotatedVideo.objects.create(annotatedsentence=self, videofile=videofile, eaffile=eaffile)
-    
+        else:
+            return None
+        
         annotatedVideo.corpus = corpus
         annotatedVideo.save()
         

@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Context, RequestContext
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -65,9 +66,13 @@ def addvideo(request):
                     annotatedSentence.add_contexts(json.loads(contexts))
                     
                 corpus = form.cleaned_data['corpus_name']
-                annotatedSentence.add_video(request.user, vfile, eaf_file, corpus)
+                annotatedVideo = annotatedSentence.add_video(request.user, vfile, eaf_file, corpus)
                 
-                annotatedSentence.save()
+                if annotatedVideo == None:
+                    messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
+                    annotatedSentence.delete()
+                else:
+                    annotatedSentence.save()
 
             return redirect(redirect_url)
 
