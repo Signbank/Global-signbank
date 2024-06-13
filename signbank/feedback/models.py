@@ -115,9 +115,11 @@ class MorphemeFeedbackForm(forms.Form):
 
 class MissingSignFeedbackForm(forms.Form):
 
-    meaning = forms.CharField(label='Sign Meaning', widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
-    video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size':'60'}))
-    comments = forms.CharField(label='Further Details', widget=forms.Textarea(attrs={'rows':6, 'cols':80}), required=True)
+    meaning = forms.CharField(label='Sign Meaning', widget=forms.Textarea(attrs={'rows': 6, 'cols': 80}))
+    video = forms.FileField(label='Video of the Sign', required=False,
+                            widget=forms.FileInput(attrs={'size': '60', 'accept': 'video/*'}))
+    comments = forms.CharField(label='Further Details', widget=forms.Textarea(attrs={'rows': 6, 'cols': 80}),
+                               required=True)
 
     def __init__(self, *args, **kwargs):
         sign_languages = kwargs.pop('sign_languages')
