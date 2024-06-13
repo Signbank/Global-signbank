@@ -118,6 +118,7 @@ def missingsign(request):
             fb.comments = form.cleaned_data['comments']
     
             fb.save()
+            fb.save_video()
             posted = True
 
     else:
@@ -385,7 +386,7 @@ def recent_feedback(request):
     recently_added_feedback_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
     signfb = signfb.filter(
         date__range=[recently_added_feedback_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
-        'date').reverse()
+        '-date')
 
     return render(request, "feedback/recent_feedback.html",
                   {'signfb': signfb,
