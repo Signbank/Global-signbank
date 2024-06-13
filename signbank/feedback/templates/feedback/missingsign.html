@@ -32,7 +32,7 @@ $(document).ready(function(){
 {% block content %}
   <div class="col-md-5 col-md-offset-1">
       
-      <h2>{% trans "Missing Sign Feedback" %}</h2>
+      <h3>{% trans "Missing Sign Feedback" %}</h3>
       
   {% if posted %}
 <div id="feedbackmessage">
@@ -41,8 +41,7 @@ $(document).ready(function(){
     </h4>
 </div>    
   {% else %}
-      <br>
-      <legend>{% trans "What sign do you think is missing?" %}</legend>
+      <h4>{% trans "What sign do you think is missing?" %}</h4>
 
 <form method="post" enctype="multipart/form-data" name="missingsign">
    {% csrf_token %}
