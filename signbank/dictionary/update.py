@@ -21,7 +21,7 @@ from signbank.dictionary.forms import *
 from django.conf import settings
 
 from signbank.video.forms import VideoUploadForObjectForm
-from signbank.video.models import AnnotatedVideo
+from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory
 
 from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
@@ -393,11 +393,12 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
 def add_sentence_video(request, glossid, examplesentenceid):
     template = 'dictionary/add_sentence_video.html'
     gloss = Gloss.objects.get(id=glossid)
+    languages = gloss.lemma.dataset.translation_languages.all()
     examplesentence = ExampleSentence.objects.get(id=examplesentenceid)
     context = {
         'examplesentence': examplesentence,
         'gloss': gloss,
-        'videoform': VideoUploadForObjectForm(),
+        'videoform': VideoUploadForObjectForm(languages=languages),
     }
     return render(request, template, context)
 
@@ -717,7 +718,6 @@ def update_gloss(request, glossid):
         return HttpResponseForbidden("Gloss Update method must be POST")
 
     gloss = get_object_or_404(Gloss, id=glossid)
-    gloss.save()  # This updates the lastUpdated field
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
@@ -869,7 +869,6 @@ def update_gloss(request, glossid):
                 gloss.save()
                 newvalue = value
 
-
     elif field in 'inWeb':
         # only modify if we have publish permission
         original_value = getattr(gloss,field)
@@ -909,6 +908,10 @@ def update_gloss(request, glossid):
 
         return update_annotation_idgloss(gloss, field, value)
 
+    elif field.startswith('nmevideo'):
+
+        return update_nmevideo(request.user, gloss, field, value)
+
     elif field.startswith('lemmaidgloss'):
         # Set new lemmaidgloss for this gloss
         # First check whether the gloss dataset is the same as the lemma dataset
@@ -925,7 +928,6 @@ def update_gloss(request, glossid):
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     else:
-
 
         if field not in Gloss.get_field_names():
             return HttpResponseBadRequest("Unknown field", {'content-type': 'text/plain'})
@@ -1160,6 +1162,52 @@ def update_annotation_idgloss(gloss, field, value):
 
     return HttpResponse(str(value), {'content-type': 'text/plain'})
 
+
+def update_nmevideo(user, gloss, field, value):
+    """Update the GlossVideoNME"""
+    if field.startswith('nmevideo_description_'):
+        nmevideoid_language_code_2char = field[len('nmevideo_description_'):]
+        nmevideoid, language_code_2char = nmevideoid_language_code_2char.split('_')
+        nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))
+        language = Language.objects.filter(language_code_2char=language_code_2char).first()
+        whitespace = tuple(' \n\r\t')
+        if value.startswith(whitespace) or value.endswith(whitespace):
+            value = value.strip()
+        try:
+            description = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language)
+        except ObjectDoesNotExist:
+            # if no description object exists yet, create it
+            description = GlossVideoDescription.objects.create(nmevideo=nmevideo, language=language)
+        description.text = value
+        description.save()
+    elif field.startswith('nmevideo_offset_'):
+        nmevideoid = field[len('nmevideo_offset_'):]
+        nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))
+        new_offset = int(value)
+        existing_nmevideos = GlossVideoNME.objects.filter(gloss=gloss).exclude(id=int(nmevideoid))
+        existing_offsets = [nmev.offset for nmev in existing_nmevideos]
+        if new_offset in existing_offsets or new_offset == nmevideo.offset:
+            return HttpResponse(value, {'content-type': 'text/plain'})
+        nmevideo.offset = new_offset
+        nmevideo.save()
+    elif field.startswith('nmevideo_delete_'):
+        nmevideoid = field[len('nmevideo_delete_'):]
+        nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))
+        filename = os.path.basename(nmevideo.videofile.name)
+        filepath = nmevideo.videofile.path
+        nmevideo.reversion(revert=False)
+        log_entry = GlossVideoHistory(action="delete", gloss=gloss,
+                                      actor=user,
+                                      uploadfile=filename,
+                                      goal_location=filepath)
+        log_entry.save()
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+
+    else:
+        print('unknown nme video update field: ', field)
+    return HttpResponse(value, {'content-type': 'text/plain'})
+
+
 def update_signlanguage(gloss, field, values):
     # expecting possibly multiple values
 
@@ -1174,7 +1222,6 @@ def update_signlanguage(gloss, field, values):
     dialects_value = ", ".join([str(d.signlanguage.name) + '/' + str(d.name) for d in gloss.dialect.all()])
     current_signlanguages = gloss.signlanguage.all()
     current_signlanguage_name = ''
-    print('update_signlanguage: ', current_signlanguages)
     for lang in current_signlanguages:
         # this looks strange, is this a convenience for a singleton set
         current_signlanguage_name = lang.name
@@ -1745,7 +1792,6 @@ def update_handshape(request, handshapeid):
     handshape_fields = Handshape.get_field_names()
 
     if not request.method == "POST":
-        print(request.method.GET)
         # return HttpResponseForbidden("Update handshape method must be POST")
         return HttpResponse(" \t \t \t ", {'content-type': 'text/plain'})
 
@@ -1848,12 +1894,14 @@ def update_handshape(request, handshapeid):
 def add_annotated_media(request, glossid):
     template = 'dictionary/add_annotated_sentence.html'
     gloss = Gloss.objects.get(id=glossid)
+    languages = gloss.lemma.dataset.translation_languages.all()
     context = {
         'gloss': gloss,
         'annotationidgloss': gloss.annotationidglosstranslation_set.filter(language = gloss.lemma.dataset.default_language).first().text,
-        'videoform': VideoUploadForObjectForm(),
+        'videoform': VideoUploadForObjectForm(languages=languages),
     }
     return render(request, template, context)
+
 
 def edit_annotated_sentence(request, glossid, annotatedsentenceid):
     """View to pass context variables to the annotated sentence edit page"""

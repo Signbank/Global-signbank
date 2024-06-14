@@ -2049,7 +2049,6 @@ class Gloss(models.Model):
 
         return minimalpairs_objects_list
 
-
     def minimal_pairs_dict(self):
 
         focus_gloss_values_tuple = self.minimal_pairs_tuple()
@@ -2241,9 +2240,11 @@ class Gloss(models.Model):
 
     def get_image_path(self, check_existence=True):
         """Returns the path within the writable and static folder"""
-        glossvideo = self.glossvideo_set.filter(version=0)
+        from signbank.video.models import GlossVideo
+
+        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None).filter(version=0)
         if glossvideo:
-            glossvideo = glossvideo[0]
+            glossvideo = glossvideo.first()
             videofile_path = str(glossvideo.videofile)
             videofile_path_without_extension, extension = os.path.splitext(videofile_path)
 
@@ -2256,44 +2257,26 @@ class Gloss(models.Model):
                         imagefile_path_exists = False
                     if check_existence and imagefile_path_exists:
                         return imagefile_path
-        else:
-            # If there is no GlossVideo, see whether there is an image on disk anyway
-            # TODO Create a more elegant solution, e.g. by introducing a GlossImage model
-
-            # Create a dummy GlossVideo
-            from signbank.video.models import GlossVideo, get_video_file_path
-            glossvideo = GlossVideo(gloss=self)
-            videofile_path = get_video_file_path(glossvideo, 'does-not-exist.mp4')
-
-            videofile_path_without_extension, extension = os.path.splitext(videofile_path)
-
-            for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
-                imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
-                try:
-                    imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
-                except:
-                    imagefile_path_exists = False
-                if check_existence and imagefile_path_exists:
-                    return imagefile_path
         return ''
 
     def get_image_url(self):
         return escape_uri_path(self.get_image_path())
 
     def get_video_path(self):
+        from signbank.video.models import GlossVideo
         try:
-            glossvideo = self.glossvideo_set.get(version=0)
+            glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None).get(version=0)
             return str(glossvideo.videofile)
         except ObjectDoesNotExist:
             return ''
         except MultipleObjectsReturned:
             # Just return the first
-            glossvideos = self.glossvideo_set.filter(version=0)
-            return str(glossvideos[0].videofile)
+            glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None).filter(version=0)
+            return str(glossvideos.first().videofile)
 
     def get_video_path_prefix(self):
         try:
-            glossvideo = self.glossvideo_set.get(version=0)
+            glossvideo = self.glossvideo_set.exclude(glossvideonme=True).get(version=0)
             prefix, extension = os.path.splitext(str(glossvideo))
             return prefix
         except ObjectDoesNotExist:
@@ -2312,7 +2295,7 @@ class Gloss(models.Model):
     def count_videos(self):
         """Return a count of the number of videos as indicated in the database"""
 
-        return self.glossvideo_set.count()
+        return self.glossvideo_set.exclude(glossvideonme=True).count()
 
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
@@ -2331,27 +2314,67 @@ class Gloss(models.Model):
 
         # Create a new GlossVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideo(gloss=self)
+            video = GlossVideo(gloss=self, upload_to=get_video_file_path)
             # Backup the existing video objects stored in the database
-            existing_videos = GlossVideo.objects.filter(gloss=self)
+            existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None)
             for video_object in existing_videos:
                 video_object.reversion(revert=False)
 
             # Create a GlossVideoHistory object
-            video_file_full_path = os.path.join(WRITABLE_FOLDER, get_video_file_path(video, str(videofile)))
+            relative_path = get_video_file_path(video, str(videofile))
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
             glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
                                                   uploadfile=videofile, goal_location=video_file_full_path)
             glossvideohistory.save()
 
             # Save the new videofile in the video object
-            video.videofile.save(get_video_file_path(video, str(videofile)), videofile)
+            video.videofile.save(relative_path, videofile)
         else:
-            return GlossVideo(gloss=self)
+            return GlossVideo(gloss=self, upload_to=get_video_file_path)
         video.save()
         # video.convert_to_mp4()
         # video.ch_own_mod_video()
         # video.make_small_video()
         video.make_poster_image()
+
+        return video
+
+    def has_nme_videos(self):
+        from signbank.video.models import GlossVideoNME
+        nmevideos = GlossVideoNME.objects.filter(gloss=self)
+        return nmevideos.count()
+
+    def get_nme_videos(self):
+        from signbank.video.models import GlossVideoNME
+        nmevideos = GlossVideoNME.objects.filter(gloss=self)
+        return nmevideos
+
+    def add_nme_video(self, user, videofile, new_offset, recorded):
+        # Preventing circular import
+        from signbank.video.models import GlossVideoNME, GlossVideoHistory, get_video_file_path
+        # Create a new GlossVideo object
+        existing_nmevideos = GlossVideoNME.objects.filter(gloss=self)
+        existing_offsets = [nmev.offset for nmev in existing_nmevideos]
+        if new_offset in existing_offsets:
+            # override given offset to avoid duplicate usage
+            offset = max(existing_offsets)+1
+        else:
+            offset = new_offset
+
+        if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
+            video = GlossVideoNME(gloss=self, offset=offset, upload_to=get_video_file_path)
+            # Create a GlossVideoHistory object
+            relative_path = get_video_file_path(video, str(videofile), nmevideo=True, offset=offset)
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
+                                                  uploadfile=videofile, goal_location=video_file_full_path)
+            glossvideohistory.save()
+
+            # Save the new videofile in the video object
+            video.videofile.save(relative_path, videofile)
+        else:
+            return GlossVideoNME(gloss=self)
+        video.save()
 
         return video
 
@@ -3966,7 +3989,6 @@ class AnnotatedSentence(models.Model):
         """Test to see if the video for this sign is present"""
         
         return self.get_video() not in ['', None]
-
 
     def add_video(self, user, videofile, eaffile, corpus):
         """Add a video to the annotated sentence"""

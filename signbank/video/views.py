@@ -7,8 +7,8 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext as _
 
-from signbank.video.models import Video, GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
-from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence
+from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
+from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence, Dataset
 from signbank.video.forms import VideoUploadForObjectForm
 from django.http import JsonResponse
 # from django.contrib.auth.models import User
@@ -24,7 +24,9 @@ def addvideo(request):
     """View to present a video upload form and process the upload"""
 
     if request.method == 'POST':
-        form = VideoUploadForObjectForm(request.POST, request.FILES)
+        last_used_dataset = request.session['last_used_dataset']
+        dataset_languages = Dataset.objects.filter(acronym=last_used_dataset).first().translation_languages.all()
+        form = VideoUploadForObjectForm(request.POST, request.FILES, languages=dataset_languages)
         if form.is_valid():
             # Unpack the form
             object_id = form.cleaned_data['object_id']
@@ -43,6 +45,19 @@ def addvideo(request):
                 if not gloss:
                     redirect(redirect_url)
                 gloss.add_video(request.user, vfile, recorded)
+            elif object_type == 'gloss_nmevideo':
+                gloss = Gloss.objects.filter(id=object_id).first()
+                if not gloss:
+                    redirect(redirect_url)
+                offset = form.cleaned_data['offset']
+                nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded)
+                translation_languages = gloss.lemma.dataset.translation_languages.all()
+                descriptions = dict()
+                for language in translation_languages:
+                    form_field = 'description_' + language.language_code_2char
+                    form_value = form.cleaned_data[form_field]
+                    descriptions[language.language_code_2char] = form_value.strip()
+                nmevideo.add_descriptions(descriptions)
             elif object_type == 'morpheme_video':
                 morpheme = Morpheme.objects.filter(id=object_id).first()
                 if not morpheme:

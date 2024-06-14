@@ -1402,6 +1402,128 @@ option:not(:checked) {
             </div>
         </div>
 
+   <!-- Non-manual videos -->
+   <div class="panel panel-default">
+        <div class='panel-heading' data-toggle='collapse'
+             data-target='#nmevideos'>{% trans "Videos with Non-manual Elements" %}
+        </div>
+        <div id='nmevideos' class='collapse'>
+            <div class="panel panel-default">
+            {% if gloss.has_nme_videos %}
+               <table class='table table-condensed' style="text-align: left;">
+                <tr>
+                    {% for videonme in gloss.get_nme_videos %}
+                      <td>
+                         <table class="table table-condensed" style="text-align: left;">
+                         <tr>
+                           <td class="editform" style="width:5em;">
+                           <span class='glyphicon glyphicon-trash nmevideo-delete' data-toggle='modal' data-target='#delete_nmevideo_modal_{{videonme.id}}'></span>
+                             <div class="modal fade" id="delete_nmevideo_modal_{{videonme.id}}" role="dialog" aria-labelledby="#modalDeleteNME" aria-hidden="true">
+                                 <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <div class='modal-header'>
+                                            <h2 id='modalDeleteNME'>{% trans "Delete NME Video" %}</h2>
+                                        </div>
+                                        <div class='modal-body'>
+                                            <p>{% trans "Are you sure you? This cannot be undone." %}</p>
+                                         </div>
+                                        <form class="formbutton" action='{% url "dictionary:update_gloss" gloss.id %}'
+                                              method='post'>
+                                        {% csrf_token %}
+                                          <input type='hidden' name='id' value='nmevideo_delete_{{videonme.id}}'>
+                                          <input type='hidden' name='value' value='confirmed'>
+                                          <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                            <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
+                                          </div>
+                                        </form>
+                                    </div>
+                                  </div>
+                             </div>
+                           </td>
+                           <td>
+                               <table>
+                                   <tr>
+                                       <td colspan="2">
+                                           <div id="nmeplayer">
+                                            <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}"
+                                                   style="height:200px;width:auto;" controls muted></video>
+                                           </div>
+                                        </td>
+                                   </tr>
+                                   {% with nme_video_descriptions|get_item:videonme as nme_descriptions %}
+                                   {% for lang, description in nme_descriptions.items %}
+                                    <tr style="text-align: left;">
+                                        <td>
+                                            {% if SHOW_DATASET_INTERFACE_OPTIONS %}{{lang.name}}:{% endif %}
+                                        </td>
+                                        <td class='edit edit_text' id='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'>{{description}}</td>
+                                    </tr>
+                                   {% endfor %}
+                                   {% endwith %}
+                                   <tr class="editform">
+                                       <td>{% trans "Index" %}</td>
+                                       <td class='edit edit_int' id='nmevideo_offset_{{videonme.id}}'>{{videonme.offset}}</td>
+                                   </tr>
+                               </table>
+                           </td>
+                         </tr>
+                         </table>
+                      </td>
+                    {% endfor %}
+                </tr>
+               </table>
+            {% endif %}
+            </div>
+
+            {% if "change_dataset" in dataset_perms %}
+            <div class='editform' style="width:800px;height:800px;">
+                <fieldset>
+                    <legend>{% trans "Upload New NME Video" %}</legend>
+                    <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                        <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
+                        <input type='hidden' name='object_type' value='gloss_nmevideo'>
+                        <input type='hidden' name='recorded' value='False'>
+                        <table>
+                          <tr>
+                            <td>{{nmevideoform.videofile}}</td>
+                          </tr>
+                          <tr>
+                            <td id="nmevideo-buttons">
+                                <input type='hidden' name='object_id' value='{{gloss.pk}}'>
+                                <input class='btn btn-primary' type='submit' value='Upload' />
+                            </td>
+                          </tr>
+                        </table>
+                        <br><br>
+                        <div>{% trans "Add descriptions for the video:" %}</div>
+                            <table class="table table-condensed">
+                                <tr>
+                                    <th style="width:200px;">{% trans "Index" %}</th>
+                                    <td style='width:5em'>
+                                        <input class='form-control' name='offset' id='offset' type='number' value=1>
+                                    </td>
+                                </tr>
+                                {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                                <tr>
+                                    <th style="width:200px;">{{dataset_lang.name}}</th>
+                                    <td><input style="width:600px;"
+                                               id="description_{{dataset_lang.language_code_2char}}"
+                                               name="description_{{dataset_lang.language_code_2char}}"
+                                               value="" maxlength="200" type="text" class="description-input">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                      <br><br>
+                    </form>
+                </fieldset>
+            </div>
+            {% endif %}
+        </div>
+   </div>
+
    <!-- Morphology -->
    <div class="panel panel-default">
         <div class='panel-heading' data-toggle='collapse'
