@@ -1480,7 +1480,7 @@ option:not(:checked) {
             <div class='editform' style="width:800px;height:800px;">
                 <fieldset>
                     <legend>{% trans "Upload New NME Video" %}</legend>
-                    <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
+                    <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                         <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                         <input type='hidden' name='object_type' value='gloss_nmevideo'>
