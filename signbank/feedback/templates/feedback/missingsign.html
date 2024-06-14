@@ -85,6 +85,12 @@ $(document).ready(function(){
         {% bootstrap_field form.meaning show_label=False %}
     </div>
 
+    <div id="{{form.sentence.name}}div">
+        {% bootstrap_label form.sentence.label %}
+        {% if form.video.errors %}{{form.sentence.errors}}{% endif %}
+        {% bootstrap_field form.sentence show_label=False %}
+    </div>
+
     <div id="{{form.comments.name}}div">
         <p>{% trans "Other remarks / information about the sign" %}</p>
         {% if form.comments.errors %}{{form.comments.errors}}{% endif %}

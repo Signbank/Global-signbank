@@ -93,7 +93,17 @@ $(window).ready(function(){
             <p><a href='{{ MEDIA_URL }}{{ fb.video }}'>{% trans "Download Video" %}</a></p>
          </div>
         {% endif %}
-    
+
+        {% if fb.has_sentence_video %}
+        <div class="videocontainer">
+            <video id='mssfb{{fb.id}}' class='video-js vjs-default-skin'
+               poster='{{posterurl}}' controls preload='false' data-setup='{"example_option":true}'>
+                <source src='{{protected_media_url}}{{ fb.sentence }}' type='video/mp4' codecs='avc1.42E01E, mp4a.40.2'>
+            </video>
+            <p><a href='{{ MEDIA_URL }}{{ fb.sentence }}'>{% trans "Download Video" %}</a></p>
+         </div>
+        {% endif %}
+        
          <dl class='dl-horizontal'>
           <dt>{% trans "Sign Language" %}</dt>
              {% if fb.signlanguage %}

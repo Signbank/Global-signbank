@@ -123,6 +123,8 @@ class MissingSignFeedbackForm(forms.Form):
                             widget=forms.FileInput(attrs={'size': '60', 'accept': 'video/*'}))
     comments = forms.CharField(label=_('Other Remarks'), widget=forms.Textarea(attrs={'rows': 6, 'cols': 80}),
                                required=False)
+    sentence = forms.FileField(label=_('Example Sentence'), required=False,
+                               widget=forms.FileInput(attrs={'size': '60', 'accept': 'video/*'}))
 
     def __init__(self, *args, **kwargs):
         sign_languages = kwargs.pop('sign_languages')
@@ -161,6 +163,7 @@ class MissingSignFeedback(models.Model):
     meaning = models.TextField()
     comments = models.TextField(blank=True)
     video = models.FileField(upload_to=settings.VIDEO_UPLOAD_LOCATION, blank=True)
+    sentence = models.FileField(upload_to=settings.VIDEO_UPLOAD_LOCATION, blank=True)
 
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='unread')
 
@@ -178,7 +181,20 @@ class MissingSignFeedback(models.Model):
         else:
             return ''
 
+    def has_sentence_video(self):
+        """Return the sentence object for this Feedback or None if no sentence available"""
+        if self.sentence:
+            filepath = os.path.join(settings.WRITABLE_FOLDER, self.sentence.name)
+        else:
+            filepath = ''
+        if filepath and os.path.exists(filepath.encode('utf-8')):
+            return self.sentence
+        else:
+            return ''
+
     def save_video(self, *args, **kwargs):
+        if not self.video:
+            return
         filename = self.video.name
         signlanguage = self.signlanguage.name
         newloc = get_video_file_path(self, filename, signlanguage, 'missing_sign')
@@ -186,4 +202,16 @@ class MissingSignFeedback(models.Model):
         oldpath = os.path.join(settings.WRITABLE_FOLDER, self.video.name)
         os.rename(oldpath, newpath)
         self.video.name = newloc
+        self.save()
+
+    def save_sentence_video(self, *args, **kwargs):
+        if not self.sentence:
+            return
+        filename = self.sentence.name
+        signlanguage = self.signlanguage.name
+        newloc = get_video_file_path(self, filename, signlanguage, 'meaning_missing_sign')
+        newpath = os.path.join(settings.WRITABLE_FOLDER, newloc)
+        oldpath = os.path.join(settings.WRITABLE_FOLDER, self.sentence.name)
+        os.rename(oldpath, newpath)
+        self.sentence.name = newloc
         self.save()

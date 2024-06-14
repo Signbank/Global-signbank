@@ -116,12 +116,16 @@ def missingsign(request):
             if 'video' in form.cleaned_data and form.cleaned_data['video'] is not None:
                 fb.video = form.cleaned_data['video']
 
+            if 'sentence' in form.cleaned_data and form.cleaned_data['sentence'] is not None:
+                fb.sentence = form.cleaned_data['sentence']
+
             # these last two are required either way (video or not)
             fb.meaning = form.cleaned_data['meaning']
             fb.comments = form.cleaned_data['comments']
     
             fb.save()
             fb.save_video()
+            fb.save_sentence_video()
             posted = True
 
     else:
