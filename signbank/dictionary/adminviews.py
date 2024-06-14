@@ -27,6 +27,7 @@ from guardian.shortcuts import get_objects_for_user
 
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForObjectForm
+from signbank.video.models import GlossVideoDescription, GlossVideo, GlossVideoNME
 from tagging.models import Tag, TaggedItem
 from signbank.settings.server_specific import *
 
@@ -918,7 +919,8 @@ class GlossDetailView(DetailView):
 
         context['tagform'] = TagUpdateForm()
         context['affiliationform'] = AffiliationUpdateForm()
-        context['videoform'] = VideoUploadForObjectForm()
+        context['videoform'] = VideoUploadForObjectForm(languages=dataset_languages)
+        context['nmevideoform'] = VideoUploadForObjectForm(languages=dataset_languages)
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
@@ -1295,6 +1297,19 @@ class GlossDetailView(DetailView):
             if "-duplicate" in annotation.text:
                 gloss_is_duplicate = True
         context['gloss_is_duplicate'] = gloss_is_duplicate
+
+        # Put nme video descriptions per language in the context
+        glossnmevideos = GlossVideoNME.objects.filter(gloss=gl)
+        nme_video_descriptions = dict()
+        for nmevideo in glossnmevideos:
+            nme_video_descriptions[nmevideo] = {}
+            for language in gl.dataset.translation_languages.all():
+                try:
+                    description_text = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language).text
+                except ObjectDoesNotExist:
+                    description_text = ""
+                nme_video_descriptions[nmevideo][language] = description_text
+        context['nme_video_descriptions'] = nme_video_descriptions
 
         return context
 
@@ -4943,12 +4958,13 @@ class MorphemeDetailView(DetailView):
 
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+        languages = self.object.lemma.dataset.translation_languages.all()
 
         # Call the base implementation first to get a context
         context = super(MorphemeDetailView, self).get_context_data(**kwargs)
         # Add in a QuerySet of all the books
         context['tagform'] = TagUpdateForm()
-        context['videoform'] = VideoUploadForObjectForm()
+        context['videoform'] = VideoUploadForObjectForm(languages=languages)
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()

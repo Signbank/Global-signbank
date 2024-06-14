@@ -43,6 +43,10 @@ var busy_editing = 0;
          if (window.location.search.match('editothermedia')) {
              $('#othermedia').addClass('in');
          }
+
+         if (window.location.search.match('editnme')) {
+             $('#nmevideos').addClass('in');
+         }
      }
 
      $('#enable_edit').click(function()

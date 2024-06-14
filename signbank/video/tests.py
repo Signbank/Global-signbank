@@ -5,7 +5,7 @@ from django.core.files import File
 from django.core.management import call_command
 from django.conf import settings
 from signbank.settings.base import *
-from signbank.video.models import Video, GlossVideo
+from signbank.video.models import GlossVideo
 from signbank.video.management.commands import remove_unused
 from io import StringIO
 import os
