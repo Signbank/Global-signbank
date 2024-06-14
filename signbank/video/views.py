@@ -34,7 +34,6 @@ def addvideo(request):
             vfile = form.cleaned_data['videofile']
             redirect_url = form.cleaned_data['redirect']
             recorded = form.cleaned_data['recorded']
-            offset = form.cleaned_data['offset']
             # Get the object, either a gloss or an example sentences
             if object_type == 'examplesentence_video':
                 sentence = ExampleSentence.objects.filter(id=object_id).first()
@@ -50,6 +49,7 @@ def addvideo(request):
                 gloss = Gloss.objects.filter(id=object_id).first()
                 if not gloss:
                     redirect(redirect_url)
+                offset = form.cleaned_data['offset']
                 nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded)
                 translation_languages = gloss.lemma.dataset.translation_languages.all()
                 descriptions = dict()
