@@ -24,11 +24,12 @@ from django.db.transaction import atomic
 
 import time
 
+
 def index(request):
     return render(request, 'feedback/index.html',
-                              { 'selected_datasets': get_selected_datasets_for_user(request.user),
-                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                                'language': settings.LANGUAGE_NAME})
+                  {'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                   'language': settings.LANGUAGE_NAME})
 
 
 @login_required
@@ -59,22 +60,24 @@ def generalfeedback(request):
                     'Thank you. Your feedback has been saved. <a href="' + sourcepage + '">Return to Previous Page</a>'))
 
             # return HttpResponseRedirect("")
-            return render(request, 'feedback/generalfeedback.html', {'language': settings.LANGUAGE_NAME,
-                                                                     'selected_datasets': get_selected_datasets_for_user(request.user),
-                                                                     'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                                                                    'title':"General Feedback",
-                                                                    'form': form,
-                                                                    'valid': valid })
+            return render(request, 'feedback/generalfeedback.html',
+                          {'language': settings.LANGUAGE_NAME,
+                           'selected_datasets': get_selected_datasets_for_user(request.user),
+                           'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                           'title': "General Feedback",
+                           'form': form,
+                           'valid': valid})
     else:
         form = GeneralFeedbackForm()
 
-    return render(request,"feedback/generalfeedback.html",
-                              {'language': settings.LANGUAGE_NAME,
-                                'selected_datasets': get_selected_datasets_for_user(request.user),
-                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                               'title':"General Feedback",
-                               'form': form,
-                               'valid': valid })
+    return render(request, "feedback/generalfeedback.html",
+                  {'language': settings.LANGUAGE_NAME,
+                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                   'title': "General Feedback",
+                   'form': form,
+                   'valid': valid})
+
 
 @login_required
 def missingsign(request):
@@ -113,23 +116,28 @@ def missingsign(request):
             if 'video' in form.cleaned_data and form.cleaned_data['video'] is not None:
                 fb.video = form.cleaned_data['video']
 
+            if 'sentence' in form.cleaned_data and form.cleaned_data['sentence'] is not None:
+                fb.sentence = form.cleaned_data['sentence']
+
             # these last two are required either way (video or not)
             fb.meaning = form.cleaned_data['meaning']
             fb.comments = form.cleaned_data['comments']
     
             fb.save()
+            fb.save_video()
+            fb.save_sentence_video()
             posted = True
 
     else:
         form = MissingSignFeedbackForm(sign_languages=sign_languages)
 
     return render(request, 'feedback/missingsign.html',
-                               {'language': settings.LANGUAGE_NAME,
-                                'selected_datasets': get_selected_datasets_for_user(request.user),
-                                'signlanguage_to_dataset': signlanguage_to_dataset,
-                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                                'posted': posted,
-                                'form': form})
+                  {'language': settings.LANGUAGE_NAME,
+                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'signlanguage_to_dataset': signlanguage_to_dataset,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
+                   'posted': posted,
+                   'form': form})
 
 
 @permission_required('feedback.delete_generalfeedback')
@@ -153,9 +161,9 @@ def showfeedback(request):
     general = GeneralFeedback.objects.filter(status='unread')
     
     return render(request, "feedback/show_general_feedback.html",
-                              {'general': general,
-                               'selected_datasets': get_selected_datasets_for_user(request.user),
-                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                  {'general': general,
+                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 @permission_required('feedback.delete_signfeedback')
@@ -318,19 +326,28 @@ def recordsignfeedback(request, glossid):
                                                        'selected_datasets': get_selected_datasets_for_user(request.user),
                                                        'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
     return render(request, feedback_template,
-                              {'feedback_form': feedback_form,
-                               'sourcepage': sourcepage,
-                               'selected_datasets': get_selected_datasets_for_user(request.user),
-                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+                  {'feedback_form': feedback_form,
+                   'sourcepage': sourcepage,
+                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
-#--------------------
+#
 #  deleting feedback
-#--------------------
+#
+
 
 import django
+
+
 @permission_required('feedback.delete_generalfeedback')
 def delete(request, kind, id):
     """Mark a feedback item as deleted, kind 'signfeedback', 'generalfeedback' or 'missingsign'"""
+
+    # return to referer
+    if 'HTTP_REFERER' in request.META:
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
 
     if kind == 'sign':
         KindModel = django.apps.apps.get_model('feedback', 'SignFeedback')
@@ -341,7 +358,7 @@ def delete(request, kind, id):
     elif kind == 'missingsign':
         KindModel = django.apps.apps.get_model('feedback', 'MissingSignFeedback')
     else:
-        raise Http404
+        return redirect(url)
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
@@ -353,11 +370,6 @@ def delete(request, kind, id):
         item.status = 'deleted'
         item.save()
 
-    # return to referer
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
     return redirect(url)
     
 
@@ -385,7 +397,7 @@ def recent_feedback(request):
     recently_added_feedback_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
     signfb = signfb.filter(
         date__range=[recently_added_feedback_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
-        'date').reverse()
+        '-date')
 
     return render(request, "feedback/recent_feedback.html",
                   {'signfb': signfb,

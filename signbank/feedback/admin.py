@@ -2,7 +2,8 @@ from django.contrib import admin
 from signbank.feedback.models import *
 from django.utils.translation import override, gettext_lazy as _
 from django.contrib.admin import SimpleListFilter
- 
+
+
 class GeneralFeedbackAdmin(admin.ModelAdmin):
     readonly_fields = ['user', 'date', 'comment', 'video']
     list_display = ['user', 'date', 'comment']
@@ -61,7 +62,7 @@ class MissingSignFeedbackAdmin(admin.ModelAdmin):
     list_filter = ['user']
 
     def get_fields(self, request, obj=None):
-        fields = ['meaning', 'comments', 'video', 'status']
+        fields = ['meaning', 'comments', 'video', 'sentence', 'status']
         return fields
 
 

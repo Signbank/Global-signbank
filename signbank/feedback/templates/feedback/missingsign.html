@@ -19,13 +19,11 @@ $(document).ready(function(){
        $("#signdescriptioninput").toggle();
        return false;
     });
-    $("#videoupload").hide();
 
     $("#togglesignlanguagebutton").click(function() {
        $("#signlanguage").toggle();
        return false;
     });
-    $("#signlanguage").hide();
 
 });
 </script>
@@ -34,40 +32,33 @@ $(document).ready(function(){
 {% block content %}
   <div class="col-md-5 col-md-offset-1">
       
-      <h2>{% trans "Missing Sign Feedback" %}</h2>
+      <h3>{% trans "Missing Sign Feedback" %}</h3>
       
   {% if posted %}
 <div id="feedbackmessage">
-    <p class='alert alert-info'>
+    <h4 class='alert alert-info'>
         {% trans "Thank you for your feedback." %}
-    </p>
+    </h4>
 </div>    
   {% else %}
-      <p>{% trans "Please submit a video comment showing the sign you think is missing." %}</p>
-      <p>{% trans "Please produce the sign in isolation and then in an example sentence." %}</p>
-      <p>{% blocktrans trimmed %}
-          Please also type in the English translation equivalent below as well as
-          your contact information (name and email address) so we can contact you for a follow up if need be.
-      {% endblocktrans %}</p>
-      <p>{% trans "Thank you for taking the time to contact us and help SignBank grow." %}</p>
+      <h4>{% trans "What sign do you think is missing?" %}</h4>
 
 <form method="post" enctype="multipart/form-data" name="missingsign">
    {% csrf_token %}
-    <p>{% blocktrans trimmed %}
-        You may either upload a video that shows the missing sign or
-    fill in details below. In either case, you should
-    enter a meaning and any comments you might have in the text 
-    boxes at the bottom of the form.
-    {% endblocktrans %}</p>
 
-        <button class='btn btn-default' id="togglesignlanguagebutton">{% trans "Sign Language" %}</button>
-        <button class='btn btn-default' id="togglevideobutton">{% trans "Video Comment" %}</button>
-
+     <fieldset id="videoupload">
+      <legend>{% trans "Sign" %}</legend>
+      <div id="{{form.video.name}}div">
+        {% bootstrap_label form.video.label %}
+        {% if form.video.errors %}{{form.video.errors}}{% endif %}
+        {% bootstrap_field form.video show_label=False %}
+      </div>
+    </fieldset>
 
      <fieldset id="signlanguage">
       <legend>{% trans "Sign Language" %}</legend>
       <div id="{{form.signlanguage.name}}div">
-        <p>{% trans "What is the sign language of the missing sign?" %}</p>
+        <p>{% trans "From which sign language is this sign?" %}</p>
         {% if form.signlanguage.errors %}{{form.signlanguage.errors}}{% endif %}
         {% bootstrap_field form.signlanguage show_label=False %}
 
@@ -84,39 +75,24 @@ $(document).ready(function(){
     </fieldset>
 
 
- <fieldset id="videoupload">
-  <legend>{% trans "Video Upload" %}</legend>
-  <div id="{{form.video.name}}div">
-    {% bootstrap_label form.video.label %}
-    <p>{% trans "Upload a video of the sign." %}</p>
-    {% if form.video.errors %}{{form.video.errors}}{% endif %}
-    {% bootstrap_field form.video show_label=False %}
-
-    <p>{% blocktrans trimmed %}
-        NOTE: Video files can be quite large, and may take a long time to send.
-    Please be patient when submitting this feedback.
-    {% endblocktrans %}</p>
-  </div>
-</fieldset>
-
-
 <fieldset id="meaninginput">
   <legend>{% trans "Details" %}</legend>
     <div id="{{form.meaning.name}}div">
-        <p>{% blocktrans trimmed %}
-            Please explain the meaning of the new or missing sign, or enter individual
-            English words that have the same meaning as this sign (i.e. keywords).
-        {% endblocktrans %}</p>
+        <p>{% trans "What does this sign mean?" %}
+            {% trans "Please provide an explanation, translation and/or example sentence" %}
+        </p>
         {% if form.meaning.errors %}{{form.meaning.errors}}{% endif %}
         {% bootstrap_field form.meaning show_label=False %}
     </div>
 
+    <div id="{{form.sentence.name}}div">
+        {% bootstrap_label form.sentence.label %}
+        {% if form.video.errors %}{{form.sentence.errors}}{% endif %}
+        {% bootstrap_field form.sentence show_label=False %}
+    </div>
+
     <div id="{{form.comments.name}}div">
-        <p>{% blocktrans trimmed %}
-            Are there any other comments you would like to give about this sign? For example,
-            do you think there are other or extra keyword/s that belong with this sign?
-            If so, please include your comments below.
-        {% endblocktrans %}</p>
+        <p>{% trans "Other remarks / information about the sign" %}</p>
         {% if form.comments.errors %}{{form.comments.errors}}{% endif %}
         {% bootstrap_field form.comments show_label=False %}
     </div>
