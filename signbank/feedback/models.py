@@ -55,7 +55,8 @@ class GeneralFeedback(models.Model):
 class GeneralFeedbackForm(forms.Form):
     """Form for general feedback"""
     
-    comment = forms.CharField(widget=forms.Textarea(attrs={'rows':6, 'cols':80}), required=True)
+    comment = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}),
+                              required=True)
     video = forms.FileField(required=False, widget=forms.FileInput(attrs={'size':'60'}))
 
 
@@ -100,7 +101,8 @@ class MorphemeFeedback(models.Model):
 class SignFeedbackForm(forms.Form):
     """Form for input of sign feedback"""
 
-    comment = forms.CharField(label="Comment or new keywords", required=True, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
+    comment = forms.CharField(label="Comment or new keywords", required=True,
+                              widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}))
 
     def __init__(self, *args, **kwargs):
         super(SignFeedbackForm, self).__init__(*args, **kwargs)
@@ -109,7 +111,8 @@ class SignFeedbackForm(forms.Form):
 class MorphemeFeedbackForm(forms.Form):
     """Form for input of sign feedback"""
 
-    comment = forms.CharField(label="Comment or new keywords", required=True, widget=forms.Textarea(attrs={'rows':6, 'cols':80}))
+    comment = forms.CharField(label=_("Comment or new keywords"), required=True,
+                              widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}))
 
     def __init__(self, *args, **kwargs):
         super(MorphemeFeedbackForm, self).__init__(*args, **kwargs)
@@ -117,11 +120,11 @@ class MorphemeFeedbackForm(forms.Form):
 
 class MissingSignFeedbackForm(forms.Form):
 
-    meaning = forms.CharField(label=_('Sign Meaning'), widget=forms.Textarea(attrs={'rows': 6, 'cols': 80}),
+    meaning = forms.CharField(label=_('Sign Meaning'), widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}),
                               required=True)
     video = forms.FileField(label=_('Video of the Sign'), required=True,
                             widget=forms.FileInput(attrs={'size': '60', 'accept': 'video/*'}))
-    comments = forms.CharField(label=_('Other Remarks'), widget=forms.Textarea(attrs={'rows': 6, 'cols': 80}),
+    comments = forms.CharField(label=_('Other Remarks'), widget=forms.Textarea(attrs={'rows': 4, 'cols': 80}),
                                required=False)
     sentence = forms.FileField(label=_('Example Sentence'), required=False,
                                widget=forms.FileInput(attrs={'size': '60', 'accept': 'video/*'}))
