@@ -1311,11 +1311,11 @@ msgstr "Opening"
 
 #: signbank/dictionary/forms.py:826
 msgid "Only show results without glosses"
-msgstr ""
+msgstr "Alleen resultaten tonen zonder glossen"
 
 #: signbank/dictionary/forms.py:828
 msgid "Only show results with glosses"
-msgstr ""
+msgstr "Alleen resultaten tonen met glossen"
 
 #: signbank/dictionary/forms.py:1120
 msgid "The Field Choice Category is required"
@@ -1780,7 +1780,7 @@ msgstr "Gepubliceerd"
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:2264
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:680
 msgid "Index"
-msgstr "Index"
+msgstr "Volgorde"
 
 #: signbank/dictionary/models.py:1510
 #: signbank/dictionary/templates/dictionary/admin_keyword_list.html:458
@@ -6222,7 +6222,7 @@ msgstr "Ga naar de volgende pagina om een nieuw wachtwoord in te stellen"
 
 #: templates/global-templates/tooltip.html:7
 msgid "In many text fields, you can use patterns as follows:"
-msgstr ""
+msgstr "In veel tekstvelden kunt u als volgt patronen gebruiken:"
 
 #: templates/global-templates/tooltip.html:10
 msgid "contains A"
