@@ -1,15 +1,18 @@
 html,
 body {
-  height: 100%;
+  height: auto;
+  width: 100%;
   margin: 0px;
   padding: 0px;
+  overflow: hidden;
   /* The html and body elements cannot have any padding or margin. */
 }
 
 /* Wrapper for page content to push down footer */
 #wrap {
-  min-height: calc(100% - 220px);
+  /* min-height: calc(100% - 220px); */
   height: auto;
+  width: auto;
   /* Negative indent footer by its height */
   margin: auto auto -45px auto;
   /* Pad bottom by footer height */
@@ -30,11 +33,12 @@ body {
 }
 
 .container {
-    width: 100%;
+    width: auto;
     margin-right: 9px;
     margin-bottom: 15px;
     margin-top: 0px;
     background-color: #ffffff;
+    overflow: hidden;
 }
 
 #content {

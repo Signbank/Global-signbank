@@ -124,6 +124,14 @@ legend
     background-color: #ffffff;
 }
 
+.navbar-fixed-top {
+    z-index: 500;
+}
+
+.navbar-upper {
+    z-index: 550;
+}
+
 .navbar-nav > li > a {
     padding-top: 5px;
     padding-bottom: 5px;
