@@ -583,9 +583,8 @@ tr.rotated th {
 .ribbon_list
 {
     display: flex;
-    flex-direction: column;
     height: 100px;
-    flex-wrap: wrap;
+    flex-flow: column wrap;
     margin-left: -85px;
     margin-top: 3px;
     justify-content: center;

@@ -1410,10 +1410,11 @@ option:not(:checked) {
         <div id='nmevideos' class='collapse'>
             <div class="panel panel-default">
             {% if gloss.has_nme_videos %}
-               <table class='table table-condensed' style="text-align: left;">
-                <tr>
+               <table class='table table-responsive' style="text-align: left;width:100%;">
+                <tr style="overflow-y:auto;">
+                    <td style="display:inline-block;">
                     {% for videonme in gloss.get_nme_videos %}
-                      <td>
+                        <div class="table-responsive" style="display:inline-block;">
                          <table class="table table-condensed" style="text-align: left;">
                          <tr>
                            <td class="editform" style="width:5em;">
@@ -1457,7 +1458,9 @@ option:not(:checked) {
                                         <td>
                                             {% if SHOW_DATASET_INTERFACE_OPTIONS %}{{lang.name}}:{% endif %}
                                         </td>
-                                        <td class='edit edit_text' id='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'>{{description}}</td>
+                                        <td class='edit edit_area'
+                                            id='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'
+                                            style="height:80;">{{description}}</td>
                                     </tr>
                                    {% endfor %}
                                    {% endwith %}
@@ -1469,8 +1472,9 @@ option:not(:checked) {
                            </td>
                          </tr>
                          </table>
-                      </td>
+                      </div>
                     {% endfor %}
+                    </td>
                 </tr>
                </table>
             {% endif %}
