@@ -28,11 +28,11 @@
 
   {% include 'menu.html' %}
 
-    <div id='wrap' class="container-fluid" style="box-sizing:content-box;background:transparent;overflow-y:scroll;">
+    <div id='wrap' class="container-fluid" style="box-sizing:content-box;background:transparent;">
 
         {% bootstrap_messages %}
 
-        <div role='main' id="maincontent" style="background:transparent;overflow-y:scroll;">
+        <div role='main' id="maincontent" style="background:transparent;">
         {% block content %}(no content){% endblock %}
         </div>
         

@@ -4,7 +4,6 @@ body {
   width: 100%;
   margin: 0px;
   padding: 0px;
-  overflow: hidden;
   /* The html and body elements cannot have any padding or margin. */
 }
 
@@ -38,7 +37,6 @@ body {
     margin-bottom: 15px;
     margin-top: 0px;
     background-color: #ffffff;
-    overflow: hidden;
 }
 
 #content {
