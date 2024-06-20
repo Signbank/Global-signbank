@@ -336,12 +336,16 @@ option:not(:checked) {
 {% endblock %}
 
 {% block content %}
-    <div class="navbar" id="searchquery" style="background-color:white;z-index: 50;">
-
+    <div class="navbar" id="searchquery" style="display:flex;background-color:white;z-index: 50;">
+    <table class="table-responsive">
+    <tr>
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
+    <td>
     <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'
-            style="z-index: 50;">{% trans "QUERY" %}</span></button>
+            style="z-index: 50;height:20px">{% trans "QUERY" %}</span></button>&nbsp;&nbsp;
+    </td>
     {% endif %}
+    <td>
     <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
         {% if request.session.search_results %}{# See if search_results in sessions is empty #}
 
@@ -349,6 +353,9 @@ option:not(:checked) {
         </div>
         {% endif %}
     </div>
+    </td>
+    </tr>
+    </table>
     </div>
 
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
