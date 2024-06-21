@@ -977,7 +977,8 @@ option:not(:checked) {
                     {% trans "Annotation ID Gloss" %}
                     {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}' colspan="2">{{annotation_idgloss_translation}}</td>
+                <td class='edit edit_area' id='annotation_idgloss_{{lang.language_code_2char}}'
+                    colspan="2">{{annotation_idgloss_translation}}</td>
             </tr>
             <tr>
                 <th></th>
@@ -1386,9 +1387,15 @@ option:not(:checked) {
 
             {% for value,name,label,kind in main_fields %}
                 <tr><th>{{label}}</th>
+                    {% if kind == 'text' %}
+                    <td class="edit edit_area" id='{{name}}'
+                        value='{{value}}'>{% value value %}
+                    </td>
+                    {% else %}
                     <td class="edit edit_{{kind}}" id='{{name}}'
                         value='{{value}}'>{% value value %}
                     </td>
+                    {% endif %}
                     <td style="width:200px;"></td>
                 </tr>
             {% endfor %}
@@ -1678,7 +1685,7 @@ option:not(:checked) {
                     {% endif %}
                     <td id='morpheme-definition_{{morpheme.pk}}'>
                         <a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morph_display}} ({{morpheme_type}})</a></td>
-                    <td class='edit edit_text' id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
+                    <td class='edit edit_area' id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
                </tr>
                 {% endfor %}
             </table>
@@ -1757,7 +1764,7 @@ option:not(:checked) {
                     <td></td>
                     {% endif %}
                     <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend_display}}</a></td>
-                    <td class='edit edit_text' id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
+                    <td class='edit edit_area' id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
                </tr>
                 {% endfor %}
             </table>
@@ -1920,7 +1927,7 @@ option:not(:checked) {
                 {% elif kind == 'text' %}
                 <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %} class="empty_row"{% endif %}>
                     <th>{{label}}</th>
-                    <td class="edit edit_text" id='{{name}}' value='{{value}}' colspan="2">{% value value %}</td>
+                    <td class="edit edit_area" id='{{name}}' value='{{value}}' colspan="2">{% value value %}</td>
                 </tr>
                 {% else %}
                 {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %}
@@ -2036,7 +2043,7 @@ option:not(:checked) {
                     {% endif %}
                     </th>
                     {% if kind == 'text' %}
-                    <td class="edit edit_text" id='{{name}}' style="width:500px;" value='{{value}}'
+                    <td class="edit edit_area" id='{{name}}' style="width:500px;" value='{{value}}'
                              colspan="2">{% value value %}</td>
                     <td/>
                     {% else %}
@@ -2194,8 +2201,8 @@ option:not(:checked) {
                    {% endif %}
                         <td class='edit edit_check' id='relationforeign-loan_{{rel.id}}' style='width:3em'
                             value='{{rel.loan}}'>{% if rel.loan %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                        <td class='edit edit_text' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
-                        <td class='edit edit_text' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
+                        <td class='edit edit_area' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
+                        <td class='edit edit_area' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
                     </tr>
                    {% endfor %}
                </table>
@@ -2247,8 +2254,13 @@ option:not(:checked) {
                 {% for value,name,label,kind in publication_fields %}
 	            <tr>
                       <th>{{label}}</th>
+                      {% if kind == 'text' %}
+                      <td class="edit edit_area" id='{{name}}'
+                          value='{{value}}'>{% value value %}</td>
+                      {% else %}
                       <td class="edit edit_{{kind}}" id='{{name}}'
                           value='{{value}}'>{% if value %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                      {% endif %}
                 </tr>
                 {% endfor %}
             </table>
@@ -2514,7 +2526,7 @@ option:not(:checked) {
                     </td>
                     <td id='other-media-file-type_{{pk}}'>{{file_type}}</td>
                     <td id='other-media-type_{{pk}}'>{{type}}</td>
-                    <td class='edit edit_text' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
+                    <td class='edit edit_area' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
                 </tr>
                {% endfor %}
 
