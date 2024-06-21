@@ -16,15 +16,18 @@ def url(request):
             # this happens at the start of a session
             selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
     else:
-        # display all datasets in header
+        selected_datasets = get_selected_datasets_for_user(request.user)
+        # display selected and visible datasets in header
         viewable_datasets = list(get_datasets_with_public_glosses())
         for dataset in Dataset.objects.all():
             if dataset in viewable_datasets:
                 continue
+            if dataset in selected_datasets:
+                viewable_datasets.append(dataset)
+                continue
             permissions_for_dataset = get_user_perms(request.user, dataset)
             if 'view_dataset' in permissions_for_dataset or 'can_view_dataset' in permissions_for_dataset:
                 viewable_datasets.append(dataset)
-        selected_datasets = get_selected_datasets_for_user(request.user)
 
     return {'URL': settings.URL,
             'PREFIX_URL': settings.PREFIX_URL,
