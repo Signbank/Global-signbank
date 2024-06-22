@@ -2310,7 +2310,7 @@ def package(request):
 
 def info(request):
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     # Put the default dataset in first position
