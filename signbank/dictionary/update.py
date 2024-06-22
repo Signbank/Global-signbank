@@ -36,8 +36,8 @@ from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, map
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
 from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
-from signbank.dictionary.update_glosses import mapping_toggle_tag, mapping_toggle_semanticfield, \
-    mapping_toggle_wordclass, mapping_toggle_namedentity
+from signbank.dictionary.update_glosses import (mapping_toggle_tag, mapping_toggle_semanticfield,
+    mapping_toggle_wordclass, mapping_toggle_namedentity, mapping_toggle_handedness, mapping_toggle_domhndsh)
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -3513,6 +3513,34 @@ def toggle_namedentity(request, glossid, namedentity):
         return JsonResponse({})
 
     result = mapping_toggle_namedentity(request, glossid, namedentity)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_handedness(request, glossid, handedness):
+    print('toggle handedness')
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = mapping_toggle_handedness(request, glossid, handedness)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_domhndsh(request, glossid, domhndsh):
+    print('toggle domhndsh')
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = mapping_toggle_domhndsh(request, glossid, domhndsh)
 
     return JsonResponse(result)
 

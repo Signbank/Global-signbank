@@ -211,3 +211,100 @@ def mapping_toggle_namedentity(request, glossid, namedentity):
     result['namedentity'] = newvalue
 
     return result
+
+
+@permission_required('dictionary.change_gloss')
+def mapping_toggle_handedness(request, glossid, handedness):
+    if not request.user.is_authenticated:
+        return {}
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return {}
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        return {}
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+
+    if not gloss:
+        return {}
+
+    try:
+        handedness_machine_value = int(handedness)
+    except TypeError:
+        return {}
+
+    empty_handedness = FieldChoice.objects.get(field='Handedness', machine_value=0)
+    new_handedness = FieldChoice.objects.filter(field='Handedness', machine_value=handedness_machine_value).first()
+
+    if not new_handedness:
+        # if the word class does not exist, set it to empty
+        handedness_machine_value = 0
+        new_handedness = empty_handedness
+
+    with atomic():
+        if not gloss.handedness:
+            gloss.handedness = new_handedness
+        elif gloss.handedness.machine_value != handedness_machine_value:
+            gloss.handedness = new_handedness
+        else:
+            gloss.handedness = empty_handedness
+        gloss.save()
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.handedness.name
+    result['handedness'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
+def mapping_toggle_domhndsh(request, glossid, domhndsh):
+    if not request.user.is_authenticated:
+        return {}
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return {}
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        return {}
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+
+    if not gloss:
+        return {}
+
+    try:
+        domhndsh_machine_value = int(domhndsh)
+    except TypeError:
+        return {}
+
+    empty_domhndsh = Handshape.objects.get(machine_value=0)
+    new_domhndsh = Handshape.objects.filter(machine_value=domhndsh_machine_value).first()
+
+    if not new_domhndsh:
+        # if the word class does not exist, set it to empty
+        domhndsh_machine_value = 0
+        new_domhndsh = empty_domhndsh
+
+    with atomic():
+        if not gloss.domhndsh:
+            gloss.domhndsh = new_domhndsh
+        elif gloss.domhndsh.machine_value != domhndsh_machine_value:
+            gloss.domhndsh = new_domhndsh
+        else:
+            gloss.domhndsh = empty_domhndsh
+        gloss.save()
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.domhndsh.name
+    result['domhndsh'] = newvalue
+
+    return result
+

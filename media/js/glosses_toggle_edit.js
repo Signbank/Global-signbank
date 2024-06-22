@@ -65,6 +65,30 @@ function toggle_namedentity(data) {
     neCell.html(cell);
 }
 
+function toggle_handedness(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var handedness = data.handedness;
+    var hCell = $("#handedness_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='handedness'>"+handedness+"</span>";
+    hCell.html(cell);
+}
+
+function toggle_domhndsh(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var domhndsh = data.domhndsh;
+    var hCell = $("#domhndsh_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='domhndsh'>"+domhndsh+"</span>";
+    hCell.html(cell);
+}
+
 $(document).ready(function() {
 
     // setup required for Ajax POST
@@ -137,4 +161,33 @@ $(document).ready(function() {
             success : toggle_namedentity
          });
      });
+     $('.quick_handedness').click(function(e)
+	 {
+         e.preventDefault();
+         console.log('handedness');
+	     var glossid = $(this).attr('value');
+	     var handedness = $(this).attr("data-handedness");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_handedness/" + glossid + "/" + handedness,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_handedness
+         });
+     });
+     $('.quick_domhndsh').click(function(e)
+	 {
+         e.preventDefault();
+         console.log('domhndsh');
+	     var glossid = $(this).attr('value');
+	     var domhndsh = $(this).attr("data-domhndsh");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_domhndsh/" + glossid + "/" + domhndsh,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_domhndsh
+         });
+     });
+
 });
