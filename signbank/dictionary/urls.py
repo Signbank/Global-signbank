@@ -95,6 +95,12 @@ urlpatterns = [
     re_path(r'^update/toggle_domhndsh/(?P<glossid>\d+)/(?P<domhndsh>.*)$',
             signbank.dictionary.update.toggle_domhndsh,
             name='toggle_domhndsh'),
+    re_path(r'^update/toggle_subhndsh/(?P<glossid>\d+)/(?P<subhndsh>.*)$',
+            signbank.dictionary.update.toggle_subhndsh,
+            name='toggle_subhndsh'),
+    re_path(r'^update/toggle_locprim/(?P<glossid>\d+)/(?P<locprim>.*)$',
+            signbank.dictionary.update.toggle_locprim,
+            name='toggle_locprim'),
 
     # The next one does not have a permission check because it should be accessible from a cronjob
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),

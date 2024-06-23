@@ -308,3 +308,98 @@ def mapping_toggle_domhndsh(request, glossid, domhndsh):
 
     return result
 
+
+@permission_required('dictionary.change_gloss')
+def mapping_toggle_subhndsh(request, glossid, subhndsh):
+    if not request.user.is_authenticated:
+        return {}
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return {}
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        return {}
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+
+    if not gloss:
+        return {}
+
+    try:
+        subhndsh_machine_value = int(subhndsh)
+    except TypeError:
+        return {}
+
+    empty_subhndsh = Handshape.objects.get(machine_value=0)
+    new_subhndsh = Handshape.objects.filter(machine_value=subhndsh_machine_value).first()
+
+    if not new_subhndsh:
+        # if the word class does not exist, set it to empty
+        subhndsh_machine_value = 0
+        new_subhndsh = empty_subhndsh
+
+    with atomic():
+        if not gloss.subhndsh:
+            gloss.subhndsh = new_subhndsh
+        elif gloss.subhndsh.machine_value != subhndsh_machine_value:
+            gloss.subhndsh = new_subhndsh
+        else:
+            gloss.subhndsh = empty_subhndsh
+        gloss.save()
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.subhndsh.name
+    result['subhndsh'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
+def mapping_toggle_locprim(request, glossid, locprim):
+    if not request.user.is_authenticated:
+        return {}
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return {}
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        return {}
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+
+    if not gloss:
+        return {}
+
+    try:
+        locprim_machine_value = int(locprim)
+    except TypeError:
+        return {}
+
+    empty_locprim = FieldChoice.objects.get(field='Location', machine_value=0)
+    new_locprim = FieldChoice.objects.filter(field='Location', machine_value=locprim_machine_value).first()
+
+    if not new_locprim:
+        # if the word class does not exist, set it to empty
+        locprim_machine_value = 0
+        new_locprim = empty_locprim
+
+    with atomic():
+        if not gloss.locprim:
+            gloss.locprim = new_locprim
+        elif gloss.locprim.machine_value != locprim_machine_value:
+            gloss.locprim = new_locprim
+        else:
+            gloss.locprim = empty_locprim
+        gloss.save()
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.locprim.name
+    result['locprim'] = newvalue
+
+    return result

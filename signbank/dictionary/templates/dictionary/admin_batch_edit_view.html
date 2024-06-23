@@ -393,11 +393,7 @@ input:focus {
              {% endfor %}
              {% endwith %}
              <tr>
-                 <th>{% trans "Handedness" %}</th>
-<!--                 <td>-->
-<!--                      <input name="handedness_{{gloss.id}}" id="handedness_{{gloss.id}}"-->
-<!--                             maxlength="200" type="text" size="50" value="{{gloss.display_handedness}}">-->
-<!--                 </td>-->
+                <th>{% trans "Handedness" %}</th>
                 <td class="field_handedness" style="width:100px;">
                 <div class="handedness-cell"
                      id="handedness_cell_{{gloss.id}}"><span class='handedness'>{% if gloss.handedness %}{{gloss.handedness.name}}{% endif %}</span>
@@ -406,14 +402,27 @@ input:focus {
              </tr>
 
              <tr>
-                 <th>{% trans "Sterke Hand" %}</th>
-<!--                 <td>-->
-<!--                      <input name="domhndsh_{{gloss.id}}" id="domhndsh_{{gloss.id}}"-->
-<!--                             maxlength="200" type="text" size="50" value="{{gloss.display_domhndsh}}">-->
-<!--                 </td>-->
+                <th>{% trans "Strong Hand" %}</th>
                 <td class="field_domhndsh" style="width:100px;">
                 <div class="domhndsh-cell"
                      id="domhndsh_cell_{{gloss.id}}"><span class='domhndsh'>{% if gloss.domhndsh %}{{gloss.domhndsh.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+
+             <tr>
+                <th>{% trans "Weak Hand" %}</th>
+                <td class="field_subhndsh" style="width:100px;">
+                <div class="subhndsh-cell"
+                     id="subhndsh_cell_{{gloss.id}}"><span class='subhndsh'>{% if gloss.subhndsh %}{{gloss.subhndsh.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr>
+                <th>{% trans "Location" %}</th>
+                <td class="field_locprim" style="width:100px;">
+                <div class="locprim-cell"
+                     id="locprim_cell_{{gloss.id}}"><span class='locprim'>{% if gloss.locprim %}{{gloss.locprim.name}}{% endif %}</span>
                 </div>
                 </td>
              </tr>
@@ -459,7 +468,7 @@ input:focus {
                 </div>
                 <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
-                     data-target='#toggle_domhndsh_panel_{{gloss.id}}'>{% trans "Sterke Hand" %}
+                     data-target='#toggle_domhndsh_panel_{{gloss.id}}'>{% trans "Strong Hand" %}
                 </div>
                 <div id='toggle_domhndsh_panel_{{gloss.id}}' class="panel-collapse collapse">
                 <div class="panel-body" style="display:inline-block;">
@@ -475,6 +484,45 @@ input:focus {
                 </div>
                 </div>
                 </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_subhndsh_panel_{{gloss.id}}'>{% trans "Weak Hand" %}
+                </div>
+                <div id='toggle_subhndsh_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_handshape %}
+                <button id='quick_subhndsh_btn_{{gloss.id}}' class="quick_subhndsh btn actionButton"
+                        name='quick_subhndsh_{{gloss.id}}'
+                        value='{{gloss.id}}' data-subhndsh='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_locprim_panel_{{gloss.id}}'>{% trans "Location" %}
+                </div>
+                <div id='toggle_locprim_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_locprim %}
+                <button id='quick_locprim_btn_{{gloss.id}}' class="quick_locprim btn actionButton"
+                        name='quick_locprim_{{gloss.id}}'
+                        value='{{gloss.id}}' data-locprim='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
                 </div>
             </td>
             {% tags_for_object gloss as tag_list %}

@@ -6537,6 +6537,9 @@ class BatchEditView(ListView):
         context['available_handshape'] = [wc for wc in Handshape.objects.filter(
             machine_value__gt=1).order_by('name')]
 
+        context['available_locprim'] = [h for h in FieldChoice.objects.filter(
+            field='Location', machine_value__gt=1).order_by('name')]
+
         # data structures to store the query parameters in order to keep them in the form
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())

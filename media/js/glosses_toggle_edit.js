@@ -89,6 +89,29 @@ function toggle_domhndsh(data) {
     hCell.html(cell);
 }
 
+function toggle_subhndsh(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var subhndsh = data.subhndsh;
+    var hCell = $("#subhndsh_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='subhndsh'>"+subhndsh+"</span>";
+    hCell.html(cell);
+}
+
+function toggle_locprim(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var locprim = data.locprim;
+    var hCell = $("#locprim_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='locprim'>"+locprim+"</span>";
+    hCell.html(cell);
+}
 $(document).ready(function() {
 
     // setup required for Ajax POST
@@ -189,5 +212,32 @@ $(document).ready(function() {
             success : toggle_domhndsh
          });
      });
-
+     $('.quick_subhndsh').click(function(e)
+	 {
+         e.preventDefault();
+         console.log('subhndsh');
+	     var glossid = $(this).attr('value');
+	     var subhndsh = $(this).attr("data-subhndsh");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_subhndsh/" + glossid + "/" + subhndsh,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_subhndsh
+         });
+     });
+     $('.quick_locprim').click(function(e)
+	 {
+         e.preventDefault();
+         console.log('locprim');
+	     var glossid = $(this).attr('value');
+	     var locprim = $(this).attr("data-locprim");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_locprim/" + glossid + "/" + locprim,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_locprim
+         });
+     });
 });
