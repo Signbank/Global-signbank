@@ -270,7 +270,6 @@ input:focus {
        style="width:100%; overflow-y:scroll;">
     <thead>
       <tr>
-          <th></th>
           <th style="width:250px;">{% trans "Gloss" %}</th>
           <th style="width:500px;">{% trans "Fields" %}</th>
           <th style="width:500px;">{% trans "Quick Toggles" %}</th>
@@ -281,6 +280,9 @@ input:focus {
     {% load underscore_to_space %}
     {% for gloss in page_obj %}
         <tr style="height:auto;">
+            <td>
+            <table>
+            <tr>
             <td>{% if gloss.get_image_path %}
             {% url 'dictionary:protected_media' '' as protected_media_url %}
             <div class="thumbnail_container">
@@ -297,8 +299,7 @@ input:focus {
             </div>
             {% endif %}
             </td>
-            <td>
-                <table>
+            </tr>
                 <tr>
                     <td>
                     <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
@@ -392,7 +393,7 @@ input:focus {
              {% endfor %}
              {% endfor %}
              {% endwith %}
-             <tr>
+             <tr style="height:26px;">
                 <th>{% trans "Handedness" %}</th>
                 <td class="field_handedness" style="width:100px;">
                 <div class="handedness-cell"
@@ -401,7 +402,7 @@ input:focus {
                 </td>
              </tr>
 
-             <tr>
+             <tr style="height:26px;">
                 <th>{% trans "Strong Hand" %}</th>
                 <td class="field_domhndsh" style="width:100px;">
                 <div class="domhndsh-cell"
@@ -410,7 +411,7 @@ input:focus {
                 </td>
              </tr>
 
-             <tr>
+             <tr style="height:26px;">
                 <th>{% trans "Weak Hand" %}</th>
                 <td class="field_subhndsh" style="width:100px;">
                 <div class="subhndsh-cell"
@@ -418,7 +419,7 @@ input:focus {
                 </div>
                 </td>
              </tr>
-             <tr>
+             <tr style="height:26px;">
                 <th>{% trans "Location" %}</th>
                 <td class="field_locprim" style="width:100px;">
                 <div class="locprim-cell"
@@ -540,7 +541,7 @@ input:focus {
             {% endwith %}
         </tr>
     <tr>
-        <td colspan="2"></td>
+        <td></td>
         <td>
         <table class="table-responsive">
             <tr>

@@ -16,7 +16,6 @@ def internal_batch_update_fields_for_gloss(gloss):
 
     languages = gloss.lemma.dataset.translation_languages
     gloss_prefix = str(gloss.id) + '_'
-    gloss_suffix = '_' + str(gloss.id)
     internal_batch_fields = []
     for language in languages:
         gloss_lemma_field_name = BatchEditForm.gloss_lemma_field_prefix + gloss_prefix + language.language_code_2char
@@ -27,12 +26,8 @@ def internal_batch_update_fields_for_gloss(gloss):
         internal_batch_fields.append(gloss_annotation_field_name)
 
     for language in languages:
-        gloss_sense_field_name = self.gloss_sense_field_prefix + gloss_prefix + language.language_code_2char
+        gloss_sense_field_name = BatchEditForm.gloss_sense_field_prefix + gloss_prefix + language.language_code_2char
         internal_batch_fields.append(gloss_sense_field_name)
-
-    internal_batch_fields.append('handedness' + gloss_suffix)
-    internal_batch_fields.append('domhndsh' + gloss_suffix)
-    internal_batch_fields.append('subhndsh' + gloss_suffix)
 
     return internal_batch_fields
 
@@ -58,6 +53,17 @@ def get_sense_numbers(gloss):
             keywords_list = [translation.translation.text for translation in translations]
             senses_mapping[order][language.language_code_2char] = ', '.join(keywords_list)
     return senses_mapping
+
+
+def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue):
+
+    revision = GlossRevision(old_value=oldvalue,
+                             new_value=newvalue,
+                             field_name=field,
+                             gloss=gloss,
+                             user=user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
 
 
 def batch_edit_update_gloss(request, glossid):

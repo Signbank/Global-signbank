@@ -6531,14 +6531,23 @@ class BatchEditView(ListView):
         context['available_semanticfields'] = [semfield for semfield in SemanticField.objects.filter(
             machine_value__gt=1).order_by('name')]
 
-        context['available_handedness'] = [h for h in FieldChoice.objects.filter(
+        available_handedness = [fc for fc in FieldChoice.objects.filter(
+            field='Handedness', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_handedness += [fc for fc in FieldChoice.objects.filter(
             field='Handedness', machine_value__gt=1).order_by('name')]
+        context['available_handedness'] = available_handedness
 
-        context['available_handshape'] = [wc for wc in Handshape.objects.filter(
+        available_handshape = [hs for hs in Handshape.objects.filter(
+            machine_value__in=[0, 1]).order_by('machine_value')]
+        available_handshape += [hs for hs in Handshape.objects.filter(
             machine_value__gt=1).order_by('name')]
+        context['available_handshape'] = available_handshape
 
-        context['available_locprim'] = [h for h in FieldChoice.objects.filter(
+        available_locprim = [fc for fc in FieldChoice.objects.filter(
+            field='Location', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_locprim += [fc for fc in FieldChoice.objects.filter(
             field='Location', machine_value__gt=1).order_by('name')]
+        context['available_locprim'] = available_locprim
 
         # data structures to store the query parameters in order to keep them in the form
         context['query_parameters'] = json.dumps(self.query_parameters)

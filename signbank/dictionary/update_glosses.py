@@ -10,7 +10,7 @@ from tagging.models import TaggedItem, Tag
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
-
+from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 
 
@@ -244,6 +244,7 @@ def mapping_toggle_handedness(request, glossid, handedness):
         handedness_machine_value = 0
         new_handedness = empty_handedness
 
+    original_handedness = gloss.handedness.name if gloss.handedness else '-'
     with atomic():
         if not gloss.handedness:
             gloss.handedness = new_handedness
@@ -251,7 +252,11 @@ def mapping_toggle_handedness(request, glossid, handedness):
             gloss.handedness = new_handedness
         else:
             gloss.handedness = empty_handedness
+            new_handedness = empty_handedness
+
         gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'handedness', original_handedness, new_handedness.name)
 
     result = dict()
     result['glossid'] = str(gloss.id)
@@ -292,6 +297,7 @@ def mapping_toggle_domhndsh(request, glossid, domhndsh):
         domhndsh_machine_value = 0
         new_domhndsh = empty_domhndsh
 
+    original_domhndsh = gloss.domhndsh.name if gloss.domhndsh else '-'
     with atomic():
         if not gloss.domhndsh:
             gloss.domhndsh = new_domhndsh
@@ -299,7 +305,10 @@ def mapping_toggle_domhndsh(request, glossid, domhndsh):
             gloss.domhndsh = new_domhndsh
         else:
             gloss.domhndsh = empty_domhndsh
+            new_domhndsh = empty_domhndsh
         gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'domhndsh', original_domhndsh, new_domhndsh.name)
 
     result = dict()
     result['glossid'] = str(gloss.id)
@@ -340,6 +349,8 @@ def mapping_toggle_subhndsh(request, glossid, subhndsh):
         subhndsh_machine_value = 0
         new_subhndsh = empty_subhndsh
 
+    original_subhndsh = gloss.subhndsh.name if gloss.subhndsh else '-'
+
     with atomic():
         if not gloss.subhndsh:
             gloss.subhndsh = new_subhndsh
@@ -347,7 +358,10 @@ def mapping_toggle_subhndsh(request, glossid, subhndsh):
             gloss.subhndsh = new_subhndsh
         else:
             gloss.subhndsh = empty_subhndsh
+            new_subhndsh = empty_subhndsh
         gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'subhndsh', original_subhndsh, new_subhndsh.name)
 
     result = dict()
     result['glossid'] = str(gloss.id)
@@ -388,6 +402,8 @@ def mapping_toggle_locprim(request, glossid, locprim):
         locprim_machine_value = 0
         new_locprim = empty_locprim
 
+    original_locprim = gloss.locprim.name if gloss.locprim else '-'
+
     with atomic():
         if not gloss.locprim:
             gloss.locprim = new_locprim
@@ -395,7 +411,10 @@ def mapping_toggle_locprim(request, glossid, locprim):
             gloss.locprim = new_locprim
         else:
             gloss.locprim = empty_locprim
+            new_locprim = empty_locprim
         gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'locprim', original_locprim, new_locprim.name)
 
     result = dict()
     result['glossid'] = str(gloss.id)

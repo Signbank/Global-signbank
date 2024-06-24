@@ -1050,7 +1050,7 @@ def update_gloss(request, glossid):
             gloss.__setattr__(field,value)
             gloss.save()
 
-            #If the value is not a Boolean, get the human readable value
+            # If the value is not a Boolean, get the human readable value
             if not isinstance(value,bool):
                 # if we get to here, field is a valid field of Gloss
                 newvalue = value
@@ -1060,7 +1060,7 @@ def update_gloss(request, glossid):
         category_value = 'phonology'
 
     # the gloss has been updated, now prepare values for saving to GlossHistory and display in template
-    #This is because you cannot concat none to a string in py3
+    # This is because you cannot concat none to a string in py3
     if original_value is None:
         original_value = ''
 
@@ -1068,7 +1068,8 @@ def update_gloss(request, glossid):
     # Remember this change for the history books
     original_human_value = original_value.name if isinstance(original_value, FieldChoice) else original_value
     if isinstance(value, bool) and field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-    # store a boolean in the Revision History rather than a human value as for the template (e.g., 'letter' or 'number')
+    # store a boolean in the Revision History rather than a human value
+    # as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
     else:
         # this takes care of a problem with None not being allowed as a value in GlossRevision
