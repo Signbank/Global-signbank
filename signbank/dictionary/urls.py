@@ -102,6 +102,10 @@ urlpatterns = [
             signbank.dictionary.update.toggle_locprim,
             name='toggle_locprim'),
 
+    re_path(r'^update/toggle_language_fields/(?P<glossid>\d+)$',
+            signbank.dictionary.update.toggle_language_fields,
+            name='toggle_language_fields'),
+
     # The next one does not have a permission check because it should be accessible from a cronjob
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
     re_path(r'^update/variants_of_gloss/$', signbank.dictionary.update.variants_of_gloss, name='variants_of_gloss'),

@@ -6515,9 +6515,12 @@ class BatchEditView(ListView):
         if not selected_datasets or selected_datasets.count() > 1:
             dataset_languages = Language.objects.filter(id=get_default_language_id())
         else:
-            dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+            dataset_languages = get_dataset_languages(selected_datasets).order_by('-id')
 
         context['dataset_languages'] = dataset_languages
+
+        language_2chars = [str(language.language_code_2char) for language in dataset_languages]
+        context['language_2chars'] = language_2chars
 
         search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
 

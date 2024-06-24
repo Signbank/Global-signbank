@@ -2588,6 +2588,14 @@ def gloss_revision_history(request,gloss_pk):
             revision_verbose_fieldname = gettext("Simultaneous Morphology")
         elif revision.field_name == 'blend_morphology':
             revision_verbose_fieldname = gettext("Blend Morphology")
+        elif revision.field_name.startswith('lemma'):
+            language_2char = revision.field_name[-2:]
+            language = Language.objects.get(language_code_2char=language_2char)
+            revision_verbose_fieldname = gettext('Lemma ID Gloss') + ' (' + language.name + ')'
+        elif revision.field_name.startswith('annotation'):
+            language_2char = revision.field_name[-2:]
+            language = Language.objects.get(language_code_2char=language_2char)
+            revision_verbose_fieldname = gettext('Annotation ID Gloss') + ' (' + language.name + ')'
         else:
             revision_verbose_fieldname = _(revision.field_name)
 
@@ -2644,17 +2652,19 @@ def gloss_revision_history(request,gloss_pk):
                 # this translation exists in the interface of Gloss Edit View
                 add_command = str(_('Update'))
                 field_name_qualification = ' (' + add_command + ')'
+        elif revision.field_name.startswith('lemma') or revision.field_name.startswith('annotation'):
+            field_name_qualification = ''
         else:
             field_name_qualification = ' (' + revision.field_name + ')'
         revision_dict = {
             'is_tag': revision.field_name == 'Tags',
-            'gloss' : revision.gloss,
-            'user' : revision.user,
-            'time' : revision.time,
-            'field_name' : revision_verbose_fieldname,
-            'field_name_qualification' : field_name_qualification,
-            'old_value' : check_value_to_translated_human_value(revision.field_name, revision.old_value),
-            'new_value' : check_value_to_translated_human_value(revision.field_name, revision.new_value) }
+            'gloss': revision.gloss,
+            'user': revision.user,
+            'time': revision.time,
+            'field_name': revision_verbose_fieldname,
+            'field_name_qualification': field_name_qualification,
+            'old_value': check_value_to_translated_human_value(revision.field_name, revision.old_value),
+            'new_value': check_value_to_translated_human_value(revision.field_name, revision.new_value) }
         revisions.append(revision_dict)
 
     return render(request, 'dictionary/gloss_revision_history.html',

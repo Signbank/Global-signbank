@@ -40,6 +40,7 @@ from signbank.dictionary.update_glosses import (mapping_toggle_tag, mapping_togg
                                                 mapping_toggle_wordclass, mapping_toggle_namedentity,
                                                 mapping_toggle_handedness, mapping_toggle_domhndsh,
                                                 mapping_toggle_subhndsh, mapping_toggle_locprim)
+from signbank.dictionary.batch_edit import batch_edit_update_gloss
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -3569,6 +3570,19 @@ def toggle_locprim(request, glossid, locprim):
         return JsonResponse({})
 
     result = mapping_toggle_locprim(request, glossid, locprim)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_language_fields(request, glossid):
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = batch_edit_update_gloss(request, glossid)
 
     return JsonResponse(result)
 

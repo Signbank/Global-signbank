@@ -23,6 +23,7 @@ var csrf_token = '{{csrf_token}}';
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
 var query_parameters_keys = {{query_parameters_keys|safe}};
 var query_parameters_dict = {{query_parameters|safe}};
+var language_2chars = {{language_2chars|safe}};
 </script>
 
 <script type='text/javascript' src="{{ STATIC_URL }}js/glosses_toggle_edit.js"></script>
@@ -271,7 +272,7 @@ input:focus {
     <thead>
       <tr>
           <th style="width:250px;">{% trans "Gloss" %}</th>
-          <th style="width:500px;">{% trans "Fields" %}</th>
+          <th style="width:800px;">{% trans "Fields" %}</th>
           <th style="width:500px;">{% trans "Quick Toggles" %}</th>
           <th style="width:300px;">{% trans "Tags" %}</th>
       </tr>
@@ -344,53 +345,63 @@ input:focus {
             <td>
             <table class="table-responsive">
              {% csrf_token %}
+             <tr style="height:20;">
+             {% for dataset_lang in dataset_languages %}
+                  <th id="edit_gloss_lemma_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:400px;">
+                     {% trans "Lemma" %} ({{dataset_lang.name}})
+                 </th>
+             {% endfor %}
+             </tr>
+             <tr style="height:20;">
              {% for dataset_lang in dataset_languages %}
              {% with gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
-             <tr style="height:20;">
-                 <th id="edit_gloss_lemma_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:200px;">
-                     {% trans "Lemma" %} ({{dataset_lang.language_code_2char|upper}})
-                 </th>
                  <td id="edit_gloss_lemma_value_{{gloss.id}}_{{dataset_lang.language_code_2char}}">
                      <input id="lemma_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
                             name='lemma_{{gloss.id}}_{{dataset_lang.language_code_2char}}'
                             maxlength="30" type="text" value="{{lemmaidglosstranslation}}"
                             size="50" >
                  </td>
-             </tr>
              {% endwith %}
              {% endfor %}
+             </tr>
+             <tr>
+             {% for dataset_lang in dataset_languages %}
+                 <th id="edit_gloss_annotation_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:400px;">
+                     {% trans "Annotation" %} ({{dataset_lang.name}})
+                 </th>
+             {% endfor %}
+             </tr>
+             <tr>
              {% for dataset_lang in dataset_languages %}
              {% with gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
-             <tr>
-                 <th id="edit_gloss_annotation_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:200px;">
-                     {% trans "Annotation" %} ({{dataset_lang.language_code_2char|upper}})
-                 </th>
                  <td id="edit_gloss_annotation_value_{{gloss.id}}_{{dataset_lang.language_code_2char}}">
                      <input id="annotation_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
                             name='annotation_{{gloss.id}}_{{dataset_lang.language_code_2char}}'
                             maxlength="30" type="text" value="{{annotationidglosstranslation}}"
                             size="50" >
                  </td>
-             </tr>
              {% endwith %}
              {% endfor %}
+             </tr>
              {% with gloss|get_senses_mapping as senses_mapping %}
              {% for order, translations in senses_mapping.items %}
-             {% for sense_lang, sensetranslation in translations.items %}
-             {% with sense_lang|upper as language %}
              <tr>
-                 <th id="edit_gloss_sense_header_{{gloss.id}}_{{order}}_{{sense_lang}}" style="width:200px;">
-                     {% trans "Sense" %} #{{order}} ({{language}})
+                 {% for dataset_lang in dataset_languages %}
+                 <th id="edit_gloss_sense_header_{{gloss.id}}_{{order}}_{{dataset_lang.language_code_2char}}" style="width:400px;">
+                     {% trans "Sense" %} #{{order}} ({{dataset_lang.name}})
                  </th>
+                 {% endfor %}
+             </tr>
+             <tr>
+             {% for sense_lang, sensetranslation in translations.items %}
                  <td id="edit_gloss_sense_value_{{gloss.id}}_{{order}}_{{sense_lang}}">
                      <input id="sense_{{gloss.id}}_{{order}}_{{sense_lang}}"
                             name='sense_{{gloss.id}}_{{order}}_{{sense_lang}}'
                             maxlength="30" type="text" value="{{sensetranslation}}"
                             size="50" >
                  </td>
-             </tr>
-             {% endwith %}
              {% endfor %}
+             </tr>
              {% endfor %}
              {% endwith %}
              <tr style="height:26px;">
@@ -431,6 +442,25 @@ input:focus {
             </td>
             <td style="width:500px;">
                 <div id="toggles" class='panel-group'>
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_language_fields_panel_{{gloss.id}}'>{% trans "Language Fields" %}
+                </div>
+                <div id='toggle_language_fields_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <span>
+                <button id='quick_language_fields_btn_{{gloss.id}}' class="quick_language_fields btn actionButton"
+                        name='quick_language_fields_{{gloss.id}}'
+                        value='{{gloss.id}}' style="height:36px;"
+                        type="submit" >{% trans "Save Language Fields" %}
+                </button>
+                </span>
+                 <p id="errors_{{gloss.id}}"></p>
+
+                </div>
+                </div>
+                </div>
+
                 <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_tags_panel_{{gloss.id}}'>{% trans "Tags" %}
@@ -531,14 +561,6 @@ input:focus {
                 <div class="tags-cell"
                      id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
             </td>
-            {% with gloss.semField.all as semantic_fields_list %}
-            <td class="field_semantics" style="width:200px;">
-                <div class="semantics-cell"
-                     id="semantics_cell_{{gloss.id}}">{% for sf in semantic_fields_list %}<span class='semanticfield'>{{sf.name}}</span>
-                            {% if not forloop.last %}, {% endif %}{% endfor %}
-                </div>
-            </td>
-            {% endwith %}
         </tr>
     <tr>
         <td></td>

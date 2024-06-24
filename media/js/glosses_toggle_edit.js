@@ -112,6 +112,23 @@ function toggle_locprim(data) {
     var cell = "<span class='locprim'>"+locprim+"</span>";
     hCell.html(cell);
 }
+
+function toggle_language_fields(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var errors = data.errors;
+    var errors_lookup = '#errors_' + glossid;
+    var errorsElt = $(errors_lookup);
+    var glossCell = "ERRORS <ul>";
+    for (var err in errors) {
+        glossCell = glossCell + "<li>"+errors[err]+"</li>";
+    }
+    glossCell = glossCell + "</ul>";
+    errorsElt.html(glossCell);
+}
+
 $(document).ready(function() {
 
     // setup required for Ajax POST
@@ -187,7 +204,6 @@ $(document).ready(function() {
      $('.quick_handedness').click(function(e)
 	 {
          e.preventDefault();
-         console.log('handedness');
 	     var glossid = $(this).attr('value');
 	     var handedness = $(this).attr("data-handedness");
          $.ajax({
@@ -201,7 +217,6 @@ $(document).ready(function() {
      $('.quick_domhndsh').click(function(e)
 	 {
          e.preventDefault();
-         console.log('domhndsh');
 	     var glossid = $(this).attr('value');
 	     var domhndsh = $(this).attr("data-domhndsh");
          $.ajax({
@@ -215,7 +230,6 @@ $(document).ready(function() {
      $('.quick_subhndsh').click(function(e)
 	 {
          e.preventDefault();
-         console.log('subhndsh');
 	     var glossid = $(this).attr('value');
 	     var subhndsh = $(this).attr("data-subhndsh");
          $.ajax({
@@ -229,7 +243,6 @@ $(document).ready(function() {
      $('.quick_locprim').click(function(e)
 	 {
          e.preventDefault();
-         console.log('locprim');
 	     var glossid = $(this).attr('value');
 	     var locprim = $(this).attr("data-locprim");
          $.ajax({
@@ -238,6 +251,37 @@ $(document).ready(function() {
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
             success : toggle_locprim
+         });
+     });
+
+     $('.quick_language_fields').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+         var errors_lookup = '#errors_' + glossid;
+         $(errors_lookup).empty()
+	     var update = { 'csrfmiddlewaretoken': csrf_token };
+         for (var i=0; i < language_2chars.length; i++) {
+            var lang2char = language_2chars[i];
+            var lemma_field_key = 'lemma_' + glossid + '_'+ lang2char;
+            var lemma_field_lookup = '#'+lemma_field_key;
+            var lemma_field_value = $(lemma_field_lookup).val();
+            if (lemma_field_value != '') {
+                update[lemma_field_key] = lemma_field_value;
+            }
+            var annotation_field_key = 'annotation_' + glossid + '_'+ lang2char;
+            var annotation_field_lookup = '#'+annotation_field_key;
+            var annotation_field_value = $(annotation_field_lookup).val();
+            if (annotation_field_value != '') {
+                update[annotation_field_key] = annotation_field_value;
+            }
+         }
+         $.ajax({
+            url : url + "/dictionary/update/toggle_language_fields/" + glossid,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : toggle_language_fields
          });
      });
 });
