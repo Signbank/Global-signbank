@@ -6391,6 +6391,16 @@ class KeywordListView(ListView):
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+            if len(search_results) > 0:
+                if search_results[0]['href_type'] not in ['gloss']:
+                    search_results = []
+        else:
+            search_results = []
+
+        (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
+
         get = self.request.GET
 
         # multilingual
@@ -6398,7 +6408,10 @@ class KeywordListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
 
         # exclude morphemes
-        glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
+        if not get:
+            glosses_of_datasets = object_list
+        else:
+            glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
 
         # data structure to store the query parameters in order to keep them in the form
         query_parameters = dict()
@@ -6411,6 +6424,15 @@ class KeywordListView(ListView):
                     TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
 
+        if glosses_of_datasets.count() > 100:
+            feedback_message = _('Please refine your query to retrieve fewer than 100 glosses to use this functionality.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
+            return []
+
+        # save the query parameters to a session variable
+        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session.modified = True
         self.query_parameters = query_parameters
 
         for gloss in glosses_of_datasets:
