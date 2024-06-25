@@ -336,12 +336,16 @@ option:not(:checked) {
 {% endblock %}
 
 {% block content %}
-    <div class="navbar" id="searchquery" style="background-color:white;z-index: 50;">
-
+    <div class="navbar" id="searchquery" style="display:flex;background-color:white;z-index: 50;">
+    <table class="table-responsive">
+    <tr>
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
+    <td>
     <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'
-            style="z-index: 50;">{% trans "QUERY" %}</span></button>
+            style="z-index: 50;height:20px">{% trans "QUERY" %}</span></button>&nbsp;&nbsp;
+    </td>
     {% endif %}
+    <td>
     <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
         {% if request.session.search_results %}{# See if search_results in sessions is empty #}
 
@@ -349,6 +353,9 @@ option:not(:checked) {
         </div>
         {% endif %}
     </div>
+    </td>
+    </tr>
+    </table>
     </div>
 
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
@@ -970,7 +977,8 @@ option:not(:checked) {
                     {% trans "Annotation ID Gloss" %}
                     {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}' colspan="2">{{annotation_idgloss_translation}}</td>
+                <td class='edit edit_area' id='annotation_idgloss_{{lang.language_code_2char}}'
+                    colspan="2">{{annotation_idgloss_translation}}</td>
             </tr>
             <tr>
                 <th></th>
@@ -1379,9 +1387,15 @@ option:not(:checked) {
 
             {% for value,name,label,kind in main_fields %}
                 <tr><th>{{label}}</th>
+                    {% if kind == 'text' %}
+                    <td class="edit edit_area" id='{{name}}'
+                        value='{{value}}'>{% value value %}
+                    </td>
+                    {% else %}
                     <td class="edit edit_{{kind}}" id='{{name}}'
                         value='{{value}}'>{% value value %}
                     </td>
+                    {% endif %}
                     <td style="width:200px;"></td>
                 </tr>
             {% endfor %}
@@ -1410,10 +1424,11 @@ option:not(:checked) {
         <div id='nmevideos' class='collapse'>
             <div class="panel panel-default">
             {% if gloss.has_nme_videos %}
-               <table class='table table-condensed' style="text-align: left;">
-                <tr>
+               <table class='table table-responsive' style="text-align: left;width:100%;">
+                <tr style="overflow-y:auto;">
+                    <td style="display:inline-block;">
                     {% for videonme in gloss.get_nme_videos %}
-                      <td>
+                        <div class="table-responsive" style="display:inline-block;">
                          <table class="table table-condensed" style="text-align: left;">
                          <tr>
                            <td class="editform" style="width:5em;">
@@ -1457,7 +1472,9 @@ option:not(:checked) {
                                         <td>
                                             {% if SHOW_DATASET_INTERFACE_OPTIONS %}{{lang.name}}:{% endif %}
                                         </td>
-                                        <td class='edit edit_text' id='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'>{{description}}</td>
+                                        <td class='edit edit_area'
+                                            id='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'
+                                            style="height:80;">{{description}}</td>
                                     </tr>
                                    {% endfor %}
                                    {% endwith %}
@@ -1469,8 +1486,9 @@ option:not(:checked) {
                            </td>
                          </tr>
                          </table>
-                      </td>
+                      </div>
                     {% endfor %}
+                    </td>
                 </tr>
                </table>
             {% endif %}
@@ -1667,7 +1685,7 @@ option:not(:checked) {
                     {% endif %}
                     <td id='morpheme-definition_{{morpheme.pk}}'>
                         <a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morph_display}} ({{morpheme_type}})</a></td>
-                    <td class='edit edit_text' id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
+                    <td class='edit edit_area' id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
                </tr>
                 {% endfor %}
             </table>
@@ -1746,7 +1764,7 @@ option:not(:checked) {
                     <td></td>
                     {% endif %}
                     <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend_display}}</a></td>
-                    <td class='edit edit_text' id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
+                    <td class='edit edit_area' id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
                </tr>
                 {% endfor %}
             </table>
@@ -1909,7 +1927,7 @@ option:not(:checked) {
                 {% elif kind == 'text' %}
                 <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %} class="empty_row"{% endif %}>
                     <th>{{label}}</th>
-                    <td class="edit edit_text" id='{{name}}' value='{{value}}' colspan="2">{% value value %}</td>
+                    <td class="edit edit_area" id='{{name}}' value='{{value}}' colspan="2">{% value value %}</td>
                 </tr>
                 {% else %}
                 {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %}
@@ -2025,7 +2043,7 @@ option:not(:checked) {
                     {% endif %}
                     </th>
                     {% if kind == 'text' %}
-                    <td class="edit edit_text" id='{{name}}' style="width:500px;" value='{{value}}'
+                    <td class="edit edit_area" id='{{name}}' style="width:500px;" value='{{value}}'
                              colspan="2">{% value value %}</td>
                     <td/>
                     {% else %}
@@ -2183,8 +2201,8 @@ option:not(:checked) {
                    {% endif %}
                         <td class='edit edit_check' id='relationforeign-loan_{{rel.id}}' style='width:3em'
                             value='{{rel.loan}}'>{% if rel.loan %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                        <td class='edit edit_text' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
-                        <td class='edit edit_text' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
+                        <td class='edit edit_area' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
+                        <td class='edit edit_area' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
                     </tr>
                    {% endfor %}
                </table>
@@ -2236,8 +2254,13 @@ option:not(:checked) {
                 {% for value,name,label,kind in publication_fields %}
 	            <tr>
                       <th>{{label}}</th>
+                      {% if kind == 'text' %}
+                      <td class="edit edit_area" id='{{name}}'
+                          value='{{value}}'>{% value value %}</td>
+                      {% else %}
                       <td class="edit edit_{{kind}}" id='{{name}}'
                           value='{{value}}'>{% if value %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                      {% endif %}
                 </tr>
                 {% endfor %}
             </table>
@@ -2503,7 +2526,7 @@ option:not(:checked) {
                     </td>
                     <td id='other-media-file-type_{{pk}}'>{{file_type}}</td>
                     <td id='other-media-type_{{pk}}'>{{type}}</td>
-                    <td class='edit edit_text' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
+                    <td class='edit edit_area' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
                 </tr>
                {% endfor %}
 

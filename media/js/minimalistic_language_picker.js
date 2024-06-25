@@ -52,6 +52,7 @@ jQuery.fn.show_all_languages = function(callback)
     $(this).css('margin-right',0);
     $(this).css('margin-top',-30);
     $(this).css('margin-bottom',4);
+    $(this).css('z-index',1500);
 
     //Take data from the element
     var all_languages = $(this).attr('languages').split(',');
