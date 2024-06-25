@@ -119,14 +119,21 @@ function toggle_language_fields(data) {
     };
     var glossid = data.glossid;
     var errors = data.errors;
-    var errors_lookup = '#errors_' + glossid;
-    var errorsElt = $(errors_lookup);
-    var glossCell = "ERRORS <ul>";
-    for (var err in errors) {
-        glossCell = glossCell + "<li>"+errors[err]+"</li>";
+    var updatestatus = data.updatestatus;
+    if (errors) {
+        var errors_lookup = '#errors_' + glossid;
+        var errorsElt = $(errors_lookup);
+        var glossCell = "<ul>";
+        for (var err in errors) {
+            glossCell = glossCell + "<li>"+errors[err]+"</li>";
+        }
+        glossCell = glossCell + "</ul>";
+        errorsElt.html(glossCell);
     }
-    glossCell = glossCell + "</ul>";
-    errorsElt.html(glossCell);
+    var status_lookup = '#status_' + glossid;
+    var statusElt = $(status_lookup);
+    statusCell = "<span>"+updatestatus+"</span>";
+    statusElt.html(statusCell);
 }
 
 $(document).ready(function() {

@@ -156,7 +156,8 @@ def check_constraints_on_gloss_language_fields(gloss, value_dict):
     lemmas_per_language_translation = dict()
     for language, lemmaidglosstranslation_text in lemmaidglosstranslations.items():
         lemmatranslation_for_this_text_language = LemmaIdglossTranslation.objects.filter(
-            lemma__dataset=dataset, language=language, text__iexact=lemmaidglosstranslation_text)
+            lemma__dataset=dataset, language=language,
+            text__iexact=lemmaidglosstranslation_text).exclude(lemma=gloss.lemma)
         lemmas_per_language_translation[language] = lemmatranslation_for_this_text_language
 
     existing_lemmas = []
@@ -174,7 +175,8 @@ def check_constraints_on_gloss_language_fields(gloss, value_dict):
     annotations_per_language_translation = dict()
     for language, annotationidglosstranslation_text in annotationidglosstranslations.items():
         annotationtranslation_for_this_text_language = AnnotationIdglossTranslation.objects.filter(
-            gloss__lemma__dataset=dataset, language=language, text__iexact=annotationidglosstranslation_text)
+            gloss__lemma__dataset=dataset, language=language,
+            text__iexact=annotationidglosstranslation_text).exclude(gloss=gloss)
         annotations_per_language_translation[language] = annotationtranslation_for_this_text_language
 
     existing_glosses = []
@@ -212,10 +214,19 @@ def batch_edit_update_gloss(request, glossid):
         if value_dict[key] != language_fields_dict[key]:
             fields_to_update[key] = value_dict[key]
 
+    if not fields_to_update:
+        print('nothing to do')
+        saved_text = gettext("No changes were found.")
+        result['glossid'] = glossid
+        result['errors'] = []
+        result['updatestatus'] = saved_text
+        return result
+
     errors = check_constraints_on_gloss_language_fields(gloss, fields_to_update)
     if errors:
         result['glossid'] = glossid
         result['errors'] = errors
+        result['updatestatus'] = "&#10060;"
         return result
 
     for key in fields_to_update.keys():
@@ -230,4 +241,10 @@ def batch_edit_update_gloss(request, glossid):
             add_gloss_update_to_revision_history(request.user, gloss, 'annotation_'+language, original_value, newvalue)
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
+
+    saved_text = gettext("Gloss saved to dataset")
+    result['glossid'] = glossid
+    result['errors'] = []
+    result['updatestatus'] = saved_text + " &#x2713;"
+
     return result
