@@ -36,5 +36,6 @@ class VideoUploadForObjectForm(forms.Form):
         for language in languages:
             description_field_name = 'description_' + language.language_code_2char
             self.fields[description_field_name] = forms.CharField(label=_('Description'),
-                                                                  widget=forms.TextInput(attrs=ATTRS_FOR_FORMS),
+                                                                  widget=forms.Textarea(attrs={'cols': 200, 'rows': 2,
+                                                                                               'placeholder': _('Description')}),
                                                                   required=False)
