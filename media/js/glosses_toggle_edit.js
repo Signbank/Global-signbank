@@ -113,6 +113,18 @@ function toggle_locprim(data) {
     hCell.html(cell);
 }
 
+function toggle_movSh(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var movSh = data.movSh;
+    var hCell = $("#movSh_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='movSh'>"+movSh+"</span>";
+    hCell.html(cell);
+}
+
 function toggle_language_fields(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -132,8 +144,34 @@ function toggle_language_fields(data) {
     }
     var status_lookup = '#status_' + glossid;
     var statusElt = $(status_lookup);
-    statusCell = "<span>"+updatestatus+"</span>";
+    var statusCell = "<span>"+updatestatus+"</span>";
     statusElt.html(statusCell);
+}
+
+function show_similar_glosses(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var number_of_matches = data.number_of_matches;
+    var similar_glosses = data.similar_glosses;
+
+    var number_of_matches_lookup = '#number_of_matches_' + glossid;
+    var number_of_matchesElt = $(number_of_matches_lookup);
+    var number_of_matchesCell = "<span>"+number_of_matches_found+' '+number_of_matches+"</span>";
+    number_of_matchesElt.html(number_of_matchesCell);
+
+    if (similar_glosses) {
+        var similar_glosses_lookup = '#similar_gloss_videos_' + glossid;
+        var similar_glossesElt = $(similar_glosses_lookup);
+        var similar_glossesCell = "<ul>";
+        for (var inx in similar_glosses) {
+            var similar = similar_glosses[inx];
+            similar_glossesCell = similar_glossesCell + "<li>"+similar['annotation_idgloss']+"</li>";
+        }
+        similar_glossesCell = similar_glossesCell + "</ul>";
+        similar_glossesElt.html(similar_glossesCell);
+    }
 }
 
 $(document).ready(function() {
@@ -261,6 +299,20 @@ $(document).ready(function() {
          });
      });
 
+     $('.quick_movSh').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var movSh = $(this).attr("data-movSh");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_movSh/" + glossid + "/" + movSh,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_movSh
+         });
+     });
+
      $('.quick_language_fields').click(function(e)
 	 {
          e.preventDefault();
@@ -289,6 +341,28 @@ $(document).ready(function() {
             data: update,
             datatype: "json",
             success : toggle_language_fields
+         });
+     });
+     $('.quick_similarglosses').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('data-glossid');
+	     var query = { 'csrfmiddlewaretoken': csrf_token };
+         for (var i=0; i < similar_gloss_fields.length; i++) {
+            var fieldname = similar_gloss_fields[i];
+            var similar_field_key = 'button_' + glossid + '_'+ fieldname;
+            var similar_field_lookup = '#'+similar_field_key;
+            var similar_field_value = $(similar_field_lookup).attr('data-value');
+            if ($(similar_field_lookup).hasClass('similar')) {
+                query[similar_field_value] = similar_field_value;
+            }
+         }
+         $.ajax({
+            url : url + "/dictionary/ajax/similarglosses/" + glossid,
+            type: 'POST',
+            data: query,
+            datatype: "json",
+            success : show_similar_glosses
          });
      });
 });

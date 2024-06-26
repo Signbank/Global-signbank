@@ -39,7 +39,7 @@ from signbank.dictionary.related_objects import gloss_related_objects, morpheme_
 from signbank.dictionary.update_glosses import (mapping_toggle_tag, mapping_toggle_semanticfield,
                                                 mapping_toggle_wordclass, mapping_toggle_namedentity,
                                                 mapping_toggle_handedness, mapping_toggle_domhndsh,
-                                                mapping_toggle_subhndsh, mapping_toggle_locprim)
+                                                mapping_toggle_subhndsh, mapping_toggle_locprim, mapping_toggle_movSh)
 from signbank.dictionary.batch_edit import batch_edit_update_gloss
 
 
@@ -3570,6 +3570,19 @@ def toggle_locprim(request, glossid, locprim):
         return JsonResponse({})
 
     result = mapping_toggle_locprim(request, glossid, locprim)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_movSh(request, glossid, movSh):
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = mapping_toggle_movSh(request, glossid, movSh)
 
     return JsonResponse(result)
 

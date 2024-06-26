@@ -20,6 +20,7 @@ import signbank.api_interface
 import signbank.manage_videos
 import signbank.abstract_machine
 import signbank.gloss_update
+import signbank.dictionary.batch_edit
 import signbank.gloss_morphology_update
 
 app_name = 'dictionary'
@@ -101,6 +102,9 @@ urlpatterns = [
     re_path(r'^update/toggle_locprim/(?P<glossid>\d+)/(?P<locprim>.*)$',
             signbank.dictionary.update.toggle_locprim,
             name='toggle_locprim'),
+    re_path(r'^update/toggle_movSh/(?P<glossid>\d+)/(?P<movSh>.*)$',
+            signbank.dictionary.update.toggle_movSh,
+            name='toggle_movSh'),
 
     re_path(r'^update/toggle_language_fields/(?P<glossid>\d+)$',
             signbank.dictionary.update.toggle_language_fields,
@@ -114,6 +118,7 @@ urlpatterns = [
     # Ajax urls
     re_path(r'^ajax/tags/$', signbank.dictionary.tagviews.taglist_json),
     re_path(r'^ajax/gloss/(?P<prefix>.*)$', signbank.dictionary.adminviews.gloss_ajax_complete, name='gloss_complete'),
+    re_path(r'^ajax/similarglosses/(?P<gloss_id>.*)$', signbank.dictionary.batch_edit.similarglosses, name='similarglosses'),
     re_path(r'^ajax/handshape/(?P<prefix>.*)$', signbank.dictionary.adminviews.handshape_ajax_complete, name='handshape_complete'),
     re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
     re_path(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),

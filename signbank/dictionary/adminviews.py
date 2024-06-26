@@ -6553,6 +6553,13 @@ class BatchEditView(ListView):
 
         context['available_tags'] = [tag for tag in Tag.objects.all()]
 
+        similar_gloss_fields = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'movSh']
+        context['similar_gloss_fields'] = json.dumps(similar_gloss_fields)
+        similar_gloss_fields_labels = {}
+        for field in similar_gloss_fields:
+            similar_gloss_fields_labels[field] = Gloss.get_field(field).verbose_name
+        context['similar_gloss_fields_labels'] = similar_gloss_fields_labels
+
         context['available_semanticfields'] = [semfield for semfield in SemanticField.objects.filter(
             machine_value__gt=1).order_by('name')]
 
@@ -6573,6 +6580,12 @@ class BatchEditView(ListView):
         available_locprim += [fc for fc in FieldChoice.objects.filter(
             field='Location', machine_value__gt=1).order_by('name')]
         context['available_locprim'] = available_locprim
+
+        available_movSh = [fc for fc in FieldChoice.objects.filter(
+            field='MovementShape', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_movSh += [fc for fc in FieldChoice.objects.filter(
+            field='MovementShape', machine_value__gt=1).order_by('name')]
+        context['available_movSh'] = available_movSh
 
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())

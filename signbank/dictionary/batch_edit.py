@@ -1,6 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 
 from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
 
 from django.contrib.auth.decorators import permission_required
 from django.db import DatabaseError, IntegrityError
@@ -137,7 +138,11 @@ def check_constraints_on_gloss_language_fields(gloss, value_dict):
     for language in dataset.translation_languages.all():
         lemma_key = 'lemma_' + gloss_prefix + language.language_code_2char
         if lemma_key in value_dict.keys():
-            lemmaidglosstranslations[language] = value_dict[lemma_key]
+            if not value_dict[lemma_key]:
+                e1 = gettext("Lemma field is empty.")
+                errors.append(e1)
+            else:
+                lemmaidglosstranslations[language] = value_dict[lemma_key]
 
     if lemmaidglosstranslations:
         # the lemma translations are being updated
@@ -150,7 +155,11 @@ def check_constraints_on_gloss_language_fields(gloss, value_dict):
     for language in dataset.translation_languages.all():
         annotation_key = 'annotation__' + gloss_prefix + language.language_code_2char
         if annotation_key in value_dict.keys():
-            annotationidglosstranslations[language] = value_dict[annotation_key]
+            if not value_dict[annotation_key]:
+                e2 = gettext("Annotation field is empty.")
+                errors.append(e2)
+            else:
+                annotationidglosstranslations[language] = value_dict[annotation_key]
 
     # check lemma translations
     lemmas_per_language_translation = dict()
@@ -215,7 +224,6 @@ def batch_edit_update_gloss(request, glossid):
             fields_to_update[key] = value_dict[key]
 
     if not fields_to_update:
-        print('nothing to do')
         saved_text = gettext("No changes were found.")
         result['glossid'] = glossid
         result['errors'] = []
@@ -248,3 +256,68 @@ def batch_edit_update_gloss(request, glossid):
     result['updatestatus'] = saved_text + " &#x2713;"
 
     return result
+
+
+def get_similargloss_fields_dict(request):
+    value_dict = dict()
+    for field in request.POST.keys():
+        if field == 'csrfmiddlewaretoken':
+            continue
+        value = request.POST.get(field, '')
+        value_dict[field] = value.strip()
+    return value_dict
+
+
+def similar_glosses_fields(request, gloss):
+
+    fields = get_similargloss_fields_dict(request)
+
+    fields_dict = dict()
+    for field in fields:
+        gloss_value = getattr(gloss, field)
+        fields_dict[field] = gloss_value.machine_value if gloss_value else 0
+    return fields_dict
+
+
+def similarglosses(request, gloss_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    gloss = get_object_or_404(Gloss, id=gloss_id)
+    fields_dict = similar_glosses_fields(request, gloss)
+
+    if not fields_dict:
+        return JsonResponse({})
+
+    qs = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset).exclude(id=gloss.id)
+    for field, value in fields_dict.items():
+        if not value:
+            continue
+        query_filter = field + '__machine_value'
+        qs = qs.filter(**{query_filter: value})
+
+    result = dict()
+    similar_glosses = []
+    number_of_matches = qs.count()
+    if number_of_matches > 18:
+        result['glossid'] = str(gloss.id)
+        result['number_of_matches'] = number_of_matches
+        result['similar_glosses'] = similar_glosses
+        return JsonResponse(result, safe=False)
+
+    for g in qs:
+        annotationidglosstranslations = g.annotationidglosstranslation_set.all()
+        if not annotationidglosstranslations:
+            continue
+        # if there are results, just grab the first one
+        default_annotationidglosstranslation = annotationidglosstranslations.first().text
+        similar_glosses.append({'annotation_idgloss': default_annotationidglosstranslation,
+                                'idgloss': g.idgloss,
+                                'pk': "%s" % g.id})
+
+    result['glossid'] = str(gloss.id)
+    result['number_of_matches'] = number_of_matches
+    result['similar_glosses'] = similar_glosses
+
+    return JsonResponse(result, safe=False)
+

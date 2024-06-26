@@ -422,3 +422,56 @@ def mapping_toggle_locprim(request, glossid, locprim):
     result['locprim'] = newvalue
 
     return result
+
+
+@permission_required('dictionary.change_gloss')
+def mapping_toggle_movSh(request, glossid, movSh):
+    if not request.user.is_authenticated:
+        return {}
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return {}
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        return {}
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+
+    if not gloss:
+        return {}
+
+    try:
+        movSh_machine_value = int(movSh)
+    except TypeError:
+        return {}
+
+    empty_movSh = FieldChoice.objects.get(field='MovementShape', machine_value=0)
+    new_movSh = FieldChoice.objects.filter(field='MovementShape', machine_value=movSh_machine_value).first()
+
+    if not new_movSh:
+        # if the word class does not exist, set it to empty
+        movSh_machine_value = 0
+        new_movSh = empty_movSh
+
+    original_movSh = gloss.movSh.name if gloss.movSh else '-'
+
+    with atomic():
+        if not gloss.movSh:
+            gloss.movSh = new_movSh
+        elif gloss.movSh.machine_value != movSh_machine_value:
+            gloss.movSh = new_movSh
+        else:
+            gloss.movSh = empty_movSh
+            new_movSh = empty_movSh
+        gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'movSh', original_movSh, new_movSh.name)
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.movSh.name
+    result['movSh'] = newvalue
+
+    return result
