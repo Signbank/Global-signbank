@@ -6615,12 +6615,9 @@ class BatchEditView(ListView):
 
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
 
-        get = self.request.GET
+        glosses_of_dataset = object_list
 
-        if not get:
-            glosses_of_dataset = object_list
-        else:
-            glosses_of_dataset = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
+        get = self.request.GET
 
         if not get:
             return glosses_of_dataset
