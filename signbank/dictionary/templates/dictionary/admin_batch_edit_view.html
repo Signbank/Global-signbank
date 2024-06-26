@@ -274,7 +274,6 @@ input:focus {
           <th style="width:250px;">{% trans "Gloss" %}</th>
           <th style="width:800px;">{% trans "Fields" %}</th>
           <th style="width:500px;">{% trans "Quick Toggles" %}</th>
-          <th style="width:300px;">{% trans "Tags" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -339,7 +338,15 @@ input:focus {
                     <tr>
                         <td>{{gloss.creationDate}}</td>
                     </tr>
-
+                    <tr>
+                        {% tags_for_object gloss as tag_list %}
+                        <td class="field_tags" style="width:300px;padding-left:10px;">
+                            <div class="tags-cell"
+                                 id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}
+                                <span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
             </table>
             </td>
             <td>
@@ -347,7 +354,7 @@ input:focus {
              {% csrf_token %}
              <tr style="height:20;">
              {% for dataset_lang in dataset_languages %}
-                  <th id="edit_gloss_lemma_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:400px;">
+                  <th id="edit_gloss_lemma_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:500px;">
                      {% trans "Lemma" %} ({{dataset_lang.name}})
                  </th>
              {% endfor %}
@@ -395,10 +402,10 @@ input:focus {
              <tr>
              {% for sense_lang, sensetranslation in translations.items %}
                  <td id="edit_gloss_sense_value_{{gloss.id}}_{{order}}_{{sense_lang}}">
-                     <input id="sense_{{gloss.id}}_{{order}}_{{sense_lang}}"
+                     <textarea id="sense_{{gloss.id}}_{{order}}_{{sense_lang}}"
                             name='sense_{{gloss.id}}_{{order}}_{{sense_lang}}'
-                            maxlength="30" type="text" value="{{sensetranslation}}"
-                            size="50" >
+                            maxlength="30" type="textarea"
+                               cols="50" rows="2">{{sensetranslation}}</textarea>
                  </td>
              {% endfor %}
              </tr>
@@ -556,11 +563,7 @@ input:focus {
 
                 </div>
             </td>
-            {% tags_for_object gloss as tag_list %}
-            <td class="field_tags" style="width:300px;padding-left:10px;">
-                <div class="tags-cell"
-                     id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}<span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}</div>
-            </td>
+
         </tr>
     <tr>
         <td></td>
