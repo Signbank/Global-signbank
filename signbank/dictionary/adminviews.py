@@ -6343,7 +6343,7 @@ class LemmaDeleteView(DeleteView):
 class KeywordListView(ListView):
 
     model = Gloss
-    template_name = 'dictionary/admin_keyword_list.html'
+    template_name = 'dictionary/admin_batch_edit_senses.html'
     paginate_by = 25
     query_parameters = dict()
 
@@ -6359,7 +6359,7 @@ class KeywordListView(ListView):
         if not selected_datasets or selected_datasets.count() > 1:
             dataset_languages = Language.objects.filter(id=get_default_language_id())
         else:
-            dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+            dataset_languages = get_dataset_languages(selected_datasets).order_by('-id')
 
         context['dataset_languages'] = dataset_languages
 
@@ -6405,7 +6405,7 @@ class KeywordListView(ListView):
 
         # multilingual
         # this needs to be sorted for jquery purposes
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets).order_by('-id')
 
         # exclude morphemes
         if not get:
