@@ -33,6 +33,8 @@ from django.http import StreamingHttpResponse
 from django.contrib.auth.models import Group, User
 from signbank.zip_interface import *
 
+from signbank.api_token import put_api_user_in_request
+
 
 def api_fields(dataset, language_code='en', advanced=False):
     activate(language_code)
@@ -84,26 +86,16 @@ def api_fields(dataset, language_code='en', advanced=False):
     return api_fields_2023
 
 
+@put_api_user_in_request
 def get_fields_data_json(request, datasetid):
 
     results = dict()
-    auth_token_request = request.headers.get('Authorization', '')
     interface_language_code = request.headers.get('Accept-Language', 'en')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
-    if auth_token_request:
-        auth_token = auth_token_request.split('Bearer ')[-1]
-        hashed_token = hash_token(auth_token)
-        signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
-        if not signbank_token:
-            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
-            return JsonResponse(results)
-        username = signbank_token.signbank_user.username
-        user = User.objects.get(username=username)
-    else:
-        user = request.user
-        interface_language_code = get_interface_language_api(request, user)
+    if request.user.is_authenticated:
+        interface_language_code = get_interface_language_api(request, request.user)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -120,7 +112,7 @@ def get_fields_data_json(request, datasetid):
         # ignore the database in the url if necessary
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
-    if user.has_perm('dictionary.change_gloss'):
+    if request.user.has_perm('dictionary.change_gloss'):
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=True)
     else:
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=False)
