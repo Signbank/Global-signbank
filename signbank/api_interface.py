@@ -88,8 +88,6 @@ def api_fields(dataset, language_code='en', advanced=False):
 
 @put_api_user_in_request
 def get_fields_data_json(request, datasetid):
-
-    results = dict()
     interface_language_code = request.headers.get('Accept-Language', 'en')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
@@ -122,26 +120,14 @@ def get_fields_data_json(request, datasetid):
     return JsonResponse(result)
 
 
+@put_api_user_in_request
 def get_gloss_data_json(request, datasetid, glossid):
-
-    results = dict()
-    auth_token_request = request.headers.get('Authorization', '')
     interface_language_code = request.headers.get('Accept-Language', 'en')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
-    if auth_token_request:
-        auth_token = auth_token_request.split('Bearer ')[-1]
-        hashed_token = hash_token(auth_token)
-        signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
-        if not signbank_token:
-            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
-            return JsonResponse(results)
-        username = signbank_token.signbank_user.username
-        user = User.objects.get(username=username)
-    else:
-        user = request.user
-        interface_language_code = get_interface_language_api(request, user)
+    if request.user.is_authenticated:
+        interface_language_code = get_interface_language_api(request, request.user)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -154,7 +140,7 @@ def get_gloss_data_json(request, datasetid, glossid):
 
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
-    if not dataset or not user.is_authenticated:
+    if not dataset or not request.user.is_authenticated:
         # ignore the dataset in the url if necessary
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
@@ -173,7 +159,7 @@ def get_gloss_data_json(request, datasetid, glossid):
     if not gloss:
         return JsonResponse({})
 
-    if user.has_perm('dictionary.change_gloss'):
+    if request.user.has_perm('dictionary.change_gloss'):
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=True)
     else:
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=False)
