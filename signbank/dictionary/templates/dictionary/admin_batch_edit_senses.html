@@ -150,7 +150,6 @@ function clearForm() {
 }
 .tags-cell {
     overflow-y: visible;
-    width: 255px;
     box-sizing: inherit;
     white-space: nowrap;
 }
@@ -370,8 +369,9 @@ input:focus {
         </tr>
 
         <tr>
-            <td></td>
-            <td colspan="2">
+            <td style="width:600px;"></td>
+            <td colspan="2" style="width:1200px;">
+            <div id="toggles" class='panel-group'>
             <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_matrix_panel_{{gloss.id}}'>{% trans "Senses Matrix" %}
@@ -448,8 +448,8 @@ input:focus {
                               {% endif %}
                           </form>
 
-                       <br/>
-                       <br/>
+                       <br>
+                       <br>
                        <h4>{% trans "Add Sense" %}</h4>
                        <form id='add_keyword_form_{{gloss.id}}'
                              method='post' action='{% url "dictionary:add_keyword" gloss.id %}'>
@@ -472,18 +472,15 @@ input:focus {
                               {% trans "Add Sense" %}</button>
                           {% endif %}
                         </form>
+                        <br><br>
                     </div>
                 </div>
             </div>
-            </td>
-        </tr>
 
         {% for language in dataset_languages %}
-            <tr>
-            <td></td>
-            <td colspan="2">
-            <div class="panel panel-default panel-languages">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#languages"
+
+            <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_language_panel_{{gloss.id}}_{{language.id}}'>{{language.name}}
                 </div>
                 <div id='toggle_language_panel_{{gloss.id}}_{{language.id}}' class="panel-collapse collapse">
@@ -578,13 +575,17 @@ input:focus {
                               {% trans "Update Text" %}</button>
                           {% endif %}
                       </form>
+                   <br>
+                   <br>
                 </div>
                 </div>
                 </div>
             </div>
-        </td>
-        </tr>
+
         {% endfor %}
+            </div>
+        </td>
+    </tr>
     <tr>
         <td colspan="3">
             <hr style="border: 1px solid black;">
