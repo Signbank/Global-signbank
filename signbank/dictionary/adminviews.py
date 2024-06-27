@@ -4249,21 +4249,7 @@ class DatasetDetailView(DetailView):
             messages.add_message(self.request, messages.ERROR, _('You must be in group Dataset Manager to modify dataset permissions.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
-        # if the dataset is specified in the url parameters, set the dataset_acronym variable
         get = self.request.GET
-        if 'dataset_acronym' in get:
-            self.dataset_acronym = get['dataset_acronym']
-        if self.dataset_acronym == '':
-            messages.add_message(self.request, messages.ERROR, _('Dataset name must be non-empty.'))
-            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
-
-        try:
-            dataset_object = Dataset.objects.get(acronym=self.dataset_acronym)
-        except ObjectDoesNotExist:
-            translated_message = _('No dataset with that name found.')
-            messages.add_message(self.request, messages.ERROR, translated_message)
-            return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
-
         username = ''
         if 'username' in get:
             username = get['username']
@@ -4279,7 +4265,7 @@ class DatasetDetailView(DetailView):
             return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
         # if we get to here, we have a dataset object and a user object to add as an owner of the dataset
-
+        dataset_object = self.object
         dataset_object.owners.add(user_object)
         dataset_object.save()
 
