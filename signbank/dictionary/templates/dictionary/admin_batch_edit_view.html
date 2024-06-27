@@ -425,25 +425,29 @@ textarea:focus {
              {% endfor %}
              </tr>
              {% with gloss|get_senses_mapping as senses_mapping %}
-             {% for order, translations in senses_mapping.items %}
+             {% if senses_mapping %}
              <tr>
                  {% for dataset_lang in dataset_languages %}
-                 <th id="edit_gloss_sense_header_{{gloss.id}}_{{order}}_{{dataset_lang.language_code_2char}}" style="width:400px;">
-                     {% trans "Sense" %} #{{order}} ({{dataset_lang.name}})
+                 <th id="edit_gloss_sense_header_{{gloss.id}}_{{order}}_{{dataset_lang.language_code_2char}}"
+                     style="width:400px;">
+                     {% trans "Senses" %} ({{dataset_lang.name}})
                  </th>
                  {% endfor %}
              </tr>
-             <tr>
+             {% for order, translations in senses_mapping.items %}
+             <tr style="height:52px;">
              {% for sense_lang, sensetranslation in translations.items %}
                  <td id="edit_gloss_sense_value_{{gloss.id}}_{{order}}_{{sense_lang}}">
+                     <span>{{order}}.</span>
                      <textarea id="sense_{{gloss.id}}_{{order}}_{{sense_lang}}"
                             name='sense_{{gloss.id}}_{{order}}_{{sense_lang}}'
                             maxlength="30" type="textarea"
-                               cols="50" rows="2">{{sensetranslation}}</textarea>
+                               cols="45" rows="1">{{sensetranslation}}</textarea>
                  </td>
              {% endfor %}
              </tr>
              {% endfor %}
+             {% endif %}
              {% endwith %}
     </table>
     <table class="table-responsive">
