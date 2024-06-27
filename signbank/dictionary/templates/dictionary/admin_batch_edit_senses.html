@@ -67,7 +67,36 @@ $(document).ready(function() {
             $(this_id).trigger('change');
         };
      }
+     $('.hover-shows-video').each(function() {
+        ready_videos(this);
+     });
 });
+
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            $(this).find('img').hide();
+            video.show();
+            video.get(0).play();
+        }
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            video.hide();
+            video.get(0).pause();
+            video.get(0).currentTime = 0;
+        }
+    });
+}
 </script>
 
 <script type='text/javascript'>
@@ -80,6 +109,7 @@ function clearForm() {
 {% endblock %}
 
 {% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/affiliation_tags.css">
 <style>
 .actions {
     color: white !important;
@@ -126,11 +156,13 @@ function clearForm() {
 }
 input {
     height: 26px;
+    line-height: 26px;
     font-size: 14px;
     padding: 2px;
 }
 input[type=text] {
     border: none;
+    margin: 2px;
 }
 input:focus {
     outline: 1px solid red;
@@ -148,6 +180,9 @@ input:focus {
 }
 .modal-dialog {
     width: 1200px;
+}
+.tagAFF {
+    margin-left: 0;
 }
 </style>
 {% endblock %}
@@ -202,16 +237,90 @@ input:focus {
 <table class='table table-condensed'>
     <thead>
       <tr>
-          <th style="width:300px;">{% trans "Gloss" %}</th>
+          <th style="width:600px;">{% trans "Gloss" %}</th>
           <th style="width:600px;">{% trans "Senses" %}</th>
           <th style="width:600px;">{% trans "Keywords" %}</th>
       </tr>
+      <tr>
+          <td colspan="3">
+              <hr style="border: 1px solid black;">
+          </td>
+      </tr>
     </thead>
     <tbody>
+    {% load underscore_to_space %}
     {% for gloss, keywords_per_language, senses_per_language, translated_senses, matrix_dimensions in page_obj %}
         <tr>
-            <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
-            {{gloss|get_default_annotation_idgloss_translation}}</a>
+            <td>
+            <table>
+            <tr>
+            <td>{% if gloss.get_image_path %}
+            {% url 'dictionary:protected_media' '' as protected_media_url %}
+            <div class="thumbnail_container">
+            <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
+            <div id='glossvideo_{{gloss.id}}' class="hover-shows-video">
+                <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_url}}">
+
+                {% if gloss.has_video %}
+                <video id="videoplayer" class="thumbnail-video"
+                       src="{{protected_media_url}}{{gloss.get_video_url}}"  type="video/mp4" muted="muted"></video>
+                {% endif %}
+            </div>
+            </a>
+            </div>
+            {% endif %}
+            </td>
+            </tr>
+                <tr>
+                    <td>
+                    <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
+                    {{gloss|get_default_annotation_idgloss_translation}}</a>
+                    </td>
+                </tr>
+
+                    <tr>
+                        <td>
+                        {% for creator in gloss.creator.all %}
+                            {% if forloop.last %}
+                                {{creator.first_name}} {{creator.last_name}}
+                            {% else %}
+                                {{creator.first_name}} {{creator.last_name}},
+                            {% endif %}
+                        {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>{{gloss.creationDate}}</td>
+                    </tr>
+                <tr>
+                    <td>
+                    {% load affiliation_tags %}
+                      {% with gloss|get_affiliations_for_gloss as aff_list %}
+                      {% if aff_list %}
+                          <ul class='afflist'>
+                          {% for aff in aff_list %}
+                            <li class='affli' id="gloss_affiliation_{{aff.id}}">
+                               <div class='aff tagAFF' style="background:{{aff.field_color}};border-color:{{aff.field_color}};">
+                                 <span class='affname'>{{aff.acronym}}</span>
+                               </div>
+                            </li>
+                          </ul>
+                        {% endfor %}
+                      {% endif %}
+                      {% endwith %}
+                    </td>
+                    </tr>
+                    <tr>
+                        {% tags_for_object gloss as tag_list %}
+                        <td class="field_tags">
+                            <div class="tags-cell"
+                                 id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}
+                                <span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+            </table>
+            </td>
             </td>
             <td class="senses_{{gloss.id}}" id="senses_{{gloss.id}}">
                 <table class='table table-condensed'>
@@ -261,6 +370,7 @@ input:focus {
         </tr>
 
         <tr>
+            <td></td>
             <td colspan="2">
             <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
@@ -366,11 +476,11 @@ input:focus {
                 </div>
             </div>
             </td>
-            <td></td>
         </tr>
 
         {% for language in dataset_languages %}
             <tr>
+            <td></td>
             <td colspan="2">
             <div class="panel panel-default panel-languages">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#languages"
@@ -473,9 +583,13 @@ input:focus {
                 </div>
             </div>
         </td>
-        <td></td>
         </tr>
         {% endfor %}
+    <tr>
+        <td colspan="3">
+            <hr style="border: 1px solid black;">
+        </td>
+    </tr>
     {% endfor %}
     </tbody>
 </table>
