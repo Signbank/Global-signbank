@@ -366,31 +366,20 @@ input:focus {
                 </div>
             </div>
             </td>
+            <td></td>
         </tr>
 
         {% for language in dataset_languages %}
-        <tr class="empty-row">
-            <td colspan=7>
-             <div class="modal fade" id="edit_senses_modal_{{gloss.id}}_{{language.id}}" tabindex="-1" role="dialog"
-                 aria-labelledby="#modalTitleEdit_{{gloss.id}}_{{language.id}}" aria-hidden="true">
-             <div class="modal-dialog modal-lg" id='modalTitleEdit_{{gloss.id}}_{{language.id}}'>
-                <div class="col-md-12">
-                <div class="modal-content">
-                    <div class='modal-header'>
-                        <h3>{% trans "Gloss Keywords Mapping to Senses" %} ({{language.name}})</h3>
-                        {% blocktrans %}
-                        <p>Here you can edit keywords and regroup them to another sense by changing the sense number.</p>
-                        <p>If a sense number appears without keywords, switch to the Senses Matrix popup to
-                           view all languages.</p>
-                        <p>You can also remove empty senses there.</p>
-                        {% endblocktrans %}
-                    </div>
-                    <div class='modal-body'>
-                        <div class="col-md-12">
+            <tr>
+            <td colspan="2">
+            <div class="panel panel-default panel-languages">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#languages"
+                     data-target='#toggle_language_panel_{{gloss.id}}_{{language.id}}'>{{language.name}}
+                </div>
+                <div id='toggle_language_panel_{{gloss.id}}_{{language.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;height:400px;">
+                        <div>
                         <table class="table">
-                            <thead>
-                            <tr><th colspan=2>{{gloss|get_default_annotation_idgloss_translation}}</th></tr>
-                            </thead>
                             <tbody id="tbody_modal_senses_{{gloss.id}}_{{language.id}}">
                             {% with senses_per_language|get_item:language as senses_groups %}
                             {% for order_index, keywords_list in senses_groups.items %}
@@ -409,13 +398,13 @@ input:focus {
                             </tbody>
                         </table>
                         </div>
-                      <div class="col-md-4">
+                      <div>
                       <form id="form_regroup_keywords_{{gloss.id}}_{{language.id}}"
                             action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
                       <table class='table table-condensed'>
                           <thead>
-                            <tr><th>{% trans "Keywords" %} {{language.name}}</th><th>{% trans "Sense" %}</th></tr>
+                            <tr><th>{% trans "Keywords" %}</th><th>{% trans "Sense" %}</th></tr>
                           </thead>
                           <tbody id="tbody_senses_table_{{gloss.id}}_{{language.id}}">
                             {% with senses_per_language|get_item:language as senses_groups %}
@@ -437,12 +426,12 @@ input:focus {
                           {% if perms.dictionary.change_gloss %}
                           <button class="regroup_keywords btn btn-primary" id="regroup_keywords_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
                                     data-language="{{language.id}}" type="submit">
-                              {% trans "Regroup Kewords" %}</button>
+                              {% trans "Regroup Keywords" %}</button>
                           {% endif %}
                       </form>
                     </div>
 
-                    <div class="col-md-4">
+                    <div>
                     <br/>
                     <br/>
                     <h4>{% trans "Update Text" %}</h4>
@@ -479,16 +468,12 @@ input:focus {
                               {% trans "Update Text" %}</button>
                           {% endif %}
                       </form>
-                    </div>
-                     </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
-                      </div>
                 </div>
-             </div>
-             </div>
-             </div>
+                </div>
+                </div>
+            </div>
         </td>
+        <td></td>
         </tr>
         {% endfor %}
     {% endfor %}
