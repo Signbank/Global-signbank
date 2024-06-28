@@ -106,6 +106,10 @@ urlpatterns = [
             signbank.dictionary.update.toggle_movSh,
             name='toggle_movSh'),
 
+    re_path(r'^update/quick_create_sense/(?P<glossid>\d+)$',
+            signbank.dictionary.update.quick_create_sense,
+            name='quick_create_sense'),
+
     re_path(r'^update/toggle_language_fields/(?P<glossid>\d+)$',
             signbank.dictionary.update.toggle_language_fields,
             name='toggle_language_fields'),

@@ -125,6 +125,32 @@ function toggle_movSh(data) {
     hCell.html(cell);
 }
 
+function toggle_create_sense(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var order = data.order;
+    var languages_fields_table = $("#gloss_language_fields_"+glossid);
+    var row = $('<tr style="height:52px;"/>');
+    for (var i=0; i < language_2chars.length; i++) {
+        var lang2char = language_2chars[i];
+        var cellID = 'edit_gloss_sense_value_' + glossid + '_' + order + '_' + lang2char;
+        var cellTD = $('<td id="' + cellID + '"/>');
+        var spanCell = '<span>' + order + '.</span>';
+        cellTD.append(spanCell);
+        var textareaID = 'sense_' + glossid + '_' + order + '_' + lang2char;
+        var textareaName = 'sense_' + glossid + '_' + lang2char;
+        var textareaCell = '<textarea id="' + textareaID + '" name = "' + textareaName + '" maxlength="30" ' +
+                           '"type="textarea" data-order="' + order + '" cols="45" rows="1"></textarea>';
+        cellTD.append(textareaCell);
+        cellTD.append('</td>');
+        row.append(cellTD);
+    }
+    row.append("</tr>");
+    languages_fields_table.append(row);
+}
+
 function toggle_language_fields(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -313,6 +339,19 @@ $(document).ready(function() {
          });
      });
 
+     $('.quick_create_sense').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+         $.ajax({
+            url : url + "/dictionary/update/quick_create_sense/" + glossid,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_create_sense
+         });
+     });
+
      $('.quick_language_fields').click(function(e)
 	 {
          e.preventDefault();
@@ -335,19 +374,14 @@ $(document).ready(function() {
                 update[annotation_field_key] = annotation_field_value;
             }
             var table_id = '#gloss_language_fields_' + glossid;
-            console.log(table_id);
             var sense_field_name = 'sense_' + glossid + '_'+ lang2char;
             $(table_id).find('textarea[name="'+sense_field_name+'"]').each(function() {
                var this_order = $(this).attr('data-order');
-               console.log('found '+this_order+' '+lang2char);
                var sense_field_key = 'sense_' + glossid + '_' + this_order + '_'+ lang2char;
-               console.log(sense_field_key);
                var sense_field_value = $(this).val();
-               console.log('sense text: '+sense_field_value);
                update[sense_field_key] = sense_field_value;
             });
          }
-         console.log(update);
          $.ajax({
             url : url + "/dictionary/update/toggle_language_fields/" + glossid,
             type: 'POST',

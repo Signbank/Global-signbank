@@ -504,6 +504,7 @@ textarea:focus {
                 </div>
                 <div id='toggle_language_fields_panel_{{gloss.id}}' class="panel-collapse collapse">
                 <div class="panel-body" style="display:inline-block;">
+                <div>
                 <span>
                 <button id='quick_language_fields_btn_{{gloss.id}}' class="quick_language_fields btn actionButton"
                         name='quick_language_fields_{{gloss.id}}'
@@ -513,6 +514,16 @@ textarea:focus {
                 </span>
                  <p id="errors_{{gloss.id}}"></p>
                  <p id="status_{{gloss.id}}"></p>
+                </div>
+                <div>
+                <span>
+                <button id='quick_create_sense_btn_{{gloss.id}}' class="quick_create_sense btn actionButton"
+                        name='quick_create_sense_{{gloss.id}}'
+                        value='{{gloss.id}}' style="height:36px;"
+                        type="submit" >{% trans "Create Sense" %}
+                </button>
+                </span>
+                </div>
                 </div>
                 </div>
                 </div>

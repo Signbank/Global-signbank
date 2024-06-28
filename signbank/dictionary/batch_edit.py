@@ -74,6 +74,23 @@ def get_sense_numbers(gloss):
     return senses_mapping
 
 
+def create_empty_sense(gloss, order):
+
+    # make a new sense and translations for it
+    translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    sense_translations = dict()
+    sense_for_gloss = Sense()
+    sense_for_gloss.save()
+    glosssense = GlossSense(gloss=gloss, sense=sense_for_gloss, order=order)
+    glosssense.save()
+    for dataset_language in translation_languages:
+        glosssenselanguage = SenseTranslation(language=dataset_language)
+        glosssenselanguage.save()
+        sense_for_gloss.senseTranslations.add(glosssenselanguage)
+        sense_translations[dataset_language] = glosssenselanguage
+    return sense_for_gloss, sense_translations
+
+
 def get_gloss_language_fields(gloss):
     gloss_prefix = str(gloss.id) + '_'
     dataset_languages = gloss.dataset.translation_languages.all()

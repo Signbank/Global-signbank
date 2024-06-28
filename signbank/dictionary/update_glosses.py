@@ -10,7 +10,7 @@ from tagging.models import TaggedItem, Tag
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
-from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
+from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history, create_empty_sense
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 
 
@@ -475,3 +475,38 @@ def mapping_toggle_movSh(request, glossid, movSh):
     result['movSh'] = newvalue
 
     return result
+
+
+@permission_required('dictionary.change_gloss')
+def batch_edit_create_sense(request, glossid):
+    if not request.user.is_authenticated:
+        return {}
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return {}
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        return {}
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+
+    if not gloss:
+        return {}
+
+    gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
+    current_senses = [gs.order for gs in gloss_senses]
+    if not current_senses:
+        new_sense = 1
+    else:
+        new_sense = max(current_senses) + 1
+
+    sense_for_gloss, sense_translations = create_empty_sense(gloss, new_sense)
+    print(sense_for_gloss)
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    result['order'] = new_sense
+
+    return result
+
