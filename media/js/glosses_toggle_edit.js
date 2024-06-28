@@ -334,7 +334,20 @@ $(document).ready(function() {
             if (annotation_field_value != '') {
                 update[annotation_field_key] = annotation_field_value;
             }
+            var table_id = '#gloss_language_fields_' + glossid;
+            console.log(table_id);
+            var sense_field_name = 'sense_' + glossid + '_'+ lang2char;
+            $(table_id).find('textarea[name="'+sense_field_name+'"]').each(function() {
+               var this_order = $(this).attr('data-order');
+               console.log('found '+this_order+' '+lang2char);
+               var sense_field_key = 'sense_' + glossid + '_' + this_order + '_'+ lang2char;
+               console.log(sense_field_key);
+               var sense_field_value = $(this).val();
+               console.log('sense text: '+sense_field_value);
+               update[sense_field_key] = sense_field_value;
+            });
          }
+         console.log(update);
          $.ajax({
             url : url + "/dictionary/update/toggle_language_fields/" + glossid,
             type: 'POST',

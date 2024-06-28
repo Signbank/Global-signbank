@@ -26,9 +26,12 @@ def internal_batch_update_fields_for_gloss(gloss):
         gloss_annotation_field_name = BatchEditForm.gloss_annotation_field_prefix + gloss_prefix + language.language_code_2char
         internal_batch_fields.append(gloss_annotation_field_name)
 
+    sense_orders = get_sense_orders(gloss)
     for language in languages:
-        gloss_sense_field_name = BatchEditForm.gloss_sense_field_prefix + gloss_prefix + language.language_code_2char
-        internal_batch_fields.append(gloss_sense_field_name)
+        for order in sense_orders:
+            sense_order = str(order) + '_'
+            gloss_sense_field_name = BatchEditForm.gloss_sense_field_prefix + gloss_prefix + sense_order + language.language_code_2char
+            internal_batch_fields.append(gloss_sense_field_name)
 
     return internal_batch_fields
 
@@ -43,25 +46,9 @@ def get_value_dict(request, gloss):
     return value_dict
 
 
-def get_gloss_language_fields(gloss):
-    gloss_prefix = str(gloss.id) + '_'
-    dataset_languages = gloss.dataset.translation_languages.all()
-    language_fields_dict = dict()
-    for language in dataset_languages:
-        lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
-        field_name = BatchEditForm.gloss_lemma_field_prefix + gloss_prefix + language.language_code_2char
-        if lemmaidglosstranslations.count() > 0:
-            language_fields_dict[field_name] = lemmaidglosstranslations.first().text
-        else:
-            language_fields_dict[field_name] = ''
-    for language in dataset_languages:
-        annotationidglosstranslation = gloss.annotationidglosstranslation_set.filter(language=language)
-        field_name = BatchEditForm.gloss_annotation_field_prefix + gloss_prefix + language.language_code_2char
-        if annotationidglosstranslation.count() > 0:
-            language_fields_dict[field_name] = annotationidglosstranslation.first().text
-        else:
-            language_fields_dict[field_name] = ''
-    return language_fields_dict
+def get_sense_orders(gloss):
+    orders = [gs.order for gs in GlossSense.objects.filter(gloss=gloss).order_by('order')]
+    return orders
 
 
 def get_sense_numbers(gloss):
@@ -85,6 +72,39 @@ def get_sense_numbers(gloss):
             keywords_list = [translation.translation.text for translation in translations]
             senses_mapping[order][language.language_code_2char] = ', '.join(keywords_list)
     return senses_mapping
+
+
+def get_gloss_language_fields(gloss):
+    gloss_prefix = str(gloss.id) + '_'
+    dataset_languages = gloss.dataset.translation_languages.all()
+    language_fields_dict = dict()
+    for language in dataset_languages:
+        lemmaidglosstranslations = gloss.lemma.lemmaidglosstranslation_set.filter(language=language)
+        field_name = BatchEditForm.gloss_lemma_field_prefix + gloss_prefix + language.language_code_2char
+        if lemmaidglosstranslations.count() > 0:
+            language_fields_dict[field_name] = lemmaidglosstranslations.first().text
+        else:
+            language_fields_dict[field_name] = ''
+    for language in dataset_languages:
+        annotationidglosstranslation = gloss.annotationidglosstranslation_set.filter(language=language)
+        field_name = BatchEditForm.gloss_annotation_field_prefix + gloss_prefix + language.language_code_2char
+        if annotationidglosstranslation.count() > 0:
+            language_fields_dict[field_name] = annotationidglosstranslation.first().text
+        else:
+            language_fields_dict[field_name] = ''
+
+    senses_mapping = get_sense_numbers(gloss)
+    for language in dataset_languages:
+        lang2char = language.language_code_2char
+        for order in senses_mapping.keys():
+            sense_order = str(order) + '_'
+            sense_field_name = BatchEditForm.gloss_sense_field_prefix + gloss_prefix + sense_order + language.language_code_2char
+            if lang2char not in senses_mapping[order].keys():
+                language_fields_dict[sense_field_name] = ''
+                continue
+            language_fields_dict[sense_field_name] = senses_mapping[order][lang2char]
+
+    return language_fields_dict
 
 
 def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue):
@@ -204,6 +224,47 @@ def check_constraints_on_gloss_language_fields(gloss, value_dict):
     return errors
 
 
+def update_sense_translation(gloss, order, language, new_value):
+
+    target_language = Language.objects.get(language_code_2char=language)
+
+    gloss_sense = GlossSense.objects.filter(gloss=gloss, order=order).first()
+    if not gloss_sense:
+        # failsafe guard
+        # do we need to create this sense number if it's missing?
+        # this should not occur, but first see how to create a new sense in batch edit
+        # it might arise if another user is editing senses of this gloss at the same time
+        # in a different view or via the API and removes a sense or reorders them (?)
+        print('missing sense number: ', gloss, order)
+        return
+    sense = gloss_sense.sense
+    sense_translation = sense.senseTranslations.filter(language=target_language).first()
+    if not sense_translation:
+        # there is no translation object for this sense
+        sense_translation = SenseTranslation(language=target_language)
+        sense_translation.save()
+        sense.senseTranslations.add(sense_translation)
+    else:
+        # delete the existing keywords from this sense order language
+        for existing_translation in sense_translation.translations.all():
+            sense_translation.translations.remove(existing_translation)
+            existing_translation.delete()
+
+    new_values = new_value.split(',')
+    new_keywords = [kw.strip() for kw in new_values]
+    new_sense_keywords = [kw for kw in new_keywords if kw != '']
+    for inx, new_text in enumerate(new_sense_keywords):
+
+        (keyword_object, created) = Keyword.objects.get_or_create(text=new_text)
+
+        # make a new translation using new sense number and new index numer
+        trans = Translation(gloss=gloss, translation=keyword_object, index=inx,
+                            language=target_language, orderIndex=order)
+        trans.save()
+
+        sense_translation.translations.add(trans)
+
+
 def batch_edit_update_gloss(request, glossid):
     """Update the gloss fields"""
     if not request.user.is_authenticated:
@@ -247,6 +308,12 @@ def batch_edit_update_gloss(request, glossid):
         elif key.startswith('annotation'):
             update_annotation_translation(gloss, key[-2:], newvalue)
             add_gloss_update_to_revision_history(request.user, gloss, 'annotation_'+language, original_value, newvalue)
+        elif key.startswith('sense'):
+            sense_prefix, glossid, order, lang2char = key.split('_')
+            update_sense_translation(gloss, order, lang2char, newvalue)
+            gloss_sense_field = 'sense_'+order+'_'+language
+            add_gloss_update_to_revision_history(request.user, gloss, gloss_sense_field, original_value, newvalue)
+
     gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     gloss.save()
 

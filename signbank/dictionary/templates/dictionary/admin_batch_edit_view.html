@@ -383,7 +383,7 @@ textarea:focus {
             </table>
             </td>
             <td>
-            <table class="table-responsive">
+            <table class="table-responsive" id="gloss_language_fields_{{gloss.id}}">
              {% csrf_token %}
              <tr style="height:20;">
              {% for dataset_lang in dataset_languages %}
@@ -440,8 +440,8 @@ textarea:focus {
                  <td id="edit_gloss_sense_value_{{gloss.id}}_{{order}}_{{sense_lang}}">
                      <span>{{order}}.</span>
                      <textarea id="sense_{{gloss.id}}_{{order}}_{{sense_lang}}"
-                            name='sense_{{gloss.id}}_{{order}}_{{sense_lang}}'
-                            maxlength="30" type="textarea"
+                               name='sense_{{gloss.id}}_{{sense_lang}}'
+                               maxlength="30" type="textarea" data-order="{{order}}"
                                cols="45" rows="1">{{sensetranslation}}</textarea>
                  </td>
              {% endfor %}
