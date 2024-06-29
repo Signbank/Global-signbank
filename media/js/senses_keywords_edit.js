@@ -72,21 +72,6 @@ function update_gloss_senses(data) {
         }
     }
 
-    var keywords_glossid = '#tbody_keywords_' + glossid + '_' + changed_language;
-    var keywordsCell = $(keywords_glossid);
-    $(keywordsCell).empty();
-    var row = $("<tr/>");
-    var num_commas = keywords.length - 1;
-    for (var key in keywords) {
-        if (num_commas > 0 && key < num_commas) {
-            row.append("<span>"+keywords[key]+"</span>, ");
-        } else {
-            row.append("<span>"+keywords[key]+"</span>");
-        }
-    }
-    row.append("</td>");
-    keywordsCell.append(row);
-
     var senses_glossid = '#tbody_senses_' + glossid + '_' + changed_language;
     var sensesCell = $(senses_glossid);
     $(sensesCell).empty();
@@ -296,24 +281,6 @@ function add_gloss_keywords(data) {
     var new_sense_number = data.new_sense;
     var dataset_languages = data.dataset_languages;
 
-    for (var language in keywords) {
-        var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;
-        var keywordsCell = $(keywords_glossid);
-        $(keywordsCell).empty();
-        var language_keywords = keywords[language];
-        num_commas = language_keywords.length - 1;
-        var row = $("<tr/>");
-        row.append("<td/>");
-        for (var inx in language_keywords) {
-            if (num_commas > 0 && inx < num_commas) {
-                row.append("<span>"+language_keywords[inx]+"</span>, ");
-            } else {
-                row.append("<span>"+language_keywords[inx]+"</span>");
-            }
-        }
-        row.append("</td></tr>");
-        keywordsCell.append(row);
-    }
     for (var language in senses_groups) {
         var senses_glossid = '#tbody_senses_' + glossid + '_' + language;
         var sensesCell = $(senses_glossid);
@@ -649,25 +616,6 @@ function update_matrix(data) {
             };
             groupCell.append("</td>");
         }
-    }
-    // update outer row keywords
-    for (var language in keywords) {
-        var keywords_glossid = '#tbody_keywords_' + glossid + '_' + language;
-        var keywordsCell = $(keywords_glossid);
-        $(keywordsCell).empty();
-        var language_keywords = keywords[language];
-        num_commas = language_keywords.length - 1;
-        var row = $("<tr/>");
-        row.append("<td/>");
-        for (var inx in language_keywords) {
-            if (num_commas > 0 && inx < num_commas) {
-                row.append("<span>"+language_keywords[inx]+"</span>, ");
-            } else {
-                row.append("<span>"+language_keywords[inx]+"</span>");
-            }
-        }
-        row.append("</td></tr>");
-        keywordsCell.append(row);
     }
     // update outer row senses
     for (var language in senses_groups) {

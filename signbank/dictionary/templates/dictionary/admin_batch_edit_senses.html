@@ -8,7 +8,7 @@
 {% load annotation_idgloss_translation %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Signbank: Batch Edit Senses{% endblocktrans %}
+{% blocktrans %}Signbank: Split Up Senses{% endblocktrans %}
 {% endblock %}
 
 {% block extrajs %}
@@ -111,6 +111,19 @@ function clearForm() {
 {% block extrahead %}
 <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/affiliation_tags.css">
 <style>
+.panel {
+    border: 1px solid darkgrey;
+}
+.panel-collapse {
+    border: 1px solid darkgrey;
+}
+.panel-header {
+    border: 1px solid darkgrey;
+}
+.panel-body {
+    padding:3px;
+    margin: 5px;
+}
 .actions {
     color: white !important;
     background-color: white !important;
@@ -162,6 +175,7 @@ input {
 input[type=text] {
     border: none;
     margin: 2px;
+    padding-right: 5px;
 }
 input:focus {
     outline: 1px solid red;
@@ -169,31 +183,50 @@ input:focus {
 .span-cell {
     padding: 1px;
     height: auto;
+    width: auto;
+    padding: 5px;
+}
+.table-responsive {
+    border: 0px 0px 0px 0px;
+}
+.table-responsive tr {
+    border: 0px 0px 0px 0px;
 }
 .table-condensed {
-    border-collapse: separate;
+    border-collapse: collapse;
+    border: 0px 0px 0px 0px;
+    border-bottom-width: 0px;
     box-sizing: content-box;
 }
 .table-condensed td {
     height: auto;
 }
-.modal-dialog {
-    width: 1200px;
-}
 .tagAFF {
     margin-left: 0;
+}
+table, th, td {
+    border-collapse: collapse;
+}
+tr {
+    border-top: 0px;
+    border-bottom: 0px;
+    border: 0px 0px 0px 0px;
+}
+td {
+    border-top: none;
+    border-bottom: none;
 }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<div id="definitionblock" style="padding-top: 30px;">
+<div id="definitionblock" style="padding-top:30px;">
 
     <div class="keywordsSenses" id="keywordsSenses">
-    <h3>{% trans "Batch Edit Senses" %}</h3>
+    <h3>{% trans "Split Up Senses" %}</h3>
 
-        <div id='searchform_outer' class='well '>
+        <div id='searchform_outer' class='well'>
         <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/dictionary/keywords/'>
         {% csrf_token %}
         <div class="panel panel-default">
@@ -212,7 +245,7 @@ input:focus {
                            data-target="#pub_search">{% trans "Search by Tags" %}</div>
 
                       <div id='pub_search' class='collapse'>
-                      <table class='table table-condensed' style="width:65%;">
+                      <table class='table table-responsive' style="width:65%;">
                       <tr>
                           <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
                           <td style="width:600px;">{{searchform.tags}}</td>
@@ -233,25 +266,16 @@ input:focus {
         </div>
 
 <div>
-<table class='table table-condensed'>
+<table class="table table-responsive">
     <thead>
-      <tr>
-          <th style="width:600px;">{% trans "Gloss" %}</th>
-          <th style="width:600px;">{% trans "Senses" %}</th>
-          <th style="width:600px;">{% trans "Keywords" %}</th>
-      </tr>
-      <tr>
-          <td colspan="3">
-              <hr style="border: 1px solid black;">
-          </td>
-      </tr>
+
     </thead>
     <tbody>
     {% load underscore_to_space %}
     {% for gloss, keywords_per_language, senses_per_language, translated_senses, matrix_dimensions in page_obj %}
-        <tr>
-            <td>
-            <table>
+        <tr style="width:100%;">
+            <td style="width:30%;">
+            <table style="border:0px 0px 0px 0px;">
             <tr>
             <td>{% if gloss.get_image_path %}
             {% url 'dictionary:protected_media' '' as protected_media_url %}
@@ -313,18 +337,24 @@ input:focus {
                         {% tags_for_object gloss as tag_list %}
                         <td class="field_tags">
                             <div class="tags-cell"
-                                 id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}
-                                <span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}
+                                 id="tags_cell_{{gloss.id}}">
+                                {% for tag in tag_list %}
+                                <span class='tag'>{{tag.name|underscore_to_space}}</span>
+                                {% endfor %}
                             </div>
                         </td>
                     </tr>
             </table>
             </td>
-            </td>
             <td class="senses_{{gloss.id}}" id="senses_{{gloss.id}}">
-                <table class='table table-condensed'>
-                {% for lang, senses in senses_per_language.items %}
-                    <tr><td>{{lang.language_code_2char|upper}}</td>
+                <table class="table table-condensed">
+                    <tr>
+                    {% for lang in senses_per_language.keys %}
+                        <th>{% trans "Senses" %} ({{lang.name}})</th>
+                    {% endfor %}
+                    </tr>
+                    <tr>
+                        {% for lang, senses in senses_per_language.items %}
                         <td>
                         <table>
                             <tbody id="tbody_senses_{{gloss.id}}_{{lang.id}}">
@@ -340,48 +370,31 @@ input:focus {
                             </tbody>
                         </table>
                         </td>
-                    </tr>
-                {% endfor %}
-                </table>
-            </td>
-
-            <td class="keywords_{{gloss.id}}">
-                <table class='table table-condensed'>
-                {% for lang, keywords in keywords_per_language.items %}
-                    <tr>
-                    <td>{{lang.language_code_2char|upper}}</td>
-                    <td>
-                        <table>
-                        <tbody id="tbody_keywords_{{gloss.id}}_{{lang.id}}">
-                        <tr><td>
-                        {% for trn in keywords %}
-                            {{ trn.translation.text|safe }}{% if not forloop.last %}, {% endif %}
                         {% endfor %}
-                        </td></tr>
-                        </tbody>
-                        </table>
-                    </td>
                     </tr>
-                {% endfor %}
                 </table>
             </td>
 
         </tr>
-
+    </tbody>
+</table>
+    <table class='table table-responsive'>
+        <tbody>
         <tr>
-            <td style="width:600px;"></td>
-            <td colspan="2" style="width:1200px;">
-            <div id="toggles" class='panel-group'>
+            <td colspan="2">
+            <div id="toggles" class='panel-group' style="width:1000px;">
             <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_matrix_panel_{{gloss.id}}'>{% trans "Senses Matrix" %}
                 </div>
                 <div id='toggle_matrix_panel_{{gloss.id}}' class="panel-collapse collapse">
-                    <div id='modalTitleEditTrans_{{gloss.id}}' class="panel-body" style="display:inline-block;height:400px;">
+                    <div id='modalTitleEditTrans_{{gloss.id}}' class="panel-body"
+                         style="display:inline-block;height:auto;">
+                         <br>
                          <form id="form_edit_sense_matrix_{{gloss.id}}"
                             action="{% url 'dictionary:edit_senses_matrix' gloss.id %}" method='post'>
                             {% csrf_token %}
-                            <table class="table table-condensed">
+                            <table class="table table-responsive">
                             <thead>
                             <tr>
                                 <th>#</th>
@@ -454,7 +467,7 @@ input:focus {
                        <form id='add_keyword_form_{{gloss.id}}'
                              method='post' action='{% url "dictionary:add_keyword" gloss.id %}'>
                            {% csrf_token %}
-                           <table class='table table-condensed'>
+                           <table class='table table-responsive'>
                                <tr>
                                    {% for keywords_language in dataset_languages %}
                                    <td>
@@ -481,10 +494,11 @@ input:focus {
 
             <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
-                     data-target='#toggle_language_panel_{{gloss.id}}_{{language.id}}'>{{language.name}}
+                     data-target='#toggle_language_panel_{{gloss.id}}_{{language.id}}'>
+                    {% trans "Move Keywords to Different Senses" %} ({{language.name}})
                 </div>
                 <div id='toggle_language_panel_{{gloss.id}}_{{language.id}}' class="panel-collapse collapse">
-                <div class="panel-body" style="display:inline-block;height:400px;">
+                <div class="panel-body">
                         <div>
                         <table class="table">
                             <tbody id="tbody_modal_senses_{{gloss.id}}_{{language.id}}">
@@ -509,9 +523,9 @@ input:focus {
                       <form id="form_regroup_keywords_{{gloss.id}}_{{language.id}}"
                             action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
-                      <table class='table table-condensed'>
+                      <table class='table table-responsive'>
                           <thead>
-                            <tr><th>{% trans "Keywords" %}</th><th>{% trans "Sense" %}</th></tr>
+                            <tr><th>{% trans "Keywords" %}</th><th>{% trans "Sense #" %}</th></tr>
                           </thead>
                           <tbody id="tbody_senses_table_{{gloss.id}}_{{language.id}}">
                             {% with senses_per_language|get_item:language as senses_groups %}
@@ -545,7 +559,7 @@ input:focus {
                       <form id="form_edit_keywords_{{gloss.id}}_{{language.id}}"
                             action="{% url 'dictionary:edit_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
-                      <table class='table table-condensed'>
+                      <table class='table table-responsive'>
                           {% with keywords_per_language|get_item:language as sense_translations %}
                           <tbody id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
                           {% if not sense_translations %}
@@ -586,11 +600,7 @@ input:focus {
             </div>
         </td>
     </tr>
-    <tr>
-        <td colspan="3">
-            <hr style="border: 1px solid black;">
-        </td>
-    </tr>
+
     {% endfor %}
     </tbody>
 </table>
