@@ -23,6 +23,7 @@ var csrf_token = '{{csrf_token}}';
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
 var query_parameters_keys = {{query_parameters_keys|safe}};
 var query_parameters_dict = {{query_parameters|safe}};
+var new_text_labels = {{new_text_labels|safe}};
 </script>
 
 <script type='text/javascript' src="{{ STATIC_URL }}js/senses_keywords_edit.js"></script>
@@ -177,8 +178,14 @@ input[type=text] {
     margin: 2px;
     padding-right: 5px;
 }
-input:focus {
+input[type=text]:focus {
     outline: 1px solid red;
+}
+input[type=number] {
+    border: none;
+    margin: 2px;
+    padding-right: 5px;
+    width: 5em;
 }
 .span-cell {
     padding: 1px;
@@ -204,17 +211,22 @@ input:focus {
 .tagAFF {
     margin-left: 0;
 }
-table, th, td {
-    border-collapse: collapse;
+.table-simple {
+    border-spacing: 15px;
 }
-tr {
+.table-simple tr {
     border-top: 0px;
     border-bottom: 0px;
     border: 0px 0px 0px 0px;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
-td {
+.table-simple td, th {
     border-top: none;
     border-bottom: none;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
 </style>
 {% endblock %}
@@ -274,7 +286,7 @@ td {
     {% load underscore_to_space %}
     {% for gloss, keywords_per_language, senses_per_language, translated_senses, matrix_dimensions in page_obj %}
         <tr style="width:100%;">
-            <td style="width:30%;">
+            <td style="width:25%;">
             <table style="border:0px 0px 0px 0px;">
             <tr>
             <td>{% if gloss.get_image_path %}
@@ -296,8 +308,7 @@ td {
             </tr>
                 <tr>
                     <td>
-                    <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
-                    {{gloss|get_default_annotation_idgloss_translation}}</a>
+
                     </td>
                 </tr>
 
@@ -347,7 +358,19 @@ td {
             </table>
             </td>
             <td class="senses_{{gloss.id}}" id="senses_{{gloss.id}}">
-                <table class="table table-condensed">
+                <table class="table-simple table-responsive">
+                    <tr>
+                    {% for dataset_lang in dataset_languages %}
+                        <th>{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</th>
+                    {% endfor %}
+                    </tr>
+                    <tr>
+                    {% for dataset_lang in dataset_languages %}
+                    {% with gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+                        <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></td>
+                    {% endwith %}
+                    {% endfor %}
+                    </tr>
                     <tr>
                     {% for lang in senses_per_language.keys %}
                         <th>{% trans "Senses" %} ({{lang.name}})</th>
@@ -381,11 +404,12 @@ td {
     <table class='table table-responsive'>
         <tbody>
         <tr>
-            <td colspan="2">
-            <div id="toggles" class='panel-group' style="width:1000px;">
+            <td colspan="3">
+            <div id="toggles" class='panel-group'>
             <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
-                     data-target='#toggle_matrix_panel_{{gloss.id}}'>{% trans "Senses Matrix" %}
+                     data-target='#toggle_matrix_panel_{{gloss.id}}'>
+                    {% trans "Senses Matrix Keywords per Sense" %}
                 </div>
                 <div id='toggle_matrix_panel_{{gloss.id}}' class="panel-collapse collapse">
                     <div id='modalTitleEditTrans_{{gloss.id}}' class="panel-body"
@@ -420,7 +444,8 @@ td {
                                     {% for i in cellsrange %}
                                     <span class="span-cell">
                                     <input type="text" size="60" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
-                                           name="new_translation">
+                                           name="new_translation"
+                                           placeholder='{{language.name}} {% trans "Text" %}'>
                                     </span>
                                     {% endfor %}
                                     {% else %}
@@ -436,7 +461,8 @@ td {
                                     {% for i in cellspadding %}
                                     <span class="span-cell">
                                     <input type="text" size="60" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
-                                           name="new_translation">
+                                           name="new_translation"
+                                           placeholder='{{language.name}} {% trans "Text" %}'>
                                     </span>
                                     {% endfor %}
                                     {% endif %}
@@ -490,15 +516,19 @@ td {
                 </div>
             </div>
 
-        {% for language in dataset_languages %}
 
             <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
-                     data-target='#toggle_language_panel_{{gloss.id}}_{{language.id}}'>
-                    {% trans "Move Keywords to Different Senses" %} ({{language.name}})
+                     data-target='#toggle_language_panel_{{gloss.id}}'>
+                    {% trans "Move Keywords to Different Senses" %}
                 </div>
-                <div id='toggle_language_panel_{{gloss.id}}_{{language.id}}' class="panel-collapse collapse">
+                <div id='toggle_language_panel_{{gloss.id}}' class="panel-collapse collapse">
+
                 <div class="panel-body">
+                <div style="display:inline-block;overflow:auto;">
+                {% for language in dataset_languages %}
+                    <div style="width:500px;display:inline-block;float:left;">
+                        <h4>{{language.name}}</h4>
                         <div>
                         <table class="table">
                             <tbody id="tbody_modal_senses_{{gloss.id}}_{{language.id}}">
@@ -523,7 +553,7 @@ td {
                       <form id="form_regroup_keywords_{{gloss.id}}_{{language.id}}"
                             action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
-                      <table class='table table-responsive'>
+                      <table class='table'>
                           <thead>
                             <tr><th>{% trans "Keywords" %}</th><th>{% trans "Sense #" %}</th></tr>
                           </thead>
@@ -536,7 +566,7 @@ td {
                                 <td>
                                 <input type="number" id="regroup_{{gloss.id}}_{{language.id}}_{{trans.id}}" class="regroup" size="5"
                                        name="regroup" value='{{order_index}}' data-regroup='{{order_index}}'
-                                        data-trans_id='{{trans.id}}'>
+                                       data-trans_id='{{trans.id}}'>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -559,13 +589,14 @@ td {
                       <form id="form_edit_keywords_{{gloss.id}}_{{language.id}}"
                             action="{% url 'dictionary:edit_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
-                      <table class='table table-responsive'>
+                      <table class='table'>
                           {% with keywords_per_language|get_item:language as sense_translations %}
                           <tbody id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
                           {% if not sense_translations %}
                             <tr id="edit_keywords_empty_row_{{gloss.id}}_{{language.id}}">
                                 <td>
-                                <input type="text" size="60" name="empty_translation">
+                                <input type="text" size="60" name="empty_translation"
+                                       placeholder='{{language.name}} {% trans "Text" %}'>
                                 </td>
                             </tr>
                           {% else %}
@@ -589,14 +620,15 @@ td {
                               {% trans "Update Text" %}</button>
                           {% endif %}
                       </form>
-                   <br>
-                   <br>
+
                 </div>
+                </div>
+                </div>
+                {% endfor %}
                 </div>
                 </div>
             </div>
 
-        {% endfor %}
             </div>
         </td>
     </tr>

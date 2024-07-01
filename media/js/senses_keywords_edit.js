@@ -62,7 +62,7 @@ function update_gloss_senses(data) {
                 } else {
                     cellTDhtml += '<span class="span-cell"/>';
                     cellTDhtml += '<input type="text" size="60" data-new_order_index="'+new_order_index + '" data-new_language="'+
-                                dataset_languages[inx]+'" name="new_translation">';
+                                dataset_languages[inx]+'" name="new_translation" placeholder="' + new_text_labels[inx] + '">';
                     cellTDhtml += "</span></td>";
                 }
                 row.append(cellTDhtml);
@@ -189,7 +189,7 @@ function update_gloss_senses(data) {
         // replace with an empty cell
         var span_html = '<span class="span-cell"/>';
         span_html += '<input type="text" size="60" data-new_order_index="'+originalIndex + '" data-new_language="'+
-                    langid+'" name="new_translation">';
+                    langid+'" name="new_translation" placeholder="' + new_text_labels[langid] + '">';
         span_html += "</span>";
         // append empty cell to parent
         spanTDParent.append(span_html);
@@ -208,7 +208,7 @@ function update_gloss_senses(data) {
                 } else {
                     cellTDhtml += '<span class="span-cell"/>';
                     cellTDhtml += '<input type="text" size="60" data-new_order_index="'+orderIndex + '" data-new_language="'+
-                                dataset_languages[inx]+'" name="new_translation">';
+                                dataset_languages[inx]+'" name="new_translation" placeholder="' + new_text_labels[inx] + '">';
                     cellTDhtml += "</span>";
                 }
                 cellTDhtml += "</td>";
@@ -226,7 +226,7 @@ function update_gloss_senses(data) {
                 } else {
                     var span_cell_html = '<span class="span-cell"/>';
                     span_cell_html += '<input type="text" size="60" data-new_order_index="'+orderIndex + '" data-new_language="'+
-                                dataset_languages[inx]+'" name="new_translation">';
+                                dataset_languages[inx]+'" name="new_translation" placeholder="' + new_text_labels[inx] + '">';
                     span_cell_html += "</span>";
                     senseLangCell.append(span_cell_html);
                 }
@@ -244,7 +244,7 @@ function update_gloss_senses(data) {
         // replace with an empty cell
         var empty_span_html = '<span class="span-cell"/>';
         empty_span_html += '<input type="text" size="60" data-new_order_index="'+orderIndex + '" data-new_language="'+
-                    language+'" name="new_translation">';
+                    language+'" name="new_translation" placeholder="' + new_text_labels[language] + '">';
         empty_span_html += "</span>";
         spanTDParent.append(empty_span_html);
         // remove row of regroup table
@@ -394,7 +394,7 @@ function add_gloss_keywords(data) {
         } else {
             cellTDhtml += '<span class="span-cell"/>';
             cellTDhtml += '<input type="text" size="60" data-new_order_index="'+new_sense_number + '" data-new_language="'+
-                        langid+'" name="new_translation">';
+                        langid+'" name="new_translation" placeholder="' + new_text_labels[langid] + '">';
             cellTDhtml += "</span></td>";
             row.append(cellTDhtml);
         }
@@ -497,7 +497,6 @@ function update_matrix(data) {
             var changed_language_cell_html = "<td>"+sense_number+'.</td><td id="'+ cell_id + '"/>';
             for (var inx in group_keywords) {
                 var sense_keyword = group_keywords[inx];
-                console.log(JSON.stringify(sense_keyword));
                 var span_id = 'sensegroup_' + glossid + '_' + sense_number + '_' + changed_language + '_' + sense_keyword[0];
                 if (num_commas > 0 && inx < num_commas) {
                     changed_language_cell_html += '<span id="'+ span_id + '">'+sense_keyword[1]+"</span>, ";
@@ -520,7 +519,6 @@ function update_matrix(data) {
                                         '" name="regroup" size="5" value="'+sense_number+
                                         '" data-regroup="'+sense_number+'" data-trans_id="'+sense_keyword[0]+'">';
                 regroup_row_html += "</td></tr>";
-                console.log('append row: '+regroup_row_html);
                 regroupKeywordsTable.append(regroup_row_html);
             }
             // update edit keywords table
@@ -575,7 +573,7 @@ function update_matrix(data) {
         // replace with an empty cell
         var empty_span_html = '<span class="span-cell"/>';
         empty_span_html += '<input type="text" size="60" data-new_order_index="'+orderIndex + '" data-new_language="'+
-                    language+'" name="new_translation">';
+                    language+'" name="new_translation" placeholder="' + new_text_labels[language] + '">';
         empty_span_html += "</span>";
         spanTDParent.append(empty_span_html);
         // remove row of regroup table

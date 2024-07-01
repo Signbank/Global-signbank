@@ -6343,11 +6343,14 @@ class KeywordListView(ListView):
         context['selected_datasets'] = selected_datasets
 
         if not selected_datasets or selected_datasets.count() > 1:
-            dataset_languages = Language.objects.filter(id=get_default_language_id())
-        else:
-            dataset_languages = get_dataset_languages(selected_datasets).order_by('-id')
+            feedback_message = _('Please select a single dataset to view keywords.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
 
-        context['dataset_languages'] = dataset_languages
+        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        context['dataset_languages'] = list(dataset_languages)
+
+        new_text_labels = {str(lang.id): lang.name + ' ' + gettext("Text") for lang in dataset_languages}
+        context['new_text_labels'] = new_text_labels
 
         search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
 
@@ -6389,9 +6392,8 @@ class KeywordListView(ListView):
 
         get = self.request.GET
 
-        # multilingual
         # this needs to be sorted for jquery purposes
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('-id')
+        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
 
         # exclude morphemes
         if not get:

@@ -107,8 +107,10 @@ def mapping_edit_keywords(request, glossid):
 
     original_gloss_senses = get_state_of_gloss_senses(gloss)
 
-    dataset_languages = [str(lang.id) for lang
-                         in gloss.lemma.dataset.translation_languages.all().order_by('id')]
+    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    # for some reason these assignments need to be done in the same way in all functions
+    dataset_languages_ids = [str(lang.id)
+                             for lang in dataset_languages_objects]
 
     order_index_get = request.POST.get('order_index')
     order_index_list_str = json.loads(order_index_get)
@@ -234,7 +236,7 @@ def mapping_edit_keywords(request, glossid):
     gloss_senses_state_is_changed(request, gloss, original_gloss_senses, updated_gloss_senses)
 
     glossXsenses['regrouped_keywords'] = []
-    glossXsenses['dataset_languages'] = dataset_languages
+    glossXsenses['dataset_languages'] = dataset_languages_ids
     glossXsenses['deleted_translations'] = deleted_translations
     glossXsenses['deleted_sense_numbers'] = []
     glossXsenses['new_translations'] = new_translations
@@ -302,9 +304,11 @@ def mapping_group_keywords(request, glossid):
 
     original_gloss_senses = get_state_of_gloss_senses(gloss)
 
-    dataset_languages = [str(lang.id)
-                         for lang in gloss.lemma.dataset.translation_languages.all().order_by('id')]
-    translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    # for some reason these assignments need to be done in the same way in all functions
+    dataset_languages_ids = [str(lang.id)
+                             for lang in dataset_languages_objects]
+    translation_languages = dataset_languages_objects
 
     trans_id_get = request.POST.get('trans_id')
     trans_id_list_str = json.loads(trans_id_get) if trans_id_get else []
@@ -394,7 +398,7 @@ def mapping_group_keywords(request, glossid):
     gloss_senses_state_is_changed(request, gloss, original_gloss_senses, updated_gloss_senses)
 
     glossXsenses['regrouped_keywords'] = regrouped_keywords
-    glossXsenses['dataset_languages'] = dataset_languages
+    glossXsenses['dataset_languages'] = dataset_languages_ids
     glossXsenses['deleted_sense_numbers'] = deleted_sense_numbers
     glossXsenses['deleted_translations'] = deleted_translations
     glossXsenses['new_translations'] = new_translations
@@ -437,9 +441,11 @@ def mapping_add_keyword(request, glossid):
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
-    dataset_languages = [str(lang.id)
-                         for lang in gloss.lemma.dataset.translation_languages.all().order_by('id')]
-    translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    # for some reason these assignments need to be done in the same way in all functions
+    dataset_languages_ids = [str(lang.id)
+                             for lang in dataset_languages_objects]
+    translation_languages = dataset_languages_objects
 
     keywords = request.POST.get('keywords')
     translation_list_str = json.loads(keywords)
@@ -553,7 +559,7 @@ def mapping_add_keyword(request, glossid):
     glossXsenses['new_translations'] = new_translations
     glossXsenses['translations_row'] = translations_row
     glossXsenses['new_sense'] = str(new_sense)
-    glossXsenses['dataset_languages'] = dataset_languages
+    glossXsenses['dataset_languages'] = dataset_languages_ids
 
     return glossXsenses
 
@@ -570,10 +576,11 @@ def mapping_edit_senses_matrix(request, glossid):
 
     original_gloss_senses = get_state_of_gloss_senses(gloss)
 
+    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all().order_by('id')
     # for some reason these assignments need to be done in the same way in all functions
-    dataset_languages = [str(lang.id)
-                         for lang in gloss.lemma.dataset.translation_languages.all().order_by('id')]
-    translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    dataset_languages_ids = [str(lang.id)
+                             for lang in dataset_languages_objects]
+    translation_languages = dataset_languages_objects
 
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
     order_sense_lookup = dict()
@@ -737,7 +744,7 @@ def mapping_edit_senses_matrix(request, glossid):
     glossXsenses['updated_translations'] = updated_translations
     glossXsenses['deleted_translations'] = deleted_translations
     glossXsenses['deleted_sense_numbers'] = deleted_sense_numbers
-    glossXsenses['translation_languages'] = dataset_languages
+    glossXsenses['translation_languages'] = dataset_languages_ids
 
     return glossXsenses
 
