@@ -177,6 +177,7 @@ input[type=text] {
     border: none;
     margin: 2px;
     padding-right: 5px;
+    outline: 1px solid darkgrey;
 }
 input[type=text]:focus {
     outline: 1px solid red;
@@ -188,7 +189,6 @@ input[type=number] {
     width: 5em;
 }
 .span-cell {
-    padding: 1px;
     height: auto;
     width: auto;
     padding: 5px;
@@ -213,6 +213,7 @@ input[type=number] {
 }
 .table-simple {
     border-spacing: 15px;
+    box-sizing: content-box;
 }
 .table-simple tr {
     border-top: 0px;
@@ -285,7 +286,7 @@ input[type=number] {
     <tbody>
     {% load underscore_to_space %}
     {% for gloss, keywords_per_language, senses_per_language, translated_senses, matrix_dimensions in page_obj %}
-        <tr style="width:100%;">
+        <tr style="width:auto;">
             <td style="width:25%;">
             <table style="border:0px 0px 0px 0px;">
             <tr>
@@ -409,7 +410,7 @@ input[type=number] {
             <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_matrix_panel_{{gloss.id}}'>
-                    {% trans "Senses Matrix Keywords per Sense" %}
+                    {% trans "Translate Senses" %}
                 </div>
                 <div id='toggle_matrix_panel_{{gloss.id}}' class="panel-collapse collapse">
                     <div id='modalTitleEditTrans_{{gloss.id}}' class="panel-body"
@@ -443,7 +444,7 @@ input[type=number] {
                                     {% if not translations %}
                                     {% for i in cellsrange %}
                                     <span class="span-cell">
-                                    <input type="text" size="60" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
+                                    <input type="text" size="50" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
                                            name="new_translation"
                                            placeholder='{{language.name}} {% trans "Text" %}'>
                                     </span>
@@ -451,7 +452,7 @@ input[type=number] {
                                     {% else %}
                                     {% for trans in translations %}
                                     <span class="span-cell" id="span_cell_{{gloss.id}}_{{language.id}}_{{trans.id}}">
-                                    <input type="text" size="60" id="sense_translation_text_{{gloss.id}}_{{language.id}}_{{trans.id}}"
+                                    <input type="text" size="50" id="sense_translation_text_{{gloss.id}}_{{language.id}}_{{trans.id}}"
                                            name="translation" value='{{trans.translation.text}}'
                                            data-translation='{{trans.translation.text}}' data-trans_id='{{trans.id}}'
                                            data-order_index='{{order_index}}' data-language='{{language.id}}'>
@@ -460,7 +461,7 @@ input[type=number] {
                                     {% if cellsmax > cellscount %}
                                     {% for i in cellspadding %}
                                     <span class="span-cell">
-                                    <input type="text" size="60" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
+                                    <input type="text" size="50" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
                                            name="new_translation"
                                            placeholder='{{language.name}} {% trans "Text" %}'>
                                     </span>
@@ -498,7 +499,7 @@ input[type=number] {
                                    {% for keywords_language in dataset_languages %}
                                    <td>
                                        <input name='keyword' id="new_sense_keywords_{{gloss.id}}_{{keywords_language.id}}"
-                                              type="text" size="60"
+                                              type="text" size="50"
                                               data-language='{{keywords_language.id}}'
                                               placeholder='{{keywords_language.name}} {% trans "Text" %}' value="">
                                    </td>
@@ -520,15 +521,16 @@ input[type=number] {
             <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_language_panel_{{gloss.id}}'>
-                    {% trans "Move Keywords to Different Senses" %}
+                    {% trans "Split Senses" %}
                 </div>
                 <div id='toggle_language_panel_{{gloss.id}}' class="panel-collapse collapse">
 
                 <div class="panel-body">
-                <div style="display:inline-block;overflow:auto;">
+                <div style="display:inline-block;clear:both;">
                 {% for language in dataset_languages %}
-                    <div style="width:500px;display:inline-block;float:left;">
-                        <h4>{{language.name}}</h4>
+                    <div style="width:600px; height:auto;clear:both;overflow:auto;">
+                    <div style="width:600px; height:auto;float:left;overflow:auto;">
+                        <h3>{{language.name}}</h3>
                         <div>
                         <table class="table">
                             <tbody id="tbody_modal_senses_{{gloss.id}}_{{language.id}}">
@@ -595,7 +597,7 @@ input[type=number] {
                           {% if not sense_translations %}
                             <tr id="edit_keywords_empty_row_{{gloss.id}}_{{language.id}}">
                                 <td>
-                                <input type="text" size="60" name="empty_translation"
+                                <input type="text" size="40" name="empty_translation"
                                        placeholder='{{language.name}} {% trans "Text" %}'>
                                 </td>
                             </tr>
@@ -603,7 +605,8 @@ input[type=number] {
                           {% for trans in sense_translations %}
                             <tr id="edit_keywords_row_{{gloss.id}}_{{language.id}}_{{trans.id}}">
                                 <td>
-                                <input type="text" id="edit_keyword_text_{{gloss.id}}_{{language.id}}_{{trans.id}}" size="60"
+                                <input type="text" id="edit_keyword_text_{{gloss.id}}_{{language.id}}_{{trans.id}}"
+                                       size="40"
                                        name="translation" value='{{trans.translation.text}}'
                                        data-translation='{{trans.translation.text}}' data-trans_id='{{trans.id}}'
                                        data-order_index="{{trans.orderIndex}}">
@@ -621,6 +624,7 @@ input[type=number] {
                           {% endif %}
                       </form>
 
+                </div>
                 </div>
                 </div>
                 </div>
