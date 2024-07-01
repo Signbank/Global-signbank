@@ -646,42 +646,48 @@ textarea:focus {
     <tr>
         <td></td>
         <td>
-        <table class="table-responsive">
-            <tr>
-                <th colspan="2">
-                    {% trans "Similar Glosses" %}
-                </th>
-            </tr>
-            <tr>
-                <td>
-                {% for fieldname, label in similar_gloss_fields_labels.items %}
+        <div id="similar_glosses_{{gloss.id}}" class='panel-group'>
+            <div class="panel panel-default panel-toggles">
+            <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                 data-target='#toggle_similar_panel_{{gloss.id}}'>{% trans "Similar Glosses" %}
+            </div>
+            <div id='toggle_similar_panel_{{gloss.id}}' class="panel-collapse collapse">
+            <div class="panel-body" style="display:inline-block;">
+                <table class="table-responsive">
+                    <tr>
+                        <td>
+                        {% for fieldname, label in similar_gloss_fields_labels.items %}
 
-                <input name="button_{{gloss.id}}_{{fieldname}}" id="button_{{gloss.id}}_{{fieldname}}"
-                       class="similar"
-                       type='button' onclick="do_toggle_field(this);" data-glossid="{{gloss.id}}"
-                       data-value="{{fieldname}}" style="text-decoration:none;color:black;"
-                       value="{{label}}">
-                {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>
-                <button id='quick_similarglosses_btn_{{gloss.id}}'
-                        class="quick_similarglosses btn actionButton"
-                        name='quick_similarglosses_{{gloss.id}}'
-                        data-glossid='{{gloss.id}}' style="height:26px;"
-                        type="submit" >{% trans "Show Similar" %}
-                </button>
-                </td>
-            </tr>
-            <tr>
-                <td id="number_of_matches_{{gloss.id}}"></td>
-            </tr>
-            <tr>
-                <td id="similar_gloss_videos_{{gloss.id}}" style="width:800px;">
-                </td>
-            </tr>
-        </table>
+                        <input name="button_{{gloss.id}}_{{fieldname}}" id="button_{{gloss.id}}_{{fieldname}}"
+                               class="similar"
+                               type='button' onclick="do_toggle_field(this);" data-glossid="{{gloss.id}}"
+                               data-value="{{fieldname}}" style="text-decoration:none;color:black;"
+                               value="{{label}}">
+                        {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        <button id='quick_similarglosses_btn_{{gloss.id}}'
+                                class="quick_similarglosses btn actionButton"
+                                name='quick_similarglosses_{{gloss.id}}'
+                                data-glossid='{{gloss.id}}' style="height:26px;"
+                                type="submit" >{% trans "Show Similar" %}
+                        </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="number_of_matches_{{gloss.id}}"></td>
+                    </tr>
+                    <tr>
+                        <td id="similar_gloss_videos_{{gloss.id}}" style="width:800px;">
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            </div>
+            </div>
+        </div>
         </td>
     </tr>
     {% endfor %}
