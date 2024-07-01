@@ -62,7 +62,7 @@ def put_api_user_in_request(func):
         try:
             api_user = get_api_user(request)
         except APIAuthException as api_auth_exception:
-            return JsonResponse({'errors': str(api_auth_exception)})
+            return JsonResponse({'errors': [str(api_auth_exception)]})
 
         if api_user:
             request.user = api_user
