@@ -7,7 +7,7 @@ from tagging.models import Tag, TaggedItem
 from signbank.dictionary.forms import *
 from django.utils.translation import override, gettext_lazy as _, activate
 from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
-from signbank.api_token import hash_token
+from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import get_interface_language_api
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -32,8 +32,6 @@ from signbank.video.models import GlossVideo, GlossVideoHistory
 from django.http import StreamingHttpResponse
 from django.contrib.auth.models import Group, User
 from signbank.zip_interface import *
-
-from signbank.api_token import put_api_user_in_request
 
 
 def api_fields(dataset, language_code='en', advanced=False):

@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from guardian.shortcuts import get_objects_for_user
 from signbank.tools import get_interface_language_and_default_language_codes
 from signbank.csv_interface import normalize_field_choice
-from signbank.api_token import hash_token, put_api_user_in_request
+from signbank.api_token import put_api_user_in_request
 import datetime as DT
 
 import ast

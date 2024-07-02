@@ -12,7 +12,7 @@ from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTE
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from guardian.shortcuts import get_objects_for_user
-from signbank.api_token import hash_token, put_api_user_in_request
+from signbank.api_token import put_api_user_in_request
 
 
 def get_interface_language_api(request, user):
