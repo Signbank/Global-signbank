@@ -75,6 +75,11 @@ function toggle_handedness(data) {
     $(hCell).empty();
     var cell = "<span class='handedness'>"+handedness+"</span>";
     hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_handedness';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['handedness'] + ': ' + handedness;
+    buttonCell.attr('value', button_contents);
 }
 
 function toggle_domhndsh(data) {
@@ -87,6 +92,11 @@ function toggle_domhndsh(data) {
     $(hCell).empty();
     var cell = "<span class='domhndsh'>"+domhndsh+"</span>";
     hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_domhndsh';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['domhndsh'] + ': ' + domhndsh;
+    buttonCell.attr('value', button_contents);
 }
 
 function toggle_subhndsh(data) {
@@ -99,6 +109,11 @@ function toggle_subhndsh(data) {
     $(hCell).empty();
     var cell = "<span class='subhndsh'>"+subhndsh+"</span>";
     hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_subhndsh';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['subhndsh'] + ': ' + subhndsh;
+    buttonCell.attr('value', button_contents);
 }
 
 function toggle_locprim(data) {
@@ -111,6 +126,11 @@ function toggle_locprim(data) {
     $(hCell).empty();
     var cell = "<span class='locprim'>"+locprim+"</span>";
     hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_locprim';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['locprim'] + ': ' + locprim;
+    buttonCell.attr('value', button_contents);
 }
 
 function toggle_movSh(data) {
@@ -123,6 +143,11 @@ function toggle_movSh(data) {
     $(hCell).empty();
     var cell = "<span class='movSh'>"+movSh+"</span>";
     hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_movSh';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['movSh'] + ': ' + movSh;
+    buttonCell.attr('value', button_contents);
 }
 
 function toggle_create_sense(data) {
