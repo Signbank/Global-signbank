@@ -180,7 +180,7 @@ def process_eaffile(request):
 
 
 @login_required
-def deletesentence_video(request, videoid):
+def deletesentencevideo(request, videoid):
     """Remove the video for this gloss, if there is an older version
     then reinstate that as the current video (act like undo)"""
 

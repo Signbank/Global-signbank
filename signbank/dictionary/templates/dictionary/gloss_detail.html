@@ -1202,7 +1202,7 @@ option:not(:checked) {
                                                         <span class = "sense-icon pull-right"><a href='{% url "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id %}'><img src='{{STATIC_URL}}images/addvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></a></span>
                                                         {% if examplesentence.has_video %}
                                                             <span class="sense-icon pull-right">
-                                                                <form class="formbutton" action="{{PREFIX_URL}}/video/deletesentence_video/{{examplesentence.id}}" method='post'>
+                                                                <form class="formbutton" action="{{PREFIX_URL}}/video/deletesentencevideo/{{examplesentence.id}}" method='post'>
                                                                 {% csrf_token %}
                                                                 <input type=image value="" src='{{STATIC_URL}}images/deletevideo.png' alt = "submit" style='width: 25px; height: 25px; margin: 0px; cursor: pointer;'>
                                                                 </form>

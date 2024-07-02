@@ -497,6 +497,7 @@ class AnnotatedVideo(models.Model):
         return self.videofile.name
     
     def convert_milliseconds_to_time_format(self, ms):
+        """Convert milliseconds to a time format HH:MM:SS.mmm"""
         milliseconds = ms % 1000
         seconds = (ms // 1000) % 60
         minutes = (ms // (1000 * 60)) % 60
@@ -504,6 +505,8 @@ class AnnotatedVideo(models.Model):
         return f"{hours:02}:{minutes:02}:{seconds:02}.{milliseconds:03}"
 
     def select_annotations(self, eaf, tier_name, start_ms, end_ms):
+        """ Select annotations that are within the selected range """
+        
         keys_to_remove = []
         for key in eaf.tiers[tier_name][0]:
             annotation_list = list(eaf.tiers[tier_name][0][key])
@@ -529,66 +532,50 @@ class AnnotatedVideo(models.Model):
             del eaf.tiers[tier_name][0][key]
 
     def cut_video_and_eaf(self, start_ms, end_ms):
-        # cut both the video and the eaffile annotations
+        """cut both the video and the annotation file (eaf) to the selected range"""
+
         import subprocess
+        from pathlib import Path
         from pympi.Elan import Eaf
 
         start_ms, end_ms = int(start_ms), int(end_ms)
-        duration_ms = end_ms - start_ms
         start_time = self.convert_milliseconds_to_time_format(start_ms)
         end_time = self.convert_milliseconds_to_time_format(end_ms)
-        duration_time = self.convert_milliseconds_to_time_format(duration_ms)
         
-        from pathlib import Path
+        # Cut the video
         input_file = Path(self.videofile.path)
         temp_output_file = Path(os.path.join(os.path.split(input_file)[0], 'temp.mp4'))
-        command = [
-        'ffmpeg',
-        '-i', input_file,
-        '-ss', start_time,  # Seek to the start time
-        '-to', end_time,  # Specify the duration
-        '-c:v', 'libx264',
-        '-c:a', 'aac',
-        '-y',  # Overwrite the output file without asking
-        temp_output_file
-        ]
-    
-        # Open subprocess
+        command = ['ffmpeg', '-i', input_file, '-ss', start_time, '-to', end_time, '-c:v', 'libx264', '-c:a', 'aac', '-y', temp_output_file]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        # Communicate and wait for process to finish
-        stdout, stderr = process.communicate()
+        _, stderr = process.communicate()
         stderr_str = stderr.decode('utf-8')
-
         if process.returncode != 0:
             raise RuntimeError(f"ffmpeg error: {stderr_str}")
         else:
             # Overwrite the original file with the cut video
             overwrite_command = ['mv', temp_output_file, input_file]
             process = subprocess.Popen(overwrite_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = process.communicate()
+            _, stderr = process.communicate()
             stderr_str = stderr.decode('utf-8')
-            
             if process.returncode != 0:
                 raise RuntimeError(f"File overwrite error: {stderr_str}")
     
+        # Cut the eaf
         eaf = Eaf(self.eaffile.path)
         eaf.timeslots['ts1000'] = start_ms
         eaf.timeslots['ts1001'] = end_ms
-        
         self.select_annotations(eaf, 'Sentences', start_ms, end_ms)
         self.select_annotations(eaf, 'Glosses R', start_ms, end_ms)
         self.select_annotations(eaf, 'Glosses L', start_ms, end_ms)
-
+        # shift the timeslots to start at 0
         for key in eaf.timeslots:
             eaf.timeslots[key] -= start_ms
         eaf.clean_time_slots()
-
+        # link the new video file
         eaf.remove_linked_files()
         eaf.remove_secondary_linked_files()
         relpath = os.path.split(Path(self.videofile.path))[1]
         eaf.add_linked_file(str(self.videofile.path), str(relpath), 'video/mp4', 0)
-
         eaf.to_file(self.eaffile.path)
 
 

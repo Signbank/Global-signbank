@@ -33,13 +33,26 @@
         <br><br>
         <input type="checkbox" id="trim-video-checked" name="trim-video-checked" role="button" value="off"> {% trans 'Shorten the video' %}
         <div id="trim_video">
-            {% trans "Instructions: slide to a point in the video and set it as start and/or end point" %}<br>
-            <button type="button" id="start-button" class="btn btn-primary" data-dismiss="modal">{% trans "Set new start point" %}</button>
-            Start: <input type="text" id="start-point" name="start-ms" value="0" readonly><br>
-            <button type="button" id="end-button" class="btn btn-primary" data-dismiss="modal">{% trans "Set new end point" %}</button>
-            End: <input type="text" id="end-point" name="end-ms" value="{{ annotated_sentence.annotatedvideo.get_end_ms }}" readonly><br>
-            <button type="button" id="reset-trim" class="btn btn-primary" data-dismiss="modal">{% trans "Reset" %}</button>
-            <span id="trim-feedback"></span>
+            {% trans "Slide to a point in the video and click 'Set' to define it as the new start and/or end point" %}<br>
+            <table class='table' style="width:70%">
+                <tr>
+                    <td style="width:50%">
+                        Start: <input type="text" id="start-point" name="start-ms" value="0" readonly>
+                        <button type="button" id="start-button" class="btn btn-primary" data-dismiss="modal">{% trans "Set" %}</button>
+                    </td>
+                    <td style="width:50%">
+                        End: <input type="text" id="end-point" name="end-ms" value="{{ annotated_sentence.annotatedvideo.get_end_ms }}" readonly>
+                        <button type="button" id="end-button" class="btn btn-primary" data-dismiss="modal">{% trans "Set" %}</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                    <button type="button" id="reset-trim" class="btn btn-primary" data-dismiss="modal">{% trans "Reset" %}</button>
+                    <span id="trim-feedback"></span>
+                    </td>
+                </tr>
+            </table>
+            
         </div>
 
         <style>
@@ -65,7 +78,7 @@
                 var currentTime = (video.currentTime * 1000).toFixed(0);
                 var endValue = parseInt(endPoint.value, 10); 
                 if (!isNaN(endValue) && currentTime > endValue) {
-                    feedback.innerHTML = "Start point must be before end point";
+                    feedback.innerHTML = '<font color="red">Start point must be before end point</font>';
                 } else {
                     startPoint.value = currentTime;
                     feedback.innerHTML = "";
@@ -76,7 +89,7 @@
                 var currentTime = (video.currentTime * 1000).toFixed(0);
                 var startValue = parseInt(startPoint.value, 10); 
                 if (!isNaN(startValue) && currentTime < startValue) {
-                    feedback.innerHTML = "End point must be after start point";
+                    feedback.innerHTML = '<font color="red">End point must be after start point</font>';
                 } else {
                     endPoint.value = currentTime;
                     feedback.innerHTML = "";
