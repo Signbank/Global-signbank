@@ -293,9 +293,12 @@ def batch_edit_update_gloss(request, glossid):
     result = dict()
 
     gloss = get_object_or_404(Gloss, id=glossid)
+    default_language_2char = gloss.lemma.dataset.default_language.language_code_2char
 
     value_dict = get_value_dict(request, gloss)
     language_fields_dict = get_gloss_language_fields(gloss)
+
+    default_annotation_field = 'annotation_' + glossid + '_' + default_language_2char
     fields_to_update = dict()
     for key in value_dict.keys():
         if value_dict[key] != language_fields_dict[key]:
@@ -304,6 +307,7 @@ def batch_edit_update_gloss(request, glossid):
     if not fields_to_update:
         saved_text = gettext("No changes were found.")
         result['glossid'] = glossid
+        result['default_annotation'] = language_fields_dict[default_annotation_field]
         result['errors'] = []
         result['updatestatus'] = saved_text
         return result
@@ -311,6 +315,7 @@ def batch_edit_update_gloss(request, glossid):
     errors = check_constraints_on_gloss_language_fields(gloss, fields_to_update)
     if errors:
         result['glossid'] = glossid
+        result['default_annotation'] = language_fields_dict[default_annotation_field]
         result['errors'] = errors
         result['updatestatus'] = "&#10060;"
         return result
@@ -336,6 +341,10 @@ def batch_edit_update_gloss(request, glossid):
 
     saved_text = gettext("Gloss saved to dataset")
     result['glossid'] = glossid
+    if default_annotation_field in fields_to_update.keys():
+        result['default_annotation'] = fields_to_update[default_annotation_field]
+    else:
+        result['default_annotation'] = language_fields_dict[default_annotation_field]
     result['errors'] = []
     result['updatestatus'] = saved_text + " &#x2713;"
 

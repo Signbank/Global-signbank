@@ -156,6 +156,7 @@ function toggle_language_fields(data) {
         return;
     };
     var glossid = data.glossid;
+    var default_annotation = data.default_annotation;
     var errors = data.errors;
     var updatestatus = data.updatestatus;
     if (errors) {
@@ -168,6 +169,11 @@ function toggle_language_fields(data) {
         glossCell = glossCell + "</ul>";
         errorsElt.html(glossCell);
     }
+    var default_annotation_lookup = '#gloss_default_annotation_link_' + glossid;
+    var annotationElt = $(default_annotation_lookup);
+    var annotationCell = '<a href="'+url+'/dictionary/gloss/'+glossid+'/">'+default_annotation+'</a>';
+    annotationElt.html(annotationCell);
+
     var status_lookup = '#status_' + glossid;
     var statusElt = $(status_lookup);
     var statusCell = "<span>"+updatestatus+"</span>";

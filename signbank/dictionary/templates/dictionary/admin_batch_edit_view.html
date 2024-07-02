@@ -17,7 +17,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
 
 <script type='text/javascript'>
-var url = '{{ PREFIX_URL }}';
+var url = '{{PREFIX_URL}}';
 var saving_str = '{{saving_str|escapejs}}';
 var csrf_token = '{{csrf_token}}';
 var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
@@ -334,7 +334,7 @@ textarea:focus {
             </td>
             </tr>
                 <tr>
-                    <td>
+                    <td id='gloss_default_annotation_link_{{gloss.id}}'>
                     <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
                     {{gloss|get_default_annotation_idgloss_translation}}</a>
                     </td>
@@ -640,6 +640,7 @@ textarea:focus {
                 </div>
 
                 </div>
+                </div>
             </td>
 
         </tr>
@@ -672,7 +673,7 @@ textarea:focus {
                                 class="quick_similarglosses btn actionButton"
                                 name='quick_similarglosses_{{gloss.id}}'
                                 data-glossid='{{gloss.id}}' style="height:26px;"
-                                type="submit" >{% trans "Show Similar" %}
+                                type="submit" >{% trans "Query" %}
                         </button>
                         </td>
                     </tr>

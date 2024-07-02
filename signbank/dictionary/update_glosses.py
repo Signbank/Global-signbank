@@ -503,7 +503,7 @@ def batch_edit_create_sense(request, glossid):
         new_sense = max(current_senses) + 1
 
     sense_for_gloss, sense_translations = create_empty_sense(gloss, new_sense)
-    print(sense_for_gloss)
+
     result = dict()
     result['glossid'] = str(gloss.id)
     result['order'] = new_sense

@@ -3524,7 +3524,7 @@ def toggle_namedentity(request, glossid, namedentity):
 
 @permission_required('dictionary.change_gloss')
 def toggle_handedness(request, glossid, handedness):
-    print('toggle handedness')
+
     if not request.user.is_authenticated:
         return JsonResponse({})
 
