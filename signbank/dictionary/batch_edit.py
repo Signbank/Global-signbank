@@ -135,6 +135,22 @@ def add_gloss_update_to_revision_history(user, gloss, field, oldvalue, newvalue)
     revision.save()
 
 
+def update_scroll_bar(request, glossid, annotation):
+
+    if 'search_results' not in request.session.keys():
+        return
+
+    search_results = request.session['search_results']
+
+    for item in search_results:
+        if item['id'] == glossid:
+            item['data_label'] = annotation
+    request.session['search_results'] = search_results
+    request.session.modified = True
+
+    return
+
+
 def update_lemma_translation(gloss, language_code_2char, new_value):
     language = Language.objects.get(language_code_2char=language_code_2char)
     try:
@@ -342,7 +358,9 @@ def batch_edit_update_gloss(request, glossid):
     saved_text = gettext("Gloss saved to dataset")
     result['glossid'] = glossid
     if default_annotation_field in fields_to_update.keys():
-        result['default_annotation'] = fields_to_update[default_annotation_field]
+        annotation = fields_to_update[default_annotation_field]
+        result['default_annotation'] = annotation
+        update_scroll_bar(request, glossid, annotation)
     else:
         result['default_annotation'] = language_fields_dict[default_annotation_field]
     result['errors'] = []
