@@ -1202,7 +1202,7 @@ option:not(:checked) {
                                                         <span class = "sense-icon pull-right"><a href='{% url "dictionary:add_sentence_video" glossid=gloss.id examplesentenceid=examplesentence.id %}'><img src='{{STATIC_URL}}images/addvideo.png' style="width:25px; height:25px; margin: 0px; cursor: pointer;"></a></span>
                                                         {% if examplesentence.has_video %}
                                                             <span class="sense-icon pull-right">
-                                                                <form class="formbutton" action="{{PREFIX_URL}}/video/deletesentencevideo/{{examplesentence.id}}" method='post'>
+                                                                <form class="formbutton" action="{{PREFIX_URL}}/video/deletesentence_video/{{examplesentence.id}}" method='post'>
                                                                 {% csrf_token %}
                                                                 <input type=image value="" src='{{STATIC_URL}}images/deletevideo.png' alt = "submit" style='width: 25px; height: 25px; margin: 0px; cursor: pointer;'>
                                                                 </form>
@@ -2405,7 +2405,7 @@ option:not(:checked) {
                                 <style>.highlight {background-color: rgb(255, 149, 63);}</style>
 
                                 <video id="myVideo_{{ forloop.counter }}" controls>
-                                    <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile }}" type="video/mp4">
+                                    <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
                                 </video>                               
                             
                                 <br><br><i>Glosses</i><br>
@@ -2449,9 +2449,12 @@ option:not(:checked) {
                                     {% endif %}
                                 </p>
                                 <p>
-                                    {% if annotated_sentence.annotatedvideo.corpus %}
-                                    <i>{% trans "Corpus" %}</i><br>
-                                    {{ annotated_sentence.annotatedvideo.corpus }}
+                                    {% if annotated_sentence.annotatedvideo.source %}
+                                        <i>{% trans "Source" %}</i><br>
+                                        {{ annotated_sentence.annotatedvideo.source.source }}
+                                        {% if annotated_sentence.annotatedvideo.source.url %}
+                                            , <a href="{{ annotated_sentence.annotatedvideo.source.get_absolute_url }}">{{ annotated_sentence.annotatedvideo.source.url }}</a>
+                                        {% endif %}
                                     {% endif %}
                                 </p>
                             </td>

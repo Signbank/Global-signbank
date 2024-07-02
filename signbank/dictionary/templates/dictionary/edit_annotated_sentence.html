@@ -11,7 +11,7 @@
 
 {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
 {% if "change_dataset" in dataset_perms %}
-<div class='editform', style="width:500px">
+<div class='editform', style="width:1000px">
     <fieldset>
         <legend>{% trans "Edit Annotated Sentence" %}</legend>
         
@@ -19,7 +19,7 @@
 
         {% trans "For the following sentence:" %}<br>
         {% url 'dictionary:protected_media' '' as protected_media_url %}
-        <video id="sentenceVideo" controls width="500px">
+        <video id="sentence-video" controls width="700px">
             <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile }}" type="video/mp4">
         </video> 
 
@@ -28,16 +28,74 @@
         <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}'>
         <input type='hidden' name='annotatedsentenceid' value='{{annotated_sentence.id}}'>
         <input type='hidden' name='glossid' value='{{gloss.id}}'>
-        <input type='hidden' id='check_gloss_label' value='{{annotationidgloss}}'>
+        <input type='hidden' id='check-gloss-label' value='{{annotationidgloss}}'>
         <input type='hidden' id='dataset' value='{{gloss.lemma.dataset.acronym}}'>
-        <br>
+        <br><br>
+        <input type="checkbox" id="trim-video-checked" name="trim-video-checked" role="button" value="off"> {% trans 'Shorten the video' %}
+        <div id="trim_video">
+            {% trans "Instructions: slide to a point in the video and set it as start and/or end point" %}<br>
+            <button type="button" id="start-button" class="btn btn-primary" data-dismiss="modal">{% trans "Set new start point" %}</button>
+            Start: <input type="text" id="start-point" name="start-ms" value="0" readonly><br>
+            <button type="button" id="end-button" class="btn btn-primary" data-dismiss="modal">{% trans "Set new end point" %}</button>
+            End: <input type="text" id="end-point" name="end-ms" value="{{ annotated_sentence.annotatedvideo.get_end_ms }}" readonly><br>
+            <button type="button" id="reset-trim" class="btn btn-primary" data-dismiss="modal">{% trans "Reset" %}</button>
+            <span id="trim-feedback"></span>
+        </div>
+
+        <style>
+            #trim-video-checked:not(:checked)~#trim_video {
+                display: none;
+            }
+            #start-point, #end-point {
+                color: #787878;
+            }
+        </style>
+
+        <script>
+            var video = document.getElementById('sentence-video');
+            var startButton = document.getElementById('start-button');
+            var startPoint = document.getElementById('start-point');
+            var endButton = document.getElementById('end-button');
+            var endPoint = document.getElementById('end-point');
+            var resetTrim = document.getElementById('reset-trim');
+            var feedback = document.getElementById('trim-feedback');
+            const end = endPoint.value;
+
+            startButton.addEventListener('click', function() {
+                var currentTime = (video.currentTime * 1000).toFixed(0);
+                var endValue = parseInt(endPoint.value, 10); 
+                if (!isNaN(endValue) && currentTime > endValue) {
+                    feedback.innerHTML = "Start point must be before end point";
+                } else {
+                    startPoint.value = currentTime;
+                    feedback.innerHTML = "";
+                } 
+            });
+
+            endButton.addEventListener('click', function() {
+                var currentTime = (video.currentTime * 1000).toFixed(0);
+                var startValue = parseInt(startPoint.value, 10); 
+                if (!isNaN(startValue) && currentTime < startValue) {
+                    feedback.innerHTML = "End point must be after start point";
+                } else {
+                    endPoint.value = currentTime;
+                    feedback.innerHTML = "";
+                }
+            });
+
+            resetTrim.addEventListener('click', function() {
+                startPoint.value = 0;
+                endPoint.value = end; 
+                feedback.innerHTML = "";
+            });
+        </script>
 
         <br><br>
         {% trans "Download the current .eaf file here:" %}
         <a href="{{ annotated_sentence.annotatedvideo.eaffile.url }}" download>{{ annotated_sentence.annotatedvideo.get_eaffile_name }}</a>
         <br><br>
         {% trans "Choose the updated annotation file (.eaf) here:" %} 
-        <input type="file" id="eaffile" name="eaffile" required>
+        <input type="file" id="eaffile" name="eaffile">
         <br>
         <div id="feedback">
             {{ annotations_table_html|safe }}
@@ -56,8 +114,16 @@
         {% endfor %}
 
         <br><br>
-        {% trans "From corpus:" %}
-        <input style="width:100%" id="corpus_name" name="corpus_name" value="{{ corpus }}" maxlength="100" type="text"/>
+        {% trans "Source:" %}
+        <select name="source_id">
+            {% if annotated_sentence.annotatedvideo.source %}
+            <option value="{{ annotated_sentence.annotatedvideo.source.id }}">{{ annotated_sentence.annotatedvideo.source.name }}</option>
+            {% endif %}
+            <option value="">{% trans "-" %}</option>
+            {% for source in annotated_sentence_sources %}
+                <option value="{{ source.id }}">{{ source.name }}</option>
+            {% endfor %}
+        </select>
         
         <br><br>
         <input class='btn btn-primary' type='submit' value='Save' />
