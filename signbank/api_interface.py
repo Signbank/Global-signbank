@@ -253,6 +253,7 @@ def get_unzipped_video_files_json(request, datasetid):
     return JsonResponse(videos_data)
 
 
+@put_api_user_in_request
 def upload_zipped_videos_folder_json(request, datasetid):
 
     status_request = dict()
