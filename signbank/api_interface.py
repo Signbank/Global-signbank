@@ -444,6 +444,7 @@ def json_finish():
     return ["finish"]
 
 
+@put_api_user_in_request
 def upload_videos_to_glosses(request, datasetid):
     # get file as a url parameter: /dictionary/upload_videos_to_glosses/5
 
