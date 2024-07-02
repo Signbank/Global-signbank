@@ -34,3 +34,12 @@ def normalise_empty(machine_value):
 def translated_frequency_list(dataset):
     generated_dict = dataset.generate_frequency_dict()
     return generated_dict
+
+
+@register.filter
+def get_gloss_field(gloss, field):
+    field_value = getattr(gloss, field)
+    if field_value:
+        return field_value.name
+    else:
+        return '-'

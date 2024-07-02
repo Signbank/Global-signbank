@@ -65,6 +65,172 @@ function toggle_namedentity(data) {
     neCell.html(cell);
 }
 
+function toggle_handedness(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var handedness = data.handedness;
+    var hCell = $("#handedness_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='handedness'>"+handedness+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_handedness';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['handedness'] + ': ' + handedness;
+    buttonCell.attr('value', button_contents);
+}
+
+function toggle_domhndsh(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var domhndsh = data.domhndsh;
+    var hCell = $("#domhndsh_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='domhndsh'>"+domhndsh+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_domhndsh';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['domhndsh'] + ': ' + domhndsh;
+    buttonCell.attr('value', button_contents);
+}
+
+function toggle_subhndsh(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var subhndsh = data.subhndsh;
+    var hCell = $("#subhndsh_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='subhndsh'>"+subhndsh+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_subhndsh';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['subhndsh'] + ': ' + subhndsh;
+    buttonCell.attr('value', button_contents);
+}
+
+function toggle_locprim(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var locprim = data.locprim;
+    var hCell = $("#locprim_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='locprim'>"+locprim+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_locprim';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['locprim'] + ': ' + locprim;
+    buttonCell.attr('value', button_contents);
+}
+
+function toggle_movSh(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var movSh = data.movSh;
+    var hCell = $("#movSh_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='movSh'>"+movSh+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_movSh';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['movSh'] + ': ' + movSh;
+    buttonCell.attr('value', button_contents);
+}
+
+function toggle_create_sense(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var order = data.order;
+    var languages_fields_table = $("#gloss_language_fields_"+glossid);
+    var row = $('<tr style="height:52px;"/>');
+    for (var i=0; i < language_2chars.length; i++) {
+        var lang2char = language_2chars[i];
+        var cellID = 'edit_gloss_sense_value_' + glossid + '_' + order + '_' + lang2char;
+        var cellTD = $('<td id="' + cellID + '"/>');
+        var spanCell = '<span>' + order + '.</span>';
+        cellTD.append(spanCell);
+        var textareaID = 'sense_' + glossid + '_' + order + '_' + lang2char;
+        var textareaName = 'sense_' + glossid + '_' + lang2char;
+        var textareaCell = '<textarea id="' + textareaID + '" name = "' + textareaName + '" maxlength="30" ' +
+                           '"type="textarea" data-order="' + order + '" cols="45" rows="1"></textarea>';
+        cellTD.append(textareaCell);
+        cellTD.append('</td>');
+        row.append(cellTD);
+    }
+    row.append("</tr>");
+    languages_fields_table.append(row);
+}
+
+function toggle_language_fields(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var default_annotation = data.default_annotation;
+    var errors = data.errors;
+    var updatestatus = data.updatestatus;
+    if (errors) {
+        var errors_lookup = '#errors_' + glossid;
+        var errorsElt = $(errors_lookup);
+        var glossCell = "<ul>";
+        for (var err in errors) {
+            glossCell = glossCell + "<li>"+errors[err]+"</li>";
+        }
+        glossCell = glossCell + "</ul>";
+        errorsElt.html(glossCell);
+    }
+    var default_annotation_lookup = '#gloss_default_annotation_link_' + glossid;
+    var annotationElt = $(default_annotation_lookup);
+    var annotationCell = '<a href="'+url+'/dictionary/gloss/'+glossid+'/">'+default_annotation+'</a>';
+    annotationElt.html(annotationCell);
+
+    var status_lookup = '#status_' + glossid;
+    var statusElt = $(status_lookup);
+    var statusCell = "<span>"+updatestatus+"</span>";
+    statusElt.html(statusCell);
+}
+
+function show_similar_glosses(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var number_of_matches = data.number_of_matches;
+    var similar_glosses = data.similar_glosses;
+
+    var number_of_matches_lookup = '#number_of_matches_' + glossid;
+    var number_of_matchesElt = $(number_of_matches_lookup);
+    var number_of_matchesCell = "<span>"+number_of_matches_found+' '+number_of_matches+"</span>";
+    number_of_matchesElt.html(number_of_matchesCell);
+
+    if (similar_glosses) {
+        var similar_glosses_lookup = '#similar_gloss_videos_' + glossid;
+        var similar_glossesElt = $(similar_glosses_lookup);
+        var similar_glossesCell = "<ul>";
+        for (var inx in similar_glosses) {
+            var similar = similar_glosses[inx];
+            similar_glossesCell = similar_glossesCell + "<li>"+similar['annotation_idgloss']+"</li>";
+        }
+        similar_glossesCell = similar_glossesCell + "</ul>";
+        similar_glossesElt.html(similar_glossesCell);
+    }
+}
+
 $(document).ready(function() {
 
     // setup required for Ajax POST
@@ -135,6 +301,146 @@ $(document).ready(function() {
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
             success : toggle_namedentity
+         });
+     });
+     $('.quick_handedness').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var handedness = $(this).attr("data-handedness");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_handedness/" + glossid + "/" + handedness,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_handedness
+         });
+     });
+     $('.quick_domhndsh').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var domhndsh = $(this).attr("data-domhndsh");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_domhndsh/" + glossid + "/" + domhndsh,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_domhndsh
+         });
+     });
+     $('.quick_subhndsh').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var subhndsh = $(this).attr("data-subhndsh");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_subhndsh/" + glossid + "/" + subhndsh,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_subhndsh
+         });
+     });
+     $('.quick_locprim').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var locprim = $(this).attr("data-locprim");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_locprim/" + glossid + "/" + locprim,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_locprim
+         });
+     });
+
+     $('.quick_movSh').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var movSh = $(this).attr("data-movSh");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_movSh/" + glossid + "/" + movSh,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_movSh
+         });
+     });
+
+     $('.quick_create_sense').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+         $.ajax({
+            url : url + "/dictionary/update/quick_create_sense/" + glossid,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_create_sense
+         });
+     });
+
+     $('.quick_language_fields').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+         var errors_lookup = '#errors_' + glossid;
+         $(errors_lookup).empty()
+	     var update = { 'csrfmiddlewaretoken': csrf_token };
+         for (var i=0; i < language_2chars.length; i++) {
+            var lang2char = language_2chars[i];
+            var lemma_field_key = 'lemma_' + glossid + '_'+ lang2char;
+            var lemma_field_lookup = '#'+lemma_field_key;
+            var lemma_field_value = $(lemma_field_lookup).val();
+            if (lemma_field_value != '') {
+                update[lemma_field_key] = lemma_field_value;
+            }
+            var annotation_field_key = 'annotation_' + glossid + '_'+ lang2char;
+            var annotation_field_lookup = '#'+annotation_field_key;
+            var annotation_field_value = $(annotation_field_lookup).val();
+            if (annotation_field_value != '') {
+                update[annotation_field_key] = annotation_field_value;
+            }
+            var table_id = '#gloss_language_fields_' + glossid;
+            var sense_field_name = 'sense_' + glossid + '_'+ lang2char;
+            $(table_id).find('textarea[name="'+sense_field_name+'"]').each(function() {
+               var this_order = $(this).attr('data-order');
+               var sense_field_key = 'sense_' + glossid + '_' + this_order + '_'+ lang2char;
+               var sense_field_value = $(this).val();
+               update[sense_field_key] = sense_field_value;
+            });
+         }
+         $.ajax({
+            url : url + "/dictionary/update/toggle_language_fields/" + glossid,
+            type: 'POST',
+            data: update,
+            datatype: "json",
+            success : toggle_language_fields
+         });
+     });
+     $('.quick_similarglosses').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('data-glossid');
+	     var query = { 'csrfmiddlewaretoken': csrf_token };
+         for (var i=0; i < similar_gloss_fields.length; i++) {
+            var fieldname = similar_gloss_fields[i];
+            var similar_field_key = 'button_' + glossid + '_'+ fieldname;
+            var similar_field_lookup = '#'+similar_field_key;
+            var similar_field_value = $(similar_field_lookup).attr('data-value');
+            if ($(similar_field_lookup).hasClass('similar')) {
+                query[similar_field_value] = similar_field_value;
+            }
+         }
+         $.ajax({
+            url : url + "/dictionary/ajax/similarglosses/" + glossid,
+            type: 'POST',
+            data: query,
+            datatype: "json",
+            success : show_similar_glosses
          });
      });
 });

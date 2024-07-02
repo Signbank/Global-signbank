@@ -1,6 +1,8 @@
 from django.template import Library
 from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
 from signbank.tools import get_default_annotationidglosstranslation
+from signbank.dictionary.batch_edit import get_sense_numbers
+
 import json
 register = Library()
 
@@ -62,7 +64,7 @@ def display_language(gloss,interface_language):
 @register.filter
 def get_lemma_idgloss_translation(lemma, language):
     lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
-    if lemmaidglosstranslations is not None and len(lemmaidglosstranslations) > 0:
+    if lemmaidglosstranslations:
         return lemmaidglosstranslations.first().text
     return ""
 
@@ -198,6 +200,13 @@ def get_gloss_description(gloss, language_code_2char):
 def translated_annotationidgloss(gloss, language_code):
     annotationidgloss = gloss.annotation_idgloss(language_code)
     return annotationidgloss
+
+@register.filter
+def get_senses_mapping(gloss):
+
+    senses_mapping = get_sense_numbers(gloss)
+    return senses_mapping
+
 
 @register.filter
 def get_senses_for_language(sensetranslations, language):

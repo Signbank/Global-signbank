@@ -36,8 +36,12 @@ from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, map
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
 from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
-from signbank.dictionary.update_glosses import mapping_toggle_tag, mapping_toggle_semanticfield, \
-    mapping_toggle_wordclass, mapping_toggle_namedentity
+from signbank.dictionary.update_glosses import (mapping_toggle_tag, mapping_toggle_semanticfield,
+                                                mapping_toggle_wordclass, mapping_toggle_namedentity,
+                                                mapping_toggle_handedness, mapping_toggle_domhndsh,
+                                                mapping_toggle_subhndsh, mapping_toggle_locprim, mapping_toggle_movSh,
+                                                batch_edit_create_sense)
+from signbank.dictionary.batch_edit import batch_edit_update_gloss
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -1048,7 +1052,7 @@ def update_gloss(request, glossid):
             gloss.__setattr__(field,value)
             gloss.save()
 
-            #If the value is not a Boolean, get the human readable value
+            # If the value is not a Boolean, get the human readable value
             if not isinstance(value,bool):
                 # if we get to here, field is a valid field of Gloss
                 newvalue = value
@@ -1058,7 +1062,7 @@ def update_gloss(request, glossid):
         category_value = 'phonology'
 
     # the gloss has been updated, now prepare values for saving to GlossHistory and display in template
-    #This is because you cannot concat none to a string in py3
+    # This is because you cannot concat none to a string in py3
     if original_value is None:
         original_value = ''
 
@@ -1066,7 +1070,8 @@ def update_gloss(request, glossid):
     # Remember this change for the history books
     original_human_value = original_value.name if isinstance(original_value, FieldChoice) else original_value
     if isinstance(value, bool) and field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-    # store a boolean in the Revision History rather than a human value as for the template (e.g., 'letter' or 'number')
+    # store a boolean in the Revision History rather than a human value
+    # as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
     else:
         # this takes care of a problem with None not being allowed as a value in GlossRevision
@@ -3513,6 +3518,99 @@ def toggle_namedentity(request, glossid, namedentity):
         return JsonResponse({})
 
     result = mapping_toggle_namedentity(request, glossid, namedentity)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_handedness(request, glossid, handedness):
+
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = mapping_toggle_handedness(request, glossid, handedness)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_domhndsh(request, glossid, domhndsh):
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = mapping_toggle_domhndsh(request, glossid, domhndsh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_subhndsh(request, glossid, subhndsh):
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = mapping_toggle_subhndsh(request, glossid, subhndsh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_locprim(request, glossid, locprim):
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = mapping_toggle_locprim(request, glossid, locprim)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_movSh(request, glossid, movSh):
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = mapping_toggle_movSh(request, glossid, movSh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_language_fields(request, glossid):
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = batch_edit_update_gloss(request, glossid)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def quick_create_sense(request, glossid):
+
+    if not request.user.is_authenticated:
+        return JsonResponse({})
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({})
+
+    result = batch_edit_create_sense(request, glossid)
 
     return JsonResponse(result)
 
