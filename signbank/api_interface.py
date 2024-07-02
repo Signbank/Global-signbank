@@ -7,7 +7,7 @@ from tagging.models import Tag, TaggedItem
 from signbank.dictionary.forms import *
 from django.utils.translation import override, gettext_lazy as _, activate
 from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
-from signbank.api_token import hash_token
+from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import get_interface_language_api
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -84,26 +84,14 @@ def api_fields(dataset, language_code='en', advanced=False):
     return api_fields_2023
 
 
+@put_api_user_in_request
 def get_fields_data_json(request, datasetid):
-
-    results = dict()
-    auth_token_request = request.headers.get('Authorization', '')
     interface_language_code = request.headers.get('Accept-Language', 'en')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
-    if auth_token_request:
-        auth_token = auth_token_request.split('Bearer ')[-1]
-        hashed_token = hash_token(auth_token)
-        signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
-        if not signbank_token:
-            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
-            return JsonResponse(results)
-        username = signbank_token.signbank_user.username
-        user = User.objects.get(username=username)
-    else:
-        user = request.user
-        interface_language_code = get_interface_language_api(request, user)
+    if request.user.is_authenticated:
+        interface_language_code = get_interface_language_api(request, request.user)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -120,7 +108,7 @@ def get_fields_data_json(request, datasetid):
         # ignore the database in the url if necessary
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
-    if user.has_perm('dictionary.change_gloss'):
+    if request.user.has_perm('dictionary.change_gloss'):
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=True)
     else:
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=False)
@@ -130,26 +118,14 @@ def get_fields_data_json(request, datasetid):
     return JsonResponse(result)
 
 
+@put_api_user_in_request
 def get_gloss_data_json(request, datasetid, glossid):
-
-    results = dict()
-    auth_token_request = request.headers.get('Authorization', '')
     interface_language_code = request.headers.get('Accept-Language', 'en')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
-    if auth_token_request:
-        auth_token = auth_token_request.split('Bearer ')[-1]
-        hashed_token = hash_token(auth_token)
-        signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
-        if not signbank_token:
-            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
-            return JsonResponse(results)
-        username = signbank_token.signbank_user.username
-        user = User.objects.get(username=username)
-    else:
-        user = request.user
-        interface_language_code = get_interface_language_api(request, user)
+    if request.user.is_authenticated:
+        interface_language_code = get_interface_language_api(request, request.user)
 
     sequence_of_digits = True
     for i in datasetid:
@@ -162,7 +138,7 @@ def get_gloss_data_json(request, datasetid, glossid):
 
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
-    if not dataset or not user.is_authenticated:
+    if not dataset or not request.user.is_authenticated:
         # ignore the dataset in the url if necessary
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
@@ -181,7 +157,7 @@ def get_gloss_data_json(request, datasetid, glossid):
     if not gloss:
         return JsonResponse({})
 
-    if user.has_perm('dictionary.change_gloss'):
+    if request.user.has_perm('dictionary.change_gloss'):
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=True)
     else:
         api_fields_2023 = api_fields(dataset, interface_language_code, advanced=False)
@@ -275,6 +251,7 @@ def get_unzipped_video_files_json(request, datasetid):
     return JsonResponse(videos_data)
 
 
+@put_api_user_in_request
 def upload_zipped_videos_folder_json(request, datasetid):
 
     status_request = dict()
@@ -465,6 +442,7 @@ def json_finish():
     return ["finish"]
 
 
+@put_api_user_in_request
 def upload_videos_to_glosses(request, datasetid):
     # get file as a url parameter: /dictionary/upload_videos_to_glosses/5
 

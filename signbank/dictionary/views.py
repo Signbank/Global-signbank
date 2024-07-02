@@ -50,6 +50,8 @@ from signbank.gloss_update import api_update_gloss_fields
 from django.utils.translation import gettext_lazy as _, activate
 from signbank.abstract_machine import get_interface_language_api
 
+from signbank.api_token import put_api_user_in_request
+
 
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
@@ -2308,6 +2310,7 @@ def package(request):
     return response
 
 
+@put_api_user_in_request
 def info(request):
     import guardian
     user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
