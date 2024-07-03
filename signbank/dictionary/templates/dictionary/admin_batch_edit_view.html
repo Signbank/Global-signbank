@@ -8,7 +8,7 @@
 {% load annotation_idgloss_translation %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Signbank: Annotation Toggle View{% endblocktrans %}
+{% blocktrans %}Signbank: Batch Edit{% endblocktrans %}
 {% endblock %}
 
 {% block extrajs %}
@@ -74,7 +74,7 @@ $(document).ready(function() {
      $('.hover-shows-video').each(function() {
         ready_videos(this);
      });
-
+     $('[data-toggle="tooltip"]').tooltip();
 });
 </script>
 
@@ -254,14 +254,18 @@ textarea:focus {
 <div id="definitionblock" style="padding-top: 30px;">
 
     <div id="keywordsSenses">
-    <h3>{% trans "Batch Edit View" %}</h3>
-        <h4>{% trans "On initial view, the most recent query results are shown." %}</h4>
+    <h3>{% trans "Batch Edit" %}</h3>
 
         <div id='searchform_outer' class='well '>
         <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/batch_edit_view/'>
         {% csrf_token %}
         <div class="panel panel-default">
             <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
+                <span class="hasTooltip">
+                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true"
+                          data-toggle="tooltip" data-placement="bottom" data-html="true" title=""></span>
+                    <span class="isTooltip">{% trans "On initial view, the most recent query results are shown." %}</span>
+                </span>
             </div>
                 <div id='query-area' class='collapse'>
                 <div id='searchformwell' class='well'>
@@ -549,6 +553,12 @@ textarea:focus {
                 </div>
                 <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_phonology_panel_{{gloss.id}}'>{% trans "Phonology" %}
+                </div>
+                <div id='toggle_phonology_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div id="phonology" class='panel-group'>
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
                      data-target='#toggle_handedness_panel_{{gloss.id}}'>{% trans "Handedness" %}
                 </div>
                 <div id='toggle_handedness_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -566,7 +576,7 @@ textarea:focus {
                 </div>
                 </div>
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
                      data-target='#toggle_domhndsh_panel_{{gloss.id}}'>{% trans "Strong Hand" %}
                 </div>
                 <div id='toggle_domhndsh_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -585,7 +595,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
                      data-target='#toggle_subhndsh_panel_{{gloss.id}}'>{% trans "Weak Hand" %}
                 </div>
                 <div id='toggle_subhndsh_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -604,7 +614,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
                      data-target='#toggle_locprim_panel_{{gloss.id}}'>{% trans "Location" %}
                 </div>
                 <div id='toggle_locprim_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -622,7 +632,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
                      data-target='#toggle_movSh_panel_{{gloss.id}}'>{% trans "Movement Shape" %}
                 </div>
                 <div id='toggle_movSh_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -639,7 +649,10 @@ textarea:focus {
                 </div>
                 </div>
                 </div>
+                </div>
 
+                </div>
+                </div>
                 </div>
                 </div>
             </td>
@@ -650,7 +663,7 @@ textarea:focus {
         <td>
         <div id="similar_glosses_{{gloss.id}}" class='panel-group'>
             <div class="panel panel-default panel-toggles">
-            <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+            <div class='panel-heading' data-toggle='collapse'
                  data-target='#toggle_similar_panel_{{gloss.id}}'>{% trans "Similar Glosses" %}
             </div>
             <div id='toggle_similar_panel_{{gloss.id}}' class="panel-collapse collapse">
