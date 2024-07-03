@@ -221,13 +221,39 @@ function show_similar_glosses(data) {
     if (similar_glosses) {
         var similar_glosses_lookup = '#similar_gloss_videos_' + glossid;
         var similar_glossesElt = $(similar_glosses_lookup);
-        var similar_glossesCell = "<ul>";
         for (var inx in similar_glosses) {
             var similar = similar_glosses[inx];
-            similar_glossesCell = similar_glossesCell + "<li>"+similar['annotation_idgloss']+"</li>";
+            var annotation = similar['annotation_idgloss'];
+            var imagelink = similar['imagelink'];
+            var videolink = similar['videolink'];
+            var pk = similar['pk'];
+            var annotationCell = '<span><a href="'+url+'/dictionary/gloss/'+pk+'/">'+annotation+'</a></span>';
+            var annotationElt = $(annotationCell);
+            if (videolink) {
+                var video_container_html = "<div class='thumbnail_container'/>";
+                video_container = $(video_container_html);
+                video_container.append(annotationElt);
+                var video_elt_html = "<div id='glossvideo_"+glossid+'_'+pk+"'>";
+                video_elt_html += "<video id='videoplayer' class='thumbnail-video' src='"
+                                +videolink+"' type='video/mp4' controls muted autoplay></video>";
+                video_elt_html += "</div>";
+                var video_elt = $(video_elt_html);
+                video_container.append(video_elt);
+                video_container.append("</div>");
+                similar_glossesElt.append(video_container);
+            } else {
+                var video_container_html = "<div class='thumbnail_container'/>";
+                video_container = $(video_container_html);
+                video_container.append(annotationElt);
+                var video_elt_html = "<div id='glossvideo_"+glossid+'_'+pk+"'>";
+                video_elt_html += "<img class='thumbnail' src='"+imagelink+"'>";
+                video_elt_html += "</div>";
+                var video_elt = $(video_elt_html);
+                video_container.append(video_elt);
+                video_container.append("</div>");
+                similar_glossesElt.append(video_container);
+            }
         }
-        similar_glossesCell = similar_glossesCell + "</ul>";
-        similar_glossesElt.html(similar_glossesCell);
     }
 }
 
@@ -425,6 +451,9 @@ $(document).ready(function() {
 	 {
          e.preventDefault();
 	     var glossid = $(this).attr('data-glossid');
+        var similar_glosses_lookup = '#similar_gloss_videos_' + glossid;
+        var similar_glossesElt = $(similar_glosses_lookup);
+        similar_glossesElt.empty();
 	     var query = { 'csrfmiddlewaretoken': csrf_token };
          for (var i=0; i < similar_gloss_fields.length; i++) {
             var fieldname = similar_gloss_fields[i];

@@ -11,6 +11,7 @@ from tagging.models import TaggedItem, Tag
 
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
+from signbank.tools import get_default_annotationidglosstranslation
 
 
 def internal_batch_update_fields_for_gloss(gloss):
@@ -417,13 +418,14 @@ def similarglosses(request, gloss_id):
         return JsonResponse(result, safe=False)
 
     for g in qs:
-        annotationidglosstranslations = g.annotationidglosstranslation_set.all()
-        if not annotationidglosstranslations:
-            continue
-        # if there are results, just grab the first one
-        default_annotationidglosstranslation = annotationidglosstranslations.first().text
+        videolink = g.get_video_url()
+        imagelink = g.get_image_url()
+        default_annotationidglosstranslation = get_default_annotationidglosstranslation(g)
         similar_glosses.append({'annotation_idgloss': default_annotationidglosstranslation,
-                                'idgloss': g.idgloss,
+                                'videolink': '/dictionary/protected_media/' + videolink
+                                if videolink else '',
+                                'imagelink': '/dictionary/protected_media/' + imagelink
+                                if imagelink else settings.STATIC_URL + 'images/no-video-ngt.png',
                                 'pk': "%s" % g.id})
 
     result['glossid'] = str(gloss.id)
