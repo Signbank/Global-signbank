@@ -17,12 +17,6 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidde
 @permission_required('dictionary.change_gloss')
 def mapping_toggle_tag(request, glossid, tagid):
 
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
-
     try:
         gloss_id = int(glossid)
     except TypeError:
@@ -72,12 +66,6 @@ def mapping_toggle_tag(request, glossid, tagid):
 @permission_required('dictionary.change_gloss')
 def mapping_toggle_semanticfield(request, glossid, semanticfield):
 
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
-
     try:
         gloss_id = int(glossid)
     except TypeError:
@@ -118,12 +106,6 @@ def mapping_toggle_semanticfield(request, glossid, semanticfield):
 @permission_required('dictionary.change_gloss')
 def mapping_toggle_wordclass(request, glossid, wordclass):
 
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
-
     try:
         gloss_id = int(glossid)
     except TypeError:
@@ -147,6 +129,7 @@ def mapping_toggle_wordclass(request, glossid, wordclass):
         wordclass_machine_value = 0
         new_wordclass = empty_wordclass
 
+    original_wordClass = gloss.wordClass.name if gloss.wordClass else '-'
     with atomic():
         if not gloss.wordClass:
             gloss.wordClass = new_wordclass
@@ -154,7 +137,10 @@ def mapping_toggle_wordclass(request, glossid, wordclass):
             gloss.wordClass = new_wordclass
         else:
             gloss.wordClass = empty_wordclass
+            new_wordclass = empty_wordclass
         gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'wordClass', original_wordClass, new_wordclass.name)
 
     result = dict()
     result['glossid'] = str(gloss.id)
@@ -166,12 +152,6 @@ def mapping_toggle_wordclass(request, glossid, wordclass):
 
 @permission_required('dictionary.change_gloss')
 def mapping_toggle_namedentity(request, glossid, namedentity):
-
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
 
     try:
         gloss_id = int(glossid)
@@ -196,6 +176,7 @@ def mapping_toggle_namedentity(request, glossid, namedentity):
         namedentity_machine_value = 0
         new_namedentity = empty_namedentity
 
+    original_namedentity = gloss.namEnt.name if gloss.namEnt else '-'
     with atomic():
         if not gloss.namEnt:
             gloss.namEnt = new_namedentity
@@ -203,7 +184,10 @@ def mapping_toggle_namedentity(request, glossid, namedentity):
             gloss.namEnt = new_namedentity
         else:
             gloss.namEnt = empty_namedentity
+            new_namedentity = empty_namedentity
         gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'namEnt', original_namedentity, new_namedentity.name)
 
     result = dict()
     result['glossid'] = str(gloss.id)
@@ -215,11 +199,6 @@ def mapping_toggle_namedentity(request, glossid, namedentity):
 
 @permission_required('dictionary.change_gloss')
 def mapping_toggle_handedness(request, glossid, handedness):
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
 
     try:
         gloss_id = int(glossid)
@@ -268,11 +247,6 @@ def mapping_toggle_handedness(request, glossid, handedness):
 
 @permission_required('dictionary.change_gloss')
 def mapping_toggle_domhndsh(request, glossid, domhndsh):
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
 
     try:
         gloss_id = int(glossid)
@@ -320,11 +294,6 @@ def mapping_toggle_domhndsh(request, glossid, domhndsh):
 
 @permission_required('dictionary.change_gloss')
 def mapping_toggle_subhndsh(request, glossid, subhndsh):
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
 
     try:
         gloss_id = int(glossid)
@@ -373,11 +342,6 @@ def mapping_toggle_subhndsh(request, glossid, subhndsh):
 
 @permission_required('dictionary.change_gloss')
 def mapping_toggle_locprim(request, glossid, locprim):
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
 
     try:
         gloss_id = int(glossid)
@@ -426,11 +390,6 @@ def mapping_toggle_locprim(request, glossid, locprim):
 
 @permission_required('dictionary.change_gloss')
 def mapping_toggle_movSh(request, glossid, movSh):
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
 
     try:
         gloss_id = int(glossid)
@@ -479,11 +438,6 @@ def mapping_toggle_movSh(request, glossid, movSh):
 
 @permission_required('dictionary.change_gloss')
 def batch_edit_create_sense(request, glossid):
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
 
     try:
         gloss_id = int(glossid)
