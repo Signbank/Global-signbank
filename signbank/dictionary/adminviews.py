@@ -6594,7 +6594,11 @@ class BatchEditView(ListView):
         if 'search_results' in self.request.session.keys():
             search_results = self.request.session['search_results']
             if len(search_results) > 0:
-                if search_results[0]['href_type'] not in ['gloss']:
+                first_search_result = search_results[0]
+                first_gloss = Gloss.objects.filter(id__in=[first_search_result['id']]).first()
+                if first_search_result['href_type'] not in ['gloss']:
+                    search_results = []
+                if not first_gloss or first_gloss.lemma.dataset not in selected_datasets:
                     search_results = []
         else:
             search_results = []
@@ -6606,6 +6610,9 @@ class BatchEditView(ListView):
         get = self.request.GET
 
         if not get:
+            return glosses_of_dataset
+
+        if not glosses_of_dataset:
             return glosses_of_dataset
 
         # data structure to store the query parameters in order to keep them in the form

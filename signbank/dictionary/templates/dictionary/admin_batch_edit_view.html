@@ -305,7 +305,13 @@ textarea:focus {
         </div>
 
 <div>
-<table class='table table-condensed table-toggles'
+{% load underscore_to_space %}
+{% if not object_list %}
+    <p>{% trans "No glosses found. Please construct a new query:" %}
+        <span><a class="btn btn-default"
+                 href='{{PREFIX_URL}}/signs/search/'>{% trans "Search" %}</a></span></p>
+{% else %}
+    <table class='table table-condensed table-toggles'
        style="width:100%; overflow-y:scroll;">
     <thead>
       <tr>
@@ -315,7 +321,6 @@ textarea:focus {
       </tr>
     </thead>
     <tbody>
-    {% load underscore_to_space %}
     {% for gloss in object_list %}
         <tr style="height:auto;">
             <td>
@@ -719,6 +724,7 @@ textarea:focus {
     {% endfor %}
     </tbody>
 </table>
+{% endif %}
 </div>
 </div>
 
