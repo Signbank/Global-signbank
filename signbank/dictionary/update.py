@@ -3469,12 +3469,6 @@ def assign_lemma_dataset_to_gloss(request, glossid):
 @permission_required('dictionary.change_gloss')
 def toggle_tag(request, glossid, tagid):
 
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
     result = mapping_toggle_tag(request, glossid, tagid)
 
     return JsonResponse(result)
@@ -3482,12 +3476,6 @@ def toggle_tag(request, glossid, tagid):
 
 @permission_required('dictionary.change_gloss')
 def toggle_semantic_field(request, glossid, semanticfield):
-
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
 
     result = mapping_toggle_semanticfield(request, glossid, semanticfield)
 
@@ -3497,12 +3485,6 @@ def toggle_semantic_field(request, glossid, semanticfield):
 @permission_required('dictionary.change_gloss')
 def toggle_wordclass(request, glossid, wordclass):
 
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
     result = mapping_toggle_wordclass(request, glossid, wordclass)
 
     return JsonResponse(result)
@@ -3510,12 +3492,6 @@ def toggle_wordclass(request, glossid, wordclass):
 
 @permission_required('dictionary.change_gloss')
 def toggle_namedentity(request, glossid, namedentity):
-
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
 
     result = mapping_toggle_namedentity(request, glossid, namedentity)
 
@@ -3525,12 +3501,6 @@ def toggle_namedentity(request, glossid, namedentity):
 @permission_required('dictionary.change_gloss')
 def toggle_handedness(request, glossid, handedness):
 
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
     result = mapping_toggle_handedness(request, glossid, handedness)
 
     return JsonResponse(result)
@@ -3538,11 +3508,6 @@ def toggle_handedness(request, glossid, handedness):
 
 @permission_required('dictionary.change_gloss')
 def toggle_domhndsh(request, glossid, domhndsh):
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
 
     result = mapping_toggle_domhndsh(request, glossid, domhndsh)
 
@@ -3551,11 +3516,6 @@ def toggle_domhndsh(request, glossid, domhndsh):
 
 @permission_required('dictionary.change_gloss')
 def toggle_subhndsh(request, glossid, subhndsh):
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
 
     result = mapping_toggle_subhndsh(request, glossid, subhndsh)
 
@@ -3564,11 +3524,6 @@ def toggle_subhndsh(request, glossid, subhndsh):
 
 @permission_required('dictionary.change_gloss')
 def toggle_locprim(request, glossid, locprim):
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
 
     result = mapping_toggle_locprim(request, glossid, locprim)
 
@@ -3577,11 +3532,6 @@ def toggle_locprim(request, glossid, locprim):
 
 @permission_required('dictionary.change_gloss')
 def toggle_movSh(request, glossid, movSh):
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
 
     result = mapping_toggle_movSh(request, glossid, movSh)
 
@@ -3590,11 +3540,6 @@ def toggle_movSh(request, glossid, movSh):
 
 @permission_required('dictionary.change_gloss')
 def toggle_language_fields(request, glossid):
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
 
     result = batch_edit_update_gloss(request, glossid)
 
@@ -3603,12 +3548,6 @@ def toggle_language_fields(request, glossid):
 
 @permission_required('dictionary.change_gloss')
 def quick_create_sense(request, glossid):
-
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
 
     result = batch_edit_create_sense(request, glossid)
 
