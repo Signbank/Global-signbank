@@ -207,7 +207,7 @@ def check_constraints_on_gloss_language_fields(gloss, value_dict):
 
     annotationidglosstranslations = {}
     for language in dataset.translation_languages.all():
-        annotation_key = 'annotation__' + gloss_prefix + language.language_code_2char
+        annotation_key = 'annotation_' + gloss_prefix + language.language_code_2char
         if annotation_key in value_dict.keys():
             if not value_dict[annotation_key]:
                 e2 = gettext("Annotation field is empty.")
@@ -246,8 +246,8 @@ def check_constraints_on_gloss_language_fields(gloss, value_dict):
     for language, annotations in annotations_per_language_translation.items():
         if annotations.count():
             this_annotation = annotations.first()
-            if this_annotation.id not in existing_glosses and this_annotation.id != gloss.id:
-                existing_glosses.append(this_annotation.id)
+            if this_annotation.gloss.id not in existing_glosses and this_annotation.gloss.id != gloss.id:
+                existing_glosses.append(this_annotation.gloss.id)
                 e7 = gettext('Annotation ID Gloss') + " (" + language.name + ') ' + gettext(
                     'already exists.')
                 errors.append(e7)
