@@ -299,23 +299,17 @@ def update_sense_translation(gloss, order, language, new_value):
         sense_translation.translations.add(trans)
 
 
-def batch_edit_update_gloss(request, glossid):
+def batch_edit_update_gloss(request, gloss):
     """Update the gloss fields"""
-    if not request.user.is_authenticated:
-        return {}
-
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return {}
 
     result = dict()
 
-    gloss = get_object_or_404(Gloss, id=glossid)
     default_language_2char = gloss.lemma.dataset.default_language.language_code_2char
 
     value_dict = get_value_dict(request, gloss)
     language_fields_dict = get_gloss_language_fields(gloss)
 
-    default_annotation_field = 'annotation_' + glossid + '_' + default_language_2char
+    default_annotation_field = 'annotation_' + str(gloss.id) + '_' + default_language_2char
     fields_to_update = dict()
     for key in value_dict.keys():
         if value_dict[key] != language_fields_dict[key]:
@@ -323,7 +317,7 @@ def batch_edit_update_gloss(request, glossid):
 
     if not fields_to_update:
         saved_text = gettext("No changes were found.")
-        result['glossid'] = glossid
+        result['glossid'] = str(gloss.id)
         result['default_annotation'] = language_fields_dict[default_annotation_field]
         result['errors'] = []
         result['updatestatus'] = saved_text
@@ -331,7 +325,7 @@ def batch_edit_update_gloss(request, glossid):
 
     errors = check_constraints_on_gloss_language_fields(gloss, fields_to_update)
     if errors:
-        result['glossid'] = glossid
+        result['glossid'] = str(gloss.id)
         result['default_annotation'] = language_fields_dict[default_annotation_field]
         result['errors'] = errors
         result['updatestatus'] = "&#10060;"
@@ -357,11 +351,11 @@ def batch_edit_update_gloss(request, glossid):
     gloss.save()
 
     saved_text = gettext("Gloss saved to dataset")
-    result['glossid'] = glossid
+    result['glossid'] = str(gloss.id)
     if default_annotation_field in fields_to_update.keys():
         annotation = fields_to_update[default_annotation_field]
         result['default_annotation'] = annotation
-        update_scroll_bar(request, glossid, annotation)
+        update_scroll_bar(request, gloss.id, annotation)
     else:
         result['default_annotation'] = language_fields_dict[default_annotation_field]
     result['errors'] = []
