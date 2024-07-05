@@ -15,17 +15,7 @@ from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidde
 
 
 @permission_required('dictionary.change_gloss')
-def mapping_toggle_tag(request, glossid, tagid):
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
+def mapping_toggle_tag(request, gloss, tagid):
 
     try:
         tag_id = int(tagid)
@@ -64,17 +54,7 @@ def mapping_toggle_tag(request, glossid, tagid):
 
 
 @permission_required('dictionary.change_gloss')
-def mapping_toggle_semanticfield(request, glossid, semanticfield):
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
+def mapping_toggle_semanticfield(request, gloss, semanticfield):
 
     try:
         semanticfield_machine_value = int(semanticfield)
@@ -104,17 +84,7 @@ def mapping_toggle_semanticfield(request, glossid, semanticfield):
 
 
 @permission_required('dictionary.change_gloss')
-def mapping_toggle_wordclass(request, glossid, wordclass):
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
+def mapping_toggle_wordclass(request, gloss, wordclass):
 
     try:
         wordclass_machine_value = int(wordclass)
@@ -151,17 +121,7 @@ def mapping_toggle_wordclass(request, glossid, wordclass):
 
 
 @permission_required('dictionary.change_gloss')
-def mapping_toggle_namedentity(request, glossid, namedentity):
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
+def mapping_toggle_namedentity(request, gloss, namedentity):
 
     try:
         namedentity_machine_value = int(namedentity)
@@ -198,17 +158,7 @@ def mapping_toggle_namedentity(request, glossid, namedentity):
 
 
 @permission_required('dictionary.change_gloss')
-def mapping_toggle_handedness(request, glossid, handedness):
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
+def mapping_toggle_handedness(request, gloss, handedness):
 
     try:
         handedness_machine_value = int(handedness)
@@ -246,17 +196,7 @@ def mapping_toggle_handedness(request, glossid, handedness):
 
 
 @permission_required('dictionary.change_gloss')
-def mapping_toggle_domhndsh(request, glossid, domhndsh):
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
+def mapping_toggle_domhndsh(request, gloss, domhndsh):
 
     try:
         domhndsh_machine_value = int(domhndsh)
@@ -293,17 +233,7 @@ def mapping_toggle_domhndsh(request, glossid, domhndsh):
 
 
 @permission_required('dictionary.change_gloss')
-def mapping_toggle_subhndsh(request, glossid, subhndsh):
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
+def mapping_toggle_subhndsh(request, gloss, subhndsh):
 
     try:
         subhndsh_machine_value = int(subhndsh)
@@ -341,17 +271,7 @@ def mapping_toggle_subhndsh(request, glossid, subhndsh):
 
 
 @permission_required('dictionary.change_gloss')
-def mapping_toggle_locprim(request, glossid, locprim):
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
+def mapping_toggle_locprim(request, gloss, locprim):
 
     try:
         locprim_machine_value = int(locprim)
@@ -389,17 +309,7 @@ def mapping_toggle_locprim(request, glossid, locprim):
 
 
 @permission_required('dictionary.change_gloss')
-def mapping_toggle_movSh(request, glossid, movSh):
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
+def mapping_toggle_movSh(request, gloss, movSh):
 
     try:
         movSh_machine_value = int(movSh)
@@ -437,17 +347,7 @@ def mapping_toggle_movSh(request, glossid, movSh):
 
 
 @permission_required('dictionary.change_gloss')
-def batch_edit_create_sense(request, glossid):
-
-    try:
-        gloss_id = int(glossid)
-    except TypeError:
-        return {}
-
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-
-    if not gloss:
-        return {}
+def batch_edit_create_sense(request, gloss):
 
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
     current_senses = [gs.order for gs in gloss_senses]
