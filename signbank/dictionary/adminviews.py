@@ -14,7 +14,7 @@ from django.http import HttpResponse, HttpResponseRedirect, \
     QueryDict, JsonResponse, StreamingHttpResponse
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from django.utils.translation import override, gettext_lazy as _, activate
+from django.utils.translation import override, gettext, gettext_lazy as _, activate
 from django.shortcuts import *
 from django.contrib import messages
 from django.contrib.sites.models import Site
@@ -6539,7 +6539,7 @@ class BatchEditView(ListView):
 
         context['available_tags'] = [tag for tag in Tag.objects.all()]
 
-        similar_gloss_fields = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'movSh']
+        similar_gloss_fields = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'movSh', 'repeat']
         context['similar_gloss_fields'] = json.dumps(similar_gloss_fields)
         similar_gloss_fields_labels = {}
         for field in similar_gloss_fields:
@@ -6572,6 +6572,10 @@ class BatchEditView(ListView):
         available_movSh += [fc for fc in FieldChoice.objects.filter(
             field='MovementShape', machine_value__gt=1).order_by('name')]
         context['available_movSh'] = available_movSh
+
+        available_boolean = [{'machine_value': 1, 'name': gettext("Yes")},
+                             {'machine_value': 0, 'name': gettext("No")}]
+        context['available_boolean'] = available_boolean
 
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())

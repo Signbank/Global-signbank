@@ -504,6 +504,15 @@ textarea:focus {
                 </div>
                 </td>
              </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Repeat" %}</th>
+                <td class="field_repeat" style="width:100px;">
+                <div class="repeat-cell"
+                     id="repeat_cell_{{gloss.id}}"><span class='repeat'>{% if gloss.repeat %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+
             </table>
             </td>
             <td style="width:500px;">
@@ -654,6 +663,26 @@ textarea:focus {
                 </div>
                 </div>
                 </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                     data-target='#toggle_repeat_panel_{{gloss.id}}'>{% trans "Repeat" %}
+                </div>
+                <div id='toggle_repeat_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for ab in available_boolean %}
+                <button id='quick_repeat_btn_{{gloss.id}}' class="quick_repeat btn actionButton"
+                        name='quick_repeat_{{gloss.id}}'
+                        value='{{gloss.id}}' data-repeat='{{ab.machine_value}}' style="height:36px;"
+                        type="submit" >{{ab.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
                 </div>
 
                 </div>
@@ -675,7 +704,7 @@ textarea:focus {
             <div class="panel-body" style="display:inline-block;">
                 <table class="table-responsive">
                     <tr>
-                        <td>
+                        <td style="line-height: 26px;">
                         {% load field_choice %}
                         {% for fieldname, label in similar_gloss_fields_labels.items %}
                         {% with gloss|get_gloss_field:fieldname as fieldvalue %}
