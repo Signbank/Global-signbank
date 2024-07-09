@@ -81,9 +81,13 @@ def addvideo(request):
                     annotatedSentence.add_contexts(json.loads(contexts))
                     
                 corpus = form.cleaned_data['corpus_name']
-                annotatedSentence.add_video(request.user, vfile, eaf_file, corpus)
+                annotatedVideo = annotatedSentence.add_video(request.user, vfile, eaf_file, corpus)
                 
-                annotatedSentence.save()
+                if annotatedVideo == None:
+                    messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
+                    annotatedSentence.delete()
+                else:
+                    annotatedSentence.save()
 
             return redirect(redirect_url)
 
