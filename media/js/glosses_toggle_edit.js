@@ -116,6 +116,23 @@ function toggle_subhndsh(data) {
     buttonCell.attr('value', button_contents);
 }
 
+function toggle_handCh(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var handCh = data.handCh;
+    var hCell = $("#handCh_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='handCh'>"+handCh+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_handCh';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['handCh'] + ': ' + handCh;
+    buttonCell.attr('value', button_contents);
+}
+
 function toggle_locprim(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -402,6 +419,21 @@ $(document).ready(function() {
             success : toggle_subhndsh
          });
      });
+
+     $('.quick_handCh').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var handCh = $(this).attr("data-handCh");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_handCh/" + glossid + "/" + handCh,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_handCh
+         });
+     });
+
      $('.quick_locprim').click(function(e)
 	 {
          e.preventDefault();

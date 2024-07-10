@@ -271,6 +271,44 @@ def mapping_toggle_subhndsh(request, gloss, subhndsh):
 
 
 @permission_required('dictionary.change_gloss')
+def mapping_toggle_handCh(request, gloss, handCh):
+
+    try:
+        handCh_machine_value = int(handCh)
+    except TypeError:
+        return {}
+
+    empty_handCh = FieldChoice.objects.get(field='HandshapeChange', machine_value=0)
+    new_handCh = FieldChoice.objects.filter(field='HandshapeChange', machine_value=handCh_machine_value).first()
+
+    if not new_handCh:
+        # if the word class does not exist, set it to empty
+        handCh_machine_value = 0
+        new_handCh = empty_handCh
+
+    original_handCh = gloss.handCh.name if gloss.handCh else '-'
+
+    with atomic():
+        if not gloss.handCh:
+            gloss.handCh = new_handCh
+        elif gloss.handCh.machine_value != handCh_machine_value:
+            gloss.handCh = new_handCh
+        else:
+            gloss.handCh = empty_handCh
+            new_handCh = empty_handCh
+        gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'handCh', original_handCh, new_handCh.name)
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.handCh.name
+    result['handCh'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
 def mapping_toggle_locprim(request, gloss, locprim):
 
     try:
