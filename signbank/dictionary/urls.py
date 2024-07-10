@@ -108,6 +108,9 @@ urlpatterns = [
     re_path(r'^update/toggle_repeat/(?P<glossid>\d+)/(?P<repeat>.*)$',
             signbank.dictionary.update.toggle_repeat,
             name='toggle_repeat'),
+    re_path(r'^update/toggle_altern/(?P<glossid>\d+)/(?P<altern>.*)$',
+            signbank.dictionary.update.toggle_altern,
+            name='toggle_altern'),
 
     re_path(r'^update/quick_create_sense/(?P<glossid>\d+)$',
             signbank.dictionary.update.quick_create_sense,

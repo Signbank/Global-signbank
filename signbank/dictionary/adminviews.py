@@ -6539,7 +6539,7 @@ class BatchEditView(ListView):
 
         context['available_tags'] = [tag for tag in Tag.objects.all()]
 
-        similar_gloss_fields = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'movSh', 'repeat']
+        similar_gloss_fields = ['handedness', 'domhndsh', 'subhndsh', 'locprim', 'movSh', 'repeat', 'altern']
         context['similar_gloss_fields'] = json.dumps(similar_gloss_fields)
         similar_gloss_fields_labels = {}
         for field in similar_gloss_fields:

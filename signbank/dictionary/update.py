@@ -42,7 +42,7 @@ from signbank.dictionary.update_glosses import (mapping_toggle_tag, mapping_togg
                                                 mapping_toggle_wordclass, mapping_toggle_namedentity,
                                                 mapping_toggle_handedness, mapping_toggle_domhndsh,
                                                 mapping_toggle_subhndsh, mapping_toggle_locprim, mapping_toggle_movSh,
-                                                batch_edit_create_sense, mapping_toggle_repeat)
+                                                batch_edit_create_sense, mapping_toggle_repeat, mapping_toggle_altern)
 from signbank.dictionary.batch_edit import batch_edit_update_gloss
 
 
@@ -3603,6 +3603,19 @@ def toggle_repeat(request, glossid, repeat):
         return JsonResponse({})
 
     result = mapping_toggle_repeat(request, gloss, repeat)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_altern(request, glossid, altern):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_altern(request, gloss, altern)
 
     return JsonResponse(result)
 

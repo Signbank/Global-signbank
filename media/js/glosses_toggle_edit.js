@@ -167,6 +167,23 @@ function toggle_repeat(data) {
     buttonCell.attr('value', button_contents);
 }
 
+function toggle_altern(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var altern = data.altern;
+    var hCell = $("#altern_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='altern'>"+altern+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_altern';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['altern'] + ': ' + altern;
+    buttonCell.attr('value', button_contents);
+}
+
 function toggle_create_sense(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -424,6 +441,20 @@ $(document).ready(function() {
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
             success : toggle_repeat
+         });
+     });
+
+     $('.quick_altern').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var altern = $(this).attr("data-altern");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_altern/" + glossid + "/" + altern,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_altern
          });
      });
 

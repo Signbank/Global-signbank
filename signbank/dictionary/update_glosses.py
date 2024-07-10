@@ -373,6 +373,32 @@ def mapping_toggle_repeat(request, gloss, repeat):
 
 
 @permission_required('dictionary.change_gloss')
+def mapping_toggle_altern(request, gloss, altern):
+    # altern is 0 or 1
+
+    if altern not in ['0', '1']:
+        return {}
+
+    new_altern_boolean = altern == '1'
+
+    original_altern = 'True' if gloss.altern else 'False'
+    new_altern = 'True' if altern == '1' else 'False'
+
+    with atomic():
+        gloss.altern = new_altern_boolean
+        gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'altern', new_altern, original_altern)
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gettext("Yes") if gloss.altern else gettext("No")
+    result['altern'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
 def batch_edit_create_sense(request, gloss):
 
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
