@@ -9,6 +9,7 @@ from django.db.transaction import TransactionManagementError
 
 from tagging.models import TaggedItem, Tag
 
+from django.db.models import When, Case, BooleanField, IntegerField
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.tools import get_default_annotationidglosstranslation
@@ -377,10 +378,12 @@ def get_similargloss_fields_dict(request):
 def similar_glosses_fields(request, gloss):
 
     fields = get_similargloss_fields_dict(request)
-
     fields_dict = dict()
-    for field in fields:
+    for field in fields.keys():
         gloss_value = getattr(gloss, field)
+        if isinstance(Gloss.get_field(field), BooleanField):
+            fields_dict[field] = gloss_value
+            continue
         fields_dict[field] = gloss_value.machine_value if gloss_value else 0
     return fields_dict
 
@@ -397,10 +400,16 @@ def similarglosses(request, gloss_id):
 
     qs = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset).exclude(id=gloss.id)
     for field, value in fields_dict.items():
-        if not value:
-            continue
-        query_filter = field + '__machine_value'
-        qs = qs.filter(**{query_filter: value})
+        if isinstance(Gloss.get_field(field), BooleanField):
+            query_filter = field + '__in'
+            query_value = [value]
+        elif not value:
+            query_filter = field + '__machine_value'
+            query_value = 0
+        else:
+            query_filter = field + '__machine_value'
+            query_value = value
+        qs = qs.filter(**{query_filter: query_value})
 
     result = dict()
     similar_glosses = []

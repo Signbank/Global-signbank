@@ -237,6 +237,10 @@ input:focus {
 input[type="button"]:focus {
     outline: none;
 }
+.similarButton.actionButton {
+    padding: 0px 8px 12px 8px;
+    height: 30px;
+}
 textarea {
     border: none;
 }
@@ -704,12 +708,12 @@ textarea:focus {
             <div class="panel-body" style="display:inline-block;">
                 <table class="table-responsive">
                     <tr>
-                        <td style="line-height: 26px;">
+                        <td style="line-height: 30px;">
                         {% load field_choice %}
                         {% for fieldname, label in similar_gloss_fields_labels.items %}
                         {% with gloss|get_gloss_field:fieldname as fieldvalue %}
                         <input name="button_{{gloss.id}}_{{fieldname}}" id="button_{{gloss.id}}_{{fieldname}}"
-                               class="similar actionButton"
+                               class="similar similarButton actionButton"
                                type='button' onclick="do_toggle_field(this);" data-glossid="{{gloss.id}}"
                                data-value="{{fieldname}}" style="text-decoration:none;color:black;"
                                value="{{label}}: {{fieldvalue}}">

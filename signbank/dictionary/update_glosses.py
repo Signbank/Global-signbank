@@ -347,6 +347,32 @@ def mapping_toggle_movSh(request, gloss, movSh):
 
 
 @permission_required('dictionary.change_gloss')
+def mapping_toggle_repeat(request, gloss, repeat):
+    # repeat is 0 or 1
+
+    if repeat not in ['0', '1']:
+        return {}
+
+    new_repeat_boolean = repeat == '1'
+
+    original_repeat = 'True' if gloss.repeat else 'False'
+    new_repeat = 'True' if repeat == '1' else 'False'
+
+    with atomic():
+        gloss.repeat = new_repeat_boolean
+        gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'repeat', new_repeat, original_repeat)
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gettext("Yes") if gloss.repeat else gettext("No")
+    result['repeat'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
 def batch_edit_create_sense(request, gloss):
 
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')

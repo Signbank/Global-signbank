@@ -150,6 +150,23 @@ function toggle_movSh(data) {
     buttonCell.attr('value', button_contents);
 }
 
+function toggle_repeat(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var repeat = data.repeat;
+    var hCell = $("#repeat_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='repeat'>"+repeat+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_repeat';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['repeat'] + ': ' + repeat;
+    buttonCell.attr('value', button_contents);
+}
+
 function toggle_create_sense(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -396,6 +413,20 @@ $(document).ready(function() {
          });
      });
 
+     $('.quick_repeat').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var repeat = $(this).attr("data-repeat");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_repeat/" + glossid + "/" + repeat,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_repeat
+         });
+     });
+
      $('.quick_create_sense').click(function(e)
 	 {
          e.preventDefault();
@@ -451,9 +482,9 @@ $(document).ready(function() {
 	 {
          e.preventDefault();
 	     var glossid = $(this).attr('data-glossid');
-        var similar_glosses_lookup = '#similar_gloss_videos_' + glossid;
-        var similar_glossesElt = $(similar_glosses_lookup);
-        similar_glossesElt.empty();
+         var similar_glosses_lookup = '#similar_gloss_videos_' + glossid;
+         var similar_glossesElt = $(similar_glosses_lookup);
+         similar_glossesElt.empty();
 	     var query = { 'csrfmiddlewaretoken': csrf_token };
          for (var i=0; i < similar_gloss_fields.length; i++) {
             var fieldname = similar_gloss_fields[i];
