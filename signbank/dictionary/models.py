@@ -3910,10 +3910,8 @@ class AnnotatedSentence(models.Model):
                 if start_cut >= 0 and end_cut >= 0:
                     # If completely outside of the cut, exclude it
                     if starttime >= end_cut or endtime <= 0:
-                        print(gloss_translation, " is outside of the cut")
                         excluded = True
                     elif (min(endtime, end_cut) - max(starttime, start_cut)) < 100:
-                        print(gloss_translation, " is too short")
                         excluded = True
                     # If the annotation is partially outside the cut, make it fit
                     elif starttime < start_cut and endtime > start_cut and endtime < end_cut:
