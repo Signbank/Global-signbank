@@ -501,6 +501,14 @@ textarea:focus {
                 </td>
              </tr>
              <tr style="height:26px;">
+                <th>{% trans "Relation between Articulators" %}</th>
+                <td class="field_relatArtic" style="width:100px;">
+                <div class="relatArtic-cell"
+                     id="relatArtic_cell_{{gloss.id}}"><span class='relatArtic'>{% if gloss.relatArtic %}{{gloss.relatArtic.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
                 <th>{% trans "Location" %}</th>
                 <td class="field_locprim" style="width:100px;">
                 <div class="locprim-cell"
@@ -539,7 +547,7 @@ textarea:focus {
                 <div id="toggles" class='panel-group'>
                 <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
-                     data-target='#toggle_language_fields_panel_{{gloss.id}}'>{% trans "Text Fields" %}
+                     data-target='#toggle_language_fields_panel_{{gloss.id}}'>{% trans "TEXT FIELDS" %}
                 </div>
                 <div id='toggle_language_fields_panel_{{gloss.id}}' class="panel-collapse collapse in">
                 <div class="panel-body" style="display:inline-block;">
@@ -569,7 +577,7 @@ textarea:focus {
 
                 <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
-                     data-target='#toggle_tags_panel_{{gloss.id}}'>{% trans "Tags" %}
+                     data-target='#toggle_tags_panel_{{gloss.id}}'>{% trans "TAGS" %}
                 </div>
                 <div id='toggle_tags_panel_{{gloss.id}}' class="panel-collapse collapse">
                 <div class="panel-body" style="display:inline-block;">
@@ -587,7 +595,7 @@ textarea:focus {
                 </div>
                 <div class="panel panel-default panel-toggles">
                 <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
-                     data-target='#toggle_phonology_panel_{{gloss.id}}'>{% trans "Phonology" %}
+                     data-target='#toggle_phonology_panel_{{gloss.id}}'>{% trans "PHONOLOGY" %}
                 </div>
                 <div id='toggle_phonology_panel_{{gloss.id}}' class="panel-collapse collapse">
                 <div id="phonology" class='panel-group'>
@@ -658,6 +666,25 @@ textarea:focus {
                 <button id='quick_handCh_btn_{{gloss.id}}' class="quick_handCh btn actionButton"
                         name='quick_handCh_{{gloss.id}}'
                         value='{{gloss.id}}' data-handCh='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                     data-target='#toggle_relatArtic_panel_{{gloss.id}}'>{% trans "Relation between Articulators" %}
+                </div>
+                <div id='toggle_relatArtic_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_relatArtic %}
+                <button id='quick_relatArtic_btn_{{gloss.id}}' class="quick_relatArtic btn actionButton"
+                        name='quick_relatArtic_{{gloss.id}}'
+                        value='{{gloss.id}}' data-relatArtic='{{wc.machine_value}}' style="height:36px;"
                         type="submit" >{{wc.name}}
                 </button>
                 {% endfor %}

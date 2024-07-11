@@ -133,6 +133,23 @@ function toggle_handCh(data) {
     buttonCell.attr('value', button_contents);
 }
 
+function toggle_relatArtic(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var relatArtic = data.relatArtic;
+    var hCell = $("#relatArtic_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='relatArtic'>"+relatArtic+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_relatArtic';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['relatArtic'] + ': ' + relatArtic;
+    buttonCell.attr('value', button_contents);
+}
+
 function toggle_locprim(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -431,6 +448,20 @@ $(document).ready(function() {
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
             success : toggle_handCh
+         });
+     });
+
+     $('.quick_relatArtic').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var relatArtic = $(this).attr("data-relatArtic");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_relatArtic/" + glossid + "/" + relatArtic,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_relatArtic
          });
      });
 

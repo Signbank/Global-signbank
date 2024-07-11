@@ -309,6 +309,44 @@ def mapping_toggle_handCh(request, gloss, handCh):
 
 
 @permission_required('dictionary.change_gloss')
+def mapping_toggle_relatArtic(request, gloss, relatArtic):
+
+    try:
+        relatArtic_machine_value = int(relatArtic)
+    except TypeError:
+        return {}
+
+    empty_relatArtic = FieldChoice.objects.get(field='RelatArtic', machine_value=0)
+    new_relatArtic = FieldChoice.objects.filter(field='RelatArtic', machine_value=relatArtic_machine_value).first()
+
+    if not new_relatArtic:
+        # if the word class does not exist, set it to empty
+        relatArtic_machine_value = 0
+        new_relatArtic = empty_relatArtic
+
+    original_relatArtic = gloss.relatArtic.name if gloss.relatArtic else '-'
+
+    with atomic():
+        if not gloss.relatArtic:
+            gloss.relatArtic = new_relatArtic
+        elif gloss.relatArtic.machine_value != relatArtic_machine_value:
+            gloss.relatArtic = new_relatArtic
+        else:
+            gloss.relatArtic = empty_relatArtic
+            new_relatArtic = empty_relatArtic
+        gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'relatArtic', original_relatArtic, new_relatArtic.name)
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.relatArtic.name
+    result['relatArtic'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
 def mapping_toggle_locprim(request, gloss, locprim):
 
     try:

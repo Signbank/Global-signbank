@@ -38,12 +38,7 @@ from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, map
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
 from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
-from signbank.dictionary.update_glosses import (mapping_toggle_tag, mapping_toggle_semanticfield,
-                                                mapping_toggle_wordclass, mapping_toggle_namedentity,
-                                                mapping_toggle_handedness, mapping_toggle_domhndsh,
-                                                mapping_toggle_subhndsh, mapping_toggle_handCh, mapping_toggle_locprim,
-                                                mapping_toggle_movSh,
-                                                batch_edit_create_sense, mapping_toggle_repeat, mapping_toggle_altern)
+from signbank.dictionary.update_glosses import *
 from signbank.dictionary.batch_edit import batch_edit_update_gloss
 
 
@@ -3578,6 +3573,19 @@ def toggle_handCh(request, glossid, handCh):
         return JsonResponse({})
 
     result = mapping_toggle_handCh(request, gloss, handCh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_relatArtic(request, glossid, relatArtic):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_relatArtic(request, gloss, relatArtic)
 
     return JsonResponse(result)
 
