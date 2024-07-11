@@ -2405,7 +2405,7 @@ option:not(:checked) {
                                 <style>.highlight {background-color: rgb(255, 149, 63);}</style>
 
                                 <video id="myVideo_{{ forloop.counter }}" controls>
-                                    <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile }}" type="video/mp4">
+                                    <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
                                 </video>                               
                             
                                 <br><br><i>Glosses</i><br>
@@ -2449,9 +2449,12 @@ option:not(:checked) {
                                     {% endif %}
                                 </p>
                                 <p>
-                                    {% if annotated_sentence.annotatedvideo.corpus %}
-                                    <i>{% trans "Corpus" %}</i><br>
-                                    {{ annotated_sentence.annotatedvideo.corpus }}
+                                    {% if annotated_sentence.annotatedvideo.source %}
+                                        <i>{% trans "Source" %}</i><br>
+                                        {{ annotated_sentence.annotatedvideo.source.source }}
+                                        {% if annotated_sentence.annotatedvideo.source.url %}
+                                            , <a href="{{ annotated_sentence.annotatedvideo.source.get_absolute_url }}">{{ annotated_sentence.annotatedvideo.source.url }}</a>
+                                        {% endif %}
                                     {% endif %}
                                 </p>
                             </td>

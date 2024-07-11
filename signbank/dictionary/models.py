@@ -3881,7 +3881,7 @@ class AnnotatedSentence(models.Model):
             return True
         return False
 
-    def add_annotations(self, annotations, gloss):
+    def add_annotations(self, annotations, gloss, start_cut=-1, end_cut=-1):
         """Add annotations to the annotated sentence"""
         dataset = gloss.lemma.dataset
 
@@ -3902,7 +3902,29 @@ class AnnotatedSentence(models.Model):
                 repr = False
                 if annotation[1] == "1":
                     repr = True
-                AnnotatedGloss.objects.create(gloss=annotationIdGlossTranslation.gloss, annotatedsentence=self, isRepresentative=repr, starttime=annotation[2], endtime=annotation[3])
+
+                starttime = int(annotation[2])
+                endtime = int(annotation[3])
+
+                excluded = False
+                if start_cut >= 0 and end_cut >= 0:
+                    # If completely outside of the cut, exclude it
+                    if starttime >= end_cut or endtime <= 0:
+                        excluded = True
+                    elif (min(endtime, end_cut) - max(starttime, start_cut)) < 100:
+                        excluded = True
+                    # If the annotation is partially outside the cut, make it fit
+                    elif starttime < start_cut and endtime > start_cut and endtime < end_cut:
+                        starttime = start_cut
+                    elif starttime >= start_cut and starttime < end_cut and endtime > end_cut:
+                        endtime = end_cut
+                    elif starttime < start_cut and endtime > end_cut:
+                        starttime = start_cut
+                        endtime = end_cut
+                    starttime = starttime - start_cut
+                    endtime = endtime - start_cut
+                if not excluded:
+                    AnnotatedGloss.objects.create(gloss=annotationIdGlossTranslation.gloss, annotatedsentence=self, isRepresentative=repr, starttime=starttime, endtime=endtime)
 
     def get_annotated_glosses_list(self):
         annotated_glosses = []
@@ -3990,17 +4012,32 @@ class AnnotatedSentence(models.Model):
         
         return self.get_video() not in ['', None]
 
-    def add_video(self, user, videofile, eaffile, corpus):
+    def add_video(self, user, videofile, eaffile, source):
         """Add a video to the annotated sentence"""
         from signbank.video.models import AnnotatedVideo
 
         annotatedVideo = AnnotatedVideo.objects.create(annotatedsentence=self, videofile=videofile, eaffile=eaffile)
-        
-        annotatedVideo.corpus = corpus
+        annotatedVideo.source = source
         annotatedVideo.save()
         
         return annotatedVideo
-
     
     def __str__(self):
         return " | ".join(self.get_annotatedstc_translations())
+
+class AnnotatedSentenceSource(models.Model):
+    """A source to choose for a sentence"""
+    name = models.CharField(max_length=200)
+    source = models.TextField()
+    url = models.TextField(blank=True)
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.source
+
+    def get_absolute_url(self):
+        from urllib.parse import urlparse
+        parsed_url = urlparse(self.url)
+        if not parsed_url.scheme:
+            return 'http://' + self.url
+        return self.url

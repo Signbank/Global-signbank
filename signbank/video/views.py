@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext as _
 
 from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
-from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence, Dataset
+from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence, Dataset, AnnotatedSentenceSource
 from signbank.video.forms import VideoUploadForObjectForm
 from django.http import JsonResponse
 # from django.contrib.auth.models import User
@@ -25,8 +25,9 @@ def addvideo(request):
 
     if request.method == 'POST':
         last_used_dataset = request.session['last_used_dataset']
-        dataset_languages = Dataset.objects.filter(acronym=last_used_dataset).first().translation_languages.all()
-        form = VideoUploadForObjectForm(request.POST, request.FILES, languages=dataset_languages)
+        dataset = Dataset.objects.filter(acronym=last_used_dataset).first()
+        dataset_languages = dataset.translation_languages.all()
+        form = VideoUploadForObjectForm(request.POST, request.FILES, languages=dataset_languages, dataset=dataset)
         if form.is_valid():
             # Unpack the form
             object_id = form.cleaned_data['object_id']
@@ -80,8 +81,8 @@ def addvideo(request):
                 if contexts:
                     annotatedSentence.add_contexts(json.loads(contexts))
                     
-                corpus = form.cleaned_data['corpus_name']
-                annotatedVideo = annotatedSentence.add_video(request.user, vfile, eaf_file, corpus)
+                source = form.cleaned_data['source_id']
+                annotatedVideo = annotatedSentence.add_video(request.user, vfile, eaf_file, source)
                 
                 if annotatedVideo == None:
                     messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
