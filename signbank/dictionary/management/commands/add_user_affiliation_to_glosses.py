@@ -50,3 +50,5 @@ class Command(BaseCommand):
                                                                                              gloss=gloss)
                             if created:
                                 print("Affiliation added to Gloss ", gloss, " for user ", creator)
+                    else:
+                        print('Creator has no affiliation: ', creator)
