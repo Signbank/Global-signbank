@@ -48,3 +48,5 @@ class Command(BaseCommand):
                         for ua in user_affiliations:
                             new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
                                                                                              gloss=gloss)
+                            if created:
+                                print("Affiliation added to Gloss ", gloss, " for user ", creator)
