@@ -461,6 +461,44 @@ def mapping_toggle_movSh(request, gloss, movSh):
 
 
 @permission_required('dictionary.change_gloss')
+def mapping_toggle_movDir(request, gloss, movDir):
+
+    try:
+        movDir_machine_value = int(movDir)
+    except TypeError:
+        return {}
+
+    empty_movDir = FieldChoice.objects.get(field='MovementDir', machine_value=0)
+    new_movDir = FieldChoice.objects.filter(field='MovementDir', machine_value=movDir_machine_value).first()
+
+    if not new_movDir:
+        # if the word class does not exist, set it to empty
+        movDir_machine_value = 0
+        new_movDir = empty_movDir
+
+    original_movDir = gloss.movDir.name if gloss.movDir else '-'
+
+    with atomic():
+        if not gloss.movDir:
+            gloss.movDir = new_movDir
+        elif gloss.movDir.machine_value != movDir_machine_value:
+            gloss.movDir = new_movDir
+        else:
+            gloss.movDir = empty_movDir
+            new_movDir = empty_movDir
+        gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'movDir', original_movDir, new_movDir.name)
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.movDir.name
+    result['movDir'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
 def mapping_toggle_repeat(request, gloss, repeat):
     # repeat is 0 or 1
 

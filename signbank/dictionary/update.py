@@ -3630,6 +3630,19 @@ def toggle_movSh(request, glossid, movSh):
 
 
 @permission_required('dictionary.change_gloss')
+def toggle_movDir(request, glossid, movDir):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_movDir(request, gloss, movDir)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
 def toggle_repeat(request, glossid, repeat):
 
     gloss = Gloss.objects.filter(id=glossid).first()

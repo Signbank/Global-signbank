@@ -6540,7 +6540,7 @@ class BatchEditView(ListView):
         context['available_tags'] = [tag for tag in Tag.objects.all()]
 
         similar_gloss_fields = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
-                                'contType', 'movSh', 'repeat', 'altern']
+                                'contType', 'movSh', 'movDir', 'repeat', 'altern']
         context['similar_gloss_fields'] = json.dumps(similar_gloss_fields)
         similar_gloss_fields_labels = {}
         for field in similar_gloss_fields:
@@ -6591,6 +6591,12 @@ class BatchEditView(ListView):
         available_movSh += [fc for fc in FieldChoice.objects.filter(
             field='MovementShape', machine_value__gt=1).order_by('name')]
         context['available_movSh'] = available_movSh
+
+        available_movDir = [fc for fc in FieldChoice.objects.filter(
+            field='MovementDir', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_movDir += [fc for fc in FieldChoice.objects.filter(
+            field='MovementDir', machine_value__gt=1).order_by('name')]
+        context['available_movDir'] = available_movDir
 
         available_boolean = [{'machine_value': 1, 'name': gettext("Yes")},
                              {'machine_value': 0, 'name': gettext("No")}]

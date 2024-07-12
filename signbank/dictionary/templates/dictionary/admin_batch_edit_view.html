@@ -533,6 +533,14 @@ textarea:focus {
                 </td>
              </tr>
              <tr style="height:26px;">
+                <th>{% trans "Movement Direction" %}</th>
+                <td class="field_movDir" style="width:100px;">
+                <div class="movDir-cell"
+                     id="movDir_cell_{{gloss.id}}"><span class='movDir'>{% if gloss.movDir %}{{gloss.movDir.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
                 <th>{% trans "Repeated Movement" %}</th>
                 <td class="field_repeat" style="width:100px;">
                 <div class="repeat-cell"
@@ -750,6 +758,25 @@ textarea:focus {
                 <button id='quick_movSh_btn_{{gloss.id}}' class="quick_movSh btn actionButton"
                         name='quick_movSh_{{gloss.id}}'
                         value='{{gloss.id}}' data-movSh='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                     data-target='#toggle_movDir_panel_{{gloss.id}}'>{% trans "Movement Direction" %}
+                </div>
+                <div id='toggle_movDir_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_movDir %}
+                <button id='quick_movDir_btn_{{gloss.id}}' class="quick_movDir btn actionButton"
+                        name='quick_movDir_{{gloss.id}}'
+                        value='{{gloss.id}}' data-movDir='{{wc.machine_value}}' style="height:36px;"
                         type="submit" >{{wc.name}}
                 </button>
                 {% endfor %}
