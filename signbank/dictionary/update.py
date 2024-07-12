@@ -3604,6 +3604,19 @@ def toggle_locprim(request, glossid, locprim):
 
 
 @permission_required('dictionary.change_gloss')
+def toggle_contType(request, glossid, contType):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_contType(request, gloss, contType)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
 def toggle_movSh(request, glossid, movSh):
 
     gloss = Gloss.objects.filter(id=glossid).first()

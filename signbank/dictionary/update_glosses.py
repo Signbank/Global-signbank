@@ -385,6 +385,44 @@ def mapping_toggle_locprim(request, gloss, locprim):
 
 
 @permission_required('dictionary.change_gloss')
+def mapping_toggle_contType(request, gloss, contType):
+
+    try:
+        contType_machine_value = int(contType)
+    except TypeError:
+        return {}
+
+    empty_contType = FieldChoice.objects.get(field='ContactType', machine_value=0)
+    new_contType = FieldChoice.objects.filter(field='ContactType', machine_value=contType_machine_value).first()
+
+    if not new_contType:
+        # if the word class does not exist, set it to empty
+        contType_machine_value = 0
+        new_contType = empty_contType
+
+    original_contType = gloss.contType.name if gloss.contType else '-'
+
+    with atomic():
+        if not gloss.contType:
+            gloss.contType = new_contType
+        elif gloss.contType.machine_value != contType_machine_value:
+            gloss.contType = new_contType
+        else:
+            gloss.contType = empty_contType
+            new_contType = empty_contType
+        gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'contType', original_contType, new_contType.name)
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.contType.name
+    result['contType'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
 def mapping_toggle_movSh(request, gloss, movSh):
 
     try:

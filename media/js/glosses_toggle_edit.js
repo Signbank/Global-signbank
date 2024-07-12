@@ -167,6 +167,23 @@ function toggle_locprim(data) {
     buttonCell.attr('value', button_contents);
 }
 
+function toggle_contType(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var contType = data.contType;
+    var hCell = $("#contType_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='contType'>"+contType+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_contType';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['contType'] + ': ' + contType;
+    buttonCell.attr('value', button_contents);
+}
+
 function toggle_movSh(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -476,6 +493,20 @@ $(document).ready(function() {
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
             success : toggle_locprim
+         });
+     });
+
+     $('.quick_contType').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var contType = $(this).attr("data-contType");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_contType/" + glossid + "/" + contType,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_contType
          });
      });
 
