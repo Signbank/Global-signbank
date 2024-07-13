@@ -556,7 +556,14 @@ textarea:focus {
                 </div>
                 </td>
              </tr>
-
+             <tr style="height:26px;">
+                <th>{% trans "Relative Orientation: Movement" %}</th>
+                <td class="field_relOriMov" style="width:100px;">
+                <div class="relOriMov-cell"
+                     id="relOriMov_cell_{{gloss.id}}"><span class='relOriMov'>{% if gloss.relOriMov %}{{gloss.relOriMov.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
             </table>
             </td>
             <td style="width:500px;">
@@ -816,6 +823,25 @@ textarea:focus {
                         name='quick_altern_{{gloss.id}}'
                         value='{{gloss.id}}' data-altern='{{ab.machine_value}}' style="height:36px;"
                         type="submit" >{{ab.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                     data-target='#toggle_relOriMov_panel_{{gloss.id}}'>{% trans "Relative Orientation: Movement" %}
+                </div>
+                <div id='toggle_relOriMov_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_relOriMov %}
+                <button id='quick_relOriMov_btn_{{gloss.id}}' class="quick_relOriMov btn actionButton"
+                        name='quick_relOriMov_{{gloss.id}}'
+                        value='{{gloss.id}}' data-relOriMov='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
                 </button>
                 {% endfor %}
                 </p>

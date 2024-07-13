@@ -3669,6 +3669,19 @@ def toggle_altern(request, glossid, altern):
 
 
 @permission_required('dictionary.change_gloss')
+def toggle_relOriMov(request, glossid, relOriMov):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_relOriMov(request, gloss, relOriMov)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
 def toggle_language_fields(request, glossid):
 
     gloss = Gloss.objects.filter(id=glossid).first()
