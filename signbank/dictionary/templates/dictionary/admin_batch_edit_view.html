@@ -570,15 +570,23 @@ textarea:focus {
                 </div>
                 </td>
              </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Relative Orientation: Location" %}</th>
+                <td class="field_relOriLoc" style="width:100px;">
+                <div class="relOriLoc-cell"
+                     id="relOriLoc_cell_{{gloss.id}}"><span class='relOriLoc'>{% if gloss.relOriLoc %}{{gloss.relOriLoc.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
             </table>
             </div>
             </div>
             </div>
             </td>
             <td style="width:500px;">
-                <div id="toggles" class='panel-group'>
+                <div id="toggles_{{gloss.id}}" class='panel-group'>
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles_{{gloss.id}}"
                      data-target='#toggle_language_fields_panel_{{gloss.id}}'>{% trans "TEXT FIELDS" %}
                 </div>
                 <div id='toggle_language_fields_panel_{{gloss.id}}' class="panel-collapse collapse in">
@@ -608,7 +616,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles_{{gloss.id}}"
                      data-target='#toggle_tags_panel_{{gloss.id}}'>{% trans "TAGS" %}
                 </div>
                 <div id='toggle_tags_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -626,13 +634,13 @@ textarea:focus {
                 </div>
                 </div>
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles_{{gloss.id}}"
                      data-target='#toggle_phonology_panel_{{gloss.id}}'>{% trans "PHONOLOGY" %}
                 </div>
                 <div id='toggle_phonology_panel_{{gloss.id}}' class="panel-collapse collapse">
-                <div id="phonology" class='panel-group'>
+                <div id="phonology_{{gloss.id}}" class='panel-group'>
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_handedness_panel_{{gloss.id}}'>{% trans "Handedness" %}
                 </div>
                 <div id='toggle_handedness_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -650,7 +658,7 @@ textarea:focus {
                 </div>
                 </div>
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_domhndsh_panel_{{gloss.id}}'>{% trans "Strong Hand" %}
                 </div>
                 <div id='toggle_domhndsh_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -669,7 +677,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_subhndsh_panel_{{gloss.id}}'>{% trans "Weak Hand" %}
                 </div>
                 <div id='toggle_subhndsh_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -688,7 +696,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_handCh_panel_{{gloss.id}}'>{% trans "Handshape Change" %}
                 </div>
                 <div id='toggle_handCh_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -707,7 +715,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_relatArtic_panel_{{gloss.id}}'>{% trans "Relation between Articulators" %}
                 </div>
                 <div id='toggle_relatArtic_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -726,7 +734,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_locprim_panel_{{gloss.id}}'>{% trans "Location" %}
                 </div>
                 <div id='toggle_locprim_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -745,7 +753,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_contType_panel_{{gloss.id}}'>{% trans "Contact Type" %}
                 </div>
                 <div id='toggle_contType_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -764,7 +772,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_movSh_panel_{{gloss.id}}'>{% trans "Movement Shape" %}
                 </div>
                 <div id='toggle_movSh_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -783,7 +791,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_movDir_panel_{{gloss.id}}'>{% trans "Movement Direction" %}
                 </div>
                 <div id='toggle_movDir_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -802,7 +810,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_repeat_panel_{{gloss.id}}'>{% trans "Repeated Movement" %}
                 </div>
                 <div id='toggle_repeat_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -821,7 +829,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_altern_panel_{{gloss.id}}'>{% trans "Alternating Movement" %}
                 </div>
                 <div id='toggle_altern_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -840,7 +848,7 @@ textarea:focus {
                 </div>
 
                 <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology"
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
                      data-target='#toggle_relOriMov_panel_{{gloss.id}}'>{% trans "Relative Orientation: Movement" %}
                 </div>
                 <div id='toggle_relOriMov_panel_{{gloss.id}}' class="panel-collapse collapse">
@@ -850,6 +858,25 @@ textarea:focus {
                 <button id='quick_relOriMov_btn_{{gloss.id}}' class="quick_relOriMov btn actionButton"
                         name='quick_relOriMov_{{gloss.id}}'
                         value='{{gloss.id}}' data-relOriMov='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_relOriLoc_panel_{{gloss.id}}'>{% trans "Relative Orientation: Location" %}
+                </div>
+                <div id='toggle_relOriLoc_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_relOriLoc %}
+                <button id='quick_relOriLoc_btn_{{gloss.id}}' class="quick_relOriLoc btn actionButton"
+                        name='quick_relOriLoc_{{gloss.id}}'
+                        value='{{gloss.id}}' data-relOriLoc='{{wc.machine_value}}' style="height:36px;"
                         type="submit" >{{wc.name}}
                 </button>
                 {% endfor %}
@@ -898,7 +925,7 @@ textarea:focus {
                                 class="quick_similarglosses btn actionButton"
                                 name='quick_similarglosses_{{gloss.id}}'
                                 data-glossid='{{gloss.id}}' style="height:26px;margin-top:10px;"
-                                type="submit" >{% trans "QUERY" %}
+                                type="submit" >{% trans "QUERY EXACT" %}
                         </button>
                         </td>
                     </tr>

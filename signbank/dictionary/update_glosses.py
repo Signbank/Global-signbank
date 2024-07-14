@@ -589,6 +589,44 @@ def mapping_toggle_relOriMov(request, gloss, relOriMov):
 
 
 @permission_required('dictionary.change_gloss')
+def mapping_toggle_relOriLoc(request, gloss, relOriLoc):
+
+    try:
+        relOriLoc_machine_value = int(relOriLoc)
+    except TypeError:
+        return {}
+
+    empty_relOriLoc = FieldChoice.objects.get(field='RelOriLoc', machine_value=0)
+    new_relOriLoc = FieldChoice.objects.filter(field='RelOriLoc', machine_value=relOriLoc_machine_value).first()
+
+    if not new_relOriLoc:
+        # if the word class does not exist, set it to empty
+        relOriLoc_machine_value = 0
+        new_relOriLoc = empty_relOriLoc
+
+    original_relOriLoc = gloss.relOriLoc.name if gloss.relOriLoc else '-'
+
+    with atomic():
+        if not gloss.relOriLoc:
+            gloss.relOriLoc = new_relOriLoc
+        elif gloss.relOriLoc.machine_value != relOriLoc_machine_value:
+            gloss.relOriLoc = new_relOriLoc
+        else:
+            gloss.relOriLoc = empty_relOriLoc
+            new_relOriLoc = empty_relOriLoc
+        gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'relOriLoc', original_relOriLoc, new_relOriLoc.name)
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.relOriLoc.name
+    result['relOriLoc'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
 def batch_edit_create_sense(request, gloss):
 
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')

@@ -6540,7 +6540,7 @@ class BatchEditView(ListView):
         context['available_tags'] = [tag for tag in Tag.objects.all()]
 
         similar_gloss_fields = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
-                                'contType', 'movSh', 'movDir', 'repeat', 'altern', 'relOriMov']
+                                'contType', 'movSh', 'movDir', 'repeat', 'altern', 'relOriMov', 'relOriLoc']
         context['similar_gloss_fields'] = json.dumps(similar_gloss_fields)
         similar_gloss_fields_labels = {}
         for field in similar_gloss_fields:
@@ -6607,7 +6607,13 @@ class BatchEditView(ListView):
         available_relOriMov += [fc for fc in FieldChoice.objects.filter(
             field='RelOriMov', machine_value__gt=1).order_by('name')]
         context['available_relOriMov'] = available_relOriMov
-        
+
+        available_relOriLoc = [fc for fc in FieldChoice.objects.filter(
+            field='RelOriLoc', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_relOriLoc += [fc for fc in FieldChoice.objects.filter(
+            field='RelOriLoc', machine_value__gt=1).order_by('name')]
+        context['available_relOriLoc'] = available_relOriLoc
+
         context['query_parameters'] = json.dumps(self.query_parameters)
         query_parameters_keys = list(self.query_parameters.keys())
         context['query_parameters_keys'] = json.dumps(query_parameters_keys)

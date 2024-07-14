@@ -269,6 +269,23 @@ function toggle_relOriMov(data) {
     buttonCell.attr('value', button_contents);
 }
 
+function toggle_relOriLoc(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var relOriLoc = data.relOriLoc;
+    var hCell = $("#relOriLoc_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='relOriLoc'>"+relOriLoc+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_relOriLoc';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['relOriLoc'] + ': ' + relOriLoc;
+    buttonCell.attr('value', button_contents);
+}
+
 function toggle_create_sense(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -611,6 +628,20 @@ $(document).ready(function() {
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
             success : toggle_relOriMov
+         });
+     });
+
+     $('.quick_relOriLoc').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var relOriLoc = $(this).attr("data-relOriLoc");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_relOriLoc/" + glossid + "/" + relOriLoc,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_relOriLoc
          });
      });
 
