@@ -236,6 +236,11 @@ input[type=number] {
 
 <div id="definitionblock" style="padding-top:30px;">
 
+{% if not object_list %}
+    <p>{% trans "Please construct a new query:" %}
+        <span><a class="btn btn-default"
+                 href='{{PREFIX_URL}}/signs/search/'>{% trans "Search" %}</a></span></p>
+{% else %}
     <div class="keywordsSenses" id="keywordsSenses">
     <h3>{% trans "Split Up Senses" %}</h3>
 
@@ -285,7 +290,7 @@ input[type=number] {
     </thead>
     <tbody>
     {% load underscore_to_space %}
-    {% for gloss, keywords_per_language, senses_per_language, translated_senses, matrix_dimensions in page_obj %}
+    {% for gloss, keywords_per_language, senses_per_language, translated_senses, matrix_dimensions in object_list %}
         <tr style="width:auto;">
             <td style="width:25%;">
             <table style="border:0px 0px 0px 0px;">
@@ -642,6 +647,7 @@ input[type=number] {
 </table>
 </div>
 </div>
+{% endif %}
 
 <div class="pagination">
     <span class="step-links">

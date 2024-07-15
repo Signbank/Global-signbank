@@ -6390,16 +6390,23 @@ class KeywordListView(ListView):
 
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
 
+        glosses_of_datasets = object_list
+
         get = self.request.GET
 
         # this needs to be sorted for jquery purposes
         dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
 
         # exclude morphemes
-        if not get:
-            glosses_of_datasets = object_list
-        else:
-            glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
+        if not glosses_of_datasets:
+            feedback_message = _('No glosses found.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            return []
+
+        if glosses_of_datasets.count() > 100:
+            feedback_message = _('Please refine your query to retrieve fewer than 100 glosses to use this functionality.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            return []
 
         # data structure to store the query parameters in order to keep them in the form
         query_parameters = dict()
@@ -6411,12 +6418,6 @@ class KeywordListView(ListView):
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
-
-        if glosses_of_datasets.count() > 100:
-            feedback_message = _('Please refine your query to retrieve fewer than 100 glosses to use this functionality.')
-            messages.add_message(self.request, messages.ERROR, feedback_message)
-            # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
-            return []
 
         # save the query parameters to a session variable
         self.request.session['query_parameters'] = json.dumps(query_parameters)
