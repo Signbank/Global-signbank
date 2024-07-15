@@ -1358,6 +1358,10 @@ class ExampleSentenceTranslationAdmin(admin.ModelAdmin):
     search_fields = ['text']
     list_filter = ['language']
 
+class AnnotatedSentenceSourceAdmin(admin.ModelAdmin):
+    list_display = ("name", "source", "url", "dataset")
+    search_fields = ['name']
+    list_filter = ['dataset']
 
 class AffiliationAdmin(admin.ModelAdmin):
     list_display = ("name", )
@@ -1409,3 +1413,4 @@ admin.site.register(GlossSense, GlossSenseAdmin)
 admin.site.register(Sense, SenseAdmin)
 admin.site.register(ExampleSentence, ExampleSentenceAdmin)
 admin.site.register(ExampleSentenceTranslation, ExampleSentenceTranslationAdmin)
+admin.site.register(AnnotatedSentenceSource, AnnotatedSentenceSourceAdmin)
