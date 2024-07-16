@@ -627,6 +627,44 @@ def mapping_toggle_relOriLoc(request, gloss, relOriLoc):
 
 
 @permission_required('dictionary.change_gloss')
+def mapping_toggle_oriCh(request, gloss, oriCh):
+
+    try:
+        oriCh_machine_value = int(oriCh)
+    except TypeError:
+        return {}
+
+    empty_oriCh = FieldChoice.objects.get(field='OriChange', machine_value=0)
+    new_oriCh = FieldChoice.objects.filter(field='OriChange', machine_value=oriCh_machine_value).first()
+
+    if not new_oriCh:
+        # if the word class does not exist, set it to empty
+        oriCh_machine_value = 0
+        new_oriCh = empty_oriCh
+
+    original_oriCh = gloss.oriCh.name if gloss.oriCh else '-'
+
+    with atomic():
+        if not gloss.oriCh:
+            gloss.oriCh = new_oriCh
+        elif gloss.oriCh.machine_value != oriCh_machine_value:
+            gloss.oriCh = new_oriCh
+        else:
+            gloss.oriCh = empty_oriCh
+            new_oriCh = empty_oriCh
+        gloss.save()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'oriCh', original_oriCh, new_oriCh.name)
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+    newvalue = gloss.oriCh.name
+    result['oriCh'] = newvalue
+
+    return result
+
+
+@permission_required('dictionary.change_gloss')
 def batch_edit_create_sense(request, gloss):
 
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')

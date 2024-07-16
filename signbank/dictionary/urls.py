@@ -129,6 +129,9 @@ urlpatterns = [
     re_path(r'^update/toggle_relOriLoc/(?P<glossid>\d+)/(?P<relOriLoc>.*)$',
             signbank.dictionary.update.toggle_relOriLoc,
             name='toggle_relOriLoc'),
+    re_path(r'^update/toggle_oriCh/(?P<glossid>\d+)/(?P<oriCh>.*)$',
+            signbank.dictionary.update.toggle_oriCh,
+            name='toggle_oriCh'),
 
     re_path(r'^update/quick_create_sense/(?P<glossid>\d+)$',
             signbank.dictionary.update.quick_create_sense,

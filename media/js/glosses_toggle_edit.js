@@ -286,6 +286,23 @@ function toggle_relOriLoc(data) {
     buttonCell.attr('value', button_contents);
 }
 
+function toggle_oriCh(data) {
+    if ($.isEmptyObject(data)) {
+        return;
+    };
+    var glossid = data.glossid;
+    var oriCh = data.oriCh;
+    var hCell = $("#oriCh_cell_"+glossid);
+    $(hCell).empty();
+    var cell = "<span class='oriCh'>"+oriCh+"</span>";
+    hCell.html(cell);
+
+    var button_lookup = '#button_' + glossid + '_oriCh';
+    var buttonCell = $(button_lookup);
+    var button_contents = similar_gloss_fields_labels['oriCh'] + ': ' + oriCh;
+    buttonCell.attr('value', button_contents);
+}
+
 function toggle_create_sense(data) {
     if ($.isEmptyObject(data)) {
         return;
@@ -642,6 +659,20 @@ $(document).ready(function() {
             data: { 'csrfmiddlewaretoken': csrf_token },
             datatype: "json",
             success : toggle_relOriLoc
+         });
+     });
+
+     $('.quick_oriCh').click(function(e)
+	 {
+         e.preventDefault();
+	     var glossid = $(this).attr('value');
+	     var oriCh = $(this).attr("data-oriCh");
+         $.ajax({
+            url : url + "/dictionary/update/toggle_oriCh/" + glossid + "/" + oriCh,
+            type: 'POST',
+            data: { 'csrfmiddlewaretoken': csrf_token },
+            datatype: "json",
+            success : toggle_oriCh
          });
      });
 
