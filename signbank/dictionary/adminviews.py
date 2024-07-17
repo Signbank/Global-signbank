@@ -2566,9 +2566,14 @@ class QueryListView(ListView):
             toggle_gloss_list_display_fields, toggle_query_parameter_fields, toggle_publication_fields = \
             query_parameters_toggle_fields(query_parameters)
 
+        display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+        for qpf in query_fields_focus:
+            if qpf not in display_fields:
+                display_fields += [qpf]
+
         context['objects_on_page'] = objects_on_page
         context['object_list'] = object_list
-        context['display_fields'] = settings.GLOSS_LIST_DISPLAY_FIELDS + query_fields_focus
+        context['display_fields'] = display_fields
         context['query_fields_parameters'] = query_fields_parameters
         context['TOGGLE_QUERY_PARAMETER_FIELDS'] = toggle_query_parameter_fields
         context['TOGGLE_PUBLICATION_FIELDS'] = toggle_publication_fields
@@ -6331,6 +6336,7 @@ class KeywordListView(ListView):
     model = Gloss
     template_name = 'dictionary/admin_batch_edit_senses.html'
     paginate_by = 25
+    search_type = 'sign'
     query_parameters = dict()
 
     def get(self, request, *args, **kwargs):
@@ -6372,10 +6378,21 @@ class KeywordListView(ListView):
     def get_queryset(self):
         # this is a ListView for a complicated data structure
 
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view keywords.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
+            return []
+
+        if ('search_type' in self.request.session.keys() and
+                self.request.session['search_type'] != self.search_type):
+            feedback_message = _('Your query result is not glosses.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
@@ -6408,21 +6425,32 @@ class KeywordListView(ListView):
             messages.add_message(self.request, messages.ERROR, feedback_message)
             return []
 
-        # data structure to store the query parameters in order to keep them in the form
-        query_parameters = dict()
-
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
             if vals:
-                query_parameters['tags[]'] = vals
+                self.query_parameters['tags[]'] = vals
+                values = [int(v) for v in vals]
                 glosses_with_tag = list(
-                    TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
 
-        # save the query parameters to a session variable
-        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        items = construct_scrollbar(glosses_of_datasets, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
+
+        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
+        self.request.session['search_type'] = self.search_type
         self.request.session.modified = True
-        self.query_parameters = query_parameters
 
         for gloss in glosses_of_datasets:
             consistent = consistent_senses(gloss, include_translations=True,
@@ -6610,8 +6638,9 @@ class ToggleListView(ListView):
             vals = get.getlist('tags[]')
             if vals:
                 query_parameters['tags[]'] = vals
+                values = [int(v) for v in vals]
                 glosses_with_tag = list(
-                    TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
         if 'createdBy' in get and get['createdBy']:
             get_value = get['createdBy']
