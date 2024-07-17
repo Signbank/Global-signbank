@@ -6631,10 +6631,20 @@ class BatchEditView(ListView):
 
     def get_queryset(self):
 
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to use Batch Edit.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            return Gloss.objects.none()
+
+        if ('search_type' in self.request.session.keys() and
+                self.request.session['search_type'] != self.search_type):
+            feedback_message = _('Your query result is not glosses.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
             return Gloss.objects.none()
 
@@ -6662,28 +6672,40 @@ class BatchEditView(ListView):
         if not glosses_of_dataset:
             return glosses_of_dataset
 
-        # data structure to store the query parameters in order to keep them in the form
-        query_parameters = dict()
-
         if 'tags[]' in get:
             vals = get.getlist('tags[]')
             if vals:
-                query_parameters['tags[]'] = vals
+                self.query_parameters['tags[]'] = vals
+                values = [int(v) for v in vals]
                 glosses_with_tag = list(
-                    TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_dataset = glosses_of_dataset.filter(id__in=glosses_with_tag)
         if 'createdBy' in get and get['createdBy']:
             get_value = get['createdBy']
-            query_parameters['createdBy'] = get_value.strip()
+            self.query_parameters['createdBy'] = get_value.strip()
             created_by_search_string = ' '.join(get_value.strip().split())  # remove redundant spaces
             glosses_of_dataset = glosses_of_dataset.annotate(
                 created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
                 .filter(created_by__icontains=created_by_search_string)
 
-        # save the query parameters to a session variable
-        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset = selected_datasets.first()
+
+        dataset_display_languages = []
+        for lang in dataset.translation_languages.all():
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        items = construct_scrollbar(glosses_of_dataset, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
+
+        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
         self.request.session.modified = True
-        self.query_parameters = query_parameters
 
         return glosses_of_dataset
 
