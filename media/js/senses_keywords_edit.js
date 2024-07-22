@@ -265,6 +265,30 @@ function update_gloss_senses(data) {
             keywordsUpdateRow.remove();
         }
     }
+
+    var tbody_modal_senses = '#tbody_modal_sensetranslations_' + glossid;
+    var modalSensesTable = $(tbody_modal_senses);
+    var matrix_rows = 'modal_sensetranslations_' + glossid + '_row_';
+    var emptyCells = [];
+    modalSensesTable.find("tr").each(function () {
+        var language_columns = $(this).find("td").each(function () {
+            if (!$(this).attr('id')) { return; }
+            var translation_elements = $(this).find('span input[name="translation"]');
+            var new_translation_elements = $(this).find('span input[name="new_translation"]');
+            if (translation_elements.length > 0 && new_translation_elements.length > 0) {
+                new_translation_elements.each(function () {
+                    emptyCells.push($(this));
+                });
+                return;
+            }
+            if (new_translation_elements.length > 1) {
+                emptyCells.push(new_translation_elements.first());
+            }
+        });
+    });
+    $.each(emptyCells, function(index, elt) {
+        $(elt).remove();
+    });
 }
 
 // the following function expects more fields from the ajax call json data

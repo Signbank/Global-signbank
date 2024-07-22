@@ -447,13 +447,11 @@ input[type=number] {
                                    {% with matrix_data|get_item:'padding' as cellspadding %}
                                     <td id="sense_translations_{{gloss.id}}_{{language.id}}_{{order_index}}">
                                     {% if not translations %}
-                                    {% for i in cellsrange %}
                                     <span class="span-cell">
                                     <input type="text" size="50" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
                                            name="new_translation"
                                            placeholder='{{language.name}} {% trans "Text" %}'>
                                     </span>
-                                    {% endfor %}
                                     {% else %}
                                     {% for trans in translations %}
                                     <span class="span-cell" id="span_cell_{{gloss.id}}_{{language.id}}_{{trans.id}}">
@@ -463,15 +461,6 @@ input[type=number] {
                                            data-order_index='{{order_index}}' data-language='{{language.id}}'>
                                     </span>
                                     {% endfor %}
-                                    {% if cellsmax > cellscount %}
-                                    {% for i in cellspadding %}
-                                    <span class="span-cell">
-                                    <input type="text" size="50" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
-                                           name="new_translation"
-                                           placeholder='{{language.name}} {% trans "Text" %}'>
-                                    </span>
-                                    {% endfor %}
-                                    {% endif %}
                                     {% endif %}
                                     </td>
                                    {% endwith %}
