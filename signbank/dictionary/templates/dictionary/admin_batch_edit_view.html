@@ -189,6 +189,24 @@ function ready_videos(el) {
     background-color: none;
     outline: none;
 }
+.saveButton {
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-color: Grey;
+    border-radius: 8px;
+    text-align: center;
+    color: White;
+    background-color: DodgerBlue;
+}
+.saveButton:hover {
+    text-decoration: none;
+    background-color: LightGrey;
+}
+.saveButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
 .tags-cell {
     overflow-y: visible;
     width: 255px;
@@ -601,7 +619,7 @@ textarea:focus {
                 <div class="panel-body" style="display:inline-block;">
                 <div>
                 <span>
-                <button id='quick_language_fields_btn_{{gloss.id}}' class="quick_language_fields btn actionButton"
+                <button id='quick_language_fields_btn_{{gloss.id}}' class="quick_language_fields btn saveButton"
                         name='quick_language_fields_{{gloss.id}}'
                         value='{{gloss.id}}' style="height:36px;"
                         type="submit" >{% trans "Save Text Fields" %}
