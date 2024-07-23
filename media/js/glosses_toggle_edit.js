@@ -319,8 +319,8 @@ function toggle_create_sense(data) {
         cellTD.append(spanCell);
         var textareaID = 'sense_' + glossid + '_' + order + '_' + lang2char;
         var textareaName = 'sense_' + glossid + '_' + lang2char;
-        var textareaCell = '<textarea id="' + textareaID + '" name = "' + textareaName + '" maxlength="30" ' +
-                           '"type="textarea" data-order="' + order + '" cols="45" rows="1"></textarea>';
+        var textareaCell = '<textarea id="' + textareaID + '" name = "' + textareaName + '" maxlength="80" ' +
+                           '"type="textarea" data-order="' + order + '" cols="80" rows="1"></textarea>';
         cellTD.append(textareaCell);
         cellTD.append('</td>');
         row.append(cellTD);

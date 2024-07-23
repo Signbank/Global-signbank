@@ -338,7 +338,7 @@ textarea:focus {
     <thead>
       <tr>
           <th style="width:250px;">{% trans "Gloss" %}</th>
-          <th style="width:800px;">{% trans "Fields" %}</th>
+          <th style="width:1100px;">{% trans "Fields" %}</th>
           <th style="width:500px;">{% trans "Quick Toggles" %}</th>
       </tr>
     </thead>
@@ -420,7 +420,7 @@ textarea:focus {
              <tr style="height:20;">
              {% for dataset_lang in dataset_languages %}
                   <th id="edit_gloss_lemma_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
-                      style="width:500px;">
+                      style="width:800px;">
                      {% trans "Lemma" %} ({{dataset_lang.name}})
                  </th>
              {% endfor %}
@@ -431,15 +431,15 @@ textarea:focus {
                  <td id="edit_gloss_lemma_value_{{gloss.id}}_{{dataset_lang.language_code_2char}}">
                      <input id="lemma_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
                             name='lemma_{{gloss.id}}_{{dataset_lang.language_code_2char}}'
-                            maxlength="30" type="text" value="{{lemmaidglosstranslation}}"
-                            size="50" >
+                            maxlength="80" type="text" value="{{lemmaidglosstranslation}}"
+                            size="80" >
                  </td>
              {% endwith %}
              {% endfor %}
              </tr>
              <tr>
              {% for dataset_lang in dataset_languages %}
-                 <th id="edit_gloss_annotation_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:400px;">
+                 <th id="edit_gloss_annotation_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:800px;">
                      {% trans "Annotation" %} ({{dataset_lang.name}})
                  </th>
              {% endfor %}
@@ -450,8 +450,8 @@ textarea:focus {
                  <td id="edit_gloss_annotation_value_{{gloss.id}}_{{dataset_lang.language_code_2char}}">
                      <input id="annotation_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
                             name='annotation_{{gloss.id}}_{{dataset_lang.language_code_2char}}'
-                            maxlength="30" type="text" value="{{annotationidglosstranslation}}"
-                            size="50" >
+                            maxlength="80" type="text" value="{{annotationidglosstranslation}}"
+                            size="80" >
                  </td>
              {% endwith %}
              {% endfor %}
@@ -461,7 +461,7 @@ textarea:focus {
              <tr>
                  {% for dataset_lang in dataset_languages %}
                  <th id="edit_gloss_sense_header_{{gloss.id}}_{{order}}_{{dataset_lang.language_code_2char}}"
-                     style="width:400px;">
+                     style="width:800px;">
                      {% trans "Senses" %} ({{dataset_lang.name}})
                  </th>
                  {% endfor %}
@@ -473,8 +473,8 @@ textarea:focus {
                      <span>{{order}}.</span>
                      <textarea id="sense_{{gloss.id}}_{{order}}_{{sense_lang}}"
                                name='sense_{{gloss.id}}_{{sense_lang}}'
-                               maxlength="30" type="textarea" data-order="{{order}}"
-                               cols="45" rows="1">{{sensetranslation}}</textarea>
+                               maxlength="80" type="textarea" data-order="{{order}}"
+                               cols="80" rows="1">{{sensetranslation}}</textarea>
                  </td>
              {% endfor %}
              </tr>
@@ -622,7 +622,7 @@ textarea:focus {
                 <button id='quick_language_fields_btn_{{gloss.id}}' class="quick_language_fields btn saveButton"
                         name='quick_language_fields_{{gloss.id}}'
                         value='{{gloss.id}}' style="height:36px;"
-                        type="submit" >{% trans "Save Text Fields" %}
+                        type="submit" >{% trans "Check Constraints & Save Changes" %}
                 </button>
                 </span>
                  <p id="errors_{{gloss.id}}"></p>
