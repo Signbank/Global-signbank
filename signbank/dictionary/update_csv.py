@@ -39,6 +39,9 @@ def update_sequential_morphology(gloss, values):
         morph_def.save()
         role = role + 1
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
     return
 
 
@@ -75,6 +78,9 @@ def update_simultaneous_morphology(gloss, values):
         sim.role = role
         sim.save()
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
     return
 
 
@@ -109,6 +115,9 @@ def update_blend_morphology(gloss, values):
         new_blend.glosses = morpheme_gloss
         new_blend.role = role
         new_blend.save()
+
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
 
     return
 
@@ -173,6 +182,9 @@ def subst_relations(gloss, values):
         reverse_relation = Relation(source=target_gloss, target=gloss, role=Relation.get_reverse_role(role))
         reverse_relation.save()
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
     return
 
 
@@ -215,6 +227,9 @@ def subst_foreignrelations(gloss, values):
                                         other_lang=other_lang, other_lang_gloss=other_lang_gloss)
             rel.save()
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
     return
 
 
@@ -239,6 +254,9 @@ def update_tags(gloss, values):
 
     for value in values:
         Tag.objects.add_tag(gloss, value)
+
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
 
     return
 
@@ -289,6 +307,9 @@ def subst_notes(gloss, values):
         defn = Definition(gloss=gloss, count=index_count, role=note_role, text=text, published=is_published)
         defn.save()
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
     return
 
 
@@ -318,4 +339,7 @@ def subst_semanticfield(gloss, values):
         gloss.semField.add(sf)
     gloss.save()
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+    
     return
