@@ -871,9 +871,11 @@ class SenseExamplesentence(models.Model):
     def __unicode__(self):
         return "Example sentence: " + str(self.examplesentence) + " is a member of " + str(self.sense) + (" in position %d" % self.order)
 
+
 @receiver(m2m_changed, sender=SenseExamplesentence)
 def post_remove_examplesentence_reorder(sender, instance, **kwargs):
     instance.reorder_examplesentences()
+
 
 class Gloss(models.Model):
     class Meta:
@@ -930,6 +932,8 @@ class Gloss(models.Model):
     def get_field(cls, field):
         field = cls._meta.get_field(field)
         return field
+
+    archived = models.BooleanField(_("Archived"), default=False)
 
     lemma = models.ForeignKey("LemmaIdgloss", null=True, on_delete=models.SET_NULL)
 

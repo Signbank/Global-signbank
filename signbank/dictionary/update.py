@@ -1703,6 +1703,9 @@ def add_morphology_definition(request):
     morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
     morphdef.save()
 
+    thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    thisgloss.save()
+
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
 
@@ -2211,6 +2214,9 @@ def update_morphology_definition(gloss, field, value):
     (what, morph_def_id) = field.split('_')
     what = what.replace('-','_')
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
     try:
         morph_def = MorphologyDefinition.objects.get(id=morph_def_id)
     except ObjectDoesNotExist:
@@ -2608,6 +2614,9 @@ def update_morpheme_definition(gloss, field, value):
     (what, morph_def_id) = field.split('_')
     what = what.replace('-','_')
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
     if what == 'morpheme_definition_delete':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         definition.delete()
@@ -2631,9 +2640,13 @@ def update_blend_definition(gloss, field, value):
     (what, blend_id) = field.split('_')
     what = what.replace('-','_')
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
     if what == 'blend_definition_delete':
         definition = BlendMorphology.objects.get(id=blend_id)
         definition.delete()
+
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'blend_definition_role':
         definition = BlendMorphology.objects.get(id=blend_id)
