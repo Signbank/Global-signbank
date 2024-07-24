@@ -12,7 +12,7 @@ from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTE
 from signbank.dictionary.update_senses_mapping import add_sense_to_revision_history
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from guardian.shortcuts import get_objects_for_user
-from signbank.api_token import hash_token
+from signbank.api_token import put_api_user_in_request
 
 
 def get_interface_language_api(request, user):
@@ -360,40 +360,26 @@ def csv_create_gloss(request, datasetid):
 
 
 @csrf_exempt
+@put_api_user_in_request
 def api_create_gloss(request, datasetid):
 
     results = dict()
-    auth_token_request = request.headers.get('Authorization', '')
     interface_language_code = request.headers.get('Accept-Language', 'en')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
     activate(interface_language_code)
-    if auth_token_request:
-        auth_token = auth_token_request.split('Bearer ')[-1]
-        hashed_token = hash_token(auth_token)
-        signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
-        if not signbank_token:
-            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
-            return JsonResponse(results)
-        username = signbank_token.signbank_user.username
-        user = User.objects.get(username=username)
-    elif request.user:
-        user = request.user
-    else:
-        results['errors'] = [gettext("User not found in request.")]
-        return JsonResponse(results)
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
         results['errors'] = [gettext("Dataset ID does not exist.")]
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
-        results['errors'] = [gettext("No change permission for dataset for user ") + str(user)]
+        results['errors'] = [gettext("No change permission for dataset for user ") + str(request.user)]
         return JsonResponse(results)
 
-    if not user.has_perm('dictionary.change_gloss'):
+    if not request.user.has_perm('dictionary.change_gloss'):
         results['errors'] = [gettext("No change gloss permission.")]
         return JsonResponse(results)
 
@@ -409,6 +395,6 @@ def api_create_gloss(request, datasetid):
         results['glossid'] = ""
         return JsonResponse(results)
 
-    creation_results = create_gloss(user, dataset, value_dict)
+    creation_results = create_gloss(request.user, dataset, value_dict)
 
     return JsonResponse(creation_results)
