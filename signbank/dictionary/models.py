@@ -2578,6 +2578,59 @@ def save_info_about_deleted_gloss(sender, instance, using, **kwarsg):
     deleted_gloss.save()
 
 
+def cascade_archival_gloss(gloss):
+    # this is to show details about what the Django "cascade" operation would delete
+
+    relations_source = Relation.objects.filter(source=gloss)
+    if relations_source:
+        print('Archived gloss ', str(gloss.id), ' is related to: ', relations_source)
+    relations_target = Relation.objects.filter(target=gloss)
+    if relations_target:
+        print('Archived gloss ', str(gloss.id), ' is related to: ', relations_target)
+    morphemes_parent = MorphologyDefinition.objects.filter(parent_gloss=gloss)
+    if morphemes_parent:
+        print('Archived gloss ', str(gloss.id), ' shares morphology with: ', morphemes_parent)
+    morphemes_appears_in = MorphologyDefinition.objects.filter(morpheme=gloss)
+    if morphemes_appears_in:
+        print('Archived gloss ', str(gloss.id), ' shares morphology with: ', morphemes_appears_in)
+    simultaneous = SimultaneousMorphologyDefinition.objects.filter(parent_gloss=gloss)
+    if simultaneous:
+        print('Archived gloss ', str(gloss.id), ' shares morphology with: ', simultaneous)
+    blends = BlendMorphology.objects.filter(parent_gloss=gloss)
+    if blends:
+        print('Archived gloss ', str(gloss.id), ' shares morphology with: ', blends)
+    partofblends = BlendMorphology.objects.filter(glosses=gloss)
+    if partofblends:
+        print('Archived gloss ', str(gloss.id), ' shares morphology with: ', partofblends)
+    other_media = OtherMedia.objects.filter(parent_gloss=gloss)
+    if other_media:
+        print('Archived gloss ', str(gloss.id), ' has other media: ', other_media)
+    relation_foreign = RelationToForeignSign.objects.filter(gloss=gloss)
+    if relation_foreign:
+        print('Archived gloss ', str(gloss.id), ' is foreign related to: ', relation_foreign)
+
+    # ALSO grab all Senses objects related to this gloss!!
+
+
+@receiver(models.signals.post_save, sender=Gloss, dispatch_uid='gloss_save_signal')
+def save_info_about_archived_gloss(sender, instance, using, update_fields=[], **kwarsg):
+
+    if not update_fields:
+        return
+
+    from signbank.tools import get_default_annotationidglosstranslation
+    default_annotationidglosstranslation = get_default_annotationidglosstranslation(instance)
+
+    deleted_gloss = DeletedGlossOrMedia()
+    deleted_gloss.item_type = 'gloss'
+    deleted_gloss.idgloss = instance.idgloss
+    deleted_gloss.annotation_idgloss = default_annotationidglosstranslation
+    deleted_gloss.old_pk = instance.pk
+    deleted_gloss.save()
+
+    cascade_archival_gloss(instance)
+
+
 # We want to remember some stuff about deleted glosses
 class DeletedGlossOrMedia(models.Model):
     item_type = models.CharField(max_length=5, choices=(('gloss', 'gloss'), ('image', 'image'), ('video', 'video')))

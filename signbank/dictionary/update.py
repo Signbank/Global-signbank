@@ -760,7 +760,9 @@ def update_gloss(request, glossid):
                                      _("GUARDED_GLOSS_DELETE is set to True. The gloss has relations to other glosses and was not deleted."))
                 return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss.id}))
 
-            gloss.delete()
+            # gloss.delete()
+            gloss.archived = True
+            gloss.save(update_fields=['archived'])
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
