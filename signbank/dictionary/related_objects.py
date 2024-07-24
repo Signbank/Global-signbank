@@ -74,7 +74,8 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
 
     # the morpheme field of MorphologyDefinition is a ForeignKey to Gloss
     morphdefs = []
-    for morphdef in gloss.parent_glosses.all():
+    for morphdef in gloss.parent_glosses.filter(parent_gloss__archived__exact=False,
+                                                morpheme__archived__exact=False):
         translated_role = morphdef.role.name
         sign_display = str(morphdef.morpheme.id)
         morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()

@@ -1056,7 +1056,8 @@ class GlossDetailView(DetailView):
 
         # Collect morphology definitions for sequential morphology section
         morphdefs = []
-        for morphdef in context['gloss'].parent_glosses.all():
+        for morphdef in context['gloss'].parent_glosses.filter(parent_gloss__archived__exact=False,
+                                                               morpheme__archived__exact=False):
 
             translated_role = morphdef.role.name if morphdef.role else ''
 
@@ -1243,7 +1244,7 @@ class GlossDetailView(DetailView):
         context['gloss_derivationhistory'] = list(gl.derivHist.all())
 
         simultaneous_morphology = []
-        for sim_morph in gl.simultaneous_morphology.all():
+        for sim_morph in gl.simultaneous_morphology.filter(parent_gloss__archived__exact=False):
             translated_morph_type = sim_morph.morpheme.mrpType.name if sim_morph.morpheme.mrpType else ''
             morpheme_annotation_idgloss = {}
             if sim_morph.morpheme.dataset:
@@ -1271,13 +1272,15 @@ class GlossDetailView(DetailView):
         context['count_morphemes_in_dataset'] = count_morphemes_in_dataset
 
         blend_morphology = []
-        for ble_morph in gl.blend_morphology.all():
+        for ble_morph in gl.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                    glosses__archived__exact=False):
             morpheme_display = get_default_annotationidglosstranslation(ble_morph.glosses)
             blend_morphology.append((ble_morph, morpheme_display))
         context['blend_morphology'] = blend_morphology
 
         otherrelations = []
-        for oth_rel in gl.relation_sources.all():
+        for oth_rel in gl.relation_sources.filter(target__archived__exact=False,
+                                                  source__archived__exact=False):
             otherrelations.append((oth_rel, oth_rel.get_target_display()))
         context['otherrelations'] = otherrelations
 
@@ -1648,7 +1651,8 @@ class GlossRelationsDetailView(DetailView):
         otherrelations = []
 
         if gl.relation_sources:
-            for oth_rel in gl.relation_sources.all():
+            for oth_rel in gl.relation_sources.filter(target__archived__exact=False,
+                                                      source__archived__exact=False):
                 if oth_rel.source.id == oth_rel.target.id:
                     print('circular relation found: ', gl, ' (', str(gl.id), ') ', oth_rel, oth_rel.role)
                     continue
@@ -1681,9 +1685,11 @@ class GlossRelationsDetailView(DetailView):
         context['minimalpairs'] = minimalpairs
 
         compounds = []
-        reverse_morphdefs = gl.parent_glosses.all()
+        reverse_morphdefs = gl.parent_glosses.filter(parent_gloss__archived__exact=False,
+                                                     morpheme__archived__exact=False)
         for rm in reverse_morphdefs:
-            parent_glosses = rm.parent_gloss.parent_glosses.all()
+            parent_glosses = rm.parent_gloss.parent_glosses.filter(parent_gloss__archived__exact=False,
+                                                                   morpheme__archived__exact=False)
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
@@ -1693,7 +1699,8 @@ class GlossRelationsDetailView(DetailView):
         appearsin = []
         reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl)
         for rm in reverse_morphdefs:
-            parent_glosses = rm.parent_gloss.parent_glosses.all()
+            parent_glosses = rm.parent_gloss.parent_glosses.filter(parent_gloss__archived__exact=False,
+                                                                   morpheme__archived__exact=False)
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
@@ -1703,7 +1710,8 @@ class GlossRelationsDetailView(DetailView):
         appearsinblend = []
         reverse_blends = BlendMorphology.objects.filter(glosses=gl)
         for rb in reverse_blends:
-            parent_glosses = rb.parent_gloss.blend_morphology.all()
+            parent_glosses = rb.parent_gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                                     glosses__archived__exact=False)
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses) + ': ' + pg.role)
@@ -1711,9 +1719,11 @@ class GlossRelationsDetailView(DetailView):
         context['appearsinblend'] = appearsinblend
 
         blends = []
-        reverse_blends = gl.blend_morphology.all()
+        reverse_blends = gl.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                    glosses__archived__exact=False)
         for rb in reverse_blends:
-            parent_glosses = rb.parent_gloss.blend_morphology.all()
+            parent_glosses = rb.parent_gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                                     glosses__archived__exact=False)
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses) + ': ' + pg.role)
@@ -1721,7 +1731,7 @@ class GlossRelationsDetailView(DetailView):
         context['blends'] = blends
 
         simultaneous_morphology = []
-        for sim_morph in gl.simultaneous_morphology.all():
+        for sim_morph in gl.simultaneous_morphology.filter(parent_gloss__archived__exact=False):
             morpheme_display = get_default_annotationidglosstranslation(sim_morph.morpheme)
             simultaneous_morphology.append((sim_morph, morpheme_display))
         context['simultaneous_morphology'] = simultaneous_morphology
@@ -5561,7 +5571,9 @@ def glosslist_ajax_complete(request, gloss_id):
             if query_fields_parameters:
                 # query_fields_parameters ends up being a list of list for this field
                 field_paramters = query_fields_parameters[0]
-                relations_of_type = [r for r in this_gloss.relation_sources.all() if r.role in field_paramters]
+                relations_of_type = [r for r in this_gloss.relation_sources.filter(target__archived__exact=False,
+                                                                                   source__archived__exact=False)
+                                     if r.role in field_paramters]
                 relations = ", ".join([r.target.annotation_idgloss(default_language) for r in relations_of_type])
                 column_values.append((fieldname, relations))
         elif fieldname not in Gloss.get_field_names():

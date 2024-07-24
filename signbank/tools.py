@@ -514,7 +514,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     continue
 
                 relations = [(relation.role, get_default_annotationidglosstranslation(relation.target))
-                             for relation in gloss.relation_sources.all()]
+                             for relation in gloss.relation_sources.filter(target__archived__exact=False,
+                                                                           source__archived__exact=False)]
 
                 # sort tuples on other gloss to allow comparison with imported values
 
@@ -607,7 +608,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if new_human_value in ['None', '']:
                     continue
 
-                morphemes = [(get_default_annotationidglosstranslation(m.morpheme), m.role) for m in gloss.simultaneous_morphology.all()]
+                morphemes = [(get_default_annotationidglosstranslation(m.morpheme), m.role)
+                             for m in gloss.simultaneous_morphology.filter(parent_gloss__archived__exact=False)]
                 sim_morphs = []
                 for m in morphemes:
                     sim_morphs.append(':'.join(m))
@@ -637,7 +639,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     continue
 
                 morphemes = [(get_default_annotationidglosstranslation(m.glosses), m.role)
-                             for m in gloss.blend_morphology.all()]
+                             for m in gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                                    glosses__archived__exact=False)]
 
                 ble_morphs = []
                 for m in morphemes:
