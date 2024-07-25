@@ -72,7 +72,7 @@ def get_sense_numbers(gloss):
             sensetranslation = sense.senseTranslations.filter(language=language).first()
             translations = sensetranslation.translations.all().order_by('index') if sensetranslation else []
             keywords_list = [translation.translation.text for translation in translations]
-            senses_mapping[order][language.language_code_2char] = ', '.join(keywords_list)
+            senses_mapping[order][language.language_code_2char] = '\n'.join(keywords_list)
     return senses_mapping
 
 
@@ -285,7 +285,7 @@ def update_sense_translation(gloss, order, language, new_value):
             sense_translation.translations.remove(existing_translation)
             existing_translation.delete()
 
-    new_values = new_value.split(',')
+    new_values = new_value.split('\n')
     new_keywords = [kw.strip() for kw in new_values]
     new_sense_keywords = [kw for kw in new_keywords if kw != '']
     for inx, new_text in enumerate(new_sense_keywords):

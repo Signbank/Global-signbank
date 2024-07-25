@@ -315,12 +315,12 @@ function toggle_create_sense(data) {
         var lang2char = language_2chars[i];
         var cellID = 'edit_gloss_sense_value_' + glossid + '_' + order + '_' + lang2char;
         var cellTD = $('<td id="' + cellID + '"/>');
-        var spanCell = '<span>' + order + '.</span>';
+        var spanCell = '<div>' + order + '.</div>';
         cellTD.append(spanCell);
         var textareaID = 'sense_' + glossid + '_' + order + '_' + lang2char;
         var textareaName = 'sense_' + glossid + '_' + lang2char;
-        var textareaCell = '<textarea id="' + textareaID + '" name = "' + textareaName + '" maxlength="80" ' +
-                           '"type="textarea" data-order="' + order + '" cols="80" rows="1"></textarea>';
+        var textareaCell = '<textarea id="' + textareaID + '" name = "' + textareaName + '" wrap="hard" maxlength="240" ' +
+                           '"type="textarea" data-order="' + order + '" cols="60" rows="8"></textarea>';
         cellTD.append(textareaCell);
         cellTD.append('</td>');
         row.append(cellTD);

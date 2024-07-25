@@ -338,7 +338,7 @@ textarea:focus {
     <thead>
       <tr>
           <th style="width:250px;">{% trans "Gloss" %}</th>
-          <th style="width:1600px;">{% trans "Fields" %}</th>
+          <th style="width:1000px;">{% trans "Fields" %}</th>
           <th style="width:500px;">{% trans "Quick Toggles" %}</th>
       </tr>
     </thead>
@@ -414,13 +414,13 @@ textarea:focus {
                     </tr>
             </table>
             </td>
-            <td style="width:1600px;">
+            <td style="width:1000px;">
             <table class="table-responsive" id="gloss_language_fields_{{gloss.id}}">
              {% csrf_token %}
              <tr style="height:20;">
              {% for dataset_lang in dataset_languages %}
                   <th id="edit_gloss_lemma_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
-                      style="width:800px;">
+                      style="width:500px;">
                      {% trans "Lemma" %} ({{dataset_lang.name}})
                  </th>
              {% endfor %}
@@ -432,14 +432,14 @@ textarea:focus {
                      <input id="lemma_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
                             name='lemma_{{gloss.id}}_{{dataset_lang.language_code_2char}}'
                             maxlength="80" type="text" value="{{lemmaidglosstranslation}}"
-                            size="80" >
+                            size="50" >
                  </td>
              {% endwith %}
              {% endfor %}
              </tr>
              <tr>
              {% for dataset_lang in dataset_languages %}
-                 <th id="edit_gloss_annotation_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:800px;">
+                 <th id="edit_gloss_annotation_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:500px;">
                      {% trans "Annotation" %} ({{dataset_lang.name}})
                  </th>
              {% endfor %}
@@ -451,7 +451,7 @@ textarea:focus {
                      <input id="annotation_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
                             name='annotation_{{gloss.id}}_{{dataset_lang.language_code_2char}}'
                             maxlength="80" type="text" value="{{annotationidglosstranslation}}"
-                            size="80" >
+                            size="50" >
                  </td>
              {% endwith %}
              {% endfor %}
@@ -461,7 +461,7 @@ textarea:focus {
              <tr>
                  {% for dataset_lang in dataset_languages %}
                  <th id="edit_gloss_sense_header_{{gloss.id}}_{{order}}_{{dataset_lang.language_code_2char}}"
-                     style="width:800px;">
+                     style="width:500px;">
                      {% trans "Senses" %} ({{dataset_lang.name}})
                  </th>
                  {% endfor %}
@@ -470,11 +470,11 @@ textarea:focus {
              <tr style="height:52px;">
              {% for sense_lang, sensetranslation in translations.items %}
                  <td id="edit_gloss_sense_value_{{gloss.id}}_{{order}}_{{sense_lang}}">
-                     <span>{{order}}.</span>
+                     <div>{{order}}.</div>
                      <textarea id="sense_{{gloss.id}}_{{order}}_{{sense_lang}}"
-                               name='sense_{{gloss.id}}_{{sense_lang}}'
-                               maxlength="80" type="textarea" data-order="{{order}}"
-                               cols="80" rows="1">{{sensetranslation}}</textarea>
+                               name='sense_{{gloss.id}}_{{sense_lang}}' wrap="hard"
+                               maxlength="240" type="textarea" data-order="{{order}}"
+                               cols="60" rows="8">{{sensetranslation}}</textarea>
                  </td>
              {% endfor %}
              </tr>
@@ -978,7 +978,7 @@ textarea:focus {
                         <td id="number_of_matches_{{gloss.id}}"></td>
                     </tr>
                     <tr>
-                        <td  style="width:800px;">
+                        <td  style="width:500px;">
                             <table>
                                 <tbody>
                                     <tr>
