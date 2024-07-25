@@ -52,7 +52,7 @@ def gloss_senses_state_is_changed(request, gloss, original_senses_state_lookup, 
 def create_empty_sense(gloss, order):
 
     # make a new sense and translations for it
-    translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    translation_languages = gloss.lemma.dataset.translation_languages.all()
     sense_translations = dict()
     sense_for_gloss = Sense()
     sense_for_gloss.save()
@@ -107,7 +107,7 @@ def mapping_edit_keywords(request, glossid):
 
     original_gloss_senses = get_state_of_gloss_senses(gloss)
 
-    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all()
     # for some reason these assignments need to be done in the same way in all functions
     dataset_languages_ids = [str(lang.id)
                              for lang in dataset_languages_objects]
@@ -246,7 +246,7 @@ def mapping_edit_keywords(request, glossid):
 
 def delete_empty_senses(gloss):
 
-    translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    translation_languages = gloss.lemma.dataset.translation_languages.all()
     gloss_senses = GlossSense.objects.filter(gloss=gloss).order_by('order')
     order_sense_dict = dict()
     for glosssense in gloss_senses:
@@ -304,7 +304,7 @@ def mapping_group_keywords(request, glossid):
 
     original_gloss_senses = get_state_of_gloss_senses(gloss)
 
-    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all()
     # for some reason these assignments need to be done in the same way in all functions
     dataset_languages_ids = [str(lang.id)
                              for lang in dataset_languages_objects]
@@ -413,7 +413,7 @@ def gloss_to_keywords_senses_groups_matrix(gloss):
     sense_numbers = [gs.order for gs in gloss_senses]
     senses_groups = dict()
     keywords_translations = dict()
-    translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    translation_languages = gloss.lemma.dataset.translation_languages.all()
     for language in translation_languages:
         senses_groups[str(language.id)] = dict()
         keywords_translations[str(language.id)] = []
@@ -441,7 +441,7 @@ def mapping_add_keyword(request, glossid):
 
     gloss = get_object_or_404(Gloss, id=glossid)
 
-    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all()
     # for some reason these assignments need to be done in the same way in all functions
     dataset_languages_ids = [str(lang.id)
                              for lang in dataset_languages_objects]
@@ -576,7 +576,7 @@ def mapping_edit_senses_matrix(request, glossid):
 
     original_gloss_senses = get_state_of_gloss_senses(gloss)
 
-    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    dataset_languages_objects = gloss.lemma.dataset.translation_languages.all()
     # for some reason these assignments need to be done in the same way in all functions
     dataset_languages_ids = [str(lang.id)
                              for lang in dataset_languages_objects]

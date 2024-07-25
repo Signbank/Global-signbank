@@ -23,7 +23,7 @@ def add_sentence_to_revision_history(request, gloss, old_value, new_value):
 def create_empty_sense(gloss, order, erase=False):
 
     # make a new sense and translations for it
-    translation_languages = gloss.lemma.dataset.translation_languages.all().order_by('id')
+    translation_languages = gloss.lemma.dataset.translation_languages.all()
     sense_translations = dict()
 
     existing_senses = GlossSense.objects.filter(gloss=gloss, order=order)

@@ -1714,7 +1714,7 @@ class GlossRelationsDetailView(DetailView):
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
-        for language in gl.dataset.translation_languages.all().order_by('id'):
+        for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
             except ObjectDoesNotExist:
@@ -1722,7 +1722,7 @@ class GlossRelationsDetailView(DetailView):
             context['annotation_idgloss'][language] = annotation_text
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         context['sensetranslations_per_language'] = senses_per_language(gl)
@@ -6352,7 +6352,7 @@ class KeywordListView(ListView):
             feedback_message = _('Please select a single dataset to view keywords.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
 
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = list(dataset_languages)
 
         new_text_labels = {str(lang.id): lang.name + ' ' + gettext("Text") for lang in dataset_languages}
@@ -6412,7 +6412,7 @@ class KeywordListView(ListView):
         get = self.request.GET
 
         # this needs to be sorted for jquery purposes
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         # exclude morphemes
         if not glosses_of_datasets:
@@ -6554,7 +6554,7 @@ class ToggleListView(ListView):
         if not selected_datasets or selected_datasets.count() > 1:
             dataset_languages = Language.objects.filter(id=get_default_language_id())
         else:
-            dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+            dataset_languages = get_dataset_languages(selected_datasets)
 
         context['dataset_languages'] = dataset_languages
 
@@ -6621,7 +6621,7 @@ class ToggleListView(ListView):
 
         # multilingual
         # this needs to be sorted for jquery purposes
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         if get:
             glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
