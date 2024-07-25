@@ -436,7 +436,7 @@ def try_code(request, pk):
     context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
     try:
-        gloss = get_object_or_404(Gloss, pk=pk)
+        gloss = get_object_or_404(Gloss, pk=pk, archived=False)
     except ObjectDoesNotExist:
         gloss = None
 
@@ -1884,7 +1884,7 @@ def proposed_new_signs(request):
 
 
 def create_citation_image(request, pk):
-    gloss = get_object_or_404(Gloss, pk=pk)
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
     try:
         gloss.create_citation_image()
     except:
@@ -1911,7 +1911,7 @@ def add_image(request):
         if form.is_valid():
 
             gloss_id = form.cleaned_data['gloss_id']
-            gloss = get_object_or_404(Gloss, pk=gloss_id)
+            gloss = get_object_or_404(Gloss, pk=gloss_id, archived=False)
 
             imagefile = form.cleaned_data['imagefile']
             extension = '.'+imagefile.name.split('.')[-1]
@@ -1996,7 +1996,7 @@ def delete_image(request, pk):
     if request.method == "POST":
 
         # deal with any existing video for this sign
-        gloss = get_object_or_404(Gloss, pk=pk)
+        gloss = get_object_or_404(Gloss, pk=pk, archived=False)
         image_path = gloss.get_image_path()
         full_image_path = settings.WRITABLE_FOLDER + os.sep + image_path
         default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)

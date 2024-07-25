@@ -103,7 +103,7 @@ def mapping_edit_keywords(request, glossid):
     if not request.user.has_perm('dictionary.change_gloss'):
         return {}
 
-    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     original_gloss_senses = get_state_of_gloss_senses(gloss)
 
@@ -298,7 +298,7 @@ def mapping_group_keywords(request, glossid):
     if not request.user.has_perm('dictionary.change_gloss'):
         return {}
 
-    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     original_gloss_senses = get_state_of_gloss_senses(gloss)
 
@@ -435,7 +435,7 @@ def mapping_add_keyword(request, glossid):
     if not request.user.has_perm('dictionary.change_gloss'):
         return {}
 
-    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     dataset_languages = [str(lang.id)
                          for lang in gloss.lemma.dataset.translation_languages.all().order_by('id')]
@@ -566,7 +566,7 @@ def mapping_edit_senses_matrix(request, glossid):
     if not request.user.has_perm('dictionary.change_gloss'):
         return {}
 
-    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     original_gloss_senses = get_state_of_gloss_senses(gloss)
 
@@ -751,7 +751,7 @@ def mapping_toggle_sense_tag(request, glossid):
     if not request.user.has_perm('dictionary.change_gloss'):
         return {}
 
-    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     current_tags = [ tagged_item.tag_id for tagged_item in TaggedItem.objects.filter(object_id=gloss.id)]
 

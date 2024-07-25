@@ -717,7 +717,7 @@ def update_gloss(request, glossid):
     if not request.method == "POST":
         return HttpResponseForbidden("Gloss Update method must be POST")
 
-    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
@@ -1651,7 +1651,7 @@ def add_relationtoforeignsign(request):
 def add_definition(request, glossid):
     """Add a new definition for this gloss"""
 
-    thisgloss = get_object_or_404(Gloss, id=glossid)
+    thisgloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     if thisgloss.is_morpheme():
         gloss_or_morpheme = thisgloss.morpheme
@@ -1696,7 +1696,7 @@ def add_morphology_definition(request):
     # This is now a gloss ID
     morpheme = Gloss.objects.get(id=morpheme_id)
 
-    thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
+    thisgloss = get_object_or_404(Gloss, pk=parent_gloss, archived=False)
     role = get_object_or_404(FieldChoice, pk=role_id, field='MorphologyType')
 
     # create definition, default to not published
@@ -1718,7 +1718,7 @@ def add_morpheme_definition(request, glossid):
     form = GlossMorphemeForm(request.POST)
 
     # Get the glossid at any rate
-    thisgloss = get_object_or_404(Gloss, pk=glossid)
+    thisgloss = get_object_or_404(Gloss, pk=glossid, archived=False)
 
     # check availability of morpheme before continuing
     if form.data['morph_id'] == "":
@@ -1767,7 +1767,7 @@ def add_blend_definition(request, glossid):
     form = GlossBlendForm(request.POST)
 
     # Get the glossid at any rate
-    thisgloss = get_object_or_404(Gloss, pk=glossid)
+    thisgloss = get_object_or_404(Gloss, pk=glossid, archived=False)
 
     # check availability of morpheme before continuing
     if form.data['blend_id'] == "":
@@ -2666,7 +2666,7 @@ def add_tag(request, glossid):
     if not request.method == "POST":
         return HttpResponseForbidden("Add gloss tag method must be POST")
 
-    thisgloss = get_object_or_404(Gloss, id=glossid)
+    thisgloss = get_object_or_404(Gloss, id=glossid, archived=False)
     tags_label = 'Tags'
     form = TagUpdateForm(request.POST)
 
@@ -3452,7 +3452,7 @@ def assign_lemma_dataset_to_gloss(request, glossid):
         messages.add_message(request, messages.ERROR, _('You do not have permission to change glosses.'))
         return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
 
-    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     lemma_get = request.POST.get('lemmaid', '')
     if not lemma_get:
@@ -3557,7 +3557,7 @@ def add_affiliation(request, glossid):
     if not form.is_valid():
         return JsonResponse({})
 
-    thisgloss = get_object_or_404(Gloss, id=glossid)
+    thisgloss = get_object_or_404(Gloss, id=glossid, archived=False)
     tags_label = 'Affiliation'
 
     deletetag = request.POST.get('delete', '')

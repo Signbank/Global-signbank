@@ -256,7 +256,7 @@ def glossfeedback(request, glossid):
     if 'morpheme' in request_path:
         morpheme = get_object_or_404(Morpheme, id=glossid)
     else:
-        gloss = get_object_or_404(Gloss, id=glossid)
+        gloss = get_object_or_404(Gloss, id=glossid, archived=False)
     return recordsignfeedback(request, glossid)
 
 
@@ -267,7 +267,7 @@ def morphemefeedback(request, glossid):
     if 'morpheme' in request_path:
         morpheme = get_object_or_404(Morpheme, id=glossid)
     else:
-        gloss = get_object_or_404(Gloss, id=glossid)
+        gloss = get_object_or_404(Gloss, id=glossid, archived=False)
     return recordsignfeedback(request, glossid)
 
 
@@ -289,7 +289,7 @@ def recordsignfeedback(request, glossid):
         feedback_template = "feedback/morphemefeedback.html"
         redirect_page = settings.PREFIX_URL + '/dictionary/morpheme/' + str(glossid)
     else:
-        sign_or_morpheme = get_object_or_404(Gloss, id=glossid)
+        sign_or_morpheme = get_object_or_404(Gloss, id=glossid, archived=False)
         feedback_form = SignFeedbackForm(request.POST) if request.method == 'POST' else SignFeedbackForm()
         feedback_template = "feedback/signfeedback.html"
         redirect_page = settings.PREFIX_URL + '/dictionary/gloss/' + str(glossid)
