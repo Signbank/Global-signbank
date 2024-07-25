@@ -320,7 +320,7 @@ function toggle_create_sense(data) {
         var textareaID = 'sense_' + glossid + '_' + order + '_' + lang2char;
         var textareaName = 'sense_' + glossid + '_' + lang2char;
         var textareaCell = '<textarea id="' + textareaID + '" name = "' + textareaName + '" wrap="hard" maxlength="240" ' +
-                           '"type="textarea" data-order="' + order + '" cols="60" rows="8"></textarea>';
+                           '"type="textarea" data-order="' + order + '" cols="50" rows="8"></textarea>';
         cellTD.append(textareaCell);
         cellTD.append('</td>');
         row.append(cellTD);

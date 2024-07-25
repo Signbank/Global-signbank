@@ -338,7 +338,7 @@ textarea:focus {
     <thead>
       <tr>
           <th style="width:250px;">{% trans "Gloss" %}</th>
-          <th style="width:1000px;">{% trans "Fields" %}</th>
+          <th style="width:1100px;">{% trans "Fields" %}</th>
           <th style="width:500px;">{% trans "Quick Toggles" %}</th>
       </tr>
     </thead>
@@ -414,7 +414,7 @@ textarea:focus {
                     </tr>
             </table>
             </td>
-            <td style="width:1000px;">
+            <td style="width:1100px;">
             <table class="table-responsive" id="gloss_language_fields_{{gloss.id}}">
              {% csrf_token %}
              <tr style="height:20;">
@@ -474,7 +474,7 @@ textarea:focus {
                      <textarea id="sense_{{gloss.id}}_{{order}}_{{sense_lang}}"
                                name='sense_{{gloss.id}}_{{sense_lang}}' wrap="hard"
                                maxlength="240" type="textarea" data-order="{{order}}"
-                               cols="60" rows="8">{{sensetranslation}}</textarea>
+                               cols="50" rows="8">{{sensetranslation}}</textarea>
                  </td>
              {% endfor %}
              </tr>
