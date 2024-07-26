@@ -1,5 +1,5 @@
 from django.conf import empty
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed, Http404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -66,7 +66,7 @@ def gloss(request, glossid):
     # this is public view of a gloss
 
     try:
-        gloss = Gloss.objects.get(id=glossid)
+        gloss = Gloss.objects.get(id=glossid, archived=False)
     except ObjectDoesNotExist:
         raise Http404
 
@@ -256,7 +256,7 @@ def missing_video_list():
     """A list of signs that don't have an
     associated video file"""
 
-    glosses = Gloss.objects.filter(inWeb__exact=True)
+    glosses = Gloss.objects.filter(inWeb__exact=True, archived=False)
     for gloss in glosses:
         if not gloss.has_video():
             yield gloss
@@ -1230,7 +1230,7 @@ def import_csv_update(request):
                     lemmaidglosstranslations[language] = lemma_idgloss_value
             # updating glosses
             try:
-                gloss = Gloss.objects.select_related().get(pk=pk)
+                gloss = Gloss.objects.select_related().get(pk=pk, archived=False)
             except ObjectDoesNotExist as e:
 
                 e = 'Row ' + str(nl + 2) + ': Could not find gloss for Signbank ID '+str(pk)
@@ -1292,7 +1292,7 @@ def import_csv_update(request):
                 # when the database token csrfmiddlewaretoken is passed, there is no dot
                 continue
 
-            gloss = Gloss.objects.select_related().get(pk=pk)
+            gloss = Gloss.objects.select_related().get(pk=pk, archived=False)
 
             # This is no longer allowed. The column is skipped.
             # Updating the lemma idgloss is a special procedure, not only because it has relations to other parts of
@@ -1713,7 +1713,7 @@ def import_csv_lemmas(request):
                     continue
             elif 'Signbank ID' in value_dict.keys():
                 try:
-                    gloss = Gloss.objects.select_related().get(pk=pk)
+                    gloss = Gloss.objects.select_related().get(pk=pk, archived=False)
                     lemma = gloss.lemma
                     value_dict['Lemma ID'] = str(lemma.pk)
                 except ObjectDoesNotExist as e:
@@ -1850,7 +1850,7 @@ def recently_added_glosses(request):
         lang_attr_name = default_language_code
 
     recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
-    recent_glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets).filter(
+    recent_glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets, archived=False).filter(
         creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
         'creationDate')
 
@@ -1872,7 +1872,7 @@ def recently_added_glosses(request):
 def proposed_new_signs(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
-    proposed_or_new_signs = (Gloss.objects.filter(isNew=True) |
+    proposed_or_new_signs = (Gloss.objects.filter(isNew=True, archived=False) |
                              TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed")).order_by('creationDate').reverse()
     return render(request, 'dictionary/recently_added_glosses.html',
                   {'glosses': proposed_or_new_signs,
@@ -2137,7 +2137,7 @@ def find_and_save_variants(request):
                        })
 
     # first get all the glosses from the (single) selected dataset that match the syntactical variant pattern
-    variant_pattern_glosses = Gloss.objects.filter(lemma__dataset__in=selected_datasets,
+    variant_pattern_glosses = Gloss.objects.filter(lemma__dataset__in=selected_datasets, archived=False,
                                                    annotationidglosstranslation__text__regex=r"^(.*)\-([A-Z])$").distinct().order_by('lemma')
 
     # each of these, called the focus gloss, will have a row in a table in the template
@@ -2184,7 +2184,7 @@ def find_and_save_variants(request):
         query = queries.pop()
         for q in queries:
             query |= q
-        candidate_variants = Gloss.objects.filter(query).distinct().exclude(id=focus_gloss.id).exclude(
+        candidate_variants = Gloss.objects.filter(query).distinct().exclude(id=focus_gloss.id, archived=True).exclude(
             id__in=other_relation_objects).exclude(id__in=variant_relation_objects)
 
         if not candidate_variants:
@@ -2246,11 +2246,11 @@ def package(request):
             dataset = Dataset.objects.get(acronym=request.GET['dataset_name'])
         else:
             dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
-        available_glosses = Gloss.objects.filter(lemma__dataset=dataset)
+        available_glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False)
         inWebSet = False  # not necessary
     else:
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
-        available_glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True)
+        available_glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True, archived=False)
         inWebSet = True
 
     first_part_of_file_name = 'signbank_pa'
@@ -2340,7 +2340,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
             gloss_pk = int(filename.split('.')[-2].split('-')[-1])
 
             try:
-                if not Gloss.objects.get(pk=gloss_pk).inWeb:
+                if not Gloss.objects.get(pk=gloss_pk, archived=False).inWeb:
                     return HttpResponse(status=401)
             except Gloss.DoesNotExist:
                 return HttpResponse(status=401)
@@ -2395,7 +2395,7 @@ def show_glosses_with_no_lemma(request):
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    glosses_without_lemma = Gloss.objects.filter(lemma=None)
+    glosses_without_lemma = Gloss.objects.filter(lemma=None, archived=False)
     gloss_tuples = []
     for g in glosses_without_lemma:
         gloss_annotations = AnnotationIdglossTranslation.objects.filter(gloss=g)
@@ -2555,7 +2555,7 @@ def choice_lists(request):
 
                 else:
                     frequency_for_field = Gloss.objects.filter(
-                        lemma__dataset__in=selected_datasets).filter(**{filter: value}).count()
+                        lemma__dataset__in=selected_datasets, archived=False).filter(**{filter: value}).count()
 
                 if choice_list_field in all_choice_lists[field].keys():
                     all_choice_lists[field][choice_list_field] += ' ['+str(frequency_for_field)+']'
@@ -2572,7 +2572,7 @@ def choice_lists(request):
 
 def gloss_revision_history(request,gloss_pk):
 
-    gloss = Gloss.objects.get(pk=gloss_pk)
+    gloss = Gloss.objects.get(pk=gloss_pk, archived=False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -3027,7 +3027,7 @@ def import_csv_create_sentences(request):
             gloss_id = glosses_to_create[row]['gloss_pk']
 
             try:
-                gloss = Gloss.objects.get(id=int(gloss_id))
+                gloss = Gloss.objects.get(id=int(gloss_id), archived=False)
             except ObjectDoesNotExist:
                 # this is an error, this should have already been caught
                 e1 = 'Gloss not found: ' + gloss_id
@@ -3108,7 +3108,7 @@ def test_am_update_gloss(request, datasetid, glossid):
                        'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
     gloss_id = int(glossid)
-    gloss = Gloss.objects.filter(id=gloss_id, lemma__dataset=dataset).first()
+    gloss = Gloss.objects.filter(id=gloss_id, lemma__dataset=dataset, archived=False).first()
     if not gloss:
         translated_message = _('The gloss does not exist in the dataset.')
         return render(request, 'dictionary/warning.html',

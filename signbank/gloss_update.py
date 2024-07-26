@@ -575,7 +575,7 @@ def api_update_gloss(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    gloss = Gloss.objects.filter(id=gloss_id).first()
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
     if not gloss:
         errors[gettext("Gloss")] = gettext("Gloss not found.")

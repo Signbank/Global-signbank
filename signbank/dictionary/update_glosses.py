@@ -28,7 +28,7 @@ def mapping_toggle_tag(request, glossid, tagid):
     except TypeError:
         return {}
 
-    gloss = Gloss.objects.filter(id=gloss_id).first()
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
     if not gloss:
         return {}
@@ -83,7 +83,7 @@ def mapping_toggle_semanticfield(request, glossid, semanticfield):
     except TypeError:
         return {}
 
-    gloss = Gloss.objects.filter(id=gloss_id).first()
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
     if not gloss:
         return {}
@@ -129,7 +129,7 @@ def mapping_toggle_wordclass(request, glossid, wordclass):
     except TypeError:
         return {}
 
-    gloss = Gloss.objects.filter(id=gloss_id).first()
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
     if not gloss:
         return {}
@@ -178,7 +178,7 @@ def mapping_toggle_namedentity(request, glossid, namedentity):
     except TypeError:
         return {}
 
-    gloss = Gloss.objects.filter(id=gloss_id).first()
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
     if not gloss:
         return {}

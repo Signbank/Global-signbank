@@ -5401,7 +5401,7 @@ def sensetranslation_ajax_complete(request, dataset_id, language_code, q):
 def homonyms_ajax_complete(request, gloss_id):
 
     try:
-        this_gloss = Gloss.objects.get(id=gloss_id)
+        this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
         homonym_objects = this_gloss.homonym_objects()
     except ObjectDoesNotExist:
         homonym_objects = []
@@ -5433,7 +5433,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
     if language_code == "zh-hans":
         language_code = "zh"
 
-    this_gloss = Gloss.objects.get(id=gloss_id)
+    this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
     try:
         minimalpairs_objects = this_gloss.minimal_pairs_dict()
     except Exception as e:
@@ -5540,7 +5540,7 @@ def glosslist_ajax_complete(request, gloss_id):
             display_fields = json.loads(request.GET['display_fields'])
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
-    this_gloss = Gloss.objects.get(id=gloss_id)
+    this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
     default_language = this_gloss.lemma.dataset.default_language.language_code_2char
 
     # TO DO could use the following method to generate the column values
@@ -5768,7 +5768,7 @@ def senselistheader_ajax(request):
 
 def lemmaglosslist_ajax_complete(request, gloss_id):
 
-    this_gloss = Gloss.objects.get(id=gloss_id)
+    this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
 
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
@@ -6110,7 +6110,7 @@ class LemmaCreateView(CreateView):
 def create_lemma_for_gloss(request, glossid):
     print('create lemma for gloss')
     try:
-        gloss = Gloss.objects.get(id=glossid)
+        gloss = Gloss.objects.get(id=glossid, archived=False)
     except ObjectDoesNotExist:
         try:
             gloss = Morpheme.objects.get(id=glossid).gloss

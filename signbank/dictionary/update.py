@@ -330,7 +330,7 @@ def delete_examplesentence(request, senseid):
 
 def sort_sense(request, glossid, order, direction):
     order = int(order)
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     gloss_senses_matching_order = GlossSense.objects.filter(gloss=gloss, order=order).count()
     if gloss_senses_matching_order != 1:
         print('sort_sense: multiple or no match for order: ', glossid, str(order))
@@ -363,7 +363,7 @@ def sort_sense(request, glossid, order, direction):
 def sort_examplesentence(request, senseid, glossid, order, direction):
     order = int(order)
     sense = Sense.objects.get(id=senseid)
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     sense_examplesentences_matching_order = SenseExamplesentence.objects.filter(sense=sense, order=order).count()
     if sense_examplesentences_matching_order != 1:
         sense.reorder_examplesentences()
@@ -392,7 +392,7 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
 
 def add_sentence_video(request, glossid, examplesentenceid):
     template = 'dictionary/add_sentence_video.html'
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     languages = gloss.lemma.dataset.translation_languages.all()
     examplesentence = ExampleSentence.objects.get(id=examplesentenceid)
     context = {
@@ -579,7 +579,7 @@ def create_sense(request, glossid):
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
     # Make a dict of new values
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
     vals = {}
@@ -659,7 +659,7 @@ def delete_sense(request, glossid):
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
     
     sense = Sense.objects.get(id=request.POST['senseid'])
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
 
@@ -1570,12 +1570,12 @@ def add_relation(request):
     targetid = form.cleaned_data['targetid']
 
     try:
-        source = Gloss.objects.get(pk=int(sourceid))
+        source = Gloss.objects.get(pk=int(sourceid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
 
     try:
-        target = Gloss.objects.get(id=int(targetid))
+        target = Gloss.objects.get(id=int(targetid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
 
@@ -1605,12 +1605,12 @@ def variants_of_gloss(request):
     targetid = form.cleaned_data['targetid']
 
     try:
-        source = Gloss.objects.get(pk=int(sourceid))
+        source = Gloss.objects.get(pk=int(sourceid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
 
     try:
-        target = Gloss.objects.get(id=int(targetid))
+        target = Gloss.objects.get(id=int(targetid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
 
@@ -1638,7 +1638,7 @@ def add_relationtoforeignsign(request):
     other_lang_gloss = form.cleaned_data['other_lang_gloss']
 
     try:
-        gloss = Gloss.objects.get(pk=int(sourceid))
+        gloss = Gloss.objects.get(pk=int(sourceid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
 
@@ -1780,7 +1780,7 @@ def add_blend_definition(request, glossid):
         return HttpResponseRedirect('/')
 
     blend_id = form.cleaned_data['blend_id'] # This is a gloss ID now
-    blend = Gloss.objects.get(id=blend_id)
+    blend = Gloss.objects.get(id=blend_id, archived=False)
 
     if blend is not None:
         definition = BlendMorphology()
@@ -1898,7 +1898,7 @@ def update_handshape(request, handshapeid):
 
 def add_annotated_media(request, glossid):
     template = 'dictionary/add_annotated_sentence.html'
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     dataset = gloss.lemma.dataset
     languages = dataset.translation_languages.all()
     annotated_sentence_sources = AnnotatedSentenceSource.objects.filter(dataset=dataset)
@@ -1915,7 +1915,7 @@ def add_annotated_media(request, glossid):
 def edit_annotated_sentence(request, glossid, annotatedsentenceid):
     """View to pass context variables to the annotated sentence edit page"""
     template = 'dictionary/edit_annotated_sentence.html'
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     annotated_translations, annotated_contexts = {}, {}
     annotated_sentence = None
     annotated_sentence_sources = AnnotatedSentenceSource.objects.filter(dataset=gloss.lemma.dataset)
@@ -1949,7 +1949,7 @@ def save_edit_annotated_sentence(request):
         return HttpResponseForbidden("Annotated Sentence Edit method must be POST")
     
     redirect_url = request.POST.get('redirect')
-    gloss = Gloss.objects.get(id=request.POST.get('glossid'))
+    gloss = Gloss.objects.get(id=request.POST.get('glossid'), archived=False)
     annotated_sentence = AnnotatedSentence.objects.get(id=request.POST.get('annotatedsentenceid'))
     annotations = request.POST['feedbackdata']
 
@@ -2035,7 +2035,7 @@ def add_othermedia(request):
         # fallback to the requesting page
         return HttpResponseRedirect('/')
 
-    morpheme_or_gloss = Gloss.objects.get(id=request.POST['gloss'])
+    morpheme_or_gloss = Gloss.objects.get(id=request.POST['gloss'], archived=False)
 
     if morpheme_or_gloss.is_morpheme():
         gloss_or_morpheme = morpheme_or_gloss.morpheme
