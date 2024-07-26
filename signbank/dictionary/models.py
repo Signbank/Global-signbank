@@ -1553,7 +1553,7 @@ class Gloss(models.Model):
     @staticmethod
     def none_morpheme_objects():
         """Get all the GLOSS objects, but excluding the MORPHEME ones"""
-        return Gloss.objects.filter(morpheme=None)
+        return Gloss.objects.filter(morpheme=None, archived=False)
 
     def is_morpheme(self):
         """Test if this instance is a Morpheme or (just) a Gloss"""
@@ -1563,7 +1563,7 @@ class Gloss(models.Model):
         return "/dictionary/gloss/%s.html" % self.idgloss
 
     def lemma_group(self):
-        glosses_with_same_lemma_group = Gloss.objects.filter(idgloss__iexact=self.idgloss).exclude(pk=self.pk)
+        glosses_with_same_lemma_group = Gloss.objects.filter(idgloss__iexact=self.idgloss, archived=False).exclude(pk=self.pk)
 
         return glosses_with_same_lemma_group
 
@@ -1844,7 +1844,7 @@ class Gloss(models.Model):
         if merged_query_expression:
             # exclude glosses that have a relation to this gloss
             related_gloss_ids = [relation.target.id for relation in self.other_relations()]
-            pattern_variants = Gloss.objects.filter(merged_query_expression).exclude(id__in=related_gloss_ids).distinct()
+            pattern_variants = Gloss.objects.filter(archived=False).filter(merged_query_expression).exclude(id__in=related_gloss_ids).distinct()
         else:
             pattern_variants = [self]
         return pattern_variants
@@ -3144,7 +3144,7 @@ class Dataset(models.Model):
 
     def count_glosses(self):
 
-        count_glosses = Gloss.objects.filter(lemma__dataset_id=self.id).count()
+        count_glosses = Gloss.objects.filter(lemma__dataset_id=self.id, archived=False).count()
 
         return count_glosses
 
@@ -3233,7 +3233,7 @@ class Dataset(models.Model):
                     variable_column_query = 'semField__machine_value__in'
                     try:
                         semantic_field = [sf.machine_value for sf in SemanticField.objects.filter(name__exact=fieldchoice.name)]
-                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self, archived=False,
                                                                                          **{
                                                                                              variable_column_query: semantic_field}).count()
                     except ObjectDoesNotExist:
@@ -3243,7 +3243,7 @@ class Dataset(models.Model):
                     variable_column_query = 'derivHist__machine_value__in'
                     try:
                         derivation_field = [sf.machine_value for sf in DerivationHistory.objects.filter(name__exact=fieldchoice.name)]
-                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self, archived=False,
                                                                                          **{
                                                                                              variable_column_query: derivation_field}).count()
                     except ObjectDoesNotExist:
@@ -3251,11 +3251,11 @@ class Dataset(models.Model):
                         continue
                 # empty values can be either 0 or else null
                 elif fieldchoice.machine_value == 0:
-                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(Q(lemma__dataset=self),
+                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(Q(lemma__dataset=self, archived=False),
                                                                                      Q(**{variable_column + '__isnull': True}) |
                                                                                      Q(**{variable_column: fieldchoice})).count()
                 else:
-                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self, archived=False,
                                                                                      **{variable_column: fieldchoice}).count()
 
             # the new frequencies for this field are added using the update method to insure the order is maintained
@@ -3434,7 +3434,7 @@ class LemmaIdgloss(models.Model):
         return ", ".join(translations)
 
     def num_gloss(self):
-        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk).count()
+        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk, archived=False).count()
         return glosses_with_this_lemma
 
 

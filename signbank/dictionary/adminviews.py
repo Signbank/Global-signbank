@@ -288,8 +288,7 @@ class GlossListView(ListView):
             # Only count the none-morpheme glosses
             # this branch is slower than the other one
             context['glosscount'] = Gloss.none_morpheme_objects().select_related('lemma').select_related(
-                'dataset').filter(lemma__dataset__in=context['selected_datasets'],
-                                  archived__exact=False).count()
+                'dataset').filter(lemma__dataset__in=context['selected_datasets']).count()
         else:
             context['glosscount'] = Gloss.objects.select_related('lemma').select_related(
                 'dataset').filter(lemma__dataset__in=context['selected_datasets'],
@@ -511,8 +510,7 @@ class GlossListView(ListView):
             if self.search_type == 'sign' or not self.request.user.is_authenticated:
                 # Get all the GLOSS items that are not member of the sub-class Morpheme
                 if SPEED_UP_RETRIEVING_ALL_SIGNS:
-                    qs = Gloss.none_morpheme_objects().select_related('lemma').prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets,
-                                                                                                                                                                                                         archived__exact=False)
+                    qs = Gloss.none_morpheme_objects().select_related('lemma').prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
                 else:
                     qs = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
             else:
@@ -527,8 +525,7 @@ class GlossListView(ListView):
                 qs = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
                                                                           archived__exact=False)
             else:
-                qs = Gloss.none_morpheme_objects().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
-                                                                                    archived__exact=False)
+                qs = Gloss.none_morpheme_objects().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
 
             qs = apply_language_filters_to_results(qs, self.query_parameters)
             qs = qs.distinct()
@@ -6435,8 +6432,7 @@ class KeywordListView(ListView):
         if not get:
             glosses_of_datasets = object_list
         else:
-            glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets,
-                                                                       archived__exact=False)
+            glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
 
         # data structure to store the query parameters in order to keep them in the form
         query_parameters = dict()
@@ -6632,8 +6628,7 @@ class ToggleListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
 
         if get:
-            glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets,
-                                                                       archived__exact=False)
+            glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
         else:
             recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
             glosses_of_datasets = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets,
