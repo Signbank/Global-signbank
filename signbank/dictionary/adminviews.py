@@ -14,7 +14,7 @@ from django.http import HttpResponse, HttpResponseRedirect, \
     QueryDict, JsonResponse, StreamingHttpResponse
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from django.utils.translation import override, gettext_lazy as _, activate
+from django.utils.translation import override, gettext, gettext_lazy as _, activate
 from django.shortcuts import *
 from django.contrib import messages
 from django.contrib.sites.models import Site
@@ -6501,6 +6501,213 @@ class KeywordListView(ListView):
                                    translated_senses,
                                    matrix_dimensions))
         return glossesXsenses
+
+
+class BatchEditView(ListView):
+
+    model = Gloss
+    template_name = 'dictionary/admin_batch_edit_view.html'
+    paginate_by = 25
+    search_type = 'sign'
+    query_parameters = dict()
+
+    def get(self, request, *args, **kwargs):
+        return super(BatchEditView, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(BatchEditView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+
+        if not selected_datasets or selected_datasets.count() > 1:
+            dataset_languages = Language.objects.filter(id=get_default_language_id())
+        else:
+            dataset_languages = get_dataset_languages(selected_datasets).order_by('-id')
+
+        context['dataset_languages'] = dataset_languages
+
+        language_2chars = [str(language.language_code_2char) for language in dataset_languages]
+        context['language_2chars'] = language_2chars
+
+        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
+
+        context['searchform'] = search_form
+
+        multiple_select_gloss_fields = ['tags']
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+
+        context['available_tags'] = [tag for tag in Tag.objects.all()]
+
+        similar_gloss_fields = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                                'contType', 'movSh', 'movDir', 'repeat', 'altern', 'relOriMov', 'relOriLoc', 'oriCh']
+        context['similar_gloss_fields'] = json.dumps(similar_gloss_fields)
+        similar_gloss_fields_labels = {}
+        for field in similar_gloss_fields:
+            similar_gloss_fields_labels[field] = Gloss.get_field(field).verbose_name
+        context['similar_gloss_fields_labels'] = similar_gloss_fields_labels
+
+        context['available_semanticfields'] = [semfield for semfield in SemanticField.objects.filter(
+            machine_value__gt=1).order_by('name')]
+
+        available_handedness = [fc for fc in FieldChoice.objects.filter(
+            field='Handedness', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_handedness += [fc for fc in FieldChoice.objects.filter(
+            field='Handedness', machine_value__gt=1).order_by('name')]
+        context['available_handedness'] = available_handedness
+
+        available_handshape = [hs for hs in Handshape.objects.filter(
+            machine_value__in=[0, 1]).order_by('machine_value')]
+        available_handshape += [hs for hs in Handshape.objects.filter(
+            machine_value__gt=1).order_by('name')]
+        context['available_handshape'] = available_handshape
+
+        available_handCh = [fc for fc in FieldChoice.objects.filter(
+            field='HandshapeChange', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_handCh += [fc for fc in FieldChoice.objects.filter(
+            field='HandshapeChange', machine_value__gt=1).order_by('name')]
+        context['available_handCh'] = available_handCh
+
+        available_relatArtic = [fc for fc in FieldChoice.objects.filter(
+            field='RelatArtic', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_relatArtic += [fc for fc in FieldChoice.objects.filter(
+            field='RelatArtic', machine_value__gt=1).order_by('name')]
+        context['available_relatArtic'] = available_relatArtic
+
+        available_locprim = [fc for fc in FieldChoice.objects.filter(
+            field='Location', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_locprim += [fc for fc in FieldChoice.objects.filter(
+            field='Location', machine_value__gt=1).order_by('name')]
+        context['available_locprim'] = available_locprim
+
+        available_contType = [fc for fc in FieldChoice.objects.filter(
+            field='ContactType', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_contType += [fc for fc in FieldChoice.objects.filter(
+            field='ContactType', machine_value__gt=1).order_by('name')]
+        context['available_contType'] = available_contType
+
+        available_movSh = [fc for fc in FieldChoice.objects.filter(
+            field='MovementShape', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_movSh += [fc for fc in FieldChoice.objects.filter(
+            field='MovementShape', machine_value__gt=1).order_by('name')]
+        context['available_movSh'] = available_movSh
+
+        available_movDir = [fc for fc in FieldChoice.objects.filter(
+            field='MovementDir', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_movDir += [fc for fc in FieldChoice.objects.filter(
+            field='MovementDir', machine_value__gt=1).order_by('name')]
+        context['available_movDir'] = available_movDir
+
+        available_boolean = [{'machine_value': 1, 'name': gettext("Yes")},
+                             {'machine_value': 0, 'name': gettext("No")}]
+        context['available_boolean'] = available_boolean
+
+        available_relOriMov = [fc for fc in FieldChoice.objects.filter(
+            field='RelOriMov', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_relOriMov += [fc for fc in FieldChoice.objects.filter(
+            field='RelOriMov', machine_value__gt=1).order_by('name')]
+        context['available_relOriMov'] = available_relOriMov
+
+        available_relOriLoc = [fc for fc in FieldChoice.objects.filter(
+            field='RelOriLoc', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_relOriLoc += [fc for fc in FieldChoice.objects.filter(
+            field='RelOriLoc', machine_value__gt=1).order_by('name')]
+        context['available_relOriLoc'] = available_relOriLoc
+
+        available_oriCh = [fc for fc in FieldChoice.objects.filter(
+            field='OriChange', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_oriCh += [fc for fc in FieldChoice.objects.filter(
+            field='OriChange', machine_value__gt=1).order_by('name')]
+        context['available_oriCh'] = available_oriCh
+
+        context['query_parameters'] = json.dumps(self.query_parameters)
+        query_parameters_keys = list(self.query_parameters.keys())
+        context['query_parameters_keys'] = json.dumps(query_parameters_keys)
+
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+        return context
+
+    def get_queryset(self):
+
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        if not selected_datasets or selected_datasets.count() > 1:
+            feedback_message = _('Please select a single dataset to use Batch Edit.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            return Gloss.objects.none()
+
+        if ('search_type' in self.request.session.keys() and
+                self.request.session['search_type'] != self.search_type):
+            feedback_message = _('Your query result is not glosses.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            return Gloss.objects.none()
+
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+            if len(search_results) > 0:
+                first_search_result = search_results[0]
+                first_gloss = Gloss.objects.filter(id__in=[first_search_result['id']]).first()
+                if first_search_result['href_type'] not in ['gloss']:
+                    search_results = []
+                if not first_gloss or first_gloss.lemma.dataset not in selected_datasets:
+                    search_results = []
+        else:
+            search_results = []
+
+        (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
+
+        glosses_of_dataset = object_list
+
+        get = self.request.GET
+
+        if not get:
+            return glosses_of_dataset
+
+        if not glosses_of_dataset:
+            return glosses_of_dataset
+
+        if 'tags[]' in get:
+            vals = get.getlist('tags[]')
+            if vals:
+                self.query_parameters['tags[]'] = vals
+                values = [int(v) for v in vals]
+                glosses_with_tag = list(
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
+                glosses_of_dataset = glosses_of_dataset.filter(id__in=glosses_with_tag)
+        if 'createdBy' in get and get['createdBy']:
+            get_value = get['createdBy']
+            self.query_parameters['createdBy'] = get_value.strip()
+            created_by_search_string = ' '.join(get_value.strip().split())  # remove redundant spaces
+            glosses_of_dataset = glosses_of_dataset.annotate(
+                created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
+                .filter(created_by__icontains=created_by_search_string)
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset = selected_datasets.first()
+
+        dataset_display_languages = []
+        for lang in dataset.translation_languages.all():
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        items = construct_scrollbar(glosses_of_dataset, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
+
+        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
+        self.request.session.modified = True
+
+        return glosses_of_dataset
 
 
 class ToggleListView(ListView):
