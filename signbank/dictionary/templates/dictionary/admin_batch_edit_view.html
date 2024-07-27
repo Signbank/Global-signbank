@@ -1,0 +1,1043 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Batch Edit{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+
+<script type='text/javascript'>
+var url = '{{PREFIX_URL}}';
+var saving_str = '{{saving_str|escapejs}}';
+var csrf_token = '{{csrf_token}}';
+var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+var query_parameters_keys = {{query_parameters_keys|safe}};
+var query_parameters_dict = {{query_parameters|safe}};
+var language_2chars = {{language_2chars|safe}};
+var similar_gloss_fields = {{similar_gloss_fields|safe}};
+var similar_gloss_fields_labels = {{similar_gloss_fields_labels|safe}};
+var number_of_matches_found = '{% trans "Number of Similar Videos" %}';
+</script>
+
+<script type='text/javascript' src="{{ STATIC_URL }}js/glosses_toggle_edit.js"></script>
+
+<script type='text/javascript'>
+$(document).ready(function() {
+
+    function makeMultipleSelect(fieldId,fieldVar) {
+        var target_pulldown = document.getElementById(fieldId);
+        if (!target_pulldown) { return; }
+        target_pulldown.setAttribute('multiple','multiple');
+        target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+        target_pulldown.setAttribute('name',fieldVar);
+        target_pulldown.style.width = '100%';
+    }
+
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = 'id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        makeMultipleSelect(this_id, this_var);
+     }
+
+     $('.js-example-basic-multiple').each(function() {
+         var thisId = this.id;
+         $(this).select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve',
+            placeholder: '',
+         });
+     });
+
+     $('.js-example-basic-multiple').val(null).trigger('change');
+
+     // initialize query parameters in multiple select fields
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = '#id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        if (query_parameters_keys.includes(this_var)) {
+            var query_initial = query_parameters_dict[this_var];
+            $(this_id).val(query_initial);
+            $(this_id).trigger('change');
+        };
+     }
+     $('.hover-shows-video').each(function() {
+        ready_videos(this);
+     });
+     $('[data-toggle="tooltip"]').tooltip();
+});
+</script>
+
+<script type='text/javascript'>
+// toggle the line-through on a button
+function do_toggle_line_through(el,id) {
+    var button_value = $(el).attr('data-value');
+    var button_id = '#' + id;
+    var button_status = $(button_id).css('text-decoration');
+    if ($(button_id).css('text-decoration-line') == 'none') {
+        $(button_id).css('text-decoration', 'line-through');
+        $(button_id).removeClass('similar');
+        $(button_id).css('color', 'grey');
+    } else {
+        $(button_id).css('text-decoration', 'none');
+        $(button_id).addClass('similar');
+        $(button_id).css('color', 'black');
+    };
+};
+
+// This function toggles the different field columns
+function do_toggle_field(el) {
+    var field_id = $(el).attr('data-value');
+    var gloss_id = $(el).attr('data-glossid');
+    do_toggle_line_through(el,'button_'+gloss_id+'_'+field_id);
+};
+
+function clearForm() {
+      $('input').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'radio' || this_type == 'button') { return; };
+        if (this_type == 'date') {
+            $(this).attr('value', "");
+        } else {
+            $(this).val('');
+        };
+      });
+     $('.js-example-basic-multiple').val(null).trigger('change');
+}
+
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            $(this).find('img').hide();
+            video.show();
+            video.get(0).play();
+        }
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            video.hide();
+            video.get(0).pause();
+            video.get(0).currentTime = 0;
+        }
+    });
+}
+</script>
+
+{% endblock %}
+
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/affiliation_tags.css">
+
+<style>
+.actions {
+    color: white !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.actionLabel {
+    border: 1px solid;
+    text-align: center;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: white;
+    margin: 0 0 0 0;
+}
+.actionLabel:hover {
+    text-decoration: none;
+}
+.actionLabel:active:focus {
+    text-decoration: none;
+    outline: none;
+}
+.actionButton {
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-color: Grey;
+    border-radius: 8px;
+    text-align: center;
+    color: Black;
+    background-color: white;
+}
+.actionButton:hover {
+    text-decoration: none;
+    background-color: LightGrey;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
+.saveButton {
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-color: Grey;
+    border-radius: 8px;
+    text-align: center;
+    color: White;
+    background-color: DodgerBlue;
+}
+.saveButton:hover {
+    text-decoration: none;
+    background-color: LightGrey;
+}
+.saveButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
+.tags-cell {
+    overflow-y: visible;
+    width: 255px;
+    box-sizing: inherit;
+    white-space: nowrap;
+}
+input {
+    height: 26px;
+    font-size: 14px;
+    padding: 0;
+}
+.span-cell {
+    padding: 1px;
+    height: auto;
+}
+.table-condensed {
+    border-collapse: no-collapse;
+    overflow-y: scroll;
+}
+.table-condensed td {
+    height: auto;
+}
+.modal-dialog {
+    width: 1200px;
+}
+.table.collapse.in {
+   display: table;
+}
+.panel-body {
+    display: table;
+}
+.table-toggles {
+    table-layout:fixed;
+    overflow:auto;
+}
+.panel-toggles {
+    margin: 0 important!;
+    width: inherit;
+}
+input[type="text"] {
+    border: none;
+}
+input:focus {
+    outline: 1px solid red;
+}
+input[type="button"]:focus {
+    outline: none;
+}
+.similarButton.actionButton {
+    padding: 0px 8px 12px 8px;
+    height: 30px;
+}
+textarea {
+    border: none;
+}
+textarea:focus {
+    outline: 1px solid red;
+}
+.tagAFF {
+    margin-left: 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock" style="padding-top: 30px;">
+
+    <div id="keywordsSenses">
+    <h3>{% trans "Batch Edit" %}</h3>
+
+        <div id='searchform_outer' class='well '>
+        <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/batch_edit_view/'>
+        {% csrf_token %}
+        <div class="panel panel-default">
+            <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
+                <span class="hasTooltip">
+                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true"
+                          data-toggle="tooltip" data-placement="bottom" data-html="true" title=""></span>
+                    <span class="isTooltip">{% trans "On initial view, the most recent query results are shown." %}</span>
+                </span>
+            </div>
+                <div id='query-area' class='collapse'>
+                <div id='searchformwell' class='well'>
+
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='' >
+                    <input name='search_type' class='form-control' value='filter'>
+                </div>
+
+                <div class="panel panel-default">
+                  <div class="panel-heading" data-toggle="collapse"
+                           data-target="#pub_search">{% trans "Search by Attributes" %}</div>
+
+                      <div id='pub_search' class='collapse'>
+                      <table class='table table-condensed' style="width:65%;">
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
+                          <td style="width:600px;">{{searchform.tags}}</td>
+                      </tr>
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_createdBy'>{% trans "Created By" %}</label></td>
+                          <td style="width:600px;">{{searchform.createdBy}}</td>
+                      </tr>
+                      </table>
+                      </div>
+                    </div>
+                </div>
+        <div class='btn-group' style="margin-bottom: 20px; margin-left: 20px;">
+        <input class='btn btn-primary' type='submit' name="filter" value='{% trans "Apply Filter" %}'>
+        <input class='btn btn-primary' type='reset' onclick="clearForm();"
+                       value='{% trans "Reset" %}'>
+        </div>
+        </div>
+        </div>
+
+        </form>
+        </div>
+
+<div>
+{% load underscore_to_space %}
+{% if not object_list %}
+    <p>{% trans "No glosses found. Please construct a new query:" %}
+        <span><a class="btn btn-default"
+                 href='{{PREFIX_URL}}/signs/search/'>{% trans "Search" %}</a></span></p>
+{% else %}
+    <table class='table table-condensed table-toggles'
+       style="width:100%; overflow-y:scroll;">
+    <thead>
+      <tr>
+          <th style="width:250px;">{% trans "Gloss" %}</th>
+          <th style="width:1100px;">{% trans "Fields" %}</th>
+          <th style="width:500px;">{% trans "Quick Toggles" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for gloss in object_list %}
+        <tr style="height:auto;">
+            <td>
+            <table>
+            <tr>
+            <td>{% if gloss.get_image_path %}
+            {% url 'dictionary:protected_media' '' as protected_media_url %}
+            <div class="thumbnail_container">
+            <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
+            <div id='glossvideo_{{gloss.id}}' class="hover-shows-video">
+                <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_url}}">
+
+                {% if gloss.has_video %}
+                <video id="videoplayer" class="thumbnail-video"
+                       src="{{protected_media_url}}{{gloss.get_video_url}}"  type="video/mp4" muted="muted"></video>
+                {% endif %}
+            </div>
+            </a>
+            </div>
+            {% endif %}
+            </td>
+            </tr>
+                <tr>
+                    <td id='gloss_default_annotation_link_{{gloss.id}}'>
+                    <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
+                    {{gloss|get_default_annotation_idgloss_translation}}</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    {% load affiliation_tags %}
+                      {% with gloss|get_affiliations_for_gloss as aff_list %}
+                      {% if aff_list %}
+                          <ul class='afflist'>
+                          {% for aff in aff_list %}
+                            <li class='affli' id="gloss_affiliation_{{aff.id}}">
+                               <div class='aff tagAFF' style="background:{{aff.field_color}};border-color:{{aff.field_color}};">
+                                 <span class='affname'>{{aff.acronym}}</span>
+                               </div>
+                            </li>
+                          </ul>
+                        {% endfor %}
+                      {% endif %}
+                      {% endwith %}
+                    </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        {% for creator in gloss.creator.all %}
+                            {% if forloop.last %}
+                                {{creator.first_name}} {{creator.last_name}}
+                            {% else %}
+                                {{creator.first_name}} {{creator.last_name}},
+                            {% endif %}
+                        {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>{{gloss.creationDate}}</td>
+                    </tr>
+                    <tr>
+                        {% tags_for_object gloss as tag_list %}
+                        <td class="field_tags" style="width:300px;padding-left:10px;">
+                            <div class="tags-cell"
+                                 id="tags_cell_{{gloss.id}}">{% for tag in tag_list %}
+                                <span class='tag'>{{tag.name|underscore_to_space}}</span> {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+            </table>
+            </td>
+            <td style="width:1100px;">
+            <table class="table-responsive" id="gloss_language_fields_{{gloss.id}}">
+             {% csrf_token %}
+             <tr style="height:20;">
+             {% for dataset_lang in dataset_languages %}
+                  <th id="edit_gloss_lemma_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
+                      style="width:500px;">
+                     {% trans "Lemma" %} ({{dataset_lang.name}})
+                 </th>
+             {% endfor %}
+             </tr>
+             <tr style="height:20;">
+             {% for dataset_lang in dataset_languages %}
+             {% with gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
+                 <td id="edit_gloss_lemma_value_{{gloss.id}}_{{dataset_lang.language_code_2char}}">
+                     <input id="lemma_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
+                            name='lemma_{{gloss.id}}_{{dataset_lang.language_code_2char}}'
+                            maxlength="80" type="text" value="{{lemmaidglosstranslation}}"
+                            size="50" >
+                 </td>
+             {% endwith %}
+             {% endfor %}
+             </tr>
+             <tr>
+             {% for dataset_lang in dataset_languages %}
+                 <th id="edit_gloss_annotation_header_{{gloss.id}}_{{dataset_lang.language_code_2char}}" style="width:500px;">
+                     {% trans "Annotation" %} ({{dataset_lang.name}})
+                 </th>
+             {% endfor %}
+             </tr>
+             <tr>
+             {% for dataset_lang in dataset_languages %}
+             {% with gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+                 <td id="edit_gloss_annotation_value_{{gloss.id}}_{{dataset_lang.language_code_2char}}">
+                     <input id="annotation_{{gloss.id}}_{{dataset_lang.language_code_2char}}"
+                            name='annotation_{{gloss.id}}_{{dataset_lang.language_code_2char}}'
+                            maxlength="80" type="text" value="{{annotationidglosstranslation}}"
+                            size="50" >
+                 </td>
+             {% endwith %}
+             {% endfor %}
+             </tr>
+             {% with gloss|get_senses_mapping as senses_mapping %}
+             {% if senses_mapping %}
+             <tr>
+                 {% for dataset_lang in dataset_languages %}
+                 <th id="edit_gloss_sense_header_{{gloss.id}}_{{order}}_{{dataset_lang.language_code_2char}}"
+                     style="width:500px;">
+                     {% trans "Senses" %} ({{dataset_lang.name}})
+                 </th>
+                 {% endfor %}
+             </tr>
+             {% for order, translations in senses_mapping.items %}
+             <tr style="height:52px;">
+             {% for sense_lang, sensetranslation in translations.items %}
+                 <td id="edit_gloss_sense_value_{{gloss.id}}_{{order}}_{{sense_lang}}">
+                     <div>{{order}}.</div>
+                     <textarea id="sense_{{gloss.id}}_{{order}}_{{sense_lang}}"
+                               name='sense_{{gloss.id}}_{{sense_lang}}' wrap="hard"
+                               maxlength="240" type="textarea" data-order="{{order}}"
+                               cols="50" rows="8">{{sensetranslation}}</textarea>
+                 </td>
+             {% endfor %}
+             </tr>
+             {% endfor %}
+             {% endif %}
+             {% endwith %}
+    </table>
+    <div class="panel panel-default panel-toggles" style="padding-top:5px;">
+    <div class='panel-heading' data-toggle='collapse'
+         data-target='#toggle_gloss_phonology_panel_{{gloss.id}}'>{% trans "Phonology" %}
+    </div>
+    <div id='toggle_gloss_phonology_panel_{{gloss.id}}' class="panel-collapse collapse">
+    <div class="panel-body" style="display:inline-block;">
+    <table class="table-responsive">
+             {% csrf_token %}
+             <tr style="height:26px;">
+                <th style="width:250px;">{% trans "Handedness" %}</th>
+                <td class="field_handedness" style="width:250px;">
+                <div class="handedness-cell"
+                     id="handedness_cell_{{gloss.id}}"><span class='handedness'>{% if gloss.handedness %}{{gloss.handedness.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+
+             <tr style="height:26px;">
+                <th>{% trans "Strong Hand" %}</th>
+                <td class="field_domhndsh" style="width:100px;">
+                <div class="domhndsh-cell"
+                     id="domhndsh_cell_{{gloss.id}}"><span class='domhndsh'>{% if gloss.domhndsh %}{{gloss.domhndsh.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+
+             <tr style="height:26px;">
+                <th>{% trans "Weak Hand" %}</th>
+                <td class="field_subhndsh" style="width:100px;">
+                <div class="subhndsh-cell"
+                     id="subhndsh_cell_{{gloss.id}}"><span class='subhndsh'>{% if gloss.subhndsh %}{{gloss.subhndsh.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Handshape Change" %}</th>
+                <td class="field_handCh" style="width:100px;">
+                <div class="handCh-cell"
+                     id="handCh_cell_{{gloss.id}}"><span class='handCh'>{% if gloss.handCh %}{{gloss.handCh.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Relation between Articulators" %}</th>
+                <td class="field_relatArtic" style="width:100px;">
+                <div class="relatArtic-cell"
+                     id="relatArtic_cell_{{gloss.id}}"><span class='relatArtic'>{% if gloss.relatArtic %}{{gloss.relatArtic.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Location" %}</th>
+                <td class="field_locprim" style="width:100px;">
+                <div class="locprim-cell"
+                     id="locprim_cell_{{gloss.id}}"><span class='locprim'>{% if gloss.locprim %}{{gloss.locprim.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Contact Type" %}</th>
+                <td class="field_contType" style="width:100px;">
+                <div class="contType-cell"
+                     id="contType_cell_{{gloss.id}}"><span class='contType'>{% if gloss.contType %}{{gloss.contType.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Movement Shape" %}</th>
+                <td class="field_movSh" style="width:100px;">
+                <div class="movSh-cell"
+                     id="movSh_cell_{{gloss.id}}"><span class='movSh'>{% if gloss.movSh %}{{gloss.movSh.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Movement Direction" %}</th>
+                <td class="field_movDir" style="width:100px;">
+                <div class="movDir-cell"
+                     id="movDir_cell_{{gloss.id}}"><span class='movDir'>{% if gloss.movDir %}{{gloss.movDir.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Repeated Movement" %}</th>
+                <td class="field_repeat" style="width:100px;">
+                <div class="repeat-cell"
+                     id="repeat_cell_{{gloss.id}}"><span class='repeat'>{% if gloss.repeat %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Alternating Movement" %}</th>
+                <td class="field_altern" style="width:100px;">
+                <div class="altern-cell"
+                     id="altern_cell_{{gloss.id}}"><span class='altern'>{% if gloss.altern %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Relative Orientation: Movement" %}</th>
+                <td class="field_relOriMov" style="width:100px;">
+                <div class="relOriMov-cell"
+                     id="relOriMov_cell_{{gloss.id}}"><span class='relOriMov'>{% if gloss.relOriMov %}{{gloss.relOriMov.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Relative Orientation: Location" %}</th>
+                <td class="field_relOriLoc" style="width:100px;">
+                <div class="relOriLoc-cell"
+                     id="relOriLoc_cell_{{gloss.id}}"><span class='relOriLoc'>{% if gloss.relOriLoc %}{{gloss.relOriLoc.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+             <tr style="height:26px;">
+                <th>{% trans "Orientation Change" %}</th>
+                <td class="field_oriCh" style="width:100px;">
+                <div class="oriCh-cell"
+                     id="oriCh_cell_{{gloss.id}}"><span class='oriCh'>{% if gloss.oriCh %}{{gloss.oriCh.name}}{% endif %}</span>
+                </div>
+                </td>
+             </tr>
+            </table>
+            </div>
+            </div>
+            </div>
+            </td>
+            <td style="width:500px;">
+                <div id="toggles_{{gloss.id}}" class='panel-group'>
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles_{{gloss.id}}"
+                     data-target='#toggle_language_fields_panel_{{gloss.id}}'>{% trans "TEXT FIELDS" %}
+                </div>
+                <div id='toggle_language_fields_panel_{{gloss.id}}' class="panel-collapse collapse in">
+                <div class="panel-body" style="display:inline-block;">
+                <div>
+                <span>
+                <button id='quick_language_fields_btn_{{gloss.id}}' class="quick_language_fields btn saveButton"
+                        name='quick_language_fields_{{gloss.id}}'
+                        value='{{gloss.id}}' style="height:36px;"
+                        type="submit" >{% trans "Check Constraints & Save Changes" %}
+                </button>
+                </span>
+                 <p id="errors_{{gloss.id}}"></p>
+                 <p id="status_{{gloss.id}}"></p>
+                </div>
+                <div>
+                <span>
+                <button id='quick_create_sense_btn_{{gloss.id}}' class="quick_create_sense btn actionButton"
+                        name='quick_create_sense_{{gloss.id}}'
+                        value='{{gloss.id}}' style="height:36px;"
+                        type="submit" >{% trans "Create Sense" %}
+                </button>
+                </span>
+                </div>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles_{{gloss.id}}"
+                     data-target='#toggle_tags_panel_{{gloss.id}}'>{% trans "TAGS" %}
+                </div>
+                <div id='toggle_tags_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <span>
+                {% for tag in available_tags %}
+                <button id='quick_tag_btn_{{gloss.id}}' class="quick_tag btn actionButton"
+                        name='quick_tag_{{gloss.id}}'
+                        value='{{gloss.id}}' data-tagname='{{tag.id}}' style="height:36px;"
+                        type="submit" >{{tag.name|underscore_to_space}}
+                </button>
+                {% endfor %}
+                </span>
+                </div>
+                </div>
+                </div>
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles_{{gloss.id}}"
+                     data-target='#toggle_phonology_panel_{{gloss.id}}'>{% trans "PHONOLOGY" %}
+                </div>
+                <div id='toggle_phonology_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div id="phonology_{{gloss.id}}" class='panel-group'>
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_handedness_panel_{{gloss.id}}'>{% trans "Handedness" %}
+                </div>
+                <div id='toggle_handedness_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_handedness %}
+                <button id='quick_handedness_btn_{{gloss.id}}' class="quick_handedness btn actionButton"
+                        name='quick_handedness_{{gloss.id}}'
+                        value='{{gloss.id}}' data-handedness='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_domhndsh_panel_{{gloss.id}}'>{% trans "Strong Hand" %}
+                </div>
+                <div id='toggle_domhndsh_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_handshape %}
+                <button id='quick_domhndsh_btn_{{gloss.id}}' class="quick_domhndsh btn actionButton"
+                        name='quick_domhndsh_{{gloss.id}}'
+                        value='{{gloss.id}}' data-domhndsh='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_subhndsh_panel_{{gloss.id}}'>{% trans "Weak Hand" %}
+                </div>
+                <div id='toggle_subhndsh_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_handshape %}
+                <button id='quick_subhndsh_btn_{{gloss.id}}' class="quick_subhndsh btn actionButton"
+                        name='quick_subhndsh_{{gloss.id}}'
+                        value='{{gloss.id}}' data-subhndsh='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_handCh_panel_{{gloss.id}}'>{% trans "Handshape Change" %}
+                </div>
+                <div id='toggle_handCh_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_handCh %}
+                <button id='quick_handCh_btn_{{gloss.id}}' class="quick_handCh btn actionButton"
+                        name='quick_handCh_{{gloss.id}}'
+                        value='{{gloss.id}}' data-handCh='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_relatArtic_panel_{{gloss.id}}'>{% trans "Relation between Articulators" %}
+                </div>
+                <div id='toggle_relatArtic_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_relatArtic %}
+                <button id='quick_relatArtic_btn_{{gloss.id}}' class="quick_relatArtic btn actionButton"
+                        name='quick_relatArtic_{{gloss.id}}'
+                        value='{{gloss.id}}' data-relatArtic='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_locprim_panel_{{gloss.id}}'>{% trans "Location" %}
+                </div>
+                <div id='toggle_locprim_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_locprim %}
+                <button id='quick_locprim_btn_{{gloss.id}}' class="quick_locprim btn actionButton"
+                        name='quick_locprim_{{gloss.id}}'
+                        value='{{gloss.id}}' data-locprim='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_contType_panel_{{gloss.id}}'>{% trans "Contact Type" %}
+                </div>
+                <div id='toggle_contType_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_contType %}
+                <button id='quick_contType_btn_{{gloss.id}}' class="quick_contType btn actionButton"
+                        name='quick_contType_{{gloss.id}}'
+                        value='{{gloss.id}}' data-contType='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_movSh_panel_{{gloss.id}}'>{% trans "Movement Shape" %}
+                </div>
+                <div id='toggle_movSh_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_movSh %}
+                <button id='quick_movSh_btn_{{gloss.id}}' class="quick_movSh btn actionButton"
+                        name='quick_movSh_{{gloss.id}}'
+                        value='{{gloss.id}}' data-movSh='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_movDir_panel_{{gloss.id}}'>{% trans "Movement Direction" %}
+                </div>
+                <div id='toggle_movDir_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_movDir %}
+                <button id='quick_movDir_btn_{{gloss.id}}' class="quick_movDir btn actionButton"
+                        name='quick_movDir_{{gloss.id}}'
+                        value='{{gloss.id}}' data-movDir='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_repeat_panel_{{gloss.id}}'>{% trans "Repeated Movement" %}
+                </div>
+                <div id='toggle_repeat_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for ab in available_boolean %}
+                <button id='quick_repeat_btn_{{gloss.id}}' class="quick_repeat btn actionButton"
+                        name='quick_repeat_{{gloss.id}}'
+                        value='{{gloss.id}}' data-repeat='{{ab.machine_value}}' style="height:36px;"
+                        type="submit" >{{ab.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_altern_panel_{{gloss.id}}'>{% trans "Alternating Movement" %}
+                </div>
+                <div id='toggle_altern_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for ab in available_boolean %}
+                <button id='quick_altern_btn_{{gloss.id}}' class="quick_altern btn actionButton"
+                        name='quick_altern_{{gloss.id}}'
+                        value='{{gloss.id}}' data-altern='{{ab.machine_value}}' style="height:36px;"
+                        type="submit" >{{ab.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_relOriMov_panel_{{gloss.id}}'>{% trans "Relative Orientation: Movement" %}
+                </div>
+                <div id='toggle_relOriMov_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_relOriMov %}
+                <button id='quick_relOriMov_btn_{{gloss.id}}' class="quick_relOriMov btn actionButton"
+                        name='quick_relOriMov_{{gloss.id}}'
+                        value='{{gloss.id}}' data-relOriMov='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_relOriLoc_panel_{{gloss.id}}'>{% trans "Relative Orientation: Location" %}
+                </div>
+                <div id='toggle_relOriLoc_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_relOriLoc %}
+                <button id='quick_relOriLoc_btn_{{gloss.id}}' class="quick_relOriLoc btn actionButton"
+                        name='quick_relOriLoc_{{gloss.id}}'
+                        value='{{gloss.id}}' data-relOriLoc='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                <div class="panel panel-default panel-toggles">
+                <div class='panel-heading' data-toggle='collapse' data-parent="#phonology_{{gloss.id}}"
+                     data-target='#toggle_oriCh_panel_{{gloss.id}}'>{% trans "Orientation Change" %}
+                </div>
+                <div id='toggle_oriCh_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div class="panel-body" style="display:inline-block;">
+                <p>
+                {% for wc in available_oriCh %}
+                <button id='quick_oriCh_btn_{{gloss.id}}' class="quick_oriCh btn actionButton"
+                        name='quick_oriCh_{{gloss.id}}'
+                        value='{{gloss.id}}' data-oriCh='{{wc.machine_value}}' style="height:36px;"
+                        type="submit" >{{wc.name}}
+                </button>
+                {% endfor %}
+                </p>
+                </div>
+                </div>
+                </div>
+
+                </div>
+
+                </div>
+                </div>
+                </div>
+                </div>
+            </td>
+
+        </tr>
+    <tr>
+        <td></td>
+        <td>
+        <div id="similar_glosses_{{gloss.id}}" class='panel-group'>
+            <div class="panel panel-default panel-toggles">
+            <div class='panel-heading' data-toggle='collapse'
+                 data-target='#toggle_similar_panel_{{gloss.id}}'>{% trans "Similar Glosses" %}
+            </div>
+            <div id='toggle_similar_panel_{{gloss.id}}' class="panel-collapse collapse">
+            <div class="panel-body" style="display:inline-block;">
+                <table class="table-responsive">
+                    <tr>
+                        <td style="line-height: 30px;">
+                        {% load field_choice %}
+                        {% for fieldname, label in similar_gloss_fields_labels.items %}
+                        {% with gloss|get_gloss_field:fieldname as fieldvalue %}
+                        <input name="button_{{gloss.id}}_{{fieldname}}" id="button_{{gloss.id}}_{{fieldname}}"
+                               class="similar similarButton actionButton"
+                               type='button' onclick="do_toggle_field(this);" data-glossid="{{gloss.id}}"
+                               data-value="{{fieldname}}" style="text-decoration:none;color:black;"
+                               value="{{label}}: {{fieldvalue}}">
+                        {% endwith %}
+                        {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                        <button id='quick_similarglosses_btn_{{gloss.id}}'
+                                class="quick_similarglosses btn actionButton"
+                                name='quick_similarglosses_{{gloss.id}}'
+                                data-glossid='{{gloss.id}}' style="height:26px;margin-top:10px;"
+                                type="submit" >{% trans "QUERY EXACT" %}
+                        </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="number_of_matches_{{gloss.id}}"></td>
+                    </tr>
+                    <tr>
+                        <td  style="width:500px;">
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <td id="similar_gloss_videos_{{gloss.id}}">
+
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            </div>
+            </div>
+        </div>
+        </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+</div>
+</div>
+
+<div class="pagination">
+    <span class="step-links">
+        <ul class='pagination pagination-sm'>
+        {% if page_obj.has_previous %}
+            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
+        {% endif %}
+
+          {% if  page_obj.number > 10 %}
+            <li><a>...</a></li>
+          {% endif %}
+
+          {% for p in page_obj.paginator.page_range %}
+
+             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
+             <li {% if p == page_obj.number %}class='active'{% endif %}>
+             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+             </li>
+             {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
+            <li><a>...</a></li>
+            <li>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+            </li>
+          {% endif %}
+
+        {% if page_obj.has_next %}
+            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
+
+      </ul>
+        {% endif %}
+    </span>
+</div>
+</div>
+{% endblock content %}

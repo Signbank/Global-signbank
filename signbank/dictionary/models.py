@@ -1264,6 +1264,10 @@ class Gloss(models.Model):
         except:
             return str(self.id)
 
+    def num_senses(self):
+        senses_for_this_gloss = GlossSense.objects.filter(gloss_pk=self.pk).count()
+        return senses_for_this_gloss
+
     def reorder_senses(self):
         """when a sense is deleted, the senses should be reordered"""
         glosssenses_of_this_gloss = GlossSense.objects.filter(gloss=self).order_by('order')

@@ -1,17 +1,19 @@
 from colorfield.fields import ColorWidget
 from django import forms
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
+
 from django.utils.translation import override, gettext_lazy as _, get_language
 from django.db import OperationalError, ProgrammingError
 from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
-from signbank.dictionary.models import Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign, \
-                                        MorphologyDefinition, OtherMedia, Handshape, SemanticField, DerivationHistory, \
-                                        AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, \
-                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage, \
-                                        QueryParameterFieldChoice, SearchHistory, QueryParameter, \
-                                        QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation, \
-                                        ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss
+from signbank.dictionary.models import (Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign,
+                                        MorphologyDefinition, OtherMedia, Handshape, SemanticField, DerivationHistory,
+                                        AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss,
+                                        LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage,
+                                        QueryParameterFieldChoice, SearchHistory, QueryParameter,
+                                        QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
+                                        ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
+                                        SenseTranslation)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
@@ -52,7 +54,7 @@ class GlossCreateForm(forms.ModelForm):
     """Form for creating a new gloss from scratch"""
 
     gloss_create_field_prefix = "glosscreate_"
-    languages = None # Languages to use for annotation idgloss translations
+    languages = None  # Languages to use for annotation idgloss translations
     user = None
     last_used_dataset = None
 
@@ -1420,3 +1422,73 @@ class SentenceForm(forms.ModelForm):
                                                         choices=[(0, '-')],
                                                         required=False, widget=Select2)
         self.fields['negative'].choices = [('0', '-'), ('yes', _('Yes')), ('no', _('No'))]
+
+
+class BatchEditForm(forms.Form):
+    """Specify updates for Gloss fields"""
+
+    languages = None  # Languages to use for lemma, annotation translations
+    user = None
+    gloss = None
+    gloss_lemma_field_prefix = "lemma_"
+    gloss_annotation_field_prefix = "annotation_"
+    gloss_sense_field_prefix = "sense_"
+
+    def __init__(self, queryDict, *args, **kwargs):
+        self.gloss = kwargs.pop('gloss')
+        self.languages = kwargs.pop('languages')
+        self.user = kwargs.pop('user')
+
+        super(BatchEditForm, self).__init__(queryDict, *args, **kwargs)
+
+        for language in self.languages:
+            gloss_lemma_field_name = self.gloss_lemma_field_prefix + language.language_code_2char
+            self.fields[gloss_lemma_field_name] = forms.CharField(label=_("Lemma")+(" (%s)" % language.name))
+            if gloss_lemma_field_name in queryDict:
+                self.fields[gloss_lemma_field_name].value = queryDict[gloss_lemma_field_name]
+
+        for language in self.languages:
+            gloss_annotation_field_name = self.gloss_annotation_field_prefix + language.language_code_2char
+            self.fields[gloss_annotation_field_name] = forms.CharField(label=_("Gloss")+(" (%s)" % language.name))
+            if gloss_annotation_field_name in queryDict:
+                self.fields[gloss_annotation_field_name].value = queryDict[gloss_annotation_field_name]
+
+        gloss_senses = GlossSense.objects.filter(gloss=self.gloss).order_by('order')
+        current_sense_numbers = [gs.order for gs in gloss_senses]
+        current_trans = []
+        current_indices = []
+        for gs in gloss_senses:
+            sense = gs.sense
+            for language in self.languages:
+                try:
+                    sense_trans = sense.senseTranslations.get(language=language)
+                except ObjectDoesNotExist:
+                    # there should only be one
+                    sense_trans = SenseTranslation(language=language)
+                    sense_trans.save()
+                    sense.senseTranslations.add(sense_trans)
+                    # the new sense translation object is empty
+                    continue
+                for trans in sense_trans.translations.all().order_by('index'):
+                    current_indices.append(trans.index)
+                    current_trans.append(trans)
+        current_keywords = dict()
+        for order in current_sense_numbers:
+            current_keywords[order] = dict()
+            for language in self.languages:
+                current_keywords[order][language.id] = [t.translation.text for t in current_trans
+                                                        if t.orderIndex == order and t.language == language]
+
+        for language in self.languages:
+            gloss_sense_field_name = self.gloss_sense_field_prefix + language.language_code_2char
+            self.fields[gloss_sense_field_name] = forms.CharField(label=_("Sense") + (" (%s)" % language.name))
+            if gloss_sense_field_name in queryDict:
+                self.fields[gloss_sense_field_name].value = queryDict[gloss_sense_field_name]
+
+    @atomic
+    def save(self, commit=True):
+
+        for field_key in self.instance.fields.keys():
+            if self.instance.fields[field_key]:
+                print(self.instance.fields[field_key])
+

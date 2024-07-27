@@ -6,6 +6,8 @@ from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 
 from django.contrib.auth.decorators import permission_required
+import guardian
+
 from django.db.models.fields import BooleanField, IntegerField
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
@@ -36,8 +38,8 @@ from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, map
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
 from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
-from signbank.dictionary.update_glosses import mapping_toggle_tag, mapping_toggle_semanticfield, \
-    mapping_toggle_wordclass, mapping_toggle_namedentity
+from signbank.dictionary.update_glosses import *
+from signbank.dictionary.batch_edit import batch_edit_update_gloss
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -833,7 +835,6 @@ def update_gloss(request, glossid):
 
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-        import guardian
         if ds in guardian.shortcuts.get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
                                                          Dataset, any_perm=True):
             newvalue = value
@@ -1050,7 +1051,7 @@ def update_gloss(request, glossid):
             gloss.__setattr__(field,value)
             gloss.save()
 
-            #If the value is not a Boolean, get the human readable value
+            # If the value is not a Boolean, get the human readable value
             if not isinstance(value,bool):
                 # if we get to here, field is a valid field of Gloss
                 newvalue = value
@@ -1060,7 +1061,7 @@ def update_gloss(request, glossid):
         category_value = 'phonology'
 
     # the gloss has been updated, now prepare values for saving to GlossHistory and display in template
-    #This is because you cannot concat none to a string in py3
+    # This is because you cannot concat none to a string in py3
     if original_value is None:
         original_value = ''
 
@@ -1068,7 +1069,8 @@ def update_gloss(request, glossid):
     # Remember this change for the history books
     original_human_value = original_value.name if isinstance(original_value, FieldChoice) else original_value
     if isinstance(value, bool) and field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-    # store a boolean in the Revision History rather than a human value as for the template (e.g., 'letter' or 'number')
+    # store a boolean in the Revision History rather than a human value
+    # as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
     else:
         # this takes care of a problem with None not being allowed as a value in GlossRevision
@@ -2461,7 +2463,6 @@ def update_morpheme(request, morphemeid):
 
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-        import guardian
         if ds in guardian.shortcuts.get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
                                                          Dataset, any_perm=True):
             newvalue = value
@@ -2884,7 +2885,6 @@ def update_dataset(request, datasetid):
         dataset = get_object_or_404(Dataset, id=datasetid)
         dataset.save() # This updates the lastUpdated field
 
-        import guardian
         from django.contrib.auth.models import Group
 
         try:
@@ -2900,7 +2900,7 @@ def update_dataset(request, datasetid):
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
         user_change_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
-        if not dataset in user_change_datasets:
+        if dataset not in user_change_datasets:
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
         field = request.POST.get('id', '')
@@ -3493,16 +3493,27 @@ def assign_lemma_dataset_to_gloss(request, glossid):
                                     'datasetname': str(success_message) }), {'content-type': 'application/json'})
 
 
+def okay_to_update_gloss(request, gloss):
+
+    if not gloss or not gloss.lemma:
+        return False
+
+    if gloss.lemma.dataset not in guardian.shortcuts.get_objects_for_user(request.user, ['change_dataset'],
+                                                                          Dataset, any_perm=True):
+        return False
+    
+    return True
+
+
 @permission_required('dictionary.change_gloss')
 def toggle_tag(request, glossid, tagid):
 
-    if not request.user.is_authenticated:
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
 
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
-    result = mapping_toggle_tag(request, glossid, tagid)
+    result = mapping_toggle_tag(request, gloss, tagid)
 
     return JsonResponse(result)
 
@@ -3510,13 +3521,12 @@ def toggle_tag(request, glossid, tagid):
 @permission_required('dictionary.change_gloss')
 def toggle_semantic_field(request, glossid, semanticfield):
 
-    if not request.user.is_authenticated:
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
 
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
-    result = mapping_toggle_semanticfield(request, glossid, semanticfield)
+    result = mapping_toggle_semanticfield(request, gloss, semanticfield)
 
     return JsonResponse(result)
 
@@ -3524,13 +3534,12 @@ def toggle_semantic_field(request, glossid, semanticfield):
 @permission_required('dictionary.change_gloss')
 def toggle_wordclass(request, glossid, wordclass):
 
-    if not request.user.is_authenticated:
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
 
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
-    result = mapping_toggle_wordclass(request, glossid, wordclass)
+    result = mapping_toggle_wordclass(request, gloss, wordclass)
 
     return JsonResponse(result)
 
@@ -3538,13 +3547,220 @@ def toggle_wordclass(request, glossid, wordclass):
 @permission_required('dictionary.change_gloss')
 def toggle_namedentity(request, glossid, namedentity):
 
-    if not request.user.is_authenticated:
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
 
-    if not request.user.has_perm('dictionary.change_gloss'):
+    result = mapping_toggle_namedentity(request, gloss, namedentity)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_handedness(request, glossid, handedness):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
 
-    result = mapping_toggle_namedentity(request, glossid, namedentity)
+    result = mapping_toggle_handedness(request, gloss, handedness)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_domhndsh(request, glossid, domhndsh):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_domhndsh(request, gloss, domhndsh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_subhndsh(request, glossid, subhndsh):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_subhndsh(request, gloss, subhndsh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_handCh(request, glossid, handCh):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_handCh(request, gloss, handCh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_relatArtic(request, glossid, relatArtic):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_relatArtic(request, gloss, relatArtic)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_locprim(request, glossid, locprim):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_locprim(request, gloss, locprim)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_contType(request, glossid, contType):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_contType(request, gloss, contType)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_movSh(request, glossid, movSh):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_movSh(request, gloss, movSh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_movDir(request, glossid, movDir):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_movDir(request, gloss, movDir)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_repeat(request, glossid, repeat):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_repeat(request, gloss, repeat)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_altern(request, glossid, altern):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_altern(request, gloss, altern)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_relOriMov(request, glossid, relOriMov):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_relOriMov(request, gloss, relOriMov)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_relOriLoc(request, glossid, relOriLoc):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_relOriLoc(request, gloss, relOriLoc)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_oriCh(request, glossid, oriCh):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_oriCh(request, gloss, oriCh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_language_fields(request, glossid):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = batch_edit_update_gloss(request, gloss)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def quick_create_sense(request, glossid):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = batch_edit_create_sense(request, gloss)
 
     return JsonResponse(result)
 
@@ -3558,6 +3774,10 @@ def add_affiliation(request, glossid):
         return JsonResponse({})
 
     thisgloss = get_object_or_404(Gloss, id=glossid, archived=False)
+
+    if not okay_to_update_gloss(request, thisgloss):
+        return JsonResponse({})
+
     tags_label = 'Affiliation'
 
     deletetag = request.POST.get('delete', '')
