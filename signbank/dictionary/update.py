@@ -3508,7 +3508,7 @@ def okay_to_update_gloss(request, gloss):
 @permission_required('dictionary.change_gloss')
 def toggle_tag(request, glossid, tagid):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3521,7 +3521,7 @@ def toggle_tag(request, glossid, tagid):
 @permission_required('dictionary.change_gloss')
 def toggle_semantic_field(request, glossid, semanticfield):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3534,7 +3534,7 @@ def toggle_semantic_field(request, glossid, semanticfield):
 @permission_required('dictionary.change_gloss')
 def toggle_wordclass(request, glossid, wordclass):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3547,7 +3547,7 @@ def toggle_wordclass(request, glossid, wordclass):
 @permission_required('dictionary.change_gloss')
 def toggle_namedentity(request, glossid, namedentity):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3560,7 +3560,7 @@ def toggle_namedentity(request, glossid, namedentity):
 @permission_required('dictionary.change_gloss')
 def toggle_handedness(request, glossid, handedness):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3573,7 +3573,7 @@ def toggle_handedness(request, glossid, handedness):
 @permission_required('dictionary.change_gloss')
 def toggle_domhndsh(request, glossid, domhndsh):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3586,7 +3586,7 @@ def toggle_domhndsh(request, glossid, domhndsh):
 @permission_required('dictionary.change_gloss')
 def toggle_subhndsh(request, glossid, subhndsh):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3599,7 +3599,7 @@ def toggle_subhndsh(request, glossid, subhndsh):
 @permission_required('dictionary.change_gloss')
 def toggle_handCh(request, glossid, handCh):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3612,7 +3612,7 @@ def toggle_handCh(request, glossid, handCh):
 @permission_required('dictionary.change_gloss')
 def toggle_relatArtic(request, glossid, relatArtic):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3625,7 +3625,7 @@ def toggle_relatArtic(request, glossid, relatArtic):
 @permission_required('dictionary.change_gloss')
 def toggle_locprim(request, glossid, locprim):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3638,7 +3638,7 @@ def toggle_locprim(request, glossid, locprim):
 @permission_required('dictionary.change_gloss')
 def toggle_contType(request, glossid, contType):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3651,7 +3651,7 @@ def toggle_contType(request, glossid, contType):
 @permission_required('dictionary.change_gloss')
 def toggle_movSh(request, glossid, movSh):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3664,7 +3664,7 @@ def toggle_movSh(request, glossid, movSh):
 @permission_required('dictionary.change_gloss')
 def toggle_movDir(request, glossid, movDir):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3677,7 +3677,7 @@ def toggle_movDir(request, glossid, movDir):
 @permission_required('dictionary.change_gloss')
 def toggle_repeat(request, glossid, repeat):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3690,7 +3690,7 @@ def toggle_repeat(request, glossid, repeat):
 @permission_required('dictionary.change_gloss')
 def toggle_altern(request, glossid, altern):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3703,7 +3703,7 @@ def toggle_altern(request, glossid, altern):
 @permission_required('dictionary.change_gloss')
 def toggle_relOriMov(request, glossid, relOriMov):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3716,7 +3716,7 @@ def toggle_relOriMov(request, glossid, relOriMov):
 @permission_required('dictionary.change_gloss')
 def toggle_relOriLoc(request, glossid, relOriLoc):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3729,7 +3729,7 @@ def toggle_relOriLoc(request, glossid, relOriLoc):
 @permission_required('dictionary.change_gloss')
 def toggle_oriCh(request, glossid, oriCh):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3742,7 +3742,7 @@ def toggle_oriCh(request, glossid, oriCh):
 @permission_required('dictionary.change_gloss')
 def toggle_language_fields(request, glossid):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3755,7 +3755,7 @@ def toggle_language_fields(request, glossid):
 @permission_required('dictionary.change_gloss')
 def quick_create_sense(request, glossid):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
