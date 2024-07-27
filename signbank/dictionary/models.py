@@ -2620,6 +2620,8 @@ def save_info_about_deleted_gloss(sender, instance, using, **kwarsg):
 
 def cascade_archival_gloss(gloss):
     # this is to show details about what the Django "cascade" operation would delete
+    # the models are queried explicitly rather than use the relation name and other methods
+    # in order to also retrieve archived glosses
 
     relations_source = Relation.objects.filter(source=gloss)
     if relations_source:
@@ -2655,7 +2657,10 @@ def cascade_archival_gloss(gloss):
 @receiver(models.signals.post_save, sender=Gloss, dispatch_uid='gloss_save_signal')
 def save_info_about_archived_gloss(sender, instance, using, update_fields=[], **kwarsg):
 
-    if not update_fields:
+    if not update_fields or 'archived' not in update_fields:
+        return
+
+    if not instance.archived:
         return
 
     from signbank.tools import get_default_annotationidglosstranslation
@@ -3434,7 +3439,11 @@ class LemmaIdgloss(models.Model):
         return ", ".join(translations)
 
     def num_gloss(self):
-        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk, archived=False).count()
+        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk).count()
+        return glosses_with_this_lemma
+
+    def num_archived_glosses(self):
+        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk, archived=True).count()
         return glosses_with_this_lemma
 
 

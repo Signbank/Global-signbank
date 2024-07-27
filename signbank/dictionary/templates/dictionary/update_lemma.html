@@ -80,17 +80,19 @@
                                 <th>{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</th>
                             {% endfor %}
                 </tr>
-                {% for lemma, annotation_idgloss_translations in lemma_group_list %}
+                {% for gloss, annotation_idgloss_translations in lemma_group_list %}
                 <tr><td></td>
 
-                    <td>{{lemma.id}}</td>
+                    <td>{{gloss.id}} {% if gloss.archived %}({% trans "Archived" %}){% endif %}</td>
                     {% for dataset_lang in dataset_languages %}
-                    {% with lemma|get_annotation_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
+                    {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotation_translation %}
                         <td>
-                            {% if lemmaidglosstranslation != "" %}
-                            <a href="{{PREFIX_URL}}/dictionary/gloss/{{lemma.id}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
-                                {{lemmaidglosstranslation}}
+                            {% if not gloss.archived and annotation_translation != "" %}
+                            <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
+                                {{annotation_translation}}
                             </a>
+                            {% else %}
+                                {{annotation_translation}}
                             {% endif %}
                         </td>
                     {% endwith %}

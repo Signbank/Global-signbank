@@ -6227,8 +6227,7 @@ class LemmaUpdateView(UpdateView):
 
         # Make sure these are evaluated ih Python
         lemma_group_count = self.object.gloss_set.count()
-        lemma_group_glossset = Gloss.objects.filter(lemma=self.object,
-                                                    archived__exact=False)
+        lemma_group_glossset = Gloss.objects.filter(lemma=self.object)
         lemma_group_list = []
         for lemma in lemma_group_glossset:
             annotation_idgloss = {}

@@ -231,6 +231,7 @@ function do_export_csv(e1) {
           <th>{% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})</th>
           {% endfor %}
           <th>{% trans "Number of Glosses" %}</th>
+          <th>{% trans "Number of Archived Glosses" %}</th>
           <th>{% trans "Update" %}</th>
       </tr>
     </thead>
@@ -253,6 +254,9 @@ function do_export_csv(e1) {
           {% endfor %}
             <td>
                 {{ lemma.num_gloss }}
+            </td>
+            <td>
+                {{ lemma.num_archived_glosses }}
             </td>
             <td>
             {% get_obj_perms request.user for lemma.dataset as "dataset_perms" %}
