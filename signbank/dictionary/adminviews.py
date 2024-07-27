@@ -1736,7 +1736,7 @@ class GlossRelationsDetailView(DetailView):
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
-        for language in gl.dataset.translation_languages.all().order_by('id'):
+        for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
             except ObjectDoesNotExist:
@@ -1744,7 +1744,7 @@ class GlossRelationsDetailView(DetailView):
             context['annotation_idgloss'][language] = annotation_text
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         context['sensetranslations_per_language'] = senses_per_language(gl)
@@ -2588,9 +2588,14 @@ class QueryListView(ListView):
             toggle_gloss_list_display_fields, toggle_query_parameter_fields, toggle_publication_fields = \
             query_parameters_toggle_fields(query_parameters)
 
+        display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+        for qpf in query_fields_focus:
+            if qpf not in display_fields:
+                display_fields += [qpf]
+
         context['objects_on_page'] = objects_on_page
         context['object_list'] = object_list
-        context['display_fields'] = settings.GLOSS_LIST_DISPLAY_FIELDS + query_fields_focus
+        context['display_fields'] = display_fields
         context['query_fields_parameters'] = query_fields_parameters
         context['TOGGLE_QUERY_PARAMETER_FIELDS'] = toggle_query_parameter_fields
         context['TOGGLE_PUBLICATION_FIELDS'] = toggle_publication_fields
@@ -6363,8 +6368,9 @@ class LemmaDeleteView(DeleteView):
 class KeywordListView(ListView):
 
     model = Gloss
-    template_name = 'dictionary/admin_keyword_list.html'
+    template_name = 'dictionary/admin_batch_edit_senses.html'
     paginate_by = 25
+    search_type = 'sign'
     query_parameters = dict()
 
     def get(self, request, *args, **kwargs):
@@ -6377,11 +6383,14 @@ class KeywordListView(ListView):
         context['selected_datasets'] = selected_datasets
 
         if not selected_datasets or selected_datasets.count() > 1:
-            dataset_languages = Language.objects.filter(id=get_default_language_id())
-        else:
-            dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+            feedback_message = _('Please select a single dataset to view keywords.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
 
-        context['dataset_languages'] = dataset_languages
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = list(dataset_languages)
+
+        new_text_labels = {str(lang.id): lang.name + ' ' + gettext("Text") for lang in dataset_languages}
+        context['new_text_labels'] = new_text_labels
 
         search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
 
@@ -6403,10 +6412,21 @@ class KeywordListView(ListView):
     def get_queryset(self):
         # this is a ListView for a complicated data structure
 
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view keywords.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
+            return []
+
+        if ('search_type' in self.request.session.keys() and
+                self.request.session['search_type'] != self.search_type):
+            feedback_message = _('Your query result is not glosses.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
@@ -6421,39 +6441,50 @@ class KeywordListView(ListView):
 
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
 
+        glosses_of_datasets = object_list
+
         get = self.request.GET
 
-        # multilingual
         # this needs to be sorted for jquery purposes
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         # exclude morphemes
-        if not get:
-            glosses_of_datasets = object_list
-        else:
-            glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
-
-        # data structure to store the query parameters in order to keep them in the form
-        query_parameters = dict()
-
-        if 'tags[]' in get:
-            vals = get.getlist('tags[]')
-            if vals:
-                query_parameters['tags[]'] = vals
-                glosses_with_tag = list(
-                    TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
-                glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
+        if not glosses_of_datasets:
+            feedback_message = _('No glosses found.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            return []
 
         if glosses_of_datasets.count() > 100:
             feedback_message = _('Please refine your query to retrieve fewer than 100 glosses to use this functionality.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
-            # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
-        # save the query parameters to a session variable
-        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        if 'tags[]' in get:
+            vals = get.getlist('tags[]')
+            if vals:
+                self.query_parameters['tags[]'] = vals
+                values = [int(v) for v in vals]
+                glosses_with_tag = list(
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
+                glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        items = construct_scrollbar(glosses_of_datasets, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
+
+        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
+        self.request.session['search_type'] = self.search_type
         self.request.session.modified = True
-        self.query_parameters = query_parameters
 
         for gloss in glosses_of_datasets:
             consistent = consistent_senses(gloss, include_translations=True,
@@ -6764,7 +6795,7 @@ class ToggleListView(ListView):
         if not selected_datasets or selected_datasets.count() > 1:
             dataset_languages = Language.objects.filter(id=get_default_language_id())
         else:
-            dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+            dataset_languages = get_dataset_languages(selected_datasets)
 
         context['dataset_languages'] = dataset_languages
 
@@ -6831,7 +6862,7 @@ class ToggleListView(ListView):
 
         # multilingual
         # this needs to be sorted for jquery purposes
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         if get:
             glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
@@ -6849,8 +6880,9 @@ class ToggleListView(ListView):
             vals = get.getlist('tags[]')
             if vals:
                 query_parameters['tags[]'] = vals
+                values = [int(v) for v in vals]
                 glosses_with_tag = list(
-                    TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag,
                                                                  archived__exact=False)
         if 'createdBy' in get and get['createdBy']:

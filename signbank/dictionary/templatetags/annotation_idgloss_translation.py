@@ -25,19 +25,11 @@ def get_annotation_idgloss_translation(gloss, language):
 
 @register.filter
 def get_annotation_idgloss_translation_no_default(gloss, language):
-    annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-    if annotationidglosstranslations is not None and len(annotationidglosstranslations) > 0:
-        return annotationidglosstranslations[0].text
-    if not (gloss.lemma or gloss.lemma.dataset):
-        return ""
-    gloss_translation_languages = gloss.lemma.dataset.translation_languages.all()
-    dataset_default_language = gloss.lemma.dataset.default_language
-    if language not in gloss_translation_languages:
-        return ""
-    if language != dataset_default_language:
-        return ""
-    # the default dataset translation language has no annotation for this gloss
-    return str(gloss.id)
+    annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language).first()
+    if annotationidglosstranslations:
+        return annotationidglosstranslations.text
+    return ""
+
 
 @register.filter
 def get_default_annotation_idgloss_translation(gloss):
