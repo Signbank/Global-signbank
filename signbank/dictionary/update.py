@@ -39,7 +39,7 @@ from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, map
 from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
 from signbank.dictionary.update_glosses import *
-from signbank.dictionary.batch_edit import batch_edit_update_gloss
+from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -1695,15 +1695,21 @@ def add_morphology_definition(request):
     parent_gloss = form.cleaned_data['parent_gloss_id']
     role_id = form.cleaned_data['role']
     morpheme_id = form.cleaned_data['morpheme_id']
-    # This is now a gloss ID
+    # This is no a gloss ID
     morpheme = Gloss.objects.get(id=morpheme_id)
 
     thisgloss = get_object_or_404(Gloss, pk=parent_gloss, archived=False)
+
+    original_sequential = thisgloss.get_hasComponentOfType_display()
+
     role = get_object_or_404(FieldChoice, pk=role_id, field='MorphologyType')
 
     # create definition, default to not published
     morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
     morphdef.save()
+
+    new_sequential = thisgloss.get_hasComponentOfType_display()
+    add_gloss_update_to_revision_history(request.user, thisgloss, 'sequential_morphology', original_sequential, new_sequential)
 
     thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
     thisgloss.save()
@@ -1719,7 +1725,6 @@ def add_morpheme_definition(request, glossid):
 
     form = GlossMorphemeForm(request.POST)
 
-    # Get the glossid at any rate
     thisgloss = get_object_or_404(Gloss, pk=glossid, archived=False)
 
     # check availability of morpheme before continuing
@@ -1752,11 +1757,20 @@ def add_morpheme_definition(request, glossid):
 
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
+    original_simultaneous = thisgloss.get_morpheme_display()
+
     definition = SimultaneousMorphologyDefinition()
     definition.parent_gloss = thisgloss
     definition.morpheme = morph
     definition.role = form.cleaned_data['description']
     definition.save()
+
+    new_simultaneous = thisgloss.get_morpheme_display()
+    add_gloss_update_to_revision_history(request.user, thisgloss, 'simultaneous_morphology', original_simultaneous, new_simultaneous)
+
+    thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    thisgloss.save()
+
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
 
@@ -1768,8 +1782,9 @@ def add_blend_definition(request, glossid):
 
     form = GlossBlendForm(request.POST)
 
-    # Get the glossid at any rate
     thisgloss = get_object_or_404(Gloss, pk=glossid, archived=False)
+
+    original_blend = thisgloss.get_blendmorphology_display()
 
     # check availability of morpheme before continuing
     if form.data['blend_id'] == "":
@@ -1790,6 +1805,12 @@ def add_blend_definition(request, glossid):
         definition.glosses = blend
         definition.role = form.cleaned_data['role']
         definition.save()
+
+    new_blend = thisgloss.get_blendmorphology_display()
+    add_gloss_update_to_revision_history(request.user, thisgloss, 'blend_morphology', original_blend, new_blend)
+
+    thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    thisgloss.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
