@@ -2572,7 +2572,7 @@ def choice_lists(request):
 
 def gloss_revision_history(request,gloss_pk):
 
-    gloss = Gloss.objects.get(pk=gloss_pk, archived=False)
+    gloss = Gloss.objects.get_object_or_404(pk=gloss_pk, archived=False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -2603,6 +2603,10 @@ def gloss_revision_history(request,gloss_pk):
             language_2char = revision.field_name[-2:]
             language = Language.objects.get(language_code_2char=language_2char)
             revision_verbose_fieldname = gettext('Annotation ID Gloss') + ' (' + language.name + ')'
+        elif revision.field_name == 'archived':
+            revision_verbose_fieldname = gettext("Deleted")
+        elif revision.field_name == 'restored':
+            revision_verbose_fieldname = gettext("Restored")
         else:
             revision_verbose_fieldname = gettext(revision.field_name)
 
@@ -2664,7 +2668,7 @@ def gloss_revision_history(request,gloss_pk):
         elif revision.field_name.startswith('sense'):
             field_name_qualification = ''
         else:
-            field_name_qualification = ' (' + revision.field_name + ')'
+            field_name_qualification = ''
         revision_dict = {
             'is_tag': revision.field_name == 'Tags',
             'gloss': revision.gloss,

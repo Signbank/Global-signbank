@@ -650,7 +650,7 @@ def gloss_archival_delete(user, gloss, annotation):
     gloss.save(update_fields=['archived'])
 
     revision = GlossRevision(old_value=annotation,
-                             new_value='',
+                             new_value=annotation,
                              field_name='archived',
                              gloss=gloss,
                              user=user,
@@ -664,7 +664,7 @@ def gloss_archival_restore(user, gloss, annotation):
     gloss.save()
 
     revision = GlossRevision(old_value=annotation,
-                             new_value='',
+                             new_value=annotation,
                              field_name='restored',
                              gloss=gloss,
                              user=user,
