@@ -69,9 +69,6 @@
                 {% if "change_dataset" in dataset_perms %}
                 {% if request.user|has_group:"Dataset_Manager" %}
                     <form name='add_owner_form' id='add_owner_form' method='get'>
-                        <div class="hidden">
-                            <input name='dataset_name' id='dataset_name' class='form-control' value='{{dataset.name}}' >
-                        </div>
                         <table class='table table-condensed' style="background: transparent;">
                         <tr>
                             <td>

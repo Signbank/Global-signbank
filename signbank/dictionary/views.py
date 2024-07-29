@@ -50,6 +50,8 @@ from signbank.gloss_update import api_update_gloss_fields
 from django.utils.translation import gettext_lazy as _, activate
 from signbank.abstract_machine import get_interface_language_api
 
+from signbank.api_token import put_api_user_in_request
+
 
 def login_required_config(f):
     """like @login_required if the ALWAYS_REQUIRE_LOGIN setting is True"""
@@ -2308,9 +2310,10 @@ def package(request):
     return response
 
 
+@put_api_user_in_request
 def info(request):
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'view_dataset', Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     # Put the default dataset in first position
@@ -2580,27 +2583,39 @@ def gloss_revision_history(request,gloss_pk):
 
     revisions = []
     for revision in GlossRevision.objects.filter(gloss=gloss):
-        if revision.field_name in Gloss.get_field_names():
-            revision_verbose_fieldname = _(Gloss.get_field(revision.field_name).verbose_name)
+        if revision.field_name.startswith('sense_'):
+            prefix, order, language_2char = revision.field_name.split('_')
+            language = Language.objects.get(language_code_2char=language_2char)
+            revision_verbose_fieldname = gettext('Sense') + ' ' + order + ' (' + language.name + ')'
+        elif revision.field_name in Gloss.get_field_names():
+            revision_verbose_fieldname = gettext(Gloss.get_field(revision.field_name).verbose_name)
         elif revision.field_name == 'sequential_morphology':
             revision_verbose_fieldname = gettext("Sequential Morphology")
         elif revision.field_name == 'simultaneous_morphology':
             revision_verbose_fieldname = gettext("Simultaneous Morphology")
         elif revision.field_name == 'blend_morphology':
             revision_verbose_fieldname = gettext("Blend Morphology")
+        elif revision.field_name.startswith('lemma'):
+            language_2char = revision.field_name[-2:]
+            language = Language.objects.get(language_code_2char=language_2char)
+            revision_verbose_fieldname = gettext('Lemma ID Gloss') + ' (' + language.name + ')'
+        elif revision.field_name.startswith('annotation'):
+            language_2char = revision.field_name[-2:]
+            language = Language.objects.get(language_code_2char=language_2char)
+            revision_verbose_fieldname = gettext('Annotation ID Gloss') + ' (' + language.name + ')'
         else:
-            revision_verbose_fieldname = _(revision.field_name)
+            revision_verbose_fieldname = gettext(revision.field_name)
 
         # field name qualification is stored separately here
         # Django was having a bit of trouble translating it when embeded in the field_name string below
         if revision.field_name == 'Tags':
             if revision.old_value:
                 # this translation exists in the interface of Gloss Edit View
-                delete_command = str(_('delete this tag'))
+                delete_command = gettext('delete this tag')
                 field_name_qualification = ' (' + delete_command + ')'
             elif revision.new_value:
                 # this translation exists in the interface of Gloss Edit View
-                add_command = str(_('Add Tag'))
+                add_command = gettext('Add Tag')
                 field_name_qualification = ' (' + add_command + ')'
             else:
                 # this shouldn't happen
@@ -2608,53 +2623,57 @@ def gloss_revision_history(request,gloss_pk):
         elif revision.field_name in ['Sense', 'Senses', 'senses']:
             if revision.old_value and not revision.new_value:
                 # this translation exists in the interface of Gloss Edit View
-                delete_command = str(_('Delete'))
+                delete_command = gettext('Delete')
                 field_name_qualification = ' (' + delete_command + ')'
             elif revision.new_value and not revision.old_value:
                 # this translation exists in the interface of Gloss Edit View
-                add_command = str(_('Create'))
+                add_command = gettext('Create')
                 field_name_qualification = ' (' + add_command + ')'
             else:
                 # this translation exists in the interface of Gloss Edit View
-                add_command = str(_('Update'))
+                add_command = gettext('Update')
                 field_name_qualification = ' (' + add_command + ')'
         elif revision.field_name == 'Sentence':
             if revision.old_value and not revision.new_value:
                 # this translation exists in the interface of Gloss Edit View
-                delete_command = str(_('Delete'))
+                delete_command = gettext('Delete')
                 field_name_qualification = ' (' + delete_command + ')'
             elif revision.new_value and not revision.old_value:
                 # this translation exists in the interface of Gloss Edit View
-                add_command = str(_('Create'))
+                add_command = gettext('Create')
                 field_name_qualification = ' (' + add_command + ')'
             else:
                 # this translation exists in the interface of Gloss Edit View
-                add_command = str(_('Update'))
+                add_command = gettext('Update')
                 field_name_qualification = ' (' + add_command + ')'
         elif revision.field_name in ['sequential_morphology', 'simultaneous_morphology', 'blend_morphology']:
             if revision.old_value and not revision.new_value:
                 # this translation exists in the interface of Gloss Edit View
-                delete_command = str(_('Delete'))
+                delete_command = gettext('Delete')
                 field_name_qualification = ' (' + delete_command + ')'
             elif revision.new_value and not revision.old_value:
                 # this translation exists in the interface of Gloss Edit View
-                add_command = str(_('Create'))
+                add_command = gettext('Create')
                 field_name_qualification = ' (' + add_command + ')'
             else:
                 # this translation exists in the interface of Gloss Edit View
-                add_command = str(_('Update'))
+                add_command = gettext('Update')
                 field_name_qualification = ' (' + add_command + ')'
+        elif revision.field_name.startswith('lemma') or revision.field_name.startswith('annotation'):
+            field_name_qualification = ''
+        elif revision.field_name.startswith('sense'):
+            field_name_qualification = ''
         else:
             field_name_qualification = ' (' + revision.field_name + ')'
         revision_dict = {
             'is_tag': revision.field_name == 'Tags',
-            'gloss' : revision.gloss,
-            'user' : revision.user,
-            'time' : revision.time,
-            'field_name' : revision_verbose_fieldname,
-            'field_name_qualification' : field_name_qualification,
-            'old_value' : check_value_to_translated_human_value(revision.field_name, revision.old_value),
-            'new_value' : check_value_to_translated_human_value(revision.field_name, revision.new_value) }
+            'gloss': revision.gloss,
+            'user': revision.user,
+            'time': revision.time,
+            'field_name': revision_verbose_fieldname,
+            'field_name_qualification': field_name_qualification,
+            'old_value': check_value_to_translated_human_value(revision.field_name, revision.old_value),
+            'new_value': check_value_to_translated_human_value(revision.field_name, revision.new_value) }
         revisions.append(revision_dict)
 
     return render(request, 'dictionary/gloss_revision_history.html',

@@ -20,6 +20,7 @@ import signbank.api_interface
 import signbank.manage_videos
 import signbank.abstract_machine
 import signbank.gloss_update
+import signbank.dictionary.batch_edit
 import signbank.gloss_morphology_update
 
 app_name = 'dictionary'
@@ -89,6 +90,56 @@ urlpatterns = [
     re_path(r'^update/toggle_namedentity/(?P<glossid>\d+)/(?P<namedentity>.*)$',
             signbank.dictionary.update.toggle_namedentity,
             name='toggle_namedentity'),
+    re_path(r'^update/toggle_handedness/(?P<glossid>\d+)/(?P<handedness>.*)$',
+            signbank.dictionary.update.toggle_handedness,
+            name='toggle_handedness'),
+    re_path(r'^update/toggle_domhndsh/(?P<glossid>\d+)/(?P<domhndsh>.*)$',
+            signbank.dictionary.update.toggle_domhndsh,
+            name='toggle_domhndsh'),
+    re_path(r'^update/toggle_subhndsh/(?P<glossid>\d+)/(?P<subhndsh>.*)$',
+            signbank.dictionary.update.toggle_subhndsh,
+            name='toggle_subhndsh'),
+    re_path(r'^update/toggle_handCh/(?P<glossid>\d+)/(?P<handCh>.*)$',
+            signbank.dictionary.update.toggle_handCh,
+            name='toggle_handCh'),
+    re_path(r'^update/toggle_relatArtic/(?P<glossid>\d+)/(?P<relatArtic>.*)$',
+            signbank.dictionary.update.toggle_relatArtic,
+            name='toggle_relatArtic'),
+    re_path(r'^update/toggle_locprim/(?P<glossid>\d+)/(?P<locprim>.*)$',
+            signbank.dictionary.update.toggle_locprim,
+            name='toggle_locprim'),
+    re_path(r'^update/toggle_contType/(?P<glossid>\d+)/(?P<contType>.*)$',
+            signbank.dictionary.update.toggle_contType,
+            name='toggle_contType'),
+    re_path(r'^update/toggle_movSh/(?P<glossid>\d+)/(?P<movSh>.*)$',
+            signbank.dictionary.update.toggle_movSh,
+            name='toggle_movSh'),
+    re_path(r'^update/toggle_movDir/(?P<glossid>\d+)/(?P<movDir>.*)$',
+            signbank.dictionary.update.toggle_movDir,
+            name='toggle_movDir'),
+    re_path(r'^update/toggle_repeat/(?P<glossid>\d+)/(?P<repeat>.*)$',
+            signbank.dictionary.update.toggle_repeat,
+            name='toggle_repeat'),
+    re_path(r'^update/toggle_altern/(?P<glossid>\d+)/(?P<altern>.*)$',
+            signbank.dictionary.update.toggle_altern,
+            name='toggle_altern'),
+    re_path(r'^update/toggle_relOriMov/(?P<glossid>\d+)/(?P<relOriMov>.*)$',
+            signbank.dictionary.update.toggle_relOriMov,
+            name='toggle_relOriMov'),
+    re_path(r'^update/toggle_relOriLoc/(?P<glossid>\d+)/(?P<relOriLoc>.*)$',
+            signbank.dictionary.update.toggle_relOriLoc,
+            name='toggle_relOriLoc'),
+    re_path(r'^update/toggle_oriCh/(?P<glossid>\d+)/(?P<oriCh>.*)$',
+            signbank.dictionary.update.toggle_oriCh,
+            name='toggle_oriCh'),
+
+    re_path(r'^update/quick_create_sense/(?P<glossid>\d+)$',
+            signbank.dictionary.update.quick_create_sense,
+            name='quick_create_sense'),
+
+    re_path(r'^update/toggle_language_fields/(?P<glossid>\d+)$',
+            signbank.dictionary.update.toggle_language_fields,
+            name='toggle_language_fields'),
 
     # The next one does not have a permission check because it should be accessible from a cronjob
     re_path(r'^update_ecv/', GlossListView.as_view(only_export_ecv=True)),
@@ -98,6 +149,7 @@ urlpatterns = [
     # Ajax urls
     re_path(r'^ajax/tags/$', signbank.dictionary.tagviews.taglist_json),
     re_path(r'^ajax/gloss/(?P<prefix>.*)$', signbank.dictionary.adminviews.gloss_ajax_complete, name='gloss_complete'),
+    re_path(r'^ajax/similarglosses/(?P<gloss_id>.*)$', signbank.dictionary.batch_edit.similarglosses, name='similarglosses'),
     re_path(r'^ajax/handshape/(?P<prefix>.*)$', signbank.dictionary.adminviews.handshape_ajax_complete, name='handshape_complete'),
     re_path(r'^ajax/morph/(?P<prefix>.*)$', signbank.dictionary.adminviews.morph_ajax_complete, name='morph_complete'),
     re_path(r'^ajax/user/(?P<prefix>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.user_ajax_complete), name='user_complete'),

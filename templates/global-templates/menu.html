@@ -1,5 +1,3 @@
-
-
 {% load i18n %}
 
 <script type="text/javascript" src="{{ STATIC_URL }}js/dark-mode-toggles.js"></script>
@@ -8,20 +6,20 @@
 #affix-bar.affix {
     position:fixed;
     top: 0;
-    z-index: 1000 !important;
+    z-index: 10 !important;
     background: inherit;
 }
 </style>
 
-<div id="signbank-bar" class="navbar navbar-light navbar-fixed-top" style="box-sizing:content-box;">
+<nav id="signbank-bar" class="navbar navbar-light navbar-fixed-top" style="box-sizing:content-box;;height:200px;">
 
-<div id='header' class="navbar-header">
+<nav id='header' class="navbar navbar-fixed-top navbar-header" style="box-sizing:content-box;">
+    <div class="nav navbar-left">
     <a href="{{PREFIX_URL}}/" height="80" width="80" style="box-sizing:content-box;"><img class="global_sb_logo" src="{{STATIC_URL}}images/global/GlobalSigbank_logo_white.svg" height="80" width="80"></a>
     <h1>Global <br/><span id="second-title-part">signbank</span></h1>
 
-    {% if user.is_authenticated %}
     {% if SHOW_DATASET_INTERFACE_OPTIONS and viewable_datasets %}
-        <div class='navbar-text' style="left-margin: 15px;">
+        <div class='navbar-text' style="left-margin: 15px;width:auto">
             <div class='taglist ribbon_list'>
                 {% load underscore_to_space %}
                 {% for ds,selected in viewable_datasets %}
@@ -34,30 +32,18 @@
             </div>
         </div>
      {% endif %}
-     {% else %}
-        {% if viewable_datasets %}
-        <div class='navbar-text' style="left-margin: 15px;">
-            <div class='taglist ribbon_list'>
-                {% load underscore_to_space %}
-                {% for ds,selected in viewable_datasets %}
-                <a href="{{PREFIX_URL}}/datasets/{{ds.acronym}}">
-                    <div class="ribbon {% if selected %}selected{% endif %}">
-                        {{ds.generate_short_name|underscore_to_space}}
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-     {% endif %}
-
-    <a href="http://www.ru.nl/sign-lang" id='logoholder' class='visible-lg visible-md visible-sm'></a>
-</div>
+    </div>
+    <div class="nav navbar-right">
+    <a href="http://www.ru.nl/sign-lang" id='logoholder'
+       class='visible-lg visible-md visible-sm'>
+        <img src="{{STATIC_URL}}/images/global/ru-logo.png"></a>
+    </div>
+</nav>
 {% get_current_language as WEBSITE_LANGUAGE %}
-<div id='navbar-menus' class="collapse navbar-collapse navbar-upper navbar-default" role="navigation" style="display:inline;box-sizing:content-box;padding:0;">
+<nav id='navbar-menus' class="collapse navbar-collapse navbar-upper navbar-default" role="navigation" style="display:inline;box-sizing:content-box;padding:0;">
 
   <!-- Collect the nav links, forms, and other content for toggling -->
-  <div class="nav navbar-upper" id="menu-pull-downs" style="display:inline;padding-left:0px;box-sizing:content-box;">
+  <nav class="nav navbar-upper" id="menu-pull-downs" style="display:inline;padding-left:0px;box-sizing:content-box;">
 
     <nav class="nav navbar-upper">
     <div class="container-fluid">
@@ -110,6 +96,16 @@
             </div>
           <button class='invisible_button' type='submit'><img id='mag-glass' src='{{ STATIC_URL }}images/global/search_icon.svg'></button>
     </form>
+    <div class="nav navbar-left navbar-nav" id="interface-language"
+         style="height: 20px;box-sizing:content-box;">
+    <div class='navbar-text navbar-text-light' id="minimalistic_language_picker">
+    <form id="change_language_form" method="post" action="{{PREFIX_URL}}/i18n/setlang/">
+        {% csrf_token %}
+        <input id="change_language_input_field" type="hidden" name="language" value="{{ user.user_profile_user.last_used_language }}">
+
+    </form>
+    </div>
+    </div>
     <div class="nav navbar-left navbar-nav navbar-nav-light" id="user-menu" style="height: 20px;box-sizing:content-box;">
         {% if user.is_authenticated %}
         <div class='navbar-text navbar-text-light'>
@@ -117,26 +113,25 @@
         </div>
         {% endif %}
     </div>
-      <div class="nav navbar-right" style="height:20px;box-sizing:content-box;">
-          <div id="toggle_dark_mode">
-              <button onclick="set_dark_mode()" class="btn btn-primary">{% trans "Dark Mode" %}</button>
-          </div>
+    <div class="nav navbar-left" style="height: 20px;box-sizing:content-box;">
         {% if user.is_authenticated %}
             <div class='navbar-text navbar-text-light'>
                 <a id="username_link" href="{% url 'logout' %}">{% trans "Logout" %} ({{ user.first_name }} {{ user.last_name }})</a></div>
         {% else %}
             <div class='navbar-text navbar-text-light'><a href="{{PREFIX_URL}}/accounts/login/">{% trans "Login" %}</a></div>
         {% endif %}
-		<div class='navbar-text navbar-text-light' id="minimalistic_language_picker"></div>
-
+          <div id="toggle_dark_mode" class="navbar-text">
+              <button class='invisible_button' onclick="set_dark_mode()" style="width:10px;">
+                  <span class="glyphicon glyphicon-adjust" style="font-size:16px;color:DodgerBlue;"></span>
+              </button>
+          </div>
 	</div>
+
     </div>
     </div>
   </nav>
 
-  </div>
+</nav>
 
-</div>
-
-</div>
-
+</nav>
+</nav>

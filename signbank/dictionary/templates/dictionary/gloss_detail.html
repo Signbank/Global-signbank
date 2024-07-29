@@ -338,11 +338,15 @@ option:not(:checked) {
 
 {% block content %}
     <div class="navbar navbar-light" id="searchquery" style="background-color:inherit; color:inherit;z-index: 50;">
-
+    <table class="table-responsive">
+    <tr>
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
+    <td>
     <button class="btn btn-primary"><span data-toggle='modal' data-target='#display_query_parameters'
-            style="z-index: 500;">{% trans "QUERY" %}</span></button>
+            style="z-index: 50;height:20px">{% trans "QUERY" %}</span></button>&nbsp;&nbsp;
+    </td>
     {% endif %}
+    <td>
     <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box;z-index: 500;">
         {% if request.session.search_results %}{# See if search_results in sessions is empty #}
 
@@ -351,6 +355,9 @@ option:not(:checked) {
         </div>
         {% endif %}
     </div>
+    </td>
+    </tr>
+    </table>
     </div>
 
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
@@ -975,10 +982,10 @@ option:not(:checked) {
                     {% trans "Annotation ID Gloss" %}
                     {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}'
+
+                <td class='edit edit_area' id='annotation_idgloss_{{lang.language_code_2char}}'
                     style="color:inherit;"
-                    colspan="2"><span>{{annotation_idgloss_translation}}</span>
-                </td>
+                    colspan="2">{{annotation_idgloss_translation}}</td>
             </tr>
             <tr>
                 <th></th>
@@ -1387,9 +1394,15 @@ option:not(:checked) {
 
             {% for value,name,label,kind in main_fields %}
                 <tr><th>{{label}}</th>
+                    {% if kind == 'text' %}
+                    <td class="edit edit_area" id='{{name}}'
+                        value='{{value}}'>{% value value %}
+                    </td>
+                    {% else %}
                     <td class="edit edit_{{kind}}" id='{{name}}'
                         value='{{value}}'>{% value value %}
                     </td>
+                    {% endif %}
                     <td style="width:200px;"></td>
                 </tr>
             {% endfor %}
@@ -1413,6 +1426,132 @@ option:not(:checked) {
                 </div>
             </div>
         </div>
+
+   <!-- Non-manual videos -->
+   <div class="panel panel-default">
+        <div class='panel-heading' data-toggle='collapse'
+             data-target='#nmevideos'>{% trans "Videos with Non-manual Elements" %}
+        </div>
+        <div id='nmevideos' class='collapse'>
+            <div class="panel panel-default">
+            {% if gloss.has_nme_videos %}
+               <table class='table table-responsive' style="text-align: left;width:100%;">
+                <tr style="overflow-y:auto;">
+                    <td style="display:inline-block;">
+                    {% for videonme in gloss.get_nme_videos %}
+                        <div class="table-responsive" style="display:inline-block;">
+                         <table class="table table-condensed" style="text-align: left;">
+                         <tr>
+                           <td class="editform" style="width:5em;">
+                           <span class='glyphicon glyphicon-trash nmevideo-delete' data-toggle='modal' data-target='#delete_nmevideo_modal_{{videonme.id}}'></span>
+                             <div class="modal fade" id="delete_nmevideo_modal_{{videonme.id}}" role="dialog" aria-labelledby="#modalDeleteNME" aria-hidden="true">
+                                 <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <div class='modal-header'>
+                                            <h2 id='modalDeleteNME'>{% trans "Delete NME Video" %}</h2>
+                                        </div>
+                                        <div class='modal-body'>
+                                            <p>{% trans "Are you sure? This cannot be undone." %}</p>
+                                         </div>
+                                        <form class="formbutton" action='{% url "dictionary:update_gloss" gloss.id %}'
+                                              method='post'>
+                                        {% csrf_token %}
+                                          <input type='hidden' name='id' value='nmevideo_delete_{{videonme.id}}'>
+                                          <input type='hidden' name='value' value='confirmed'>
+                                          <div class="modal-footer">
+                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                            <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
+                                          </div>
+                                        </form>
+                                    </div>
+                                  </div>
+                             </div>
+                           </td>
+                           <td>
+                               <table>
+                                   <tr>
+                                       <td colspan="2">
+                                           <div id="nmeplayer">
+                                            <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}"
+                                                   style="height:200px;width:auto;" controls muted></video>
+                                           </div>
+                                        </td>
+                                   </tr>
+                                   {% with nme_video_descriptions|get_item:videonme as nme_descriptions %}
+                                   {% for lang, description in nme_descriptions.items %}
+                                    <tr style="text-align: left;">
+                                        <td>
+                                            {% if SHOW_DATASET_INTERFACE_OPTIONS %}{{lang.name}}:{% endif %}
+                                        </td>
+                                        <td class='edit edit_area'
+                                            id='nmevideo_description_{{videonme.id}}_{{lang.language_code_2char}}'
+                                            style="height:80;">{{description}}</td>
+                                    </tr>
+                                   {% endfor %}
+                                   {% endwith %}
+                                   <tr class="editform">
+                                       <td>{% trans "Index" %}</td>
+                                       <td class='edit edit_int' id='nmevideo_offset_{{videonme.id}}'>{{videonme.offset}}</td>
+                                   </tr>
+                               </table>
+                           </td>
+                         </tr>
+                         </table>
+                      </div>
+                    {% endfor %}
+                    </td>
+                </tr>
+               </table>
+            {% endif %}
+            </div>
+
+            {% if "change_dataset" in dataset_perms %}
+            <div class='editform' style="width:800px;height:800px;">
+                <fieldset>
+                    <legend>{% trans "Upload New NME Video" %}</legend>
+                    <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                        <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
+                        <input type='hidden' name='object_type' value='gloss_nmevideo'>
+                        <input type='hidden' name='recorded' value='False'>
+                        <table>
+                          <tr>
+                            <td>{{nmevideoform.videofile}}</td>
+                          </tr>
+                          <tr>
+                            <td id="nmevideo-buttons">
+                                <input type='hidden' name='object_id' value='{{gloss.pk}}'>
+                                <input class='btn btn-primary' type='submit' value='Upload' />
+                            </td>
+                          </tr>
+                        </table>
+                        <br><br>
+                        <div>{% trans "Add descriptions for the video:" %}</div>
+                            <table class="table table-condensed">
+                                <tr>
+                                    <th style="width:200px;">{% trans "Index" %}</th>
+                                    <td style='width:5em'>
+                                        <input class='form-control' name='offset' id='offset' type='number' value=1>
+                                    </td>
+                                </tr>
+                                {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
+                                <tr>
+                                    <th style="width:200px;">{{dataset_lang.name}}</th>
+                                    <td><input style="width:600px;"
+                                               id="description_{{dataset_lang.language_code_2char}}"
+                                               name="description_{{dataset_lang.language_code_2char}}"
+                                               value="" maxlength="200" type="text" class="description-input">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                      <br><br>
+                    </form>
+                </fieldset>
+            </div>
+            {% endif %}
+        </div>
+   </div>
 
    <!-- Morphology -->
    <div class="panel panel-default panel-light">
@@ -1559,7 +1698,7 @@ option:not(:checked) {
                     {% endif %}
                     <td id='morpheme-definition_{{morpheme.pk}}'>
                         <a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morph_display}} ({{morpheme_type}})</a></td>
-                    <td class='edit edit_text' id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
+                    <td class='edit edit_area' id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
                </tr>
                 {% endfor %}
             </table>
@@ -1638,7 +1777,7 @@ option:not(:checked) {
                     <td></td>
                     {% endif %}
                     <td id='blend-definition_{{blend.pk}}'><a href='{% url "dictionary:admin_gloss_view" pk=blend.glosses.pk %}'>{{blend_display}}</a></td>
-                    <td class='edit edit_text' id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
+                    <td class='edit edit_area' id='blend-definition-role_{{blend.pk}}'>{{blend.role}}</td>
                </tr>
                 {% endfor %}
             </table>
@@ -1801,7 +1940,7 @@ option:not(:checked) {
                 {% elif kind == 'text' %}
                 <tr {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %} class="empty_row"{% endif %}>
                     <th>{{label}}</th>
-                    <td class="edit edit_text" id='{{name}}' value='{{value}}' colspan="2">{% value value %}</td>
+                    <td class="edit edit_area" id='{{name}}' value='{{value}}' colspan="2">{% value value %}</td>
                 </tr>
                 {% else %}
                 {% if value == '-' or value == ' ' or value == '' or value == None or value == False or value == '------' %}
@@ -1917,7 +2056,7 @@ option:not(:checked) {
                     {% endif %}
                     </th>
                     {% if kind == 'text' %}
-                    <td class="edit edit_text" id='{{name}}' style="width:500px;" value='{{value}}'
+                    <td class="edit edit_area" id='{{name}}' style="width:500px;" value='{{value}}'
                              colspan="2">{% value value %}</td>
                     <td/>
                     {% else %}
@@ -2075,8 +2214,8 @@ option:not(:checked) {
                    {% endif %}
                         <td class='edit edit_check' id='relationforeign-loan_{{rel.id}}' style='width:3em'
                             value='{{rel.loan}}'>{% if rel.loan %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
-                        <td class='edit edit_text' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
-                        <td class='edit edit_text' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
+                        <td class='edit edit_area' id='relationforeign-other-lang_{{rel.id}}'>{{rel.other_lang}}</td>
+                        <td class='edit edit_area' id='relationforeign-other-lang-gloss_{{rel.id}}'>{{rel.other_lang_gloss}}</td>
                     </tr>
                    {% endfor %}
                </table>
@@ -2128,8 +2267,13 @@ option:not(:checked) {
                 {% for value,name,label,kind in publication_fields %}
 	            <tr>
                       <th>{{label}}</th>
+                      {% if kind == 'text' %}
+                      <td class="edit edit_area" id='{{name}}'
+                          value='{{value}}'>{% value value %}</td>
+                      {% else %}
                       <td class="edit edit_{{kind}}" id='{{name}}'
                           value='{{value}}'>{% if value %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
+                      {% endif %}
                 </tr>
                 {% endfor %}
             </table>
@@ -2274,7 +2418,7 @@ option:not(:checked) {
                                 <style>.highlight {background-color: rgb(255, 149, 63);}</style>
 
                                 <video id="myVideo_{{ forloop.counter }}" controls>
-                                    <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile }}" type="video/mp4">
+                                    <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
                                 </video>                               
                             
                                 <br><br><i>Glosses</i><br>
@@ -2303,7 +2447,7 @@ option:not(:checked) {
                                 </script>
                                 <p>
                                     {% if annotated_sentence.has_contexts %}
-                                    <i>Sentence context</i><br>
+                                    <i>{% trans "Sentence context" %}</i><br>
                                     {% for annotated_sentence_context in annotated_sentence.annotated_sentence_contexts.all %}
                                         {{ annotated_sentence_context.language }}: {{ annotated_sentence_context.text }}{% if not forloop.last %}<br>{% endif %}
                                     {% endfor %}
@@ -2311,16 +2455,19 @@ option:not(:checked) {
                                 </p>
                                 <p>
                                     {% if annotated_sentence.has_translations %}
-                                    <i>Sentence translation</i><br>
+                                    <i>{% trans "Sentence translation" %}</i><br>
                                     {% for annotated_sentence_translation in annotated_sentence.annotated_sentence_translations.all %}
                                         {{ annotated_sentence_translation.language }}: {{ annotated_sentence_translation.text }}{% if not forloop.last %}<br>{% endif %}
                                     {% endfor %}
                                     {% endif %}
                                 </p>
                                 <p>
-                                    {% if annotated_sentence.annotatedvideo.corpus %}
-                                    <i>Corpus</i><br>
-                                    {{ annotated_sentence.annotatedvideo.corpus }}
+                                    {% if annotated_sentence.annotatedvideo.source %}
+                                        <i>{% trans "Source" %}</i><br>
+                                        {{ annotated_sentence.annotatedvideo.source.source }}
+                                        {% if annotated_sentence.annotatedvideo.source.url %}
+                                            , <a href="{{ annotated_sentence.annotatedvideo.source.get_absolute_url }}">{{ annotated_sentence.annotatedvideo.source.url }}</a>
+                                        {% endif %}
                                     {% endif %}
                                 </p>
                             </td>
@@ -2395,7 +2542,7 @@ option:not(:checked) {
                     </td>
                     <td id='other-media-file-type_{{pk}}'>{{file_type}}</td>
                     <td id='other-media-type_{{pk}}'>{{type}}</td>
-                    <td class='edit edit_text' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
+                    <td class='edit edit_area' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
                 </tr>
                {% endfor %}
 

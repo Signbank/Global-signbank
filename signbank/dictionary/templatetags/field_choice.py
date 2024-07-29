@@ -1,5 +1,7 @@
 from django.template import Library
 from signbank.dictionary.models import FieldChoice, Dataset
+from django.utils.translation import gettext
+
 
 def get_field_choice(machine_value,field_category):
 
@@ -17,8 +19,8 @@ def get_field_choice(machine_value,field_category):
         return '-'
 
 
-
 register = Library()
+
 
 @register.filter
 def normalise_empty(machine_value):
@@ -34,3 +36,17 @@ def normalise_empty(machine_value):
 def translated_frequency_list(dataset):
     generated_dict = dataset.generate_frequency_dict()
     return generated_dict
+
+
+@register.filter
+def get_gloss_field(gloss, field):
+    field_value = getattr(gloss, field)
+    if field in ['repeat', 'altern']:
+        if not field_value:
+            return gettext("No")
+        else:
+            return gettext("Yes")
+    elif field_value:
+        return field_value.name
+    else:
+        return '-'

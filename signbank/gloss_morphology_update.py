@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from guardian.shortcuts import get_objects_for_user
 from signbank.tools import get_interface_language_and_default_language_codes
 from signbank.csv_interface import normalize_field_choice
-from signbank.api_token import hash_token
+from signbank.api_token import put_api_user_in_request
 from signbank.tools import (gloss_from_identifier, get_default_annotationidglosstranslation,
                             check_existence_sequential_morphology,
                             check_existence_simultaneous_morphology,
@@ -146,36 +146,20 @@ def gloss_update_do_changes(user, gloss, fields_to_update, language_code):
 
 
 @csrf_exempt
+@put_api_user_in_request
 def api_update_gloss_morphology(request, datasetid, glossid):
 
     results = dict()
-    auth_token_request = request.headers.get('Authorization', '')
     interface_language_code = request.headers.get('Accept-Language', 'en')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
-    activate(interface_language_code)
-    if auth_token_request:
-        auth_token = auth_token_request.split('Bearer ')[-1]
-        hashed_token = hash_token(auth_token)
-        signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
-        if not signbank_token:
-            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
-            return JsonResponse(results)
-        username = signbank_token.signbank_user.username
-        user = User.objects.get(username=username)
-    elif request.user:
-        user = request.user
-    else:
-        results['errors'] = [gettext("User not found in request.")]
-        return JsonResponse(results)
-
     activate(interface_language_code)
 
     results['glossid'] = glossid
 
     errors = dict()
 
-    if not user.is_authenticated:
+    if not request.user.is_authenticated:
         errors[gettext("User")] = gettext("You must be logged in to use this functionality.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
@@ -188,7 +172,7 @@ def api_update_gloss_morphology(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
         errors[gettext("Dataset")] = gettext("No change permission for dataset.")
         results['errors'] = errors
@@ -225,7 +209,7 @@ def api_update_gloss_morphology(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    if not user.has_perm('dictionary.change_gloss'):
+    if not request.user.has_perm('dictionary.change_gloss'):
         errors[gettext("Gloss")] = gettext("No change gloss permission.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
@@ -245,7 +229,7 @@ def api_update_gloss_morphology(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    gloss_update_do_changes(user, gloss, fields_to_update, interface_language_code)
+    gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
 
     results['errors'] = {}
     results['updatestatus'] = "Success"

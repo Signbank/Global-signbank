@@ -1,11 +1,14 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import Context, RequestContext
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from signbank.video.models import Video, GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
-from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence
+from django.utils.translation import gettext as _
+
+from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
+from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence, Dataset, AnnotatedSentenceSource
 from signbank.video.forms import VideoUploadForObjectForm
 from django.http import JsonResponse
 # from django.contrib.auth.models import User
@@ -21,7 +24,10 @@ def addvideo(request):
     """View to present a video upload form and process the upload"""
 
     if request.method == 'POST':
-        form = VideoUploadForObjectForm(request.POST, request.FILES)
+        last_used_dataset = request.session['last_used_dataset']
+        dataset = Dataset.objects.filter(acronym=last_used_dataset).first()
+        dataset_languages = dataset.translation_languages.all()
+        form = VideoUploadForObjectForm(request.POST, request.FILES, languages=dataset_languages, dataset=dataset)
         if form.is_valid():
             # Unpack the form
             object_id = form.cleaned_data['object_id']
@@ -40,6 +46,19 @@ def addvideo(request):
                 if not gloss:
                     redirect(redirect_url)
                 gloss.add_video(request.user, vfile, recorded)
+            elif object_type == 'gloss_nmevideo':
+                gloss = Gloss.objects.filter(id=object_id).first()
+                if not gloss:
+                    redirect(redirect_url)
+                offset = form.cleaned_data['offset']
+                nmevideo = gloss.add_nme_video(request.user, vfile, offset, recorded)
+                translation_languages = gloss.lemma.dataset.translation_languages.all()
+                descriptions = dict()
+                for language in translation_languages:
+                    form_field = 'description_' + language.language_code_2char
+                    form_value = form.cleaned_data[form_field]
+                    descriptions[language.language_code_2char] = form_value.strip()
+                nmevideo.add_descriptions(descriptions)
             elif object_type == 'morpheme_video':
                 morpheme = Morpheme.objects.filter(id=object_id).first()
                 if not morpheme:
@@ -62,10 +81,14 @@ def addvideo(request):
                 if contexts:
                     annotatedSentence.add_contexts(json.loads(contexts))
                     
-                corpus = form.cleaned_data['corpus_name']
-                annotatedSentence.add_video(request.user, vfile, eaf_file, corpus)
+                source = form.cleaned_data['source_id']
+                annotatedVideo = annotatedSentence.add_video(request.user, vfile, eaf_file, source)
                 
-                annotatedSentence.save()
+                if annotatedVideo == None:
+                    messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
+                    annotatedSentence.delete()
+                else:
+                    annotatedSentence.save()
 
             return redirect(redirect_url)
 
@@ -107,18 +130,19 @@ def process_eaffile(request):
 
     if request.method == 'POST':
         check_gloss_label = request.POST.get('check_gloss_label', '')
+        dataset_acronym = request.POST.get('dataset', '')
         labels_not_found = []
         uploaded_file = request.FILES['eaffile']
         file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
         if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
-            return JsonResponse({'error': 'Invalid file. Please try again.'})
+            return JsonResponse({'error': _('Invalid file. Please try again.')})
 
         eaf = Eaf(uploaded_file.temporary_file_path())
         
         # Add glosses from the right hand
         for annotation in eaf.tiers['Glosses R'][0].values():
             gloss_label = annotation[2]
-            if AnnotationIdglossTranslation.objects.filter(text__exact=gloss_label).exists():
+            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
                 start = int(eaf.timeslots[annotation[0]])
                 end = int(eaf.timeslots[annotation[1]])
                 glosses.append([gloss_label, start, end])
@@ -128,7 +152,7 @@ def process_eaffile(request):
         # Add glosses from the left hand, if they don't overlap with the right hand
         for annotation in find_non_overlapping_annotated_glosses(eaf.timeslots, eaf.tiers['Glosses R'][0].values(), eaf.tiers['Glosses L'][0].values()):
             gloss_label = annotation[2]
-            if AnnotationIdglossTranslation.objects.filter(text__exact=gloss_label).exists():
+            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
                 start = int(eaf.timeslots[annotation[0]])
                 end = int(eaf.timeslots[annotation[1]])
                 glosses.append([gloss_label, start, end])
@@ -137,9 +161,6 @@ def process_eaffile(request):
         
         # Sort the list of glosses by the "start" value
         glosses = sorted(glosses, key=lambda x: x[1])
-
-        if glosses == []:
-            return JsonResponse({'error': 'No annotations found. Please try again.'})
         
         if 'Sentences' in eaf.tiers:
             for annotation in eaf.tiers['Sentences'][0].values():
@@ -152,6 +173,9 @@ def process_eaffile(request):
     annotations_table_html = render(request, 'annotations_table.html', {'glosses_list': glosses, 'check_gloss_label': [check_gloss_label], 'labels_not_found': labels_not_found}).content.decode('utf-8')
     sentences_json = json.dumps(sentence_dict)
 
+    if glosses == []:
+        return JsonResponse({'error': annotations_table_html})
+    
     return JsonResponse({'annotations_table_html': annotations_table_html, 'sentences': sentences_json})
 
 

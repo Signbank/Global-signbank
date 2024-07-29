@@ -46,7 +46,6 @@ html {
 }
 
 #logoholder {
-    background-image: url(../../images/global/ru-logo.png);
     background-repeat: no-repeat;
     background-position: 11px 10px;
 	width: 115px;
@@ -126,6 +125,14 @@ legend
     position: fixed;
     background-color: #ffffff;
     color: black;
+}
+
+.navbar-fixed-top {
+    z-index: 500;
+}
+
+.navbar-upper {
+    z-index: 550;
 }
 
 .navbar-nav > li > a {

@@ -25,7 +25,8 @@
 }
 html,
 body {
-  height: 100%;
+  height: auto;
+  width: 100%;
   margin: 0px;
   padding: 0px;
   background-color: white;
@@ -38,8 +39,9 @@ body {
 }
 /* Wrapper for page content to push down footer */
 #wrap {
-  min-height: calc(100% - 220px);
+  /* min-height: calc(100% - 220px); */
   height: auto;
+  width: auto;
   /* Negative indent footer by its height */
   margin: auto auto -45px auto;
   /* Pad bottom by footer height */
@@ -60,7 +62,7 @@ body {
 }
 
 .container {
-    width: 100%;
+    width: auto;
     margin-right: 9px;
     margin-bottom: 15px;
     margin-top: 0px;
@@ -623,9 +625,8 @@ tr.rotated th {
 .ribbon_list
 {
     display: flex;
-    flex-direction: column;
     height: 100px;
-    flex-wrap: wrap;
+    flex-flow: column wrap;
     margin-left: -85px;
     margin-top: 3px;
     justify-content: center;
