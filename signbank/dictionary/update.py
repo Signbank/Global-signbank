@@ -6,6 +6,8 @@ from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 
 from django.contrib.auth.decorators import permission_required
+import guardian
+
 from django.db.models.fields import BooleanField, IntegerField
 from django.db import DatabaseError, IntegrityError
 from django.db.transaction import TransactionManagementError
@@ -36,8 +38,8 @@ from signbank.dictionary.update_senses_mapping import mapping_edit_keywords, map
     mapping_edit_senses_matrix, mapping_toggle_sense_tag
 from signbank.dictionary.consistency_senses import reorder_translations
 from signbank.dictionary.related_objects import gloss_related_objects, morpheme_related_objects
-from signbank.dictionary.update_glosses import mapping_toggle_tag, mapping_toggle_semanticfield, \
-    mapping_toggle_wordclass, mapping_toggle_namedentity
+from signbank.dictionary.update_glosses import *
+from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_update_to_revision_history
 
 
 def show_error(request, translated_message, form, dataset_languages):
@@ -1048,7 +1050,7 @@ def update_gloss(request, glossid):
             gloss.__setattr__(field,value)
             gloss.save()
 
-            #If the value is not a Boolean, get the human readable value
+            # If the value is not a Boolean, get the human readable value
             if not isinstance(value,bool):
                 # if we get to here, field is a valid field of Gloss
                 newvalue = value
@@ -1058,7 +1060,7 @@ def update_gloss(request, glossid):
         category_value = 'phonology'
 
     # the gloss has been updated, now prepare values for saving to GlossHistory and display in template
-    #This is because you cannot concat none to a string in py3
+    # This is because you cannot concat none to a string in py3
     if original_value is None:
         original_value = ''
 
@@ -1066,7 +1068,8 @@ def update_gloss(request, glossid):
     # Remember this change for the history books
     original_human_value = original_value.name if isinstance(original_value, FieldChoice) else original_value
     if isinstance(value, bool) and field in settings.HANDSHAPE_ETYMOLOGY_FIELDS + settings.HANDEDNESS_ARTICULATION_FIELDS:
-    # store a boolean in the Revision History rather than a human value as for the template (e.g., 'letter' or 'number')
+    # store a boolean in the Revision History rather than a human value
+    # as for the template (e.g., 'letter' or 'number')
         glossrevision_newvalue = value
     else:
         # this takes care of a problem with None not being allowed as a value in GlossRevision
@@ -1695,11 +1698,20 @@ def add_morphology_definition(request):
     morpheme = Gloss.objects.get(id=morpheme_id)
 
     thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
+
+    original_sequential = thisgloss.get_hasComponentOfType_display()
+
     role = get_object_or_404(FieldChoice, pk=role_id, field='MorphologyType')
 
     # create definition, default to not published
     morphdef = MorphologyDefinition(parent_gloss=thisgloss, role=role, morpheme=morpheme)
     morphdef.save()
+
+    new_sequential = thisgloss.get_hasComponentOfType_display()
+    add_gloss_update_to_revision_history(request.user, thisgloss, 'sequential_morphology', original_sequential, new_sequential)
+
+    thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    thisgloss.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
@@ -1745,11 +1757,20 @@ def add_morpheme_definition(request, glossid):
 
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
+    original_simultaneous = thisgloss.get_morpheme_display()
+
     definition = SimultaneousMorphologyDefinition()
     definition.parent_gloss = thisgloss
     definition.morpheme = morph
     definition.role = form.cleaned_data['description']
     definition.save()
+
+    new_simultaneous = thisgloss.get_morpheme_display()
+    add_gloss_update_to_revision_history(request.user, thisgloss, 'simultaneous_morphology', original_simultaneous, new_simultaneous)
+
+    thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    thisgloss.save()
+
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
 
@@ -1761,8 +1782,9 @@ def add_blend_definition(request, glossid):
 
     form = GlossBlendForm(request.POST)
 
-    # Get the glossid at any rate
     thisgloss = get_object_or_404(Gloss, pk=glossid)
+
+    original_blend = thisgloss.get_blendmorphology_display()
 
     # check availability of morpheme before continuing
     if form.data['blend_id'] == "":
@@ -1783,6 +1805,12 @@ def add_blend_definition(request, glossid):
         definition.glosses = blend
         definition.role = form.cleaned_data['role']
         definition.save()
+
+    new_blend = thisgloss.get_blendmorphology_display()
+    add_gloss_update_to_revision_history(request.user, thisgloss, 'blend_morphology', original_blend, new_blend)
+
+    thisgloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    thisgloss.save()
 
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': thisgloss.id})+'?editmorphdef')
 
@@ -1894,11 +1922,15 @@ def update_handshape(request, handshapeid):
 def add_annotated_media(request, glossid):
     template = 'dictionary/add_annotated_sentence.html'
     gloss = Gloss.objects.get(id=glossid)
-    languages = gloss.lemma.dataset.translation_languages.all()
+    dataset = gloss.lemma.dataset
+    languages = dataset.translation_languages.all()
+    annotated_sentence_sources = AnnotatedSentenceSource.objects.filter(dataset=dataset)
     context = {
         'gloss': gloss,
-        'annotationidgloss': gloss.annotationidglosstranslation_set.filter(language = gloss.lemma.dataset.default_language).first().text,
-        'videoform': VideoUploadForObjectForm(languages=languages),
+        'annotationidgloss': gloss.annotationidglosstranslation_set.filter(language = dataset.default_language).first().text,
+        'videoform': VideoUploadForObjectForm(languages=languages, dataset=dataset),
+        'annotated_sentence_sources': annotated_sentence_sources,
+        'dataset': dataset,
     }
     return render(request, template, context)
 
@@ -1909,11 +1941,14 @@ def edit_annotated_sentence(request, glossid, annotatedsentenceid):
     gloss = Gloss.objects.get(id=glossid)
     annotated_translations, annotated_contexts = {}, {}
     annotated_sentence = None
+    annotated_sentence_sources = AnnotatedSentenceSource.objects.filter(dataset=gloss.lemma.dataset)
+    
     if AnnotatedSentence.objects.filter(id=annotatedsentenceid).count() == 1:
         annotated_sentence = AnnotatedSentence.objects.get(id=annotatedsentenceid)
+        if annotated_sentence.annotatedvideo.source:
+            annotated_sentence_sources = annotated_sentence_sources.exclude(id=annotated_sentence.annotatedvideo.source.id)
         annotated_translations = annotated_sentence.get_annotatedstc_translations_dict_with()
         annotated_contexts = annotated_sentence.get_annotatedstc_contexts_dict_with()
-        corpus = annotated_sentence.annotatedvideo.corpus
         annotationidgloss = gloss.annotationidglosstranslation_set.filter(language = annotated_sentence.get_dataset().default_language).first().text
 
     annotated_glosses, checked_glosses = annotated_sentence.get_annotated_glosses_list()
@@ -1925,8 +1960,8 @@ def edit_annotated_sentence(request, glossid, annotatedsentenceid):
         'annotated_sentence': annotated_sentence,
         'annotated_translations': annotated_translations,
         'annotated_contexts': annotated_contexts,
-        'corpus': corpus,
         'annotations_table_html': annotations_table_html,
+        'annotated_sentence_sources': annotated_sentence_sources,
     }
     return render(request, template, context)
 
@@ -1943,7 +1978,14 @@ def save_edit_annotated_sentence(request):
 
     with atomic():
         annotated_sentence.annotated_glosses.all().delete()
-        annotated_sentence.add_annotations(annotations, gloss)
+        cut = False
+        if 'trim-video-checked' in request.POST:
+            cut = True
+            start_cut = int(request.POST['start-ms'])
+            end_cut = int(request.POST['end-ms'])
+            annotated_sentence.add_annotations(annotations, gloss, start_cut, end_cut)
+        else:
+            annotated_sentence.add_annotations(annotations, gloss)
 
         for language in gloss.lemma.dataset.translation_languages.all():
             context_key = 'context_' + language.language_code_3char
@@ -1968,19 +2010,22 @@ def save_edit_annotated_sentence(request):
                     annotated_sentence_translation = AnnotatedSentenceTranslation.objects.filter(annotatedsentence=annotated_sentence, language=language)
                     if annotated_sentence_translation:
                         annotated_sentence_translation.delete()
-        if 'corpus_name' in request.POST:
-            corpus = request.POST['corpus_name']
-            annotated_sentence.annotatedvideo.corpus = corpus
+        if 'source_id' in request.POST:
+            source = request.POST['source_id']
+            if source != "":
+                annotated_sentence.annotatedvideo.source = AnnotatedSentenceSource.objects.get(id=source)
+            else:
+                annotated_sentence.annotatedvideo.source = None
+            annotated_sentence.annotatedvideo.save()
+        if 'eaffile' in request.FILES:
             annotated_sentence.annotatedvideo.delete_files(only_eaf=True)
-            if 'eaffile' in request.FILES:
-                eaffile = request.FILES['eaffile']
-                if isinstance(eaffile, File) or eaffile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile' or eaffile.content_type == 'django.core.files.uploadedfile.TemporaryUploadedFile':
-                    from signbank.video.models import get_annotated_video_file_path
-                    eaf_file_path = get_annotated_video_file_path(instance=annotated_sentence.annotatedvideo, filename=eaffile.name)
-                    annotated_sentence.annotatedvideo.eaffile.save(eaf_file_path, eaffile)
-                else:
-                    raise ValueError("Uploaded file is not valid")
+            eaffile = request.FILES['eaffile']
+            from signbank.video.models import get_annotated_video_file_path
+            eaf_file_path = get_annotated_video_file_path(instance=annotated_sentence.annotatedvideo, filename=eaffile.name)
+            annotated_sentence.annotatedvideo.eaffile.save(eaf_file_path, eaffile)
 
+        if cut:
+            annotated_sentence.annotatedvideo.cut_video_and_eaf(start_cut, end_cut)
     
     return redirect(redirect_url)
 
@@ -2191,6 +2236,9 @@ def update_morphology_definition(gloss, field, value):
 
     (what, morph_def_id) = field.split('_')
     what = what.replace('-','_')
+
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
 
     try:
         morph_def = MorphologyDefinition.objects.get(id=morph_def_id)
@@ -2590,6 +2638,9 @@ def update_morpheme_definition(gloss, field, value):
     (what, morph_def_id) = field.split('_')
     what = what.replace('-','_')
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
     if what == 'morpheme_definition_delete':
         definition = SimultaneousMorphologyDefinition.objects.get(id=morph_def_id)
         definition.delete()
@@ -2613,9 +2664,13 @@ def update_blend_definition(gloss, field, value):
     (what, blend_id) = field.split('_')
     what = what.replace('-','_')
 
+    gloss.lastUpdated = DT.datetime.now(tz=get_current_timezone())
+    gloss.save()
+
     if what == 'blend_definition_delete':
         definition = BlendMorphology.objects.get(id=blend_id)
         definition.delete()
+
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id})+'?editmorphdef')
     elif what == 'blend_definition_role':
         definition = BlendMorphology.objects.get(id=blend_id)
@@ -2852,7 +2907,6 @@ def update_dataset(request, datasetid):
         dataset = get_object_or_404(Dataset, id=datasetid)
         dataset.save() # This updates the lastUpdated field
 
-        import guardian
         from django.contrib.auth.models import Group
 
         try:
@@ -2868,7 +2922,7 @@ def update_dataset(request, datasetid):
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
         user_change_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
-        if not dataset in user_change_datasets:
+        if dataset not in user_change_datasets:
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
         field = request.POST.get('id', '')
@@ -3461,16 +3515,27 @@ def assign_lemma_dataset_to_gloss(request, glossid):
                                     'datasetname': str(success_message) }), {'content-type': 'application/json'})
 
 
+def okay_to_update_gloss(request, gloss):
+
+    if not gloss or not gloss.lemma:
+        return False
+
+    if gloss.lemma.dataset not in guardian.shortcuts.get_objects_for_user(request.user, ['change_dataset'],
+                                                                          Dataset, any_perm=True):
+        return False
+    
+    return True
+
+
 @permission_required('dictionary.change_gloss')
 def toggle_tag(request, glossid, tagid):
 
-    if not request.user.is_authenticated:
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
 
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
-    result = mapping_toggle_tag(request, glossid, tagid)
+    result = mapping_toggle_tag(request, gloss, tagid)
 
     return JsonResponse(result)
 
@@ -3478,13 +3543,12 @@ def toggle_tag(request, glossid, tagid):
 @permission_required('dictionary.change_gloss')
 def toggle_semantic_field(request, glossid, semanticfield):
 
-    if not request.user.is_authenticated:
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
 
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
-    result = mapping_toggle_semanticfield(request, glossid, semanticfield)
+    result = mapping_toggle_semanticfield(request, gloss, semanticfield)
 
     return JsonResponse(result)
 
@@ -3492,13 +3556,12 @@ def toggle_semantic_field(request, glossid, semanticfield):
 @permission_required('dictionary.change_gloss')
 def toggle_wordclass(request, glossid, wordclass):
 
-    if not request.user.is_authenticated:
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
 
-    if not request.user.has_perm('dictionary.change_gloss'):
-        return JsonResponse({})
-
-    result = mapping_toggle_wordclass(request, glossid, wordclass)
+    result = mapping_toggle_wordclass(request, gloss, wordclass)
 
     return JsonResponse(result)
 
@@ -3506,13 +3569,220 @@ def toggle_wordclass(request, glossid, wordclass):
 @permission_required('dictionary.change_gloss')
 def toggle_namedentity(request, glossid, namedentity):
 
-    if not request.user.is_authenticated:
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
 
-    if not request.user.has_perm('dictionary.change_gloss'):
+    result = mapping_toggle_namedentity(request, gloss, namedentity)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_handedness(request, glossid, handedness):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
 
-    result = mapping_toggle_namedentity(request, glossid, namedentity)
+    result = mapping_toggle_handedness(request, gloss, handedness)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_domhndsh(request, glossid, domhndsh):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_domhndsh(request, gloss, domhndsh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_subhndsh(request, glossid, subhndsh):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_subhndsh(request, gloss, subhndsh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_handCh(request, glossid, handCh):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_handCh(request, gloss, handCh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_relatArtic(request, glossid, relatArtic):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_relatArtic(request, gloss, relatArtic)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_locprim(request, glossid, locprim):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_locprim(request, gloss, locprim)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_contType(request, glossid, contType):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_contType(request, gloss, contType)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_movSh(request, glossid, movSh):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_movSh(request, gloss, movSh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_movDir(request, glossid, movDir):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_movDir(request, gloss, movDir)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_repeat(request, glossid, repeat):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_repeat(request, gloss, repeat)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_altern(request, glossid, altern):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_altern(request, gloss, altern)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_relOriMov(request, glossid, relOriMov):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_relOriMov(request, gloss, relOriMov)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_relOriLoc(request, glossid, relOriLoc):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_relOriLoc(request, gloss, relOriLoc)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_oriCh(request, glossid, oriCh):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = mapping_toggle_oriCh(request, gloss, oriCh)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def toggle_language_fields(request, glossid):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = batch_edit_update_gloss(request, gloss)
+
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def quick_create_sense(request, glossid):
+
+    gloss = Gloss.objects.filter(id=glossid).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    result = batch_edit_create_sense(request, gloss)
 
     return JsonResponse(result)
 
@@ -3526,6 +3796,10 @@ def add_affiliation(request, glossid):
         return JsonResponse({})
 
     thisgloss = get_object_or_404(Gloss, id=glossid)
+
+    if not okay_to_update_gloss(request, thisgloss):
+        return JsonResponse({})
+
     tags_label = 'Affiliation'
 
     deletetag = request.POST.get('delete', '')

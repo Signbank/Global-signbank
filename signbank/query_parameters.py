@@ -609,7 +609,7 @@ def query_parameters_toggle_fields(query_parameters):
                 qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
                 qp_key.startswith(GlossSearchForm.keyword_search_field_prefix):
             continue
-        if qp_key in settings.GLOSS_LIST_DISPLAY_FIELDS:
+        if qp_key[:-2] in settings.GLOSS_LIST_DISPLAY_FIELDS:
             continue
         if qp_key == 'hasRelation[]':
             query_fields_parameters.append(query_parameters[qp_key])
