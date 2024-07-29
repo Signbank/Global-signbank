@@ -6223,8 +6223,10 @@ class LemmaUpdateView(UpdateView):
         context['page_in_lemma_list'] = self.page_in_lemma_list
         dataset = self.object.dataset
         context['dataset'] = dataset
-        dataset_languages = Language.objects.filter(dataset=dataset).distinct()
+        dataset_languages = dataset.translation_languages.all()
         context['dataset_languages'] = dataset_languages
+        context['language_2chars'] = [str(language.language_code_2char) for language in dataset_languages]
+
         context['change_lemma_form'] = LemmaUpdateForm(instance=self.object, page_in_lemma_list=self.page_in_lemma_list)
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 

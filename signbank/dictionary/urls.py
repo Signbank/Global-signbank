@@ -212,6 +212,9 @@ urlpatterns = [
     re_path(r'api_update_gloss_morphology/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.gloss_morphology_update.api_update_gloss_morphology, name='api_update_gloss'),
 
+    re_path(r'restore_gloss/(?P<glossid>\d+)/$',
+            signbank.dictionary.update.restore_gloss, name='restore_gloss'),
+
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
 

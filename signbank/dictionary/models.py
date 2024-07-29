@@ -2665,11 +2665,13 @@ def save_info_about_archived_gloss(sender, instance, using, update_fields=[], **
         return
 
     if not instance.archived:
+        logged_deletes = DeletedGlossOrMedia.objects.filter(old_pk=instance.pk)
+        for deleted_gloss_or_media in logged_deletes:
+            deleted_gloss_or_media.delete()
         return
 
     from signbank.tools import get_default_annotationidglosstranslation
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(instance)
-
     deleted_gloss = DeletedGlossOrMedia()
     deleted_gloss.item_type = 'gloss'
     deleted_gloss.idgloss = instance.idgloss

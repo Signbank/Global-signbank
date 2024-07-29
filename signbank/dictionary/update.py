@@ -3840,3 +3840,20 @@ def add_affiliation(request, glossid):
 
     result = {'affiliation': affiliation_id}
     return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def restore_gloss(request, glossid):
+
+    gloss = Gloss.objects.filter(id=glossid, archived=True).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    gloss.archived = False
+    gloss.save(update_fields=['archived'])
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+
+    return JsonResponse(result)
