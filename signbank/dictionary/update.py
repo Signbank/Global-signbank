@@ -766,6 +766,10 @@ def update_gloss(request, glossid):
             gloss.archived = True
             gloss.save(update_fields=['archived'])
 
+            annotation = get_default_annotationidglosstranslation(gloss)
+            add_gloss_update_to_revision_history(request.user, gloss, 'archived', annotation,
+                                                 annotation)
+
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
     if field.startswith('definition'):
@@ -3852,6 +3856,10 @@ def restore_gloss(request, glossid):
 
     gloss.archived = False
     gloss.save(update_fields=['archived'])
+
+    annotation = get_default_annotationidglosstranslation(gloss)
+    add_gloss_update_to_revision_history(request.user, gloss, 'restored', annotation,
+                                         annotation)
 
     result = dict()
     result['glossid'] = str(gloss.id)
