@@ -2572,7 +2572,7 @@ def choice_lists(request):
 
 def gloss_revision_history(request,gloss_pk):
 
-    gloss = Gloss.objects.get_object_or_404(pk=gloss_pk, archived=False)
+    gloss = get_object_or_404(Gloss, pk=gloss_pk, archived=False)
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
