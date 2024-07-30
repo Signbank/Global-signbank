@@ -105,7 +105,6 @@ def update_gloss_columns_to_value_dict_keys(dataset, language_code):
     return human_readable_to_internal, human_readable_to_json
 
 
-@csrf_exempt
 def get_gloss_update_human_readable_value_dict(request):
     post_data = json.loads(request.body.decode('utf-8'))
 
@@ -432,7 +431,6 @@ def update_language_field(gloss, language_field, new_value):
     gloss.save()
 
 
-@csrf_exempt
 def gloss_update_do_changes(user, gloss, changes, language_code):
     dataset = gloss.lemma.dataset
     language_fields = internal_language_fields(dataset, language_code)
@@ -679,7 +677,6 @@ def gloss_update_nmevideo(gloss, update_fields_dict, language_code, create=False
     return fields_to_update
 
 
-@csrf_exempt
 def gloss_create_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code):
     changes_done = []
     activate(language_code)
@@ -717,6 +714,7 @@ def gloss_create_nmevideo_do_changes(user, gloss, nmevideo, changes, language_co
 
 
 @csrf_exempt
+@put_api_user_in_request
 def api_update_gloss_nmevideo(request, datasetid, glossid):
 
     results = dict()
@@ -793,7 +791,6 @@ def api_update_gloss_nmevideo(request, datasetid, glossid):
     return JsonResponse(results)
 
 
-@csrf_exempt
 def get_gloss_nmevideo_value_dict(request, gloss, language_code):
     post_data = json.loads(request.body.decode('utf-8'))
 
@@ -834,6 +831,7 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code):
 
 
 @csrf_exempt
+@put_api_user_in_request
 def api_create_gloss_nmevideo(request, datasetid, glossid):
 
     results = dict()
