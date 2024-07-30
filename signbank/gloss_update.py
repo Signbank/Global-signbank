@@ -716,6 +716,7 @@ def gloss_create_nmevideo_do_changes(user, gloss, nmevideo, changes, language_co
         revision.save()
 
 
+@csrf_exempt
 def api_update_gloss_nmevideo(request, datasetid, glossid):
 
     results = dict()
@@ -832,6 +833,7 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code):
     return value_dict
 
 
+@csrf_exempt
 def api_create_gloss_nmevideo(request, datasetid, glossid):
 
     results = dict()
