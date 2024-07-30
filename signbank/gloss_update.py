@@ -809,7 +809,7 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code):
     except KeyError:
         return value_dict
 
-    video_file = io.BytesIO(video_file_data)
+    video_file = video_file_data
 
     nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
 
