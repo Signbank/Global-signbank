@@ -590,21 +590,12 @@ def import_csv_create(request):
     if len(request.FILES) > 0:
 
         new_file = request.FILES['file']
-
         try:
             # files that will fail here include those renamed to .csv which are not csv
             # non UTF-8 encoded files also fail
             csv_text = new_file.read().decode('UTF-8-sig')
         except (UnicodeDecodeError, UnicodeError):
-            new_file.seek(0)
-            import magic
-            magic_file_type = magic.from_buffer(new_file.read(2048), mime=True)
-
-            if magic_file_type == 'text/plain':
-                feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
-            else:
-                feedback_message = _('Unrecognised format in selected CSV file.')
-
+            feedback_message = _('Unrecognised format in selected CSV file.')
             messages.add_message(request, messages.ERROR, feedback_message)
 
             return render(request, 'dictionary/import_csv_create.html',
@@ -1024,15 +1015,7 @@ def import_csv_update(request):
             # non UTF-8 encoded files also fail
             csv_text = new_file.read().decode('UTF-8-sig')
         except (UnicodeDecodeError, UnicodeError):
-            new_file.seek(0)
-            import magic
-            magic_file_type = magic.from_buffer(new_file.read(2048), mime=True)
-
-            if magic_file_type == 'text/plain':
-                feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
-            else:
-                feedback_message = _('Unrecognised format in selected CSV file.')
-
+            feedback_message = _('Unrecognised format in selected CSV file.')
             messages.add_message(request, messages.ERROR, feedback_message)
 
             return render(request, 'dictionary/import_csv_update.html',
@@ -2852,17 +2835,9 @@ def import_csv_create_sentences(request):
         try:
             # files that will fail here include those renamed to .csv which are not csv
             # non UTF-8 encoded files also fail
-            csv_text = new_file.read().decode('UTF-8-sig')
+            csv_text = new_file.read().decode('UTF-8')
         except (UnicodeDecodeError, UnicodeError):
-            new_file.seek(0)
-            import magic
-            magic_file_type = magic.from_buffer(new_file.read(2048), mime=True)
-
-            if magic_file_type == 'text/plain':
-                feedback_message = _('Unrecognised text encoding. Please export your file to UTF-8 format using e.g. LibreOffice.')
-            else:
-                feedback_message = _('Unrecognised format in selected CSV file.')
-
+            feedback_message = _('Unrecognised format in selected CSV file.')
             messages.add_message(request, messages.ERROR, feedback_message)
 
             return render(request, 'dictionary/import_csv_create_sentences.html',
