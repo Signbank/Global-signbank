@@ -956,16 +956,8 @@ class GlossDetailView(DetailView):
         # the lemma field is non-empty because it's caught in the get method
         dataset_of_requested_gloss = gl.lemma.dataset
 
-        # set a session variable to be able to pass the gloss's id to the ajax_complete method
-        # the last_used_dataset name is updated to that of this gloss
-        # if a sequence of glosses are being created by hand, this keeps the dataset setting the same
-        if dataset_of_requested_gloss:
-            self.request.session['datasetid'] = dataset_of_requested_gloss.pk
-            self.last_used_dataset = dataset_of_requested_gloss.acronym
-        else:
-            # in this case the gloss does not have a dataset assigned
-            self.request.session['datasetid'] = settings.DEFAULT_DATASET_PK
-            self.last_used_dataset = settings.DEFAULT_DATASET_ACRONYM
+        self.request.session['datasetid'] = dataset_of_requested_gloss.pk
+        self.last_used_dataset = dataset_of_requested_gloss.acronym
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
@@ -1528,14 +1520,8 @@ class GlossVideosView(DetailView):
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
-        if dataset_of_requested_gloss:
-            self.request.session['datasetid'] = dataset_of_requested_gloss.pk
-            self.last_used_dataset = dataset_of_requested_gloss.acronym
-        else:
-            # in this case the gloss does not have a dataset assigned
-            print("Alert: The gloss does not have a dataset. The default dataset is assigned to session variable 'datasetid'")
-            self.request.session['datasetid'] = settings.DEFAULT_DATASET_PK
-            self.last_used_dataset = settings.DEFAULT_DATASET_ACRONYM
+        self.request.session['datasetid'] = dataset_of_requested_gloss.pk
+        self.last_used_dataset = dataset_of_requested_gloss.acronym
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
@@ -2930,11 +2916,8 @@ class GlossFrequencyView(DetailView):
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
-        if gl.dataset:
-            self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.acronym
-        else:
-            self.request.session['datasetid'] = get_default_language_id()
+        self.request.session['datasetid'] = gl.lemma.dataset.id
+        self.last_used_dataset = gl.lemma.dataset.acronym
 
         # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
@@ -3080,11 +3063,8 @@ class LemmaFrequencyView(DetailView):
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
-        if gl.dataset:
-            self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.acronym
-        else:
-            self.request.session['datasetid'] = get_default_language_id()
+        self.request.session['datasetid'] = gl.lemma.dataset.id
+        self.last_used_dataset = gl.lemma.dataset.acronym
 
         # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
@@ -4979,11 +4959,8 @@ class MorphemeDetailView(DetailView):
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
-        if gl.dataset:
-            self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.acronym
-        else:
-            self.request.session['datasetid'] = get_default_language_id()
+        self.request.session['datasetid'] = gl.lemma.dataset.id
+        self.last_used_dataset = gl.lemma.dataset.acronym
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
@@ -5204,10 +5181,13 @@ def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""
 
+    result = []
+
     if 'datasetid' in request.session.keys():
         datasetid = request.session['datasetid']
     else:
-        datasetid = settings.DEFAULT_DATASET_PK
+        return JsonResponse(result, safe=False)
+
     dataset = Dataset.objects.get(id=datasetid)
     default_language = dataset.default_language
 
@@ -5224,7 +5204,6 @@ def gloss_ajax_complete(request, prefix):
               annotationidglosstranslation__language=interface_language)
     qs = Gloss.objects.filter(query).distinct()
 
-    result = []
     for g in qs:
         if g.dataset == dataset:
             try:
@@ -5254,17 +5233,19 @@ def morph_ajax_complete(request, prefix):
     """Return a list of morphemes matching the search term
     as a JSON structure suitable for typeahead."""
 
+    result = []
+
     if 'datasetid' in request.session.keys():
         datasetid = request.session['datasetid']
     else:
-        datasetid = settings.DEFAULT_DATASET_PK
+        return JsonResponse(result, safe=False)
+
     dataset = Dataset.objects.get(id=datasetid)
 
     # the following query retrieves morphemes with annotations that match the prefix
     query = Q(lemma__dataset=dataset, annotationidglosstranslation__text__istartswith=prefix)
     qs = Morpheme.objects.filter(query).distinct()
 
-    result = []
     for g in qs:
         annotationidglosstranslations = g.annotationidglosstranslation_set.all()
         if not annotationidglosstranslations:
