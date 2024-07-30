@@ -1047,10 +1047,11 @@ def check_existence_dialect(gloss, values):
     errors = []
     found = []
     not_found = []
-
     for new_value in values:
-        dialect_signlanguage, dialect_name = new_value.split('/')
-        if Dialect.objects.filter(name_iexact=dialect_name, signlanguage__name__iexact=dialect_signlanguage):
+        dialect_signlanguage_str, dialect_name_str = new_value.split('/')
+        dialect_signlanguage = dialect_signlanguage_str.strip()
+        dialect_name = dialect_name_str.strip()
+        if Dialect.objects.filter(name=dialect_name, signlanguage__name=dialect_signlanguage):
             if new_value not in found:
                 found += [new_value]
         else:
