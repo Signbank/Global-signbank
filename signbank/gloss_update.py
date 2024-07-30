@@ -798,18 +798,18 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code):
 
     index_key = gettext("Index")
 
-    if index_key in post_data.keys():
-        index_str = post_data[index_key]
-        index = int(index_str)
-    else:
-        index = 1
-
     try:
         video_file_data = post_data['file']
     except KeyError:
         return value_dict
 
     video_file = video_file_data
+
+    if index_key in post_data.keys():
+        index_str = post_data[index_key]
+        index = int(index_str)
+    else:
+        index = 1
 
     nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
 
