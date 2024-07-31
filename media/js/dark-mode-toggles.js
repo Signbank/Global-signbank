@@ -278,6 +278,15 @@ function toggle_dark_mode() {
             $(this).addClass("morphtypeahead-light");
         }
   });
+  $(".usertypeahead").each(function () {
+        if ($(this).hasClass("usertypeahead-light")) {
+            $(this).removeClass("usertypeahead-light");
+            $(this).addClass("morphtypeahead-dark");
+        } else if ($(this).hasClass("usertypeahead-dark")) {
+            $(this).removeClass("usertypeahead-dark");
+            $(this).addClass("usertypeahead-light");
+        }
+  });
   $(".lemmatypeahead").each(function () {
         if ($(this).hasClass("lemmatypeahead-light")) {
             $(this).removeClass("lemmatypeahead-light");

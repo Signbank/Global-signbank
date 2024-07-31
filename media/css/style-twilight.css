@@ -1293,6 +1293,19 @@ input:focus, input.form-control:focus {
     color: var(--typeahead-dark-color) !important;
     border: solid 1px var(--typeahead-dark-border) !important;
 }
+.usertypeahead-light {
+    background-color: white !important;
+    border-color: black !important;
+    opacity: 100%;
+    color: black !important;
+    border: black !important;
+}
+.usertypeahead-dark {
+    background-color: var(--typeahead-dark-background) !important;
+    border-color: var(--typeahead-dark-border) !important;
+    color: var(--typeahead-dark-color) !important;
+    border: solid 1px var(--typeahead-dark-border) !important;
+}
 .lemmatypeahead-light {
     background-color: white !important;
     border-color: black !important;

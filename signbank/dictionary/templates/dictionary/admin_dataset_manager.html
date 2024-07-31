@@ -151,9 +151,12 @@
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control form-control-light usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                                   placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
+                        </tr>
+                        <tr>
                             <td>
                             <input class='btn btn-primary' id='add_view_perm' name='add_view_perm' type='submit' value='{% trans "Grant" %}'>
                             </td>
@@ -168,9 +171,12 @@
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control form-control-light usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                                   placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
+                        </tr>
+                        <tr>
                             <td>
                             <input class='btn btn-primary' id='delete_view_perm' name='delete_view_perm' type='submit' value='{% trans "Revoke" %}'>
                             </td>
@@ -217,9 +223,12 @@
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control form-control-light usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                                   placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
+                        </tr>
+                        <tr>
                             <td>
                             <input class='btn btn-primary' id='add_change_perm' name='add_change_perm' type='submit' value='{% trans "Grant" %}'>
                             </td>
@@ -234,9 +243,12 @@
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control form-control-light usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                                   placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
+                        </tr>
+                        <tr>
                             <td>
                             <input class='btn btn-primary' id='delete_change_perm' name='delete_change_perm' type='submit' value='{% trans "Revoke" %}'>
                             </td>
