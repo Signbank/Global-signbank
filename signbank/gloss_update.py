@@ -814,7 +814,7 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code):
         return value_dict
 
     try:
-        video_file = base64.b64decode(video_file_data.data)
+        video_file = base64.b64decode(video_file_data)
     except UnicodeDecodeError:
         return value_dict
 
