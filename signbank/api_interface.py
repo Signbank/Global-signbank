@@ -81,6 +81,8 @@ def api_fields(dataset, language_code='en', advanced=False):
         for field in gloss_fields:
             api_fields_2023.append(field.verbose_name.title())
 
+        api_fields_2023.append(gettext("NME Videos"))
+
     return api_fields_2023
 
 
