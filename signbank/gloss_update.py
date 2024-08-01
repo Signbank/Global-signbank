@@ -14,6 +14,7 @@ from signbank.api_token import put_api_user_in_request
 import datetime as DT
 
 import ast
+import base64
 
 
 def api_update_gloss_fields(dataset, language_code='en'):
@@ -798,18 +799,21 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code):
 
     index_key = gettext("Index")
 
-    try:
-        video_file_data = post_data['file']
-    except KeyError:
-        return value_dict
-
-    video_file = video_file_data
-
     if index_key in post_data.keys():
         index_str = post_data[index_key]
         index = int(index_str)
     else:
         index = 1
+
+    try:
+        video_file_data = post_data['file']
+    except KeyError:
+        return value_dict
+
+    if not video_file_data:
+        return value_dict
+
+    video_file = base64.b64decode(video_file_data)
 
     nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
 
@@ -901,6 +905,12 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
         return JsonResponse(results)
 
     value_dict = get_gloss_nmevideo_value_dict(request, gloss, interface_language_code)
+
+    if 'file' not in value_dict.keys():
+        errors[gettext("File")] = gettext("Missing File argument.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
 
     fields_to_update = gloss_update_nmevideo(gloss, value_dict, interface_language_code, create=True)
     gloss_create_nmevideo_do_changes(request.user, gloss, value_dict['file'], fields_to_update, interface_language_code)
