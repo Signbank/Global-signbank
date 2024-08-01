@@ -813,7 +813,10 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code):
     if not video_file_data:
         return value_dict
 
-    video_file = base64.b64decode(video_file_data)
+    try:
+        video_file = base64.b64decode(video_file_data.data)
+    except UnicodeDecodeError:
+        return value_dict
 
     nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
 
