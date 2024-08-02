@@ -12,6 +12,8 @@
 {% endblock %}
 
 {% block extrajs %}
+<link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
+
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
@@ -241,6 +243,7 @@ input {
 .table-toggles {
     table-layout:fixed;
     overflow:auto;
+    background-color: inherit;
 }
 .panel-toggles {
     margin: 0 important!;
@@ -261,6 +264,7 @@ input[type="button"]:focus {
 }
 textarea {
     border: none;
+    background-color: inherit;
 }
 textarea:focus {
     outline: 1px solid red;
@@ -273,13 +277,14 @@ textarea:focus {
 
 {% block content %}
 
-<div id="definitionblock" style="padding-top: 30px;">
+<div id="definitionblock" style="padding-top: 30px; background: var(--ultron);">
 
-    <div id="keywordsSenses">
+    <div id="keywordsSenses" style="background: var(--ultron);">
     <h3>{% trans "Batch Edit" %}</h3>
 
-        <div id='searchform_outer' class='well well-light'>
-        <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/batch_edit_view/'>
+        <div id='searchform_outer' class='well well-light' style="background: green;">
+        <form name='adminsearch' id='adminsearch' class="search-form search-form-light" method='get'
+              action='{{PREFIX_URL}}/analysis/batch_edit_view/'>
         {% csrf_token %}
         <div class="panel panel-default panel-light">
             <div class="panel-heading panel-light" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
@@ -304,18 +309,18 @@ textarea:focus {
                       <div id='pub_search' class='collapse collapse-light'>
                       <table class='table table-condensed table-condensed-light' style="width:65%;">
                       <tr>
-                          <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
-                          <td style="width:600px;">{{searchform.tags}}</td>
+                          <td class='td td-light' style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
+                          <td class='td td-light' style="width:600px;">{{searchform.tags}}</td>
                       </tr>
                       <tr>
-                          <td style="padding-left:30px;"><label for='id_createdBy'>{% trans "Created By" %}</label></td>
-                          <td style="width:600px;">{{searchform.createdBy}}</td>
+                          <td class='td td-light' style="padding-left:30px;"><label for='id_createdBy'>{% trans "Created By" %}</label></td>
+                          <td class='td td-light' style="width:600px;">{{searchform.createdBy}}</td>
                       </tr>
                       </table>
                       </div>
                     </div>
                 </div>
-        <div class='btn-group' style="margin-bottom: 20px; margin-left: 20px;">
+        <div class='btn-group btn-group-light' style="margin-bottom: 20px; margin-left: 20px;">
         <input class='btn btn-primary' type='submit' name="filter" value='{% trans "Apply Filter" %}'>
         <input class='btn btn-primary' type='reset' onclick="clearForm();"
                        value='{% trans "Reset" %}'>
@@ -326,11 +331,11 @@ textarea:focus {
         </form>
         </div>
 
-<div>
+<div class="body body-light" style="background-color: inherit;">
 {% load underscore_to_space %}
 {% if not object_list %}
     <p>{% trans "No glosses found. Please construct a new query:" %}
-        <span><a class="btn btn-default"
+        <span><a class="btn btn-default btn-default-light"
                  href='{{PREFIX_URL}}/signs/search/'>{% trans "Search" %}</a></span></p>
 {% else %}
     <table class='table table-condensed table-condensed-light table-toggles'
@@ -609,7 +614,7 @@ textarea:focus {
             </div>
             </div>
             </td>
-            <td style="width:500px;">
+            <td class='td td-light' style="width:500px;">
                 <div id="toggles_{{gloss.id}}" class='panel-group'>
                 <div class="panel panel-default panel-light panel-toggles">
                 <div class='panel-heading panel-light' data-toggle='collapse' data-parent="#toggles_{{gloss.id}}"

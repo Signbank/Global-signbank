@@ -1,11 +1,16 @@
 
 
 function toggle_dark_mode() {
+  var r = document.querySelector(':root');
   $(".body").each(function () {
         if ($(this).hasClass("body-light")) {
+            r.style.setProperty('--ultron', 'black');
+            r.style.setProperty('--beam', 'white');
             $(this).removeClass("body-light");
             $(this).addClass("body-dark");
         } else if ($(this).hasClass("body-dark")) {
+            r.style.setProperty('--ultron', 'white');
+            r.style.setProperty('--beam', 'black');
             $(this).removeClass("body-dark");
             $(this).addClass("body-light");
         }

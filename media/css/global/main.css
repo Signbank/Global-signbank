@@ -1,9 +1,10 @@
 /* variant style for black - main page style */
 
 
-html { 
-  background-image: url(../../images/global/black_02.gif); 
-} 
+html {
+  background: var(--ultron);
+  color: var(--beam);
+}
 
 #leftcontentborder {
   background-image: url(../../images/global/black_03.gif);
@@ -14,7 +15,7 @@ html {
 }
 
  #header {
-		background-image: url(../../images/global/black_02.gif); 
+		background-image: url(../../images/global/black_02.gif);
         padding:0;
         background:#BB2F2C;
         height:110px;

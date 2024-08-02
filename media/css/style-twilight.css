@@ -1,4 +1,6 @@
 :root {
+    --ultron: white;
+    --beam: black;
     --dark-mode-very-dark: rgb(9, 4, 2);
     --tbody-dark-border: rgb(9, 4, 2);
     --tbody-dark-background: rgb(9, 4, 2);
