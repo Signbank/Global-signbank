@@ -5,6 +5,20 @@
 {% load has_group %}
 {% load guardian_tags %}
 
+{% block extrahead %}
+<style>
+input[type="submit"] {
+    z-index: 0 !important;
+}
+tr > td > input[type="submit"] {
+    z-index: 0 !important;
+}
+tr > td > form > input[type="submit"] {
+    z-index: 0 !important;
+}
+</style>
+{% endblock %}
+
 {% block extrajs %}
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
@@ -94,7 +108,7 @@
       {% if request.user|has_group:"Dataset_Manager" %}
       {% get_obj_perms request.user for dataset as "dataset_perms" %}
       {% if "change_dataset" in dataset_perms %}
-        <tr>
+        <tr style="z-index:0;">
             <td>
                 <table class="table table-condensed">
                     <tr>
@@ -156,7 +170,7 @@
                             <input type="hidden" name="username" value=""/>
                             </td>
                         </tr>
-                        <tr>
+                        <tr style="z-index:0;">
                             <td>
                             <input class='btn btn-primary' id='add_view_perm' name='add_view_perm' type='submit' value='{% trans "Grant" %}'>
                             </td>
@@ -176,7 +190,7 @@
                             <input type="hidden" name="username" value=""/>
                             </td>
                         </tr>
-                        <tr>
+                        <tr style="z-index:0;">
                             <td>
                             <input class='btn btn-primary' id='delete_view_perm' name='delete_view_perm' type='submit' value='{% trans "Revoke" %}'>
                             </td>
@@ -228,7 +242,7 @@
                             <input type="hidden" name="username" value=""/>
                             </td>
                         </tr>
-                        <tr>
+                        <tr style="z-index:0;">
                             <td>
                             <input class='btn btn-primary' id='add_change_perm' name='add_change_perm' type='submit' value='{% trans "Grant" %}'>
                             </td>
@@ -248,7 +262,7 @@
                             <input type="hidden" name="username" value=""/>
                             </td>
                         </tr>
-                        <tr>
+                        <tr style="z-index:0;">
                             <td>
                             <input class='btn btn-primary' id='delete_change_perm' name='delete_change_perm' type='submit' value='{% trans "Revoke" %}'>
                             </td>
@@ -260,7 +274,7 @@
                 {% endwith %}
                 </div>
             </td>
-            <td>
+            <td style="z-index: 0 important!;">
                 <form method="get" class='pages-form pages-form-light'>
                     {% csrf_token %}
                     <div class="hidden">
@@ -274,7 +288,7 @@
                                 {{ language.name }}</option>
                         {% endfor %}
                     </select>
-                    <input class="btn btn-primary" type="submit" value="{% trans 'Set' %}"/>
+                    <input class="btn btn-primary" type="submit" value="{% trans 'Set' %}">
                 </form>
             </td>
             <td>

@@ -1,30 +1,32 @@
 :root {
     --ultron: white;
     --beam: black;
+    --typeahead-background: white;
+    --typeahead-color: black;
     --dark-mode-very-dark: rgb(9, 9, 9);
     --tbody-dark-border: rgb(9, 9, 9);
     --tbody-dark-background: rgb(9, 9, 9);
     --typeahead-dark-background: rgb(9, 9, 9);
-    --typeahead-dark-border: rgb(40, 0, 0);
-    --typeahead-dark-color: rgb(174, 0, 0);
+    --typeahead-dark-border: rgb(20, 20, 20);
+    --typeahead-dark-color: rgb(200, 200, 200);
     --panel-heading-background: rgb(28, 28, 28);
     --panel-heading-text: rgb(186, 186, 186);
-    --text-input-field: rgb(50, 50, 50);
+    --text-input-field: rgb(20, 20, 20);
     --text-input-border: rgb(200, 200, 200);
     --text-input-text: rgb(250, 250, 250);
-    --well-background: rgb(9, 4, 2);
+    --well-background: rgb(9, 9, 9);
     --well-border: rgb(9, 9, 9);
     --button-default: rgb(187, 60, 80);
     --action-button: rgb(147, 80, 120);
-    --nav-highlight: rgb(28, 0, 0);
-    --dropdown-dark: rgb(112, 0, 0);
+    --nav-highlight: rgb(40, 40, 40);
+    --dropdown-dark: rgb(40, 40, 40);
     --text-container-dark-input-border: rgb(100, 100, 100);
-    --text-container-dark-input-fill: rgba(50,50,50,10%);
+    --text-container-dark-input-fill: rgb(20,20,20);
     --text-container-dark-border: rgb(9, 9, 9);
     --text-container-dark-placeholder: rgb(200, 200, 200);
     --table-dark-color: rgb(150, 150, 150);
     --table-dark-border: rgb(34, 34, 34);
-    --dark-label-background: rgb(55, 40, 40);
+    --dark-label-background: rgb(40, 40, 40);
     --search-results-color: hsl(0, 0, 40%);
     --search-results-dark: hsl(0, 0, 90%);
     --search-results-luminosity: 0.35%;
@@ -435,7 +437,10 @@ table {
   padding: 8px 12px;
   font-size: 24px;
   line-height: 30px;
-  border: 2px solid black;
+  border: 2px solid var(--typeahead-color);
+  background-color: var(--typeahead-background);
+  opacity: 0.99;
+  z-index: 9999 important!;
   -webkit-border-radius: 8px;
      -moz-border-radius: 8px;
           border-radius: 8px;
@@ -443,12 +448,15 @@ table {
 }
 
 .typeahead {
-  background-color: white;
-  opacity: 60%;
+  background-color: var(--typeahead-background);
+  color: var(--typeahead-color);
 }
 
 .typeahead:focus {
-  border: 2px solid black;
+  border: 2px solid var(--typeahead-color);
+}
+.typeahead:active {
+  z-index: 9999;
 }
 
 .tt-query {
@@ -458,17 +466,19 @@ table {
 }
 
 .tt-hint {
-  color: #999
+  color: var(--typeahead-color);
 }
 
 .tt-dropdown-menu {
   width: 422px;
-  margin-top: 12px;
-  padding: 8px 0;
-  background-color: white;
-  border: 1px solid black;
-  opacity: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  margin-top: 0px;
+  margin-bottom: 0px;
+  padding: 10px 0px;
+  border: 1px solid var(--typeahead-color);
+  color: 1px solid var(--typeahead-color);
+  background: 1px solid var(--typeahead-background);
+  opacity: 0.99;
+  z-index: 9999;
   -webkit-border-radius: 8px;
      -moz-border-radius: 8px;
           border-radius: 8px;
@@ -480,6 +490,8 @@ table {
 .tt-suggestion {
   padding: 3px 20px;
   line-height: 20px;
+  background-color: var(--typeahead-background);
+  color: var(--typeahead-color);
 }
 
 .tt-suggestion.tt-cursor {
@@ -1132,6 +1144,7 @@ input:focus, input.form-control:focus {
 .dropdown-dark {
     background-color: var(--dropdown-dark) !important;
     color: var(--text-input-border) !important;
+    opacity: 0.99;
 }
 .dropdown-dark > ul {
     background-color: var(--text-input-field) !important;
@@ -1282,31 +1295,41 @@ input:focus, input.form-control:focus {
     color: var(--text-input-text) !important;
     border-color: var(--text-container-dark-border) !important;
 }
+.morphtypeahead:active {
+    z-index: 9999 !important;
+    opacity: 0.99;
+}
 .morphtypeahead-light {
-    background-color: white !important;
-    border-color: black !important;
-    opacity: 100%;
-    color: black !important;
-    border: black !important;
+    background-color: var(--typeahead-background) !important;
+    border-color: var(--typeahead-color) !important;
+    color: var(--typeahead-color) !important;
+    border: var(--typeahead-color) ! !important;
 }
 .morphtypeahead-dark {
-    background-color: var(--typeahead-dark-background) !important;
-    border-color: var(--typeahead-dark-border) !important;
-    color: var(--typeahead-dark-color) !important;
-    border: solid 1px var(--typeahead-dark-border) !important;
+    background-color: var(--typeahead-background) !important;
+    border-color: var(--typeahead-color) !important;
+    color: var(--typeahead-color) !important;
+    border: solid 1px var(--typeahead-background) !important;
+}
+.usertypeahead:active {
+    z-index: 9999 !important;
+    opacity: 0.99;
 }
 .usertypeahead-light {
-    background-color: white !important;
-    border-color: black !important;
-    opacity: 100%;
-    color: black !important;
-    border: black !important;
+    background-color: var(--typeahead-background) !important;
+    border-color: var(--typeahead-color) !important;
+    color: var(--typeahead-color) !important;
+    border: var(--typeahead-background) !important;
 }
 .usertypeahead-dark {
     background-color: var(--typeahead-dark-background) !important;
     border-color: var(--typeahead-dark-border) !important;
     color: var(--typeahead-dark-color) !important;
     border: solid 1px var(--typeahead-dark-border) !important;
+}
+.lemmatypeahead:active {
+    z-index: 9999 !important;
+    opacity: 0.99;
 }
 .lemmatypeahead-light {
     background-color: white !important;

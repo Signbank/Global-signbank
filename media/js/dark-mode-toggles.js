@@ -6,11 +6,15 @@ function toggle_dark_mode() {
         if ($(this).hasClass("body-light")) {
             r.style.setProperty('--ultron', 'black');
             r.style.setProperty('--beam', 'white');
+            r.style.setProperty('--typeahead-background', 'black');
+            r.style.setProperty('--typeahead-color', 'white');
             $(this).removeClass("body-light");
             $(this).addClass("body-dark");
         } else if ($(this).hasClass("body-dark")) {
             r.style.setProperty('--ultron', 'white');
             r.style.setProperty('--beam', 'black');
+            r.style.setProperty('--typeahead-background', 'white');
+            r.style.setProperty('--typeahead-color', 'black');
             $(this).removeClass("body-dark");
             $(this).addClass("body-light");
         }
