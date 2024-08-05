@@ -1325,14 +1325,15 @@ class Gloss(models.Model):
 
     def get_morpheme_display(self):
         from signbank.tools import get_default_annotationidglosstranslation
-        simultaneous = self.simultaneous_morphology.all()
+        simultaneous = self.simultaneous_morphology.filter(parent_gloss__archived__exact=False)
         return ", ".join([get_default_annotationidglosstranslation(sim_morph.morpheme)
                           + ':' + (sim_morph.role if sim_morph.role else '-') for sim_morph in simultaneous])
 
     def get_blendmorphology_display(self):
         from signbank.tools import get_default_annotationidglosstranslation
         ble_morphemes = [(get_default_annotationidglosstranslation(m.glosses), m.role)
-                         for m in self.blend_morphology.all()]
+                         for m in self.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                               glosses__archived__exact=False)]
         ble_morphs = []
         for m in ble_morphemes:
             ble_morphs.append(':'.join(m))
@@ -1347,7 +1348,8 @@ class Gloss(models.Model):
 
     def get_hasComponentOfType_display(self):
         from signbank.tools import get_default_annotationidglosstranslation
-        morphdefs = self.parent_glosses.all()
+        morphdefs = self.parent_glosses.filter(parent_gloss__archived__exact=False,
+                                               morpheme__archived__exact=False)
         return " + ".join([get_default_annotationidglosstranslation(mdef.morpheme) for mdef in morphdefs])
 
     def get_mrpType_display(self):
@@ -1359,18 +1361,24 @@ class Gloss(models.Model):
     def get_isablend_display(self):
         # This function displays the glosses of the blend
         # To instead show only Yes or No, use the commented out return instead
-        # return _('Yes') if (self.blend_morphology.all().count() > 0) else _('No')
+        # return _('Yes') if (self.blend_morphology.filter(parent_gloss__archived__exact=False,
+        #                                                  glosses__archived__exact=False).count() > 0) else _('No')
         from signbank.tools import get_default_annotationidglosstranslation
-        return " + ".join([get_default_annotationidglosstranslation(bm.glosses) for bm in self.blend_morphology.all()])
+        return " + ".join([get_default_annotationidglosstranslation(bm.glosses)
+                           for bm in self.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                                  glosses__archived__exact=False)])
 
     def get_ispartofablend_display(self):
         # This function displays the parent gloss plus the glosses of the blend of which the gloss is included
         # To instead show only Yes or No, use the commented out return instead
-        # return _('Yes') if (self.glosses_comprising.all().count() > 0) else _('No')
-        blend_morphology = self.glosses_comprising.all().first()
+        # return _('Yes') if (self.glosses_comprising.filter(parent_gloss__archived__exact=False,
+        #                                                    glosses__archived__exact=False).count() > 0) else _('No')
+        blend_morphology = self.glosses_comprising.filter(parent_gloss__archived__exact=False,
+                                                          glosses__archived__exact=False).first()
         if not blend_morphology:
             return ""
-        glosses_comprising = blend_morphology.parent_gloss.blend_morphology.all()
+        glosses_comprising = blend_morphology.parent_gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                                                   glosses__archived__exact=False)
         from signbank.tools import get_default_annotationidglosstranslation
         display = (get_default_annotationidglosstranslation(blend_morphology.parent_gloss) + ': '
                    + " + ".join([get_default_annotationidglosstranslation(bm.glosses) for bm in glosses_comprising]))
@@ -1549,7 +1557,7 @@ class Gloss(models.Model):
     @staticmethod
     def none_morpheme_objects():
         """Get all the GLOSS objects, but excluding the MORPHEME ones"""
-        return Gloss.objects.filter(morpheme=None)
+        return Gloss.objects.filter(morpheme=None, archived=False)
 
     def is_morpheme(self):
         """Test if this instance is a Morpheme or (just) a Gloss"""
@@ -1559,7 +1567,7 @@ class Gloss(models.Model):
         return "/dictionary/gloss/%s.html" % self.idgloss
 
     def lemma_group(self):
-        glosses_with_same_lemma_group = Gloss.objects.filter(idgloss__iexact=self.idgloss).exclude(pk=self.pk)
+        glosses_with_same_lemma_group = Gloss.objects.filter(idgloss__iexact=self.idgloss, archived=False).exclude(pk=self.pk)
 
         return glosses_with_same_lemma_group
 
@@ -1715,7 +1723,9 @@ class Gloss(models.Model):
             return homophones
         elif self.sense > 1:
             # need to find the root and see how many senses it has
-            homophones = self.relation_sources.filter(role='homophone', target__sense__exact=1)
+            homophones = self.relation_sources.filter(target__archived__exact=False,
+                                                      source__archived__exact=False,
+                                                      role='homophone', target__sense__exact=1)
             if len(homophones) > 0:
                 root = homophones[0].target
                 return root.homophones()
@@ -1723,55 +1733,73 @@ class Gloss(models.Model):
 
     def homonyms_count(self):
 
-        homonyms_count = self.relation_sources.filter(role='homonym').exclude(target=self).count()
+        homonyms_count = self.relation_sources.filter(target__archived__exact=False,
+                                                      source__archived__exact=False,
+                                                      role='homonym').exclude(target=self).count()
 
         return homonyms_count
 
     def synonyms_count(self):
 
-        synonyms_count = self.relation_sources.filter(role='synonym').exclude(target=self).count()
+        synonyms_count = self.relation_sources.filter(target__archived__exact=False,
+                                                      source__archived__exact=False,
+                                                      role='synonym').exclude(target=self).count()
 
         return synonyms_count
 
     def antonyms_count(self):
 
-        antonyms_count = self.relation_sources.filter(role='antonym').exclude(target=self).count()
+        antonyms_count = self.relation_sources.filter(target__archived__exact=False,
+                                                      source__archived__exact=False,
+                                                      role='antonym').exclude(target=self).count()
 
         return antonyms_count
 
     def hyponyms_count(self):
 
-        hyponyms_count = self.relation_sources.filter(role='hyponym').exclude(target=self).count()
+        hyponyms_count = self.relation_sources.filter(target__archived__exact=False,
+                                                      source__archived__exact=False,
+                                                      role='hyponym').exclude(target=self).count()
 
         return hyponyms_count
 
     def hypernyms_count(self):
 
-        hypernyms_count = self.relation_sources.filter(role='hypernym').exclude(target=self).count()
+        hypernyms_count = self.relation_sources.filter(target__archived__exact=False,
+                                                       source__archived__exact=False,
+                                                       role='hypernym').exclude(target=self).count()
 
         return hypernyms_count
 
     def seealso_count(self):
 
-        seealso_count = self.relation_sources.filter(role='seealso').exclude(target=self).count()
+        seealso_count = self.relation_sources.filter(target__archived__exact=False,
+                                                     source__archived__exact=False,
+                                                     role='seealso').exclude(target=self).count()
 
         return seealso_count
 
     def paradigm_count(self):
 
-        paradigm_count = self.relation_sources.filter(role='paradigm').exclude(target=self).count()
+        paradigm_count = self.relation_sources.filter(target__archived__exact=False,
+                                                      source__archived__exact=False,
+                                                      role='paradigm').exclude(target=self).count()
 
         return paradigm_count
 
     def variant_count(self):
 
-        variant_count = self.relation_sources.filter(role='variant').exclude(target=self).count()
+        variant_count = self.relation_sources.filter(target__archived__exact=False,
+                                                     source__archived__exact=False,
+                                                     role='variant').exclude(target=self).count()
 
         return variant_count
 
     def relations_count(self):
 
         relations_count = self.relation_sources.filter(
+            target__archived__exact=False,
+            source__archived__exact=False,
             role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso', 'variant']).exclude(target=self).count()
 
         return relations_count
@@ -1820,7 +1848,7 @@ class Gloss(models.Model):
         if merged_query_expression:
             # exclude glosses that have a relation to this gloss
             related_gloss_ids = [relation.target.id for relation in self.other_relations()]
-            pattern_variants = Gloss.objects.filter(merged_query_expression).exclude(id__in=related_gloss_ids).distinct()
+            pattern_variants = Gloss.objects.filter(archived=False).filter(merged_query_expression).exclude(id__in=related_gloss_ids).distinct()
         else:
             pattern_variants = [self]
         return pattern_variants
@@ -1828,13 +1856,17 @@ class Gloss(models.Model):
     def other_relations(self):
 
         other_relations = self.relation_sources.filter(
+            target__archived__exact=False,
+            source__archived__exact=False,
             role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso']).exclude(target=self)
 
         return other_relations
 
     def variant_relations(self):
 
-        variant_relations = self.relation_sources.filter(role__in=['variant']).exclude(target=self)
+        variant_relations = self.relation_sources.filter(target__archived__exact=False,
+                                                         source__archived__exact=False,
+                                                         role__in=['variant']).exclude(target=self)
 
         return variant_relations
 
@@ -1842,7 +1874,9 @@ class Gloss(models.Model):
     # a boolean is paired with saved homonym relation targets to tag duplicates
     def homonym_relations(self):
 
-        homonym_relations = self.relation_sources.filter(role__in=['homonym'])
+        homonym_relations = self.relation_sources.filter(target__archived__exact=False,
+                                                         source__archived__exact=False,
+                                                         role__in=['homonym'])
 
         homonyms = [x.target for x in homonym_relations]
 
@@ -1882,10 +1916,14 @@ class Gloss(models.Model):
 
     def gloss_relations(self):
 
-        variant_relations = self.relation_sources.filter(role__in=['variant'])
+        variant_relations = self.relation_sources.filter(target__archived__exact=False,
+                                                         source__archived__exact=False,
+                                                         role__in=['variant'])
 
-        other_relations = self.relation_sources.filter(role__in=['homonym', 'synonyn', 'antonym',
-                                                                 'hyponym', 'hypernym', 'seealso', 'paradigm'])
+        other_relations = self.relation_sources.filter(
+            target__archived__exact=False,
+            source__archived__exact=False,
+            role__in=['homonym', 'synonyn', 'antonym', 'hyponym', 'hypernym', 'seealso', 'paradigm'])
 
         return other_relations, variant_relations
 
@@ -2198,7 +2236,9 @@ class Gloss(models.Model):
             # take care of glosses without a dataset
             return [], [], []
 
-        gloss_homonym_relations = self.relation_sources.filter(role='homonym')
+        gloss_homonym_relations = self.relation_sources.filter(target__archived__exact=False,
+                                                               source__archived__exact=False,
+                                                               role='homonym')
 
         list_of_homonym_relations = [r for r in gloss_homonym_relations]
 
@@ -2580,6 +2620,66 @@ def save_info_about_deleted_gloss(sender, instance, using, **kwarsg):
     deleted_gloss.annotation_idgloss = default_annotationidglosstranslation
     deleted_gloss.old_pk = instance.pk
     deleted_gloss.save()
+
+
+def cascade_archival_gloss(gloss):
+    # this is to show details about what the Django "cascade" operation would delete
+    # the models are queried explicitly rather than use the relation name and other methods
+    # in order to also retrieve archived glosses
+
+    relations_source = Relation.objects.filter(source=gloss)
+    if relations_source:
+        print('Archived gloss ', str(gloss.id), ' is related to: ', relations_source)
+    relations_target = Relation.objects.filter(target=gloss)
+    if relations_target:
+        print('Archived gloss ', str(gloss.id), ' is related to: ', relations_target)
+    morphemes_parent = MorphologyDefinition.objects.filter(parent_gloss=gloss)
+    if morphemes_parent:
+        print('Archived gloss ', str(gloss.id), ' shares morphology with: ', morphemes_parent)
+    morphemes_appears_in = MorphologyDefinition.objects.filter(morpheme=gloss)
+    if morphemes_appears_in:
+        print('Archived gloss ', str(gloss.id), ' shares morphology with: ', morphemes_appears_in)
+    simultaneous = SimultaneousMorphologyDefinition.objects.filter(parent_gloss=gloss)
+    if simultaneous:
+        print('Archived gloss ', str(gloss.id), ' shares morphology with: ', simultaneous)
+    blends = BlendMorphology.objects.filter(parent_gloss=gloss)
+    if blends:
+        print('Archived gloss ', str(gloss.id), ' shares morphology with: ', blends)
+    partofblends = BlendMorphology.objects.filter(glosses=gloss)
+    if partofblends:
+        print('Archived gloss ', str(gloss.id), ' shares morphology with: ', partofblends)
+    other_media = OtherMedia.objects.filter(parent_gloss=gloss)
+    if other_media:
+        print('Archived gloss ', str(gloss.id), ' has other media: ', other_media)
+    relation_foreign = RelationToForeignSign.objects.filter(gloss=gloss)
+    if relation_foreign:
+        print('Archived gloss ', str(gloss.id), ' is foreign related to: ', relation_foreign)
+
+    # ALSO grab all Senses objects related to this gloss!!
+
+
+@receiver(models.signals.post_save, sender=Gloss, dispatch_uid='gloss_save_signal')
+def save_info_about_archived_gloss(sender, instance, using, update_fields=[], **kwarsg):
+
+    if not update_fields or 'archived' not in update_fields:
+        return
+
+    if not instance.archived:
+        logged_deletes = DeletedGlossOrMedia.objects.filter(old_pk=instance.pk)
+        for deleted_gloss_or_media in logged_deletes:
+            deleted_gloss_or_media.delete()
+        return
+
+    from signbank.tools import get_default_annotationidglosstranslation
+    default_annotationidglosstranslation = get_default_annotationidglosstranslation(instance)
+    deleted_gloss = DeletedGlossOrMedia()
+    deleted_gloss.item_type = 'gloss'
+    deleted_gloss.idgloss = instance.idgloss
+    deleted_gloss.annotation_idgloss = default_annotationidglosstranslation
+    deleted_gloss.old_pk = instance.pk
+    deleted_gloss.save()
+
+    cascade_archival_gloss(instance)
 
 
 # We want to remember some stuff about deleted glosses
@@ -3055,7 +3155,7 @@ class Dataset(models.Model):
 
     def count_glosses(self):
 
-        count_glosses = Gloss.objects.filter(lemma__dataset_id=self.id).count()
+        count_glosses = Gloss.objects.filter(lemma__dataset_id=self.id, archived=False).count()
 
         return count_glosses
 
@@ -3144,7 +3244,7 @@ class Dataset(models.Model):
                     variable_column_query = 'semField__machine_value__in'
                     try:
                         semantic_field = [sf.machine_value for sf in SemanticField.objects.filter(name__exact=fieldchoice.name)]
-                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self, archived=False,
                                                                                          **{
                                                                                              variable_column_query: semantic_field}).count()
                     except ObjectDoesNotExist:
@@ -3154,7 +3254,7 @@ class Dataset(models.Model):
                     variable_column_query = 'derivHist__machine_value__in'
                     try:
                         derivation_field = [sf.machine_value for sf in DerivationHistory.objects.filter(name__exact=fieldchoice.name)]
-                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                        choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self, archived=False,
                                                                                          **{
                                                                                              variable_column_query: derivation_field}).count()
                     except ObjectDoesNotExist:
@@ -3162,11 +3262,11 @@ class Dataset(models.Model):
                         continue
                 # empty values can be either 0 or else null
                 elif fieldchoice.machine_value == 0:
-                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(Q(lemma__dataset=self),
+                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(Q(lemma__dataset=self, archived=False),
                                                                                      Q(**{variable_column + '__isnull': True}) |
                                                                                      Q(**{variable_column: fieldchoice})).count()
                 else:
-                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self,
+                    choice_list_frequencies[fieldchoice.name] = Gloss.objects.filter(lemma__dataset=self, archived=False,
                                                                                      **{variable_column: fieldchoice}).count()
 
             # the new frequencies for this field are added using the update method to insure the order is maintained
@@ -3346,6 +3446,10 @@ class LemmaIdgloss(models.Model):
 
     def num_gloss(self):
         glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk).count()
+        return glosses_with_this_lemma
+
+    def num_archived_glosses(self):
+        glosses_with_this_lemma = Gloss.objects.filter(lemma__pk=self.pk, archived=True).count()
         return glosses_with_this_lemma
 
 
