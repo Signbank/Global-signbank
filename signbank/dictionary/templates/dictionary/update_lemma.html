@@ -9,10 +9,6 @@
 
 {% load annotation_idgloss_translation %}
 
-<script type="text/javascript">
-
-</script>
-
 {% block extrajs %}
     <script type='text/javascript'>
 
@@ -20,13 +16,67 @@
 
     var url = '{{ PREFIX_URL }}';
 
+    var url = '{{PREFIX_URL}}';
+    var language_2chars = {{language_2chars|safe}};
+
+    function toggle_restore(data) {
+        if ($.isEmptyObject(data)) {
+            return;
+        };
+        var glossid = data.glossid;
+        var signbankCell = $("#signbank_id_"+glossid);
+        $(signbankCell).html(glossid);
+
+        for (var i=0; i < language_2chars.length; i++) {
+            var lang2char = language_2chars[i];
+            var cellID = '#gloss_annotation_' + glossid + '_' + lang2char;
+            var annotationElt = $(cellID);
+            var annotation_text = annotationElt.html();
+            var annotationCell = '<a href="'+url+'/dictionary/gloss/'+glossid+'/">'+annotation_text+'</a>';
+            annotationElt.html(annotationCell);
+        }
+
+        var button_lookup = '#restore_gloss_' + glossid;
+        var buttonCell = $(button_lookup);
+        buttonCell.empty();
+    }
+
+    $(document).ready(function() {
+        // setup required for Ajax POST
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({
+            crossDomain: false, // obviates need for sameOrigin test
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type)) {
+                    xhr.setRequestHeader("X-CSRFToken", csrf_token);
+                }
+            }
+        });
+
+         $('.quick_restore').click(function(e)
+         {
+             e.preventDefault();
+             var glossid = $(this).attr('value');
+             $.ajax({
+                url : url + "/dictionary/restore_gloss/" + glossid + "/",
+                type: 'POST',
+                data: { 'csrfmiddlewaretoken': csrf_token },
+                datatype: "json",
+                success : toggle_restore
+             });
+         });
+    });
+
     var search_results_url = '{% url 'dictionary:lemma_ajax_search_results' %}';
 
     {% include "dictionary/search_result_bar.html" %}
 
     </script>
 {% endblock %}
-
 
 
 {% block content %}
@@ -79,22 +129,34 @@
                            {% for dataset_lang in dataset_languages %}
                                 <th>{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</th>
                             {% endfor %}
+                    <th></th>
                 </tr>
-                {% for lemma, annotation_idgloss_translations in lemma_group_list %}
+                {% for gloss, annotation_idgloss_translations in lemma_group_list %}
                 <tr><td></td>
 
-                    <td>{{lemma.id}}</td>
+                    <td id="signbank_id_{{gloss.id}}">{{gloss.id}} {% if gloss.archived %}({% trans "Archived" %}){% endif %}</td>
                     {% for dataset_lang in dataset_languages %}
-                    {% with lemma|get_annotation_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
-                        <td>
-                            {% if lemmaidglosstranslation != "" %}
-                            <a href="{{PREFIX_URL}}/dictionary/gloss/{{lemma.id}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
-                                {{lemmaidglosstranslation}}
+                    {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotation_translation %}
+                        <td id="gloss_annotation_{{gloss.id}}_{{dataset_lang.language_code_2char}}">
+                            {% if not gloss.archived %}
+                            <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/">
+                                {{annotation_translation}}
                             </a>
+                            {% else %}
+                                {{annotation_translation}}
                             {% endif %}
                         </td>
                     {% endwith %}
                     {% endfor %}
+                    <td id="restore_gloss_{{gloss.id}}">
+                    {% if gloss.archived and perms.dictionary.change_gloss %}
+                    <button id='quick_restore_btn_{{gloss.id}}' class="quick_restore btn btn-danger"
+                            name='quick_restore_{{gloss.id}}'
+                            value='{{gloss.id}}' style="height:36px;"
+                            type="submit" >{% trans "Restore Gloss" %}</button>
+
+                    {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </table>
