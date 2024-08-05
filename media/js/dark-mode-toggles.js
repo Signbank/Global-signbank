@@ -215,6 +215,15 @@ function toggle_dark_mode() {
             $(this).addClass("table-condensed-light");
         }
   });
+  $(".table-responsive").each(function () {
+        if ($(this).hasClass("table-responsive-light")) {
+            $(this).removeClass("table-responsive-light");
+            $(this).addClass("table-responsive-dark");
+        } else if ($(this).hasClass("table-responsive-dark")) {
+            $(this).removeClass("table-responsive-dark");
+            $(this).addClass("table-responsive-light");
+        }
+  });
   $(".table-bordered").each(function () {
         if ($(this).hasClass("table-bordered-light")) {
             $(this).removeClass("table-bordered-light");

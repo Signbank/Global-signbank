@@ -1232,7 +1232,19 @@ input:focus, input.form-control:focus {
     border-bottom-color: var(--text-container-dark-border) !important;
     border-bottom: 1px solid var(--text-container-dark-border) !important;
 }
+.table .table-responsive-dark {
+    background-color: var(--well-background) !important;
+    color: var(--table-dark-color) !important;
+    border-color: var(--text-container-dark-border) !important;
+    outline: none;
+}
 .table .table-condensed-dark {
+    background-color: var(--well-background) !important;
+    color: var(--table-dark-color) !important;
+    border-color: var(--text-container-dark-border) !important;
+    outline: none;
+}
+.table .table-condensed-dark > tr > td {
     background-color: var(--well-background) !important;
     color: var(--table-dark-color) !important;
     border-color: var(--text-container-dark-border) !important;
