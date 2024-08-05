@@ -1,5 +1,7 @@
+import binascii
 import io
 
+import numpy
 from django.utils.translation import gettext_lazy as _, activate, gettext
 from signbank.dictionary.models import *
 from signbank.video.models import GlossVideoDescription, GlossVideoNME
@@ -12,6 +14,7 @@ from signbank.tools import get_interface_language_and_default_language_codes
 from signbank.csv_interface import normalize_field_choice
 from signbank.api_token import put_api_user_in_request
 import datetime as DT
+from signbank.tools import get_default_annotationidglosstranslation
 
 import ast
 import base64
@@ -642,12 +645,14 @@ def gloss_update_nmevideo(gloss, update_fields_dict, language_code, create=False
     activate(language_code)
     dataset_languages = dataset.translation_languages.all()
     description_fields = [gettext("Description") + " (" + language.name + ")"
-                          for language in dataset_languages]
+                          for language in dataset_languages] + [gettext("File")]
     description_field_to_internal = dict()
     for language in dataset_languages:
         description_field_to_internal[gettext("Description")
                                       + " (" + language.name + ")"] = ('description_'
                                                                        + language.language_code_2char)
+    description_field_to_internal[gettext("File")] = 'file'
+
     offset = gettext("Index")
     if create:
         gloss_data_dict = dict()
@@ -660,21 +665,19 @@ def gloss_update_nmevideo(gloss, update_fields_dict, language_code, create=False
             continue
         if human_readable_field not in gloss_data_dict.keys():
             # new value
-            original_value = ''
             internal_field = description_field_to_internal[human_readable_field]
-            fields_to_update[internal_field] = (original_value, new_field_value)
+            fields_to_update[internal_field] = new_field_value
             continue
         if human_readable_field in description_fields:
-            original_value = gloss_data_dict[human_readable_field]
             internal_field = description_field_to_internal[human_readable_field]
-            fields_to_update[internal_field] = (original_value, new_field_value)
+            fields_to_update[internal_field] = new_field_value
             continue
         if human_readable_field == offset:
             original_value = gloss_data_dict[human_readable_field]
             if new_field_value == original_value:
                 continue
             internal_field = 'index'
-            fields_to_update[internal_field] = (original_value, new_field_value)
+            fields_to_update[internal_field] = new_field_value
     return fields_to_update
 
 
@@ -684,16 +687,13 @@ def gloss_create_nmevideo_do_changes(user, gloss, nmevideo, changes, language_co
 
     for field, new_value in changes.items():
         if field.startswith('description_'):
-            nmevideoid_language_code_2char = field[len('description_'):]
-            nmevideoid, language_code_2char = nmevideoid_language_code_2char.split('_')
+            language_code_2char = field[len('description_'):]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
-            whitespace = tuple(' \n\r\t')
-            if value.startswith(whitespace) or value.endswith(whitespace):
-                value = value.strip()
+            value = new_value.strip()
             description = GlossVideoDescription.objects.create(nmevideo=nmevideo, language=language)
             description.text = value
             description.save()
-            changes_done.append((field, '', new_value))
+            changes_done.append((field, '', value))
 
     filename = os.path.basename(nmevideo.videofile.name)
     revision = GlossRevision(old_value='',
@@ -798,29 +798,30 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code):
     value_dict = dict()
 
     index_key = gettext("Index")
-
     if index_key in post_data.keys():
         index_str = post_data[index_key]
         index = int(index_str)
     else:
         index = 1
 
-    try:
-        video_file_data = post_data['file']
-    except KeyError:
-        return value_dict
+    if 'File' in post_data.keys():
+        try:
+            uploaded_file = post_data["File"]
+            uploaded_file_contents = uploaded_file[22:]
+            filename = get_default_annotationidglosstranslation(gloss) + '_' + str(gloss.id) + '.mp4'
+            filetype = 'video/mp4'
+            dataset_acronym = gloss.lemma.dataset.acronym
+            goal_path = os.path.join(settings.TMP_DIR, filename)
+            f = open(goal_path, 'wb+')
+            inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
+            f.write(inputbytes)
+            video_file = File(f)
+        except OSError:
+            return value_dict
 
-    if not video_file_data:
-        return value_dict
+        nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
 
-    try:
-        video_file = base64.b64decode(video_file_data)
-    except UnicodeDecodeError:
-        return value_dict
-
-    nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
-
-    value_dict['file'] = nmevideo
+        value_dict['File'] = nmevideo
 
     dataset = gloss.lemma.dataset
 
@@ -909,14 +910,14 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
 
     value_dict = get_gloss_nmevideo_value_dict(request, gloss, interface_language_code)
 
-    if 'file' not in value_dict.keys():
+    if 'File' not in value_dict.keys():
         errors[gettext("File")] = gettext("Missing File argument.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
     fields_to_update = gloss_update_nmevideo(gloss, value_dict, interface_language_code, create=True)
-    gloss_create_nmevideo_do_changes(request.user, gloss, value_dict['file'], fields_to_update, interface_language_code)
+    gloss_create_nmevideo_do_changes(request.user, gloss, value_dict['File'], fields_to_update, interface_language_code)
 
     results['errors'] = errors
     results['updatestatus'] = "Success"
