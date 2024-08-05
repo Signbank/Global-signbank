@@ -999,6 +999,8 @@ def api_update_gloss_nmevideo(request, datasetid, glossid):
     return JsonResponse(results)
 
 
+@csrf_exempt
+@put_api_user_in_request
 def get_gloss_nmevideo_value_dict(request, gloss, language_code):
     post_data = json.loads(request.body.decode('utf-8'))
 
