@@ -2570,6 +2570,12 @@ def gloss_revision_history(request,gloss_pk):
             prefix, order, language_2char = revision.field_name.split('_')
             language = Language.objects.get(language_code_2char=language_2char)
             revision_verbose_fieldname = gettext('Sense') + ' ' + order + ' (' + language.name + ')'
+        elif revision.field_name.startswith('description_'):
+            prefix, language_2char = revision.field_name.split('_')
+            language = Language.objects.get(language_code_2char=language_2char)
+            revision_verbose_fieldname = gettext('Description') + ' (' + language.name + ')'
+        elif revision.field_name in ['nmevideo_create']:
+            revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Create")
         elif revision.field_name in Gloss.get_field_names():
             revision_verbose_fieldname = gettext(Gloss.get_field(revision.field_name).verbose_name)
         elif revision.field_name == 'sequential_morphology':

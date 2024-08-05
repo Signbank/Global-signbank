@@ -1056,6 +1056,7 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
     activate(interface_language_code)
 
     results['glossid'] = glossid
+    results['videoid'] = ''
 
     errors = dict()
 
@@ -1124,9 +1125,11 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
         return JsonResponse(results)
 
     fields_to_update = gloss_update_nmevideo(gloss, value_dict, interface_language_code, create=True)
+    new_nme_video = value_dict['File']
     gloss_create_nmevideo_do_changes(request.user, gloss, value_dict['File'], fields_to_update, interface_language_code)
 
     results['errors'] = errors
     results['updatestatus'] = "Success"
+    results['videoid'] = str(new_nme_video.id)
 
     return JsonResponse(results)
