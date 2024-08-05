@@ -25,7 +25,7 @@ def update_sequential_morphology(gloss, values):
         print("DELETE Sequential Morphology: ", old_morpheme)
         old_morpheme.delete()
     for value in values:
-        filter_morphemes = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
+        filter_morphemes = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
                                                 annotationidglosstranslation__text__exact=value).distinct()
         morpheme = filter_morphemes.first()
         if not morpheme:
@@ -103,7 +103,7 @@ def update_blend_morphology(gloss, values):
 
     for (morpheme, role) in new_blend_tuples:
 
-        filter_morphemes = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
+        filter_morphemes = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
                                                 annotationidglosstranslation__text__exact=morpheme).distinct()
         morpheme_gloss = filter_morphemes.first()
         if not morpheme_gloss:
@@ -170,7 +170,7 @@ def subst_relations(gloss, values):
 
     # all remaining existing relations are to be updated
     for (role, target) in new_tuples_to_add:
-        filter_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset,
+        filter_glosses = Gloss.objects.filter(lemma__dataset=gloss.lemma.dataset, archived=False,
                                               annotationidglosstranslation__text__exact=target).distinct()
         target_gloss = filter_glosses.first()
         if not target_gloss:

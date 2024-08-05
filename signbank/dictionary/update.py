@@ -332,7 +332,7 @@ def delete_examplesentence(request, senseid):
 
 def sort_sense(request, glossid, order, direction):
     order = int(order)
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     gloss_senses_matching_order = GlossSense.objects.filter(gloss=gloss, order=order).count()
     if gloss_senses_matching_order != 1:
         print('sort_sense: multiple or no match for order: ', glossid, str(order))
@@ -365,7 +365,7 @@ def sort_sense(request, glossid, order, direction):
 def sort_examplesentence(request, senseid, glossid, order, direction):
     order = int(order)
     sense = Sense.objects.get(id=senseid)
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     sense_examplesentences_matching_order = SenseExamplesentence.objects.filter(sense=sense, order=order).count()
     if sense_examplesentences_matching_order != 1:
         sense.reorder_examplesentences()
@@ -394,7 +394,7 @@ def sort_examplesentence(request, senseid, glossid, order, direction):
 
 def add_sentence_video(request, glossid, examplesentenceid):
     template = 'dictionary/add_sentence_video.html'
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     languages = gloss.lemma.dataset.translation_languages.all()
     examplesentence = ExampleSentence.objects.get(id=examplesentenceid)
     context = {
@@ -581,7 +581,7 @@ def create_sense(request, glossid):
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
 
     # Make a dict of new values
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
     vals = {}
@@ -661,7 +661,7 @@ def delete_sense(request, glossid):
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid})+'?edit')
     
     sense = Sense.objects.get(id=request.POST['senseid'])
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     dataset = Dataset.objects.get(id = request.POST['dataset'])
     dataset_languages = dataset.translation_languages.all()
 
@@ -719,7 +719,7 @@ def update_gloss(request, glossid):
     if not request.method == "POST":
         return HttpResponseForbidden("Gloss Update method must be POST")
 
-    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     field = request.POST.get('id', '')
     value = request.POST.get('value', '')
@@ -762,7 +762,13 @@ def update_gloss(request, glossid):
                                      _("GUARDED_GLOSS_DELETE is set to True. The gloss has relations to other glosses and was not deleted."))
                 return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': gloss.id}))
 
-            gloss.delete()
+            # gloss.delete()
+            gloss.archived = True
+            gloss.save(update_fields=['archived'])
+
+            annotation = get_default_annotationidglosstranslation(gloss)
+            add_gloss_update_to_revision_history(request.user, gloss, 'archived', annotation,
+                                                 annotation)
 
             return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
 
@@ -1570,12 +1576,12 @@ def add_relation(request):
     targetid = form.cleaned_data['targetid']
 
     try:
-        source = Gloss.objects.get(pk=int(sourceid))
+        source = Gloss.objects.get(pk=int(sourceid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
 
     try:
-        target = Gloss.objects.get(id=int(targetid))
+        target = Gloss.objects.get(id=int(targetid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
 
@@ -1605,12 +1611,12 @@ def variants_of_gloss(request):
     targetid = form.cleaned_data['targetid']
 
     try:
-        source = Gloss.objects.get(pk=int(sourceid))
+        source = Gloss.objects.get(pk=int(sourceid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
 
     try:
-        target = Gloss.objects.get(id=int(targetid))
+        target = Gloss.objects.get(id=int(targetid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Target gloss not found.", {'content-type': 'text/plain'})
 
@@ -1638,7 +1644,7 @@ def add_relationtoforeignsign(request):
     other_lang_gloss = form.cleaned_data['other_lang_gloss']
 
     try:
-        gloss = Gloss.objects.get(pk=int(sourceid))
+        gloss = Gloss.objects.get(pk=int(sourceid), archived=False)
     except ObjectDoesNotExist:
         return HttpResponseBadRequest("Source gloss not found.", {'content-type': 'text/plain'})
 
@@ -1651,7 +1657,7 @@ def add_relationtoforeignsign(request):
 def add_definition(request, glossid):
     """Add a new definition for this gloss"""
 
-    thisgloss = get_object_or_404(Gloss, id=glossid)
+    thisgloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     if thisgloss.is_morpheme():
         gloss_or_morpheme = thisgloss.morpheme
@@ -1693,10 +1699,10 @@ def add_morphology_definition(request):
     parent_gloss = form.cleaned_data['parent_gloss_id']
     role_id = form.cleaned_data['role']
     morpheme_id = form.cleaned_data['morpheme_id']
-    # This is now a gloss ID
+    # This is no a gloss ID
     morpheme = Gloss.objects.get(id=morpheme_id)
 
-    thisgloss = get_object_or_404(Gloss, pk=parent_gloss)
+    thisgloss = get_object_or_404(Gloss, pk=parent_gloss, archived=False)
 
     original_sequential = thisgloss.get_hasComponentOfType_display()
 
@@ -1723,8 +1729,7 @@ def add_morpheme_definition(request, glossid):
 
     form = GlossMorphemeForm(request.POST)
 
-    # Get the glossid at any rate
-    thisgloss = get_object_or_404(Gloss, pk=glossid)
+    thisgloss = get_object_or_404(Gloss, pk=glossid, archived=False)
 
     # check availability of morpheme before continuing
     if form.data['morph_id'] == "":
@@ -1781,7 +1786,7 @@ def add_blend_definition(request, glossid):
 
     form = GlossBlendForm(request.POST)
 
-    thisgloss = get_object_or_404(Gloss, pk=glossid)
+    thisgloss = get_object_or_404(Gloss, pk=glossid, archived=False)
 
     original_blend = thisgloss.get_blendmorphology_display()
 
@@ -1796,7 +1801,7 @@ def add_blend_definition(request, glossid):
         return HttpResponseRedirect('/')
 
     blend_id = form.cleaned_data['blend_id'] # This is a gloss ID now
-    blend = Gloss.objects.get(id=blend_id)
+    blend = Gloss.objects.get(id=blend_id, archived=False)
 
     if blend is not None:
         definition = BlendMorphology()
@@ -1920,7 +1925,7 @@ def update_handshape(request, handshapeid):
 
 def add_annotated_media(request, glossid):
     template = 'dictionary/add_annotated_sentence.html'
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     dataset = gloss.lemma.dataset
     languages = dataset.translation_languages.all()
     annotated_sentence_sources = AnnotatedSentenceSource.objects.filter(dataset=dataset)
@@ -1937,7 +1942,7 @@ def add_annotated_media(request, glossid):
 def edit_annotated_sentence(request, glossid, annotatedsentenceid):
     """View to pass context variables to the annotated sentence edit page"""
     template = 'dictionary/edit_annotated_sentence.html'
-    gloss = Gloss.objects.get(id=glossid)
+    gloss = Gloss.objects.get(id=glossid, archived=False)
     annotated_translations, annotated_contexts = {}, {}
     annotated_sentence = None
     annotated_sentence_sources = AnnotatedSentenceSource.objects.filter(dataset=gloss.lemma.dataset)
@@ -1971,7 +1976,7 @@ def save_edit_annotated_sentence(request):
         return HttpResponseForbidden("Annotated Sentence Edit method must be POST")
     
     redirect_url = request.POST.get('redirect')
-    gloss = Gloss.objects.get(id=request.POST.get('glossid'))
+    gloss = Gloss.objects.get(id=request.POST.get('glossid'), archived=False)
     annotated_sentence = AnnotatedSentence.objects.get(id=request.POST.get('annotatedsentenceid'))
     annotations = request.POST['feedbackdata']
 
@@ -2057,7 +2062,7 @@ def add_othermedia(request):
         # fallback to the requesting page
         return HttpResponseRedirect('/')
 
-    morpheme_or_gloss = Gloss.objects.get(id=request.POST['gloss'])
+    morpheme_or_gloss = Gloss.objects.get(id=request.POST['gloss'], archived=False)
 
     if morpheme_or_gloss.is_morpheme():
         gloss_or_morpheme = morpheme_or_gloss.morpheme
@@ -2687,7 +2692,7 @@ def add_tag(request, glossid):
     if not request.method == "POST":
         return HttpResponseForbidden("Add gloss tag method must be POST")
 
-    thisgloss = get_object_or_404(Gloss, id=glossid)
+    thisgloss = get_object_or_404(Gloss, id=glossid, archived=False)
     tags_label = 'Tags'
     form = TagUpdateForm(request.POST)
 
@@ -3472,7 +3477,7 @@ def assign_lemma_dataset_to_gloss(request, glossid):
         messages.add_message(request, messages.ERROR, _('You do not have permission to change glosses.'))
         return HttpResponse(json.dumps({}), {'content-type': 'application/json'})
 
-    gloss = get_object_or_404(Gloss, id=glossid)
+    gloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     lemma_get = request.POST.get('lemmaid', '')
     if not lemma_get:
@@ -3528,7 +3533,7 @@ def okay_to_update_gloss(request, gloss):
 @permission_required('dictionary.change_gloss')
 def toggle_tag(request, glossid, tagid):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3541,7 +3546,7 @@ def toggle_tag(request, glossid, tagid):
 @permission_required('dictionary.change_gloss')
 def toggle_semantic_field(request, glossid, semanticfield):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3554,7 +3559,7 @@ def toggle_semantic_field(request, glossid, semanticfield):
 @permission_required('dictionary.change_gloss')
 def toggle_wordclass(request, glossid, wordclass):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3567,7 +3572,7 @@ def toggle_wordclass(request, glossid, wordclass):
 @permission_required('dictionary.change_gloss')
 def toggle_namedentity(request, glossid, namedentity):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3580,7 +3585,7 @@ def toggle_namedentity(request, glossid, namedentity):
 @permission_required('dictionary.change_gloss')
 def toggle_handedness(request, glossid, handedness):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3593,7 +3598,7 @@ def toggle_handedness(request, glossid, handedness):
 @permission_required('dictionary.change_gloss')
 def toggle_domhndsh(request, glossid, domhndsh):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3606,7 +3611,7 @@ def toggle_domhndsh(request, glossid, domhndsh):
 @permission_required('dictionary.change_gloss')
 def toggle_subhndsh(request, glossid, subhndsh):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3619,7 +3624,7 @@ def toggle_subhndsh(request, glossid, subhndsh):
 @permission_required('dictionary.change_gloss')
 def toggle_handCh(request, glossid, handCh):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3632,7 +3637,7 @@ def toggle_handCh(request, glossid, handCh):
 @permission_required('dictionary.change_gloss')
 def toggle_relatArtic(request, glossid, relatArtic):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3645,7 +3650,7 @@ def toggle_relatArtic(request, glossid, relatArtic):
 @permission_required('dictionary.change_gloss')
 def toggle_locprim(request, glossid, locprim):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3658,7 +3663,7 @@ def toggle_locprim(request, glossid, locprim):
 @permission_required('dictionary.change_gloss')
 def toggle_contType(request, glossid, contType):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3671,7 +3676,7 @@ def toggle_contType(request, glossid, contType):
 @permission_required('dictionary.change_gloss')
 def toggle_movSh(request, glossid, movSh):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3684,7 +3689,7 @@ def toggle_movSh(request, glossid, movSh):
 @permission_required('dictionary.change_gloss')
 def toggle_movDir(request, glossid, movDir):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3697,7 +3702,7 @@ def toggle_movDir(request, glossid, movDir):
 @permission_required('dictionary.change_gloss')
 def toggle_repeat(request, glossid, repeat):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3710,7 +3715,7 @@ def toggle_repeat(request, glossid, repeat):
 @permission_required('dictionary.change_gloss')
 def toggle_altern(request, glossid, altern):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3723,7 +3728,7 @@ def toggle_altern(request, glossid, altern):
 @permission_required('dictionary.change_gloss')
 def toggle_relOriMov(request, glossid, relOriMov):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3736,7 +3741,7 @@ def toggle_relOriMov(request, glossid, relOriMov):
 @permission_required('dictionary.change_gloss')
 def toggle_relOriLoc(request, glossid, relOriLoc):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3749,7 +3754,7 @@ def toggle_relOriLoc(request, glossid, relOriLoc):
 @permission_required('dictionary.change_gloss')
 def toggle_oriCh(request, glossid, oriCh):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3762,7 +3767,7 @@ def toggle_oriCh(request, glossid, oriCh):
 @permission_required('dictionary.change_gloss')
 def toggle_language_fields(request, glossid):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3775,7 +3780,7 @@ def toggle_language_fields(request, glossid):
 @permission_required('dictionary.change_gloss')
 def quick_create_sense(request, glossid):
 
-    gloss = Gloss.objects.filter(id=glossid).first()
+    gloss = Gloss.objects.filter(id=glossid, archived=False).first()
 
     if not okay_to_update_gloss(request, gloss):
         return JsonResponse({})
@@ -3793,7 +3798,7 @@ def add_affiliation(request, glossid):
     if not form.is_valid():
         return JsonResponse({})
 
-    thisgloss = get_object_or_404(Gloss, id=glossid)
+    thisgloss = get_object_or_404(Gloss, id=glossid, archived=False)
 
     if not okay_to_update_gloss(request, thisgloss):
         return JsonResponse({})
@@ -3838,4 +3843,25 @@ def add_affiliation(request, glossid):
         revision.save()
 
     result = {'affiliation': affiliation_id}
+    return JsonResponse(result)
+
+
+@permission_required('dictionary.change_gloss')
+def restore_gloss(request, glossid):
+
+    gloss = Gloss.objects.filter(id=glossid, archived=True).first()
+
+    if not okay_to_update_gloss(request, gloss):
+        return JsonResponse({})
+
+    gloss.archived = False
+    gloss.save(update_fields=['archived'])
+
+    annotation = get_default_annotationidglosstranslation(gloss)
+    add_gloss_update_to_revision_history(request.user, gloss, 'restored', annotation,
+                                         annotation)
+
+    result = dict()
+    result['glossid'] = str(gloss.id)
+
     return JsonResponse(result)

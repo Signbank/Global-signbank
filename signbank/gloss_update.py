@@ -1,10 +1,8 @@
-import binascii
-import io
 
-import numpy
 from django.utils.translation import gettext_lazy as _, activate, gettext
 from signbank.dictionary.models import *
 from signbank.video.models import GlossVideoDescription, GlossVideoNME
+from signbank.tools import get_default_annotationidglosstranslation
 from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -577,7 +575,7 @@ def api_update_gloss(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    gloss = Gloss.objects.filter(id=gloss_id).first()
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
     if not gloss:
         errors[gettext("Gloss")] = gettext("Gloss not found.")
@@ -631,6 +629,215 @@ def api_update_gloss(request, datasetid, glossid):
             return JsonResponse(results)
 
     gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
+
+    results['errors'] = {}
+    results['updatestatus'] = "Success"
+
+    return JsonResponse(results)
+
+
+def check_confirmed(value_dict):
+
+    errors = dict()
+    for field in value_dict.keys():
+        if field not in ['confirmed', 'Confirmed'] or value_dict[field] not in ['true', 'True', 'TRUE']:
+            errors[field] = _("Gloss operation not confirmed")
+    return errors
+
+
+def gloss_archival_delete(user, gloss, annotation):
+
+    gloss.archived = True
+    gloss.save(update_fields=['archived'])
+
+    revision = GlossRevision(old_value=annotation,
+                             new_value=annotation,
+                             field_name='archived',
+                             gloss=gloss,
+                             user=user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+
+
+def gloss_archival_restore(user, gloss, annotation):
+
+    gloss.archived = False
+    gloss.save(update_fields=['archived'])
+
+    revision = GlossRevision(old_value=annotation,
+                             new_value=annotation,
+                             field_name='restored',
+                             gloss=gloss,
+                             user=user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_delete_gloss(request, datasetid, glossid):
+
+    results = dict()
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
+
+    results['glossid'] = glossid
+
+    errors = dict()
+
+    if not request.user.is_authenticated:
+        errors[gettext("User")] = gettext("You must be logged in to use this functionality.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        # the glossid in the url is a sequence of digits
+        # this error can occur if it begins with a 0
+        errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
+
+    if not gloss:
+        errors[gettext("Gloss")] = gettext("Gloss not found.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not gloss.lemma:
+        errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if gloss.lemma.dataset != dataset:
+        errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    value_dict = get_gloss_update_human_readable_value_dict(request)
+    errors = check_confirmed(value_dict)
+    if errors:
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    annotation = get_default_annotationidglosstranslation(gloss)
+    gloss_archival_delete(request.user, gloss, annotation)
+
+    results['errors'] = {}
+    results['updatestatus'] = "Success"
+
+    return JsonResponse(results)
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_restore_gloss(request, datasetid, glossid):
+
+    results = dict()
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
+
+    results['glossid'] = glossid
+
+    errors = dict()
+
+    if not request.user.is_authenticated:
+        errors[gettext("User")] = gettext("You must be logged in to use this functionality.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        # the glossid in the url is a sequence of digits
+        # this error can occur if it begins with a 0
+        errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    gloss = Gloss.objects.filter(id=gloss_id, archived=True).first()
+
+    if not gloss:
+        errors[gettext("Gloss")] = gettext("Gloss not found in archive.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not gloss.lemma:
+        errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if gloss.lemma.dataset != dataset:
+        errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    value_dict = get_gloss_update_human_readable_value_dict(request)
+    errors = check_confirmed(value_dict)
+    if errors:
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    annotation = get_default_annotationidglosstranslation(gloss)
+    gloss_archival_restore(request.user, gloss, annotation)
 
     results['errors'] = {}
     results['updatestatus'] = "Success"

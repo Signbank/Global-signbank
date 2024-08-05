@@ -203,6 +203,10 @@ urlpatterns = [
             signbank.dictionary.views.test_abstract_machine, name='test_abstract_machine'),
     re_path(r'api_update_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.gloss_update.api_update_gloss, name='api_update_gloss'),
+    re_path(r'api_delete_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
+            signbank.gloss_update.api_delete_gloss, name='api_delete_gloss'),
+    re_path(r'api_restore_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
+            signbank.gloss_update.api_restore_gloss, name='api_restore_gloss'),
     re_path(r'test_am_update_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.dictionary.views.test_am_update_gloss, name='test_am_update_gloss'),
     re_path(r'api_update_gloss_morphology/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
@@ -211,6 +215,9 @@ urlpatterns = [
             signbank.gloss_update.api_update_gloss_nmevideo, name='api_update_gloss_nmevideo'),
     re_path(r'api_create_gloss_nmevideo/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.gloss_update.api_create_gloss_nmevideo, name='api_create_gloss_nmevideo'),
+
+    re_path(r'restore_gloss/(?P<glossid>\d+)/$',
+            signbank.dictionary.update.restore_gloss, name='restore_gloss'),
 
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
