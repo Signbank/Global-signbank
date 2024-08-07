@@ -229,6 +229,7 @@ function checkKey(e)
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/dropstyle.css">
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/recordstyle.css">
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
+
     <style>
         #panel-expand-collapse-btn-group.affix {
             position:fixed;
@@ -261,11 +262,6 @@ select option {
     background-color: white !important;
     -webkit-appearance: none;
     -moz-appearance: none;
-}
-
-.dropdown-menu {
-    display: visible !important;
-    box-shadow: 0 10px 10px #333;
 }
 
 .dropdown-item:active{
@@ -332,12 +328,29 @@ option:not(:checked) {
 .panel-heading:hover {
     background-color: #D2D2D2;
 }
+input[type="text"] {
+    background-color: rgba(50,50,50,10%);
+    border: none;
+}
+input[type="text"]:focus {
+    border: 1px solid red;
+}
+input[type="button"]:focus {
+    outline: none;
+}
+textarea {
+    border: none;
+    background-color: rgba(50,50,50,10%);
+}
+textarea:focus {
+    border: 1px solid red;
+}
 </style>
 
 {% endblock %}
 
 {% block content %}
-    <div class="navbar navbar-light" id="searchquery" style="background-color:inherit; color:inherit;z-index: 50;">
+    <nav class="navbar navbar-light" id="searchquery" style="background-color:inherit; color:inherit;z-index: 50;">
     <table class="table-responsive">
     <tr>
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
@@ -358,7 +371,7 @@ option:not(:checked) {
     </td>
     </tr>
     </table>
-    </div>
+    </nav>
 
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
      <div class="modal fade" id="display_query_parameters"
@@ -385,7 +398,7 @@ option:not(:checked) {
                     <input type='hidden' name='use_default_query_parameters' value='default_parameters'>
                         <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
                             <thead id = 'default_query_table_header'>
-                                    <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                    <th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
                                     <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
@@ -419,7 +432,7 @@ option:not(:checked) {
                         <input type='hidden' name='use_default_query_parameters' value='query_parameters'>
                         <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
                             <thead id = 'query_table_header'>
-                                    <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                    <th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
                                     <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
@@ -520,7 +533,7 @@ option:not(:checked) {
          <button id='copy_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
 
           <div class="modal fade" id="copy_gloss_modal" role="dialog" aria-labelledby="#modalGlossCopy" aria-hidden="true">
-             <div class="modal-dialog">
+             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h2 id='modalGlossCopy'>{% trans "Copy Gloss" %}</h2>
@@ -578,7 +591,7 @@ option:not(:checked) {
          <button id='move_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#move_gloss_modal'>{% trans "Move" %}</button>
 
           <div class="modal fade" id="move_gloss_modal" role="dialog" aria-labelledby="#modalGlossMove" aria-hidden="true">
-             <div class="modal-dialog">
+             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h2 id='modalGlossMove'>{% trans "Move Gloss" %}</h2>
@@ -660,7 +673,7 @@ option:not(:checked) {
 
         {% if "change_dataset" in dataset_perms %}
         <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDelete" aria-hidden="true">
-             <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
+             <div class="modal-dialog modal-lg left-modal">
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h2 id='modalTitleDelete'>{% trans "Delete This Sign" %}</h2>
@@ -1039,9 +1052,9 @@ option:not(:checked) {
                                 <td style="width:50px">
                                     {% if "change_dataset" in dataset_perms %}
                                         <span class='glyphicon glyphicon-trash sense_delete sense-icon pull-right' style="color:red"  data-toggle='modal' data-target='#delete_sense_modal_{{sense.id}}'></span>
-                                        <div class="modal fade" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleDeleteSense" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                                <div class="modal-content">
+                                        <div class="modal fade modal-sense" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleDeleteSense" aria-hidden="true">
+                                            <div class="modal-dialog modal-sm left-modal">
+                                                <div class="modal-content modal-content-sense">
                                                     <div class='modal-header'>
                                                         <h2 id='modalTitleDeleteSense'>{% trans "Delete this Sense" %}</h2>
                                                     </div><br>
@@ -1061,9 +1074,9 @@ option:not(:checked) {
                                             </div>
                                         </div>
                                         <span class='sense-icon glyphicon glyphicon-edit sense_edit pull-right' style="color:red" data-toggle='modal' data-target='#edit_sense_modal_{{sense.id}}'></span>
-                                        <div class="modal fade" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleEditSense" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
-                                                <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
+                                        <div class="modal fade modal-sense" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleEditSense" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg left-modal">
+                                                <div class="modal-content modal-content-sense" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
                                                     <div class='modal-header'>
                                                         <h2 id='modalTitleEditSense'>{% trans "Edit this sense" %}</h2>
                                                     </div><br>
@@ -1112,9 +1125,9 @@ option:not(:checked) {
                                     {% with sense_to_similar_senses|get_item:sense.id as similar_senses %}
                                     {% if similar_senses %}
                                         <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
-                                        <div class="modal fade" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                                <div class="modal-content" style="width:calc(({{gloss.lemma.dataset.translation_languages.count}}+3)*200px);">
+                                        <div class="modal fade modal-sense" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg left-modal">
+                                                <div class="modal-content modal-content-sense" style="width:calc(({{gloss.lemma.dataset.translation_languages.count}}+3)*200px);">
                                                     <div class='modal-header'>
                                                         <h2 id='modalTitleSimilarSense'>{% trans "Similar senses" %}</h2>
                                                     </div><br>
@@ -1218,9 +1231,9 @@ option:not(:checked) {
 
                                                         <br><br>
                                                         <span class='glyphicon glyphicon-trash examplestc_delete sense-icon pull-right' style="color:red"  data-toggle='modal' data-target='#delete_examplestc_modal_{{examplesentence.id}}'></span>
-                                                        <div class="modal fade" id="delete_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteExamplestc" aria-hidden="true">
-                                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                                                <div class="modal-content">
+                                                        <div class="modal fade modal-sense" id="delete_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteExamplestc" aria-hidden="true">
+                                                            <div class="modal-dialog modal-lg left-modal">
+                                                                <div class="modal-content modal-content-sense">
                                                                     <div class='modal-header'>
                                                                         <h2 id='modalTitleDeleteExamplestc'>{% trans "Delete this Example Sentence" %}</h2>
                                                                     </div><br>
@@ -1241,9 +1254,9 @@ option:not(:checked) {
                                                         </div>
 
                                                         <span class='glyphicon glyphicon-edit examplestc_edit sense-icon pull-right' style="color:red"  data-toggle='modal' data-target='#edit_examplestc_modal_{{examplesentence.id}}'></span>
-                                                        <div class="modal fade" id="edit_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleEditExamplestc" aria-hidden="true">
-                                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                                                <div class="modal-content">
+                                                        <div class="modal fade modal-sense" id="edit_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleEditExamplestc" aria-hidden="true">
+                                                            <div class="modal-dialog modal-lg left-modal">
+                                                                <div class="modal-content modal-content-sense">
                                                                     <div class='modal-header'>
                                                                         <h2 id='modalTitleEditExamplestc'>{% trans "Edit an example sentence" %}</h2>
                                                                     </div><br>
@@ -1309,9 +1322,9 @@ option:not(:checked) {
                                             <tr class="sense-icon">
                                                 <td>
                                                     <button data-toggle='modal' data-target='#add_examplestc_modal_{{sense.id}}', class='sense-button btn btn-primary btn-space'>{% trans "Add an example sentence" %}</button>
-                                                    <div class="modal fade" id="add_examplestc_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleAddExamplestc" aria-hidden="true">
-                                                        <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                                            <div class="modal-content">
+                                                    <div class="modal fade modal-sense" id="add_examplestc_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleAddExamplestc" aria-hidden="true">
+                                                        <div class="modal-dialog modal-lg left-modal">
+                                                            <div class="modal-content modal-content-sense">
                                                                 <div class='modal-header'>
                                                                     <h2 id='modalTitleAddExamplestc'>{% trans "Add an example sentence" %}</h2>
                                                                 </div><br>
@@ -1353,9 +1366,9 @@ option:not(:checked) {
                             <tr class="sense-icon">
                                 <td>
                                     <button data-toggle='modal' data-target='#add_sense_modal_{{gloss.id}}', class='sense-button btn btn-primary btn-space sense-button sense_add'>{% trans "Add a sense" %}</button>
-                                    <div class="modal fade" id="add_sense_modal_{{gloss.id}}" role="dialog" aria-labelledby="#modalTitleGloss" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                            <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
+                                    <div class="modal fade modal-sense" id="add_sense_modal_{{gloss.id}}" role="dialog" aria-labelledby="#modalTitleGloss" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg left-modal">
+                                            <div class="modal-content modal-content-sense" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
                                                 <div class='modal-header'>
                                                     <h2 id='modalTitleGloss'>{% trans "Add a sense" %}</h2>
                                                 </div><br>
@@ -2393,7 +2406,7 @@ option:not(:checked) {
                             <td style="flex: 0 0 30%;">
                                 <span class='sense-icon glyphicon glyphicon-trash sense_delete pull-right' style="color:red"  data-toggle='modal' data-target='#delete_annotated_sentence_modal_{{annotated_sentence.id}}'></span>
                                 <div class="modal fade" id="delete_annotated_sentence_modal_{{annotated_sentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteAnnotatedSentence" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
+                                    <div class="modal-dialog modal-sm left-modal">
                                         <div class="modal-content">
                                             <div class='modal-header'>
                                                 <h2 id='modalTitleDeleteAnnotatedSentence'>{% trans "Delete this annotated sentence" %}</h2>

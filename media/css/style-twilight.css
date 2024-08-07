@@ -482,9 +482,6 @@ table {
   -webkit-border-radius: 8px;
      -moz-border-radius: 8px;
           border-radius: 8px;
-  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
-     -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
-          box-shadow: 0 5px 10px rgba(0,0,0,.2);
 }
 
 .tt-suggestion {
@@ -888,8 +885,11 @@ input {
 }
 
 .modal {
-    background-color: white;
-    color: black;
+    background-color: var(--ultron);
+    color: var(--beam);
+}
+.modal-dialog {
+    border: solid 0.5px var(--beam) !important;
 }
 .modal-content {
     background-color: inherit;
