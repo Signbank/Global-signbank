@@ -211,10 +211,12 @@ urlpatterns = [
             signbank.dictionary.views.test_am_update_gloss, name='test_am_update_gloss'),
     re_path(r'api_update_gloss_morphology/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.gloss_morphology_update.api_update_gloss_morphology, name='api_update_gloss'),
-    re_path(r'api_update_gloss_nmevideo/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
+    re_path(r'api_update_gloss_nmevideo/(?P<datasetid>\d+)/(?P<glossid>\d+)/(?P<videoid>\d+)/$',
             signbank.gloss_update.api_update_gloss_nmevideo, name='api_update_gloss_nmevideo'),
     re_path(r'api_create_gloss_nmevideo/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.gloss_update.api_create_gloss_nmevideo, name='api_create_gloss_nmevideo'),
+    re_path(r'api_delete_gloss_nmevideo/(?P<datasetid>\d+)/(?P<glossid>\d+)/(?P<videoid>\d+)/$',
+            signbank.gloss_update.api_delete_gloss_nmevideo, name='api_delete_gloss_nmevideo'),
 
     re_path(r'restore_gloss/(?P<glossid>\d+)/$',
             signbank.dictionary.update.restore_gloss, name='restore_gloss'),
