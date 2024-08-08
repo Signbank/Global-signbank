@@ -877,10 +877,10 @@ def gloss_update_nmevideo(gloss, update_fields_dict, nmevideo, language_code, cr
     return fields_to_update
 
 
-def gloss_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code):
+def gloss_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code, create=True):
     changes_done = []
     activate(language_code)
-
+    original_filename = '' if create else os.path.basename(nmevideo.videofile.name)
     for field, (original_value, new_value) in changes.items():
         if field.startswith('description_'):
             language_code_2char = field[len('description_'):]
@@ -891,13 +891,15 @@ def gloss_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code):
             description.save()
             changes_done.append((field, original_value, value))
         elif field == 'offset':
+            # this changes the filename and moves the file
             nmevideo.offset = int(new_value)
             nmevideo.save()
 
+    operation = 'nmevideo_create' if create else 'nmevideo_update'
     filename = os.path.basename(nmevideo.videofile.name)
-    revision = GlossRevision(old_value='',
+    revision = GlossRevision(old_value=original_filename,
                              new_value=filename,
-                             field_name='nmevideo_create',
+                             field_name=operation,
                              gloss=gloss,
                              user=user,
                              time=datetime.now(tz=get_current_timezone()))
@@ -999,7 +1001,7 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
     # we already have an nme video object
     value_dict = get_gloss_nmevideo_value_dict(request, gloss, interface_language_code, create=False)
     fields_to_update = gloss_update_nmevideo(gloss, value_dict, nmevideo, interface_language_code)
-    gloss_nmevideo_do_changes(request.user, gloss, nmevideo, fields_to_update, interface_language_code)
+    gloss_nmevideo_do_changes(request.user, gloss, nmevideo, fields_to_update, interface_language_code, create=False)
 
     results['errors'] = errors
     results['updatestatus'] = "Success"
