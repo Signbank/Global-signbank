@@ -55,7 +55,7 @@
             {% if not user.is_anonymous %}
             <td>
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
-                {% if "view_dataset" in dataset_perms or "can_view_dataset" in dataset_perms %}
+                {% if "view_dataset" in dataset_perms %}
                 {% trans "Yes" %}
                 {% else %}
                 {% trans "No" %}
@@ -72,7 +72,7 @@
             <td>
                 {% if dataset.is_public %}
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
-                {% if not "view_dataset" in dataset_perms or not "can_view_dataset" in dataset_perms %}
+                {% if not "view_dataset" in dataset_perms %}
 
                 <div data-toggle="collapse" href="#dataset_{{dataset.name|cut:' '}}_request_view"><button>{% trans "Request View Access" %}</button></div>
                 <div id='dataset_{{dataset.name|cut:" "}}_request_view' class='collapse'>
