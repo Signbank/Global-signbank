@@ -13,6 +13,7 @@ from signbank.csv_interface import normalize_field_choice
 from signbank.api_token import put_api_user_in_request
 import datetime as DT
 from signbank.tools import get_default_annotationidglosstranslation
+from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
 
 import ast
 import base64
@@ -835,14 +836,17 @@ def gloss_update_nmevideo(gloss, update_fields_dict, nmevideo, language_code, cr
     offset = gettext("Index")
 
     dataset_languages = dataset.translation_languages.all()
-    description_fields = [gettext("Description") + " (" + language.name + ")"
+    description_fields = [gettext("Description") + " (%s)" % language.name
                           for language in dataset_languages] + [offset]
     description_field_to_internal = dict()
+    json_field_to_human_readable = dict()
     for language in dataset_languages:
-        description_field_to_internal[gettext("Description")
-                                      + " (" + language.name + ")"] = ('description_'
-                                                                       + language.language_code_2char)
+        human_readable = gettext("Description") + " (%s)" % language.name
+        description_field_to_internal[human_readable] = ('description_' + language.language_code_2char)
+        description_api_field_name = gettext("Description") + ": %s" % language.name
+        json_field_to_human_readable[description_api_field_name] = human_readable
     description_field_to_internal[offset] = 'offset'
+    json_field_to_human_readable[offset] = offset
 
     nme_videos_key = gettext("NME Videos")
     nme_videos_field = [nme_videos_key]
@@ -852,7 +856,10 @@ def gloss_update_nmevideo(gloss, update_fields_dict, nmevideo, language_code, cr
         gloss_data_nme_videos_list = gloss_data_nme_videos[nme_videos_key]
         for nme_dict in gloss_data_nme_videos_list:
             if nme_dict['ID'] == str(nmevideo.id):
-                gloss_data_dict = nme_dict
+                for gloss_json_field in nme_dict.keys():
+                    if gloss_json_field in json_field_to_human_readable.keys():
+                        human_readable = json_field_to_human_readable[gloss_json_field]
+                        gloss_data_dict[human_readable] = nme_dict[gloss_json_field]
     else:
         gloss_data_dict['ID'] = str(nmevideo.id)
         gloss_data_dict[offset] = str(nmevideo.offset)
@@ -1047,7 +1054,7 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
     activate(language_code)
     dataset_languages = dataset.translation_languages.all()
 
-    description_fields = [gettext("Description") + " (" + language.name + ")"
+    description_fields = [gettext("Description") + " (%s)" % language.name
                           for language in dataset_languages]
 
     for field in description_fields:
@@ -1224,7 +1231,11 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
+    original_nme_file = os.path.basename(nmevideo.videofile.name)
     nmevideo.delete()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'nmevideo_delete', original_nme_file, '')
+
     results['errors'] = errors
     results['updatestatus'] = "Success"
 
