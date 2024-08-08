@@ -943,7 +943,8 @@ def update_gloss(request, glossid):
         if value.startswith(whitespace) or value.endswith(whitespace):
             value = value.strip()
         original_value = getattr(gloss,field)
-
+        if field in ['domhndsh', 'subhndsh', 'final_domhndsh', 'final_subhndsh']:
+            original_value = original_value.name if original_value else original_value
         if field == 'idgloss' and value == '':
             # don't allow user to set Lemma ID Gloss to empty
             # return HttpResponse(str(original_value), {'content-type': 'text/plain'})
