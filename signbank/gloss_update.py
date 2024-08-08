@@ -1131,8 +1131,8 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    fields_to_update = gloss_update_nmevideo(gloss, value_dict, interface_language_code, create=True)
     new_nme_video = value_dict[file_key]
+    fields_to_update = gloss_update_nmevideo(gloss, value_dict, new_nme_video,interface_language_code, create=True)
     gloss_nmevideo_do_changes(request.user, gloss, new_nme_video, fields_to_update, interface_language_code)
 
     results['errors'] = errors
