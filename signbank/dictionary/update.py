@@ -1947,6 +1947,7 @@ def save_edit_annotated_sentence(request):
     gloss = Gloss.objects.get(id=request.POST.get('glossid'))
     annotated_sentence = AnnotatedSentence.objects.get(id=request.POST.get('annotatedsentenceid'))
     annotations = request.POST['feedbackdata']
+    annotations = json.loads(annotations)
 
     with atomic():
         annotated_sentence.annotated_glosses.all().delete()

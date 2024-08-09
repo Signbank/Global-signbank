@@ -3885,26 +3885,16 @@ class AnnotatedSentence(models.Model):
         """Add annotations to the annotated sentence"""
         dataset = gloss.lemma.dataset
 
-        arrays = []
-        segments = annotations.split(";")
-        for segment in segments:
-            values = segment.split(":")
-            if len(values) == 4:
-                arrays.append(values)
-
-        for annotation in arrays:
-            gloss_translation = annotation[0]
+        for annotation in annotations:
+            gloss_translation = annotation['gloss']
             annotationIdGlossTranslation = AnnotationIdglossTranslation.objects.filter(text__exact=gloss_translation, language__in=dataset.translation_languages.all(), gloss__lemma__dataset=dataset).first()
             if annotationIdGlossTranslation is None:
                 print("No annotation found for: ", gloss_translation)
                 continue
             else:
-                repr = False
-                if annotation[1] == "1":
-                    repr = True
-
-                starttime = int(annotation[2])
-                endtime = int(annotation[3])
+                repr = annotation['representative']
+                starttime = int(annotation['starttime'])
+                endtime = int(annotation['endtime'])
 
                 excluded = False
                 if start_cut >= 0 and end_cut >= 0:
