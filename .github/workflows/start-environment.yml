@@ -17,8 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          response = curl -X POST -H "Content-Type: application/json" -d '{"branch": "'"${BRANCH}"'", "days_active": '"${DAYS_ACTIVE}"'}' ${{ secrets.START_ENVIRONMENT_URL }}
-          echo "Response: $response"
+          # Calculate minutes_active from days_active
+          minutes_active=$((DAYS_ACTIVE * 1440))
+          echo "Minutes active: $minutes_active"
+
+          # Making a POST request using curl and logging the response
+          response=$(curl -X POST -H "Content-Type: application/json" \
+          -d '{"branch": "'"${BRANCH}"'", "minutes_active": '"${minutes_active}"'}' \
+          ${{ secrets.POST_URL }})
         env:
           BRANCH: ${{ inputs.branch }}
           DAYS_ACTIVE: ${{ inputs.days_active }}
