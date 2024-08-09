@@ -3,13 +3,13 @@
 {% load stylesheet %}
 {% load i18n %}
 
-<html>
+<html style="background-color:var(--ultron);color:var(--beam);background-size:cover;">
   <head>
     <title>{% block bootstrap3_title %}Global Signbank{% endblock %}</title>
     <link href="{{ STATIC_URL }}bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
 
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/style.css">
     <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}{% primary_css %}">
+    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/style-twilight.css">
 
     <link rel="stylesheet" href="{{STATIC_URL}}css/minimalistic_language_picker.css">
 
@@ -17,7 +17,7 @@
 
     {% block extrahead %}{% endblock %}
   </head>
-  <body>
+  <body class='body body-light'>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
@@ -28,11 +28,12 @@
 
   {% include 'menu.html' %}
 
-    <div id='wrap' class="container-fluid" style="box-sizing:content-box;background:transparent;">
+    <div id='wrap' class="container-fluid" style="box-sizing:content-box;color:inherit;background-color:inherit;">
 
         {% bootstrap_messages %}
 
-        <div role='main' id="maincontent" style="background:transparent;">
+        <div role='main' id="maincontent" style="color:inherit;background-color:inherit;">
+
         {% block content %}(no content){% endblock %}
         </div>
         
@@ -43,7 +44,10 @@
     <script type="text/javascript" src="{{STATIC_URL}}js/minimalistic_language_picker.js"></script>
 
     {% block extrajs %}{% endblock %}
-
+    <script type='text/javascript'>
+    var set_dark_mode_url = "{{PREFIX_URL}}/set_dark_mode/";
+    var dark_mode_setting = '{{request.session.dark_mode|safe}}';
+    </script>
     <script type="text/javascript">
         function focusFunction() {
             var search_text = document.getElementById("tooltip-search").value;
@@ -113,6 +117,10 @@
     	navbarHeight = Math.round($('#signbank-bar').outerHeight());
         $('#wrap').css({'padding-top': navbarHeight});
         $('[data-toggle="tooltip-menubar"]').tooltip();
+
+        if (dark_mode_setting == "True") {
+            toggle_dark_mode();
+        }
     })
 
     $(window).on('resize', function() {
@@ -124,7 +132,8 @@
 
     </script>
 
-    <form id="change_language_form" method="post" action="{{PREFIX_URL}}/i18n/setlang/">
+    <form id="change_language_form" class="interface-language interface-language-light"
+          method="post" action="{{PREFIX_URL}}/i18n/setlang/">
         {% csrf_token %}
         <input id="change_language_input_field" type="hidden" name="language" value="{{ user.user_profile_user.last_used_language }}">
 
