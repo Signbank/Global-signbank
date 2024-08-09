@@ -1,0 +1,851 @@
+﻿{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Search Annotated Glosses{% endblocktrans %}
+{% endblock %}
+
+{% block extrahead %}
+<style>
+.table-condensed {
+    border-collapse: separate;
+    box-sizing: content-box;
+}
+.table-condensed td {
+    height: auto;
+}
+</style>
+{% endblock %}
+
+{% load guardian_tags %}
+
+{% block extrajs %}
+<script type="text/javascript">
+    var url = '{{PREFIX_URL}}';
+    var language_code = '{{ LANGUAGE_CODE }}';
+    // this is a default setting for the case only one dataset is available
+    var js_dataset_languages = '{{js_dataset_languages|safe}}';
+</script>
+
+<style>
+.select2-results__option--highlighted {
+    color: black !important;
+    font-weight: bold;
+}
+
+.pub-row tr {float: left!important; width: 50%!important;}
+</style>
+
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+<script type='text/javascript'>
+var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+var field_colors = {{field_colors|safe}};
+var csrf_token = '{{csrf_token}}';
+var page_number = {{ page_number }};
+var objects_on_this_page = {{objects_on_page|safe}};
+var view_type = '{{view_type}}';
+var paginate_by = '{{paginate_by}}';
+var query_parameters_keys = {{query_parameters_keys|safe}};
+var query_parameters_dict = {{query_parameters|safe}};
+
+var other_parameters_keys = {{other_parameters_keys|safe}};
+var language_query_keys = {{language_query_keys|safe}};
+var gloss_fields_to_populate = {{gloss_fields_to_populate|safe}};
+var gloss_fields_to_populate_keys = {{gloss_fields_to_populate_keys|safe}};
+
+$(document).ready(function() {
+
+    $('[data-toggle="tooltip"]').tooltip();
+
+    function selectColors(fieldId) {
+        var target_pulldown = document.getElementById(fieldId);
+        var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
+        var pulldown_colors_str = new String(pulldown_colors);
+        var pulldown_lookup = JSON.parse(pulldown_colors_str);
+        $('option',target_pulldown).each(function(){
+            var this_code = $(this).attr('value');
+            var this_color = pulldown_lookup[this_code];
+            $(this).attr('style','background-color:#'+this_color);
+        });
+    }
+
+    function makeMultipleSelect(fieldId,fieldVar) {
+        var target_pulldown = document.getElementById(fieldId);
+        if (!target_pulldown) { return; }
+        target_pulldown.setAttribute('multiple','multiple');
+        target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+        target_pulldown.setAttribute('name',fieldVar);
+        target_pulldown.style.width = '100%';
+    }
+
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = 'id_' + multiple_select_fields[i];
+        selectColors(this_id);
+        var this_var = multiple_select_fields[i] + '[]';
+        makeMultipleSelect(this_id, this_var);
+     }
+
+     function addOptionColor(optionNode) {
+        var color_text = optionNode.text;
+
+        // pattern of resultId: "select2-id_handedness-result-58e8-0"
+
+        if (optionNode._resultId) {
+            var resultString = optionNode._resultId
+            splitPattern = resultString.split('-');
+            var fieldId = splitPattern[1];
+            var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
+            var this_code = splitPattern[4];
+            var pulldown_colors_str = new String(pulldown_colors);
+            var pulldown_lookup = JSON.parse(pulldown_colors_str);
+            var this_color = pulldown_lookup[this_code];
+            var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;background-color:#"+this_color+"'>"+color_text+"</span>");
+            return $color_text_node
+        } else {
+            return color_text;
+        };
+     }
+
+     $('.js-example-basic-multiple').each(function() {
+         var thisId = this.id;
+         $(this).select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve',
+            placeholder: '',
+            templateResult: addOptionColor
+         });
+     });
+
+     $('.js-example-basic-multiple').val(null).trigger('change');
+
+
+     <!--Alert: The sign language and dialect multiple select code differs from the other fields.-->
+     <!--The code must appear after the class initialisation for for js-example-basic-multiple to avoid applying it to these fields prematurely-->
+
+     <!--Alert: the id for sign language is signLanguage (with an uppercase L), not the same as the model field!-->
+     <!--Django was messing up the template generation otherwise (without the uppercase L)-->
+     <!--The value field is signlanguage[] (lowercase l to match the model)-->
+
+     makeMultipleSelect('id_signLanguage', 'signlanguage[]');
+     $('#id_signLanguage').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve',
+        placeholder: ''
+     });
+
+     if (query_parameters_keys.includes('signlanguage[]')) {
+         var query_initial = query_parameters_dict['signlanguage[]'];
+         $('#id_signLanguage').val(query_initial);
+         $('#id_signLanguage').trigger('change');
+     } else {
+         $('#id_signLanguage').val(null).trigger('change');
+     };
+
+     $('#id_signLanguage').change(function() {
+        set_signlanguages_dialects();
+     });
+
+     <!--Alert: the id for the dialect field is dialects (plural), not the same as the model field!-->
+     <!--Django was messing up the template generation otherwise (without the s at the end)-->
+
+     makeMultipleSelect('id_dialects', 'dialect[]');
+     $('#id_dialects').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve',
+        placeholder: ''
+     });
+
+     if (query_parameters_keys.includes('dialect[]')) {
+         var query_initial = query_parameters_dict['dialect[]'];
+         $('#id_dialects').val(query_initial);
+         $('#id_dialects').trigger('change');
+    } else {
+         $('#id_dialects').val(null).trigger('change');
+    };
+
+     makeMultipleSelect('id_tags', 'tags[]');
+     $('#id_tags').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve',
+        placeholder: ''
+     });
+
+     if (query_parameters_keys.includes('tags[]')) {
+         var query_initial = query_parameters_dict['tags[]'];
+         $('#id_tags').val(query_initial);
+         $('#id_tags').trigger('change');
+     } else {
+         $('#id_tags').val(null).trigger('change');
+     };
+
+     makeMultipleSelect('id_sentenceType', 'sentenceType[]');
+     $('#id_sentenceType').select2({
+        allowClear: true,
+        dropdownAutoWidth: true,
+        width: 'resolve',
+        placeholder: ''
+     });
+
+     $('#id_sentenceType').val(null).trigger('change');
+
+     if (query_parameters_keys.includes('sentenceType[]')) {
+         var query_initial = query_parameters_dict['sentenceType[]'];
+         $('#id_sentenceType').val(query_initial);
+         $('#id_sentenceType').trigger('change');
+     } else {
+         $('#id_sentenceType').val(null).trigger('change');
+     };
+
+     // initialize query parameters in multiple select fields
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = '#id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        if (query_parameters_keys.includes(this_var)) {
+            var query_initial = query_parameters_dict[this_var];
+            $(this_id).val(query_initial);
+            $(this_id).trigger('change');
+        };
+     }
+
+     // initialize non-multiple select, not language-based query fields
+     for (var i = 0; i < query_parameters_keys.length; i++) {
+        var this_var = query_parameters_keys[i];
+        if (this_var.endsWith('[]')) { continue; }
+        if (language_query_keys.includes(this_var)) { continue; }
+        var this_id = '#id_' + query_parameters_keys[i];
+        var query_initial = query_parameters_dict[this_var];
+        $(this_id).val(query_initial);
+     }
+
+     // initialize language-based query fields
+     for (var i = 0; i < language_query_keys.length; i++) {
+        var this_var = language_query_keys[i];
+        if (query_parameters_keys.includes(this_var)) {
+            var $language_search = $("input[name='"+this_var+"']");
+            var query_initial = query_parameters_dict[this_var];
+            $language_search.val(query_initial);
+        };
+     }
+
+     if (query_parameters_keys.includes('translation')) {
+        var $translation = $("input[name='translation']");
+        var query_initial = query_parameters_dict['translation'];
+        $translation.val(query_initial);
+     };
+
+     if (gloss_fields_to_populate_keys.includes('translation')) {
+        var $translation = $("input[name='translation']");
+        var query_initial = gloss_fields_to_populate['translation'];
+        $translation.val(query_initial);
+     };
+
+     // Empty menu_bar_search_mirror: if the user is still busy with the form and hits Reset, this clears it
+     $("#adminsearch :input").change(function() {
+        $("#menu_bar_search_mirror").val("");
+     });
+
+    // This script gets gloss list data and displays it as table rows
+    // Each ajax call generates one row, it is appended to the table dynamically
+
+    lookup = "#senselist_table";
+    $.ajax({
+            url : url + "/dictionary/ajax/annotatedglosslistheader/",
+            datatype: "json",
+            async: true,
+            success : function(result) {
+                var elem = $(result);
+                var parsed = $.parseHTML(result);
+                $(lookup).find('#senselist_table_header').append(result);
+            }
+
+    });
+    for (var i = 0; i < objects_on_this_page.length; i++) {
+        $.ajax({
+            url : url + "/dictionary/ajax/annotatedglossrow/" + objects_on_this_page[i] + "/",
+            datatype: "json",
+            async: true,
+            success : function(result) {
+                var elem = $(result);
+                var parsed = $.parseHTML(result);
+                $.each( parsed, function(i, el ) {
+                    nodename = el.nodeName;
+                    if (nodename == 'TR') {
+                        id_of_row = $(el).attr('id');
+                        res = id_of_row.split("_");
+                        id_of_sense = res[1];
+                        focus_sense_lookup = '#focussense_' + id_of_sense;
+                        $(lookup).find(focus_sense_lookup).first().before(result).end().remove();
+                    };
+                });
+            }
+        });
+        ready_videos();
+    }
+
+});
+
+</script>
+
+<script type='text/javascript'>
+
+function clearForm() {
+
+      $('input').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden' || this_type == 'submit' || this_type == 'reset') { return; };
+        if (this_type == 'date' || this_type == 'text') {
+            $(this).attr('value', "");
+        } else {
+            $(this).val('');
+        };
+      });
+
+      $('select').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden') { return; };
+        if (this_field.endsWith('[]')) {
+            return;
+        } else {
+            $(this).find('option').each(function () {
+                $(this).removeAttr("selected");
+            });;
+        };
+      });
+
+     $('.js-example-basic-multiple').val(null).trigger('change');
+     $("input[name='translation']").val('');
+     $("input[name='search']").val('');
+}
+
+ /**
+ * @param {string} field_name - name of the field to sort on
+ * @param {string} action     - one of: desc, asc, del
+ * @param {string} frmName    - name of the <form ...> that contains the 'sortOrder' <input> field
+ * @returns {void}
+ */
+function do_sort_column(field_name, action, frmName) {
+  // Combine @field_name and @action into [sOrder]
+  var sOrder = field_name;
+  if (action == 'desc') {
+    // Descending sort order is signified by a '-' prefix
+    sOrder = '-' + sOrder;
+  } else if (action == 'del') {
+    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
+    sOrder = '';
+  }
+  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
+  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
+
+  // Submit the form with the indicated name
+
+  $("#" + frmName).submit();
+
+}
+
+/**
+ * @returns {void}
+ */
+function do_adminsearch(el) {
+ var sSearchType = $(el).attr('value');
+  $("#adminsearch input[name='search_type']").val(sSearchType);
+  switch(sSearchType) {
+    case "sense":
+        $("#adminsearch").attr('action', '{{PREFIX_URL}}/signs/annotatedgloss/search/');
+        break;
+  }
+  document.getElementById('adminsearch').submit();
+}
+
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            $(this).find('img').hide();
+            video.show();
+            video.get(0).play();
+        }
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            video.hide();
+            video.get(0).pause();
+            video.get(0).currentTime = 0;
+        }
+    });
+}
+
+    // toggle the line-through on a button
+    function do_toggle_line_through(el,id) {
+        var button_value = $(el).attr('value');
+        var button_id = '#' + id;
+        var button_status = $(button_id).css('text-decoration');
+        if ($(button_id).css('text-decoration-line') == 'none') {
+            $(button_id).css('text-decoration', 'line-through');
+        } else {
+            $(button_id).css('text-decoration', 'none');
+        };
+    };
+
+    // This function toggles the different language columns for Annotations
+    function do_toggle_annotation(el) {
+        var dataset_language_id = $(el).attr('value');
+        var annotation_column_id = '.annotation_' + dataset_language_id;
+        var visible_columns_start = 0;
+        $('th[id^="annotation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        $(annotation_column_id).toggle();
+        var visible_columns_finnish = 0;
+        $('th[id^="annotation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 0) {
+            // the annotation columns were not visible at the start, show the header and visible columns
+            $('.annotations_multicolumn').toggle();
+            $('.annotations_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 0) {
+            // all the columns are hidden now, hide the header
+            $('.annotations_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.annotations_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+    };
+
+    // This function toggles the different language columns for Translations
+    function do_toggle_translations(el) {
+        var visible_columns_start = 1;
+        $('th[id^="translation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        var dataset_language_id = $(el).attr('value');
+        var translation_column_id = '.translation_' + dataset_language_id;
+        $(translation_column_id).toggle();
+        var visible_columns_finnish = 1;
+        $('th[id^="translation_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 1) {
+            // the translation columns were not visible at the start, show the header and visible columns
+            $('.translations_multicolumn').toggle();
+            $('.translations_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 1) {
+            // all the columns are hidden now, hide the header
+            $('.translations_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.translations_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+    };
+
+    // This function toggles the different language columns for Sentence
+    function do_toggle_sentence(el) {
+        var visible_columns_start = 2;
+        $('th[id^="sentence_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_start++;
+            };
+        });
+        var dataset_language_id = $(el).attr('value');
+        var sentence_column_id = '.sentence_' + dataset_language_id;
+        $(sentence_column_id).toggle();
+        var visible_columns_finnish = 2;
+        $('th[id^="sentence_"]').each(function() {
+            if ($(this).css('display') != 'none') {
+                visible_columns_finnish++;
+            };
+        });
+        if (visible_columns_start == 2) {
+            // the sentence columns were not visible at the start, show the header and visible columns
+            $('.sentences_multicolumn').toggle();
+            $('.sentences_multicolumn').attr('colspan', visible_columns_finnish);
+        } else if (visible_columns_finnish == 2) {
+            // all the columns are hidden now, hide the header
+            $('.sentences_multicolumn').toggle();
+        } else {
+            // some columns are visible, some columns were visible at the start, some columns are visible at the end
+            $('.sentences_multicolumn').attr('colspan', visible_columns_finnish);
+        };
+    };
+
+// This function toggles the different language columns for Annotations, Sentences, and Translations
+function do_toggle_language(el) {
+    do_toggle_annotation(el);
+    do_toggle_translations(el);
+    do_toggle_sentence(el);
+    var dataset_language_id = $(el).attr('value');
+    do_toggle_line_through(el,'button_language_'+dataset_language_id);
+};
+</script>
+
+<script type='text/javascript' src="{{ STATIC_URL }}js/gloss_search.js"></script>
+
+<script type='text/javascript'>
+    navbarHeight = Math.round($('#signbank-bar').outerHeight());
+    $('#wrap').css({'padding-top': navbarHeight});
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="definitionblock">
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+
+{{ form.media.css }}
+{{ form.media.js }}
+
+<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/annotatedgloss/search'>
+{% csrf_token %}
+<div class="panel panel-default">
+    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
+            {% if USE_REGULAR_EXPRESSIONS %}
+            <span class="hasTooltip">
+                <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                  title=""></span>
+				{% include "tooltip.html" with include_tags=True %}
+            </span>
+            {% endif %}
+    </div>
+
+    <div id='query-area' class='collapse {% if request.GET|length == 0 %} in {% endif %}'>
+        <div id='searchformwell' class='well search-results-collapsable'>
+
+                <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
+                        <!-- this is empty as an initial value because the view python code sets it -->
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='' type='hidden'>
+                    <input name='search_type' class='form-control' value='{{search_type}}' type='hidden'>
+                </div>
+                <div>
+                    <input id="menu_bar_search_mirror" type="hidden" name="search" class="form-control" value="{{menu_bar_search}}"/>
+                </div>
+                <div>
+                    <table class='table' id='searchfields'>
+                        {% for dataset_lang in dataset_languages %}
+
+                        <tr>
+                            {% with searchform|get_annotation_search_field_for_language:dataset_lang as search_field %}
+                            <td>
+                                <div class='input-group'>
+                                <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
+                                    {{search_field.label}}
+                                </label>
+                                <input id='glosssearch_{{dataset_lang.language_code_2char}}'
+                                       type='text'
+                                       name='glosssearch_{{dataset_lang.language_code_2char}}' class='form-control'>
+                                </div>
+                            </td>
+                            {% endwith %}
+
+                            {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
+                            <td><div class='input-group'>
+
+                                <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
+                                    {{lemma_field.label}}
+                                </label>
+                                <input name='lemma_{{dataset_lang.language_code_2char}}'
+                                       id='lemma_{{dataset_lang.language_code_2char}}'
+                                       type='text'
+                                       class='form-control'></div>
+                            </td>
+                            {% endwith %}
+
+                            {% with searchform|get_senses_form_field_for_language:dataset_lang as keyword_field %}
+                            <td><div class='input-group'>
+                                <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>
+                                    {{keyword_field.label}}</label>
+                                <input name='keyword_{{dataset_lang.language_code_2char}}'
+                                       id='keyword_{{dataset_lang.language_code_2char}}'
+                                       type='text'
+                                       class='form-control'></div>
+                            </td>
+                            {% endwith %}
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+
+                <div class="panel-group" id="searchpanels">
+                    <div  class="panel panel-default">
+                        <div class="panel-heading" data-toggle="collapse" data-target="#searchbasic">{% trans "Search by Language and Basic Properties" %}</div>
+
+                        <div id='searchbasic' class='collapse'>
+                        <table class='table table-condensed' style="width:65%;">
+                            <tr id='signlanguage_selection'>
+                                <td style="padding-left:30px;"><label>{{searchform.signLanguage.label}}</label></td>
+                                <td style="width:600px;">{{searchform.signLanguage}}</td>
+                            </tr>
+                            <tr id='dialect_selection'>
+                                <td style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
+                                <td style="width:600px;">{{searchform.dialects}}</td>
+                            </tr>
+                        </table>
+
+                        <table class='table table-condensed' style="width:65%;">
+                            {% for fieldname,field,label in input_names_fields_and_labels.main %}
+
+                                <tr><td style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                    <td style="width:600px;">{{field}}</td></tr>
+
+                            {% endfor %}
+
+                        </table>
+
+                        </div>
+                      </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>
+
+                      <div id='phon_search' class='collapse'>
+                      <table class='table table-condensed'>
+                        <tr>
+
+                          <td>
+                            <table class='table table-condensed' style="width:65%;">
+                                {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
+
+                                    <tr>
+                                        <td style="padding-left:30px;"><label>{{label}}</label></td><td>{{field}}</td>
+                                        {% if fieldname == 'handedness' %}
+                                            {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
+                                                <td><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td>{{handednessfield}}</td>
+                                            {% endfor %}
+                                        {% elif fieldname == 'domhndsh' %}
+                                            {% for domhndshfieldname,domhndshfield,domhndshlabel in input_names_fields_labels_domhndsh %}
+                                                <td><label for='id_{{domhndshfieldname}}'>{{domhndshlabel}}</label></td><td>{{domhndshfield}}</td>
+                                            {% endfor %}
+                                        {% elif fieldname == 'subhndsh' %}
+                                            {% for subhndshfieldname,subhndshfield,subhndshlabel in input_names_fields_labels_subhndsh %}
+                                                <td><label for='id_{{subhndshfieldname}}'>{{subhndshlabel}}</label></td><td>{{subhndshfield}}</td>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </tr>
+                                {% endfor %}
+
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#sem_search">{% trans "Search by Semantics" %}</div>
+
+                      <div id='sem_search' class='collapse'>
+                      <table class='table table-condensed'>
+                        <tr>
+
+                          <td>
+                            <table class='table table-condensed' style="width:65%;">
+                                {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
+
+                                    <tr><td style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
+                                        <td style="width:600px;">{{field}}</td></tr>
+
+                                {% endfor %}
+
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse" data-target="#sentence_search">{% trans "Search Annotated Gloss" %}</div>
+
+                      <div id='sentence_search' class='collapse'>
+                      <table class='table table-condensed'>
+                        <tr>
+
+                          <td>
+                            <table class='table table-condensed' style="width:65%;">
+                                <tr><td style="padding-left:30px;"><label for='id_sentenceType'>{{sentenceform.sentenceType.label}}</label></td>
+                                    <td style="width:600px;">{{sentenceform.sentenceType}}</td>
+                                </tr>
+                                <tr><td style="padding-left:30px;"><label for='id_negative'>{{sentenceform.negative.label}}</label></td>
+                                    <td style="width:600px;">{{sentenceform.negative}}</td>
+                                </tr>
+                                <tr><td style="padding-left:30px;"><label for='id_sentenceContains'>{{sentenceform.sentenceContains.label}}</label></td>
+                                    <td style="width:600px;">{{sentenceform.sentenceContains}}</td>
+                                </tr>
+                            </table>
+
+                          </td>
+                        </tr>
+                      </table>
+                      </div>
+                    </div>
+
+                    {% if not user.is_anonymous %}
+                    <div  class="panel panel-default">
+                      <div class="panel-heading" data-toggle="collapse"
+                           data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
+
+                      <div id='pub_search' class='collapse'>
+                      <table class='table table-condensed' style="width:65%;">
+                      {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
+                          <td style="width:600px;">{{publication_field}}</td>
+                      </tr>
+                      {% endfor %}
+                      </table>
+                      </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+    <div class='btn-group' style="margin-bottom: 20px">
+        <!-- Make sure no button has the *name* 'submit', otherwise submit() cannot be used -->
+
+        <button class="btn btn-primary" onclick="do_adminsearch(this);"
+                name="search_type" value="{{search_type}}"
+                type="submit">{% trans "Search Annotated Gloss" %}</button>
+
+        <input class='btn btn-default' type='reset' onclick="clearForm();"
+               value='{% trans "Reset" %}'>
+    </div>
+</form>
+
+
+    <div>
+        <label>{% trans "Annotated Glosses" %}</label>&nbsp;
+        {% trans "Number of Matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{annotatedglosscount}}.
+
+        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
+        {% trans "Datasets:" %}
+        {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}.{% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div></div>
+
+{% if view_type == "gloss_list" %}
+
+    <form name="show_pages">
+    <div class='form-group' id='paginate_by'>
+        <label for='paginate_by'>{% trans "Results Per Page" %}</label>
+        <select class='form-control' name="paginate_by">
+            <option {% if paginate_by == 500 %} selected="" {% endif %}>500</option>
+            <option {% if paginate_by == 100 %} selected="" {% endif %}>100</option>
+            <option {% if paginate_by == 50 %} selected="" {% endif %}>50</option>
+            <option {% if paginate_by == 25 %} selected="" {% endif %}>25</option>
+            <option {% if paginate_by == 10 %} selected="" {% endif %}>10</option>
+        </select>
+        {% csrf_token %}
+        <input type="submit" value = '{% trans "Refresh" %}' />
+    </div>
+    </form>
+
+{% if object_list %}
+{% if SHOW_DATASET_INTERFACE_OPTIONS %}
+{% if dataset_languages|length > 1 %}
+{% for dataset_lang in dataset_languages %}
+<button name="button_language_{{dataset_lang.language_code_2char}}"
+        id="button_language_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_language(this);"
+        value="{{dataset_lang.language_code_2char}}" >
+    {{ dataset_lang.name }}
+</button>
+{% endfor %}
+{% endif %}
+{% endif %}
+
+<div style="width:1600px;">
+<table class='table table-condensed' id='senselist_table' style="table-layout:auto;width:100%;overflow-y:scroll;">
+    <thead id='senselist_table_header'></thead>
+    <tbody>
+    {% for annotatedgloss in object_list %}
+    <tr id="focussense_{{annotatedgloss.id}}">
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endif %}
+{% endif %}
+
+<div class="pagination">
+    <span class="step-links">
+
+        <ul class='pagination pagination-sm'>
+        {% if page_obj.has_previous %}
+            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
+        {% endif %}
+
+          {% if  page_obj.number > 10 %}
+            <li><a>...</a></li>
+          {% endif %}
+
+          {% for p in page_obj.paginator.page_range %}
+
+             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
+             <li {% if p == page_obj.number %}class='active'{% endif %}>
+             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+             </li>
+             {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
+            <li><a>...</a></li>
+            <li>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+            </li>
+          {% endif %}
+
+        {% if page_obj.has_next %}
+            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
+
+
+      </ul>
+
+
+        {% endif %}
+    </span>
+</div>
+</div>
+{% endblock content %}

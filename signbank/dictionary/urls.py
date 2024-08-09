@@ -165,6 +165,12 @@ urlpatterns = [
     re_path(r'^ajax/senserow/(?P<sense_id>.*)/$', signbank.dictionary.adminviews.senselist_ajax_complete, name='senselist_ajax_complete'),
     re_path(r'^ajax/senselistheader/$', signbank.dictionary.adminviews.senselistheader_ajax, name='senselistheader_ajax'),
     re_path(r'^ajax/lemmaglossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.lemmaglosslist_ajax_complete, name='lemmaglosslist_ajax_complete'),
+
+    re_path(r'^ajax/annotatedglosslistheader/$', signbank.dictionary.adminviews.annotatedglosslistheader_ajax,
+            name='annotatedglosslistheader_ajax'),
+    re_path(r'^ajax/annotatedglossrow/(?P<annotatedgloss_id>\d+)/$', signbank.dictionary.adminviews.annotatedglosslist_ajax_complete,
+            name='annotatedglosslist_ajax_complete'),
+
     re_path(r'^ajax/choice_lists/$', signbank.dictionary.views.choice_lists,name='choice_lists'),
 
     re_path(r'^missingvideo.html$', signbank.dictionary.views.missing_video_view),

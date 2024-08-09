@@ -138,7 +138,7 @@ def matching_file__does_not_exist(videofile):
 
 
 def apply_video_filters_to_results(model, qs, query_parameters):
-    gloss_prefix = 'gloss__' if model in ['GlossSense'] else ''
+    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
     filter_id = gloss_prefix + 'id__in'
     gloss_ids = [gl.id if model == 'Gloss' else gl.gloss.id for gl in qs]
     if 'hasvideo' not in query_parameters.keys():
@@ -915,7 +915,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     """
     if not searchform:
         return qs
-    gloss_prefix = 'gloss__' if model in ['GlossSense'] else ''
+    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
@@ -1099,14 +1099,14 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 key = gloss_prefix + get_key + '__exact'
                 val = {'0': '', '1': None, '2': True, '3': False}[get_value]
             else:
-                print('Gloss/GlossSense Search input type select fall through: ', get_key, get_value)
+                print('1102. Gloss/GlossSense Search input type select fall through: ', get_key, get_value)
                 continue
 
             kwargs = {key: val}
             qs = qs.filter(**kwargs)
         else:
             # everything should already be taken care of
-            print('Gloss/GlossSense Search input type fall through: ', get_key, get_value,
+            print('1109. Gloss/GlossSense Search input type fall through: ', get_key, get_value,
                   searchform.fields[get_key].widget.input_type)
 
     return qs

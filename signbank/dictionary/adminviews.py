@@ -31,6 +31,7 @@ from signbank.video.models import GlossVideoDescription, GlossVideo, GlossVideoN
 from tagging.models import Tag, TaggedItem
 from signbank.settings.server_specific import *
 
+from signbank.dictionary.models import AnnotatedGloss
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     choicelist_queryset_to_translated_dict, choicelist_queryset_to_machine_value_dict, choicelist_queryset_to_colors, \
     choicelist_queryset_to_field_colors
@@ -6882,3 +6883,241 @@ class ToggleListView(ListView):
         self.query_parameters = query_parameters
 
         return glosses_of_datasets
+
+
+class AnnotatedGlossListView(ListView):
+
+    model = AnnotatedGloss
+    paginate_by = 50
+    search_type = 'gloss'
+    view_type = 'gloss_list'
+    web_search = False
+    dataset_name = settings.DEFAULT_DATASET_ACRONYM
+    last_used_dataset = None
+    queryset_language_codes = []
+    query_parameters = dict()
+    search_form_data = QueryDict(mutable=True)
+    template_name = 'dictionary/admin_annotatedgloss_list.html'
+    search_form = GlossSearchForm()
+    sentence_search_form = SentenceForm()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        fields_with_choices = fields_to_fieldcategory_dict(settings.GLOSS_CHOICE_FIELDS)
+        set_up_fieldchoice_translations(self.search_form, fields_with_choices)
+        sentence_fields_with_choices = {'sentenceType': 'SentenceType'}
+        set_up_fieldchoice_translations(self.sentence_search_form, sentence_fields_with_choices)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(AnnotatedGlossListView, self).get_context_data(**kwargs)
+
+        set_up_language_fields(Gloss, self, self.search_form)
+        set_up_signlanguage_dialects_fields(self, self.search_form)
+
+        context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
+
+        context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs,
+                                                         context, self.sentence_search_form)
+
+        context['annotatedglosscount'] = AnnotatedGloss.objects.filter(gloss__lemma__dataset__in=context['selected_datasets']).count()
+
+        context['page_number'] = context['page_obj'].number
+
+        context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
+
+        # this is needed to avoid crashing the browser if you go to the last page
+        # of an extremely long list and then go to Details on the objects
+
+        this_page_number = context['page_obj'].number
+        this_paginator = context['page_obj'].paginator
+        if len(self.object_list) > settings.MAX_SCROLL_BAR:
+            this_page = this_paginator.page(this_page_number)
+            if this_page.has_previous():
+                previous_objects = this_paginator.page(this_page_number - 1).object_list
+            else:
+                previous_objects = []
+            if this_page.has_next():
+                next_objects = this_paginator.page(this_page_number + 1).object_list
+            else:
+                next_objects = []
+            list_of_objects = previous_objects + list(context['page_obj'].object_list) + next_objects
+        else:
+            list_of_objects = self.object_list
+
+        return context
+
+    def get_queryset(self):
+        get = self.request.GET
+
+        self.search_type = self.request.GET.get('search_type', 'gloss')
+        setattr(self.request.session, 'search_type', self.search_type)
+        self.view_type = self.request.GET.get('view_type', 'gloss_list')
+        setattr(self.request, 'view_type', self.view_type)
+        self.web_search = get_web_search(self.request)
+        setattr(self.request, 'web_search', self.web_search)
+
+        if self.request.user.is_authenticated:
+            selected_datasets = get_selected_datasets_for_user(self.request.user)
+        elif 'selected_datasets' in self.request.session.keys():
+            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
+        else:
+            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
+
+        if USE_REGULAR_EXPRESSIONS and not valid_regex:
+            error_message_regular_expression(self.request, search_fields, field_values)
+            qs = AnnotatedGloss.objects.none()
+            return qs
+
+        # Get the initial selection
+        if len(get) > 0 and 'query' not in self.request.GET:
+            qs = AnnotatedGloss.objects.all().prefetch_related('gloss').filter(gloss__lemma__dataset__in=selected_datasets)
+        else:
+            qs = AnnotatedGloss.objects.none()
+
+        if not self.request.user.is_authenticated or not self.request.user.has_perm('dictionary.search_gloss'):
+            qs = qs.filter(gloss__inWeb__exact=True)
+
+        qs = queryset_glosssense_from_get('AnnotatedGloss', GlossSearchForm, self.search_form, get, qs)
+        # this is a temporary query_parameters variable
+        query_parameters = dict()
+        # it is saved to self.query_parameters after the parameters are processed
+        query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
+        qs = apply_video_filters_to_results('AnnotatedGloss', qs, query_parameters)
+
+        if self.search_type != 'sign':
+            query_parameters['search_type'] = self.search_type
+
+        qs = queryset_sentences_from_get(self.sentence_search_form, get, qs)
+        query_parameters = query_parameters_from_get(self.sentence_search_form, get, query_parameters)
+
+        # save the query parameters to a session variable
+        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        self.request.session.modified = True
+        self.query_parameters = query_parameters
+
+        self.request.session['search_type'] = self.search_type
+        self.request.session['web_search'] = self.web_search
+
+        if 'last_used_dataset' not in self.request.session.keys():
+            self.request.session['last_used_dataset'] = self.last_used_dataset
+
+        # Return the resulting filtered (not sorted) queryset
+        return qs
+
+
+def annotatedglosslistheader_ajax(request):
+
+    display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+    query_fields_parameters = []
+
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
+        if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
+            display_fields = json.loads(request.GET['display_fields'])
+            query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
+
+    SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+
+    fieldname_to_column_header = dict()
+    # fieldname_to_column_header = {'dialect': _("Dialect"),
+    #                               'signlanguage': _("Sign Language"),
+    #                               'definitionRole': _("Note Type"),
+    #                               'hasothermedia': _("Other Media"),
+    #                               'hasComponentOfType': _("Sequential Morphology"),
+    #                               'morpheme': _("Simultaneous Morphology"),
+    #                               'isablend': _("Is a Blend"),
+    #                               'ispartofablend': _("Is Part of a Blend"),
+    #                               'mrpType': _("Morpheme Type"),
+    #                               'relation': _("Gloss of Related Sign"),
+    #                               'hasRelationToForeignSign': _("Related to Foreign Sign"),
+    #                               'relationToForeignSign': _("Gloss of Foreign Sign")
+    #                               }
+
+    print(display_fields)
+    column_headers = []
+    for fieldname in display_fields:
+        if fieldname in fieldname_to_column_header.keys():
+            column_headers.append((fieldname, fieldname_to_column_header[fieldname]))
+        elif fieldname not in Gloss.get_field_names():
+            continue
+        else:
+            field_label = Gloss.get_field(fieldname).verbose_name
+            column_headers.append((fieldname, field_label))
+
+    sortOrder = ''
+
+    if 'HTTP_REFERER' in request.META.keys():
+        sortOrderURL = request.META['HTTP_REFERER']
+        sortOrderParameters = sortOrderURL.split('&sortOrder=')
+        if len(sortOrderParameters) > 1:
+            sortOrder = sortOrderParameters[1].split('&')[0]
+
+    return render(request, 'dictionary/annotatedglosslist_headerrow.html', { 'dataset_languages': dataset_languages,
+                                                                    'width_senses_columns': len(dataset_languages)+1,
+                                                                    'width_gloss_columns': len(dataset_languages),
+                                                                    'width_sentences_columns': len(dataset_languages)+2,
+                                                                    'selected_datasets': selected_datasets,
+                                                                    'column_headers': column_headers,
+                                                                    'sortOrder': str(sortOrder),
+                                                                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                                                                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS })
+
+
+def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
+
+    display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+    query_fields_parameters = []
+
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
+        if 'query' in request.GET and 'display_fields' in request.GET and 'query_fields_parameters' in request.GET:
+            display_fields = json.loads(request.GET['display_fields'])
+            query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
+
+    this = AnnotatedGloss.objects.get(id=annotatedgloss_id)
+    this_gloss = Gloss.objects.get(id=this.gloss_id)
+    default_language = this_gloss.lemma.dataset.default_language.language_code_2char
+
+    SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+
+    sensetranslations_per_language = sensetranslations_per_language_dict(this_gloss)
+
+    column_values = []
+    for fieldname in display_fields:
+        if fieldname not in Gloss.get_field_names():
+            continue
+        else:
+            machine_value = getattr(this_gloss, fieldname)
+            if machine_value and isinstance(machine_value, Handshape):
+                human_value = machine_value.name
+            elif machine_value and isinstance(machine_value, FieldChoice):
+                human_value = machine_value.name
+            else:
+                human_value = machine_value
+            if human_value:
+                column_values.append((fieldname, human_value))
+            else:
+                column_values.append((fieldname, '-'))
+
+    return render(request, 'dictionary/annotatedgloss_row.html',
+                  {'annotated_gloss': this,
+                   'focus_gloss': this_gloss,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'width_senses_columns': len(dataset_languages),
+                   'width_gloss_columns': len(dataset_languages),
+                   'width_lemma_columns': len(dataset_languages),
+                   'sensetranslations_per_language': sensetranslations_per_language,
+                   'column_values': column_values,
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
