@@ -1,0 +1,22 @@
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch name'
+        required: true
+        type: string
+      days_active:
+        description: 'Days active'
+        required: true
+        type: string
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Branch name: $BRANCH"
+          echo "Days active: $DAYS_ACTIVE"
+        env:
+          BRANCH: ${{ inputs.branch }}
+          DAYS_ACTIVE: ${{ inputs.days_active }}
