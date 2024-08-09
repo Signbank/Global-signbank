@@ -22,7 +22,9 @@ jobs:
           echo "Minutes active: $minutes_active"
 
           # Making a POST request using curl and logging the response
-          response=$(curl -X POST -H "Content-Type: application/json" -d '{"branch": "'"${BRANCH}"'", "minutes_active": '"${minutes_active}"'}' ${{ secrets.START_ENVIRONMENT_URL }})
+          response=$(curl -X POST -H "Content-Type: application/json" -d '{"branch": "'"${BRANCH}"'", "minutes": '"${minutes_active}"'}' ${{ secrets.START_ENVIRONMENT_URL }})
+          echo "Response: $response"
+
         env:
           BRANCH: ${{ inputs.branch }}
           DAYS_ACTIVE: ${{ inputs.days_active }}
