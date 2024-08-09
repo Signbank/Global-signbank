@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          response = curl -X POST -H "Content-Type: application/json" -d '{"branch": "'"${BRANCH}"'", "days_active": '"${DAYS_ACTIVE}"'}' ${{ secrets.start_environment_url }}
+          response = curl -X POST -H "Content-Type: application/json" -d '{"branch": "'"${BRANCH}"'", "days_active": '"${DAYS_ACTIVE}"'}' ${{ secrets.START_ENVIRONMENT_URL }}
           echo "Response: $response"
         env:
           BRANCH: ${{ inputs.branch }}
