@@ -355,7 +355,7 @@ function configure_edit() {
     $.fn.editable.defaults['indicator'] = saving_str;
     $.fn.editable.defaults['tooltip'] = 'Click to edit...';
     $.fn.editable.defaults['placeholder'] = '-';
-    $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" style="" type="cancel">Cancel</button>';
+    $.fn.editable.defaults['cancel'] = '<button class="btn btn-default btn-default-light" style="" type="cancel">Cancel</button>';
     $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" style="" type="submit">OK</button>';
     $.fn.editable.defaults['cssclass'] = 'preview';
     $.fn.editable.defaults['cancelleft'] = '100px';
