@@ -5234,17 +5234,16 @@ def gloss_ajax_complete(request, prefix):
     # the following query only retrieves annotations for the language that match the prefix
     query = Q(annotationidglosstranslation__text__istartswith=prefix,
               annotationidglosstranslation__language=interface_language)
-    qs = Gloss.objects.filter(archived__exact=False).filter(query).distinct()
+    qs = Gloss.objects.filter(lemma__dataset=dataset, archived__exact=False).filter(query).distinct()
 
     for g in qs:
-        if g.dataset == dataset:
-            try:
-                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=interface_language)
-                default_annotationidglosstranslation = annotationidglosstranslation.text
-            except ObjectDoesNotExist:
-                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=default_language)
-                default_annotationidglosstranslation = annotationidglosstranslation.text
-            result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % g.id})
+        try:
+            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=interface_language)
+            default_annotationidglosstranslation = annotationidglosstranslation.text
+        except ObjectDoesNotExist:
+            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=default_language)
+            default_annotationidglosstranslation = annotationidglosstranslation.text
+        result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % g.id})
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
 
