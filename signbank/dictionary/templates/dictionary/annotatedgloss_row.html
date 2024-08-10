@@ -7,10 +7,6 @@
 
 <tr id = "glossrow_{{annotated_gloss.id}}" class="gloss_row">
 
-    {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
-        <td class="field_dataset" style="width:12em;">{{focus_gloss.lemma.dataset.acronym}}</td>
-    {% endif %}
-
 
     <td class="field_hasvideo">{%if focus_gloss.get_image_path %}
     {% url 'dictionary:protected_media' '' as protected_media_url %}
@@ -37,39 +33,13 @@
     <td class="annotation_{{dataset_lang.language_code_2char}}">
       {% if annotationidglosstranslation %}
         <div>
-        {% if focus_gloss.is_morpheme %}
-        <div><a href="{{PREFIX_URL}}/dictionary/morpheme/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
-        {% else %}
         <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
-        {% endif %}
         </div>
       {% endif %}
     </td>
     {% endwith %}
     {% endfor %}
 
-    {% for dataset_lang in dataset_languages %}
-    {% with focus_gloss.lemma|get_lemma_idgloss_translation:dataset_lang as lemmaidglosstranslation %}
-      <td class="lemma_{{dataset_lang.language_code_2char}}">
-          <div>{{lemmaidglosstranslation}}</div>
-      </td>
-    {% endwith %}
-    {% endfor %}
-
-    {% for lang in dataset_languages %}
-    <td class="translation_{{lang.language_code_2char}}" style="width:360px;">
-    {% if lang in sensetranslations_per_language.keys %}
-    {% with sensetranslations_per_language|get_item:lang as sensetranslations %}
-        {% if sensetranslations %}
-        {% for order in sensetranslations.keys %}
-            {{order}}. {{sensetranslations|get_item:order}}
-            {% if not forloop.last %}<br> {% endif %}
-        {% endfor %}
-        {% endif %}
-    {% endwith %}
-    {% endif %}
-    </td>
-    {% endfor %}
 
     {% for field,value in column_values %}
     <td class="field_{{field}}">

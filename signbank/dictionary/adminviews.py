@@ -6974,7 +6974,8 @@ class AnnotatedGlossListView(ListView):
 
         # Get the initial selection
         if len(get) > 0 and 'query' not in self.request.GET:
-            qs = AnnotatedGloss.objects.all().prefetch_related('gloss').filter(gloss__lemma__dataset__in=selected_datasets)
+            qs = AnnotatedGloss.objects.all().prefetch_related('gloss').filter(
+                gloss__lemma__dataset__in=selected_datasets).order_by('annotatedsentence__id')
         else:
             qs = AnnotatedGloss.objects.none()
 
@@ -7011,7 +7012,7 @@ class AnnotatedGlossListView(ListView):
 
 def annotatedglosslistheader_ajax(request):
 
-    display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo']
     query_fields_parameters = []
 
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
@@ -7025,22 +7026,12 @@ def annotatedglosslistheader_ajax(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
 
-    fieldname_to_column_header = dict()
-    # fieldname_to_column_header = {'dialect': _("Dialect"),
-    #                               'signlanguage': _("Sign Language"),
-    #                               'definitionRole': _("Note Type"),
-    #                               'hasothermedia': _("Other Media"),
-    #                               'hasComponentOfType': _("Sequential Morphology"),
-    #                               'morpheme': _("Simultaneous Morphology"),
-    #                               'isablend': _("Is a Blend"),
-    #                               'ispartofablend': _("Is Part of a Blend"),
-    #                               'mrpType': _("Morpheme Type"),
-    #                               'relation': _("Gloss of Related Sign"),
-    #                               'hasRelationToForeignSign': _("Related to Foreign Sign"),
-    #                               'relationToForeignSign': _("Gloss of Foreign Sign")
-    #                               }
+    fieldname_to_column_header = {'id' : _('Sentence ID'),
+                                  'annotatedsentence': _("Annotated Sentence"),
+                                  'isRepresentative': _("Is Representative"),
+                                  'annotatedvideo': _("Annotated Video")
+                                  }
 
-    print(display_fields)
     column_headers = []
     for fieldname in display_fields:
         if fieldname in fieldname_to_column_header.keys():
@@ -7072,7 +7063,8 @@ def annotatedglosslistheader_ajax(request):
 
 def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
 
-    display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo']
+
     query_fields_parameters = []
 
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
@@ -7082,7 +7074,7 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
 
     this = AnnotatedGloss.objects.get(id=annotatedgloss_id)
     this_gloss = Gloss.objects.get(id=this.gloss_id)
-    default_language = this_gloss.lemma.dataset.default_language.language_code_2char
+    default_language = this_gloss.lemma.dataset.default_language
 
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
@@ -7090,34 +7082,28 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
 
-    sensetranslations_per_language = sensetranslations_per_language_dict(this_gloss)
-
     column_values = []
     for fieldname in display_fields:
-        if fieldname not in Gloss.get_field_names():
-            continue
+        if fieldname == 'id':
+            display_value = str(this.annotatedsentence.id)
+        elif fieldname == 'annotatedsentence':
+            translations = this.annotatedsentence.annotated_sentence_translations.all()
+            default_translation = translations.filter(language=default_language).first()
+            display_value = default_translation.text if default_translation else ''
+        elif fieldname == 'isRepresentative':
+            display_value = this.isRepresentative
+        elif fieldname == 'annotatedvideo':
+            display_value = this.annotatedsentence.get_video_path()
         else:
-            machine_value = getattr(this_gloss, fieldname)
-            if machine_value and isinstance(machine_value, Handshape):
-                human_value = machine_value.name
-            elif machine_value and isinstance(machine_value, FieldChoice):
-                human_value = machine_value.name
-            else:
-                human_value = machine_value
-            if human_value:
-                column_values.append((fieldname, human_value))
-            else:
-                column_values.append((fieldname, '-'))
-
+            display_value = ''
+        column_values.append((fieldname, display_value))
+    print(column_values)
     return render(request, 'dictionary/annotatedgloss_row.html',
                   {'annotated_gloss': this,
                    'focus_gloss': this_gloss,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
-                   'width_senses_columns': len(dataset_languages),
                    'width_gloss_columns': len(dataset_languages),
-                   'width_lemma_columns': len(dataset_languages),
-                   'sensetranslations_per_language': sensetranslations_per_language,
                    'column_values': column_values,
                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})

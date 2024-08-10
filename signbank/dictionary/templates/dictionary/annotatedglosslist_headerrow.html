@@ -6,20 +6,10 @@
 {% load wrong_sign %}
 
     <tr>
-        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
-        <th class="field_dataset" style="border-bottom: 1px solid grey; white-space:nowrap;"></th>
-        {% endif %}
-
         <th class="field_hasvideo" style="border-bottom: 1px solid grey; white-space:nowrap;"></th>
         {% trans "Annotation ID Gloss" as annotation_header %}
         <th class="annotations_multicolumn" colspan="{{width_gloss_columns}}"
             style="border-bottom: 1px solid grey; white-space:nowrap;">{{ annotation_header }}</th>
-        {% trans "Lemma ID Gloss" as lemma_header %}
-        <th class="lemmas_multicolumn" colspan="{{width_lemma_columns}}"
-            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ lemma_header }}</th>
-        {% trans "Senses" as senses_header %}
-        <th class="translations_multicolumn" colspan="{{width_senses_columns}}"
-            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ senses_header }}</th>
 
           {% for fieldname,column in column_headers %}
             <th class="field_{{fieldname}}" style="border-bottom: 1px solid grey; white-space:nowrap;"></th>
@@ -27,29 +17,11 @@
 
       </tr>
       <tr>
-          {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
-          <th class="field_dataset" style="vertical-align:top; border-bottom: 1px solid grey; white-space:nowrap;">{% trans "Dataset" %}</th>
-          {% endif %}
+
           <th class="field_hasvideo" style="border-bottom: 1px solid grey; white-space:nowrap;"></th>
 
            {% for dataset_lang in dataset_languages %}
           <th class="annotation_{{dataset_lang.language_code_2char}}" id="annotation_{{dataset_lang.language_code_2char}}"
-              style="vertical-align:top; border-bottom: 1px solid grey;">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
-              <div>{{ dataset_lang.name }}</div>
-              {% endif %}
-          </th>
-          {% endfor %}
-
-          {% for dataset_lang in dataset_languages %}
-          <th class="lemma_{{dataset_lang.language_code_2char}}" id="lemma_{{dataset_lang.language_code_2char}}"
-              style="vertical-align:top; border-bottom: 1px solid grey;">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
-              <div>{{ dataset_lang.name }}</div>
-              {% endif %}
-          </th>
-          {% endfor %}
-
-          {% for dataset_lang in dataset_languages %}
-          <th class="translation_{{dataset_lang.language_code_2char}}" id="translation_{{dataset_lang.language_code_2char}}"
               style="vertical-align:top; border-bottom: 1px solid grey;">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
               <div>{{ dataset_lang.name }}</div>
               {% endif %}
@@ -66,9 +38,6 @@
       </tr>
 
       <tr id="row_sort_arrowheads">
-          {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets|length > 1 %}
-            <th class="field_dataset"></th>
-          {% endif %}
 
           <th class="field_hasvideo"></th>
           {% for dataset_lang in dataset_languages %}
@@ -91,46 +60,6 @@
            {% endwith %}
           {% endfor %}
 
-          {% for dataset_lang in dataset_languages %}
-          {% with "lemmaidglosstranslation_order_"|add:dataset_lang.language_code_2char as field %}
-          {% with minfield="-"|add:field %}
-           <th class="lemma_{{dataset_lang.language_code_2char}}" style="white-space:nowrap;">
-            <div class="col_sort_arrowheads">
-             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
-               {% if sortOrder and sortOrder == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-             </a>
-             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
-               {% if sortOrder and sortOrder == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-             </a>
-             {% if sortOrder and sortOrder == minfield or sortOrder and sortOrder == field  %}
-               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
-             {% endif %}
-            </div>
-           </th>
-           {% endwith %}
-           {% endwith %}
-           {% endfor %}
-
-
-           {% for dataset_lang in dataset_languages %}
-           {% with "translation_"|add:dataset_lang.language_code_2char as field %}
-           {% with minfield="-"|add:field %}
-           <th class="translation_{{dataset_lang.language_code_2char}}" style="white-space:nowrap;">
-             <div class="col_sort_arrowheads">
-             <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch')">
-               {% if sortOrder and sortOrder == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
-             </a>
-             <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch')">
-               {% if sortOrder and sortOrder == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
-             </a>
-             {% if sortOrder and sortOrder == minfield or sortOrder and sortOrder == field  %}
-               <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch')">x</a>
-             {% endif %}
-             </div>
-           </th>
-           {% endwith %}
-           {% endwith %}
-           {% endfor %}
 
            {% for fieldname,column in column_headers %}
            {% with minfield="-"|add:fieldname %}
