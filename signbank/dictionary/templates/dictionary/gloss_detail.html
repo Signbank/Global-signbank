@@ -310,15 +310,18 @@ option:not(:checked) {
 /* This makes the popup Run Query button for the default parameters ressemble the style of the QP case.
    The <a> surrounding the text of the default parameters button is to simulate the link of the QP button. */
 .btn-query {
-    background-color: transparent;
-    border: 1px solid;
-    color: rgb(66, 139, 202);
+    background-color: DodgerBlue !important;
+    border: 1px solid DodgerBlue;
+    color: white;
     border-radius: 6px;
     height: 28px;
+    outline: none;
+    padding-bottom:20px;
 }
 .btn-query:hover .btn-query:focus {
-    color: rgb(66, 139, 202);
-    background-color: lightgrey;
+    color: white;
+    background-color: DodgerBlue;
+    outline: none;
 }
 /* modal-dialog-centered does not work in bootstrap 3
    use this instead, adjust value if necessary */
@@ -470,15 +473,15 @@ textarea:focus {
                         {% else %}
                             <form id="use_default_query_parameters" action='' method="POST">
                             {% csrf_token %}
-                            <button type='submit' class="btn-query" name="use_default_query_parameters"
+                            <button type='submit' class="btn btn-primary" name="use_default_query_parameters"
                                     value="default_parameters"><a>{% trans "Run Query" %}</a></button>
                             <input type="hidden" id="default_parameters" name="default_parameters" value="{{json_default_query_parameters}}">
                             <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
                             </form>
                         {% endif %}
                     {% else %}
-                        <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'
-                                    style="text-decoration:none;">{% trans "Run Query" %}</a></button>
+                        <button class="btn-query"><a class="btn btn-query" href="{{PREFIX_URL}}/signs/search/?query" type='submit'
+                                    style="text-decoration:none;padding-bottom:10px;color:white;">{% trans "Run Query" %}</a></button>
                         <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
                     {% endif %}
                 </div>
@@ -1077,7 +1080,7 @@ textarea:focus {
                                         <span class='sense-icon glyphicon glyphicon-edit sense_edit pull-right' style="color:red" data-toggle='modal' data-target='#edit_sense_modal_{{sense.id}}'></span>
                                         <div class="modal fade modal-sense" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleEditSense" aria-hidden="true">
                                             <div class="modal-dialog modal-lg left-modal">
-                                                <div class="modal-content modal-content-sense" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
+                                                <div class="modal-content modal-content-sense">
                                                     <div class='modal-header'>
                                                         <h2 id='modalTitleEditSense'>{% trans "Edit this sense" %}</h2>
                                                     </div><br>
@@ -1085,7 +1088,7 @@ textarea:focus {
                                                         {% csrf_token %}
                                                         <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
                                                         <input type="hidden" name="glossid" value="{{gloss.id}}"/>
-                                                        <table>
+                                                        <table style="margin-left:50px;">
                                                             <tr>
                                                                 {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                                                                     <th>{{dataset_lang.name}}</th>

@@ -17,6 +17,7 @@
     --well-background: rgb(9, 9, 9);
     --well-border: rgb(9, 9, 9);
     --button-default: rgb(187, 60, 80);
+    --button-default-light: rgb(187, 80, 100);
     --action-button: rgb(147, 80, 120);
     --nav-highlight: rgb(40, 40, 40);
     --dropdown-dark: rgb(40, 40, 40);
@@ -1126,6 +1127,10 @@ input:focus, input.form-control:focus {
     border-radius: 6px;
 }
 .btn-default-light {
+    background-color: var(--button-default-light) !important;
+    color: white !important;
+    border-color: var(--button-default-light) !important;
+    border-radius: 6px;
 }
 .btn-action-dark {
     border: 1px solid var(--action-button);
