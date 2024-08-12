@@ -40,6 +40,24 @@
     color: black;
 }
 .pub-row tr {float: left!important; width: 50%!important;}
+.actionButton {
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-color: Grey;
+    border-radius: 8px;
+    text-align: center;
+    color: Black;
+    background-color: white;
+}
+.actionButton:hover {
+    text-decoration: none;
+    background-color: LightGrey;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
 </style>
 
 <link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
@@ -807,6 +825,7 @@ function do_toggle_language(el) {
 {% if dataset_languages|length > 1 %}
 {% for dataset_lang in dataset_languages %}
 <button name="button_language_{{dataset_lang.language_code_2char}}"
+        class="btn actionButton"
         id="button_language_{{dataset_lang.language_code_2char}}" type='submit' onclick="do_toggle_language(this);"
         value="{{dataset_lang.language_code_2char}}" >
     {{ dataset_lang.name }}
