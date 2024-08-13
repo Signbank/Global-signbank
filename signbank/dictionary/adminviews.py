@@ -2383,6 +2383,18 @@ class MinimalPairsListView(ListView):
 
         context['MINIMAL_PAIRS_CHOICE_FIELDS'] = MINIMAL_PAIRS_CHOICE_FIELDS
 
+        multiple_select_minimal_pairs_categories = fields_to_fieldcategory_dict(MINIMAL_PAIRS_CHOICE_FIELDS)
+
+        choices_colors = {}
+        for (fieldname, field_category) in multiple_select_minimal_pairs_categories.items():
+            if field_category in CATEGORY_MODELS_MAPPING.keys():
+                field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
+
+        context['field_colors'] = choices_colors
+
         context['searchform'] = self.search_form
 
         self.show_all = self.request.GET.get('show_all', self.show_all)
