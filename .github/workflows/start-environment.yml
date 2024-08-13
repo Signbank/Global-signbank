@@ -1,0 +1,30 @@
+name: Start acceptance environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch name'
+        required: true
+        type: string
+      days_active:
+        description: 'Days active'
+        required: true
+        type: number
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          # Calculate minutes_active from days_active
+          minutes_active=$((DAYS_ACTIVE * 1440))
+          echo "Minutes active: $minutes_active"
+
+          # Making a POST request using curl and logging the response
+          response=$(curl -X POST -H "Content-Type: application/json" -d '{"branch": "'"${BRANCH}"'", "minutes": '"${minutes_active}"'}' ${{ secrets.START_ENVIRONMENT_URL }})
+          echo "Response: $response"
+
+        env:
+          BRANCH: ${{ inputs.branch }}
+          DAYS_ACTIVE: ${{ inputs.days_active }}

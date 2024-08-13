@@ -1243,13 +1243,16 @@ class Gloss(models.Model):
 
     @property
     def dataset(self):
-        try:
-            return self.lemma.dataset
-        except ObjectDoesNotExist:
+        if not self.lemma:
             return None
+        return self.lemma.dataset
 
     @property
     def idgloss(self):
+        if not self.lemma:
+            return str(self.id)
+        if not self.lemma.dataset:
+            return str(self.id)
         try:
             return self.lemma.lemmaidglosstranslation_set.get(language=self.lemma.dataset.default_language).text
         except:
