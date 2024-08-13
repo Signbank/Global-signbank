@@ -404,6 +404,22 @@ function toggle_dark_mode() {
             $(this).addClass("color-form-light");
         }
   });
+  $(".color-field-choices").each(function () {
+        var dark_mode = $(this).attr("data-mode");
+        if ($(this).hasClass("color-field-choices-light")) {
+            $(this).removeClass("color-field-choices-light");
+            $(this).addClass("color-field-choices-dark");
+            if (dark_mode == 'False') {
+                location.reload();
+            };
+        } else if ($(this).hasClass("color-field-choices-dark")) {
+            $(this).removeClass("color-field-choices-dark");
+            $(this).addClass("color-field-choices-light");
+            if (dark_mode == 'True') {
+                location.reload();
+            };
+        }
+  });
 }
 
 function set_dark_mode(){

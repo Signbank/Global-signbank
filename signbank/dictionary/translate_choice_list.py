@@ -6,10 +6,13 @@ from django.db.models import When, Case, BooleanField, IntegerField
 from django.db.utils import OperationalError
 from django.utils.translation import gettext
 
-def choicelist_queryset_to_translated_dict(queryset,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
+
+def choicelist_queryset_to_translated_dict(queryset,ordered=True, id_prefix='_',
+                                           shortlist=False, choices_to_exclude=None):
     # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;
     # Or the queryset is a set of Handshape objects
-    # Other functions that call this function expect either a list or an OrderedDict that maps machine values to human values
+    # Other functions that call this function expect either a list or an OrderedDict
+    # that maps machine values to human values
     # Make sure the machine values are unique by only using the first human value
 
     if not queryset:
@@ -38,16 +41,19 @@ def choicelist_queryset_to_translated_dict(queryset,ordered=True,id_prefix='_',s
 
     if ordered:
         sorted_choice_list = OrderedDict(list_head)
-        sorted_choice_list.update(OrderedDict(sorted(raw_choice_list,key = lambda x: x[1])))
+        sorted_choice_list.update(OrderedDict(sorted(raw_choice_list, key=lambda x: x[1])))
         return sorted_choice_list
     else:
         sorted_choice_list = list_head + sorted(raw_choice_list, key=lambda x: x[1])
         return sorted_choice_list
 
-def choicelist_queryset_to_colors(queryset,ordered=True,id_prefix='_',shortlist=False,choices_to_exclude=None):
+
+def choicelist_queryset_to_colors(queryset, ordered=True, id_prefix='_',
+                                  shortlist=False, choices_to_exclude=None):
     # When this method is called, the queryset is a set of either FieldChoice objects, all of which have the same field;
     # Or the queryset is a set of Handshape objects
-    # Other functions that call this function expect either a list or an OrderedDict that maps machine values to human values
+    # Other functions that call this function expect either a list or an OrderedDict
+    # that maps machine values to human values
     # Make sure the machine values are unique by only using the first human value
 
     if not queryset:
@@ -80,7 +86,7 @@ def choicelist_queryset_to_colors(queryset,ordered=True,id_prefix='_',shortlist=
 
     if ordered:
         # sort by human value
-        sorted_choices = list_head + sorted(raw_choice_list,key = lambda x: x[1])
+        sorted_choices = list_head + sorted(raw_choice_list, key=lambda x: x[1])
         sorted_tuple_dict = []
         for (a, b, c) in sorted_choices:
             sorted_tuple_dict.append((a, c))

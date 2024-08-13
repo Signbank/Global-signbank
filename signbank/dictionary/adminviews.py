@@ -4514,6 +4514,7 @@ class DatasetFieldChoiceView(ListView):
 class FieldChoiceView(ListView):
     model = FieldChoice
     template_name = 'dictionary/dataset_field_choice_colors.html'
+    dark_mode = False
 
     # set the default dataset, this should not be empty
     dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
@@ -4524,6 +4525,12 @@ class FieldChoiceView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         user_object = self.request.user
+
+        if 'dark_mode' in self.request.session.keys():
+            dark_mode = self.request.session['dark_mode']
+        else:
+            dark_mode = False
+        context['dark_mode'] = str(dark_mode)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)

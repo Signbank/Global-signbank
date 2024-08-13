@@ -5,6 +5,11 @@
 {% load annotation_idgloss_translation %}
 
 {% block extrajs %}
+<script type='text/javascript'>
+var dark_mode = '{{request.session.dark_mode}}';
+var dark_mode_django = '{{dark_mode}}';
+</script>
+
 <style>
 .preview {
     background-color: white !important;
@@ -120,6 +125,7 @@ input[type="color"] {
 /* style the items (options), including the selected item: */
 .select-items div,.select-selected {
   color: inherit; //#ffffff;
+  background-color: inherit;
   padding: 8px 16px;
   border: 1px solid transparent;
 //  border-color: transparent transparent rgba(0, 0, 0, 0.1) transparent;
@@ -154,10 +160,6 @@ input[type="color"] {
 }
 </style>
 
-<script type='text/javascript'>
-
-</script>
-
 <style>
 .color-picker {
     padding: 0 0 0 0;
@@ -173,12 +175,14 @@ input[type="color"] {
 {
     border-spacing: 0px;
     background-color: inherit;
+    color: inherit;
 }
 
 .color-field-choices table th
 {
     position: sticky;
     background-color: inherit;
+    color: inherit;
     text-align: left;
     padding: 0 0 0 0 !important;
     height: 40px;
@@ -191,6 +195,7 @@ input[type="color"] {
     position: static; //sticky;
     top: 0px;
     background-color: inherit;
+    color: inherit;
     padding: 0 0 0 0 !important;
     height: 40px;
     line-height: 20px;
@@ -240,6 +245,25 @@ input[type="color"] {
 .color-form-dark > select > option {
     background-color: var(--button-default) !important;
 }
+
+.actionButton {
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-color: Grey;
+    border-radius: 8px;
+    text-align: center;
+    color: Black;
+    background-color: white;
+}
+.actionButton:hover {
+    text-decoration: none;
+    background-color: LightGrey;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
 </style>
 {% endblock %}
 
@@ -257,7 +281,7 @@ input[type="color"] {
 
     {% csrf_token %}
 
-    <div class="color-field-choices">
+    <div id="color_field_choices" class="color-field-choices color-field-choices-light" data-mode="{{dark_mode}}">
         <table id="color-field-choices" class='table table-extra-condensed' >
             <thead>
                 <tr class="accordian" >
@@ -271,9 +295,9 @@ input[type="color"] {
             {% for category in field_choices.keys %}
             <tr style="width:1600px;">
                 <td class="preview preview-light">
-                    <button class="btn btn-default btn-default-light collapse"
+                    <button class="btn actionButton"
                             type="button" data-toggle='collapse'
-                            data-target=".collapse-{{category}}"
+                            data-target="#collapse_category_{{category}}"
                             data-parent="#accordian" value="{{category}}"
                             onclick="toggle_preview(this)">{{category}}</button>
                 </td>
@@ -281,7 +305,7 @@ input[type="color"] {
                 <td></td>
                 <td></td>
             </tr>
-            <tr class='collapse collapse-{{category}}' >
+            <tr class='collapse collapse-{{category}}' id="collapse_category_{{category}}">
                 <td class="preview preview-light"></td>
                 <td class="preview preview-light preview_{{category}} collapse collapse-{{category}}" >
                         <div class="custom-select" id="{{category}}" data-style="btn btn-color">
@@ -309,10 +333,13 @@ input[type="color"] {
                 {% for choice, display in choice_display_list %}
                 <tr id='{{category}}_{{choice.pk}}' >
                     {% csrf_token %}
-
+                    {% if dark_mode == 'True' and choice.field_color == 'ffffff' %}
+                    <td id='{{category}}_{{choice.pk}}_display'
+                        style="background-color:#000000; width:600px; vertical-align: middle;">{{display}}</td>
+                    {% else %}
                     <td id='{{category}}_{{choice.pk}}_display'
                         style="background-color:#{{choice.field_color}}; width:600px; vertical-align: middle;">{{display}}</td>
-
+                    {% endif %}
                     <td style="width:200px;">
 
                         <form id="update_color_{{category}}_{{choice.pk}}"
@@ -321,8 +348,13 @@ input[type="color"] {
                               method='post' action="{% url 'dictionary:update_field_choice_color' category choice.pk %}">
                         {% csrf_token %}
 
+                        {% if dark_mode == 'True' and choice.field_color == 'ffffff' %}
+                        <input name="field_color"
+                               type='color' value=#000000>
+                        {% else %}
                         <input name="field_color"
                                type='color' value=#{{choice.field_color}}>
+                        {% endif %}
                         <input type='hidden' name='id' value='{{category}}_color_{{choice.pk}}'>
                         <input type="submit" value="OK" >
                         </form>
