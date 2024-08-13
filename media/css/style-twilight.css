@@ -1328,6 +1328,22 @@ input:focus, input.form-control:focus {
     color: var(--typeahead-color) !important;
     border: solid 1px var(--typeahead-background) !important;
 }
+.handshapetypeahead:active {
+    z-index: 9999 !important;
+    opacity: 0.99;
+}
+.handshapetypeahead-light {
+    background-color: var(--typeahead-background) !important;
+    border-color: var(--typeahead-color) !important;
+    color: var(--typeahead-color) !important;
+    border: var(--typeahead-background) !important;
+}
+.handshapetypeahead-dark {
+    background-color: var(--typeahead-dark-background) !important;
+    border-color: var(--typeahead-dark-border) !important;
+    color: var(--typeahead-dark-color) !important;
+    border: solid 1px var(--typeahead-dark-border) !important;
+}
 .usertypeahead:active {
     z-index: 9999 !important;
     opacity: 0.99;

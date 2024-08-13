@@ -296,6 +296,15 @@ function toggle_dark_mode() {
             $(this).addClass("morphtypeahead-light");
         }
   });
+  $(".handshapetypeahead").each(function () {
+        if ($(this).hasClass("handshapetypeahead-light")) {
+            $(this).removeClass("handshapetypeahead-light");
+            $(this).addClass("handshapetypeahead-dark");
+        } else if ($(this).hasClass("handshapetypeahead-dark")) {
+            $(this).removeClass("handshapetypeahead-dark");
+            $(this).addClass("handshapetypeahead-light");
+        }
+  });
   $(".usertypeahead").each(function () {
         if ($(this).hasClass("usertypeahead-light")) {
             $(this).removeClass("usertypeahead-light");
