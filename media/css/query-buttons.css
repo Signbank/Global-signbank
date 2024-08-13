@@ -23,7 +23,6 @@ select option {
 .dropdown-menu {
     display: visible !important;
     z-index: 5;
-    box-shadow: 0 10px 10px #333;
 }
 
 .dropdown-item:active{

@@ -44,9 +44,10 @@ var saving_str = '{{saving_str|escapejs}}';
 <div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;width:1200px;">
     <div class='btn-group' style="width:200px;">
     <ul class='nav nav-tabs'>
-        <li class="nav-item">
+        <li class="nav-item" style="background-color: inherit;border-color: transparent;">
         {% if not user.is_anonymous %}
-            <a class='nav-link' href="{{PREFIX_URL}}/settings/semanticfields/">{% trans "Semantic Fields List" %}</a>
+            <a class='nav-link' style="background-color: inherit;border-color: transparent;"
+               href="{{PREFIX_URL}}/settings/semanticfields/">{% trans "Semantic Fields List" %}</a>
         {% endif %}
         </li>
     </ul>
