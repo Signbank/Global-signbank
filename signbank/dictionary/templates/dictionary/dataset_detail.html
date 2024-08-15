@@ -26,6 +26,25 @@
     </script>
     <script type='text/javascript' src="{{ STATIC_URL }}js/dataset_edit.js"></script>
 
+<style>
+input[type="text"] {
+    background-color: rgba(50,50,50,10%);
+    border: none;
+}
+input[type="text"]:focus {
+    border: 1px solid red;
+}
+input[type="button"]:focus {
+    outline: none;
+}
+textarea {
+    border: none;
+    background-color: rgba(50,50,50,10%);
+}
+textarea:focus {
+    border: 1px solid red;
+}
+</style>
 {% endblock %}
 
 {% block bootstrap3_title %}
@@ -33,7 +52,7 @@
 {% endblock %}
 
 {% block content %}
-
+<div style="background-color:--var(ultron);color:var(--beam);">
 <h3>{% trans "Dataset Details" %}</h3>
 
     <div class='pull-right'>
@@ -46,11 +65,17 @@
          {% endif %}
     </div>
 
-    <table class='table table-responsive'>
-        <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:800px;">{{dataset.name}}</td></tr>
-        <tr><th>{% trans "Acronym" %}</th><td class='edit edit_text' align="left" id='acronym' name='acronym'
-                value="{{datasetform.acronym.value|default:'-'}}">{{dataset.acronym}}</td></tr>
-        <tr><th>Number of glosses</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
+    <table class='table table-responsive table-responsive-light'>
+        <tr><th style="width:300px;">{% trans "Dataset name" %}</th>
+            <td class="td td-light">{{dataset.name}}</td>
+        </tr>
+        <tr><th>{% trans "Acronym" %}</th>
+            <td class='edit edit_area' align="left" id='acronym' name='acronym'
+                value="{{datasetform.acronym.value|default:'-'}}">{{dataset.acronym}}</td>
+        </tr>
+        <tr><th>Number of glosses</th>
+            <td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td>
+        </tr>
         <tr><th>{% trans "Accessible by others" %}</th>
             <td class="edit edit_check" id='is_public' type="hidden" value='{% if dataset.is_public %}True{% else %}False{% endif %}' name="is_public">
                 {% if dataset.is_public %}True{% else %}False{% endif %}
@@ -73,7 +98,7 @@
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control usertypeahead' size="36"
+                            <input class='form-control form-control-light usertypeahead usertypeahead-light' size="36"
                                    placeholder='{% trans "Username" %}'>
                             <input type="hidden" name="username" id="username" value="">
                             </td>
@@ -91,9 +116,12 @@
             <td class='edit edit_area' align="left" id='description' name='description'
                 placeholder='{% trans "Description" %}'
                 value="{{datasetform.description.value|default:''}}">{{dataset.description|wordwrap:120|linebreaks}}</td></tr>
-        <tr><th>{% trans "Sign language" %}</th><td>{{dataset.signlanguage.name}} ({{dataset.signlanguage.description}})</td></tr>
+        <tr><th>{% trans "Sign language" %}</th>
+            <td class="td td-light">{{dataset.signlanguage.name}} ({{dataset.signlanguage.description}})</td>
+        </tr>
         <tr><th>{% trans "Translation languages" %}</th>
-            <td>{% for tl in dataset.translation_languages.all %}{{tl.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+            <td class="td td-light">{% for tl in dataset.translation_languages.all %}{{tl.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
         <tr><th>{% trans "Default language" %}</th>
             {% csrf_token %}
             <td class='edit edit_default_language' id='default_language'
@@ -102,15 +130,18 @@
             <td class='edit edit_area' id='conditions_of_use' name='conditions_of_use'
                 placeholder='{% trans "Conditions of use by others" %}'
                 value="{{datasetform.conditions_of_use.value|default:''}}">
-                <p>{{dataset.conditions_of_use|wordwrap:120|linebreaks}}</p></td></tr>
+                <p>{{dataset.conditions_of_use|wordwrap:120|linebreaks}}</p></td>
+        </tr>
         <tr><th>{% trans "Copyright statement" %}</th>
             <td class='edit edit_area' id='copyright' name='copyright'
                 placeholder='{% trans "Copyright statement" %}'
-                value="{{datasetform.copyright.value|default:''}}">{{dataset.copyright|wordwrap:120|linebreaks}}</td></tr>
+                value="{{datasetform.copyright.value|default:''}}">{{dataset.copyright|wordwrap:120|linebreaks}}</td>
+        </tr>
         <tr><th>{% trans "Reference" %}</th>
             <td class='edit edit_area' id='reference' name='reference'
                 placeholder='{% trans "Reference" %}'
-                value="{{datasetform.reference.value|default:''}}">{{dataset.reference|wordwrap:120|linebreaks}}</td></tr>
+                value="{{datasetform.reference.value|default:''}}">{{dataset.reference|wordwrap:120|linebreaks}}</td>
+        </tr>
     </table>
 
     <div>
@@ -125,4 +156,5 @@
         </form>
         {% endif %}
     </div>
+</div>
 {% endblock %}
