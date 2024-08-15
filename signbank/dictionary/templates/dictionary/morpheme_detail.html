@@ -11,15 +11,12 @@
 {% load guardian_tags %}
 
 {% block extrahead %}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
-    <style>
-        #panel-expand-collapse-btn-group.affix {
-            position:fixed;
-        }
-    </style>
+<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}css/tagmanager.css">
+
 <style>
 .preview {
-    background-color: white !important;
+    background-color: inherit !important;
+    color: inherit !important;
     height: 40;
     width: auto;
     position: relative;
@@ -59,8 +56,8 @@ select option {
 </style>
 <style>
 .form-group {
-    background-color: white;
-    color: black;
+    background-color: inherit;
+    color: inherit;
 }
 option:not(:checked) {
     background-color: white !important;
@@ -72,17 +69,33 @@ option:not(:checked) {
 .panel-heading:hover {
     background-color: #D2D2D2;
 }
+input[type="text"] {
+    background-color: rgba(50,50,50,10%);
+    border: none;
+}
+input[type="text"]:focus {
+    border: 1px solid red;
+}
+input[type="button"]:focus {
+    outline: none;
+}
+textarea {
+    border: none;
+    background-color: rgba(50,50,50,10%);
+}
+textarea:focus {
+    border: 1px solid red;
+}
 </style>
 
 {% endblock %}
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+ <script type='text/javascript'>
+    var dark_mode = '{{request.session.dark_mode}}';
+    var dark_mode_django = '{{dark_mode}}';
 
-    <script type='text/javascript'>
-    var url = '{{ PREFIX_URL }}';
+    var url = '{{PREFIX_URL}}';
     var phonology_list_kinds = {{phonology_list_kinds|safe}};
 
     var morpheme_phonology = {{MORPHEME_DISPLAY_FIELDS|safe}};
@@ -127,16 +140,46 @@ option:not(:checked) {
     var wordclass_choices = {{morpheme.wordclass_choices|safe}};
 
     var morph_type = {{morph_type|safe}};
-    var morph_type_colors = {{morph_type_colors|safe}};
+    var morph_type_colors_original = {{morph_type_colors|safe}};
+
+   var morph_type_colors = {}
+   for (key in morph_type_colors_original) {
+        value = morph_type_colors_original[key];
+        if (value == 'ffffff' && dark_mode_django == 'True') {
+            morph_type_colors[key] = '000000';
+        } else {
+            morph_type_colors[key] = value;
+        }
+    }
 
     var choice_lists = [];
     var static_choice_lists = {{static_choice_lists|safe}};
-    var static_choice_list_colors = {{static_choice_list_colors|safe}};
+    var original_static_choice_list_colors = {{static_choice_list_colors|safe}};
+
+    var static_choice_list_colors = {};
+    for (var field in original_static_choice_list_colors) {
+       var field_dict = original_static_choice_list_colors[field];
+       static_choice_list_colors[field] = {}
+       for (key in field_dict) {
+            value = field_dict[key];
+            if (value == 'ffffff' && dark_mode_django == 'True') {
+                static_choice_list_colors[field][key] = '000000';
+            } else {
+                static_choice_list_colors[field][key] = value;
+            }
+        }
+    }
 
     var csrf_token = '{{csrf_token}}';
 
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+</script>
 
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
+
+<script type='text/javascript'>
     {% include "dictionary/search_result_bar.html" %}
 
     function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
@@ -219,34 +262,6 @@ function checkKey(e)
     <script type='text/javascript'>
         $('#searchresults').css({'padding-top': 10});
         $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 10)});
-        $('#expand-panels').on('click', function() {
-            $('#definition .collapse').collapse('show');
-        });
-        $('#collapse-panels').on('click', function() {
-            $('#definition .collapse').collapse('hide');
-        });
-        $('#panel-expand-collapse-btn-group').affix({
-            offset: {
-                top: $('#panel-expand-collapse-btn-group').offset().top - $('#signbank-bar').height() - $('#signinfo').height()
-                 + parseInt($('#signbank-bar').css('margin-bottom'))
-                 + parseInt($('#panel-expand-collapse-btn-group').css('height')),
-            }
-        });
-        $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
-            $('#panel-expand-collapse-btn-group').css({
-                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': ($('#signbank-bar').height() - $('#navbar').height() + parseInt($('#definitionblock').css('padding-top')) + 3) + 'px',
-            });
-         });
-        $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
-            $('#panel-expand-collapse-btn-group').css({
-                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': '0px',
-            });
-         });
-         $('#panel-expand-collapse-btn-toolbar').css({
-            'height': $('#panel-expand-collapse-btn-group').css('height'),
-         });
     </script>
 
 {% endblock %}
@@ -254,9 +269,9 @@ function checkKey(e)
 
 {% block content %}
 
-<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+<div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;background-color:inherit;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background:white;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
     </div>
     {% endif %}
 </div>
@@ -266,9 +281,10 @@ function checkKey(e)
 {% endif %}
 
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
 
-    <ul class='nav nav-tabs'>
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+    <ul class='nav nav-tabs nav-tabs-light'>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/morpheme/{{morpheme.id}}.html">{% trans "Public View" %}</a>
         </li>
@@ -276,7 +292,7 @@ function checkKey(e)
             <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/morpheme/{{morpheme.id}}">{% trans "Details" %}</a>
         </li>
     </ul>
-
+    </div>
     {% get_obj_perms request.user for morpheme.lemma.dataset as "dataset_perms" %}
     {% if "change_dataset" in dataset_perms %}
     {% if perms.dictionary.change_morpheme %}
@@ -321,7 +337,7 @@ function checkKey(e)
     {% if perms.dictionary.change_morpheme and perms.dictionary.update_video %}
     <div class='editform'>
         <fieldset>
-            <legend>{% trans "Upload New Video" %}</legend>
+            <h4>{% trans "Upload New Video" %}</h4>
             {% with morpheme.count_videos as morpheme_video_count %}
             <p>{% blocktrans %} We have {{morpheme_video_count}} videos for this morpheme. {% endblocktrans %}</p>
             {% endwith %}
@@ -343,7 +359,7 @@ function checkKey(e)
     
         {% if perms.dictionary.update_video and morpheme.count_videos > 0 %}
         <fieldset>
-         <legend>{% trans "Delete/Revert Video" %}</legend>
+         <h4>{% trans "Delete/Revert Video" %}</h4>
             <table>
             <form action="{{PREFIX_URL}}/video/delete/{{morpheme.pk}}" method='post'>
             <tr><td><em>{% trans "This will delete the most recent upload and restore the most recent earlier version." %} </em></td></tr>
@@ -358,7 +374,7 @@ function checkKey(e)
     {% if perms.dictionary.change_morpheme %}
     <div class='editform'>
         <fieldset>
-            <legend>{% trans "Upload New Citation Form Image" %}</legend>
+            <h4>{% trans "Upload New Citation Form Image" %}</h4>
             <form action="{{PREFIX_URL}}/image/upload/" method="post" enctype="multipart/form-data">
               {% csrf_token %}
               <input type='hidden' name='redirect' value='{{request.path}}?edit'>
@@ -380,7 +396,7 @@ function checkKey(e)
     {% if perms.dictionary.change_morpheme %}
     <div class="editform">
         <fieldset>
-         <legend>{% trans "Delete Morpheme" %}</legend>
+         <h4>{% trans "Delete Morpheme" %}</h4>
          <button id='delete_morpheme_btn' class='btn btn-danger' data-toggle='modal' data-target='#delete_morpheme_modal'>{% trans "Delete Morpheme" %}</button>
         </fieldset>
     </div>
@@ -389,13 +405,13 @@ function checkKey(e)
 
 </div>
 
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: white;">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background-color: inherit;">
 
         {% include "dictionary/morphemetags.html" %}
 
-        <table class='table table-condensed'>
+        <table class='table table-condensed table-condensed-light'>
             <tr><th>{% trans "Lemma ID Gloss" %}</th>
-                <td style="width:600px;"><span id="lemma">{{ morpheme.lemma }}
+                <td class='td td-light' style="width:600px;"><span id="lemma">{{ morpheme.lemma }}
                         {% if lemma_group %}
                             <a href='{{lemma_group_url}}' title='{% trans "Show Lemma Group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
                         {% endif %}
@@ -410,7 +426,7 @@ function checkKey(e)
                         <input type='hidden' name='morpheme_lemma_id' value='{{morpheme.lemma_id}}'>
 
                         <!-- Input of the type ahead -->
-                        <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+                        <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light' placeholder='{% trans "Lemma" %}' />
 
                         <!-- Input for morpheme_update (2) / Input that holds the lemma id the user chose from the type ahead -->
                         <input type='hidden' name='value' value='confirmed'>
@@ -419,7 +435,7 @@ function checkKey(e)
 
                         <!-- Submit -->
                         <input class='btn btn-primary' value='{% trans "Set Lemma" %}' type='submit'>
-                        <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
+                        <button type="button" class="btn btn-default btn-default-light lemma-form-dismiss">{% trans "Cancel" %}</button>
                         <a href="#" onclick="return showAddLemma()">{% trans "Create New" %}</a>
                     </form>
                     <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' morpheme.id %}" >
@@ -434,7 +450,7 @@ function checkKey(e)
                         {% endfor %}
                         <!-- Submit -->
                         <input class='btn btn-primary' value='{% trans "Add Lemma" %}' type='submit'>
-                        <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
+                        <button type="button" class="btn btn-default btn-default-light lemma-form-dismiss">{% trans "Cancel" %}</button>
                     </form>
                 </td><td style="width:200px;"></td>
             </tr>
@@ -444,8 +460,8 @@ function checkKey(e)
                 <th>
                     {% trans "Annotation ID Gloss" %} ({{ lang }})
                 </th>
-                <td class='edit edit_text' id='annotation_idgloss_{{lang.language_code_2char}}'>{{annotation_idgloss_translation}}</td>
-                <td style="width:200px;"></td>
+                <td class='edit edit_area' id='annotation_idgloss_{{lang.language_code_2char}}'>{{annotation_idgloss_translation}}</td>
+                <td style="width:200px;color:inherit;"></td>
             </tr>
             {% endfor %}
 
@@ -496,7 +512,7 @@ function checkKey(e)
                             {% for key, glosses in related_objects.items %}
                             <tr>
                                 <td style="width:240px">{{key}}</td>
-                                <td>{{glosses}}</td>
+                                <td class='td td-light'>{{glosses}}</td>
                             </tr>
                             {% endfor %}
                         </table>
@@ -509,7 +525,7 @@ function checkKey(e)
                       <input type='hidden' name='id' value='deletemorpheme'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                       </div>
                   </form>
@@ -521,23 +537,9 @@ function checkKey(e)
 
    {% if perms.dictionary.view_advanced_properties %}
 
-    <!-- Expand and collapse all panels -->
-    <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
-        <div class="pull-right">
-            <div class="btn-group" id="panel-expand-collapse-btn-group">
-                <button id="expand-panels" type="button" class="btn btn-default btn-xs">
-                        <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
-                </button>
-                <button id="collapse-panels" type="button" class="btn btn-default btn-xs">
-                    <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-
    <!-- Morphology -->
-   <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#morphology'>{% trans "Appears in" %}
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#morphology'>{% trans "Appears in" %}
         </div>
         <div id='morphology' class='collapse'>
             <!-- Show a read-only list of glosses in which this gloss occurs as compound part(ERK, issue #177) -->
@@ -563,8 +565,8 @@ function checkKey(e)
     </div>
 
     <!-- Phonology -->
-	<div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
+	<div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
         </div>
         <div id='phonology' class='collapse'>
             <table class='table table-condensed'>
@@ -592,8 +594,8 @@ function checkKey(e)
     </div>
 
     <!-- Semantics -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
         </div>
         <div id='semantics' class='collapse'>
             <table class='table table-condensed'>
@@ -630,8 +632,8 @@ function checkKey(e)
 
 
     <!-- Publication status -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#pubStatus'>{% trans "Publication Status" %}
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#pubStatus'>{% trans "Publication Status" %}
         </div>
 
         <div id="pubStatus" class="collapse">
@@ -668,8 +670,8 @@ function checkKey(e)
     
    
     <!-- Notes -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
         </div>
         <div id='definitions' class='collapse'>
 
@@ -706,7 +708,7 @@ function checkKey(e)
                                   <input type='hidden' name='id' value='definitiondelete_{{def.id}}'>
                                   <input type='hidden' name='value' value='confirmed'>
                                   <div class="modal-footer">
-                                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                    <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                     <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                   </div>
                               </form>
@@ -720,7 +722,7 @@ function checkKey(e)
                 <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'
                     value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
-                <td id='definitionrole_{{def.id}}'
+                <td class="td td-light" id='definitionrole_{{def.id}}'
                     data-field='definitionrole'>{{role_id.1}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}' style="height:80;">{{def.text}}</td>
               </tr>
@@ -736,10 +738,10 @@ function checkKey(e)
                  <table class='table'>
                     <tr>
                         <td style="width:2em"></td>
-                        <td style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
-                        <td style='width:5em'><input class='form-control' name='count' id='id_count' type='number'></td>
-                        <td style='width:20em'>{{definitionform.note}}</td>
-                        <td>{{definitionform.text}}</td>
+                        <td class='td td-light' style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
+                        <td class='td td-light' class='td td-light' style='width:5em'><input class='form-control form-control-light' name='count' id='id_count' type='number'></td>
+                        <td class='td td-light' style='width:20em'>{{definitionform.note}}</td>
+                        <td class='td td-light' class='td td-light'>{{definitionform.text}}</td>
                     </tr>
                      <tr>
                         <td></td>
@@ -759,8 +761,8 @@ function checkKey(e)
     </div>
 
      <!-- Other media -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#othermedia'>{% trans "Other Media" %}
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#othermedia'>{% trans "Other Media" %}
         </div>
         <div id='othermedia' class='collapse'>
 
@@ -795,7 +797,7 @@ function checkKey(e)
                                       <input type='hidden' name='id' value='other-media-delete_{{pk}}'>
                                       <input type='hidden' name='value' value='confirmed'>
                                       <div class="modal-footer">
-                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                       </div>
                                   </form>
@@ -830,9 +832,9 @@ function checkKey(e)
                 {% csrf_token %}
                  <table class='table'>
                     <tr>
-                        <td>{{othermediaform.file}}</td>
-                        <td>{{othermediaform.type}}</td>
-                        <td><input class='form-control' placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'></td>
+                        <td class='td td-light'>{{othermediaform.file}}</td>
+                        <td class='td td-light'>{{othermediaform.type}}</td>
+                        <td class='td td-light'><input class='form-control form-control-light' placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'></td>
                     </tr>
                      <tr>
                         <td></td>

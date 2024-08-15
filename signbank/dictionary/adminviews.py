@@ -4992,7 +4992,14 @@ class MorphemeDetailView(DetailView):
 
         # Call the base implementation first to get a context
         context = super(MorphemeDetailView, self).get_context_data(**kwargs)
-        # Add in a QuerySet of all the books
+        
+        if 'dark_mode' in self.request.session.keys():
+            dark_mode_session = self.request.session['dark_mode']
+            dark_mode = dark_mode_session in ["True"]
+        else:
+            dark_mode = False
+        context['dark_mode'] = str(dark_mode)
+
         context['tagform'] = TagUpdateForm()
         context['videoform'] = VideoUploadForObjectForm(languages=languages)
         context['imageform'] = ImageUploadForGlossForm()

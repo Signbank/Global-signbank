@@ -738,7 +738,7 @@ textarea:focus {
     {% if "change_dataset" in dataset_perms %}
     <div class='editform'>
         <fieldset>
-            <legend>{% trans "Upload New Video" %}</legend>
+            <h4>{% trans "Upload New Video" %}</h4>
             <label for="id_videofile" class="drop-container" id="drop-container-video">
               <div id="videogallery" class="gallery"></div>
               <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
@@ -833,7 +833,7 @@ textarea:focus {
 
     <div class='editform'>
         <fieldset>
-            <legend>{% trans "Upload New Citation Form Image" %}</legend>
+            <h4>{% trans "Upload New Citation Form Image" %}</h4>
             <label for='id_imagefile' class="drop-container" id="drop-container-image">
               <div id="imagegallery" class="gallery"></div>
               <span id = "drop-container-title-image"  class="drop-title">Drop image here<br>or...</span>
@@ -861,7 +861,7 @@ textarea:focus {
 
     {% if gloss.has_video and "change_dataset" in dataset_perms %}
         <div class="editform">
-            <legend>{% trans "Create Citation Form Image from Current Video" %}</legend>
+            <h4>{% trans "Create Citation Form Image from Current Video" %}</h4>
             <a href="{% url 'dictionary:create_citation_image'  gloss.id %}" class="btn btn-primary">Create</a>
         </div>
 
@@ -870,7 +870,7 @@ textarea:focus {
     {% if "change_dataset" in dataset_perms %}
     <div class="editform">
         <fieldset>
-         <legend>{% trans "Delete Media" %}</legend>
+         <h4>{% trans "Delete Media" %}</h4>
             <table>
                 <tr><td>
                 <form class="formbutton" action="{{PREFIX_URL}}/video/delete/{{gloss.pk}}" method='post'>
@@ -888,7 +888,7 @@ textarea:focus {
      {% if "change_dataset" in dataset_perms %}
     <div class="editform">
         <fieldset>
-         <legend>{% trans "Delete Sign" %}</legend>
+         <h4>{% trans "Delete Sign" %}</h4>
          <button id='delete_gloss_btn' class='btn btn-danger' style="width:auto;"
                  data-toggle='modal'
                  data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
