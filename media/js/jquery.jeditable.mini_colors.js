@@ -402,7 +402,7 @@
                     };
                     $(this).append(dropdown_button);
 					var select = $('<ul />');
-					select.attr('class', 'dropdown-menu shadow-sm p-3 mb-5 bg-white rounded');
+					select.attr('class', 'dropdown dropdown-menu');
 					select.attr('id', 'ul_' + settings.params.field);
 					if (settings.params.field == 'weakdrop' || settings.params.field == 'weakprop') {
 					    select.css({'overflow-y': 'scroll', 'list-style-type': 'none',
@@ -443,9 +443,15 @@
 						option.append(json[key]);
 						option.attr('class', 'dropdown-item');
 						option.attr('data-value', key);
-						option.css({
-							'color': 'black', 'background-color': '#' + key_color
-						});;
+						if (key_color == '000000') {
+                            option.css({
+                                'color': 'white', 'background-color': '#' + key_color
+                            });
+						} else {
+                            option.css({
+                                'color': 'black', 'background-color': '#' + key_color
+                            });
+						}
 						$('ul', this).append(option);
 					};
 					var chosen_offset = 0;

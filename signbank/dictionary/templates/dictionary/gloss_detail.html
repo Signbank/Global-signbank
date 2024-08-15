@@ -12,11 +12,9 @@
 
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
-
-    <script type='text/javascript'>
+<script type='text/javascript'>
+    var dark_mode = '{{request.session.dark_mode}}';
+    var dark_mode_django = '{{dark_mode}}';
     var url = '{{PREFIX_URL}}';
     var phonology_list_kinds = {{phonology_list_kinds|safe}};
     var gloss_phonology = {{gloss_phonology|safe}};
@@ -55,7 +53,11 @@
     var handedness_weak_choices = {{gloss.handedness_weak_drop_prop_json|safe}};
     var handedness_weak_choices_colors = {};
     for (var key in handedness_weak_choices) {
-        handedness_weak_choices_colors[key] = 'ffffff';
+        if (dark_mode_django == 'True') {
+            handedness_weak_choices_colors[key] = '000000';
+        } else {
+            handedness_weak_choices_colors[key] = 'ffffff';
+        }
     };
     var handedness_weak_drop_reverse = {{gloss.handedness_weak_drop_prop_json|safe}};
     var handedness_weakdrop = handedness_weak_drop_reverse['{{gloss.weakdrop}}'];
@@ -74,14 +76,34 @@
 
     var choice_lists = [];
     var static_choice_lists = {{static_choice_lists|safe}};
-    var static_choice_list_colors = {{static_choice_list_colors|safe}};
+    var original_static_choice_list_colors = {{static_choice_list_colors|safe}};
+
+    var static_choice_list_colors = {};
+    for (var field in original_static_choice_list_colors) {
+       var field_dict = original_static_choice_list_colors[field];
+       static_choice_list_colors[field] = {}
+       for (key in field_dict) {
+            value = field_dict[key];
+            if (value == 'ffffff' && dark_mode_django == 'True') {
+                static_choice_list_colors[field][key] = '000000';
+            } else {
+                static_choice_list_colors[field][key] = value;
+            }
+        }
+    }
 
     var csrf_token = '{{csrf_token}}';
     var this_gloss_id = {{gloss.id}};
 
     var json_default_query_parameters = {{json_default_query_parameters|safe}};
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+</script>
 
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+
+<script type='text/javascript'>
     {% include "dictionary/search_result_bar.html" %}
     function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
         var target_object = document.forms[formId][targetObjectId].value;
@@ -97,10 +119,8 @@
     }
 
     function reloadVideo() {
-        console.log('reload video');
         var video_player = document.getElementById("videoplayer");
         video_player_src = video_player.src;
-        console.log('url is ' + video_player_src);
         video_player_src = "";
         video_player.src = video_player_src;
         video_player.type = "video/mp4";
@@ -171,7 +191,6 @@ function checkKey(e)
     <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
-    <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
         // This script gets minimal pairs data and displays it as table rows
         $(document).ready(function() {
@@ -192,34 +211,7 @@ function checkKey(e)
         $('#definitionblock').css({'padding-top': Math.round($('#searchquery').height() + $('#signinfo').height() + 10)});
   //      $('#definitionblock').css({'padding-top': Math.round($('#signinfo').height() + 10)});
         $('#view_tabs').css({'padding-top': 10, 'margin-top': 10});
-        $('#expand-panels').on('click', function() {
-            $('#definition .collapse').collapse('show');
-        });
-        $('#collapse-panels').on('click', function() {
-            $('#definition .collapse').collapse('hide');
-        });
-        $('#panel-expand-collapse-btn-group').affix({
-            offset: {
-                top: $('#panel-expand-collapse-btn-group').offset().top - $('#searchquery').height() - $('#signinfo').height()
-                 + parseInt($('#searchquery').css('margin-bottom'))
-                 + parseInt($('#panel-expand-collapse-btn-group').css('height')),
-            }
-        });
-        $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
-            $('#panel-expand-collapse-btn-group').css({
-                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': ($('#searchquery').height() - $('#navbar').height() + parseInt($('#definitionblock').css('padding-top')) + 3) + 'px',
-            });
-         });
-        $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
-            $('#panel-expand-collapse-btn-group').css({
-                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': '0px',
-            });
-         });
-         $('#panel-expand-collapse-btn-toolbar').css({
-            'height': $('#panel-expand-collapse-btn-group').css('height'),
-         });
+
     </script>
 {% endblock %}
 
@@ -231,9 +223,6 @@ function checkKey(e)
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
 
     <style>
-        #panel-expand-collapse-btn-group.affix {
-            position:fixed;
-        }
         #view_tabs.affix {
             position:fixed;
         }
@@ -1426,24 +1415,6 @@ textarea:focus {
 
         </table>
 
-        <!-- Expand and collapse all panels -->
-        <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
-            <div class="pull-right">
-                <div class="btn-group" id="panel-expand-collapse-btn-group">
-                    <div class="btn-group btn-group-xs">
-                    <button id="expand-panels" type="button" class="btn btn-default btn-default-light">
-                            <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
-                    </button>
-                    </div>
-                    <div class="btn-group btn-group-xs">
-                    <button id="collapse-panels" type="button" class="btn btn-default btn-default-light">
-                        <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
-                    </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
    <!-- Non-manual videos -->
    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
@@ -1525,7 +1496,7 @@ textarea:focus {
             {% if "change_dataset" in dataset_perms %}
             <div class='editform' style="width:800px;height:800px;">
                 <fieldset>
-                    <legend>{% trans "Upload New NME Video" %}</legend>
+                    <h4>{% trans "Upload New NME Video" %}</h4>
                     <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                         <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
@@ -1547,14 +1518,14 @@ textarea:focus {
                             <table class="table table-condensed">
                                 <tr>
                                     <th style="width:200px;">{% trans "Index" %}</th>
-                                    <td style='width:5em'>
-                                        <input class='form-control' name='offset' id='offset' type='number' value=1>
+                                    <td class="td td-light" style='width:5em'>
+                                        <input class='form-control form-control-light' name='offset' id='offset' type='number' value=1>
                                     </td>
                                 </tr>
                                 {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                                 <tr>
                                     <th style="width:200px;">{{dataset_lang.name}}</th>
-                                    <td><input style="width:600px;"
+                                    <td class="td td-light"><input style="width:600px;"
                                                id="description_{{dataset_lang.language_code_2char}}"
                                                name="description_{{dataset_lang.language_code_2char}}"
                                                value="" maxlength="200" type="text" class="description-input">
@@ -1623,8 +1594,8 @@ textarea:focus {
                         {% else %}
                         <td></td>
                         {% endif %}
-                        <td id='morphology-definition-role_{{morphdef.id}}' >{{translated_role}}</td>
-                        <td id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a></td>
+                        <td class="td td-light" id='morphology-definition-role_{{morphdef.id}}' >{{translated_role}}</td>
+                        <td class="td td-light" id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a></td>
                    {% endfor %}
 
             {% else %}
@@ -1644,9 +1615,9 @@ textarea:focus {
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td style="width:12em;">{{morphologyform.role}}</td>
-                       <td>
-                           <input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID Gloss" %}' />
+                       <td class="td td-light" style="width:12em;">{{morphologyform.role}}</td>
+                       <td class="td td-light">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' placeholder='{% trans "Annotation ID Gloss" %}' />
                            <input type="hidden" name="morpheme_id" value=""/>
                        </td>
                        <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
@@ -1733,11 +1704,11 @@ textarea:focus {
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td style="width:22em;">
-                           <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' value="{{morphemeform.morph_id.value|default:''}}"/>
+                       <td class="td td-light" style="width:22em;">
+                           <input class='form-control form-control-light morphtypeahead morphtypeahead-light' placeholder='{% trans "Morpheme Gloss" %}' value="{{morphemeform.morph_id.value|default:''}}"/>
                            <input type="hidden" name='morph_id' value=""/>
                        </td>
-                       <td><input class='form-control' placeholder='{% trans "Meaning in This Sign" %}' name='description' value="{{morphemeform.description.value|default:''}}"/></td>
+                       <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Meaning in This Sign" %}' name='description' value="{{morphemeform.description.value|default:''}}"/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
                    </tr>
                </table>
@@ -1811,11 +1782,11 @@ textarea:focus {
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td style="width:22em;">
-                           <input class='form-control glosstypeahead' placeholder='{% trans "Blend Gloss" %}' value="{{blendform.blend_id.value|default:''}}"/>
+                       <td class="td td-light" style="width:22em;">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' placeholder='{% trans "Blend Gloss" %}' value="{{blendform.blend_id.value|default:''}}"/>
                            <input type="hidden" name='blend_id' value=""/>
                        </td>
-                       <td><input class='form-control' placeholder='{% trans "Role in This Sign" %}' name='role' value="{{blendform.role.value|default:''}}" required=""/></td>
+                       <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Role in This Sign" %}' name='role' value="{{blendform.role.value|default:''}}" required=""/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Blend" %}' type='submit'></td>
                    </tr>
                </table>
@@ -2139,8 +2110,8 @@ textarea:focus {
                {% else %}
                     <td></td>
                {% endif %}
-                    <td id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
-                    <td id='relationtarget_{{rel.id}}'>
+                    <td class="td td-light" id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
+                    <td class="td td-light" id='relationtarget_{{rel.id}}'>
                         <a id='relation_target_hyperlink_{{rel.id}}'
                            href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a>
                     </td>
@@ -2158,9 +2129,9 @@ textarea:focus {
                <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td>{{relationform.role}}</td>
-                       <td>
-                           <input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID Gloss" %}'/>
+                       <td class="td td-light">{{relationform.role}}</td>
+                       <td class="td td-light">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' placeholder='{% trans "Annotation ID Gloss" %}'/>
                            <input type="hidden" name="targetid" value=""/>
                        </td>
                        <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
@@ -2244,9 +2215,9 @@ textarea:focus {
                    <table class='table table-condensed'>
                        <tr>
                            <td style='width:5em'>&nbsp;&nbsp;&nbsp;</td>
-                           <td><input class='checkbox' name='loan' type='checkbox'></td>
-                           <td><input class='form-control' placeholder='{% trans "Related Language" %}' name='other_lang' type='text'></td>
-                           <td><input class='form-control' placeholder='{% trans "Gloss in Related Language" %}' name='other_lang_gloss' type='text'></td>
+                           <td class="td td-light"><input class='checkbox' name='loan' type='checkbox'></td>
+                           <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Related Language" %}' name='other_lang' type='text'></td>
+                           <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Gloss in Related Language" %}' name='other_lang_gloss' type='text'></td>
                            <td><input class='btn btn-primary' value='{% trans "Add Relation to Foreign Sign" %}' type='submit'></td>
                        </tr>
                    </table>
@@ -2357,7 +2328,7 @@ textarea:focus {
                 <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'
                     value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
-                <td id='definitionrole_{{def.id}}'
+                <td class="td td-light" id='definitionrole_{{def.id}}'
                     data-field='definitionrole'>{{role_id.1}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}' style="height:80;">{{def.text}}</td>
               </tr>
@@ -2371,11 +2342,11 @@ textarea:focus {
                 {% csrf_token %}
                  <table class='table'>
                     <tr>
-                        <td style="width:2em"></td>
-                        <td style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
-                        <td style='width:5em'><input class='form-control' name='count' id='id_count' type='number' value=3></td>
-                        <td style='width:20em'>{{definitionform.note}}</td>
-                        <td>{{definitionform.text}}</td>
+                        <td class="td td-light" style="width:2em"></td>
+                        <td class="td td-light" style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
+                        <td class="td td-light" style='width:5em'><input class='form-control form-control-light' name='count' id='id_count' type='number' value=3></td>
+                        <td class="td td-light" style='width:20em'>{{definitionform.note}}</td>
+                        <td class="td td-light">{{definitionform.text}}</td>
                     </tr>
                      <tr>
                         <td></td>
@@ -2552,13 +2523,13 @@ textarea:focus {
                     {% else %}
                     <td></td>
                     {% endif %}
-                    <td><a {% if not media_okay %}
+                    <td class="td td-light"><a {% if not media_okay %}
 				            disabled onclick="return false;" style="color:rgb(150,150,150);"
 			                {% endif %}
 				            download="{{file_name}}" href="{{PREFIX_URL}}/{{path}}">Download</a>
                     </td>
-                    <td id='other-media-file-type_{{pk}}'>{{file_type}}</td>
-                    <td id='other-media-type_{{pk}}'>{{type}}</td>
+                    <td class="td td-light" id='other-media-file-type_{{pk}}'>{{file_type}}</td>
+                    <td class="td td-light" id='other-media-type_{{pk}}'>{{type}}</td>
                     <td class='edit edit_area' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
                 </tr>
                {% endfor %}
@@ -2574,9 +2545,9 @@ textarea:focus {
                 {% csrf_token %}
                  <table class='table'>
                     <tr>
-                        <td>{{othermediaform.file}}</td>
-                        <td>{{othermediaform.type}}</td>
-                        <td><input class='form-control' placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'></td>
+                        <td class="td td-light">{{othermediaform.file}}</td>
+                        <td class="td td-light">{{othermediaform.type}}</td>
+                        <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'></td>
                     </tr>
                      <tr>
                         <td></td>

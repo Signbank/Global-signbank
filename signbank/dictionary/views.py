@@ -2493,11 +2493,6 @@ def choice_lists(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     all_choice_lists = {}
 
-    if 'dataset' in request.GET:
-        choices_to_exclude = Dataset.objects.get(acronym=request.GET['dataset']).exclude_choices.all()
-    else:
-        choices_to_exclude = None
-
     fields_with_choices = fields_to_fieldcategory_dict()
 
     for (field, fieldchoice_category) in fields_with_choices.items():
@@ -2510,8 +2505,7 @@ def choice_lists(request):
         if len(choice_list) == 0:
             continue
 
-        all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,
-                                                                         choices_to_exclude=choices_to_exclude)
+        all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list)
 
         #Also concatenate the frequencies of all values
         if 'include_frequencies' in request.GET and request.GET['include_frequencies']:

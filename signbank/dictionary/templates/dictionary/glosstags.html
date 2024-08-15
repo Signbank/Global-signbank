@@ -36,7 +36,7 @@
                 method="post" enctype="multipart/form-data">
            {% csrf_token %}
            <table>
-           <tr><td>{{tagform.tag}}</td><td><input class='btn btn-primary' type='submit' value='{% trans "Add Tag" %}'></td></tr>
+           <tr><td class="td td-light">{{tagform.tag}}</td><td><input class='btn btn-primary' type='submit' value='{% trans "Add Tag" %}'></td></tr>
            </table>
           </form>
       </div>

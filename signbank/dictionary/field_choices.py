@@ -121,7 +121,7 @@ def get_static_choice_lists(fieldname):
             # there are no choices for this field
             # it does not have a declared category or recognised choices model
             return static_choice_lists, static_choice_list_colors
-    if len(choice_list) == 0:
+    if len(choice_list) == 0 or choice_list.count() < 1:
         # there are no choices in the database for this field
         return static_choice_lists, static_choice_list_colors
 

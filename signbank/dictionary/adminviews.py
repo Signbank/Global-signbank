@@ -821,6 +821,7 @@ class GlossDetailView(DetailView):
     context_object_name = 'gloss'
     last_used_dataset = None
     query_parameters = dict()
+    dark_mode = False
 
     def get_template_names(self):
         return ['dictionary/gloss_detail.html']
@@ -894,6 +895,13 @@ class GlossDetailView(DetailView):
 
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
+
+        if 'dark_mode' in self.request.session.keys():
+            dark_mode_session = self.request.session['dark_mode']
+            dark_mode = dark_mode_session in ["True"]
+        else:
+            dark_mode = False
+        context['dark_mode'] = str(dark_mode)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -4407,7 +4415,7 @@ class DatasetFieldChoiceView(ListView):
                 # Get and save the choice list for this field
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 if len(choice_list) > 0:
-                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list, choices_to_exclude=[])
+                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list)
                     choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
 
                     for choice_list_field, machine_value in choice_list_machine_values:
