@@ -83,7 +83,7 @@ $(window).ready(function(){
           {% endif %}
             <td>{{fb.comment}}</td>
             <td>
-                    <button class='delete btn btn-primary' type='submit' value='Delete Comment'
+                    <button class='delete btn btn-danger' type='submit' value='Delete Comment'
                             data-toggle='modal' data-target='#delete_comment_sign_{{fb.id}}'>{% trans "Delete" %}</button>
 
           <div class="modal fade" id="delete_comment_sign_{{fb.id}}" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDeleteFeedbackSign" aria-hidden="true">
@@ -100,8 +100,8 @@ $(window).ready(function(){
                       <input type='hidden' name='id' value='deletefeedbacksign_{{fb.pk}}'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
                       </div>
                   </form>
 
