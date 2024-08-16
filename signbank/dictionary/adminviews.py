@@ -351,6 +351,8 @@ class GlossListView(ListView):
 
         column_headers = []
         for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+            if fieldname not in Gloss.get_field_names():
+                continue
             field_label = Gloss.get_field(fieldname).verbose_name
             column_headers.append((fieldname, field_label))
         context['column_headers'] = column_headers
