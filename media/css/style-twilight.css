@@ -1025,6 +1025,7 @@ input {
     border-top-color: var(--well-background) !important;
     background-color: var(--well-background) !important;
     border: solid 1px var(--well-background) !important;
+    color: var(--text-input-text) !important;
 }
 .td-dark > select {
     border-top-color: var(--well-background) !important;
