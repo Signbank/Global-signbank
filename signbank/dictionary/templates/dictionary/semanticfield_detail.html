@@ -41,12 +41,13 @@ var saving_str = '{{saving_str|escapejs}}';
 
 <h3>{% trans "Semantic Field Details" %}</h3>
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;width:1200px;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;width:1200px;">
     <div class='btn-group' style="width:200px;">
     <ul class='nav nav-tabs'>
-        <li class="nav-item">
+        <li class="nav-item" style="background-color: inherit;border-color: transparent;">
         {% if not user.is_anonymous %}
-            <a class='nav-link' href="{{PREFIX_URL}}/settings/semanticfields/">{% trans "Semantic Fields List" %}</a>
+            <a class='nav-link' style="background-color: inherit;border-color: transparent;"
+               href="{{PREFIX_URL}}/settings/semanticfields/">{% trans "Semantic Fields List" %}</a>
         {% endif %}
         </li>
     </ul>
@@ -64,7 +65,7 @@ var saving_str = '{{saving_str|escapejs}}';
 <div id="definitionblock">
 
         <div class='panel-group' id="definition"
-             style="z-index: 10;opacity:.99; position: relative; background-color: white;margin-top:15px;" >
+             style="z-index: 10;opacity:.99; position: relative; background-color: inherit;margin-top:15px;" >
         {% csrf_token %}
             <table class='table table-condensed' id="semanticFieldTranslations">
                 <tr><th style="width:18em;">{% trans "Semantic Field " %}</th><td>{{ semanticfield.name }}</td></tr>

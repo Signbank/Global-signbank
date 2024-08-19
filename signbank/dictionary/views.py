@@ -2493,11 +2493,6 @@ def choice_lists(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
     all_choice_lists = {}
 
-    if 'dataset' in request.GET:
-        choices_to_exclude = Dataset.objects.get(acronym=request.GET['dataset']).exclude_choices.all()
-    else:
-        choices_to_exclude = None
-
     fields_with_choices = fields_to_fieldcategory_dict()
 
     for (field, fieldchoice_category) in fields_with_choices.items():
@@ -2510,8 +2505,7 @@ def choice_lists(request):
         if len(choice_list) == 0:
             continue
 
-        all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list,
-                                                                         choices_to_exclude=choices_to_exclude)
+        all_choice_lists[field] = choicelist_queryset_to_translated_dict(choice_list)
 
         #Also concatenate the frequencies of all values
         if 'include_frequencies' in request.GET and request.GET['include_frequencies']:
@@ -2569,7 +2563,19 @@ def gloss_revision_history(request,gloss_pk):
         if revision.field_name.startswith('sense_'):
             prefix, order, language_2char = revision.field_name.split('_')
             language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('Sense') + ' ' + order + ' (' + language.name + ')'
+            revision_verbose_fieldname = gettext('Sense') + ' ' + order + " (%s)" % language.name
+        elif revision.field_name.startswith('description_'):
+            prefix, language_2char = revision.field_name.split('_')
+            language = Language.objects.get(language_code_2char=language_2char)
+            revision_verbose_fieldname = gettext('NME Video Description') + " (%s)" % language.name
+        elif revision.field_name.startswith('nmevideo_'):
+            prefix, operation = revision.field_name.split('_')
+            if operation == 'create':
+                revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Create")
+            elif operation == 'delete':
+                revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Delete")
+            else:
+                revision_verbose_fieldname = gettext("NME Video") + ' ' + gettext("Update")
         elif revision.field_name in Gloss.get_field_names():
             revision_verbose_fieldname = gettext(Gloss.get_field(revision.field_name).verbose_name)
         elif revision.field_name == 'sequential_morphology':
@@ -2581,11 +2587,11 @@ def gloss_revision_history(request,gloss_pk):
         elif revision.field_name.startswith('lemma'):
             language_2char = revision.field_name[-2:]
             language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('Lemma ID Gloss') + ' (' + language.name + ')'
+            revision_verbose_fieldname = gettext('Lemma ID Gloss') + " (%s)" % language.name
         elif revision.field_name.startswith('annotation'):
             language_2char = revision.field_name[-2:]
             language = Language.objects.get(language_code_2char=language_2char)
-            revision_verbose_fieldname = gettext('Annotation ID Gloss') + ' (' + language.name + ')'
+            revision_verbose_fieldname = gettext('Annotation ID Gloss') + " (%s)" % language.name
         elif revision.field_name == 'archived':
             revision_verbose_fieldname = gettext("Deleted")
         elif revision.field_name == 'restored':

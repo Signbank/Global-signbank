@@ -14,7 +14,7 @@ from django.urls import reverse
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from signbank.tools import get_selected_datasets_for_user
-from django.utils.translation import override, gettext_lazy as _, activate
+from django.utils.translation import override, gettext_lazy as _, activate, gettext
 from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 import datetime as DT
 from django.utils.timezone import get_current_timezone
@@ -64,7 +64,7 @@ def generalfeedback(request):
                           {'language': settings.LANGUAGE_NAME,
                            'selected_datasets': get_selected_datasets_for_user(request.user),
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                           'title': "General Feedback",
+                           'title': gettext("General Feedback"),
                            'form': form,
                            'valid': valid})
     else:
@@ -74,7 +74,7 @@ def generalfeedback(request):
                   {'language': settings.LANGUAGE_NAME,
                    'selected_datasets': get_selected_datasets_for_user(request.user),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                   'title': "General Feedback",
+                   'title': gettext("General Feedback"),
                    'form': form,
                    'valid': valid})
 

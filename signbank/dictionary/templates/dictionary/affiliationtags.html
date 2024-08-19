@@ -2,7 +2,7 @@
 
 {% load guardian_tags %}
 
-        <div id='affs' style="z-index: 0;opacity:.99; position: relative; background-color: white;">
+        <div id='affs' style="z-index: 0;opacity:.99; position: relative; background-color: inherit;">
         <fieldset>
       {% load affiliation_tags %}
       {% with gloss|get_affiliations_for_gloss as aff_list %}
@@ -36,7 +36,7 @@
                 method="post" enctype="multipart/form-data">
            {% csrf_token %}
            <table>
-           <tr><td>{{affiliationform.affiliation}}</td>
+           <tr><td class="td td-light">{{affiliationform.affiliation}}</td>
                <td><input class='btn btn-primary' type='submit' value='{% trans "Add Affiliation" %}'></td>
            </tr>
            </table>
