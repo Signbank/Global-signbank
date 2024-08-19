@@ -6924,7 +6924,7 @@ class AnnotatedGlossListView(ListView):
 
     model = AnnotatedGloss
     paginate_by = 50
-    search_type = 'gloss'
+    search_type = 'sign'
     view_type = 'gloss_list'
     web_search = False
     dataset_name = settings.DEFAULT_DATASET_ACRONYM
@@ -6985,7 +6985,7 @@ class AnnotatedGlossListView(ListView):
     def get_queryset(self):
         get = self.request.GET
 
-        self.search_type = self.request.GET.get('search_type', 'gloss')
+        self.search_type = self.request.GET.get('search_type', 'sign')
         setattr(self.request.session, 'search_type', self.search_type)
         self.view_type = self.request.GET.get('view_type', 'gloss_list')
         setattr(self.request, 'view_type', self.view_type)
@@ -7132,7 +7132,6 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
         else:
             display_value = ''
         column_values.append((fieldname, display_value))
-    print(column_values)
     return render(request, 'dictionary/annotatedgloss_row.html',
                   {'annotated_gloss': this,
                    'focus_gloss': this_gloss,

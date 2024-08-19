@@ -5,20 +5,22 @@
 {% load bootstrap3 %}
 {% load tagging_tags %}
 
-<tr id = "glossrow_{{annotated_gloss.id}}" class="gloss_row">
+<tr id = "glossrow_{{annotated_gloss.id}}_{{focus_gloss.id}}" class="gloss_row">
 
 
     <td class="field_hasvideo">{%if focus_gloss.get_image_path %}
     {% url 'dictionary:protected_media' '' as protected_media_url %}
 
       <div class="thumbnail_container">
-      <a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
+      <a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.id}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
 
-        <div id='glossvideo_{{focus_gloss.id}}'>
+        <div id='glossvideo_{{annotated_gloss.id}}_{{focus_gloss.id}}'>
             <img class="thumbnail" src="{{protected_media_url}}{{focus_gloss.get_image_url}}">
 
             {% if focus_gloss.has_video %}
-            <video id="videoplayer" class="thumbnail-video" src="{{protected_media_url}}{{focus_gloss.get_video_url}}"  type="video/mp4" muted="muted"></video>
+            <video id="videoplayer" class="thumbnail-video"
+                   src="{{protected_media_url}}{{focus_gloss.get_video_url}}"
+                   type="video/mp4" muted="muted" style="display:none;"></video>
             {% endif %}
         </div>
 
