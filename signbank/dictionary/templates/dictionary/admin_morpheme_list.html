@@ -677,17 +677,8 @@ function do_set_lemma_language(el) {
     </thead>
     <tbody>
     {% for morpheme in object_list %}
-            <!-- EK: the color depends on: (1) tag for wrong sign, (2) availability of video, and (3) morpheme database value for 'isNew' -->
-            {% tags_for_object morpheme as tag_list %}
-            {% if tag_list|wrong_sign %}
-                <tr class="danger">
-            {% elif not morpheme.has_video %}
-                <tr class="warning">
-            {% elif morpheme.isNew %}
-                <tr class="info">
-            {% else %}
-                <tr>
-            {% endif %}
+
+    <tr>
 
       <td>{%if morpheme.get_image_path %}<div class="thumbnail_container"><img class="thumbnail" src="{{protected_media_url}}{{morpheme.get_image_path}}"></div>{% endif %}</td>
 
