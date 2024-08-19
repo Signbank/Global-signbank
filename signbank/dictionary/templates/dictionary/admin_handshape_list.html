@@ -126,11 +126,11 @@ function do_adminsearch(el) {
 <div id="definitionblock">
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 </div>
-<div id='searchformwell' class='well'>
-<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/search_handshape/'>
-<div class="panel panel-default">
+<div id='searchformwell' class='well well-light'>
+<form name='adminsearch' class="search-form search-form-light" id='adminsearch' method='get' action='{{PREFIX_URL}}/signs/search_handshape/'>
+<div class="panel panel-default panel-light">
 {% if not user.is_anonymous %}
-<div class="panel-heading" data-toggle="collapse" data-target="#queryarea">{% trans "Form Your Query" %}</div>
+<div class="panel-heading panel-light" data-toggle="collapse" data-target="#queryarea">{% trans "Form Your Query" %}</div>
 <div id='queryarea' class='panel-collapse collapse'>
         <div class="hidden">
             <input name='sortOrder' class='form-control' value='machine_value' >
@@ -140,72 +140,57 @@ function do_adminsearch(el) {
                     {% csrf_token %}
                     <table class='table'>
                         <tr id='handshape_name_field'>
-                            <td><label for='id_name'>{% trans "Handshape Name" %}</label></td>
-                            <td><input class='form-control handshapetypeahead'
-                                       placeholder='{% trans "Handshape Name" %}'
-                                       name='name' type='text'
-                                       value="{{searchform.name.value|default:'' }}"/></td>
+                            <td class='td td-light'><label for='id_name'>{% trans "Handshape Name" %}</label></td>
+                            <td class='td td-light'><input
+                                    class='form-control form-control-light handshapetypeahead handshapetypeahead-light'
+                                    placeholder='{% trans "Handshape Name" %}'
+                                    name='name' type='text'
+                                    value="{{searchform.name.value|default:'' }}"/></td>
                         </tr>
                     </table>
                 </div>
                 {# spacing div to allow room for typeahead dropdown #}
                 <div style='height: 4em'></div>
 
-                <div class="panel-heading" data-toggle="collapse" data-target="#finger_selection" id="fingerSelectionPanels">
-                    <div class='panel-title' id='finger_selection_heading'>
-                        <a data-toggle='collapse' href='#finger_selection'><label>{% trans "Finger Selection" %}</label></a>
-                    </div>
-                    <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
-                    <div class="pull-right">
-                            <div class="btn-group" id="panel-expand-collapse-btn-group" style="top: -20px;">
-                                <button id="expand-panels" type="button" class="btn btn-default btn-xs">
-                                        <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
-                                </button>
-                                <button id="collapse-panels" type="button" class="btn btn-default btn-xs">
-                                    <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <div class="panel-heading panel-light panel-group" data-toggle="collapse"
+                     data-target="#finger_selection" id="fingerSelectionPanels">
+                            {% trans "FINGER SELECTION" %}</div>
 
-                <div id='finger_selection'>
-                    <div class="panel panel-default" id="selectFirstFingers">
-                        <div class="panel-heading">
-                            <div class='panel-title'>
-                                <a data-toggle='collapse' href='#finger_selection_1' for='id_hsFingSel'>{{searchform.hsFingSel.label}}</a>
-                            </div>
-                        </div>
+                <div id='finger_selection' class="panel panel-group collapse">
+                    <div class="panel panel-default panel-light" id="selectFirstFingers">
+                        <div class="panel-heading panel-light" data-toggle='collapse'
+                             data-parent="#fingerSelectionPanels"
+                             data-target='#finger_selection_1' for='id_hsFingSel'>{{searchform.hsFingSel.label}}</div>
                         <div id='finger_selection_1' class='panel-collapse collapse'>
                             <table class='table'>
                                 <tr>
                                     <td/>
                                     <td>
-                                        <div class='input-group'>
+                                        <div class='input-group input-group-light'>
                                         <label class='input-group-addon' for='id_fsT'>T</label>
                                         {{searchform.fsT}}
                                         </div>
                                     </td>
                                     <td>
-                                        <div class='input-group'>
+                                        <div class='input-group input-group-light'>
                                         <label class='input-group-addon' for='id_fsI'>I</label>
                                         {{searchform.fsI}}
                                         </div>
                                     </td>
                                     <td>
-                                        <div class='input-group'>
+                                        <div class='input-group input-group-light'>
                                         <label class='input-group-addon' for='id_fsM'>M</label>
                                         {{searchform.fsM}}
                                         </div>
                                     </td>
                                     <td>
-                                        <div class='input-group'>
+                                        <div class='input-group input-group-light'>
                                         <label class='input-group-addon' for='id_fsR'>R</label>
                                         {{searchform.fsR}}
                                         </div>
                                     </td>
                                     <td>
-                                        <div class='input-group'>
+                                        <div class='input-group input-group-light'>
                                         <label class='input-group-addon' for='id_fsP'>P</label>
                                         {{searchform.fsP}}
                                         </div>
@@ -214,42 +199,40 @@ function do_adminsearch(el) {
                             </table>
                         </div>
                 </div>
-                <div class="panel panel-default" id="selectSecondFingers">
-                    <div class="panel-heading">
-                        <div class='panel-title'>
-                            <a data-toggle='collapse' href='#finger_selection_2' for='id_hsFingSel2'>{{searchform.hsFingSel2.label}}</a>
-                        </div>
-                    </div>
+                <div class="panel panel-default panel-light" id="selectSecondFingers">
+                    <div class="panel-heading panel-light" data-toggle='collapse'
+                         data-parent="#fingerSelectionPanels" data-target='#finger_selection_2'
+                         for='id_hsFingSel2'>{{searchform.hsFingSel2.label}}</div>
                     <div id='finger_selection_2' class='panel-collapse collapse'>
                         <table class='table'>
                             <tr>
                                 <td/>
                                 <td>
-                                    <div class='input-group'>
+                                    <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_fs2T'>T</label>
                                     {{searchform.fs2T}}
                                     </div>
                                 </td>
                                 <td>
-                                    <div class='input-group'>
+                                    <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_fs2I'>I</label>
                                     {{searchform.fs2I}}
                                     </div>
                                 </td>
                                 <td>
-                                    <div class='input-group'>
+                                    <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_fs2M'>M</label>
                                     {{searchform.fs2M}}
                                     </div>
                                 </td>
                                 <td>
-                                    <div class='input-group'>
+                                    <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_fs2R'>R</label>
                                     {{searchform.fs2R}}
                                     </div>
                                 </td>
                                 <td>
-                                    <div class='input-group'>
+                                    <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_fs2P'>P</label>
                                     {{searchform.fs2P}}
                                     </div>
@@ -258,42 +241,41 @@ function do_adminsearch(el) {
                         </table>
                     </div>
                 </div>
-                <div class="panel panel-default" id="selectThirdFingers">
-                    <div class="panel-heading">
-                        <div class='panel-title'>
-                            <a data-toggle='collapse' href='#unselected_fingers' for='id_hsFingUnsel'>{{searchform.unselectedFingers.label}}</a>
-                        </div>
-                    </div>
+                <div class="panel panel-default panel-light" id="selectThirdFingers">
+                    <div class="panel-heading panel-light" data-toggle='collapse'
+                         data-parent="#fingerSelectionPanels"
+                         data-target='#unselected_fingers'
+                         for='id_hsFingUnsel'>{{searchform.unselectedFingers.label}}</div>
                     <div id='unselected_fingers' class='panel-collapse collapse'>
                         <table class='table'>
                             <tr>
                                 <td/>
                                 <td>
-                                    <div class='input-group'>
+                                    <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_ufT'>T</label>
                                     {{searchform.ufT}}
                                     </div>
                                 </td>
                                 <td>
-                                    <div class='input-group'>
+                                    <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_ufI'>I</label>
                                     {{searchform.ufI}}
                                     </div>
                                 </td>
                                 <td>
-                                    <div class='input-group'>
+                                    <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_ufM'>M</label>
                                     {{searchform.ufM}}
                                     </div>
                                 </td>
                                 <td>
-                                    <div class='input-group'>
+                                    <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_ufR'>R</label>
                                     {{searchform.ufR}}
                                     </div>
                                 </td>
                                 <td>
-                                    <div class='input-group'>
+                                    <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_ufP'>P</label>
                                     {{searchform.ufP}}
                                     </div>
@@ -305,12 +287,18 @@ function do_adminsearch(el) {
                 </div>
 
                 <table class='table'>
-                        <tr><td><label for='id_hsFingConf'>{{searchform.hsFingConf.label}}</label></td><td>{{searchform.hsFingConf}}</td></tr>
-                        <tr><td><label for='id_hsFingConf2'>{{searchform.hsFingConf2.label}}</label></td><td>{{searchform.hsFingConf2}}</td></tr>
-                        <tr><td><label for='id_hsNumSel'>{{searchform.hsNumSel.label}}</label></td><td>{{searchform.hsNumSel}}</td></tr>
-                        <tr><td><label for='id_hsSpread'>{{searchform.hsSpread.label}}</label></td><td>{{searchform.hsSpread}}</td></tr>
-                        <tr><td><label for='id_hsAperture'>{{searchform.hsAperture.label}}</label></td><td>{{searchform.hsAperture}}</td></tr>
+                        <tr><td class='td td-light'><label for='id_hsFingConf'>{{searchform.hsFingConf.label}}</label></td>
+                            <td class='td td-light'>{{searchform.hsFingConf}}</td></tr>
+                        <tr><td class='td td-light'><label for='id_hsFingConf2'>{{searchform.hsFingConf2.label}}</label></td>
+                            <td class='td td-light'>{{searchform.hsFingConf2}}</td></tr>
+                        <tr><td class='td td-light'><label for='id_hsNumSel'>{{searchform.hsNumSel.label}}</label></td>
+                            <td class='td td-light'>{{searchform.hsNumSel}}</td></tr>
+                        <tr><td class='td td-light'><label for='id_hsSpread'>{{searchform.hsSpread.label}}</label></td>
+                            <td class='td td-light'>{{searchform.hsSpread}}</td></tr>
+                        <tr><td class='td td-light'><label for='id_hsAperture'>{{searchform.hsAperture.label}}</label></td>
+                            <td class='td td-light'>{{searchform.hsAperture}}</td></tr>
                 </table>
+            </div>
             </div>
 
 <div class='btn-group'>
@@ -346,7 +334,6 @@ function do_adminsearch(el) {
            onclick="clearForm();" value='{% trans "Reset" %}'>
 </div>
 {% endif %}
-</div>
 </form>
 </div>
 

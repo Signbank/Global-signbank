@@ -105,9 +105,10 @@ function do_export_csv(e1) {
 <div id="definitionblock">
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
-<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/dictionary/lemma/'>
-<div class="panel panel-default">
-    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
+<form name='adminsearch' class="search-form search-form-light" id='adminsearch' method='get'
+      action='{{PREFIX_URL}}/dictionary/lemma/'>
+<div class="panel panel-default panel-light" style="width:1200px;">
+    <div class="panel-heading panel-light" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
             {% if USE_REGULAR_EXPRESSIONS %}
             <span class="hasTooltip">
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
@@ -117,25 +118,25 @@ function do_export_csv(e1) {
             {% endif %}
     </div>
 
-    <div id='query-area' class='collapse {% if request.GET|length == 0 %} in {% endif %}'>
-        <div id='searchformwell' class='well search-results-collapsable'>
+    <div id='query-area' class='collapse-light collapse {% if request.GET|length == 0 %} in {% endif %}'>
+        <div id='searchformwell' class='well well-light search-results-collapsable'>
                 <div class="hidden">
                     <input name='sortOrder' class='form-control' value='' type='hidden'>
                     <input name='search_type' class='form-control' value='{{search_type}}' type='hidden'>
                 </div>
                 <div>
-                    <table class='table' id='searchfields'>
+                    <table class='table table-condensed-light' id='searchfields' style="width:1200px;">
                         {% for dataset_lang in dataset_languages %}
 
                         <tr>
                             {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
-                            <td><div class='input-group'>
+                            <td><div class='input-group input-group-light'>
 
                                 <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
                                     {{lemma_field.label}}
                                 </label>
                                 <input name='lemma_{{dataset_lang.language_code_2char}}'
-                                       type='text'
+                                       type='text' maxlength="80" size="50"
                                        class='form-control'></div>
                             </td>
                             {% endwith %}
@@ -143,8 +144,8 @@ function do_export_csv(e1) {
                         {% endfor %}
 
                         <tr id="lemma_with_no_glosses">
-                            <td>
-                                <div class='input-group'>
+                            <td class='td td-light'>
+                                <div class='input-group input-group-light'>
                                 <label class='input-group-addon' for='id_no_glosses'>{{searchform.no_glosses.label}}</label>
                                 {{searchform.no_glosses}}
                                 </div>
@@ -152,8 +153,8 @@ function do_export_csv(e1) {
                          </tr>
 
                          <tr id="lemma_with_glosses">
-                            <td>
-                                <div class='input-group'>
+                            <td class='td td-light'>
+                                <div class='input-group input-group-light'>
                                 <label class='input-group-addon' for='id_has_glosses'>{{searchform.has_glosses.label}}</label>
                                 {{searchform.has_glosses}}
                                 </div>
@@ -174,19 +175,19 @@ function do_export_csv(e1) {
                onclick="do_adminsearch(this);"
                value='lemma'>{% trans "Search Lemma" %}</button>
         <input type='hidden' id='do_lemma_search' name='search_lemma' value="">
-       <button class='btn btn-default' type='submit'
+       <button class='btn btn-default btn-default-light' type='submit'
                id='show_all_lemmas_button'
                onclick="do_show_all(this);"
                value='lemma'>{% trans "Show All" %}</button>
         <input type='hidden' id='show_all_lemmas' name='show_all_lemmas' value="">
         {% if perms.dictionary.export_csv %}
-        <button class='btn btn-default' type='submit'
+        <button class='btn btn-default btn-default-light' type='submit'
                 onclick="do_export_csv(this);"
                 id='button_export_csv' value='CSV'>CSV</button>
         <input type='hidden' id='format' name='format' value="">
         <input type='hidden' id='show_all' name='show_all' value="{{show_all}}">
         {% endif %}
-        <input class='btn btn-default' type='submit' onclick="clearForm();"
+        <input class='btn btn-default btn-default-light' type='submit' onclick="clearForm();"
                value='{% trans "Reset" %}'>
         <input type='hidden' id="reset" name="reset" value="">
     </div>
@@ -341,7 +342,7 @@ function do_export_csv(e1) {
         </form>
         <a class="btn btn-danger" href="" id="delete-link"
                onclick="document.getElementById('delete-form').submit(); return false;">{% trans "Yes" %}</a>
-        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "No" %}</button>
+        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "No" %}</button>
       </div>
     </div>
 
@@ -363,7 +364,7 @@ function do_export_csv(e1) {
               {% csrf_token %}
               <input type='hidden' value='delete_lemmas' name='delete_lemmas'>
                   <div class='btn-group'>
-                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                     <button class="btn btn-danger"
                            onclick="document.getElementById('delete-no-glosses').submit(); return false">{% trans "Confirm Delete" %}</button>
                   </div>

@@ -52,10 +52,10 @@
 
      <form action='{% url "dictionary:create_lemma" %}' method='post'>
          {% csrf_token %}
-         <table class='table' style='width: 400px;'>
+         <table class='table table-condensed-light' style='width: 1200px;'>
              <tr>
                  <th><label for='dataset'>Dataset</label></th>
-                 <td><select id="id_dataset" name="dataset" required="">
+                 <td class='td td-light'><select id="id_dataset" name="dataset" required="">
                          {% for s_dataset in selected_datasets %}
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
                          {% if "change_dataset" in dataset_perms %}
@@ -76,7 +76,9 @@
                      <label for="id_lemma_idgloss_{{dataset_lang.language_code_2char}}">{% trans "Lemma ID Gloss" %} ({{ dataset_lang.name }})</label>
                  </th>
                  <td id="add_lemma_dataset_value_{{ dataset_lang.language_code_2char }}">
-                     <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}" name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}" required="" maxlength="30" type="text"/>
+                     <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
+                            name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}" required=""
+                            maxlength="80" size="50" type="text">
                  </td>
              </tr>
              {% endfor %}

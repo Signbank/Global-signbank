@@ -54,7 +54,7 @@ $(document).ready(function() {
 <h2>{% trans "User Profile" %}</h2>
 
     {% if user.is_anonymous %}
-    <table class="table">
+    <table class="table table-condensed table-condensed-light">
         <tr><th>Username</th>
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}
         <th style="white-space:nowrap;">{% trans "View Permission for Public Signs in Datasets" %}</th>
@@ -71,7 +71,8 @@ $(document).ready(function() {
     </tr>
     </table>
     {% else %}
-    <table class="table">
+    <table class="table table-condensed table-condensed-light">
+    <thead class="thead thead-light">
     <tr><th>Username</th><th>Name</th><th>Email</th><th>Expiration Date</th>
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}
         <th style="white-space:nowrap;">{% trans "Selected Datasets" %}</th>
@@ -79,7 +80,9 @@ $(document).ready(function() {
         <th style="white-space:nowrap;">{% trans "Change Permission" %}</th>
         {% endif %}
     </tr>
-    <tr><td>{{user.username}}</td>
+    </thead>
+    <tbody class="tbody tbody-light">
+    <tr class="tr tr-light"><td>{{user.username}}</td>
         <td>{{user.first_name}} {{user.last_name}}</td>
         <td>{{user.email}}</td>
         <td>{{expiry}}
@@ -105,6 +108,7 @@ $(document).ready(function() {
         </td>
         {% endif %}
     </tr>
+    </tbody>
     {% if delta.days < 60 %}
     <tr>
     <form name='extend_account_expiry' id='extend_account_expiry' action="{{PREFIX_URL}}/update/expiry/" method='POST'>
@@ -120,17 +124,27 @@ $(document).ready(function() {
     </tr>
     </table>
     {% endif %}
-    <table class="table">
-        <tr>
-        <th style="width:200px;">{% trans "Affiliation" %}</th>
-        <td>{% for aff in user_affiliation %}{{aff.affiliation.name}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-        </tr>
+    <table class="table table-condensed table-condensed-light">
+    <thead class="thead thead-light">
+    <tr>
+    <th class='th th-light' style="width:200px;">{% trans "Affiliation" %}</th>
+        <td>
+            <span class="span-text span-text-content-light">
+            {% for aff in user_affiliation %}{{aff.affiliation.name}}{% if not forloop.last %}, {% endif %}{% endfor %}
+            </span>
+        </td>
+    </tr>
+    </thead>
     </table>
     {% if user_can_change_glosses %}
-    <table class="table">
+    <br><br>
+    <table class="table table-condensed table-condensed-light">
+    <thead class="thead thead-light">
     <tr>
-    <th style="width:200px;">{% trans "Signbank API Tokens" %}</th>
+    <th class='th th-light' style="width:200px;">{% trans "Signbank API Tokens" %}</th>
     </tr>
+    </thead>
+    <tbody class="tbody tbody-light">
     {% for token in user_api_tokens %}
         <tr><td><span>{% trans "A Signbank API Token was created on" %} {{token}}</span></td></tr>
     {% endfor %}
@@ -150,12 +164,18 @@ $(document).ready(function() {
 
         </td>
     </tr>
+    </tbody>
 
     </table>
     {% endif %}
     {% if user_has_queries %}
-    <table class="table">
-    <th>{% trans "Recently Saved Queries" %}</th>
+    <br><br>
+    <table class="table table-condensed table-condensed-light">
+    <thead class="thead thead-light">
+    <tr>
+        <th class='th th-light'>{% trans "Recently Saved Queries" %}</th>
+    </tr>
+    </thead>
     <tr>
         <td>
             <a href="{{PREFIX_URL}}/analysis/search_history/">{% trans "Search History" %}</a>

@@ -12,11 +12,9 @@
 
 
 {% block extrajs %}
-    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
-    <script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
-
-    <script type='text/javascript'>
+<script type='text/javascript'>
+    var dark_mode = '{{request.session.dark_mode}}';
+    var dark_mode_django = '{{dark_mode}}';
     var url = '{{PREFIX_URL}}';
     var phonology_list_kinds = {{phonology_list_kinds|safe}};
     var gloss_phonology = {{gloss_phonology|safe}};
@@ -55,7 +53,11 @@
     var handedness_weak_choices = {{gloss.handedness_weak_drop_prop_json|safe}};
     var handedness_weak_choices_colors = {};
     for (var key in handedness_weak_choices) {
-        handedness_weak_choices_colors[key] = 'ffffff';
+        if (dark_mode_django == 'True') {
+            handedness_weak_choices_colors[key] = '000000';
+        } else {
+            handedness_weak_choices_colors[key] = 'ffffff';
+        }
     };
     var handedness_weak_drop_reverse = {{gloss.handedness_weak_drop_prop_json|safe}};
     var handedness_weakdrop = handedness_weak_drop_reverse['{{gloss.weakdrop}}'];
@@ -74,14 +76,34 @@
 
     var choice_lists = [];
     var static_choice_lists = {{static_choice_lists|safe}};
-    var static_choice_list_colors = {{static_choice_list_colors|safe}};
+    var original_static_choice_list_colors = {{static_choice_list_colors|safe}};
+
+    var static_choice_list_colors = {};
+    for (var field in original_static_choice_list_colors) {
+       var field_dict = original_static_choice_list_colors[field];
+       static_choice_list_colors[field] = {}
+       for (key in field_dict) {
+            value = field_dict[key];
+            if (value == 'ffffff' && dark_mode_django == 'True') {
+                static_choice_list_colors[field][key] = '000000';
+            } else {
+                static_choice_list_colors[field][key] = value;
+            }
+        }
+    }
 
     var csrf_token = '{{csrf_token}}';
     var this_gloss_id = {{gloss.id}};
 
     var json_default_query_parameters = {{json_default_query_parameters|safe}};
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+</script>
 
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini_colors.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
+<script type="text/javascript" src="{{STATIC_URL}}js/typeahead.bundle.min.js"></script>
+
+<script type='text/javascript'>
     {% include "dictionary/search_result_bar.html" %}
     function validateForm(formId,targetObjectId,thisGlossID,mustChooseAlert,mustBeDifferentAlert) {
         var target_object = document.forms[formId][targetObjectId].value;
@@ -97,10 +119,8 @@
     }
 
     function reloadVideo() {
-        console.log('reload video');
         var video_player = document.getElementById("videoplayer");
         video_player_src = video_player.src;
-        console.log('url is ' + video_player_src);
         video_player_src = "";
         video_player.src = video_player_src;
         video_player.type = "video/mp4";
@@ -171,7 +191,6 @@ function checkKey(e)
     <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
-    <!-- Expand and collapse all panels -->
     <script type='text/javascript'>
         // This script gets minimal pairs data and displays it as table rows
         $(document).ready(function() {
@@ -192,34 +211,7 @@ function checkKey(e)
         $('#definitionblock').css({'padding-top': Math.round($('#searchquery').height() + $('#signinfo').height() + 10)});
   //      $('#definitionblock').css({'padding-top': Math.round($('#signinfo').height() + 10)});
         $('#view_tabs').css({'padding-top': 10, 'margin-top': 10});
-        $('#expand-panels').on('click', function() {
-            $('#definition .collapse').collapse('show');
-        });
-        $('#collapse-panels').on('click', function() {
-            $('#definition .collapse').collapse('hide');
-        });
-        $('#panel-expand-collapse-btn-group').affix({
-            offset: {
-                top: $('#panel-expand-collapse-btn-group').offset().top - $('#searchquery').height() - $('#signinfo').height()
-                 + parseInt($('#searchquery').css('margin-bottom'))
-                 + parseInt($('#panel-expand-collapse-btn-group').css('height')),
-            }
-        });
-        $('#panel-expand-collapse-btn-group').on('affixed.bs.affix', function() {
-            $('#panel-expand-collapse-btn-group').css({
-                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': ($('#searchquery').height() - $('#navbar').height() + parseInt($('#definitionblock').css('padding-top')) + 3) + 'px',
-            });
-         });
-        $('#panel-expand-collapse-btn-group').on('affixed-top.bs.affix', function() {
-            $('#panel-expand-collapse-btn-group').css({
-                'margin-left': '-' + $('#panel-expand-collapse-btn-group').width() + 'px',
-                'top': '0px',
-            });
-         });
-         $('#panel-expand-collapse-btn-toolbar').css({
-            'height': $('#panel-expand-collapse-btn-group').css('height'),
-         });
+
     </script>
 {% endblock %}
 
@@ -229,10 +221,8 @@ function checkKey(e)
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/dropstyle.css">
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/recordstyle.css">
     <link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/modalstyle.css">
+
     <style>
-        #panel-expand-collapse-btn-group.affix {
-            position:fixed;
-        }
         #view_tabs.affix {
             position:fixed;
         }
@@ -242,7 +232,8 @@ function checkKey(e)
     </style>
 <style>
 .preview {
-    background-color: white !important;
+    background-color: inherit !important;
+    color: inherit !important;
     height: 40;
     width: auto;
     position: relative;
@@ -260,11 +251,6 @@ select option {
     background-color: white !important;
     -webkit-appearance: none;
     -moz-appearance: none;
-}
-
-.dropdown-menu {
-    display: visible !important;
-    box-shadow: 0 10px 10px #333;
 }
 
 .dropdown-item:active{
@@ -303,8 +289,8 @@ select option {
 </style>
 <style>
 .form-group {
-    background-color: white;
-    color: black;
+    background-color: inherit;
+    color: inherit;
 }
 option:not(:checked) {
     background-color: white !important;
@@ -313,15 +299,18 @@ option:not(:checked) {
 /* This makes the popup Run Query button for the default parameters ressemble the style of the QP case.
    The <a> surrounding the text of the default parameters button is to simulate the link of the QP button. */
 .btn-query {
-    background-color: transparent;
-    border: 1px solid;
-    color: rgb(66, 139, 202);
+    background-color: DodgerBlue !important;
+    border: 1px solid DodgerBlue;
+    color: white;
     border-radius: 6px;
     height: 28px;
+    outline: none;
+    padding-bottom:20px;
 }
 .btn-query:hover .btn-query:focus {
-    color: rgb(66, 139, 202);
-    background-color: lightgrey;
+    color: white;
+    background-color: DodgerBlue;
+    outline: none;
 }
 /* modal-dialog-centered does not work in bootstrap 3
    use this instead, adjust value if necessary */
@@ -331,12 +320,29 @@ option:not(:checked) {
 .panel-heading:hover {
     background-color: #D2D2D2;
 }
+input[type="text"] {
+    background-color: rgba(50,50,50,10%);
+    border: none;
+}
+input[type="text"]:focus {
+    border: 1px solid red;
+}
+input[type="button"]:focus {
+    outline: none;
+}
+textarea {
+    border: none;
+    background-color: rgba(50,50,50,10%);
+}
+textarea:focus {
+    border: 1px solid red;
+}
 </style>
 
 {% endblock %}
 
 {% block content %}
-    <div class="navbar" id="searchquery" style="display:flex;background-color:white;z-index: 50;">
+    <nav class="navbar navbar-light" id="searchquery" style="background-color:inherit; color:inherit;z-index: 50;">
     <table class="table-responsive">
     <tr>
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
@@ -346,17 +352,18 @@ option:not(:checked) {
     </td>
     {% endif %}
     <td>
-    <div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+    <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box;z-index: 500;">
         {% if request.session.search_results %}{# See if search_results in sessions is empty #}
 
-        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+        <div id="results-inline" class="btn-group" role="group" aria-label="search results"
+             style="white-space:nowrap;">
         </div>
         {% endif %}
     </div>
     </td>
     </tr>
     </table>
-    </div>
+    </nav>
 
     {% if SHOW_QUERY_PARAMETERS_AS_BUTTON %}
      <div class="modal fade" id="display_query_parameters"
@@ -383,7 +390,7 @@ option:not(:checked) {
                     <input type='hidden' name='use_default_query_parameters' value='default_parameters'>
                         <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
                             <thead id = 'default_query_table_header'>
-                                    <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                    <th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
                                     <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
@@ -417,7 +424,7 @@ option:not(:checked) {
                         <input type='hidden' name='use_default_query_parameters' value='query_parameters'>
                         <table class="table table-condensed" style="z-index:0;padding-top: 100px;width:1000px;">
                             <thead id = 'query_table_header'>
-                                    <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
+                                    <th style="width: 500px;border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Field" %}</th>
                                     <th style="border-bottom: 1px solid grey; border-left: 1px solid grey;
                                             border-top: 1px solid grey; border-right: 1px solid grey;">{% trans "Value" %}</th>
@@ -451,20 +458,20 @@ option:not(:checked) {
                 <div class="modal-footer">
                     {% if not query_parameters.items %}
                         {% if not default_query_parameters.items %}
-                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
                         {% else %}
                             <form id="use_default_query_parameters" action='' method="POST">
                             {% csrf_token %}
-                            <button type='submit' class="btn-query" name="use_default_query_parameters"
+                            <button type='submit' class="btn btn-primary" name="use_default_query_parameters"
                                     value="default_parameters"><a>{% trans "Run Query" %}</a></button>
                             <input type="hidden" id="default_parameters" name="default_parameters" value="{{json_default_query_parameters}}">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
                             </form>
                         {% endif %}
                     {% else %}
-                        <button><a href="{{PREFIX_URL}}/signs/search/?query" type='submit'
-                                    style="text-decoration:none;">{% trans "Run Query" %}</a></button>
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Dismiss" %}</button>
+                        <button class="btn-query"><a class="btn btn-query" href="{{PREFIX_URL}}/signs/search/?query" type='submit'
+                                    style="text-decoration:none;padding-bottom:10px;color:white;">{% trans "Run Query" %}</a></button>
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Dismiss" %}</button>
                     {% endif %}
                 </div>
 
@@ -478,10 +485,10 @@ option:not(:checked) {
 
 {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
 
-    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;">
-    <ul class='nav nav-tabs'>
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+    <ul class='nav nav-tabs nav-tabs-light'>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
         </li>
@@ -518,7 +525,7 @@ option:not(:checked) {
          <button id='copy_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#copy_gloss_modal'>{% trans "Copy" %}</button>
 
           <div class="modal fade" id="copy_gloss_modal" role="dialog" aria-labelledby="#modalGlossCopy" aria-hidden="true">
-             <div class="modal-dialog">
+             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h2 id='modalGlossCopy'>{% trans "Copy Gloss" %}</h2>
@@ -559,7 +566,7 @@ option:not(:checked) {
                       <input type='hidden' name='format' value='Copy'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                         {% if not gloss_is_duplicate %}
                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Copy Create" %}'>
                         {% endif %}
@@ -576,7 +583,7 @@ option:not(:checked) {
          <button id='move_gloss_btn' class='btn btn-primary copy-button' data-toggle='modal' data-target='#move_gloss_modal'>{% trans "Move" %}</button>
 
           <div class="modal fade" id="move_gloss_modal" role="dialog" aria-labelledby="#modalGlossMove" aria-hidden="true">
-             <div class="modal-dialog">
+             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h2 id='modalGlossMove'>{% trans "Move Gloss" %}</h2>
@@ -641,7 +648,7 @@ option:not(:checked) {
                       <input type='hidden' name='format' value='Move'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Move" %}'>
                       </div>
                   </form>
@@ -658,7 +665,7 @@ option:not(:checked) {
 
         {% if "change_dataset" in dataset_perms %}
         <div class="modal fade" id="delete_gloss_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDelete" aria-hidden="true">
-             <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
+             <div class="modal-dialog modal-lg left-modal">
                 <div class="modal-content">
                     <div class='modal-header'>
                         <h2 id='modalTitleDelete'>{% trans "Delete This Sign" %}</h2>
@@ -731,7 +738,7 @@ option:not(:checked) {
     {% if "change_dataset" in dataset_perms %}
     <div class='editform'>
         <fieldset>
-            <legend>{% trans "Upload New Video" %}</legend>
+            <h4>{% trans "Upload New Video" %}</h4>
             <label for="id_videofile" class="drop-container" id="drop-container-video">
               <div id="videogallery" class="gallery"></div>
               <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
@@ -826,7 +833,7 @@ option:not(:checked) {
 
     <div class='editform'>
         <fieldset>
-            <legend>{% trans "Upload New Citation Form Image" %}</legend>
+            <h4>{% trans "Upload New Citation Form Image" %}</h4>
             <label for='id_imagefile' class="drop-container" id="drop-container-image">
               <div id="imagegallery" class="gallery"></div>
               <span id = "drop-container-title-image"  class="drop-title">Drop image here<br>or...</span>
@@ -854,7 +861,7 @@ option:not(:checked) {
 
     {% if gloss.has_video and "change_dataset" in dataset_perms %}
         <div class="editform">
-            <legend>{% trans "Create Citation Form Image from Current Video" %}</legend>
+            <h4>{% trans "Create Citation Form Image from Current Video" %}</h4>
             <a href="{% url 'dictionary:create_citation_image'  gloss.id %}" class="btn btn-primary">Create</a>
         </div>
 
@@ -863,7 +870,7 @@ option:not(:checked) {
     {% if "change_dataset" in dataset_perms %}
     <div class="editform">
         <fieldset>
-         <legend>{% trans "Delete Media" %}</legend>
+         <h4>{% trans "Delete Media" %}</h4>
             <table>
                 <tr><td>
                 <form class="formbutton" action="{{PREFIX_URL}}/video/delete/{{gloss.pk}}" method='post'>
@@ -881,7 +888,7 @@ option:not(:checked) {
      {% if "change_dataset" in dataset_perms %}
     <div class="editform">
         <fieldset>
-         <legend>{% trans "Delete Sign" %}</legend>
+         <h4>{% trans "Delete Sign" %}</h4>
          <button id='delete_gloss_btn' class='btn btn-danger' style="width:auto;"
                  data-toggle='modal'
                  data-target='#delete_gloss_modal'>{% trans "Delete Sign" %}</button>
@@ -890,12 +897,12 @@ option:not(:checked) {
     {% endif %}
 
 </div>
-    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative; background: white;">
+    <div class='panel-group' id="definition" style="z-index: 0;opacity:.99; position: relative;">
 
         {% include "dictionary/glosstags.html" %}
         {% include "dictionary/affiliationtags.html" %}
 
-        <table class='table table-condensed' style="width:100%;">
+        <table class='table table-condensed table-condensed-light' style="width:100%;">
             <tr {% if gloss_dialects|length == 0 %} class="empty_row" {% endif %}>
                 <th>{% trans "Dialect" %}</th>
                 <td class='edit edit_dialect' id='dialect'>{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
@@ -922,8 +929,10 @@ option:not(:checked) {
                     </div>
                 </td>
             </tr>
-            <tr name="lemma_forms_row"><th></th>
-                <td name="lemma_forms_cell">
+            <tr id="lemma_forms_row">
+                <th></th>
+                <td id="lemma_forms_cell" class='td td-light'>
+                <span>
                 <form name='edit_lemma_form' id='edit_lemma_form'
                         method='post' action='{% url "dictionary:change_lemma" gloss.lemma.id %}'>
                         {% csrf_token %}
@@ -943,7 +952,8 @@ option:not(:checked) {
                     <input type='hidden' name='gloss_lemma_id' value='{{gloss.lemma_id}}'>
 
                     <!-- Input of the type ahead -->
-                    <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+                    <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light'
+                           placeholder='{% trans "Lemma" %}' />
 
                     <!-- Input for gloss_update (2) / Input that holds the lemma id the user chose from the type ahead -->
                     <input type='hidden' name='value' value='confirmed'>
@@ -951,7 +961,7 @@ option:not(:checked) {
                     <input type='hidden' name='id' value='lemmaidgloss'>
                     <!-- Submit -->
                     <input class='btn btn-primary' value='{% trans "Set Lemma" %}' type='submit'>
-                    <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-default btn-default-light lemma-form-dismiss">{% trans "Cancel" %}</button>
                 </form>
                 <form name="add_lemma_form" id="add_lemma_form" method="post" action="{% url 'dictionary:create_lemma_gloss' gloss.id %}" >
                     {% csrf_token %}
@@ -966,8 +976,9 @@ option:not(:checked) {
                     {% endfor %}
                     <!-- Submit -->
                     <input class='btn btn-primary' value='{% trans "Add Lemma" %}' type='submit'>
-                    <button type="button" class="btn btn-default lemma-form-dismiss">{% trans "Cancel" %}</button>
+                    <button type="button" class="btn btn-default btn-default-light lemma-form-dismiss">{% trans "Cancel" %}</button>
                 </form>
+                </span>
                 </td>
             </tr>
 
@@ -977,7 +988,9 @@ option:not(:checked) {
                     {% trans "Annotation ID Gloss" %}
                     {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
                 </th>
+
                 <td class='edit edit_area' id='annotation_idgloss_{{lang.language_code_2char}}'
+                    style="color:inherit;"
                     colspan="2">{{annotation_idgloss_translation}}</td>
             </tr>
             <tr>
@@ -1032,9 +1045,9 @@ option:not(:checked) {
                                 <td style="width:50px">
                                     {% if "change_dataset" in dataset_perms %}
                                         <span class='glyphicon glyphicon-trash sense_delete sense-icon pull-right' style="color:red"  data-toggle='modal' data-target='#delete_sense_modal_{{sense.id}}'></span>
-                                        <div class="modal fade" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleDeleteSense" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                                <div class="modal-content">
+                                        <div class="modal fade modal-sense" id="delete_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleDeleteSense" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg left-modal">
+                                                <div class="modal-content modal-content-sense">
                                                     <div class='modal-header'>
                                                         <h2 id='modalTitleDeleteSense'>{% trans "Delete this Sense" %}</h2>
                                                     </div><br>
@@ -1046,7 +1059,7 @@ option:not(:checked) {
                                                         <input type='hidden' name='dataset' value='{{gloss.lemma.dataset.id}}'>
                                                         <input type='hidden' name='senseid' value='{{sense.id}}'>
                                                         <div class="modal-footer">
-                                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                                             <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                                         </div>
                                                     </form>
@@ -1054,9 +1067,9 @@ option:not(:checked) {
                                             </div>
                                         </div>
                                         <span class='sense-icon glyphicon glyphicon-edit sense_edit pull-right' style="color:red" data-toggle='modal' data-target='#edit_sense_modal_{{sense.id}}'></span>
-                                        <div class="modal fade" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleEditSense" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered modal-lg left-modal">
-                                                <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
+                                        <div class="modal fade modal-sense" id="edit_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleEditSense" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg left-modal">
+                                                <div class="modal-content modal-content-sense">
                                                     <div class='modal-header'>
                                                         <h2 id='modalTitleEditSense'>{% trans "Edit this sense" %}</h2>
                                                     </div><br>
@@ -1064,7 +1077,7 @@ option:not(:checked) {
                                                         {% csrf_token %}
                                                         <input type="hidden" name="dataset" value="{{gloss.lemma.dataset.id}}"/>
                                                         <input type="hidden" name="glossid" value="{{gloss.id}}"/>
-                                                        <table>
+                                                        <table style="margin-left:50px;">
                                                             <tr>
                                                                 {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                                                                     <th>{{dataset_lang.name}}</th>
@@ -1095,7 +1108,7 @@ option:not(:checked) {
                                                         
                                                         <div class="modal-footer">
                                                             <input class='btn btn-primary' value='{% trans "Update sense" %}' type='submit'>
-                                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                                         </div>
                                                     </form>
                                                 </div>
@@ -1105,9 +1118,9 @@ option:not(:checked) {
                                     {% with sense_to_similar_senses|get_item:sense.id as similar_senses %}
                                     {% if similar_senses %}
                                         <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
-                                        <div class="modal fade" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                                <div class="modal-content" style="width:calc(({{gloss.lemma.dataset.translation_languages.count}}+3)*200px);">
+                                        <div class="modal fade modal-sense" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
+                                            <div class="modal-dialog modal-lg left-modal">
+                                                <div class="modal-content modal-content-sense" style="width:calc(({{gloss.lemma.dataset.translation_languages.count}}+3)*200px);">
                                                     <div class='modal-header'>
                                                         <h2 id='modalTitleSimilarSense'>{% trans "Similar senses" %}</h2>
                                                     </div><br>
@@ -1157,7 +1170,7 @@ option:not(:checked) {
                                                         </table>
                                                         
                                                         <div class="modal-footer">
-                                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Close" %}</button>
+                                                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Close" %}</button>
                                                         </div>
                                                     <!-- </form> -->
                                                 </div>
@@ -1211,9 +1224,9 @@ option:not(:checked) {
 
                                                         <br><br>
                                                         <span class='glyphicon glyphicon-trash examplestc_delete sense-icon pull-right' style="color:red"  data-toggle='modal' data-target='#delete_examplestc_modal_{{examplesentence.id}}'></span>
-                                                        <div class="modal fade" id="delete_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteExamplestc" aria-hidden="true">
-                                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                                                <div class="modal-content">
+                                                        <div class="modal fade modal-sense" id="delete_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteExamplestc" aria-hidden="true">
+                                                            <div class="modal-dialog modal-lg left-modal">
+                                                                <div class="modal-content modal-content-sense">
                                                                     <div class='modal-header'>
                                                                         <h2 id='modalTitleDeleteExamplestc'>{% trans "Delete this Example Sentence" %}</h2>
                                                                     </div><br>
@@ -1225,7 +1238,7 @@ option:not(:checked) {
                                                                         <input type='hidden' name='examplesentenceid' value='{{examplesentence.id}}'>
                                                                         <input type='hidden' name='glossid' value='{{gloss.id}}'>
                                                                         <div class="modal-footer">
-                                                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                                                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                                                             <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                                                         </div>
                                                                     </form>
@@ -1234,9 +1247,9 @@ option:not(:checked) {
                                                         </div>
 
                                                         <span class='glyphicon glyphicon-edit examplestc_edit sense-icon pull-right' style="color:red"  data-toggle='modal' data-target='#edit_examplestc_modal_{{examplesentence.id}}'></span>
-                                                        <div class="modal fade" id="edit_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleEditExamplestc" aria-hidden="true">
-                                                            <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                                                <div class="modal-content">
+                                                        <div class="modal fade modal-sense" id="edit_examplestc_modal_{{examplesentence.id}}" role="dialog" aria-labelledby="#modalTitleEditExamplestc" aria-hidden="true">
+                                                            <div class="modal-dialog modal-lg left-modal">
+                                                                <div class="modal-content modal-content-sense">
                                                                     <div class='modal-header'>
                                                                         <h2 id='modalTitleEditExamplestc'>{% trans "Edit an example sentence" %}</h2>
                                                                     </div><br>
@@ -1263,7 +1276,7 @@ option:not(:checked) {
                                                                             {% endfor %}
                                                                         {% endfor %}
                                                                         <div class="modal-footer">
-                                                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                                                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                                                             <input type="submit" class="btn btn-primary" value='{% trans "Confirm edit" %}'>
                                                                         </div>
                                                                     </form>
@@ -1302,9 +1315,9 @@ option:not(:checked) {
                                             <tr class="sense-icon">
                                                 <td>
                                                     <button data-toggle='modal' data-target='#add_examplestc_modal_{{sense.id}}', class='sense-button btn btn-primary btn-space'>{% trans "Add an example sentence" %}</button>
-                                                    <div class="modal fade" id="add_examplestc_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleAddExamplestc" aria-hidden="true">
-                                                        <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                                            <div class="modal-content">
+                                                    <div class="modal fade modal-sense" id="add_examplestc_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleAddExamplestc" aria-hidden="true">
+                                                        <div class="modal-dialog modal-lg left-modal">
+                                                            <div class="modal-content modal-content-sense">
                                                                 <div class='modal-header'>
                                                                     <h2 id='modalTitleAddExamplestc'>{% trans "Add an example sentence" %}</h2>
                                                                 </div><br>
@@ -1327,7 +1340,7 @@ option:not(:checked) {
                                                                             <br><br>
                                                                     {% endfor %}
                                                                     <div class="modal-footer">
-                                                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                                                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm add" %}'>
                                                                     </div>
                                                                 </form>
@@ -1346,9 +1359,9 @@ option:not(:checked) {
                             <tr class="sense-icon">
                                 <td>
                                     <button data-toggle='modal' data-target='#add_sense_modal_{{gloss.id}}', class='sense-button btn btn-primary btn-space sense-button sense_add'>{% trans "Add a sense" %}</button>
-                                    <div class="modal fade" id="add_sense_modal_{{gloss.id}}" role="dialog" aria-labelledby="#modalTitleGloss" aria-hidden="true">
-                                        <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
-                                            <div class="modal-content" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
+                                    <div class="modal fade modal-sense" id="add_sense_modal_{{gloss.id}}" role="dialog" aria-labelledby="#modalTitleGloss" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg left-modal">
+                                            <div class="modal-content modal-content-sense" style="width:calc({{gloss.lemma.dataset.translation_languages.count}}*300px);">
                                                 <div class='modal-header'>
                                                     <h2 id='modalTitleGloss'>{% trans "Add a sense" %}</h2>
                                                 </div><br>
@@ -1371,7 +1384,7 @@ option:not(:checked) {
                                                     </table>
             
                                                     <div class="modal-footer">
-                                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm add" %}'>
                                                     </div>
                                                 </form>
@@ -1402,27 +1415,13 @@ option:not(:checked) {
 
         </table>
 
-        <!-- Expand and collapse all panels -->
-        <div class="btn-toolbar" role="toolbar" id="panel-expand-collapse-btn-toolbar">
-            <div class="pull-right">
-                <div class="btn-group" id="panel-expand-collapse-btn-group">
-                    <button id="expand-panels" type="button" class="btn btn-default btn-xs">
-                            <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
-                    </button>
-                    <button id="collapse-panels" type="button" class="btn btn-default btn-xs">
-                        <span class="glyphicon glyphicon-chevron-up" aria-hidden="true"></span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
    <!-- Non-manual videos -->
-   <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#nmevideos'>{% trans "Videos with Non-manual Elements" %}
         </div>
         <div id='nmevideos' class='collapse'>
-            <div class="panel panel-default">
+            <div class="panel panel-default panel-light">
             {% if gloss.has_nme_videos %}
                <table class='table table-responsive' style="text-align: left;width:100%;">
                 <tr style="overflow-y:auto;">
@@ -1448,7 +1447,7 @@ option:not(:checked) {
                                           <input type='hidden' name='id' value='nmevideo_delete_{{videonme.id}}'>
                                           <input type='hidden' name='value' value='confirmed'>
                                           <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                             <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
                                           </div>
                                         </form>
@@ -1497,7 +1496,7 @@ option:not(:checked) {
             {% if "change_dataset" in dataset_perms %}
             <div class='editform' style="width:800px;height:800px;">
                 <fieldset>
-                    <legend>{% trans "Upload New NME Video" %}</legend>
+                    <h4>{% trans "Upload New NME Video" %}</h4>
                     <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                         <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
@@ -1519,14 +1518,14 @@ option:not(:checked) {
                             <table class="table table-condensed">
                                 <tr>
                                     <th style="width:200px;">{% trans "Index" %}</th>
-                                    <td style='width:5em'>
-                                        <input class='form-control' name='offset' id='offset' type='number' value=1>
+                                    <td class="td td-light" style='width:5em'>
+                                        <input class='form-control form-control-light' name='offset' id='offset' type='number' value=1>
                                     </td>
                                 </tr>
                                 {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
                                 <tr>
                                     <th style="width:200px;">{{dataset_lang.name}}</th>
-                                    <td><input style="width:600px;"
+                                    <td class="td td-light"><input style="width:600px;"
                                                id="description_{{dataset_lang.language_code_2char}}"
                                                name="description_{{dataset_lang.language_code_2char}}"
                                                value="" maxlength="200" type="text" class="description-input">
@@ -1543,12 +1542,13 @@ option:not(:checked) {
    </div>
 
    <!-- Morphology -->
-   <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#morphology'>{% trans "Morphology" %}
         </div>
         <div id='morphology' class='collapse'>
-               <table class='table table-condensed'>
+               <table class='table table-condensed table-condensed-light'>
+                   <tbody class="tbody tbody-light">
                    <tr>
                        <th colspan="3">{% trans "Sequential Morphology" %}</th>
                    </tr>
@@ -1581,7 +1581,7 @@ option:not(:checked) {
                                           <input type='hidden' name='id' value='morphology-definition-delete_{{morphdef.id}}'>
                                           <input type='hidden' name='value' value='confirmed'>
                                           <div class="modal-footer">
-                                            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                             <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                           </div>
                                       </form>
@@ -1594,13 +1594,14 @@ option:not(:checked) {
                         {% else %}
                         <td></td>
                         {% endif %}
-                        <td id='morphology-definition-role_{{morphdef.id}}' >{{translated_role}}</td>
-                        <td id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a></td>
+                        <td class="td td-light" id='morphology-definition-role_{{morphdef.id}}' >{{translated_role}}</td>
+                        <td class="td td-light" id='morphology-definition-morpheme_{{morphdef.id}}'><a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a></td>
                    {% endfor %}
 
             {% else %}
             <tr><td><i>({% trans "If this is a compound, use [Edit] to define its components" %})</i></td></tr>
             {% endif %}
+           </tbody>
            </table>
 
             {% if "change_dataset" in dataset_perms %}
@@ -1614,9 +1615,9 @@ option:not(:checked) {
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td style="width:12em;">{{morphologyform.role}}</td>
-                       <td>
-                           <input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID Gloss" %}' />
+                       <td class="td td-light" style="width:12em;">{{morphologyform.role}}</td>
+                       <td class="td td-light">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' placeholder='{% trans "Annotation ID Gloss" %}' />
                            <input type="hidden" name="morpheme_id" value=""/>
                        </td>
                        <td><input id="add_component" class='btn btn-primary' value='{% trans "Add Component" %}' type='submit'></td>
@@ -1670,7 +1671,7 @@ option:not(:checked) {
                                       <input type='hidden' name='id' value='morpheme-definition-delete_{{morpheme.pk}}'>
                                       <input type='hidden' name='value' value='confirmed'>
                                       <div class="modal-footer">
-                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                       </div>
                                   </form>
@@ -1703,11 +1704,11 @@ option:not(:checked) {
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td style="width:22em;">
-                           <input class='form-control morphtypeahead' placeholder='{% trans "Morpheme Gloss" %}' value="{{morphemeform.morph_id.value|default:''}}"/>
+                       <td class="td td-light" style="width:22em;">
+                           <input class='form-control form-control-light morphtypeahead morphtypeahead-light' placeholder='{% trans "Morpheme Gloss" %}' value="{{morphemeform.morph_id.value|default:''}}"/>
                            <input type="hidden" name='morph_id' value=""/>
                        </td>
-                       <td><input class='form-control' placeholder='{% trans "Meaning in This Sign" %}' name='description' value="{{morphemeform.description.value|default:''}}"/></td>
+                       <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Meaning in This Sign" %}' name='description' value="{{morphemeform.description.value|default:''}}"/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Morpheme" %}' type='submit'></td>
                    </tr>
                </table>
@@ -1750,7 +1751,7 @@ option:not(:checked) {
                                       <input type='hidden' name='id' value='blend-definition-delete_{{blend.pk}}'>
                                       <input type='hidden' name='value' value='confirmed'>
                                       <div class="modal-footer">
-                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                       </div>
                                   </form>
@@ -1781,11 +1782,11 @@ option:not(:checked) {
                <table class='table table-condensed'>
                    <tr>
                        <td style="width:2em;"></td>
-                       <td style="width:22em;">
-                           <input class='form-control glosstypeahead' placeholder='{% trans "Blend Gloss" %}' value="{{blendform.blend_id.value|default:''}}"/>
+                       <td class="td td-light" style="width:22em;">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' placeholder='{% trans "Blend Gloss" %}' value="{{blendform.blend_id.value|default:''}}"/>
                            <input type="hidden" name='blend_id' value=""/>
                        </td>
-                       <td><input class='form-control' placeholder='{% trans "Role in This Sign" %}' name='role' value="{{blendform.role.value|default:''}}" required=""/></td>
+                       <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Role in This Sign" %}' name='role' value="{{blendform.role.value|default:''}}" required=""/></td>
                        <td><input class='btn btn-primary' value='{% trans "Add Blend" %}' type='submit'></td>
                    </tr>
                </table>
@@ -1798,8 +1799,8 @@ option:not(:checked) {
 
     </div>
     <!-- Phonology -->
-	<div class="panel panel-default">
-        <div class='panel-heading' id='phonology_heading'
+	<div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' id='phonology_heading'
              data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
                     {% if handedness and domhndsh %}
                     <div class="pull-right">
@@ -1869,7 +1870,7 @@ option:not(:checked) {
                     <tr >
                         <th>{{label}}</th>
                         <td class="edit edit_list" id='{{name}}' value='{{value}}' >
-                            <a id="strong_hand_link" style="color: {% if StrongHand %}inherit{% else %}red{% endif %}; display: visible;"
+                            <a id="strong_hand_link" style="color: {% if StrongHand %}blue{% else %}red{% endif %}; display: visible;"
                                             {% if StrongHand %}
                                                 href="{{PREFIX_URL}}/dictionary/handshape/{{StrongHand}}/"
                                             {% endif %}>{{value}}</a>
@@ -1955,8 +1956,8 @@ option:not(:checked) {
 
     <!-- Minimal Pairs -->
  {% if homonyms_but_not_saved %}
-  <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+  <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              style="color:red" data-target='#identicalphonology'>{% trans "Identical phonology but not marked as homonym" %}
         </div>
         <div id='identicalphonology' class='collapse'>
@@ -1972,8 +1973,8 @@ option:not(:checked) {
   </div>
  {% endif %}
  {% if homonyms_different_phonology %}
- <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+ <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              style="color:red" data-target='#differentphonology'>{% trans "Marked as homonym but different phonology" %}
         </div>
         <div id='differentphonology' class='collapse'>
@@ -1988,8 +1989,8 @@ option:not(:checked) {
         </div>
   </div>
 {% endif %}
-<div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+<div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
         </div>
         <div id='minimalpairs' class='collapse'>
@@ -2008,8 +2009,8 @@ option:not(:checked) {
 </div>
 
     <!-- Semantics -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
                     {% if SemanticFieldDefined %}
                     <div class="pull-right">
                     <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png'
@@ -2061,8 +2062,8 @@ option:not(:checked) {
     </div>
 
     <!-- Relations to other signs -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relations'>{% trans "Relations to Other Signs" %}
                     {% if gloss.relations_count %}
                     <div class="pull-right">
@@ -2096,7 +2097,7 @@ option:not(:checked) {
                                       <input type='hidden' name='id' value='relationdelete_{{rel.id}}'>
                                       <input type='hidden' name='value' value='confirmed'>
                                       <div class="modal-footer">
-                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                       </div>
                                   </form>
@@ -2109,8 +2110,8 @@ option:not(:checked) {
                {% else %}
                     <td></td>
                {% endif %}
-                    <td id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
-                    <td id='relationtarget_{{rel.id}}'>
+                    <td class="td td-light" id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
+                    <td class="td td-light" id='relationtarget_{{rel.id}}'>
                         <a id='relation_target_hyperlink_{{rel.id}}'
                            href='{% url "dictionary:admin_gloss_view" pk=rel.target.pk %}'>{{target_display}}</a>
                     </td>
@@ -2128,9 +2129,9 @@ option:not(:checked) {
                <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
                <table class='table table-condensed'>
                    <tr>
-                       <td>{{relationform.role}}</td>
-                       <td>
-                           <input class='form-control glosstypeahead' placeholder='{% trans "Annotation ID Gloss" %}'/>
+                       <td class="td td-light">{{relationform.role}}</td>
+                       <td class="td td-light">
+                           <input class='form-control form-control-light glosstypeahead glosstypeahead-light' placeholder='{% trans "Annotation ID Gloss" %}'/>
                            <input type="hidden" name="targetid" value=""/>
                        </td>
                        <td><input class='btn btn-primary' value='Add Relation' type='submit'></td>
@@ -2145,8 +2146,8 @@ option:not(:checked) {
     </div>
 
     <!-- Relations to foreign signs -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#relationsforeign'>{% trans "Relations to Foreign Signs" %}
                     {% if gloss.relationtoforeignsign_set.all %}
                     <div class="pull-right">
@@ -2186,7 +2187,7 @@ option:not(:checked) {
                                       <input type='hidden' name='id' value='relationforeign-delete_{{rel.id}}'>
                                       <input type='hidden' name='value' value='confirmed'>
                                       <div class="modal-footer">
-                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                       </div>
                                   </form>
@@ -2214,9 +2215,9 @@ option:not(:checked) {
                    <table class='table table-condensed'>
                        <tr>
                            <td style='width:5em'>&nbsp;&nbsp;&nbsp;</td>
-                           <td><input class='checkbox' name='loan' type='checkbox'></td>
-                           <td><input class='form-control' placeholder='{% trans "Related Language" %}' name='other_lang' type='text'></td>
-                           <td><input class='form-control' placeholder='{% trans "Gloss in Related Language" %}' name='other_lang_gloss' type='text'></td>
+                           <td class="td td-light"><input class='checkbox' name='loan' type='checkbox'></td>
+                           <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Related Language" %}' name='other_lang' type='text'></td>
+                           <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Gloss in Related Language" %}' name='other_lang_gloss' type='text'></td>
                            <td><input class='btn btn-primary' value='{% trans "Add Relation to Foreign Sign" %}' type='submit'></td>
                        </tr>
                    </table>
@@ -2228,8 +2229,8 @@ option:not(:checked) {
     </div>
 
     <!-- Publication status -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#pubStatus'>{% trans "Publication Status" %}
         </div>
 
@@ -2269,8 +2270,8 @@ option:not(:checked) {
     
    
     <!-- Notes -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
                     {% if notes_groupedby_role.items %}
                     <div class="pull-right">
                     <span id="document-icon"><img id='document' src='{{STATIC_URL}}images/document_with_text_and_picture.png'
@@ -2313,7 +2314,7 @@ option:not(:checked) {
                                   <input type='hidden' name='id' value='definitiondelete_{{def.id}}'>
                                   <input type='hidden' name='value' value='confirmed'>
                                   <div class="modal-footer">
-                                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                    <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                     <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                   </div>
                               </form>
@@ -2327,7 +2328,7 @@ option:not(:checked) {
                 <td {% if perms.dictionary.can_publish %}class='edit edit_check'{% endif %} id='definitionpub_{{def.id}}'
                     value='{{def.published}}'>{% if def.published %}{% trans "Yes" %}{% else %}{% trans "No" %}{% endif %}</td>
                 <td class='edit edit_int' id='definitioncount_{{def.id}}'>{{def.count}}</td>
-                <td id='definitionrole_{{def.id}}'
+                <td class="td td-light" id='definitionrole_{{def.id}}'
                     data-field='definitionrole'>{{role_id.1}}</td>
                 <td class='edit edit_area' id='definition_{{def.id}}' style="height:80;">{{def.text}}</td>
               </tr>
@@ -2341,11 +2342,11 @@ option:not(:checked) {
                 {% csrf_token %}
                  <table class='table'>
                     <tr>
-                        <td style="width:2em"></td>
-                        <td style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
-                        <td style='width:5em'><input class='form-control' name='count' id='id_count' type='number' value=3></td>
-                        <td style='width:20em'>{{definitionform.note}}</td>
-                        <td>{{definitionform.text}}</td>
+                        <td class="td td-light" style="width:2em"></td>
+                        <td class="td td-light" style="width:7em"><input class='checkbox' name='published' id='id_published' type='checkbox'></td>
+                        <td class="td td-light" style='width:5em'><input class='form-control form-control-light' name='count' id='id_count' type='number' value=3></td>
+                        <td class="td td-light" style='width:20em'>{{definitionform.note}}</td>
+                        <td class="td td-light">{{definitionform.text}}</td>
                     </tr>
                      <tr>
                         <td></td>
@@ -2365,8 +2366,8 @@ option:not(:checked) {
     </div>
 
     <!-- Example sentences -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#exSentence'>{% trans "Example Sentences" %}
         </div>
 
@@ -2380,7 +2381,7 @@ option:not(:checked) {
                             <td style="flex: 0 0 30%;">
                                 <span class='sense-icon glyphicon glyphicon-trash sense_delete pull-right' style="color:red"  data-toggle='modal' data-target='#delete_annotated_sentence_modal_{{annotated_sentence.id}}'></span>
                                 <div class="modal fade" id="delete_annotated_sentence_modal_{{annotated_sentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteAnnotatedSentence" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
+                                    <div class="modal-dialog modal-sm left-modal">
                                         <div class="modal-content">
                                             <div class='modal-header'>
                                                 <h2 id='modalTitleDeleteAnnotatedSentence'>{% trans "Delete this annotated sentence" %}</h2>
@@ -2393,7 +2394,7 @@ option:not(:checked) {
                                                 <input type='hidden' name='dataset' value='{{gloss.lemma.dataset.id}}'>
                                                 <input type='hidden' name='annotatedsentenceid' value='{{annotated_sentence.id}}'>
                                                 <div class="modal-footer">
-                                                    <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                                    <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                                     <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                                 </div>
                                             </form>
@@ -2467,8 +2468,8 @@ option:not(:checked) {
     </div>
 
      <!-- Other media -->
-    <div class="panel panel-default">
-        <div class='panel-heading' data-toggle='collapse'
+    <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
              data-target='#othermedia'>{% trans "Other Media" %}
                     {% if other_media %}
                     <div class="pull-right">
@@ -2509,7 +2510,7 @@ option:not(:checked) {
                                       <input type='hidden' name='id' value='other-media-delete_{{pk}}'>
                                       <input type='hidden' name='value' value='confirmed'>
                                       <div class="modal-footer">
-                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                                         <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
                                       </div>
                                   </form>
@@ -2522,13 +2523,13 @@ option:not(:checked) {
                     {% else %}
                     <td></td>
                     {% endif %}
-                    <td><a {% if not media_okay %}
+                    <td class="td td-light"><a {% if not media_okay %}
 				            disabled onclick="return false;" style="color:rgb(150,150,150);"
 			                {% endif %}
 				            download="{{file_name}}" href="{{PREFIX_URL}}/{{path}}">Download</a>
                     </td>
-                    <td id='other-media-file-type_{{pk}}'>{{file_type}}</td>
-                    <td id='other-media-type_{{pk}}'>{{type}}</td>
+                    <td class="td td-light" id='other-media-file-type_{{pk}}'>{{file_type}}</td>
+                    <td class="td td-light" id='other-media-type_{{pk}}'>{{type}}</td>
                     <td class='edit edit_area' id='other-media-alternative-gloss_{{pk}}'>{{alternative_gloss}}</td>
                 </tr>
                {% endfor %}
@@ -2544,9 +2545,9 @@ option:not(:checked) {
                 {% csrf_token %}
                  <table class='table'>
                     <tr>
-                        <td>{{othermediaform.file}}</td>
-                        <td>{{othermediaform.type}}</td>
-                        <td><input class='form-control' placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'></td>
+                        <td class="td td-light">{{othermediaform.file}}</td>
+                        <td class="td td-light">{{othermediaform.type}}</td>
+                        <td class="td td-light"><input class='form-control form-control-light' placeholder='{% trans "Alternative Gloss" %}' name='alternative_gloss' type='text'></td>
                     </tr>
                      <tr>
                         <td></td>

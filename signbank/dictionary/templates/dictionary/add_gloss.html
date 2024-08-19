@@ -93,10 +93,10 @@
    <p>{% trans "Please provide some initial data" %}:</p>
      <form action='{% url "dictionary:add_gloss" %}' method='POST'>
          {% csrf_token %}
-         <table class='table' style='width: 1200px;'>
+         <table class='table table-condensed-light' style='width: 1200px;'>
              <tr>
                  <th style='width:300px;'><label for='dataset'>Dataset</label></th>
-                 <td><select id="id_dataset" name="dataset" required="">
+                 <td class='td td-light'><select id="id_dataset" name="dataset" required="">
                          {% for s_dataset in selected_datasets %}
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
                          {% if "change_dataset" in dataset_perms %}
@@ -145,7 +145,8 @@
                              <!-- Input of the type ahead -->
                              <div class="text-container" data-toggle="tooltip" data-placement="top" style="z-index:100;"
                                     title='{% trans "Type in the initial letters to see if the lemma already exists." %}' >
-                             <input class='form-control lemmatypeahead' placeholder='{% trans "Select Existing Lemma" %}' size="50" />
+                             <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light'
+                                    placeholder='{% trans "Select Existing Lemma" %}' size="50" />
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
                              <input type='hidden' name='idgloss' value='confirmed' required="">
                              </div>
