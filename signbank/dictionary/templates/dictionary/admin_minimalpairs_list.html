@@ -11,8 +11,9 @@
 
 {% block extrahead %}
 {% endblock %}
-<head>
+
 {% block extrajs %}
+<link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/typeahead.bundle.min.js"></script>
@@ -21,6 +22,7 @@
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var multiple_select_fields = {{MINIMAL_PAIRS_CHOICE_FIELDS|safe}};
+var field_colors = {{field_colors|safe}};
 var csrf_token = '{{csrf_token}}';
 var url = '{{PREFIX_URL}}';
 var page_number = {{ page_number }};
@@ -34,6 +36,22 @@ $(document).ready(function() {
 
     $('[data-toggle="tooltip"]').tooltip();
 
+    function selectColors(fieldId) {
+        var target_pulldown = document.getElementById(fieldId);
+        var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
+        var pulldown_colors_str = new String(pulldown_colors);
+        var pulldown_lookup = JSON.parse(pulldown_colors_str);
+        $('option',target_pulldown).each(function(){
+            var this_code = $(this).attr('value');
+            var this_color = pulldown_lookup[this_code];
+            if (this_color===undefined || this_color=='ffffff') {
+               $(this).attr('style','color:inherit;background-color:inherit;');
+            } else {
+                $(this).attr('style','color:black;background-color:#'+this_color);
+            }
+        });
+    }
+
     function makeMultipleSelect(fieldId,fieldVar) {
         var target_pulldown = document.getElementById(fieldId);
         target_pulldown.setAttribute('multiple','multiple');
@@ -44,14 +62,45 @@ $(document).ready(function() {
 
      for (var i = 0; i < multiple_select_fields.length; i++) {
         var this_id = 'id_' + multiple_select_fields[i];
+        selectColors(this_id);
         var this_var = multiple_select_fields[i] + '[]';
         makeMultipleSelect(this_id, this_var);
      }
 
-     $('.js-example-basic-multiple').select2({
-        allowClear: true,
-        dropdownAutoWidth: true,
-        width: 'resolve'
+     function addOptionColor(optionNode) {
+        var color_text = optionNode.text;
+
+        // pattern of resultId: "select2-id_handedness-result-58e8-0"
+
+        if (optionNode._resultId) {
+            var resultString = optionNode._resultId
+            splitPattern = resultString.split('-');
+            var fieldId = splitPattern[1];
+            var pulldown_colors = field_colors[fieldId.substring(3)]; // skip the id_
+            var this_code = splitPattern[4];
+            var pulldown_colors_str = new String(pulldown_colors);
+            var pulldown_lookup = JSON.parse(pulldown_colors_str);
+            var this_color = pulldown_lookup[this_code];
+            if (this_color===undefined || this_color=='ffffff') {
+               var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:inherit;background-color:inherit'>"+color_text+"</span>");
+            } else {
+                var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:black;background-color:#"+this_color+"'>"+color_text+"</span>");
+            }
+            return $color_text_node
+        } else {
+            return color_text;
+        };
+     }
+
+     $('.js-example-basic-multiple').each(function() {
+         var thisId = this.id;
+         $(this).select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve',
+            placeholder: '',
+            templateResult: addOptionColor
+         });
      });
      $('.js-example-basic-multiple').val(null).trigger('change');
 
@@ -192,29 +241,26 @@ function do_export_csv(e1) {
 }
 </script>
 {% endblock %}
-</head>
 
 {% block content %}
-<body>
-
 <div id="definitionblock">
 
 <h3>{% trans "Minimal Pairs" %}</h3>
-<div id='searchform_outer' class='well '>
-<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/minimalpairs/'>
-<div class="panel panel-default">
-    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
+<div id='searchform_outer' class='well well-light'>
+<form name='adminsearch' class="search-form search-form-light" id='adminsearch' method='get' action='{{PREFIX_URL}}/analysis/minimalpairs/'>
+<div class="panel panel-default panel-light">
+    <div class="panel-heading panel-light" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
     </div>
         <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
-        <div id='searchformwell' class='well search-results-collapsable'>
+        <div id='searchformwell' class='well well-light search-results-collapsable'>
 
         <div class="hidden">
             <input name='sortOrder' class='form-control' value='' >
             <input name='search_type' class='form-control' value='filter'>
         </div>
 
-        <div class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#ann_search">{% trans "Filter Focus Gloss by Annotation" %}
+        <div class="panel panel-default panel-light">
+              <div class="panel-heading panel-light" data-toggle="collapse" data-target="#ann_search">{% trans "Filter Focus Gloss by Annotation" %}
                 {% if USE_REGULAR_EXPRESSIONS %}
                 <span class="hasTooltip">
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
@@ -228,8 +274,8 @@ function do_export_csv(e1) {
             {% for dataset_lang in dataset_languages %}
             <tr>
                 {% with searchform|get_annotation_search_field_for_language:dataset_lang as search_field %}
-                <td>
-                    <div class='input-group'>
+                <td class='td td-light'>
+                    <div class='input-group input-group-light'>
                     <label class='input-group-addon' for='id_annotation_idgloss_{{ dataset_lang.language_code_2char }}'>
                         {{search_field.label}}
                     </label>
@@ -240,7 +286,7 @@ function do_export_csv(e1) {
                 {% endwith %}
 
                 {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
-                <td><div class='input-group'>
+                <td class='td td-light'><div class='input-group input-group-light'>
                     <label class='input-group-addon' for='id_lemma_{{ dataset_lang.language_code_2char }}'>
                         {{lemma_field.label}}
                     </label>
@@ -250,7 +296,7 @@ function do_export_csv(e1) {
                 {% endwith %}
 
                 {% with searchform|get_senses_form_field_for_language:dataset_lang as keyword_field %}
-                <td><div class='input-group'>
+                <td class='td td-light'><div class='input-group input-group-light'>
                     <label class='input-group-addon' for='id_keyword_{{ dataset_lang.language_code_2char }}'>{{keyword_field.label}}</label>
                     <input id='keyword_{{ dataset_lang.language_code_2char }}' type='text'
                            name='keyword_{{ dataset_lang.language_code_2char }}' class='form-control' value='{{keyword_field.value}}'></div>
@@ -261,8 +307,8 @@ function do_export_csv(e1) {
         </table>
         </div>
         </div>
-        <div  class="panel panel-default">
-          <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">{% trans "Filter Focus Gloss by Phonology" %}</div>
+        <div  class="panel panel-default panel-light">
+          <div class="panel-heading panel-light" data-toggle="collapse" data-target="#phon_search">{% trans "Filter Focus Gloss by Phonology" %}</div>
           <div id='phon_search' class='collapse'>
           <table class='table table-condensed' id="phonologyfields">
             <tr>
@@ -270,8 +316,8 @@ function do_export_csv(e1) {
                 <table class='table table-condensed'>
                     {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
                         <tr>
-                            <td style='width:10em;' align='right'><label for='id_{{fieldname}}'>{{label}}</label></td>
-                            <td style='width:10em;'>{{field}}</td>
+                            <td class='td td-light' style='width:10em;' align='right'><label for='id_{{fieldname}}'>{{label}}</label></td>
+                            <td class='td td-light' style='width:10em;'>{{field}}</td>
                         </tr>
                     {% endfor %}
                 </table>
@@ -281,8 +327,8 @@ function do_export_csv(e1) {
           </div>
         </div>
 
-        <div  class="panel panel-default">
-          <div class="panel-heading" data-toggle="collapse" data-target="#sem_search">{% trans "Filter Focus Gloss by Semantics" %}</div>
+        <div  class="panel panel-default panel-light">
+          <div class="panel-heading panel-light" data-toggle="collapse" data-target="#sem_search">{% trans "Filter Focus Gloss by Semantics" %}</div>
 
           <div id='sem_search' class='collapse'>
           <table class='table table-condensed'>
@@ -291,8 +337,8 @@ function do_export_csv(e1) {
                 <table class='table table-condensed' id="semanticsfields">
                     {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
 
-                        <tr><td style='width:10em;' align='right'><label for='id_{{fieldname}}'>{{label}}</label></td>
-                            <td style='width:10em;'>{{field}}</td>
+                        <tr><td class='td td-light' style='width:10em;' align='right'><label for='id_{{fieldname}}'>{{label}}</label></td>
+                            <td class='td td-light' style='width:10em;'>{{field}}</td>
                         </tr>
 
                     {% endfor %}
@@ -309,24 +355,24 @@ function do_export_csv(e1) {
        </div>
     </div>
 <div class='btn-group' style="margin-bottom: 20px">
-<button class='btn btn-default' type='submit'
+<button class='btn btn-primary' type='submit'
        id='minimal_pairs_search_button'
        onclick="do_adminsearch(this);"
        value='minimal_pairs'>{% trans "Apply Filter and Show Results" %}</button>
 <input type='hidden' id='do_minimal_pairs_search' name='search_minimal_pairs' value="">
-<button class='btn btn-default' type='submit'
+<button class='btn btn-primary' type='submit'
        id='show_all_minimal_pairs_button'
        onclick="do_show_all(this);"
        value='minimal_pairs'>{% trans "Show All Minimal Pairs" %}</button>
 <input type='hidden' id='show_all_minimal_pairs' name='show_all_minimal_pairs' value="">
 {% if perms.dictionary.export_csv %}
-<button class='btn btn-default' type='submit'
+<button class='btn btn-primary' type='submit'
         onclick="do_export_csv(this);"
         id='button_export_csv' value='CSV'>{% trans "Apply Filter and Export to CSV" %}</button>
 <input type='hidden' id='format' name='format' value="">
 <input type='hidden' name='show_all' value="{{show_all}}">
 {% endif %}
-<input class='btn btn-default' type='submit' onclick="clearForm();"
+<input class='btn btn-primary' type='submit' onclick="clearForm();"
        value='{% trans "Reset" %}'>
 <input type='hidden' id="reset" name="reset" value="">
 </div>
@@ -336,17 +382,17 @@ function do_export_csv(e1) {
 
 {% if object_list %}
 
-<form name="show_pages">
-<div class='form-group' id='paginate_by'>
-<label for='paginate_by'>{% trans "Glosses Per Page" %}</label>
-<select class='form-control' name="paginate_by" >
-    <option {% if paginate_by == 50 %}selected{% endif %}>50</option>
-    <option {% if paginate_by == 25 %}selected{% endif %}>25</option>
-    <option {% if paginate_by == 10 %}selected{% endif %}>10</option>
-</select>
-{% csrf_token %}
-    <input type="submit" value = '{% trans "Refresh" %}' />
-</div>
+<form name="show_pages" class='pages-form pages-form-light'>
+    <div class='form-group form-group-light' id='paginate_by'>
+    <label for='paginate_by'>{% trans "Glosses Per Page" %}</label>
+    <select class='form-control form-control-light' name="paginate_by" >
+        <option {% if paginate_by == 50 %}selected{% endif %}>50</option>
+        <option {% if paginate_by == 25 %}selected{% endif %}>25</option>
+        <option {% if paginate_by == 10 %}selected{% endif %}>10</option>
+    </select>
+    {% csrf_token %}
+        <input type="submit" value = '{% trans "Refresh" %}' class="btn btn-default btn-default-light">
+    </div>
 </form>
 
 <table class='table table-condensed' id = 'minimalpairs_table'>
@@ -412,8 +458,6 @@ function do_export_csv(e1) {
         {% endif %}
     </span>
 </div>
-
-</body>
 
 {% endblock content %}
 

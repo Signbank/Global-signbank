@@ -47,7 +47,7 @@ $(document).ready(function(){
    {% csrf_token %}
 
      <fieldset id="videoupload">
-      <legend>{% trans "Sign" %}</legend>
+      <h4>{% trans "Sign" %}</h4>
       <div id="{{form.video.name}}div">
         {% bootstrap_label form.video.label %}
         {% if form.video.errors %}{{form.video.errors}}{% endif %}
@@ -56,7 +56,7 @@ $(document).ready(function(){
     </fieldset>
 
      <fieldset id="signlanguage">
-      <legend>{% trans "Sign Language" %}</legend>
+      <h4>{% trans "Sign Language" %}</h4>
       <div id="{{form.signlanguage.name}}div">
         <p>{% trans "From which sign language is this sign?" %}</p>
         {% if form.signlanguage.errors %}{{form.signlanguage.errors}}{% endif %}
@@ -64,10 +64,10 @@ $(document).ready(function(){
 
       </div>
       <div id="datasets_for_signlanguage" class="col-md-10 col-md-offset-1">
-          <table class='table table-condensed'>
+          <table class='table table-condensed table-condensed-light'>
               <tr><th style="width:300px;">{% trans "Sign Language" %}</th><th style="width:800px;">{% trans "Selected Datasets" %}</th></tr>
           {% for signlang, datasets in signlanguage_to_dataset.items %}
-            <tr><td>{{signlang}}</td>
+            <tr><td class="td td-light">{{signlang}}</td>
                 <td>{% for dsname,dsacronym in datasets %}{{dsname}} ({{dsacronym}}){% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
           {% endfor %}
           </table>
@@ -76,7 +76,7 @@ $(document).ready(function(){
 
 
 <fieldset id="meaninginput">
-  <legend>{% trans "Details" %}</legend>
+  <h4>{% trans "Details" %}</h4>
     <div id="{{form.meaning.name}}div">
         <p>{% trans "What does this sign mean?" %}
             {% trans "Please provide an explanation, translation and/or example sentence" %}

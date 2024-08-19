@@ -173,7 +173,7 @@ class MorphemeCreateForm(forms.ModelForm):
 
 
 ATTRS_FOR_FORMS = {'class': 'form-control'}
-ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:80px'}
+ATTRS_FOR_BOOLEAN_FORMS = {'class': 'form-control', 'style': 'width:90px'}
 
 
 class TagUpdateForm(forms.Form):
@@ -638,11 +638,13 @@ class ImageUploadForGlossForm(forms.Form):
     gloss_id = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
 
-class DatasetUpdateForm(forms.ModelForm):
 
+class DatasetUpdateForm(forms.ModelForm):
+    acronym = forms.CharField(widget=forms.Textarea(attrs={'cols': 20, 'rows': 1, 'placeholder': 'Acronym'}))
     description = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Description'}))
     copyright = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Copyright'}))
-    conditions_of_use = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Conditions of use'}))
+    conditions_of_use = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 
+                                                                     'placeholder': 'Conditions of use'}))
     reference = forms.CharField(widget=forms.Textarea(attrs={'cols': 80, 'rows': 5, 'placeholder': 'Reference'}))
 
     class Meta:

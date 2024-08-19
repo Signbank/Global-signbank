@@ -24,7 +24,15 @@ var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
 var query_parameters_keys = {{query_parameters_keys|safe}};
 var query_parameters_dict = {{query_parameters|safe}};
 </script>
-
+<style>
+.select2-results__option--highlighted {
+    color: black !important;
+    font-weight: bold;
+}
+.select2-selection__choice {
+    color: black;
+}
+</style>
 <script type='text/javascript' src="{{ STATIC_URL }}js/senses_keywords_edit.js"></script>
 
 <script type='text/javascript'>
@@ -44,7 +52,11 @@ $(document).ready(function() {
         var this_var = multiple_select_fields[i] + '[]';
         makeMultipleSelect(this_id, this_var);
      }
-
+     function identityOption(optionNode) {
+        var color_text = optionNode.text;
+        var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:black;background-color:inherit'>"+color_text+"</span>");
+        return $color_text_node
+     }
      $('.js-example-basic-multiple').each(function() {
          var thisId = this.id;
          $(this).select2({
@@ -52,6 +64,7 @@ $(document).ready(function() {
             dropdownAutoWidth: true,
             width: 'resolve',
             placeholder: '',
+            templateResult: identityOption
          });
      });
 
@@ -83,7 +96,7 @@ function clearForm() {
 <style>
 .actions {
     color: white !important;
-    background-color: white !important;
+    background-color: inherit !important;
     -webkit-appearance: none;
     -moz-appearance: none;
 }
@@ -497,7 +510,7 @@ input {
                     </div>
                     <div class='modal-body'>
                         <div class="col-md-12">
-                        <table class="table">
+                        <table class="table table-condensed">
                             <thead>
                             <tr><th colspan=2>{{gloss|get_default_annotation_idgloss_translation}}</th></tr>
                             </thead>

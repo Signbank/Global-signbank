@@ -28,7 +28,7 @@ function lemmatypeahead(target) {
 $.editable.addInputType('lemmatypeahead', {
 
    element: function(settings, original) {
-      var input = $('<input type="text" class="lemmatypeahead">');
+      var input = $('<input type="text" class="form-control form-control-light lemmatypeahead lemmatypeahead-light">');
       $(this).append(input);
 
       lemmatypeahead(input);

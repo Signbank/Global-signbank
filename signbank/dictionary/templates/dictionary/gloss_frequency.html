@@ -780,15 +780,19 @@ var glossvariantsAgeChart = new Chart(ctga, {
 
 glossvariantsAgeChart.update();
 
+var variant_sex_chart_containers = [];
 var ids_variant_gender_charts = [];
 for (k in variant_labels) {
     var variant_key = variant_labels[k];
+    variant_sex_chart_containers.push('variantsgender_'+variant_key);
     ids_variant_gender_charts.push('variantsGenderChart_'+variant_key);
 };
 
+var variant_age_chart_containers = [];
 var ids_variant_age_charts = [];
 for (k in variant_labels) {
     var variant_key = variant_labels[k];
+    variant_age_chart_containers.push('variantsage_'+variant_key);
     ids_variant_age_charts.push('variantsAgeChart_'+variant_key);
 };
 
@@ -891,7 +895,7 @@ for (k in variant_labels) {
                     position: 'bottom',
                     labels: {
                         size: 10,
-                        color: 'Black'
+                        color: 'Grey'
                     },
                     onClick: null
                 }
@@ -1000,7 +1004,7 @@ for (k in variant_labels) {
                     position: 'bottom',
                     labels: {
                         size: 10,
-                        color: 'Black'
+                        color: 'Grey'
                     },
                     onClick: null
                 }
@@ -1276,8 +1280,38 @@ function do_toggle_display(el) {
 
 $(document).ready(function() {
     var region_chart = document.getElementById('regions');
-    var height_string = "height:"+((number_of_regions * 20) + "px !important; width:50%;");
+    var height_string = "background:white;height:"+((number_of_regions * 20) + "px !important; width:50%;");
     region_chart.setAttribute("style", height_string);
+    var gender_chart = document.getElementById('genders');
+    gender_chart.setAttribute("style", "background-color:white;");
+    var age_chart = document.getElementById('ages');
+    age_chart.setAttribute("style", "background-color:white;");
+    var variants_agedistribution = document.getElementById('agedistribution');
+    if (variants_agedistribution != 'undefined') {
+        variants_agedistribution.setAttribute("style", "background-color:white;");
+    }
+    var variants_age_chart = document.getElementById('variantsAgeChart');
+    if (variants_age_chart != 'undefined') {
+        variants_age_chart.setAttribute("style", "background-color:white;");
+    }
+    var variants_sex_chart = document.getElementById('variantsSexChart');
+    if (variants_sex_chart != 'undefined') {
+        variants_sex_chart.setAttribute("style", "background-color:white;");
+    }
+    var all_variants_age_chart = document.getElementById('allvariantsages');
+    if (all_variants_age_chart != 'undefined') {
+        all_variants_age_chart.setAttribute("style", "background-color:white;");
+    }
+    for (idx in variant_age_chart_containers) {
+        var variant_container_id = variant_age_chart_containers[idx];
+        var variant_container = document.getElementById(variant_container_id);
+        variant_container.setAttribute("style", "background-color:white;");
+    }
+    for (idx in variant_sex_chart_containers) {
+        var variant_container_id = variant_sex_chart_containers[idx];
+        var variant_container = document.getElementById(variant_container_id);
+        variant_container.setAttribute("style", "background-color:white;");
+    }
     chart.render();
 });
     </script>
@@ -1285,16 +1319,18 @@ $(document).ready(function() {
 
 {% block content %}
 
-<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+<div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;">
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results"
+         style="white-space:nowrap;">
     </div>
     {% endif %}
 </div>
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
 
-    <ul class='nav nav-tabs'>
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+    <ul class='nav nav-tabs nav-tabs-light'>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
         </li>
@@ -1316,7 +1352,7 @@ $(document).ready(function() {
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos" %}</a>
         </li>
     </ul>
-
+    </div>
 </div>
 
 <div id="definitionblock" style="z-index:0;padding-top: 100px;">
@@ -1339,13 +1375,12 @@ $(document).ready(function() {
             </tr>
     </table>
     </div>
-<hr>
+
         {% if has_frequency_data %}
 
-            <div class='panel-heading'>
-                <div class='panel-title' style="width:9em; color:darkred">
-                    <a data-toggle='collapse' data-parent='#regionschart' data-target='#regions'>{% trans "Gloss Regions" %}</a>
-                </div>
+            <div class='panel-heading panel-light' data-toggle='collapse'
+                 data-target='#regions'>
+                    {% trans "Gloss Regions" %}
             </div>
             <div id='regions' class='collapse panel-body' style="width:40%; padding-left:20px;">
                 <div class="chart-container">
@@ -1353,11 +1388,9 @@ $(document).ready(function() {
                 </div>
             </div>
 
-           <div class='panel-heading'>
-                <div class='panel-title' style="width:9em; color:darkred">
-                    <a data-toggle='collapse' data-parent='#speakerschart' data-target='#speakers'>{% trans "Speakers" %}</a>
-                </div>
-
+           <div class='panel-heading panel-light' data-toggle='collapse'
+                data-target='#speakers'>
+                    {% trans "Speakers" %}
             </div>
                 <div id='speakers' class='collapse row justify-content-center' style="width:50%;">
                 <div class="col-lg-2" style="margin-top:50px;">
@@ -1366,54 +1399,45 @@ $(document).ready(function() {
                             onclick="do_toggle_display(this);" value='raw'>{% trans "Raw View" %}</button>
                     </div>
                 </div>
-                <div class="col-lg-5">
+                <div class="col-lg-5" id="genders">
                 <div class="chart-container">
                 <canvas id="genderChart" width="100"></canvas>
                 </div>
                 </div>
-                <div class="col-lg-5">
+                <div class="col-lg-5" id="ages">
                 <div class="chart-container" >
                 <canvas id="ageChart" width="100"></canvas>
                 </div>
                 </div>
                 </div>
-            <hr>
-<div class="clearfix"></div>
-          {% if has_variants %}
-           <div class='panel-heading'>
-                <div class='panel-title' style="width:9em; color:darkred">
-                    <a data-toggle='collapse' data-parent='#speakerschart' data-target='#variants'>{% trans "Variants" %}</a>
-                </div>
 
+    <div class="clearfix"></div>
+          {% if has_variants %}
+            <div id="variants_of_gloss" class="panel-group">
+           <div class='panel-heading panel-light'
+                data-toggle='collapse' data-target='#variants'>
+                    {% trans "Variants" %}
             </div>
-            <div id='variants' class='collapse row' style="width:100%;" >
-             <div class='panel-heading col-lg-2'>
-                <div class='panel-title hasTooltip' style="padding-left:50px;">
-                    <a data-toggle='collapse' data-parent='#ageschart' data-target='#ages'>
-                            {% trans "Age Distribution" %}
-                    </a>{% if has_variants %}<div class="text-container">
-                                            <span class="isTooltip">Age distribution of variants can be toggled by clicking on the gloss identifiers.</span>
-                                        </div>
-                    {% endif %}
-                </div>
+            <div id='variants' class="panel-collapse collapse">
+             <div class='panel-heading panel-light' style="padding-left:50px;"
+                  data-toggle='collapse' data-parent='#variants_of_gloss' data-target='#agedistribution'>
+                 {% trans "Age Distribution" %}
             </div>
-            <div id='ages' class='collapse col-lg-10' >
+            <div id='agedistribution' class='panel-collapse collapse col-lg-10'>
                 <div class="chart-container">
                 <canvas id="speakerChart" height="80"></canvas>
                 </div>
             </div>
 
-            <hr>
-<div class="clearfix"></div>
-            <div class='panel-heading'>
-                <div class='panel-title' style="padding-left:50px;">
-                    <a data-toggle='collapse' data-target='#speaker'>{% trans "Speakers" %}</a>
-                </div>
+        <div class="clearfix"></div>
+            <div class='panel-heading panel-light' style="padding-left:50px;"
+                 data-toggle='collapse' data-target='#speaker' data-parent="#variants_of_gloss">
+                    {% trans "Speakers" %}
             </div>
 
-                <div id='speaker' class='container-fluid collapse' style="padding-left:100px">
+                <div id='speaker' class='panel-collapse collapse'>
                     <div class="row">
-                        <div class="col-lg-12">
+                        <div class="col-lg-10">
                         <button id="variants_speakers_button" class="btn btn-primary" type="submit" name="view_type"
                                 onclick="do_toggle_display(this);" value='raw'>{% trans "Raw View" %}</button>
                         </div>
@@ -1421,17 +1445,19 @@ $(document).ready(function() {
                 <div class="row">
                 <div class="col-lg-1" style="margin-top:56px;">{% trans "Gender" %}</div>
                 <div class="col-lg-5">
-                <div class="chart-multichart-enclosure-container" >
+                <div class="chart-multichart-enclosure-container" style="background-color:white;">
                 {% for key in variant_labels %}
-                <div class="chart-horizontal-single-bar-container">
+                <div class="chart-horizontal-single-bar-container"
+                     id="variantsgender_{{key}}" style="background-color:white;">
                 <canvas id="variantsGenderChart_{{key}}" height="50" ></canvas>
                 </div>
                 {% endfor %}
                 </div>
                 </div>
-                <div class="col-lg-6" >
-                <div class="chart-multichart-enclosure-container" >
-                <div class="chart-short-container" >
+                <div class="col-lg-6">
+                <div class="chart-multichart-enclosure-container"
+                     id="variantsSexChart" style="background-color:white;">
+                <div class="chart-short-container" style="background-color:white;">
                 <canvas id="glossvariantsSexChart" width="100" ></canvas>
                 </div>
                 </div>
@@ -1440,16 +1466,16 @@ $(document).ready(function() {
                 <div class="row" >
                 <div class="col-lg-1" style="margin-top:100px;">{% trans "Age" %}</div>
                 <div class="col-lg-5">
-                <div class="chart-multichart-enclosure-container" >
+                <div class="chart-multichart-enclosure-container" id="allvariantsages">
                 {% for key in variant_labels %}
-                <div class="chart-horizontal-single-bar-container">
+                <div class="chart-horizontal-single-bar-container" id="variantsage_{{key}}">
                 <canvas id="variantsAgeChart_{{key}}" height="50"></canvas>
                 </div>
                 {% endfor %}
                 </div>
                 </div>
                 <div class="col-lg-6" >
-                <div class="chart-multichart-enclosure-container" >
+                <div class="chart-multichart-enclosure-container" id="variantsAgeChart">
                 <div class="chart-short-container" >
                 <canvas id="glossvariantsAgeChart" width="100" ></canvas>
                 </div>
@@ -1458,11 +1484,11 @@ $(document).ready(function() {
                 </div>
             </div>
         </div>
+        </div>
         {% endif %}
         {% else %}
         <p>{% trans "There is no frequency data available for this gloss in dataset" %} {{gloss.lemma.dataset}}</p>
         {% endif %}
         </div>
-    <hr>
 
 {% endblock content %}

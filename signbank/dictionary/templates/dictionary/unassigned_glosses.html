@@ -9,11 +9,11 @@
 
 
 {% block content %}
-
+<div style="backgroun-color:var(--ultron);color:var(--beam);"></div>
 {% if signlanguages %}
 <form name="assignglosses" id="assignglosses" method="post" action="{{PREFIX_URL}}/datasets/unassigned_glosses">
 {% csrf_token %}
-<table class='table table-condensed'>
+<table class='table table-condensed table-condensed-light'>
     <thead>
         <tr>
             <th>
@@ -38,9 +38,9 @@
             <td>
                 {{ number_of_unassigned_glosses_without_signlanguage }}
             </td>
-            <td>
+            <td class="td td-light">
                 {% if all_datasets and number_of_unassigned_glosses_without_signlanguage %}
-                <select class="form-control" name="sign-language__">
+                <select class="form-control form-control-light" name="sign-language__">
                 <option value="">-</option>
                 {% for dataset in all_datasets %}
                 <option value="{{ dataset.id }}">{{ dataset.name }}</option>
@@ -66,9 +66,9 @@
                     0
                 {% endif %}
             </td>
-            <td>
+            <td class="td td-light">
                 {% if signlanguage.datasets and signlanguage.num_unassigned_glosses %}
-                <select class="form-control" name="sign-language__{{ signlanguage.id }}">
+                <select class="form-control form-control-light" name="sign-language__{{ signlanguage.id }}">
                 <option value="">-</option>
                 {% for dataset in signlanguage.datasets %}
                 <option value="{{ dataset.id }}">{{ dataset.name }}</option>
@@ -85,11 +85,11 @@
     {% endfor %}
     </tbody>
 </table>
-    <button class="btn btn-default pull-right" type="submit">{% trans 'Assign glosses' %}</button>
+    <button class="btn btn-default btn-default-light pull-right" type="submit">{% trans 'Assign glosses' %}</button>
 </form>
 
 {% else %}
 {% trans "No unassigned glosses found." %}
 {% endif %}
-
+</div>
 {% endblock content %}

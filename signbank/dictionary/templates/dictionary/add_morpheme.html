@@ -75,10 +75,10 @@
 
      <form action='{% url "dictionary:add_morpheme" %}' method='post'>
          {% csrf_token %}
-         <table class='table' style='width: 1200px;'>
+         <table class='table table-condensed-light' style='width: 1200px;'>
              <tr>
                  <th style='width:300px;'><label for='dataset'>Dataset</label></th>
-                 <td><select id="id_dataset" name="dataset" required="">
+                 <td class='td td-light'><select id="id_dataset" name="dataset" required="">
 
                          {% for s_dataset in selected_datasets %}
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
@@ -112,7 +112,8 @@
                              <br/>
 
                              <!-- Input of the type ahead -->
-                             <input class='form-control lemmatypeahead' placeholder='{% trans "Lemma" %}' />
+                             <input class='form-control form-control-light lemmatypeahead lemmatypeahead-light'
+                                    placeholder='{% trans "Lemma" %}' />
                              <!-- Input that holds the lemma id the user chose from the type ahead -->
                              <input type='hidden' name='idgloss' value='confirmed' required="">
                              <a href="#" onclick="return toggleAddLemma()">{% trans "Create new" %}</a>
@@ -122,7 +123,7 @@
                              <span id="{{ lemma_create_field_prefix }}_header_{{ dataset_lang.language_code_2char }}">{{ dataset_lang.name }}:</span>
                             <input id="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
                                    name="{{ lemma_create_field_prefix }}{{ dataset_lang.language_code_2char }}"
-                                   maxlength="30" type="text"/>
+                                   maxlength="80" size="50" type="text"><br>
 
                             {% endfor %}
 
@@ -137,7 +138,9 @@
                      <label for="id_annotation_idgloss_{{ dataset_lang.language_code_2char }}">{% trans "Annotation ID Gloss" %} ({{ dataset_lang.name }})</label>
                  </th>
                  <td id="add_gloss_dataset_value_{{ dataset_lang.language_code_2char }}">
-                     <input id="morphemecreate_{{ dataset_lang.language_code_2char }}" name="morphemecreate_{{ dataset_lang.language_code_2char }}" required="" maxlength="30" type="text"/>
+                     <input id="morphemecreate_{{ dataset_lang.language_code_2char }}"
+                            name="morphemecreate_{{ dataset_lang.language_code_2char }}" required=""
+                            maxlength="80" size="50" type="text">
                  </td>
              </tr>
              {% endfor %}

@@ -351,6 +351,8 @@ class GlossListView(ListView):
 
         column_headers = []
         for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+            if fieldname not in Gloss.get_field_names():
+                continue
             field_label = Gloss.get_field(fieldname).verbose_name
             column_headers.append((fieldname, field_label))
         context['column_headers'] = column_headers
@@ -821,6 +823,7 @@ class GlossDetailView(DetailView):
     context_object_name = 'gloss'
     last_used_dataset = None
     query_parameters = dict()
+    dark_mode = False
 
     def get_template_names(self):
         return ['dictionary/gloss_detail.html']
@@ -894,6 +897,13 @@ class GlossDetailView(DetailView):
 
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
+
+        if 'dark_mode' in self.request.session.keys():
+            dark_mode_session = self.request.session['dark_mode']
+            dark_mode = dark_mode_session in ["True"]
+        else:
+            dark_mode = False
+        context['dark_mode'] = str(dark_mode)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -2382,6 +2392,18 @@ class MinimalPairsListView(ListView):
         self.request.session.modified = True
 
         context['MINIMAL_PAIRS_CHOICE_FIELDS'] = MINIMAL_PAIRS_CHOICE_FIELDS
+
+        multiple_select_minimal_pairs_categories = fields_to_fieldcategory_dict(MINIMAL_PAIRS_CHOICE_FIELDS)
+
+        choices_colors = {}
+        for (fieldname, field_category) in multiple_select_minimal_pairs_categories.items():
+            if field_category in CATEGORY_MODELS_MAPPING.keys():
+                field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
+
+        context['field_colors'] = choices_colors
 
         context['searchform'] = self.search_form
 
@@ -4395,7 +4417,7 @@ class DatasetFieldChoiceView(ListView):
                 # Get and save the choice list for this field
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 if len(choice_list) > 0:
-                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list, choices_to_exclude=[])
+                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list)
                     choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
 
                     for choice_list_field, machine_value in choice_list_machine_values:
@@ -4502,6 +4524,7 @@ class DatasetFieldChoiceView(ListView):
 class FieldChoiceView(ListView):
     model = FieldChoice
     template_name = 'dictionary/dataset_field_choice_colors.html'
+    dark_mode = False
 
     # set the default dataset, this should not be empty
     dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
@@ -4512,6 +4535,12 @@ class FieldChoiceView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         user_object = self.request.user
+
+        if 'dark_mode' in self.request.session.keys():
+            dark_mode = self.request.session['dark_mode']
+        else:
+            dark_mode = False
+        context['dark_mode'] = str(dark_mode)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
@@ -4965,7 +4994,14 @@ class MorphemeDetailView(DetailView):
 
         # Call the base implementation first to get a context
         context = super(MorphemeDetailView, self).get_context_data(**kwargs)
-        # Add in a QuerySet of all the books
+        
+        if 'dark_mode' in self.request.session.keys():
+            dark_mode_session = self.request.session['dark_mode']
+            dark_mode = dark_mode_session in ["True"]
+        else:
+            dark_mode = False
+        context['dark_mode'] = str(dark_mode)
+
         context['tagform'] = TagUpdateForm()
         context['videoform'] = VideoUploadForObjectForm(languages=languages)
         context['imageform'] = ImageUploadForGlossForm()

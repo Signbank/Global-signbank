@@ -12,6 +12,8 @@
 {% endblock %}
 
 {% block extrajs %}
+<link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
+
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
 <link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
@@ -175,12 +177,13 @@ input {
 }
 input[type=text] {
     border: none;
+    background-color: rgba(50,50,50,10%);
     margin: 2px;
     padding-right: 5px;
-    outline: 1px solid darkgrey;
+    border: 1px solid darkgrey;
 }
 input[type=text]:focus {
-    outline: 1px solid red;
+    border: 1px solid red;
 }
 input[type=number] {
     border: none;
@@ -238,31 +241,32 @@ input[type=number] {
 
 {% if not object_list %}
     <p>{% trans "Please construct a new query:" %}
-        <span><a class="btn btn-default"
+        <span><a class="btn btn-default btn-default-light"
                  href='{{PREFIX_URL}}/signs/search/'>{% trans "Search" %}</a></span></p>
 {% else %}
     <div class="keywordsSenses" id="keywordsSenses">
     <h3>{% trans "Split Up Senses" %}</h3>
 
-        <div id='searchform_outer' class='well'>
-        <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/dictionary/keywords/'>
+        <div id='searchform_outer' class='well well-light'>
+        <form name='adminsearch' id='adminsearch'
+              class="search-form search-form-light" method='get' action='{{PREFIX_URL}}/dictionary/keywords/'>
         {% csrf_token %}
-        <div class="panel panel-default">
-            <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
+        <div class="panel panel-default panel-light">
+            <div class="panel-heading panel-light" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
             </div>
-                <div id='query-area' class='collapse'>
-                <div id='searchformwell' class='well search-results-collapsable'>
+                <div id='query-area' class='collapse collapse-light'>
+                <div id='searchformwell' class='well well-light search-results-collapsable'>
 
                 <div class="hidden">
                     <input name='sortOrder' class='form-control' value='' >
                     <input name='search_type' class='form-control' value='filter'>
                 </div>
 
-                <div class="panel panel-default">
-                  <div class="panel-heading" data-toggle="collapse"
+                <div class="panel panel-default panel-light">
+                  <div class="panel-heading panel-light" data-toggle="collapse"
                            data-target="#pub_search">{% trans "Search by Tags" %}</div>
 
-                      <div id='pub_search' class='collapse'>
+                      <div id='pub_search' class='collapse collapse-light'>
                       <table class='table table-responsive' style="width:65%;">
                       <tr>
                           <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
@@ -272,7 +276,7 @@ input[type=number] {
                       </div>
                     </div>
                 </div>
-        <div class='btn-group' style="margin-bottom: 20px; margin-left: 20px;">
+        <div class='btn-group btn-group-light' style="margin-bottom: 20px; margin-left: 20px;">
         <input class='btn btn-primary' type='submit' name="filter" value='Apply Filter'>
         <input class='btn btn-primary' type='reset' onclick="clearForm();"
                        value='{% trans "Reset" %}'>
@@ -285,10 +289,10 @@ input[type=number] {
 
 <div>
 <table class="table table-responsive">
-    <thead>
+    <thead class="thead thead-light">
 
     </thead>
-    <tbody>
+    <tbody class="tbody tbody-light">
     {% load underscore_to_space %}
     {% for gloss, keywords_per_language, senses_per_language, translated_senses, matrix_dimensions in object_list %}
         <tr style="width:auto;">
@@ -386,7 +390,8 @@ input[type=number] {
                         {% for lang, senses in senses_per_language.items %}
                         <td>
                         <table>
-                            <tbody id="tbody_senses_{{gloss.id}}_{{lang.id}}">
+                            <tbody class="tbody tbody-light"
+                                   id="tbody_senses_{{gloss.id}}_{{lang.id}}">
                             {% for grp, kwds in senses.items %}
                                 <tr id="senses_{{gloss.id}}_{{lang.id}}_row_{{grp}}">
                                 <td>{{grp}}.</td><td>&nbsp;&nbsp;</td>
@@ -408,16 +413,16 @@ input[type=number] {
     </tbody>
 </table>
     <table class='table table-responsive'>
-        <tbody>
+        <tbody class="tbody tbody-light">
         <tr>
             <td colspan="3">
             <div id="toggles" class='panel-group'>
-            <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+            <div class="panel panel-default panel-light panel-toggles">
+                <div class='panel-heading panel-light' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_matrix_panel_{{gloss.id}}'>
                     {% trans "Translate Senses" %}
                 </div>
-                <div id='toggle_matrix_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div id='toggle_matrix_panel_{{gloss.id}}' class="panel-collapse collapse collapse-light">
                     <div id='modalTitleEditTrans_{{gloss.id}}' class="panel-body"
                          style="display:inline-block;height:auto;">
                          <br>
@@ -425,7 +430,7 @@ input[type=number] {
                             action="{% url 'dictionary:edit_senses_matrix' gloss.id %}" method='post'>
                             {% csrf_token %}
                             <table class="table table-responsive">
-                            <thead>
+                            <thead class="thead thead-light">
                             <tr>
                                 <th>#</th>
                                 {% for language in dataset_languages %}
@@ -433,7 +438,8 @@ input[type=number] {
                                 {% endfor %}
                             </tr>
                             </thead>
-                            <tbody id="tbody_modal_sensetranslations_{{gloss.id}}">
+                            <tbody class="tbody tbody-light"
+                                   id="tbody_modal_sensetranslations_{{gloss.id}}">
                             {% for order_index, sense_translations in translated_senses.items %}
                             <tr id="modal_sensetranslations_{{gloss.id}}_row_{{order_index}}">
                                 <td>{{order_index}}</td>
@@ -488,7 +494,7 @@ input[type=number] {
                        <form id='add_keyword_form_{{gloss.id}}'
                              method='post' action='{% url "dictionary:add_keyword" gloss.id %}'>
                            {% csrf_token %}
-                           <table class='table table-responsive'>
+                           <table class='table table-responsive table-responsive-light'>
                                <tr>
                                    {% for keywords_language in dataset_languages %}
                                    <td>
@@ -512,12 +518,12 @@ input[type=number] {
             </div>
 
 
-            <div class="panel panel-default panel-toggles">
-                <div class='panel-heading' data-toggle='collapse' data-parent="#toggles"
+            <div class="panel panel-default panel-light panel-toggles">
+                <div class='panel-heading panel-light' data-toggle='collapse' data-parent="#toggles"
                      data-target='#toggle_language_panel_{{gloss.id}}'>
                     {% trans "Split Senses" %}
                 </div>
-                <div id='toggle_language_panel_{{gloss.id}}' class="panel-collapse collapse">
+                <div id='toggle_language_panel_{{gloss.id}}' class="panel-collapse collapse collapse-light">
 
                 <div class="panel-body">
                 <div style="display:inline-block;clear:both;">
@@ -527,7 +533,8 @@ input[type=number] {
                         <h3>{{language.name}}</h3>
                         <div>
                         <table class="table">
-                            <tbody id="tbody_modal_senses_{{gloss.id}}_{{language.id}}">
+                            <tbody class="tbody tbody-light"
+                                   id="tbody_modal_senses_{{gloss.id}}_{{language.id}}">
                             {% with senses_per_language|get_item:language as senses_groups %}
                             {% for order_index, keywords_list in senses_groups.items %}
                             <tr id="modal_senses_{{gloss.id}}_{{language.id}}_row_{{order_index}}">
@@ -550,10 +557,11 @@ input[type=number] {
                             action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
                       {% csrf_token %}
                       <table class='table'>
-                          <thead>
+                          <thead class="thead thead-light">
                             <tr><th>{% trans "Keywords" %}</th><th>{% trans "Sense #" %}</th></tr>
                           </thead>
-                          <tbody id="tbody_senses_table_{{gloss.id}}_{{language.id}}">
+                          <tbody class="tbody tbody-light"
+                                 id="tbody_senses_table_{{gloss.id}}_{{language.id}}">
                             {% with senses_per_language|get_item:language as senses_groups %}
                             {% for order_index, keywords_list in senses_groups.items %}
                             {% for trans in keywords_list %}
@@ -587,7 +595,8 @@ input[type=number] {
                       {% csrf_token %}
                       <table class='table'>
                           {% with keywords_per_language|get_item:language as sense_translations %}
-                          <tbody id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
+                          <tbody class="tbody tbody-light"
+                                 id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
                           {% if not sense_translations %}
                             <tr id="edit_keywords_empty_row_{{gloss.id}}_{{language.id}}">
                                 <td>

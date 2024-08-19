@@ -116,6 +116,8 @@ urlpatterns = [
                   permission_required('dictionary.search_gloss')(DerivationHistoryListView.as_view()),
                   name='admin_derivationhistory_list'),
 
+    re_path(r'^set_dark_mode/', signbank.tools.set_dark_mode, name='set_dark_mode'),
+
     # special admin sub site
     re_path(r'^publisher/', publisher_admin.urls),
 
