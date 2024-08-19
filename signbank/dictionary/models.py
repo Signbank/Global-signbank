@@ -1542,18 +1542,39 @@ class Gloss(models.Model):
 
         sequential_morphology_fieldname = gettext("Sequential Morphology")
         sequential_morphology = self.get_hasComponentOfType_display()
-        if sequential_morphology:
+        if sequential_morphology_fieldname in fieldnames and sequential_morphology:
             fields[sequential_morphology_fieldname] = sequential_morphology
 
         simultaneous_morphology_fieldname = gettext("Simultaneous Morphology")
         simultaneous_morphology = self.get_morpheme_display()
-        if simultaneous_morphology:
+        if simultaneous_morphology_fieldname in fieldnames and simultaneous_morphology:
             fields[simultaneous_morphology_fieldname] = simultaneous_morphology
 
         blend_morphology_fieldname = gettext("Blend Morphology")
         blend_morphology = self.get_blendmorphology_display()
-        if blend_morphology:
+        if blend_morphology_fieldname in fieldnames and blend_morphology:
             fields[blend_morphology_fieldname] = blend_morphology
+
+        nme_videos = gettext("NME Videos")
+        gloss_nme_videos = self.get_nme_videos()
+        if nme_videos in fieldnames and gloss_nme_videos:
+            from signbank.video.models import GlossVideoNME, GlossVideoDescription
+            nme_video_list = []
+            for nmevideo in gloss_nme_videos:
+                nme_info = dict()
+                nme_info["ID"] = str(nmevideo.id)
+                nme_info[gettext("Index")] = str(nmevideo.offset)
+                for language in self.dataset.translation_languages.all():
+                    info_field_name = gettext("Description") + ": %s" % language.name
+                    try:
+                        description_text = GlossVideoDescription.objects.get(nmevideo=nmevideo, language=language).text
+                    except ObjectDoesNotExist:
+                        description_text = ""
+                    nme_info[info_field_name] = description_text
+                nme_path = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + nmevideo.get_video_path()
+                nme_info[gettext("Link")] = nme_path
+                nme_video_list.append(nme_info)
+            fields[nme_videos] = nme_video_list
 
         return fields
 
