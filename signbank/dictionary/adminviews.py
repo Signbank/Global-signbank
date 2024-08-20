@@ -5246,6 +5246,14 @@ def lemma_ajax_search_results(request):
     else:
         return JsonResponse([], safe=False)
 
+def annotatedsentence_ajax_search_results(request):
+    """Returns a JSON list of glosses that match the previous search stored in sessions"""
+    if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
+            and request.session['search_type'] in ['annotatedsentence']:
+        return JsonResponse(request.session['search_results'], safe=False)
+    else:
+        return JsonResponse([], safe=False)
+
 def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""
@@ -6920,6 +6928,66 @@ class ToggleListView(ListView):
         return glosses_of_datasets
 
 
+class AnnotatedSentenceDetailView(DetailView):
+    model = AnnotatedSentence
+    template_name = 'dictionary/annotated_sentence_detail.html'
+    context_object_name = 'annotatedsentence'
+    search_type = 'annotatedsentence'
+
+    class Meta:
+        verbose_name_plural = "AnnotatedSentences"
+        ordering = ['id']
+
+    def get(self, request, *args, **kwargs):
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        try:
+            self.object = super().get_object()
+        except (Http404, ObjectDoesNotExist):
+            translated_message = _('Annotated Sentence not available.')
+            return show_warning(request, translated_message, selected_datasets)
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+
+        context = super(AnnotatedSentenceDetailView, self).get_context_data(**kwargs)
+
+        setattr(self.request.session, 'search_type', self.search_type)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        annotatedsentence = context['annotatedsentence']
+        annotated_translations = AnnotatedSentenceTranslation.objects.filter(annotatedsentence=annotatedsentence)
+        sentencetranslations = dict()
+        for tr in annotated_translations:
+            sentencetranslations[tr.language] = tr.text
+        context['sentencetranslations'] = sentencetranslations
+
+        annotatedglosses = AnnotatedGloss.objects.filter(annotatedsentence=annotatedsentence)
+        context['annotatedglosses'] = annotatedglosses
+
+        context['active_id'] = annotatedsentence.id
+
+        if 'search_type' not in self.request.session.keys() or self.request.session['search_type'] not in ['annotatedsentence']:
+            self.request.session['search_type'] = self.search_type
+
+        # Check the type of the current search results
+        if 'search_results' in self.request.session.keys():
+            if self.request.session['search_results'] and len(self.request.session['search_results']) > 0:
+                if self.request.session['search_results'][0]['href_type'] not in ['annotatedsentence']:
+                    # if the previous search does not match the search type
+                    self.request.session['search_results'] = []
+        print(self.request.session['search_results'])
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+        return context
+
+
 class AnnotatedGlossListView(ListView):
 
     model = AnnotatedGloss
@@ -6961,8 +7029,13 @@ class AnnotatedGlossListView(ListView):
 
         context['objects_on_page'] = [ g.id for g in context['page_obj'].object_list ]
 
-        # this is needed to avoid crashing the browser if you go to the last page
-        # of an extremely long list and then go to Details on the objects
+        dataset_display_languages = []
+        for lang in context['dataset_languages']:
+            dataset_display_languages.append(lang.language_code_2char)
+        lang_attr_name = dataset_display_languages[0]
+
+        items = construct_scrollbar(self.object_list, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
 
         this_page_number = context['page_obj'].number
         this_paginator = context['page_obj'].paginator

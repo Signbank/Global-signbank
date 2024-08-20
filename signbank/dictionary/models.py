@@ -1587,6 +1587,10 @@ class Gloss(models.Model):
         """Test if this instance is a Morpheme or (just) a Gloss"""
         return hasattr(self, 'morpheme')
 
+    def is_annotatedgloss(self):
+        """This is not an AnnotatedGloss"""
+        return False
+
     def get_absolute_url(self):
         return "/dictionary/gloss/%s.html" % self.idgloss
 
@@ -2930,6 +2934,10 @@ class Morpheme(Gloss):
                 abstract_meaning.append((language, ''))
         return abstract_meaning
 
+    def is_annotatedgloss(self):
+        """This is not an AnnotatedGloss"""
+        return False
+
 
 def generate_fieldname_to_kind_table():
     temp_field_to_kind_table = dict()
@@ -3978,7 +3986,16 @@ class AnnotatedGloss(models.Model):
         return self.endtime/1000
     
     def show_annotationidglosstranslation(self):
-        return self.gloss.annotationidglosstranslation_set.filter(language = self.annotatedsentence.get_dataset().default_language).first().text
+        default_language = self.gloss.lemma.dataset.default_language
+        return self.gloss.annotationidglosstranslation_set.filter(language=default_language).first().text
+
+    def is_morpheme(self):
+        """This is not a Morpheme or (just) a Gloss"""
+        return False
+
+    def is_annotatedgloss(self):
+        """This is an AnnotatedGloss"""
+        return True
 
 
 class AnnotatedSentenceTranslation(models.Model):

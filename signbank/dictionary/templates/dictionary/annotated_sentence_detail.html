@@ -1,0 +1,68 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Annotated Sentence Details{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+
+<script type="text/javascript">
+var url = '{{ PREFIX_URL }}';
+var language_code = '{{LANGUAGE_CODE}}';
+var search_results_url = '{% url 'dictionary:annotatedsentence_ajax_search_results' %}';
+
+{% include "dictionary/search_result_bar.html" %}
+</script>
+
+{% endblock %}
+
+{% block content %}
+<div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
+    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;margin-top:3px;">
+    </div>
+    {% endif %}
+</div>
+
+<div style="width:1000px; padding-top:200px;">
+        <h3>{% trans "Annotated Sentence" %}</h3>
+        <br>
+        <table class="table">
+            <tr>
+            {% for annotatedgloss in annotatedglosses %}
+
+                <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{annotatedgloss.gloss.id}}">{{annotatedgloss.gloss.idgloss}}</a></td>
+
+            {% endfor %}
+            </tr>
+        </table>
+
+        <br>
+
+        <table class="table">
+        {% for dataset_lang, sentence_text in sentencetranslations.items %}
+            <tr>
+                <td>{{dataset_lang.name}}</td>
+                <td>{{sentence_text}}</td>
+            </tr>
+        {% endfor %}
+        </table>
+
+        <br>
+
+        {% url 'dictionary:protected_media' '' as protected_media_url %}
+        <div id="videocontainer">
+        <video id="sentence-video" controls width="400px">
+            <source src="{{ protected_media_url }}/{{ annotatedsentence.annotatedvideo.videofile }}" type="video/mp4">
+        </video> 
+        </div>
+        <br><br>
+
+</div>
+
+{% endblock %}

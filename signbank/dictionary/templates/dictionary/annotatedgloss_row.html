@@ -34,9 +34,7 @@
     {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
     <td class="annotation_{{dataset_lang.language_code_2char}}">
       {% if annotationidglosstranslation %}
-        <div>
-        <div><a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.pk}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">{{annotationidglosstranslation}}</a></div>
-        </div>
+        <div>{{annotationidglosstranslation}}</div>
       {% endif %}
     </td>
     {% endwith %}
@@ -45,9 +43,13 @@
 
     {% for field,value in column_values %}
     <td class="field_{{field}}">
-        <div>{{value}}</div>
-    </td>
 
+    {% if field == 'id' %}
+        <div><a href="{{PREFIX_URL}}/dictionary/annotatedsentence/{{value}}">{{value}}</a></div>
+    {% else %}
+        <div>{{value}}</div>
+    {% endif %}
+    </td>
     {% endfor %}
 
 </tr>
