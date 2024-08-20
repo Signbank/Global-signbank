@@ -1,12 +1,42 @@
+:root {
+    --dark-mode-very-dark: rgb(9, 4, 2);
+    --tbody-dark-border: rgb(9, 4, 2);
+    --tbody-dark-background: rgb(9, 4, 2);
+    --typeahead-dark-background: rgb(9, 4, 2);
+    --typeahead-dark-border: rgb(40, 0, 0);
+    --typeahead-dark-color: rgb(174, 0, 0);
+    --panel-heading-background: rgb(44, 18, 18);
+    --panel-heading-text: rgb(200, 156, 156);
+    --text-input-field: rgb(40, 0, 0);
+    --text-input-border: rgb(172, 0, 0);
+    --text-input-text: rgb(250, 255, 255);
+    --well-background: rgb(9, 4, 2);
+    --well-border: rgb(60, 0, 0);
+    --button-default: rgb(187, 60, 80);
+    --nav-highlight: rgb(28, 0, 0);
+    --dropdown-dark: rgb(112, 0, 0);
+    --text-container-dark-input-border: rgb(112, 0, 0);
+    --text-container-dark-input-fill: rgb(9, 4, 2);
+    --text-container-dark-border: rgb(34, 0, 0);
+    --text-container-dark-placeholder: rgb(255, 0, 0);
+    --table-dark-color: rgb(151, 100, 100);
+    --table-dark-border: rgb(34, 0, 0);
+    --dark-label-background: rgb(55, 40, 40);
+}
 html,
 body {
   height: auto;
   width: 100%;
   margin: 0px;
   padding: 0px;
+  background-color: white;
+  color: black;
   /* The html and body elements cannot have any padding or margin. */
 }
-
+.body-dark {
+  background-color: var(--well-background);
+  color: var(--panel-heading-text);
+}
 /* Wrapper for page content to push down footer */
 #wrap {
   /* min-height: calc(100% - 220px); */
@@ -36,22 +66,26 @@ body {
     margin-right: 9px;
     margin-bottom: 15px;
     margin-top: 0px;
-    background-color: #ffffff;
+    background-color: inherit;
+    color: inherit;
 }
 
 #content {
-    background-color: #fff;
+    background-color: inherit;
+    color: inherit;
 }
 
 #signinfo {
-    background-color: #ffffff;
+    background-color: inherit;
+    color: inherit;
     margin-bottom: 0px;
     margin-top: 10px;
     padding-left: 0px;
 }
 
 #signinfo .navbar-text {
-        color: #FFFFFF;
+    color: inherit;
+    background-color: inherit;
 }
 #signinfo #editbutton {
     margin-right: 15px;
@@ -68,7 +102,8 @@ body {
 
 #definitionblock {
    margin-top: 0px;
-   background-color: #FFF;
+   background-color: inherit;
+   color: inherit;
 }
 
 @media (min-width: 992px) {
@@ -91,7 +126,8 @@ body {
    margin: 0;
    width:450px;
    height:259px;
-   background-color: white;
+   background-color: inherit;
+   color: inherit;
 }
 
 #novideo
@@ -166,7 +202,8 @@ body {
 /* admin search form */
 
 #searchformwell {
-    background: #FFFFFF;
+    background-color: inherit;
+    color: inherit;
 }
 
 #adminsearch td input {
@@ -222,6 +259,7 @@ body {
 
 .edit_enabled {
     background-color: red;
+    color: inherit;
 }
 
 #definition .table th {
@@ -380,7 +418,7 @@ body {
   padding: 8px 12px;
   font-size: 24px;
   line-height: 30px;
-  border: 2px solid #ccc;
+  border: 2px solid black;
   -webkit-border-radius: 8px;
      -moz-border-radius: 8px;
           border-radius: 8px;
@@ -388,11 +426,12 @@ body {
 }
 
 .typeahead {
-  background-color: #fff;
+  background-color: white;
+  opacity: 60%;
 }
 
 .typeahead:focus {
-  border: 2px solid #0097cf;
+  border: 2px solid black;
 }
 
 .tt-query {
@@ -409,8 +448,9 @@ body {
   width: 422px;
   margin-top: 12px;
   padding: 8px 0;
-  background-color: #fff;
-  border: 1px solid #ccc;
+  background-color: white;
+  border: 1px solid black;
+  opacity: 50%;
   border: 1px solid rgba(0, 0, 0, 0.2);
   -webkit-border-radius: 8px;
      -moz-border-radius: 8px;
@@ -577,7 +617,7 @@ tr.rotated th {
 .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active
 {
     color: #495057;
-    background-color: #fff;
+    background-color: inherit;
     border-color: #BB2F2C #dee2e6 #fff;
     border-top-width: 2px;
 }
@@ -713,4 +753,619 @@ canvas{
 
 .btn-color {
     background-color: Pink;
+}
+
+.btn-toolbar {
+    background-color: inherit;
+    color: inherit;
+}
+.btn-group {
+    background-color: inherit;
+    color: inherit;
+}
+.container {
+    background-color: inherit;
+    color: inherit;
+}
+
+.container-fluid {
+    background-color: inherit;
+    color: inherit;
+}
+
+.well {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel-default {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel-heading {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel-body {
+    background-color: inherit;
+    color: inherit;
+}
+
+.panel-footer {
+    background-color: inherit;
+    color: inherit;
+}
+
+form {
+    background-color: inherit;
+    color: inherit;
+}
+
+.table .table-condensed {
+    background-color: inherit;
+    color: inherit;
+}
+
+.table-responsive {
+    background-color: inherit;
+    color: inherit;
+}
+
+.table .table-bordered {
+    background-color: inherit;
+    color: inherit;
+}
+
+@body-bg {
+    background-color: inherit;
+    color: inherit;
+}
+
+.dark-mode {
+  background-color: var(--dark-mode-very-dark) !important;
+  color: var(--text-input-text) !important;
+}
+
+@media screen {
+  background: inherit;
+  background-color: inherit;
+  color: inherit;
+  border-top-color: inherit;
+}
+
+@media screen body {
+  background: inherit;
+  background-color: inherit;
+  color: inherit;
+}
+/*
+.table > thead > tr > td {
+    border-bottom-color: inherit !important;
+}
+.table > thead > tr > th {
+    border-bottom-color: inherit !important;
+}
+.table > tbody > tr > td {
+    border-top-color: inherit !important;
+}
+.table > tbody > tr > th {
+    border-top-color: inherit !important;
+}
+*/
+option {
+    color: inherit;
+}
+select {
+    color: inherit;
+}
+
+input {
+    background-color: inherit;
+    color: inherit;
+}
+
+.modal {
+    background-color: white;
+    color: black;
+}
+.modal-content {
+    background-color: inherit;
+    color: inherit;
+}
+.modal-header {
+    background-color: inherit;
+    color: inherit;
+}
+.modal-body {
+    background-color: inherit;
+    color: inherit;
+}
+.modal-footer {
+    background-color: inherit;
+    color: inherit;
+}
+
+.modal fade {
+    background-color: inherit;
+    color: inherit;
+}
+.edit .edit_list {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_text {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_area {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_int {
+    background-color: inherit;
+    color: inherit !important;
+}
+.edit .edit_check {
+    background-color: inherit;
+    color: inherit !important;
+}
+/* this is the Edit button in e.g., Gloss Detail View */
+.edit_enabled {
+    background-color: red;
+    color: white !important;
+}
+
+.pull-right {
+    background-color: inherit;
+    color: inherit !important;
+}
+.view-tabs-dark {
+    background-color: var(--panel-heading-background) !important;
+    color: var(--panel-heading-text) !important;
+}
+.nav-tabs-dark {
+    background-color: var(--panel-heading-background) !important;
+    color: var(--panel-heading-text) !important;
+    border-bottom: 1px solid var(--panel-heading-background);
+}
+.nav-tabs-dark > li > .nav-link:hover {
+    background-color: var(--dropdown-dark) !important;
+    color: white !important;
+    border-bottom: 1px solid var(--nav-highlight);
+    border-color: var(--panel-heading-background) var(--panel-heading-background) var(--panel-heading-background);
+}
+.nav-tabs-dark .nav-item.show .nav-link, .nav-tabs .nav-link.active
+{
+    color: var(--panel-heading-text);
+    background-color: inherit;
+    border-color: var(--panel-heading-background);
+    border-top-width: 2px;
+}
+.panel-light {
+    background-color: inherit;
+    color: inherit !important;
+}
+.panel-heading-dark {
+    background-color: var(--panel-heading-background) !important;
+    color: var(--panel-heading-text) !important;
+    border-bottom-width: 0;
+}
+.panel-default-dark {
+    border: solid 1px var(--well-background) !important;
+    border-bottom-color: var(--well-background);
+    background-color: var(--well-background);
+    color: var(--text-input-border);
+    margin-bottom: 0;
+}
+.collapse-dark {
+    border: solid 1px var(--well-background) !important;
+    border-top-width: 1px !important;
+}
+
+.panel-default-dark {
+    border-color: var(--panel-heading-background) !important;
+}
+.panel-default-dark > td > input {
+    border-color: var(--panel-heading-background) !important;
+}
+
+.collapse-light {
+    border: solid 1px inherit !important;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+}
+.well-dark {
+    border: solid 1px var(--well-background) !important;
+}
+.well-light {
+    border: solid 1px inherit !important;
+}
+/* .nav-bar {
+    border: solid 1px purple !important;
+} */
+/*
+.hidden {
+    color: transparent;
+    background-color: transparent;
+}
+*/
+/* .panel {
+    background-color: inherit;
+    border: solid 2px purple;
+    box-shadow: purple 0px 1px 1px 0px;
+} */
+/*
+.tr-dark > td {
+    border-top-color: var(--well-background) !important;
+    background-color: var(--well-background) !important;
+    border: solid 1px var(--well-background) !important;
+    color: var(--text-input-text) !important;
+}
+*/
+.td-dark {
+    border-top-color: var(--well-background) !important;
+    background-color: var(--well-background) !important;
+    border: solid 1px var(--well-background) !important;
+}
+.td-dark > select {
+    border-top-color: var(--well-background) !important;
+    background-color: var(--well-background) !important;
+    border: solid 1px var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
+}
+.td-dark > select > option {
+    border-top-color: var(--well-background) !important;
+    background-color: var(--well-background) !important;
+    border: solid 1px var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
+}
+.span-text-dark {
+    background-color: inherit !important;
+    color: var(--panel-heading-text) !important;
+}
+
+.td-dark > form {
+    border-top-color: var(--well-background) !important;
+    background-color: var(--well-background) !important;
+    color: var(--text-input-text) !important;
+}
+.td-dark > input {
+    border-top-color: var(--text-input-field) !important;
+    border-color: var(--text-input-field) !important;
+    background-color: var(--text-input-field) !important;
+    border: solid 1px var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
+}
+.td-dark > .btn-default-dark {
+    background-color: var(--button-default) !important;
+    color: white !important;
+    border-color: var(--button-default) !important;
+}
+.td-light {
+    border-top-color: inherit;
+}
+.th-dark {
+    border-bottom-color: var(--text-container-dark-border) !important;
+    color: var(--panel-heading-text) !important;
+    background-color: inherit !important;
+}
+.th-light {
+    border-bottom-color: inherit !important;
+}
+
+.navbar-dark {
+    background-color: var(--well-background) !important;
+    color: var(--text-input-border) !important;
+}
+.navbar-nav-dark {
+    background-color: var(--well-background) !important;
+    color: var(--text-input-border) !important;
+    margin-bottom: 3px;
+    padding-top: 3px;
+}
+.navbar-nav-dark > li > a {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    background-color: var(--well-background) !important;
+    color: var(--text-input-border) !important;
+}
+.navbar-nav-dark > li > a:hover {
+    background-color: var(--nav-highlight) !important;
+    color: white !important;
+}
+.navbar-nav-dark > ul {
+    background-color: var(--nav-highlight) !important;
+    color: white !important;
+}
+.btn-default-dark {
+    background-color: var(--button-default) !important;
+    color: white !important;
+    border-color: var(--button-default) !important;
+    border-radius: 6px;
+}
+.btn-default-light {
+}
+.navbar-form-dark {
+    background-color: var(--well-background) !important;
+    border: solid 1px var(--well-background) !important;
+    color: var(--text-input-border) !important;
+}
+.dropdown-dark {
+    background-color: var(--dropdown-dark) !important;
+    color: var(--text-input-border) !important;
+}
+.dropdown-dark > ul {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-border) !important;
+}
+.dropdown-menu-dark > ul {
+    background-color: var(--dropdown-dark) !important;
+    color: var(--text-input-border) !important;
+}
+.dropdown-menu-dark > li > a {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-border) !important;
+}
+.dropdown-menu-dark > li > a:hover {
+    background-color: var(--dropdown-dark) !important;
+    color: white !important;
+}
+.text-container-dark {
+    background-color: var(--text-container-dark-border) !important;
+    color: var(--table-dark-color) !important;
+}
+.text-container-dark > input {
+    background-color: var(--text-container-dark-input-fill) !important;
+    color: white !important;
+    border: solid 1px var(--text-container-dark-input-border) !important;
+}
+.text-container-dark ::placeholder {
+    color: var(--text-container-dark-placeholder) !important;
+}
+.navbar-text-dark {
+    background-color: var(--text-container-dark-border) !important;
+    color: white !important;
+}
+.navbar-text-dark > a:hover {
+    background-color: var(--dropdown-dark) !important;
+    color: white !important;
+}
+.interface-language-light > input {
+    background-color: inherit !important;
+    color: inherit !important;
+    border: solid 1px inherit !important;
+}
+.interface-language-dark {
+    background-color: var(--nav-highlight) !important;
+    color: white !important;
+    border: solid 1px var(--nav-highlight) !important;
+}
+.input-group-dark > label {
+    background-color: var(--dark-label-background) !important;
+    color: var(--panel-heading-text) !important;
+    border: solid 1px var(--dark-label-background) !important;
+}
+.input-group-dark > input {
+    background-color: var(--text-container-dark-input-field) !important;
+    color: white !important;
+    border: solid 1px var(--text-container-dark-input-border) !important;
+}
+.query-toggles {
+    border-left: 2px solid grey;
+    border-spacing: 15px 30px;
+    width: auto;
+}
+.query-toggles-dark {
+    border-left: 2px solid var(--well-border);
+    color: var(--panel-heading-text) !important;
+}
+.query-toggles-dark > tbody > tr > td {
+    border-left: 2px solid var(--well-border);
+    color: var(--panel-heading-text) !important;
+    border: 1px solid var(--well-border) !important;
+}
+.query-toggles-dark > tbody > tr > td > button {
+    color: white !important;
+    border: 1px solid var(--button-default) !important;
+    background-color: var(--button-default) !important;
+    border-radius: 6px;
+}
+.table-bordered-dark {
+    background-color: var(--well-background) !important;
+    color: var(--table-dark-color) !important;
+    border: 1px solid var(--well-border) !important;
+    border-left-color: var(--text-container-dark-border) !important;
+    border-right-color: var(--text-container-dark-border) !important;
+    border-top-color: var(--text-container-dark-border) !important;
+    border-bottom-color: var(--text-container-dark-border) !important;
+}
+.table-condensed-dark {
+    background-color: var(--well-background) !important;
+    color: var(--table-dark-color) !important;
+    border: 1px solid var(--well-border) !important;
+    border-left-color: var(--table-dark-border) !important;
+    border-right-color: var(--table-dark-border) !important;
+    border-top-color: var(--table-dark-border) !important;
+    border-bottom-color: var(--table-dark-border) !important;
+}
+.table-condensed-dark > tbody > tr > td {
+    background-color: var(--well-background) !important;
+    color: var(--text-input-text) !important;
+    border-left-color: var(--table-dark-border) !important;
+    border-right-color: var(--table-dark-border) !important;
+    border-top-color: var(--table-dark-border) !important;
+    border-bottom-color: var(--table-dark-border) !important;
+}
+.table-condensed-dark > tr > td > span {
+    background-color: var(--well-background) !important;
+    color: var(--table-dark-color) !important;
+    border-left-color: var(--text-container-dark-border) !important;
+    border-right-color: var(--text-container-dark-border) !important;
+    border-top-color: var(--text-container-dark-border) !important;
+    border-bottom-color: var(--text-container-dark-border) !important;
+}
+.table-condensed-dark > tr > th {
+    background-color: var(--well-background) !important;
+    color: var(--panel-heading-text) !important;
+    /*
+    border-left-color: var--table-dark-border) !important;
+    border-right-color: var(--table-dark-border) !important;
+    border-top-color: var(--table-dark-border) !important;
+    border-bottom-color: var(--table-dark-border) !important;
+    border-top: 1px solid var(--table-dark-border) !important;
+    */
+}
+.table-condensed-dark > input {
+    background-color: var(--text-container-dark-input-fill) !important;
+    color: white !important;
+    border-left-color: var(--dropdown-dark) !important;
+    border-right-color: var(--dropdown-dark) !important;
+    border-top-color: var(--dropdown-dark) !important;
+    border-bottom-color: var(--dropdown-dark) !important;
+}
+.table-condensed-dark > td > form {
+    background-color: var(--tbody-dark-background) !important;
+    color: var(--table-dark-color) !important;
+    border-left-color: var(--text-container-dark-border) !important;
+    border-right-color: var(--text-container-dark-border) !important;
+    border-top-color: var(--text-container-dark-border) !important;
+    border-bottom-color: var(--text-container-dark-border) !important;
+}
+.search-form-dark {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-border) !important;
+}
+.thead-light {
+    background-color: inherit;
+    color: inherit !important;
+}
+.thead-dark {
+    background-color: inherit !important;
+    color: inherit !important;
+}
+.thead-dark > tr > th {
+    background-color: var(--well-background) !important;
+    color: var(--panel-heading-text) !important;
+}
+.tbody-dark {
+    background-color: var(--tbody-dark-background) !important;
+    border-color: var(--tbody-dark-border) !important;
+    color: var(--text-input-text) !important;
+}
+.tbody-dark > tr > td {
+    background-color: var(--tbody-dark-background) !important;
+    border-color: var(--tbody-dark-border) !important;
+    color: var(--text-input-text) !important;
+}
+.morphtypeahead-light {
+    background-color: white !important;
+    border-color: black !important;
+    opacity: 100%;
+    color: black !important;
+    border: black !important;
+}
+.morphtypeahead-dark {
+    background-color: var(--typeahead-dark-background) !important;
+    border-color: var(--typeahead-dark-border) !important;
+    color: var(--typeahead-dark-color) !important;
+    border: solid 1px var(--typeahead-dark-border) !important;
+}
+.lemmatypeahead-light {
+    background-color: white !important;
+    border-color: black !important;
+    color: black !important;
+    border: black !important;
+}
+.lemmatypeahead-dark {
+    background-color: var(--typeahead-dark-background) !important;
+    border-color: var(--typeahead-dark-border) !important;
+    color: var(--typeahead-dark-color) !important;
+    border: solid 1px var(--typeahead-dark-border) !important;
+}
+span ::placeholder {
+    color: var(--text-input-border) !important;
+}
+.td-dark > span > input {
+    border-top-color: var(--text-input-field) !important;
+    border-color: var(--text-input-field) !important;
+    background-color: var(--text-input-field) !important;
+    border: solid 1px var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
+}
+.td-dark > label {
+    color: var(--panel-heading-text) !important;
+}
+/*
+.td-dark > input {
+    border-color: var(--text-input-field) !important;
+    background-color: var(--text-input-field) !important;
+    border: solid 1px var(--text-input-border) !important;
+    color: var(--text-input-text) !important;
+
+}
+*/
+/*
+.td-dark ::placeholder {
+    color: var(--text-input-border) !important;
+}
+
+.twitter-typeahead {
+    background-color: inherit !important;
+    color: inherit !important;
+    border: solid 1px inherit !important;
+}
+.tt-hint {
+    background-color: inherit !important;
+    color: inherit !important;
+}
+*/
+.pages-form-dark {
+    color: var(--panel-heading-text) !important;
+}
+
+.form-group-dark {
+    color: var(--panel-heading-text) !important;
+}
+/*
+.form-group-dark > label {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-border) !important;
+    border: solid 1px var(--text-input-border) !important;
+}
+*/
+.form-group-dark > input {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-text) !important;
+    border: solid 1px var(--text-input-border) !important;
+}
+/*
+.form-group-dark > label > span > label {
+    background-color: var(--dark-label-background) !important;
+    color: var(--panel-heading-text) !important;
+    border: solid 1px var(--dark-label-background) !important;
+}
+.form-group-dark > select {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-border) !important;
+}
+.form-group-dark > select > option {
+    background-color: var(--text-input-field) !important;
+    color: var(--text-input-border) !important;
+}
+*/
+.form-control-dark {
+    background-color: var(--button-default) !important;
+    color: white !important;
+    border-color: var(--button-default) !important;
+}
+.btn-group-dark {
+    color: inherit !important;
+    background-color: inherit !important;
 }

@@ -4,6 +4,29 @@
 {% load bootstrap3 %}
 {% load annotation_idgloss_translation %}
 
+{% block extrahead %}
+<style>
+.actionButton {
+    padding: 4px 8px;
+    border: 1px solid Grey;
+    border-color: Grey;
+    border-radius: 8px;
+    text-align: center;
+    color: Black;
+    background-color: white;
+}
+.actionButton:hover {
+    text-decoration: none;
+    background-color: LightGrey;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
+</style>
+{% endblock %}
+
 {% block extrajs %}
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
@@ -66,15 +89,20 @@ $(document).ready(function(){
     {% csrf_token %}
 
     <div class="exclude-field-choices">
-        <table class="table table-condensed" id="exclude-field-choices">
+        <table class="table table-condensed table-condensed-light" id="exclude-field-choices">
+            <thead class="thead thead-light">
                 <tr class="accordian">
-                    <th>{% trans "Field Choice Category" %}</th><th>{% trans "Field Choice [Frequency in Selected Managed Datasets]" %}</th>
+                    <th>{% trans "Field Choice Category" %}</th>
+                    <th>{% trans "Field Choice [Frequency in Selected Managed Datasets]" %}</th>
                     {% for dataset, excluded_choices in datasets %}
                         <th>{{ dataset.generate_short_name }}</th>
                     {% endfor %}
                 </tr>
+            </thead>
+            <tbody class="tbody tbody-light">
             {% for category in field_choices.keys %}
-            <tr><td><button class="collapse" type="button" data-toggle='collapse' data-target=".collapse-{{category}}" data-parent="#accordian">{{category}}</button></td>
+            <tr><td><button class="collapse actionButton" type="button" data-toggle='collapse'
+                            data-target=".collapse-{{category}}" data-parent="#accordian">{{category}}</button></td>
                 <td></td>
                 {% for dataset, excluded_choices in datasets %}
                 <td></td>
@@ -101,10 +129,11 @@ $(document).ready(function(){
                 {% endfor %}
                 {% endwith %}
             {% endfor %}
+            </tbody>
         </table>
     </div>
 
-    <input class="pull-right btn btn-primary" type="submit" value="Save">
+    <input class="pull-right btn btn-default btn-default-light" type="submit" value="Save">
 </form>
 
 {% else %}

@@ -14,7 +14,7 @@ from django.http import HttpResponse, HttpResponseRedirect, \
     QueryDict, JsonResponse, StreamingHttpResponse
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from django.utils.translation import override, gettext_lazy as _, activate
+from django.utils.translation import override, gettext, gettext_lazy as _, activate
 from django.shortcuts import *
 from django.contrib import messages
 from django.contrib.sites.models import Site
@@ -391,7 +391,8 @@ class GlossListView(ListView):
                 'dataset').filter(lemma__dataset__in=context['selected_datasets']).count()
         else:
             context['glosscount'] = Gloss.objects.select_related('lemma').select_related(
-                'dataset').filter(lemma__dataset__in=context['selected_datasets']).count()
+                'dataset').filter(lemma__dataset__in=context['selected_datasets'],
+                                  archived__exact=False).count()
 
         context['page_number'] = context['page_obj'].number
 
@@ -450,6 +451,8 @@ class GlossListView(ListView):
 
         column_headers = []
         for fieldname in settings.GLOSS_LIST_DISPLAY_FIELDS:
+            if fieldname not in Gloss.get_field_names():
+                continue
             field_label = Gloss.get_field(fieldname).verbose_name
             column_headers.append((fieldname, field_label))
         context['column_headers'] = column_headers
@@ -614,12 +617,15 @@ class GlossListView(ListView):
                     qs = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
             else:
                 if SPEED_UP_RETRIEVING_ALL_SIGNS:
-                    qs = Gloss.objects.all().prefetch_related('lemma').prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets)
+                    qs = Gloss.objects.all().prefetch_related('lemma').prefetch_related('parent_glosses').prefetch_related('simultaneous_morphology').prefetch_related('translation_set').filter(lemma__dataset__in=selected_datasets,
+                                                                                                                                                                                                 archived__exact=False)
                 else:
-                    qs = Gloss.objects.all().filter(lemma__dataset__in=selected_datasets)
+                    qs = Gloss.objects.all().filter(lemma__dataset__in=selected_datasets,
+                                                    archived__exact=False)
         elif self.query_parameters and 'query' in self.request.GET:
             if self.search_type == 'sign_or_morpheme':
-                qs = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
+                qs = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
+                                                                          archived__exact=False)
             else:
                 qs = Gloss.none_morpheme_objects().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
 
@@ -859,11 +865,13 @@ class SenseListView(ListView):
 
         # Get the initial selection
         if len(get) > 0 and 'query' not in self.request.GET:
-            qs = GlossSense.objects.filter(gloss__lemma__dataset__in=selected_datasets)
+            qs = GlossSense.objects.filter(gloss__lemma__dataset__in=selected_datasets,
+                                           gloss__archived__exact=False)
             qs = qs.order_by('gloss__id', 'order')
 
         elif self.query_parameters and 'query' in self.request.GET:
-            gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets)
+            gloss_query = Gloss.objects.all().prefetch_related('lemma').filter(lemma__dataset__in=selected_datasets,
+                                                                               archived__exact=False)
             gloss_query = apply_language_filters_to_results(gloss_query, self.query_parameters)
             gloss_query = apply_video_filters_to_results('GlossSense', gloss_query, self.query_parameters)
             gloss_query = gloss_query.distinct()
@@ -915,6 +923,7 @@ class GlossDetailView(DetailView):
     context_object_name = 'gloss'
     last_used_dataset = None
     query_parameters = dict()
+    dark_mode = False
 
     def get_template_names(self):
         return ['dictionary/gloss_detail.html']
@@ -925,6 +934,8 @@ class GlossDetailView(DetailView):
 
         try:
             self.object = super().get_object()
+            if self.object.archived:
+                raise ObjectDoesNotExist
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return show_warning(request, translated_message, selected_datasets)
@@ -986,6 +997,13 @@ class GlossDetailView(DetailView):
 
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
+
+        if 'dark_mode' in self.request.session.keys():
+            dark_mode_session = self.request.session['dark_mode']
+            dark_mode = dark_mode_session in ["True"]
+        else:
+            dark_mode = False
+        context['dark_mode'] = str(dark_mode)
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         dataset_languages = get_dataset_languages(selected_datasets)
@@ -1056,16 +1074,8 @@ class GlossDetailView(DetailView):
         # the lemma field is non-empty because it's caught in the get method
         dataset_of_requested_gloss = gl.lemma.dataset
 
-        # set a session variable to be able to pass the gloss's id to the ajax_complete method
-        # the last_used_dataset name is updated to that of this gloss
-        # if a sequence of glosses are being created by hand, this keeps the dataset setting the same
-        if dataset_of_requested_gloss:
-            self.request.session['datasetid'] = dataset_of_requested_gloss.pk
-            self.last_used_dataset = dataset_of_requested_gloss.acronym
-        else:
-            # in this case the gloss does not have a dataset assigned
-            self.request.session['datasetid'] = settings.DEFAULT_DATASET_PK
-            self.last_used_dataset = settings.DEFAULT_DATASET_ACRONYM
+        self.request.session['datasetid'] = dataset_of_requested_gloss.pk
+        self.last_used_dataset = dataset_of_requested_gloss.acronym
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
@@ -1145,7 +1155,8 @@ class GlossDetailView(DetailView):
 
         # Collect morphology definitions for sequential morphology section
         morphdefs = []
-        for morphdef in context['gloss'].parent_glosses.all():
+        for morphdef in context['gloss'].parent_glosses.filter(parent_gloss__archived__exact=False,
+                                                               morpheme__archived__exact=False):
 
             translated_role = morphdef.role.name if morphdef.role else ''
 
@@ -1332,7 +1343,7 @@ class GlossDetailView(DetailView):
         context['gloss_derivationhistory'] = list(gl.derivHist.all())
 
         simultaneous_morphology = []
-        for sim_morph in gl.simultaneous_morphology.all():
+        for sim_morph in gl.simultaneous_morphology.filter(parent_gloss__archived__exact=False):
             translated_morph_type = sim_morph.morpheme.mrpType.name if sim_morph.morpheme.mrpType else ''
             morpheme_annotation_idgloss = {}
             if sim_morph.morpheme.dataset:
@@ -1360,13 +1371,15 @@ class GlossDetailView(DetailView):
         context['count_morphemes_in_dataset'] = count_morphemes_in_dataset
 
         blend_morphology = []
-        for ble_morph in gl.blend_morphology.all():
+        for ble_morph in gl.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                    glosses__archived__exact=False):
             morpheme_display = get_default_annotationidglosstranslation(ble_morph.glosses)
             blend_morphology.append((ble_morph, morpheme_display))
         context['blend_morphology'] = blend_morphology
 
         otherrelations = []
-        for oth_rel in gl.relation_sources.all():
+        for oth_rel in gl.relation_sources.filter(target__archived__exact=False,
+                                                  source__archived__exact=False):
             otherrelations.append((oth_rel, oth_rel.get_target_display()))
         context['otherrelations'] = otherrelations
 
@@ -1547,6 +1560,8 @@ class GlossVideosView(DetailView):
 
         try:
             self.object = super().get_object()
+            if self.object.archived:
+                raise ObjectDoesNotExist
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return show_warning(request, translated_message, selected_datasets)
@@ -1628,14 +1643,8 @@ class GlossVideosView(DetailView):
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
-        if dataset_of_requested_gloss:
-            self.request.session['datasetid'] = dataset_of_requested_gloss.pk
-            self.last_used_dataset = dataset_of_requested_gloss.acronym
-        else:
-            # in this case the gloss does not have a dataset assigned
-            print("Alert: The gloss does not have a dataset. The default dataset is assigned to session variable 'datasetid'")
-            self.request.session['datasetid'] = settings.DEFAULT_DATASET_PK
-            self.last_used_dataset = settings.DEFAULT_DATASET_ACRONYM
+        self.request.session['datasetid'] = dataset_of_requested_gloss.pk
+        self.last_used_dataset = dataset_of_requested_gloss.acronym
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
@@ -1660,6 +1669,8 @@ class GlossRelationsDetailView(DetailView):
 
         try:
             self.object = super().get_object()
+            if self.object.archived:
+                raise ObjectDoesNotExist
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return show_warning(request, translated_message, selected_datasets)
@@ -1733,7 +1744,8 @@ class GlossRelationsDetailView(DetailView):
         otherrelations = []
 
         if gl.relation_sources:
-            for oth_rel in gl.relation_sources.all():
+            for oth_rel in gl.relation_sources.filter(target__archived__exact=False,
+                                                      source__archived__exact=False):
                 if oth_rel.source.id == oth_rel.target.id:
                     print('circular relation found: ', gl, ' (', str(gl.id), ') ', oth_rel, oth_rel.role)
                     continue
@@ -1766,9 +1778,11 @@ class GlossRelationsDetailView(DetailView):
         context['minimalpairs'] = minimalpairs
 
         compounds = []
-        reverse_morphdefs = gl.parent_glosses.all()
+        reverse_morphdefs = gl.parent_glosses.filter(parent_gloss__archived__exact=False,
+                                                     morpheme__archived__exact=False)
         for rm in reverse_morphdefs:
-            parent_glosses = rm.parent_gloss.parent_glosses.all()
+            parent_glosses = rm.parent_gloss.parent_glosses.filter(parent_gloss__archived__exact=False,
+                                                                   morpheme__archived__exact=False)
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
@@ -1778,7 +1792,8 @@ class GlossRelationsDetailView(DetailView):
         appearsin = []
         reverse_morphdefs = MorphologyDefinition.objects.filter(morpheme=gl)
         for rm in reverse_morphdefs:
-            parent_glosses = rm.parent_gloss.parent_glosses.all()
+            parent_glosses = rm.parent_gloss.parent_glosses.filter(parent_gloss__archived__exact=False,
+                                                                   morpheme__archived__exact=False)
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
@@ -1788,7 +1803,8 @@ class GlossRelationsDetailView(DetailView):
         appearsinblend = []
         reverse_blends = BlendMorphology.objects.filter(glosses=gl)
         for rb in reverse_blends:
-            parent_glosses = rb.parent_gloss.blend_morphology.all()
+            parent_glosses = rb.parent_gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                                     glosses__archived__exact=False)
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses) + ': ' + pg.role)
@@ -1796,9 +1812,11 @@ class GlossRelationsDetailView(DetailView):
         context['appearsinblend'] = appearsinblend
 
         blends = []
-        reverse_blends = gl.blend_morphology.all()
+        reverse_blends = gl.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                    glosses__archived__exact=False)
         for rb in reverse_blends:
-            parent_glosses = rb.parent_gloss.blend_morphology.all()
+            parent_glosses = rb.parent_gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                                     glosses__archived__exact=False)
             parent_glosses_display = []
             for pg in parent_glosses:
                 parent_glosses_display.append(get_default_annotationidglosstranslation(pg.glosses) + ': ' + pg.role)
@@ -1806,7 +1824,7 @@ class GlossRelationsDetailView(DetailView):
         context['blends'] = blends
 
         simultaneous_morphology = []
-        for sim_morph in gl.simultaneous_morphology.all():
+        for sim_morph in gl.simultaneous_morphology.filter(parent_gloss__archived__exact=False):
             morpheme_display = get_default_annotationidglosstranslation(sim_morph.morpheme)
             simultaneous_morphology.append((sim_morph, morpheme_display))
         context['simultaneous_morphology'] = simultaneous_morphology
@@ -1814,7 +1832,7 @@ class GlossRelationsDetailView(DetailView):
         gloss_default_annotationidglosstranslation = gl.annotationidglosstranslation_set.get(language=default_language).text
         # Put annotation_idgloss per language in the context
         context['annotation_idgloss'] = {}
-        for language in gl.dataset.translation_languages.all().order_by('id'):
+        for language in gl.dataset.translation_languages.all():
             try:
                 annotation_text = gl.annotationidglosstranslation_set.get(language=language).text
             except ObjectDoesNotExist:
@@ -1822,7 +1840,7 @@ class GlossRelationsDetailView(DetailView):
             context['annotation_idgloss'][language] = annotation_text
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
         context['sensetranslations_per_language'] = senses_per_language(gl)
@@ -2475,6 +2493,18 @@ class MinimalPairsListView(ListView):
 
         context['MINIMAL_PAIRS_CHOICE_FIELDS'] = MINIMAL_PAIRS_CHOICE_FIELDS
 
+        multiple_select_minimal_pairs_categories = fields_to_fieldcategory_dict(MINIMAL_PAIRS_CHOICE_FIELDS)
+
+        choices_colors = {}
+        for (fieldname, field_category) in multiple_select_minimal_pairs_categories.items():
+            if field_category in CATEGORY_MODELS_MAPPING.keys():
+                field_choices = CATEGORY_MODELS_MAPPING[field_category].objects.all()
+            else:
+                field_choices = FieldChoice.objects.filter(field__iexact=field_category)
+            choices_colors[fieldname] = json.dumps(choicelist_queryset_to_field_colors(field_choices))
+
+        context['field_colors'] = choices_colors
+
         context['searchform'] = self.search_form
 
         self.show_all = self.request.GET.get('show_all', self.show_all)
@@ -2666,9 +2696,14 @@ class QueryListView(ListView):
             toggle_gloss_list_display_fields, toggle_query_parameter_fields, toggle_publication_fields = \
             query_parameters_toggle_fields(query_parameters)
 
+        display_fields = settings.GLOSS_LIST_DISPLAY_FIELDS
+        for qpf in query_fields_focus:
+            if qpf not in display_fields:
+                display_fields += [qpf]
+
         context['objects_on_page'] = objects_on_page
         context['object_list'] = object_list
-        context['display_fields'] = settings.GLOSS_LIST_DISPLAY_FIELDS + query_fields_focus
+        context['display_fields'] = display_fields
         context['query_fields_parameters'] = query_fields_parameters
         context['TOGGLE_QUERY_PARAMETER_FIELDS'] = toggle_query_parameter_fields
         context['TOGGLE_PUBLICATION_FIELDS'] = toggle_publication_fields
@@ -2964,6 +2999,8 @@ class GlossFrequencyView(DetailView):
 
         try:
             self.object = super().get_object()
+            if self.object.archived:
+                raise ObjectDoesNotExist
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return show_warning(request, translated_message, selected_datasets)
@@ -3025,11 +3062,8 @@ class GlossFrequencyView(DetailView):
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
-        if gl.dataset:
-            self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.acronym
-        else:
-            self.request.session['datasetid'] = get_default_language_id()
+        self.request.session['datasetid'] = gl.lemma.dataset.id
+        self.last_used_dataset = gl.lemma.dataset.acronym
 
         # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
@@ -3175,11 +3209,8 @@ class LemmaFrequencyView(DetailView):
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
-        if gl.dataset:
-            self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.acronym
-        else:
-            self.request.session['datasetid'] = get_default_language_id()
+        self.request.session['datasetid'] = gl.lemma.dataset.id
+        self.last_used_dataset = gl.lemma.dataset.acronym
 
         # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
@@ -3308,7 +3339,8 @@ class HandshapeListView(ListView):
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
         
-        context['signscount'] = Gloss.objects.filter(lemma__dataset__in=selected_datasets).count()
+        context['signscount'] = Gloss.objects.filter(lemma__dataset__in=selected_datasets,
+                                                     archived__exact=False).count()
 
         context['HANDSHAPE_RESULT_FIELDS'] = settings.HANDSHAPE_RESULT_FIELDS
 
@@ -3527,7 +3559,8 @@ class HandshapeListView(ListView):
             weak_hand = 'subhndsh'
             weak_hand_in = weak_hand + '__machine_value__in'
 
-            qs = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
+            qs = Gloss.objects.filter(lemma__dataset__in=selected_datasets,
+                                      archived__exact=False).filter(
                         (Q(**{strong_hand_in: selected_handshapes}) |
                          Q(**{weak_hand_in: selected_handshapes}) ))
 
@@ -3563,7 +3596,8 @@ class DatasetListView(ListView):
 
         for ds in Dataset.objects.all():
             if self.request.user.is_authenticated or ds in datasets_with_public_glosses:
-                glosses = Gloss.objects.filter(lemma__dataset=ds, morpheme=None)
+                glosses = Gloss.objects.filter(lemma__dataset=ds, morpheme=None,
+                                               archived__exact=False)
                 nr_of_glosses[ds] = glosses.count()
                 nr_of_public_glosses[ds] = glosses.filter(inWeb=True).count()
 
@@ -4164,7 +4198,8 @@ class DatasetManagerView(ListView):
             header = ['Signbank ID', 'Dataset'] + annotationidglosstranslation_fields + ['glossvideo url', 'glossimage url']
 
         writer.writerow(header)
-        queryset = Gloss.objects.filter(lemma__dataset_id=dataset_object.id)
+        queryset = Gloss.objects.filter(lemma__dataset_id=dataset_object.id,
+                                        archived__exact=False)
         for gloss in queryset:
             row = [str(gloss.pk), gloss.lemma.dataset.acronym]
 
@@ -4300,7 +4335,8 @@ class DatasetDetailView(DetailView):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-        glosses = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None)
+        glosses = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None,
+                                       archived__exact=False)
         nr_of_glosses = glosses.count()
         nr_of_public_glosses = glosses.filter(inWeb=True).count()
 
@@ -4425,7 +4461,8 @@ class DatasetMediaView(DetailView):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-        glosses = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None)
+        glosses = Gloss.objects.filter(lemma__dataset=dataset, morpheme=None,
+                                       archived__exact=False)
         nr_of_glosses = glosses.count()
         nr_of_public_glosses = glosses.filter(inWeb=True).count()
 
@@ -4480,13 +4517,14 @@ class DatasetFieldChoiceView(ListView):
                 # Get and save the choice list for this field
                 choice_list = FieldChoice.objects.filter(field__iexact=fieldchoice_category)
                 if len(choice_list) > 0:
-                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list, choices_to_exclude=[])
+                    all_choice_lists[fieldchoice_category] = choicelist_queryset_to_translated_dict(choice_list)
                     choice_list_machine_values = choicelist_queryset_to_machine_value_dict(choice_list)
 
                     for choice_list_field, machine_value in choice_list_machine_values:
 
                         if machine_value == 0:
-                            frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
+                            frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets,
+                                                                         archived__exact=False),
                                                                        Q(**{field.name + '__isnull': True}) |
                                                                        Q(**{field.name: 0})).count()
 
@@ -4494,7 +4532,8 @@ class DatasetFieldChoiceView(ListView):
                             variable_column = field.name
                             search_filter = 'exact'
                             filter = variable_column + '__' + search_filter
-                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
+                            frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets,
+                                                                       archived__exact=False).filter(
                                 **{filter: machine_value}).count()
 
                         try:
@@ -4585,6 +4624,7 @@ class DatasetFieldChoiceView(ListView):
 class FieldChoiceView(ListView):
     model = FieldChoice
     template_name = 'dictionary/dataset_field_choice_colors.html'
+    dark_mode = False
 
     # set the default dataset, this should not be empty
     dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
@@ -4595,6 +4635,12 @@ class FieldChoiceView(ListView):
 
         selected_datasets = get_selected_datasets_for_user(self.request.user)
         user_object = self.request.user
+
+        if 'dark_mode' in self.request.session.keys():
+            dark_mode = self.request.session['dark_mode']
+        else:
+            dark_mode = False
+        context['dark_mode'] = str(dark_mode)
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
@@ -5048,7 +5094,14 @@ class MorphemeDetailView(DetailView):
 
         # Call the base implementation first to get a context
         context = super(MorphemeDetailView, self).get_context_data(**kwargs)
-        # Add in a QuerySet of all the books
+        
+        if 'dark_mode' in self.request.session.keys():
+            dark_mode_session = self.request.session['dark_mode']
+            dark_mode = dark_mode_session in ["True"]
+        else:
+            dark_mode = False
+        context['dark_mode'] = str(dark_mode)
+
         context['tagform'] = TagUpdateForm()
         context['videoform'] = VideoUploadForObjectForm(languages=languages)
         context['imageform'] = ImageUploadForGlossForm()
@@ -5074,11 +5127,8 @@ class MorphemeDetailView(DetailView):
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
         # the last_used_dataset name is updated to that of this gloss
         # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
-        if gl.dataset:
-            self.request.session['datasetid'] = gl.dataset.id
-            self.last_used_dataset = gl.dataset.acronym
-        else:
-            self.request.session['datasetid'] = get_default_language_id()
+        self.request.session['datasetid'] = gl.lemma.dataset.id
+        self.last_used_dataset = gl.lemma.dataset.acronym
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
@@ -5299,10 +5349,13 @@ def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""
 
+    result = []
+
     if 'datasetid' in request.session.keys():
         datasetid = request.session['datasetid']
     else:
-        datasetid = settings.DEFAULT_DATASET_PK
+        return JsonResponse(result, safe=False)
+
     dataset = Dataset.objects.get(id=datasetid)
     default_language = dataset.default_language
 
@@ -5317,18 +5370,16 @@ def gloss_ajax_complete(request, prefix):
     # the following query only retrieves annotations for the language that match the prefix
     query = Q(annotationidglosstranslation__text__istartswith=prefix,
               annotationidglosstranslation__language=interface_language)
-    qs = Gloss.objects.filter(query).distinct()
+    qs = Gloss.objects.filter(lemma__dataset=dataset, archived__exact=False).filter(query).distinct()
 
-    result = []
     for g in qs:
-        if g.dataset == dataset:
-            try:
-                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=interface_language)
-                default_annotationidglosstranslation = annotationidglosstranslation.text
-            except ObjectDoesNotExist:
-                annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=default_language)
-                default_annotationidglosstranslation = annotationidglosstranslation.text
-            result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % g.id})
+        try:
+            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=interface_language)
+            default_annotationidglosstranslation = annotationidglosstranslation.text
+        except ObjectDoesNotExist:
+            annotationidglosstranslation = g.annotationidglosstranslation_set.get(language=default_language)
+            default_annotationidglosstranslation = annotationidglosstranslation.text
+        result.append({'annotation_idgloss': default_annotationidglosstranslation, 'idgloss': g.idgloss, 'sn': g.sn, 'pk': "%s" % g.id})
 
     sorted_result = sorted(result, key=lambda x : (x['annotation_idgloss'], len(x['annotation_idgloss'])))
 
@@ -5349,17 +5400,19 @@ def morph_ajax_complete(request, prefix):
     """Return a list of morphemes matching the search term
     as a JSON structure suitable for typeahead."""
 
+    result = []
+
     if 'datasetid' in request.session.keys():
         datasetid = request.session['datasetid']
     else:
-        datasetid = settings.DEFAULT_DATASET_PK
+        return JsonResponse(result, safe=False)
+
     dataset = Dataset.objects.get(id=datasetid)
 
     # the following query retrieves morphemes with annotations that match the prefix
     query = Q(lemma__dataset=dataset, annotationidglosstranslation__text__istartswith=prefix)
     qs = Morpheme.objects.filter(query).distinct()
 
-    result = []
     for g in qs:
         annotationidglosstranslations = g.annotationidglosstranslation_set.all()
         if not annotationidglosstranslations:
@@ -5466,7 +5519,7 @@ def sensetranslation_ajax_complete(request, dataset_id, language_code, q):
 def homonyms_ajax_complete(request, gloss_id):
 
     try:
-        this_gloss = Gloss.objects.get(id=gloss_id)
+        this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
         homonym_objects = this_gloss.homonym_objects()
     except ObjectDoesNotExist:
         homonym_objects = []
@@ -5498,7 +5551,7 @@ def minimalpairs_ajax_complete(request, gloss_id, gloss_detail=False):
     if language_code == "zh-hans":
         language_code = "zh"
 
-    this_gloss = Gloss.objects.get(id=gloss_id)
+    this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
     try:
         minimalpairs_objects = this_gloss.minimal_pairs_dict()
     except Exception as e:
@@ -5605,7 +5658,7 @@ def glosslist_ajax_complete(request, gloss_id):
             display_fields = json.loads(request.GET['display_fields'])
             query_fields_parameters = json.loads(request.GET['query_fields_parameters'])
 
-    this_gloss = Gloss.objects.get(id=gloss_id)
+    this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
     default_language = this_gloss.lemma.dataset.default_language.language_code_2char
 
     # TO DO could use the following method to generate the column values
@@ -5636,7 +5689,9 @@ def glosslist_ajax_complete(request, gloss_id):
             if query_fields_parameters:
                 # query_fields_parameters ends up being a list of list for this field
                 field_paramters = query_fields_parameters[0]
-                relations_of_type = [r for r in this_gloss.relation_sources.all() if r.role in field_paramters]
+                relations_of_type = [r for r in this_gloss.relation_sources.filter(target__archived__exact=False,
+                                                                                   source__archived__exact=False)
+                                     if r.role in field_paramters]
                 relations = ", ".join([r.target.annotation_idgloss(default_language) for r in relations_of_type])
                 column_values.append((fieldname, relations))
         elif fieldname not in Gloss.get_field_names():
@@ -5831,7 +5886,7 @@ def senselistheader_ajax(request):
 
 def lemmaglosslist_ajax_complete(request, gloss_id):
 
-    this_gloss = Gloss.objects.get(id=gloss_id)
+    this_gloss = Gloss.objects.get(id=gloss_id, archived=False)
 
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
@@ -6173,7 +6228,7 @@ class LemmaCreateView(CreateView):
 def create_lemma_for_gloss(request, glossid):
     print('create lemma for gloss')
     try:
-        gloss = Gloss.objects.get(id=glossid)
+        gloss = Gloss.objects.get(id=glossid, archived=False)
     except ObjectDoesNotExist:
         try:
             gloss = Morpheme.objects.get(id=glossid).gloss
@@ -6284,8 +6339,10 @@ class LemmaUpdateView(UpdateView):
         context['page_in_lemma_list'] = self.page_in_lemma_list
         dataset = self.object.dataset
         context['dataset'] = dataset
-        dataset_languages = Language.objects.filter(dataset=dataset).distinct()
+        dataset_languages = dataset.translation_languages.all()
         context['dataset_languages'] = dataset_languages
+        context['language_2chars'] = [str(language.language_code_2char) for language in dataset_languages]
+
         context['change_lemma_form'] = LemmaUpdateForm(instance=self.object, page_in_lemma_list=self.page_in_lemma_list)
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
 
@@ -6429,8 +6486,9 @@ class LemmaDeleteView(DeleteView):
 class KeywordListView(ListView):
 
     model = Gloss
-    template_name = 'dictionary/admin_keyword_list.html'
+    template_name = 'dictionary/admin_batch_edit_senses.html'
     paginate_by = 25
+    search_type = 'sign'
     query_parameters = dict()
 
     def get(self, request, *args, **kwargs):
@@ -6443,11 +6501,14 @@ class KeywordListView(ListView):
         context['selected_datasets'] = selected_datasets
 
         if not selected_datasets or selected_datasets.count() > 1:
-            dataset_languages = Language.objects.filter(id=get_default_language_id())
-        else:
-            dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+            feedback_message = _('Please select a single dataset to view keywords.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
 
-        context['dataset_languages'] = dataset_languages
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = list(dataset_languages)
+
+        new_text_labels = {str(lang.id): lang.name + ' ' + gettext("Text") for lang in dataset_languages}
+        context['new_text_labels'] = new_text_labels
 
         search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
 
@@ -6469,10 +6530,21 @@ class KeywordListView(ListView):
     def get_queryset(self):
         # this is a ListView for a complicated data structure
 
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
+
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view keywords.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
+            return []
+
+        if ('search_type' in self.request.session.keys() and
+                self.request.session['search_type'] != self.search_type):
+            feedback_message = _('Your query result is not glosses.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
@@ -6487,39 +6559,50 @@ class KeywordListView(ListView):
 
         (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
 
+        glosses_of_datasets = object_list
+
         get = self.request.GET
 
-        # multilingual
         # this needs to be sorted for jquery purposes
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         # exclude morphemes
-        if not get:
-            glosses_of_datasets = object_list
-        else:
-            glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
-
-        # data structure to store the query parameters in order to keep them in the form
-        query_parameters = dict()
-
-        if 'tags[]' in get:
-            vals = get.getlist('tags[]')
-            if vals:
-                query_parameters['tags[]'] = vals
-                glosses_with_tag = list(
-                    TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
-                glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
+        if not glosses_of_datasets:
+            feedback_message = _('No glosses found.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            return []
 
         if glosses_of_datasets.count() > 100:
             feedback_message = _('Please refine your query to retrieve fewer than 100 glosses to use this functionality.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
-            # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
-        # save the query parameters to a session variable
-        self.request.session['query_parameters'] = json.dumps(query_parameters)
+        if 'tags[]' in get:
+            vals = get.getlist('tags[]')
+            if vals:
+                self.query_parameters['tags[]'] = vals
+                values = [int(v) for v in vals]
+                glosses_with_tag = list(
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
+                glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        items = construct_scrollbar(glosses_of_datasets, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
+
+        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
+        self.request.session['search_type'] = self.search_type
         self.request.session.modified = True
-        self.query_parameters = query_parameters
 
         for gloss in glosses_of_datasets:
             consistent = consistent_senses(gloss, include_translations=True,
@@ -6603,6 +6686,213 @@ class KeywordListView(ListView):
         return glossesXsenses
 
 
+class BatchEditView(ListView):
+
+    model = Gloss
+    template_name = 'dictionary/admin_batch_edit_view.html'
+    paginate_by = 25
+    search_type = 'sign'
+    query_parameters = dict()
+
+    def get(self, request, *args, **kwargs):
+        return super(BatchEditView, self).get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(BatchEditView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+
+        if not selected_datasets or selected_datasets.count() > 1:
+            dataset_languages = Language.objects.filter(id=get_default_language_id())
+        else:
+            dataset_languages = get_dataset_languages(selected_datasets).order_by('-id')
+
+        context['dataset_languages'] = dataset_languages
+
+        language_2chars = [str(language.language_code_2char) for language in dataset_languages]
+        context['language_2chars'] = language_2chars
+
+        search_form = KeyMappingSearchForm(self.request.GET, languages=dataset_languages)
+
+        context['searchform'] = search_form
+
+        multiple_select_gloss_fields = ['tags']
+        context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
+
+        context['available_tags'] = [tag for tag in Tag.objects.all()]
+
+        similar_gloss_fields = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
+                                'contType', 'movSh', 'movDir', 'repeat', 'altern', 'relOriMov', 'relOriLoc', 'oriCh']
+        context['similar_gloss_fields'] = json.dumps(similar_gloss_fields)
+        similar_gloss_fields_labels = {}
+        for field in similar_gloss_fields:
+            similar_gloss_fields_labels[field] = Gloss.get_field(field).verbose_name
+        context['similar_gloss_fields_labels'] = similar_gloss_fields_labels
+
+        context['available_semanticfields'] = [semfield for semfield in SemanticField.objects.filter(
+            machine_value__gt=1).order_by('name')]
+
+        available_handedness = [fc for fc in FieldChoice.objects.filter(
+            field='Handedness', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_handedness += [fc for fc in FieldChoice.objects.filter(
+            field='Handedness', machine_value__gt=1).order_by('name')]
+        context['available_handedness'] = available_handedness
+
+        available_handshape = [hs for hs in Handshape.objects.filter(
+            machine_value__in=[0, 1]).order_by('machine_value')]
+        available_handshape += [hs for hs in Handshape.objects.filter(
+            machine_value__gt=1).order_by('name')]
+        context['available_handshape'] = available_handshape
+
+        available_handCh = [fc for fc in FieldChoice.objects.filter(
+            field='HandshapeChange', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_handCh += [fc for fc in FieldChoice.objects.filter(
+            field='HandshapeChange', machine_value__gt=1).order_by('name')]
+        context['available_handCh'] = available_handCh
+
+        available_relatArtic = [fc for fc in FieldChoice.objects.filter(
+            field='RelatArtic', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_relatArtic += [fc for fc in FieldChoice.objects.filter(
+            field='RelatArtic', machine_value__gt=1).order_by('name')]
+        context['available_relatArtic'] = available_relatArtic
+
+        available_locprim = [fc for fc in FieldChoice.objects.filter(
+            field='Location', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_locprim += [fc for fc in FieldChoice.objects.filter(
+            field='Location', machine_value__gt=1).order_by('name')]
+        context['available_locprim'] = available_locprim
+
+        available_contType = [fc for fc in FieldChoice.objects.filter(
+            field='ContactType', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_contType += [fc for fc in FieldChoice.objects.filter(
+            field='ContactType', machine_value__gt=1).order_by('name')]
+        context['available_contType'] = available_contType
+
+        available_movSh = [fc for fc in FieldChoice.objects.filter(
+            field='MovementShape', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_movSh += [fc for fc in FieldChoice.objects.filter(
+            field='MovementShape', machine_value__gt=1).order_by('name')]
+        context['available_movSh'] = available_movSh
+
+        available_movDir = [fc for fc in FieldChoice.objects.filter(
+            field='MovementDir', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_movDir += [fc for fc in FieldChoice.objects.filter(
+            field='MovementDir', machine_value__gt=1).order_by('name')]
+        context['available_movDir'] = available_movDir
+
+        available_boolean = [{'machine_value': 1, 'name': gettext("Yes")},
+                             {'machine_value': 0, 'name': gettext("No")}]
+        context['available_boolean'] = available_boolean
+
+        available_relOriMov = [fc for fc in FieldChoice.objects.filter(
+            field='RelOriMov', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_relOriMov += [fc for fc in FieldChoice.objects.filter(
+            field='RelOriMov', machine_value__gt=1).order_by('name')]
+        context['available_relOriMov'] = available_relOriMov
+
+        available_relOriLoc = [fc for fc in FieldChoice.objects.filter(
+            field='RelOriLoc', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_relOriLoc += [fc for fc in FieldChoice.objects.filter(
+            field='RelOriLoc', machine_value__gt=1).order_by('name')]
+        context['available_relOriLoc'] = available_relOriLoc
+
+        available_oriCh = [fc for fc in FieldChoice.objects.filter(
+            field='OriChange', machine_value__in=[0, 1]).order_by('machine_value')]
+        available_oriCh += [fc for fc in FieldChoice.objects.filter(
+            field='OriChange', machine_value__gt=1).order_by('name')]
+        context['available_oriCh'] = available_oriCh
+
+        context['query_parameters'] = json.dumps(self.query_parameters)
+        query_parameters_keys = list(self.query_parameters.keys())
+        context['query_parameters_keys'] = json.dumps(query_parameters_keys)
+
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+        return context
+
+    def get_queryset(self):
+
+        if 'query_parameters' in self.request.session.keys() and self.request.session['query_parameters'] not in ['', '{}']:
+            session_query_parameters = self.request.session['query_parameters']
+            self.query_parameters = json.loads(session_query_parameters)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        if not selected_datasets or selected_datasets.count() > 1:
+            feedback_message = _('Please select a single dataset to use Batch Edit.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            return Gloss.objects.none()
+
+        if ('search_type' in self.request.session.keys() and
+                self.request.session['search_type'] != self.search_type):
+            feedback_message = _('Your query result is not glosses.')
+            messages.add_message(self.request, messages.ERROR, feedback_message)
+            return Gloss.objects.none()
+
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+            if len(search_results) > 0:
+                first_search_result = search_results[0]
+                first_gloss = Gloss.objects.filter(id__in=[first_search_result['id']]).first()
+                if first_search_result['href_type'] not in ['gloss']:
+                    search_results = []
+                if not first_gloss or first_gloss.lemma.dataset not in selected_datasets:
+                    search_results = []
+        else:
+            search_results = []
+
+        (objects_on_page, object_list) = map_search_results_to_gloss_list(search_results)
+
+        glosses_of_dataset = object_list
+
+        get = self.request.GET
+
+        if not get:
+            return glosses_of_dataset
+
+        if not glosses_of_dataset:
+            return glosses_of_dataset
+
+        if 'tags[]' in get:
+            vals = get.getlist('tags[]')
+            if vals:
+                self.query_parameters['tags[]'] = vals
+                values = [int(v) for v in vals]
+                glosses_with_tag = list(
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
+                glosses_of_dataset = glosses_of_dataset.filter(id__in=glosses_with_tag)
+        if 'createdBy' in get and get['createdBy']:
+            get_value = get['createdBy']
+            self.query_parameters['createdBy'] = get_value.strip()
+            created_by_search_string = ' '.join(get_value.strip().split())  # remove redundant spaces
+            glosses_of_dataset = glosses_of_dataset.annotate(
+                created_by=Concat('creator__first_name', V(' '), 'creator__last_name', output_field=CharField())) \
+                .filter(created_by__icontains=created_by_search_string)
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset = selected_datasets.first()
+
+        dataset_display_languages = []
+        for lang in dataset.translation_languages.all():
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        items = construct_scrollbar(glosses_of_dataset, self.search_type, lang_attr_name)
+        self.request.session['search_results'] = items
+
+        self.request.session['query_parameters'] = json.dumps(self.query_parameters)
+        self.request.session.modified = True
+
+        return glosses_of_dataset
+
+
 class ToggleListView(ListView):
 
     model = Gloss
@@ -6623,7 +6913,7 @@ class ToggleListView(ListView):
         if not selected_datasets or selected_datasets.count() > 1:
             dataset_languages = Language.objects.filter(id=get_default_language_id())
         else:
-            dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+            dataset_languages = get_dataset_languages(selected_datasets)
 
         context['dataset_languages'] = dataset_languages
 
@@ -6690,13 +6980,14 @@ class ToggleListView(ListView):
 
         # multilingual
         # this needs to be sorted for jquery purposes
-        dataset_languages = get_dataset_languages(selected_datasets).order_by('id')
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         if get:
             glosses_of_datasets = Gloss.none_morpheme_objects().filter(lemma__dataset__in=selected_datasets)
         else:
             recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
-            glosses_of_datasets = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets).filter(
+            glosses_of_datasets = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets,
+                                                       archived__exact=False).filter(
                 creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
                 'creationDate')
 
@@ -6707,9 +6998,11 @@ class ToggleListView(ListView):
             vals = get.getlist('tags[]')
             if vals:
                 query_parameters['tags[]'] = vals
+                values = [int(v) for v in vals]
                 glosses_with_tag = list(
-                    TaggedItem.objects.filter(tag__id__in=vals).values_list('object_id', flat=True))
-                glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
+                    TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
+                glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag,
+                                                                 archived__exact=False)
         if 'createdBy' in get and get['createdBy']:
             get_value = get['createdBy']
             query_parameters['createdBy'] = get_value.strip()

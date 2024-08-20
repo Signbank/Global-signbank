@@ -5,6 +5,20 @@
 {% load has_group %}
 {% load guardian_tags %}
 
+{% block extrahead %}
+<style>
+input[type="submit"] {
+    z-index: 0 !important;
+}
+tr > td > input[type="submit"] {
+    z-index: 0 !important;
+}
+tr > td > form > input[type="submit"] {
+    z-index: 0 !important;
+}
+</style>
+{% endblock %}
+
 {% block extrajs %}
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
     <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.checkbox.js"></script>
@@ -21,11 +35,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.min.js"></script>
 
     <script type="text/javascript">
-        $(document).ready(function() {
-            $('.default-language-select').select2({
-              placeholder: 'Select an option'
-            });
-        });
 
         function selectFolder(e) {
             var theFiles = e.target.files;
@@ -60,8 +69,8 @@
 
 <a href="{% url 'admin_dataset_field_choices' %}"><button class="btn btn-primary" >{% trans "Exclude field choices for datasets" %}</button></a>
 
-<table class='table'>
-    <thead>
+<table class='table table-condensed table-condensed-light'>
+    <thead class="thead thead-light">
       <tr>
           <th style="width:100px;">{% trans "Dataset Name" %}</th>
           <th style="width:200px;">{% trans "Users who can View Dataset (Group permissions excluded)" %}</th>
@@ -94,12 +103,12 @@
           <th style="width:270px;">{% trans "EAF Files" %}</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody class="tbody tbody-light">
       {% for dataset in object_list %}
       {% if request.user|has_group:"Dataset_Manager" %}
       {% get_obj_perms request.user for dataset as "dataset_perms" %}
       {% if "change_dataset" in dataset_perms %}
-        <tr>
+        <tr style="z-index:0;">
             <td>
                 <table class="table table-condensed">
                     <tr>
@@ -120,7 +129,9 @@
                 </table>
             </td>
             <td>
-                <div data-toggle="collapse" href="#dataset_{{dataset.name|slugify}}_manage_view"><button>{% trans "Manage" %}</button></div>
+                <div data-toggle="collapse" href="#dataset_{{dataset.name|slugify}}_manage_view">
+                    <button class="btn-default btn-default-light">{% trans "Manage" %}</button>
+                </div>
                 <div id='dataset_{{dataset.name|slugify}}_manage_view' class='collapse'>
                 {% with dataset.get_users_who_can_view_dataset as view_users %}
                 {% if view_users|length > 0 %}
@@ -148,15 +159,18 @@
                 {% endif %}
                     <form name='dataset_{{dataset.name|cut:" "}}_view_perm_form' id='dataset_{{dataset.name|cut:" "}}_view_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
+                            <input name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                                   placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
+                        </tr>
+                        <tr style="z-index:0;">
                             <td>
                             <input class='btn btn-primary' id='add_view_perm' name='add_view_perm' type='submit' value='{% trans "Grant" %}'>
                             </td>
@@ -165,15 +179,18 @@
                     </form>
                     <form name='dataset_{{dataset.name|cut:" "}}_delete_view_perm_form' id='dataset_{{dataset.name|cut:" "}}_delete_view_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
+                            <input name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                                   placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
+                        </tr>
+                        <tr style="z-index:0;">
                             <td>
                             <input class='btn btn-primary' id='delete_view_perm' name='delete_view_perm' type='submit' value='{% trans "Revoke" %}'>
                             </td>
@@ -186,7 +203,9 @@
                 </div>
             </td>
             <td>
-                <div data-toggle="collapse" href="#dataset_{{dataset.name|slugify}}_manage_change"><button>{% trans "Manage" %}</button></div>
+                <div data-toggle="collapse" href="#dataset_{{dataset.name|slugify}}_manage_change">
+                    <button class="btn-default btn-default-light">{% trans "Manage" %}</button>
+                </div>
                 <div id='dataset_{{dataset.name|slugify}}_manage_change' class='collapse'>
                 {% with dataset.get_users_who_can_change_dataset as change_users %}
                 {% if change_users|length > 0 %}
@@ -212,15 +231,18 @@
                 {% endif %}
                     <form name='dataset_{{dataset.name|cut:" "}}_change_perm_form' id='dataset_{{dataset.name|cut:" "}}_change_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
+                            <input name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                                   placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
+                        </tr>
+                        <tr style="z-index:0;">
                             <td>
                             <input class='btn btn-primary' id='add_change_perm' name='add_change_perm' type='submit' value='{% trans "Grant" %}'>
                             </td>
@@ -229,15 +251,18 @@
                     </form>
                     <form name='dataset_{{dataset.name|cut:" "}}_delete_change_perm_form' id='dataset_{{dataset.name|cut:" "}}_delete_change_perm_form' method='get'>
                         <div class="hidden">
-                            <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
+                            <input name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
                         </div>
                         <table class='table table-condensed'>
                         <tr>
                             <td>
                             {% csrf_token %}
-                            <input class='form-control usertypeahead' placeholder='{% trans "Username" %}'/>
+                            <input class='form-control form-control-light usertypeahead usertypeahead-light'
+                                   placeholder='{% trans "Username" %}'/>
                             <input type="hidden" name="username" value=""/>
                             </td>
+                        </tr>
+                        <tr style="z-index:0;">
                             <td>
                             <input class='btn btn-primary' id='delete_change_perm' name='delete_change_perm' type='submit' value='{% trans "Revoke" %}'>
                             </td>
@@ -249,13 +274,13 @@
                 {% endwith %}
                 </div>
             </td>
-            <td>
-                <form method="get">
+            <td style="z-index: 0 important!;">
+                <form method="get" class='pages-form pages-form-light'>
                     {% csrf_token %}
                     <div class="hidden">
-                        <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
+                        <input name='dataset_acronym' value='{{dataset.acronym}}' >
                     </div>
-                    <select name='default_language' class="default-language-select" style="width:200px;">
+                    <select name='default_language' class="form-control form-control-light" style="width:200px;">
                         <option value="">--------</option>
                         {% for language in dataset.translation_languages.all %}
                             <option value="{{ language.id }}"
@@ -263,7 +288,7 @@
                                 {{ language.name }}</option>
                         {% endfor %}
                     </select>
-                    <input class="btn btn-primary" type="submit" value="{% trans 'Set' %}"/>
+                    <input class="btn btn-primary" type="submit" value="{% trans 'Set' %}">
                 </form>
             </td>
             <td>
@@ -271,14 +296,14 @@
                   <form id="export_links_{{dataset.acronym}}" method="get" action='{{PREFIX_URL}}/datasets/manager'
                         enctype="multipart/form-data">
                       {% csrf_token %}
-                        <input type='hidden' name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
-                        <input class='btn btn-default' type='submit' name='format' id='format' value='CSV' >
+                        <input type='hidden' name='dataset_acronym' class='form-control form-control-light' value='{{dataset.acronym}}' >
+                        <input class='btn btn-default btn-default-light' type='submit' name='format' id='format' value='CSV' >
                   </form>
               </div>
             </td>
           <td>
             <div data-toggle="collapse" href="#dataset_{{dataset.acronym}}_metadata" data-target=".multi-collapse-meta-{{dataset.pk}}">
-                <button>{% trans "Manage" %}</button>
+                <button class="btn-default btn-default-light">{% trans "Manage" %}</button>
             </div>
             <div id='dataset_{{dataset.acronym}}_metadata' class='collapse multi-collapse-meta-{{dataset.pk}}' >
                 {% if dataset.get_metadata_path %}
@@ -301,13 +326,13 @@
                      {% endif %}' >
 
             <input type='hidden' name='dataset_acronym' value='{{dataset.acronym}}'>
-            <input class='form-control' placeholder='{% trans "Upload CSV" %}' name='file' type='file' required="">
+            <input class='form-control form-control-light' placeholder='{% trans "Upload CSV" %}' name='file' type='file' required="">
           </form>
           </div>
           </td>
           <td>
               <div data-toggle="collapse" href="#dataset_{{dataset.acronym}}_view_eafs" data-target=".multi-collapse-{{dataset.pk}}">
-                  <button>{% trans "Manage" %}</button>
+                  <button class="btn-default btn-default-light">{% trans "Manage" %}</button>
               </div>
               <div id='dataset_{{dataset.acronym}}_view_eafs' class='collapse multi-collapse-{{dataset.pk}}'>
                   {% if dataset.uploaded_eafs %}
@@ -335,7 +360,7 @@
                 <label for="radio_files">{% trans "Files" %}</label>
             <input type="hidden" name="dir_name" id="dir_name" value="">
             <input type='hidden' name='dataset_acronym' value='{{dataset.acronym}}'>
-            <input class='form-control' placeholder='{% trans "Upload EAF Files" %}'
+            <input class='form-control form-control-light' placeholder='{% trans "Upload EAF Files" %}'
                    name='file' type='file' multiple="" required="" webkitdirectory=true
                     onchange="selectFolder(event)" id="{{dataset.acronym}}_file_or_folder">
           </form>

@@ -130,7 +130,11 @@ for (i = 0; i < l; i++) {
     var j_color = '#' + res[3];
     var item_choice_id = res[2];
     c.setAttribute("id", "select_items_"+category_xi+"_"+item_choice_id);
-    c.style.backgroundColor = j_color;
+    if (j_color == '#ffffff' && dark_mode == 'True') {
+        c.style.backgroundColor = '#000000';
+    } else {
+        c.style.backgroundColor = j_color;
+    }
     c.addEventListener("click", function(e) {
         /* When an item is clicked, update the original select box,
         and the selected item: */

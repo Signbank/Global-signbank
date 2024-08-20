@@ -15,6 +15,12 @@
     var url = '{{ URL }}'
 
     </script>
+
+<style>
+.nav-link > a:hover {
+    text-decoration: none;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -22,11 +28,12 @@
 <h3>{% trans "Derivation History Details" %}</h3>
 
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
-    <ul class='nav nav-tabs'>
-        <li class="nav-item">
+<div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;">
+    <ul class='nav nav-tabs nav-tabs-light'>
+        <li class="nav-item" style="background-color: inherit;border-color: transparent;">
         {% if not user.is_anonymous %}
-            <a class='nav-link' href="{{PREFIX_URL}}/settings/derivationhistory_list/">{% trans "Derivation Histories List" %}</a>
+            <a class='nav-link' style="background-color: inherit;border-color: transparent;"
+               href="{{PREFIX_URL}}/settings/derivationhistory_list/">{% trans "Derivation Histories List" %}</a>
         {% endif %}
         </li>
     </ul>
@@ -34,9 +41,10 @@
 
 <div id="definitionblock">
 
-        <div class='panel-group' id="definition" style="z-index: 10;opacity:.99; position: relative; background-color: white;margin-top:15px;">
+        <div class='panel-group' id="definition" style="z-index: 10;opacity:.99; position: relative; background-color: inherit;margin-top:15px;">
             <table class='table table-condensed'>
-                <tr><th style="width:18em;">{% trans "Derivation History " %}</th><td>{{ derivationhistory.name }}</td></tr>
+                <tr><th style="width:18em;">{% trans "Derivation History " %}</th>
+                    <td>{{ derivationhistory.name }}</td></tr>
 
                 <tr><th>{% trans "Description" %}</th>
                     <td align="left" id='description' name='description'>{{derivationhistory.description}}</td></tr>

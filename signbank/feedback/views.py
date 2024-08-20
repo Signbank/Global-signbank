@@ -14,7 +14,7 @@ from django.urls import reverse
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from signbank.tools import get_selected_datasets_for_user
-from django.utils.translation import override, gettext_lazy as _, activate
+from django.utils.translation import override, gettext_lazy as _, activate, gettext
 from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 import datetime as DT
 from django.utils.timezone import get_current_timezone
@@ -64,7 +64,7 @@ def generalfeedback(request):
                           {'language': settings.LANGUAGE_NAME,
                            'selected_datasets': get_selected_datasets_for_user(request.user),
                            'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                           'title': "General Feedback",
+                           'title': gettext("General Feedback"),
                            'form': form,
                            'valid': valid})
     else:
@@ -74,7 +74,7 @@ def generalfeedback(request):
                   {'language': settings.LANGUAGE_NAME,
                    'selected_datasets': get_selected_datasets_for_user(request.user),
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS,
-                   'title': "General Feedback",
+                   'title': gettext("General Feedback"),
                    'form': form,
                    'valid': valid})
 
@@ -256,7 +256,7 @@ def glossfeedback(request, glossid):
     if 'morpheme' in request_path:
         morpheme = get_object_or_404(Morpheme, id=glossid)
     else:
-        gloss = get_object_or_404(Gloss, id=glossid)
+        gloss = get_object_or_404(Gloss, id=glossid, archived=False)
     return recordsignfeedback(request, glossid)
 
 
@@ -267,7 +267,7 @@ def morphemefeedback(request, glossid):
     if 'morpheme' in request_path:
         morpheme = get_object_or_404(Morpheme, id=glossid)
     else:
-        gloss = get_object_or_404(Gloss, id=glossid)
+        gloss = get_object_or_404(Gloss, id=glossid, archived=False)
     return recordsignfeedback(request, glossid)
 
 
@@ -289,7 +289,7 @@ def recordsignfeedback(request, glossid):
         feedback_template = "feedback/morphemefeedback.html"
         redirect_page = settings.PREFIX_URL + '/dictionary/morpheme/' + str(glossid)
     else:
-        sign_or_morpheme = get_object_or_404(Gloss, id=glossid)
+        sign_or_morpheme = get_object_or_404(Gloss, id=glossid, archived=False)
         feedback_form = SignFeedbackForm(request.POST) if request.method == 'POST' else SignFeedbackForm()
         feedback_template = "feedback/signfeedback.html"
         redirect_page = settings.PREFIX_URL + '/dictionary/gloss/' + str(glossid)

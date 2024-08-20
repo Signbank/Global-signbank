@@ -1,0 +1,687 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Split Up Senses{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+<link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
+
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini_colors.js"></script>
+<link href="//cdnjs.cloudflare.com/ajax/libs/select2/4.0.0/css/select2.css" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.full.js"></script>
+
+<script type='text/javascript'>
+var url = '{{ PREFIX_URL }}';
+var saving_str = '{{saving_str|escapejs}}';
+var csrf_token = '{{csrf_token}}';
+var multiple_select_fields = {{MULTIPLE_SELECT_GLOSS_FIELDS|safe}};
+var query_parameters_keys = {{query_parameters_keys|safe}};
+var query_parameters_dict = {{query_parameters|safe}};
+var new_text_labels = {{new_text_labels|safe}};
+</script>
+
+<script type='text/javascript' src="{{ STATIC_URL }}js/senses_keywords_edit.js"></script>
+
+<script type='text/javascript'>
+$(document).ready(function() {
+
+    function makeMultipleSelect(fieldId,fieldVar) {
+        var target_pulldown = document.getElementById(fieldId);
+        if (!target_pulldown) { return; }
+        target_pulldown.setAttribute('multiple','multiple');
+        target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
+        target_pulldown.setAttribute('name',fieldVar);
+        target_pulldown.style.width = '100%';
+    }
+
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = 'id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        makeMultipleSelect(this_id, this_var);
+     }
+
+     $('.js-example-basic-multiple').each(function() {
+         var thisId = this.id;
+         $(this).select2({
+            allowClear: true,
+            dropdownAutoWidth: true,
+            width: 'resolve',
+            placeholder: '',
+         });
+     });
+
+     $('.js-example-basic-multiple').val(null).trigger('change');
+
+     // initialize query parameters in multiple select fields
+     for (var i = 0; i < multiple_select_fields.length; i++) {
+        var this_id = '#id_' + multiple_select_fields[i];
+        var this_var = multiple_select_fields[i] + '[]';
+        if (query_parameters_keys.includes(this_var)) {
+            var query_initial = query_parameters_dict[this_var];
+            $(this_id).val(query_initial);
+            $(this_id).trigger('change');
+        };
+     }
+     $('.hover-shows-video').each(function() {
+        ready_videos(this);
+     });
+});
+
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            $(this).find('img').hide();
+            video.show();
+            video.get(0).play();
+        }
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            video.hide();
+            video.get(0).pause();
+            video.get(0).currentTime = 0;
+        }
+    });
+}
+</script>
+
+<script type='text/javascript'>
+
+// http://www.javascript-coder.com/javascript-form/javascript-reset-form.phtml
+function clearForm() {
+     $('.js-example-basic-multiple').val(null).trigger('change');
+}
+</script>
+{% endblock %}
+
+{% block extrahead %}
+<link rel="stylesheet" type="text/css" href="{{STATIC_URL}}css/affiliation_tags.css">
+<style>
+.panel {
+    border: 1px solid darkgrey;
+}
+.panel-collapse {
+    border: 1px solid darkgrey;
+}
+.panel-header {
+    border: 1px solid darkgrey;
+}
+.panel-body {
+    padding:3px;
+    margin: 5px;
+}
+.actions {
+    color: white !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+.actionLabel {
+    border: 1px solid;
+    text-align: center;
+    padding: 6px 12px;
+    border-radius: 6px;
+    background-color: white;
+    margin: 0 0 0 0;
+}
+.actionLabel:hover {
+    text-decoration: none;
+}
+.actionLabel:active:focus {
+    text-decoration: none;
+    outline: none;
+}
+.actionButton {
+    padding: 0;
+    border: 0px;
+    border-width: 0px;
+    margin: 0 0 0 0;
+    border-radius: 6px;
+    text-align: center;
+}
+.actionButton:hover {
+    text-decoration: none;
+}
+.actionButton:active:focus {
+    text-decoration: none;
+    background-color: none;
+    outline: none;
+}
+.tags-cell {
+    overflow-y: visible;
+    box-sizing: inherit;
+    white-space: nowrap;
+}
+input {
+    height: 26px;
+    line-height: 26px;
+    font-size: 14px;
+    padding: 2px;
+}
+input[type=text] {
+    border: none;
+    background-color: rgba(50,50,50,10%);
+    margin: 2px;
+    padding-right: 5px;
+    border: 1px solid darkgrey;
+}
+input[type=text]:focus {
+    border: 1px solid red;
+}
+input[type=number] {
+    border: none;
+    margin: 2px;
+    padding-right: 5px;
+    width: 5em;
+}
+.span-cell {
+    height: auto;
+    width: auto;
+    padding: 5px;
+}
+.table-responsive {
+    border: 0px 0px 0px 0px;
+}
+.table-responsive tr {
+    border: 0px 0px 0px 0px;
+}
+.table-condensed {
+    border-collapse: collapse;
+    border: 0px 0px 0px 0px;
+    border-bottom-width: 0px;
+    box-sizing: content-box;
+}
+.table-condensed td {
+    height: auto;
+}
+.tagAFF {
+    margin-left: 0;
+}
+.table-simple {
+    border-spacing: 15px;
+    box-sizing: content-box;
+}
+.table-simple tr {
+    border-top: 0px;
+    border-bottom: 0px;
+    border: 0px 0px 0px 0px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+.table-simple td, th {
+    border-top: none;
+    border-bottom: none;
+    padding-right: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div id="definitionblock" style="padding-top:30px;">
+
+{% if not object_list %}
+    <p>{% trans "Please construct a new query:" %}
+        <span><a class="btn btn-default btn-default-light"
+                 href='{{PREFIX_URL}}/signs/search/'>{% trans "Search" %}</a></span></p>
+{% else %}
+    <div class="keywordsSenses" id="keywordsSenses">
+    <h3>{% trans "Split Up Senses" %}</h3>
+
+        <div id='searchform_outer' class='well well-light'>
+        <form name='adminsearch' id='adminsearch'
+              class="search-form search-form-light" method='get' action='{{PREFIX_URL}}/dictionary/keywords/'>
+        {% csrf_token %}
+        <div class="panel panel-default panel-light">
+            <div class="panel-heading panel-light" data-toggle="collapse" data-target="#query-area">{% trans "Construct Filter" %}
+            </div>
+                <div id='query-area' class='collapse collapse-light'>
+                <div id='searchformwell' class='well well-light search-results-collapsable'>
+
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='' >
+                    <input name='search_type' class='form-control' value='filter'>
+                </div>
+
+                <div class="panel panel-default panel-light">
+                  <div class="panel-heading panel-light" data-toggle="collapse"
+                           data-target="#pub_search">{% trans "Search by Tags" %}</div>
+
+                      <div id='pub_search' class='collapse collapse-light'>
+                      <table class='table table-responsive' style="width:65%;">
+                      <tr>
+                          <td style="padding-left:30px;"><label for='id_tags'>{% trans "Tags" %}</label></td>
+                          <td style="width:600px;">{{searchform.tags}}</td>
+                      </tr>
+                      </table>
+                      </div>
+                    </div>
+                </div>
+        <div class='btn-group btn-group-light' style="margin-bottom: 20px; margin-left: 20px;">
+        <input class='btn btn-primary' type='submit' name="filter" value='Apply Filter'>
+        <input class='btn btn-primary' type='reset' onclick="clearForm();"
+                       value='{% trans "Reset" %}'>
+        </div>
+        </div>
+        </div>
+
+        </form>
+        </div>
+
+<div>
+<table class="table table-responsive">
+    <thead class="thead thead-light">
+
+    </thead>
+    <tbody class="tbody tbody-light">
+    {% load underscore_to_space %}
+    {% for gloss, keywords_per_language, senses_per_language, translated_senses, matrix_dimensions in object_list %}
+        <tr style="width:auto;">
+            <td style="width:25%;">
+            <table style="border:0px 0px 0px 0px;">
+            <tr>
+            <td>{% if gloss.get_image_path %}
+            {% url 'dictionary:protected_media' '' as protected_media_url %}
+            <div class="thumbnail_container">
+            <a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">
+            <div id='glossvideo_{{gloss.id}}' class="hover-shows-video">
+                <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_url}}">
+
+                {% if gloss.has_video %}
+                <video id="videoplayer" class="thumbnail-video"
+                       src="{{protected_media_url}}{{gloss.get_video_url}}"  type="video/mp4" muted="muted"></video>
+                {% endif %}
+            </div>
+            </a>
+            </div>
+            {% endif %}
+            </td>
+            </tr>
+                <tr>
+                    <td>
+
+                    </td>
+                </tr>
+
+                    <tr>
+                        <td>
+                        {% for creator in gloss.creator.all %}
+                            {% if forloop.last %}
+                                {{creator.first_name}} {{creator.last_name}}
+                            {% else %}
+                                {{creator.first_name}} {{creator.last_name}},
+                            {% endif %}
+                        {% endfor %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>{{gloss.creationDate}}</td>
+                    </tr>
+                <tr>
+                    <td>
+                    {% load affiliation_tags %}
+                      {% with gloss|get_affiliations_for_gloss as aff_list %}
+                      {% if aff_list %}
+                          <ul class='afflist'>
+                          {% for aff in aff_list %}
+                            <li class='affli' id="gloss_affiliation_{{aff.id}}">
+                               <div class='aff tagAFF' style="background:{{aff.field_color}};border-color:{{aff.field_color}};">
+                                 <span class='affname'>{{aff.acronym}}</span>
+                               </div>
+                            </li>
+                          </ul>
+                        {% endfor %}
+                      {% endif %}
+                      {% endwith %}
+                    </td>
+                    </tr>
+                    <tr>
+                        {% tags_for_object gloss as tag_list %}
+                        <td class="field_tags">
+                            <div class="tags-cell"
+                                 id="tags_cell_{{gloss.id}}">
+                                {% for tag in tag_list %}
+                                <span class='tag'>{{tag.name|underscore_to_space}}</span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+            </table>
+            </td>
+            <td class="senses_{{gloss.id}}" id="senses_{{gloss.id}}">
+                <table class="table-simple table-responsive">
+                    <tr>
+                    {% for dataset_lang in dataset_languages %}
+                        <th>{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</th>
+                    {% endfor %}
+                    </tr>
+                    <tr>
+                    {% for dataset_lang in dataset_languages %}
+                    {% with gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+                        <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/">{{annotationidglosstranslation}}</a></td>
+                    {% endwith %}
+                    {% endfor %}
+                    </tr>
+                    <tr>
+                    {% for lang in senses_per_language.keys %}
+                        <th>{% trans "Senses" %} ({{lang.name}})</th>
+                    {% endfor %}
+                    </tr>
+                    <tr>
+                        {% for lang, senses in senses_per_language.items %}
+                        <td>
+                        <table>
+                            <tbody class="tbody tbody-light"
+                                   id="tbody_senses_{{gloss.id}}_{{lang.id}}">
+                            {% for grp, kwds in senses.items %}
+                                <tr id="senses_{{gloss.id}}_{{lang.id}}_row_{{grp}}">
+                                <td>{{grp}}.</td><td>&nbsp;&nbsp;</td>
+                                <td>{% for kw in kwds %}
+                                    {{ kw.translation.text|safe }}{% if not forloop.last %}, {% endif %}
+                                    {% endfor %}
+                                </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </table>
+            </td>
+
+        </tr>
+    </tbody>
+</table>
+    <table class='table table-responsive'>
+        <tbody class="tbody tbody-light">
+        <tr>
+            <td colspan="3">
+            <div id="toggles" class='panel-group'>
+            <div class="panel panel-default panel-light panel-toggles">
+                <div class='panel-heading panel-light' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_matrix_panel_{{gloss.id}}'>
+                    {% trans "Translate Senses" %}
+                </div>
+                <div id='toggle_matrix_panel_{{gloss.id}}' class="panel-collapse collapse collapse-light">
+                    <div id='modalTitleEditTrans_{{gloss.id}}' class="panel-body"
+                         style="display:inline-block;height:auto;">
+                         <br>
+                         <form id="form_edit_sense_matrix_{{gloss.id}}"
+                            action="{% url 'dictionary:edit_senses_matrix' gloss.id %}" method='post'>
+                            {% csrf_token %}
+                            <table class="table table-responsive">
+                            <thead class="thead thead-light">
+                            <tr>
+                                <th>#</th>
+                                {% for language in dataset_languages %}
+                                <th>{{language.name}}</th>
+                                {% endfor %}
+                            </tr>
+                            </thead>
+                            <tbody class="tbody tbody-light"
+                                   id="tbody_modal_sensetranslations_{{gloss.id}}">
+                            {% for order_index, sense_translations in translated_senses.items %}
+                            <tr id="modal_sensetranslations_{{gloss.id}}_row_{{order_index}}">
+                                <td>{{order_index}}</td>
+                            {% for language in dataset_languages %}
+                            {% with sense_translations|get_item:language as translations %}
+                                   {% with matrix_dimensions|get_item:order_index as senses_matrix %}
+                                   {% with senses_matrix|get_item:language as matrix_data %}
+                                   {% with matrix_data|get_item:'range' as cellsrange %}
+                                   {% with matrix_data|get_item:'count' as cellscount %}
+                                   {% with matrix_data|get_item:'max' as cellsmax %}
+                                   {% with matrix_data|get_item:'padding' as cellspadding %}
+                                    <td id="sense_translations_{{gloss.id}}_{{language.id}}_{{order_index}}">
+                                    {% if not translations %}
+                                    <span class="span-cell">
+                                    <input type="text" size="50" data-new_language='{{language.id}}' data-new_order_index='{{order_index}}'
+                                           name="new_translation"
+                                           placeholder='{{language.name}} {% trans "Text" %}'>
+                                    </span>
+                                    {% else %}
+                                    {% for trans in translations %}
+                                    <span class="span-cell" id="span_cell_{{gloss.id}}_{{language.id}}_{{trans.id}}">
+                                    <input type="text" size="50" id="sense_translation_text_{{gloss.id}}_{{language.id}}_{{trans.id}}"
+                                           name="translation" value='{{trans.translation.text}}'
+                                           data-translation='{{trans.translation.text}}' data-trans_id='{{trans.id}}'
+                                           data-order_index='{{order_index}}' data-language='{{language.id}}'>
+                                    </span>
+                                    {% endfor %}
+                                    {% endif %}
+                                    </td>
+                                   {% endwith %}
+                                   {% endwith %}
+                                   {% endwith %}
+                                   {% endwith %}
+                                   {% endwith %}
+                                   {% endwith %}
+                            {% endwith %}
+                            {% endfor %}
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                            </table>
+                              {% if perms.dictionary.change_gloss %}
+                              <button class="update_translations btn btn-primary" id="update_translations_{{gloss.id}}"
+                                      value='{{gloss.id}}' type="submit">
+                                  {% trans "Update" %}</button>
+                              {% endif %}
+                          </form>
+
+                       <br>
+                       <br>
+                       <h4>{% trans "Add Sense" %}</h4>
+                       <form id='add_keyword_form_{{gloss.id}}'
+                             method='post' action='{% url "dictionary:add_keyword" gloss.id %}'>
+                           {% csrf_token %}
+                           <table class='table table-responsive table-responsive-light'>
+                               <tr>
+                                   {% for keywords_language in dataset_languages %}
+                                   <td>
+                                       <input name='keyword' id="new_sense_keywords_{{gloss.id}}_{{keywords_language.id}}"
+                                              type="text" size="50"
+                                              data-language='{{keywords_language.id}}'
+                                              placeholder='{{keywords_language.name}} {% trans "Text" %}' value="">
+                                   </td>
+                                   {% endfor %}
+                               </tr>
+                           </table>
+                          {% if perms.dictionary.change_gloss %}
+                          <button class="add_keyword btn btn-primary" id="add_keyword_{{gloss.id}}" value='{{gloss.id}}'
+                                    type="submit">
+                              {% trans "Add Sense" %}</button>
+                          {% endif %}
+                        </form>
+                        <br><br>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="panel panel-default panel-light panel-toggles">
+                <div class='panel-heading panel-light' data-toggle='collapse' data-parent="#toggles"
+                     data-target='#toggle_language_panel_{{gloss.id}}'>
+                    {% trans "Split Senses" %}
+                </div>
+                <div id='toggle_language_panel_{{gloss.id}}' class="panel-collapse collapse collapse-light">
+
+                <div class="panel-body">
+                <div style="display:inline-block;clear:both;">
+                {% for language in dataset_languages %}
+                    <div style="width:600px; height:auto;clear:both;overflow:auto;">
+                    <div style="width:600px; height:auto;float:left;overflow:auto;">
+                        <h3>{{language.name}}</h3>
+                        <div>
+                        <table class="table">
+                            <tbody class="tbody tbody-light"
+                                   id="tbody_modal_senses_{{gloss.id}}_{{language.id}}">
+                            {% with senses_per_language|get_item:language as senses_groups %}
+                            {% for order_index, keywords_list in senses_groups.items %}
+                            <tr id="modal_senses_{{gloss.id}}_{{language.id}}_row_{{order_index}}">
+                            <td>{{order_index}}.</td>
+                            <td id="modal_senses_order_language_cell_{{gloss.id}}_{{language.id}}_{{order_index}}">
+                              {% for trans in keywords_list %}
+                                <span id="sensegroup_{{gloss.id}}_{{order_index}}_{{language.id}}_{{trans.id}}">
+                                    {{trans.translation.text|safe}}
+                                </span>{% if not forloop.last %}, {% endif %}
+                              {% endfor %}
+                            </td>
+                            {% endfor %}
+                            </tr>
+                            {% endwith %}
+                            </tbody>
+                        </table>
+                        </div>
+                      <div>
+                      <form id="form_regroup_keywords_{{gloss.id}}_{{language.id}}"
+                            action="{% url 'dictionary:group_keywords' gloss.id %}" method='post'>
+                      {% csrf_token %}
+                      <table class='table'>
+                          <thead class="thead thead-light">
+                            <tr><th>{% trans "Keywords" %}</th><th>{% trans "Sense #" %}</th></tr>
+                          </thead>
+                          <tbody class="tbody tbody-light"
+                                 id="tbody_senses_table_{{gloss.id}}_{{language.id}}">
+                            {% with senses_per_language|get_item:language as senses_groups %}
+                            {% for order_index, keywords_list in senses_groups.items %}
+                            {% for trans in keywords_list %}
+                            <tr id="keywords_regroup_row_{{gloss.id}}_{{language.id}}_{{trans.id}}">
+                                <td id="keyword_sense_index_{{gloss.id}}_{{language.id}}_{{trans.id}}">{{trans.translation.text}}</td>
+                                <td>
+                                <input type="number" id="regroup_{{gloss.id}}_{{language.id}}_{{trans.id}}" class="regroup" size="5"
+                                       name="regroup" value='{{order_index}}' data-regroup='{{order_index}}'
+                                       data-trans_id='{{trans.id}}'>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% endfor %}
+                            {% endwith %}
+                          </tbody>
+                      </table>
+                          {% if perms.dictionary.change_gloss %}
+                          <button class="regroup_keywords btn btn-primary" id="regroup_keywords_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
+                                    data-language="{{language.id}}" type="submit">
+                              {% trans "Regroup Keywords" %}</button>
+                          {% endif %}
+                      </form>
+                    </div>
+
+                    <div>
+                    <br/>
+                    <br/>
+                    <h4>{% trans "Update Text" %}</h4>
+                      <form id="form_edit_keywords_{{gloss.id}}_{{language.id}}"
+                            action="{% url 'dictionary:edit_keywords' gloss.id %}" method='post'>
+                      {% csrf_token %}
+                      <table class='table'>
+                          {% with keywords_per_language|get_item:language as sense_translations %}
+                          <tbody class="tbody tbody-light"
+                                 id="edit_keywords_table_{{gloss.id}}_{{language.id}}">
+                          {% if not sense_translations %}
+                            <tr id="edit_keywords_empty_row_{{gloss.id}}_{{language.id}}">
+                                <td>
+                                <input type="text" size="40" name="empty_translation"
+                                       placeholder='{{language.name}} {% trans "Text" %}'>
+                                </td>
+                            </tr>
+                          {% else %}
+                          {% for trans in sense_translations %}
+                            <tr id="edit_keywords_row_{{gloss.id}}_{{language.id}}_{{trans.id}}">
+                                <td>
+                                <input type="text" id="edit_keyword_text_{{gloss.id}}_{{language.id}}_{{trans.id}}"
+                                       size="40"
+                                       name="translation" value='{{trans.translation.text}}'
+                                       data-translation='{{trans.translation.text}}' data-trans_id='{{trans.id}}'
+                                       data-order_index="{{trans.orderIndex}}">
+                                </td>
+                            </tr>
+                          {% endfor %}
+                          {% endif %}
+                          </tbody>
+                          {% endwith %}
+                      </table>
+                          {% if perms.dictionary.change_gloss %}
+                          <button class="edit_keywords btn btn-primary" id="edit_keywords_{{gloss.id}}_{{language.id}}" value='{{gloss.id}}'
+                                    data-language="{{language.id}}" type="submit">
+                              {% trans "Update Text" %}</button>
+                          {% endif %}
+                      </form>
+
+                </div>
+                </div>
+                </div>
+                </div>
+                {% endfor %}
+                </div>
+                </div>
+            </div>
+
+            </div>
+        </td>
+    </tr>
+
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+<div class="pagination">
+    <span class="step-links">
+        <ul class='pagination pagination-sm'>
+        {% if page_obj.has_previous %}
+            <li><a href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a></li>
+        {% endif %}
+
+          {% if  page_obj.number > 10 %}
+            <li><a>...</a></li>
+          {% endif %}
+
+          {% for p in page_obj.paginator.page_range %}
+
+             {% if p < page_obj.number|add:"10" and  p > page_obj.number|add:"-10" %}
+             <li {% if p == page_obj.number %}class='active'{% endif %}>
+             <a href="?page={{ p }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% if p == 0 %}Start{% else %}{{p}}{% endif %}</a>
+             </li>
+             {% endif %}
+
+          {% endfor %}
+
+          {% if page_obj.paginator.num_pages > page_obj.number|add:"10" %}
+            <li><a>...</a></li>
+            <li>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+            </li>
+          {% endif %}
+
+        {% if page_obj.has_next %}
+            <li><a href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a></li>
+
+      </ul>
+        {% endif %}
+    </span>
+</div>
+</div>
+{% endblock content %}
+

@@ -121,7 +121,7 @@ def get_static_choice_lists(fieldname):
             # there are no choices for this field
             # it does not have a declared category or recognised choices model
             return static_choice_lists, static_choice_list_colors
-    if len(choice_list) == 0:
+    if len(choice_list) == 0 or choice_list.count() < 1:
         # there are no choices in the database for this field
         return static_choice_lists, static_choice_list_colors
 
@@ -170,7 +170,7 @@ def get_frequencies_for_category(category, fields, selected_datasets):
                 # check for the machine value 0 object or a null field value
 
                 filter = field + '__machine_value'
-                frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets),
+                frequency_for_field = Gloss.objects.filter(Q(lemma__dataset__in=selected_datasets, archived=False),
                                                            Q(**{field + '__isnull': True}) |
                                                            Q(**{filter: 0})).count()
 
@@ -178,7 +178,7 @@ def get_frequencies_for_category(category, fields, selected_datasets):
                 # otherwise, count the number of matches to the machine value
                 filter = field + field_filter
                 filter_value = [machine_value]
-                frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets).filter(
+                frequency_for_field = Gloss.objects.filter(lemma__dataset__in=selected_datasets, archived=False).filter(
                     **{filter: filter_value}).count()
             if choice_list_field not in choices.keys():
                 choices[choice_list_field] = frequency_for_field

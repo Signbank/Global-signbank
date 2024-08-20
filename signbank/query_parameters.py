@@ -226,7 +226,8 @@ def convert_query_parameters_to_filter(query_parameters):
                 query_list.append(~Q(pk__in=pks_for_glosses_with_othermedia))
 
         elif get_key == 'hasRelationToForeignSign':
-            pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
+            pks_for_glosses_with_relations = [relation.gloss.pk
+                                              for relation in RelationToForeignSign.objects.filter(gloss__archived__exact=False)]
 
             if get_value == '2':
                 # value '1' filters glosses with a relation to a foreign sign
@@ -236,7 +237,9 @@ def convert_query_parameters_to_filter(query_parameters):
                 query_list.append(~Q(pk__in=pks_for_glosses_with_relations))
 
         elif get_key == 'isablend':
-            pks_for_gloss_blends = [blemorph.parent_gloss.pk for blemorph in BlendMorphology.objects.all()]
+            pks_for_gloss_blends = [blemorph.parent_gloss.pk
+                                    for blemorph in BlendMorphology.objects.filter(parent_gloss__archived__exact=False,
+                                                                                   glosses__archived__exact=False)]
 
             if get_value == '2':  # glosses that are blends
                 query_list.append(Q(pk__in=pks_for_gloss_blends))
@@ -245,7 +248,9 @@ def convert_query_parameters_to_filter(query_parameters):
                 query_list.append(~Q(pk__in=pks_for_gloss_blends))
 
         elif get_key == 'ispartofablend':
-            pks_for_glosses_of_blends = [blemorph.glosses.pk for blemorph in BlendMorphology.objects.all()]
+            pks_for_glosses_of_blends = [blemorph.glosses.pk
+                                         for blemorph in BlendMorphology.objects.filter(parent_gloss__archived__exact=False,
+                                                                                        glosses__archived__exact=False)]
 
             if get_value == '2':  # glosses that are part of blends
                 query_list.append(Q(pk__in=pks_for_glosses_of_blends))
@@ -254,7 +259,8 @@ def convert_query_parameters_to_filter(query_parameters):
                 query_list.append(~Q(pk__in=pks_for_glosses_of_blends))
 
         elif get_key == 'relationToForeignSign':
-            relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get_value)
+            relations = RelationToForeignSign.objects.filter(gloss__archived__exact=False,
+                                                             other_lang_gloss__icontains=get_value)
             potential_pks = [relation.gloss.pk for relation in relations]
             query_list.append(Q(pk__in=potential_pks))
 
@@ -609,7 +615,7 @@ def query_parameters_toggle_fields(query_parameters):
                 qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
                 qp_key.startswith(GlossSearchForm.keyword_search_field_prefix):
             continue
-        if qp_key in settings.GLOSS_LIST_DISPLAY_FIELDS:
+        if qp_key[:-2] in settings.GLOSS_LIST_DISPLAY_FIELDS:
             continue
         if qp_key == 'hasRelation[]':
             query_fields_parameters.append(query_parameters[qp_key])
@@ -989,7 +995,8 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 query_filter = gloss_prefix + 'pk__in'
                 qs = qs.filter(**{query_filter: potential_pks})
             elif get_key in ['relationToForeignSign']:
-                relations = RelationToForeignSign.objects.filter(other_lang_gloss__icontains=get_value)
+                relations = RelationToForeignSign.objects.filter(gloss__archived__exact=False,
+                                                                 other_lang_gloss__icontains=get_value)
                 potential_pks = [relation.gloss.pk for relation in relations]
                 qs = qs.filter(pk__in=potential_pks)
                 query_filter = gloss_prefix + 'pk__in'
@@ -1057,7 +1064,8 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                     qs = qs.exclude(**{query_filter: pks_for_glosses_with_othermedia})
                 continue
             elif get_key in ['hasRelationToForeignSign']:
-                pks_for_glosses_with_relations = [relation.gloss.pk for relation in RelationToForeignSign.objects.all()]
+                pks_for_glosses_with_relations = [relation.gloss.pk
+                                                  for relation in RelationToForeignSign.objects.filter(gloss__archived__exact=False)]
                 query_filter = gloss_prefix + 'pk__in'
                 if get_value == '2':  # glosses with a relation to a foreign sign
                     qs = qs.filter(**{query_filter: pks_for_glosses_with_relations})
@@ -1065,7 +1073,9 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                     qs = qs.exclude(**{query_filter: pks_for_glosses_with_relations})
                 continue
             elif get_key in ['isablend']:
-                pks_for_gloss_blends = [blemorph.parent_gloss.pk for blemorph in BlendMorphology.objects.all()]
+                pks_for_gloss_blends = [blemorph.parent_gloss.pk
+                                        for blemorph in BlendMorphology.objects.filter(parent_gloss__archived__exact=False,
+                                                                                       glosses__archived__exact=False)]
                 query_filter = gloss_prefix + 'pk__in'
                 if get_value == '2':  # glosses that are blends
                     qs = qs.filter(**{query_filter: pks_for_gloss_blends})
@@ -1073,7 +1083,9 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                     qs = qs.exclude(**{query_filter: pks_for_gloss_blends})
                 continue
             elif get_key in ['ispartofablend']:
-                pks_for_glosses_of_blends = [blemorph.glosses.pk for blemorph in BlendMorphology.objects.all()]
+                pks_for_glosses_of_blends = [blemorph.glosses.pk
+                                             for blemorph in BlendMorphology.objects.filter(parent_gloss__archived__exact=False,
+                                                                                            glosses__archived__exact=False)]
                 query_filter = gloss_prefix + 'pk__in'
                 if get_value == '2':  # glosses that are part of blends
                     qs = qs.filter(**{query_filter: pks_for_glosses_of_blends})

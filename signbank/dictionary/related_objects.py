@@ -74,7 +74,8 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
 
     # the morpheme field of MorphologyDefinition is a ForeignKey to Gloss
     morphdefs = []
-    for morphdef in gloss.parent_glosses.all():
+    for morphdef in gloss.parent_glosses.filter(parent_gloss__archived__exact=False,
+                                                morpheme__archived__exact=False):
         translated_role = morphdef.role.name
         sign_display = str(morphdef.morpheme.id)
         morph_texts = morphdef.morpheme.get_annotationidglosstranslation_texts()
@@ -161,7 +162,7 @@ def gloss_is_related_to(gloss, interface_language_code, default_language_code):
 
 def glosses_in_lemma_group(gloss):
 
-    lemma_group = [gl for gl in Gloss.objects.filter(lemma=gloss.lemma).exclude(id=gloss.id)]
+    lemma_group = [gl for gl in Gloss.objects.filter(lemma=gloss.lemma, archived=False).exclude(id=gloss.id)]
 
     return lemma_group
 
@@ -169,42 +170,51 @@ def glosses_in_lemma_group(gloss):
 def gloss_related_objects(gloss):
 
     related_glosses_target = [relation.target
-                              for relation in Relation.objects.filter(source=gloss)]
+                              for relation in Relation.objects.filter(source=gloss,
+                                                                      target__archived=False)]
 
     related_glosses_source = [relation.source
-                              for relation in Relation.objects.filter(target=gloss)]
+                              for relation in Relation.objects.filter(target=gloss,
+                                                                      source__archived=False)]
 
     # the morpheme field of MorphologyDefinition is a ForeignKey to Gloss
     morphemes = [morpheme.morpheme
-                 for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss)]
+                 for morpheme in MorphologyDefinition.objects.filter(parent_gloss=gloss,
+                                                                     morpheme__archived=False)]
 
     appears_in = [morpheme.parent_gloss
-                  for morpheme in MorphologyDefinition.objects.filter(morpheme=gloss)]
+                  for morpheme in MorphologyDefinition.objects.filter(morpheme=gloss,
+                                                                      parent_gloss__archived=False)]
 
     siblings = []
     for compound in appears_in:
         compound_glosses = [morpheme.morpheme
-                            for morpheme in MorphologyDefinition.objects.filter(parent_gloss=compound)]
+                            for morpheme in MorphologyDefinition.objects.filter(parent_gloss=compound,
+                                                                                morpheme__archived=False)]
         for gl in compound_glosses:
             if gl != gloss and gl not in siblings:
                 siblings.append(gl)
 
     # the morpheme field of SimultaneousMorphologyDefinition is a ForeignKey to Morpheme
     simultaneous = [simdef.morpheme
-                    for simdef in SimultaneousMorphologyDefinition.objects.filter(parent_gloss=gloss)]
+                    for simdef in SimultaneousMorphologyDefinition.objects.filter(parent_gloss=gloss,
+                                                                                  morpheme__archived=False)]
 
     # the glosses field of SimultaneousMorphologyDefinition is a ForeignKey to Gloss
     blends = [blendmorph.glosses
-              for blendmorph in BlendMorphology.objects.filter(parent_gloss=gloss)]
+              for blendmorph in BlendMorphology.objects.filter(parent_gloss=gloss,
+                                                               glosses__archived=False)]
 
     partofblends = [blendmorph.parent_gloss
-                    for blendmorph in BlendMorphology.objects.filter(glosses=gloss)]
+                    for blendmorph in BlendMorphology.objects.filter(glosses=gloss,
+                                                                     parent_gloss__archived=False)]
 
     blendsiblings = []
     for compound in partofblends:
         blendsiblings.append(compound)
         compound_glosses = [morpheme.glosses
-                            for morpheme in BlendMorphology.objects.filter(parent_gloss=compound)]
+                            for morpheme in BlendMorphology.objects.filter(parent_gloss=compound,
+                                                                           glosses__archived=False)]
         for gl in compound_glosses:
             if gl != gloss and gl not in blendsiblings:
                 blendsiblings.append(gl)

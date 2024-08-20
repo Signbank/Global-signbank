@@ -57,9 +57,11 @@
 
 {% block content %}
 
-<div id="searchresults" class='navbar' style="overflow-y:hidden;background-color:white;border:0;box-sizing:content-box; z-index: 50;">
+<div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}{# See if search_results in sessions is empty #}
-        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;background-color:white;"></div>
+        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
+
+        </div>
     {% endif %}
 </div>
 
@@ -68,9 +70,9 @@
 {% endif %}
 
 
-<div id="signinfo" class='navbar navbar-collapse' style="background-color:white;border:0;">
-
-    <ul class='nav nav-tabs'>
+<div id="signinfo" class='navbar navbar-collapse' style="border:0;">
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:500;" class='view-tabs view-tabs-light'>
+    <ul class='nav nav-tabs nav-tabs-light'>
         <li class="nav-item">
             <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
         </li>
@@ -92,12 +94,10 @@
             <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos" %}</a>
         </li>
     </ul>
-
-
-
+    </div>
 </div>
 
-<div id="definitionblock" style="z-index:0;">
+<div id="definitionblock" style="z-index:0;background-color:inherit;">
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
         <h3>{% trans "Video" %}</h3>
@@ -129,17 +129,17 @@
         </div>
     </div>
 
-    <div class='panel-group' id="definition"
-         style="width:auto; z-index: 0;opacity:.99; position: relative; background-color: white;">
+    <div class='panel panel-group panel-default panel-light' id="definition"
+         style="width:auto; z-index: 0;opacity:.99; position: relative;background-color:inherit;">
 
+        {% if gloss.has_sense_with_examplesentence_with_video %}
         <!-- Example Sentences -->
-        <div class="panel panel-default">
+        <div class="panel panel-default panel-default-light">
             <!-- Only show if any example sentence videos exist -->
-            {% if gloss.has_sense_with_examplesentence_with_video %}
                 {% if senses %}
                 <div class="panel-heading"><h3>{% trans "Example Sentences" %}</h3></div>
                 <div class="panel-body">
-                <table class='table table-condensed'>
+                <table class='table table-condensed table-condensed-light'>
                     {% for sense in senses %}
                         <!-- Only show if the sense has any example sentences with videos -->
                         {% if sense.has_examplesentence_with_video %}
@@ -193,15 +193,16 @@
                 </table>
                 </div>
                 {% endif %}
-            {% endif %}
         </div>
+        {% endif %}
 
         <!-- Other media -->
-        <div class="panel panel-default">
             {% if other_media %}
+            <div class="panel panel-default panel-default-light">
+
             <div class="panel-heading"><h3>{% trans "Other Media" %}</h3></div>
             <div class="panel-body">
-            <table class='table table-condensed'>
+            <table class='table table-condensed table-condensed-light'>
                 {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
                     {% if media_okay and file_type == 'video/mp4' %}
                     <tr >
@@ -240,8 +241,8 @@
                 {% endfor %}
             </table>
             </div>
+            </div>
             {% endif %}
-        </div>
 
     </div>
 </div>

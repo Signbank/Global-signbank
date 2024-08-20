@@ -35,6 +35,7 @@ from tagging.models import TaggedItem, Tag
 
 from guardian.shortcuts import get_objects_for_user
 from signbank.api_interface import api_fields
+from django.views.decorators.csrf import csrf_exempt
 
 
 def get_two_letter_dir(idgloss):
@@ -514,7 +515,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     continue
 
                 relations = [(relation.role, get_default_annotationidglosstranslation(relation.target))
-                             for relation in gloss.relation_sources.all()]
+                             for relation in gloss.relation_sources.filter(target__archived__exact=False,
+                                                                           source__archived__exact=False)]
 
                 # sort tuples on other gloss to allow comparison with imported values
 
@@ -607,7 +609,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                 if new_human_value in ['None', '']:
                     continue
 
-                morphemes = [(get_default_annotationidglosstranslation(m.morpheme), m.role) for m in gloss.simultaneous_morphology.all()]
+                morphemes = [(get_default_annotationidglosstranslation(m.morpheme), m.role)
+                             for m in gloss.simultaneous_morphology.filter(parent_gloss__archived__exact=False)]
                 sim_morphs = []
                 for m in morphemes:
                     sim_morphs.append(':'.join(m))
@@ -637,7 +640,8 @@ def compare_valuedict_to_gloss(valuedict, gloss_id, my_datasets, nl,
                     continue
 
                 morphemes = [(get_default_annotationidglosstranslation(m.glosses), m.role)
-                             for m in gloss.blend_morphology.all()]
+                             for m in gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                                    glosses__archived__exact=False)]
 
                 ble_morphs = []
                 for m in morphemes:
@@ -1046,10 +1050,11 @@ def check_existence_dialect(gloss, values):
     errors = []
     found = []
     not_found = []
-
     for new_value in values:
-        dialect_signlanguage, dialect_name = new_value.split('/')
-        if Dialect.objects.filter(name_iexact=dialect_name, signlanguage__name__iexact=dialect_signlanguage):
+        dialect_signlanguage_str, dialect_name_str = new_value.split('/')
+        dialect_signlanguage = dialect_signlanguage_str.strip()
+        dialect_name = dialect_name_str.strip()
+        if Dialect.objects.filter(name=dialect_name, signlanguage__name=dialect_signlanguage):
             if new_value not in found:
                 found += [new_value]
         else:
@@ -1548,6 +1553,21 @@ def check_existence_foreign_relations(gloss, relations, values):
     return checked, errors
 
 
+@csrf_exempt
+def set_dark_mode(request):
+    # this is the toggle button in the menu bar
+    from django.http import JsonResponse
+    if 'dark_mode' not in request.session.keys():
+        # first time button is used
+        request.session['dark_mode'] = "True"
+    elif request.session['dark_mode'] == "True":
+        request.session['dark_mode'] = "False"
+    elif request.session['dark_mode'] == "False":
+        request.session['dark_mode'] = "True"
+    request.session.modified = True
+    return JsonResponse({})
+
+
 def lookup_semantic_fields(values):
     # case insensitive lookup of values for semantic fields
     semantic_fields_machine_values = []
@@ -1579,9 +1599,9 @@ def get_gloss_data(since_timestamp=0, language_code='en', dataset=None, inWebSet
         dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
 
     if inWebSet:
-        glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True)
+        glosses = Gloss.objects.filter(lemma__dataset=dataset, inWeb=True, archived=False)
     else:
-        glosses = Gloss.objects.filter(lemma__dataset=dataset)
+        glosses = Gloss.objects.filter(lemma__dataset=dataset, archived=False)
 
     # settings.API_FIELDS
     api_fields_2023 = api_fields(dataset, language_code, extended_fields)
@@ -1668,7 +1688,7 @@ def get_datasets_with_public_glosses():
 
     # Make sure a non-empty set is returned, for anonymous users when no datasets are public
     # the first query fetches glosses that are public, then obtains those glosses' dataset ids
-    datasets_of_public_glosses = Gloss.objects.filter(inWeb=True).values('lemma__dataset__id').distinct()
+    datasets_of_public_glosses = Gloss.objects.filter(inWeb=True, archived=False).values('lemma__dataset__id').distinct()
     datasets_with_public_glosses = Dataset.objects.filter(id__in=datasets_of_public_glosses)
     return datasets_with_public_glosses
 

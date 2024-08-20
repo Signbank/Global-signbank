@@ -16,7 +16,7 @@
 {% if "change_dataset" in dataset_perms %}
 <div class='editform', style="width:500px">
     <fieldset>
-        <legend>{% trans "Upload New Annotated Sentence" %}</legend>
+        <h4>{% trans "Upload New Annotated Sentence" %}</h4>
         
         {% trans "For the following gloss:" %} {{annotationidgloss}}<br><br>
 
@@ -66,7 +66,7 @@
 
         <br><br>
         {% trans "Source:" %}
-        <select name="source_id">
+        <select name="source_id" style="background-color: inherit;color:inherit;">
             <option value="">{% trans "-" %}</option>
             {% for source in annotated_sentence_sources %}
                 <option value="{{ source.id }}">{{ source.name }}</option>

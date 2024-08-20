@@ -1,6 +1,8 @@
 
 from django.utils.translation import gettext_lazy as _, activate, gettext
 from signbank.dictionary.models import *
+from signbank.video.models import GlossVideoDescription, GlossVideoNME
+from signbank.tools import get_default_annotationidglosstranslation
 from django.db.transaction import atomic
 from django.utils.timezone import get_current_timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -8,10 +10,13 @@ from django.http import JsonResponse
 from guardian.shortcuts import get_objects_for_user
 from signbank.tools import get_interface_language_and_default_language_codes
 from signbank.csv_interface import normalize_field_choice
-from signbank.api_token import hash_token
+from signbank.api_token import put_api_user_in_request
 import datetime as DT
+from signbank.tools import get_default_annotationidglosstranslation
+from signbank.dictionary.batch_edit import add_gloss_update_to_revision_history
 
 import ast
+import base64
 
 
 def api_update_gloss_fields(dataset, language_code='en'):
@@ -103,7 +108,6 @@ def update_gloss_columns_to_value_dict_keys(dataset, language_code):
     return human_readable_to_internal, human_readable_to_json
 
 
-@csrf_exempt
 def get_gloss_update_human_readable_value_dict(request):
     post_data = json.loads(request.body.decode('utf-8'))
 
@@ -430,7 +434,6 @@ def update_language_field(gloss, language_field, new_value):
     gloss.save()
 
 
-@csrf_exempt
 def gloss_update_do_changes(user, gloss, changes, language_code):
     dataset = gloss.lemma.dataset
     language_fields = internal_language_fields(dataset, language_code)
@@ -530,40 +533,18 @@ def gloss_update(gloss, update_fields_dict, language_code):
 
 
 @csrf_exempt
+@put_api_user_in_request
 def api_update_gloss(request, datasetid, glossid):
 
     results = dict()
-    auth_token_request = request.headers.get('Authorization', '')
     interface_language_code = request.headers.get('Accept-Language', 'en')
     if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
         interface_language_code = 'en'
-    activate(interface_language_code)
-    if auth_token_request:
-        auth_token = auth_token_request.split('Bearer ')[-1]
-        hashed_token = hash_token(auth_token)
-        signbank_token = SignbankAPIToken.objects.filter(api_token=hashed_token).first()
-        if not signbank_token:
-            results['errors'] = [gettext("Your Authorization Token does not match anything.")]
-            return JsonResponse(results)
-        username = signbank_token.signbank_user.username
-        user = User.objects.get(username=username)
-    elif request.user:
-        user = request.user
-    else:
-        results['errors'] = [gettext("User not found in request.")]
-        return JsonResponse(results)
-
     activate(interface_language_code)
 
     results['glossid'] = glossid
 
     errors = dict()
-
-    if not user.is_authenticated:
-        errors[gettext("User")] = gettext("You must be logged in to use this functionality.")
-        results['errors'] = errors
-        results['updatestatus'] = "Failed"
-        return JsonResponse(results)
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
@@ -572,7 +553,7 @@ def api_update_gloss(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
         errors[gettext("Dataset")] = gettext("No change permission for dataset.")
         results['errors'] = errors
@@ -589,7 +570,7 @@ def api_update_gloss(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    gloss = Gloss.objects.filter(id=gloss_id).first()
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
 
     if not gloss:
         errors[gettext("Gloss")] = gettext("Gloss not found.")
@@ -609,7 +590,7 @@ def api_update_gloss(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    if not user.has_perm('dictionary.change_gloss'):
+    if not request.user.has_perm('dictionary.change_gloss'):
         errors[gettext("Gloss")] = gettext("No change gloss permission.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
@@ -642,9 +623,620 @@ def api_update_gloss(request, datasetid, glossid):
             results['updatestatus'] = "Failed"
             return JsonResponse(results)
 
-    gloss_update_do_changes(user, gloss, fields_to_update, interface_language_code)
+    gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
 
     results['errors'] = {}
+    results['updatestatus'] = "Success"
+
+    return JsonResponse(results)
+
+
+def check_confirmed(value_dict):
+
+    errors = dict()
+    for field in value_dict.keys():
+        if field not in ['confirmed', 'Confirmed'] or value_dict[field] not in ['true', 'True', 'TRUE']:
+            errors[field] = _("Gloss operation not confirmed")
+    return errors
+
+
+def gloss_archival_delete(user, gloss, annotation):
+
+    gloss.archived = True
+    gloss.save(update_fields=['archived'])
+
+    revision = GlossRevision(old_value=annotation,
+                             new_value=annotation,
+                             field_name='archived',
+                             gloss=gloss,
+                             user=user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+
+
+def gloss_archival_restore(user, gloss, annotation):
+
+    gloss.archived = False
+    gloss.save(update_fields=['archived'])
+
+    revision = GlossRevision(old_value=annotation,
+                             new_value=annotation,
+                             field_name='restored',
+                             gloss=gloss,
+                             user=user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_delete_gloss(request, datasetid, glossid):
+
+    results = dict()
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
+
+    results['glossid'] = glossid
+
+    errors = dict()
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        # the glossid in the url is a sequence of digits
+        # this error can occur if it begins with a 0
+        errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
+
+    if not gloss:
+        errors[gettext("Gloss")] = gettext("Gloss not found.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not gloss.lemma:
+        errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if gloss.lemma.dataset != dataset:
+        errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    value_dict = get_gloss_update_human_readable_value_dict(request)
+    errors = check_confirmed(value_dict)
+    if errors:
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    annotation = get_default_annotationidglosstranslation(gloss)
+    gloss_archival_delete(request.user, gloss, annotation)
+
+    results['errors'] = {}
+    results['updatestatus'] = "Success"
+
+    return JsonResponse(results)
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_restore_gloss(request, datasetid, glossid):
+
+    results = dict()
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
+
+    results['glossid'] = glossid
+
+    errors = dict()
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        # the glossid in the url is a sequence of digits
+        # this error can occur if it begins with a 0
+        errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    gloss = Gloss.objects.filter(id=gloss_id, archived=True).first()
+
+    if not gloss:
+        errors[gettext("Gloss")] = gettext("Gloss not found in archive.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not gloss.lemma:
+        errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if gloss.lemma.dataset != dataset:
+        errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    value_dict = get_gloss_update_human_readable_value_dict(request)
+    errors = check_confirmed(value_dict)
+    if errors:
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    annotation = get_default_annotationidglosstranslation(gloss)
+    gloss_archival_restore(request.user, gloss, annotation)
+
+    results['errors'] = {}
+    results['updatestatus'] = "Success"
+
+    return JsonResponse(results)
+
+
+def gloss_update_nmevideo(gloss, update_fields_dict, nmevideo, language_code, create=False):
+
+    dataset = gloss.lemma.dataset
+
+    activate(language_code)
+    offset = gettext("Index")
+
+    dataset_languages = dataset.translation_languages.all()
+    description_fields = [gettext("Description") + " (%s)" % language.name
+                          for language in dataset_languages] + [offset]
+    description_field_to_internal = dict()
+    json_field_to_human_readable = dict()
+    for language in dataset_languages:
+        human_readable = gettext("Description") + " (%s)" % language.name
+        description_field_to_internal[human_readable] = ('description_' + language.language_code_2char)
+        description_api_field_name = gettext("Description") + ": %s" % language.name
+        json_field_to_human_readable[description_api_field_name] = human_readable
+    description_field_to_internal[offset] = 'offset'
+    json_field_to_human_readable[offset] = offset
+
+    nme_videos_key = gettext("NME Videos")
+    nme_videos_field = [nme_videos_key]
+    gloss_data_dict = dict()
+    if not create:
+        gloss_data_nme_videos = gloss.get_fields_dict(nme_videos_field, language_code)
+        gloss_data_nme_videos_list = gloss_data_nme_videos[nme_videos_key]
+        for nme_dict in gloss_data_nme_videos_list:
+            if nme_dict['ID'] == str(nmevideo.id):
+                for gloss_json_field in nme_dict.keys():
+                    if gloss_json_field in json_field_to_human_readable.keys():
+                        human_readable = json_field_to_human_readable[gloss_json_field]
+                        gloss_data_dict[human_readable] = nme_dict[gloss_json_field]
+    else:
+        gloss_data_dict['ID'] = str(nmevideo.id)
+        gloss_data_dict[offset] = str(nmevideo.offset)
+
+    fields_to_update = dict()
+    for human_readable_field, new_field_value in update_fields_dict.items():
+        if not new_field_value:
+            continue
+        if human_readable_field not in gloss_data_dict.keys():
+            if human_readable_field not in description_fields:
+                continue
+            internal_field = description_field_to_internal[human_readable_field]
+            fields_to_update[internal_field] = '', new_field_value
+            continue
+        if human_readable_field in description_fields:
+            original_value = gloss_data_dict[human_readable_field]
+            internal_field = description_field_to_internal[human_readable_field]
+            if internal_field == 'offset' and gloss_data_dict[human_readable_field] == new_field_value:
+                continue
+            fields_to_update[internal_field] = original_value, new_field_value
+
+    return fields_to_update
+
+
+def gloss_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code, create=True):
+    changes_done = []
+    activate(language_code)
+    original_filename = '' if create else os.path.basename(nmevideo.videofile.name)
+    for field, (original_value, new_value) in changes.items():
+        if field.startswith('description_'):
+            language_code_2char = field[len('description_'):]
+            language = Language.objects.filter(language_code_2char=language_code_2char).first()
+            value = new_value.strip()
+            description, _ = GlossVideoDescription.objects.get_or_create(nmevideo=nmevideo, language=language)
+            description.text = value
+            description.save()
+            changes_done.append((field, original_value, value))
+        elif field == 'offset':
+            # this changes the filename and moves the file
+            nmevideo.offset = int(new_value)
+            nmevideo.save()
+
+    operation = 'nmevideo_create' if create else 'nmevideo_update'
+    filename = os.path.basename(nmevideo.videofile.name)
+    revision = GlossRevision(old_value=original_filename,
+                             new_value=filename,
+                             field_name=operation,
+                             gloss=gloss,
+                             user=user,
+                             time=datetime.now(tz=get_current_timezone()))
+    revision.save()
+
+    for field, original_human_value, glossrevision_newvalue in changes_done:
+        revision = GlossRevision(old_value=original_human_value,
+                                 new_value=glossrevision_newvalue,
+                                 field_name=field,
+                                 gloss=gloss,
+                                 user=user,
+                                 time=datetime.now(tz=get_current_timezone()))
+        revision.save()
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
+
+    results = dict()
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
+
+    results['glossid'] = glossid
+
+    errors = dict()
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        # the glossid in the url is a sequence of digits
+        # this error can occur if it begins with a 0
+        errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
+
+    if not gloss:
+        errors[gettext("Gloss")] = gettext("Gloss not found.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not gloss.lemma:
+        errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if gloss.lemma.dataset != dataset:
+        errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    try:
+        video_id = int(videoid)
+    except TypeError:
+        # the videoid in the url is a sequence of digits
+        # this error can occur if it begins with a 0
+        errors[gettext("NME Video ID")] = gettext("Video ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    nmevideo = GlossVideoNME.objects.filter(id=video_id, gloss=gloss).first()
+
+    if not nmevideo:
+        errors[gettext("NME Video ID")] = gettext("NME Video not found.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    # pass create=False: ignore the File field if present, this is an update
+    # we already have an nme video object
+    value_dict = get_gloss_nmevideo_value_dict(request, gloss, interface_language_code, create=False)
+    fields_to_update = gloss_update_nmevideo(gloss, value_dict, nmevideo, interface_language_code)
+    gloss_nmevideo_do_changes(request.user, gloss, nmevideo, fields_to_update, interface_language_code, create=False)
+
+    results['errors'] = errors
+    results['updatestatus'] = "Success"
+
+    return JsonResponse(results)
+
+
+@csrf_exempt
+@put_api_user_in_request
+def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
+    post_data = json.loads(request.body.decode('utf-8'))
+
+    value_dict = dict()
+
+    index_key = gettext("Index")
+    if index_key in post_data.keys():
+        index_str = post_data[index_key]
+        index = int(index_str)
+    else:
+        index = 1
+    value_dict[index_key] = index
+
+    file_key = gettext("File")
+    if file_key in post_data.keys() and create:
+        # a file may be included in the json data
+        # if there are problems decoding it, the value_dict without it is returned
+        try:
+            uploaded_file = post_data[file_key]
+            uploaded_file_contents = uploaded_file[22:]
+            filename = get_default_annotationidglosstranslation(gloss) + '_' + str(gloss.id) + '.mp4'
+            goal_path = os.path.join(settings.TMP_DIR, filename)
+            f = open(goal_path, 'wb+')
+            inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
+            f.write(inputbytes)
+            video_file = File(f)
+            nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
+            value_dict[file_key] = nmevideo
+        except (OSError, EncodingWarning, UnicodeDecodeError):
+            pass
+
+    dataset = gloss.lemma.dataset
+
+    activate(language_code)
+    dataset_languages = dataset.translation_languages.all()
+
+    description_fields = [gettext("Description") + " (%s)" % language.name
+                          for language in dataset_languages]
+
+    for field in description_fields:
+        value = post_data.get(field, '')
+        value_dict[field] = value.strip()
+
+    return value_dict
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_create_gloss_nmevideo(request, datasetid, glossid):
+
+    results = dict()
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
+
+    results['glossid'] = glossid
+    results['videoid'] = ''
+
+    errors = dict()
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        # the glossid in the url is a sequence of digits
+        # this error can occur if it begins with a 0
+        errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
+
+    if not gloss:
+        errors[gettext("Gloss")] = gettext("Gloss not found.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not gloss.lemma:
+        errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if gloss.lemma.dataset != dataset:
+        errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    value_dict = get_gloss_nmevideo_value_dict(request, gloss, interface_language_code)
+
+    file_key = gettext("File")
+    if file_key not in value_dict.keys():
+        errors[file_key] = gettext("Missing File argument.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    new_nme_video = value_dict[file_key]
+    fields_to_update = gloss_update_nmevideo(gloss, value_dict, new_nme_video,interface_language_code, create=True)
+    gloss_nmevideo_do_changes(request.user, gloss, new_nme_video, fields_to_update, interface_language_code)
+
+    results['errors'] = errors
+    results['updatestatus'] = "Success"
+    results['videoid'] = str(new_nme_video.id)
+
+    return JsonResponse(results)
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
+
+    results = dict()
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
+
+    results['glossid'] = glossid
+
+    errors = dict()
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        errors[gettext("Dataset")] = gettext("No change permission for dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    try:
+        gloss_id = int(glossid)
+    except TypeError:
+        # the glossid in the url is a sequence of digits
+        # this error can occur if it begins with a 0
+        errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    gloss = Gloss.objects.filter(id=gloss_id, archived=False).first()
+
+    if not gloss:
+        errors[gettext("Gloss")] = gettext("Gloss not found.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not gloss.lemma:
+        errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if gloss.lemma.dataset != dataset:
+        errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        errors[gettext("Gloss")] = gettext("No change gloss permission.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    try:
+        video_id = int(videoid)
+    except TypeError:
+        # the videoid in the url is a sequence of digits
+        # this error can occur if it begins with a 0
+        errors[gettext("NME Video ID")] = gettext("Video ID must be a number.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    nmevideo = GlossVideoNME.objects.filter(id=video_id, gloss=gloss).first()
+
+    if not nmevideo:
+        errors[gettext("NME Video ID")] = gettext("NME Video not found.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    original_nme_file = os.path.basename(nmevideo.videofile.name)
+    nmevideo.delete()
+
+    add_gloss_update_to_revision_history(request.user, gloss, 'nmevideo_delete', original_nme_file, '')
+
+    results['errors'] = errors
     results['updatestatus'] = "Success"
 
     return JsonResponse(results)

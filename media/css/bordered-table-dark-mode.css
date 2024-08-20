@@ -1,0 +1,64 @@
+/* these styles are to allow inheritance of the styles for dark mode */
+
+.table-frequency-light > thead > tr > th {
+    border: 1px solid black !important;
+}
+.table-frequency-light > tbody > tr {
+    border: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-frequency-light > tbody > tr > td {
+    border: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-frequency-dark > thead > tr {
+    border: 1px solid white !important;
+}
+.table-frequency-dark > thead > tr > th {
+    border: 1px solid white !important;
+}
+.table-frequency-dark > tbody > tr {
+    border: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.table-frequency-dark > tbody > tr > td {
+    border: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+
+table {
+    margin: 0px 0px 0px 0px important!;
+}
+.frequency-table-light {
+    border: 1px solid black !important;
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.frequency-cell-light {
+    border: 1px solid black !important;
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.frequency-table-dark {
+    border: 1px solid white !important;
+    border-top: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.frequency-cell-dark {
+    border: 1px solid white !important;
+    border-top: 1px solid white !important;
+    border-bottom: 1px solid white !important;
+}
+.table-bordered {
+    margin-top: 20px;
+    border: 1px solid black !important;
+}
+.table-bordered > thead > tr {
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+}
+.table-bordered > tbody > tr {
+    border-top: 1px solid black !important;
+    border-bottom: 1px solid black !important;
+    border: 1px solid black !important;
+}

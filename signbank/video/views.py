@@ -222,7 +222,7 @@ def deletevideo(request, videoid):
 
     if request.method == "POST":
         # deal with any existing video for this sign
-        gloss = get_object_or_404(Gloss, pk=videoid)
+        gloss = get_object_or_404(Gloss, pk=videoid, archived=False)
         vids = GlossVideo.objects.filter(gloss=gloss).order_by('version')
         for v in vids:
             # this will remove the most recent video, ie it's equivalent
@@ -264,7 +264,7 @@ def deletevideo(request, videoid):
 def video(request, videoid):
     """Redirect to the video url for this videoid"""
 
-    video = get_object_or_404(GlossVideo, gloss_id=videoid)
+    video = get_object_or_404(GlossVideo, gloss_id=videoid, gloss__archived=False)
 
     return redirect(video)
 

@@ -77,7 +77,7 @@ function ready_videos(el) {
 <div>
 <h3>{% trans "Manage Dataset Media" %}</h3>
 
-    <table class='table table-condensed'>
+    <table class='table table-condensed table-condensed-light'>
         <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:1200px;">{{dataset.name}}</td></tr>
         <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
         <tr><th>{% trans "Number of glosses" %}</th><td>{{nr_of_public_glosses}} public glosses, {{nr_of_glosses}} total</td></tr>
@@ -111,8 +111,8 @@ function ready_videos(el) {
                {% load underscore_to_space %}
                {% for zipfilename, zipcontents in zipped_archives.items %}
                {% with zipfilename|dot_to_underscore as zipfileid %}
-                <div class="panel panel-default">
-                  <div class='panel-heading' data-toggle='collapse' style="padding: 0;"
+                <div class="panel panel-default panel-light">
+                  <div class='panel-heading panel-light' data-toggle='collapse' style="padding: 0;"
                        data-target='#zipfile_{{zipfileid}}'>
                        <span style='font-size:24px;'>&#128194;</span>&nbsp;&nbsp;&nbsp;
                        <span><bold>{{zipfilename}}</bold></span>
@@ -217,7 +217,7 @@ function ready_videos(el) {
             <th></th>
             <td colspan="2">
                 <div>
-                    <table class="table table-responsive" style="width:1200px;">
+                    <table class="table table-responsive table-responsive-light" style="width:1200px;">
                         <thead id="imported_videos_header">
                         <tr>
                             <th style='width:300px;'>
