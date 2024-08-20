@@ -2044,7 +2044,7 @@ def get_value_for_ecv(gloss, fieldname):
 
 def construct_scrollbar(qs, search_type, language_code):
     items = []
-    if search_type in ['sign', 'sign_or_morpheme', 'morpheme', 'sign_handshape']:
+    if search_type in ['sign', 'sign_or_morpheme', 'morpheme', 'sign_handshape', 'annotatedsentence']:
         for item in qs:
             if item.is_morpheme():
                 href_type = 'morpheme'

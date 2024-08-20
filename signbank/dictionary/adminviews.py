@@ -6981,7 +6981,7 @@ class AnnotatedSentenceDetailView(DetailView):
                 if self.request.session['search_results'][0]['href_type'] not in ['annotatedsentence']:
                     # if the previous search does not match the search type
                     self.request.session['search_results'] = []
-        print(self.request.session['search_results'])
+
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
