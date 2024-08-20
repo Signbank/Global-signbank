@@ -1,5 +1,5 @@
 from django.template import Library
-from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm
+from signbank.dictionary.forms import GlossSearchForm, MorphemeSearchForm, AnnotatedSentenceSearchForm
 from signbank.tools import get_default_annotationidglosstranslation
 import json
 register = Library()
@@ -67,6 +67,20 @@ def get_lemma_idgloss_translation(lemma, language):
     return ""
 
 @register.filter
+def get_annotatedsentence_translation(sentence, language):
+    sentencetranslations = sentence.annotated_sentence_translations.filter(language=language)
+    if sentencetranslations:
+        return sentencetranslations.first().text
+    return ""
+
+@register.filter
+def get_annotatedgloss_translation(annotated_gloss, language):
+    gloss_translation = annotated_gloss.gloss.annotationidglosstranslation_set.filter(language=language)
+    if gloss_translation:
+        return gloss_translation.first().text
+    return ""
+
+@register.filter
 def get_lemma_idgloss_translation_no_default(lemma, language):
     lemmaidglosstranslations = lemma.lemmaidglosstranslation_set.filter(language=language)
     if lemmaidglosstranslations is not None and len(lemmaidglosstranslations) > 0:
@@ -115,6 +129,11 @@ def get_lemma_field_for_language(form, language):
 @register.filter
 def get_lemma_form_field_for_language(form, language):
     field = MorphemeSearchForm.lemma_search_field_prefix + language.language_code_2char
+    return form.fields[field]
+
+@register.filter
+def get_annotatedsentence_form_field_for_language(form, language):
+    field = AnnotatedSentenceSearchForm.annotatedsentence_search_field_prefix + language.language_code_2char
     return form.fields[field]
 
 @register.filter

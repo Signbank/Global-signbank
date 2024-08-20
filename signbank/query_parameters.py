@@ -838,9 +838,9 @@ def set_up_language_fields(model, view, form):
     This is done dynamically since they depend on the selected datasets.
     Called from get_context_data method of the view
     If only one translation language is used, the name of the language is omitted from the field label.
-    :model: Gloss, Morpheme, GlossSense, LemmaIdgloss
-    :form: GlossSearchForm, MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm
-    :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView, LemmaListView
+    :model: Gloss, Morpheme, GlossSense, LemmaIdgloss, AnnotatedSentence
+    :form: GlossSearchForm, MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm, AnnotatedSentenceForm
+    :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView, LemmaListView, AnnotatedSentenceListView
     """
     selected_datasets = get_selected_datasets_for_user(view.request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -874,6 +874,13 @@ def set_up_language_fields(model, view, form):
             if count_languages > 1 or language.language_code_2char not in interface_language:
                 lemma_field_label += (" (%s)" % language.name)
             form.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
+
+        if hasattr(form, 'annotatedsentence_search_field_prefix'):
+            annotatedsentence_field_name = form.annotatedsentence_search_field_prefix + language.language_code_2char
+            annotatedsentence_field_label = _("Sentence")
+            if count_languages > 1 or language.language_code_2char not in interface_language:
+                annotatedsentence_field_label += (" (%s)" % language.name)
+            form.fields[annotatedsentence_field_name] = forms.CharField(label=annotatedsentence_field_label)
 
 
 def set_up_signlanguage_dialects_fields(view, form):

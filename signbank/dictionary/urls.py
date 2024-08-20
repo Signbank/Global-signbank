@@ -7,8 +7,8 @@ from signbank.dictionary.forms import *
 
 from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossFrequencyView, GlossRelationsDetailView, MorphemeDetailView, \
     MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView, \
-    create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView, \
-    DerivationHistoryListView, GlossVideosView, KeywordListView
+    create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView,\
+    DerivationHistoryListView, GlossVideosView, KeywordListView, AnnotatedSentenceListView
 
 from signbank.dictionary.views import create_citation_image
 
@@ -182,6 +182,7 @@ urlpatterns = [
         name='admin_derivationhistory_list'),
     # Lemma Idgloss views
     re_path(r'^lemma/$', login_required(LemmaListView.as_view()), name='admin_lemma_list'),
+    re_path(r'^annotatedsentence/$', login_required(AnnotatedSentenceListView.as_view()), name='admin_annotatedsentence_list'),
     re_path(r'^lemma/add/$', permission_required('dictionary.add_lemmaidgloss')(LemmaCreateView.as_view()), name='create_lemma'),
     re_path(r'^lemma/delete/(?P<pk>\d+)', permission_required('dictionary.delete_lemmaidgloss')(LemmaDeleteView.as_view()), name='delete_lemma'),
     re_path(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),

@@ -71,7 +71,7 @@ from signbank.dictionary.senses_display import (senses_per_language, senses_per_
                                                 senses_translations_per_language_list,
                                                 senses_sentences_per_language_list)
 from signbank.dictionary.context_data import (get_context_data_for_list_view, get_context_data_for_gloss_search_form,
-                                              get_web_search)
+                                                get_web_search)
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to, gloss_related_objects,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
@@ -239,6 +239,106 @@ class Echo:
     def write(self, value):
         """Write the value by returning it, instead of storing in a buffer."""
         return value
+
+
+class AnnotatedSentenceListView(ListView):
+    model = AnnotatedSentence
+    template_name = 'dictionary/admin_annotatedsentence_list.html'
+    paginate_by = 5
+    show_all = False
+    search_type = 'annotatedsentence'
+    search_form = AnnotatedSentenceSearchForm()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_paginate_by(self, queryset):
+        return self.request.GET.get('paginate_by', self.paginate_by)
+
+    def get_queryset(self):
+        self.show_all = self.kwargs.get('show_all', False)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        get = self.request.GET
+        valid_regex, search_fields, field_values = check_language_fields_annotatedsentence(
+            self.search_form, AnnotatedSentenceSearchForm, get, dataset_languages
+        )
+
+        if USE_REGULAR_EXPRESSIONS and not valid_regex:
+            error_message_regular_expression(self.request, search_fields, field_values)
+            qs = AnnotatedSentence.objects.none()
+            return qs
+
+        if get.get('reset') == '1':
+            qs = AnnotatedSentence.objects.none()
+            return qs
+        
+        # filter query on dataset and sort based on first gloss of the sentence
+        qs = AnnotatedSentence.objects.annotate(
+            dataset=Subquery(
+                AnnotatedGloss.objects.filter(
+                    annotatedsentence_id=OuterRef('id')
+                ).values('gloss__lemma__dataset')[:1]
+            ),
+            firstgloss=Subquery(
+                AnnotatedGloss.objects.filter(
+                    annotatedsentence__id=OuterRef('id')
+                ).order_by('starttime').values('gloss')[:1]
+            )
+        ).filter(dataset__in=selected_datasets).order_by('firstgloss')
+
+        if get.get('show_all_annotatedsentences') == '1':
+            self.show_all = True
+
+        if get.get('no_glosses') == '1':
+            qs = qs.annotate(
+                num_annotated_glosses=Count('annotated_glosses')
+            ).filter(num_annotated_glosses=0)
+
+        if get.get('has_glosses') == '1':
+            qs = qs.annotate(
+                num_annotated_glosses=Count('annotated_glosses')
+            ).filter(num_annotated_glosses__gt=0)
+
+        if not self.show_all and not get:
+            qs = AnnotatedSentence.objects.none()
+
+        for get_key, get_value in get.items():
+            if get_key.startswith(AnnotatedSentenceSearchForm.annotatedsentence_search_field_prefix) and get_value:
+                language_code_2char = get_key[len(AnnotatedSentenceSearchForm.annotatedsentence_search_field_prefix):]
+                language = Language.objects.get(language_code_2char=language_code_2char)
+                qs = qs.filter(
+                    annotated_sentence_translations__text__icontains=get_value,
+                    annotated_sentence_translations__language=language
+                )
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        set_up_language_fields(AnnotatedSentence, self, self.search_form)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        nr_sentences_in_dataset = AnnotatedSentence.objects.annotate(
+            dataset=Subquery(
+                AnnotatedGloss.objects.filter(
+                    annotatedsentence_id=OuterRef('id')
+                ).values('gloss__lemma__dataset')[:1]
+            )
+        ).filter(dataset__in=selected_datasets).count()
+        results = self.get_queryset()
+        context['annotatedsentence_count'] = nr_sentences_in_dataset
+        context['dataset_languages'] = dataset_languages
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+        context['searchform'] = self.search_form
+        context['show_all'] = self.show_all
+        context['search_type'] = self.search_type
+        context['search_matches'] = results.count()
+
+        return context
 
 
 class GlossListView(ListView):
