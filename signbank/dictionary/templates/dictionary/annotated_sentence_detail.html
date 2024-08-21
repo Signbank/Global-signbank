@@ -30,21 +30,51 @@ var search_results_url = '{% url 'dictionary:annotatedsentence_ajax_search_resul
     {% endif %}
 </div>
 
-<div style="width:1000px; padding-top:200px;">
+<div style="padding-top:200px;overflow-y: auto;">
         <h3>{% trans "Annotated Sentence" %}</h3>
         <br>
-        <table class="table">
+        <table class="table table-responsive">
+            <caption class="text-left" style="padding-bottom:20px;">{% trans "Annotated Glosses" %}</caption>
+            {% for dataset_lang in dataset_languages %}
             <tr>
+                <td>{{dataset_lang.name}}</td>
             {% for annotatedgloss in annotatedglosses %}
-
-                <td><a href="{{PREFIX_URL}}/dictionary/gloss/{{annotatedgloss.gloss.id}}">{{annotatedgloss.gloss.idgloss}}</a></td>
-
+            {% with annotatedgloss.gloss as gloss %}
+            {% with gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+                <td style="white-space:nowrap;"><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{{annotationidglosstranslation}}</a></td>
+            {% endwith %}
+            {% endwith %}
+            {% endfor %}
+            </tr>
+            {% endfor %}
+            <tr>
+            <td>{% trans "Start Time" %}</td>
+            {% for annotatedgloss in annotatedglosses %}
+                <td>{{annotatedgloss.starttime}}</td>
+            {% endfor %}
+            </tr>
+            <tr>
+            <td>{% trans "Representative" %}</td>
+            {% for annotatedgloss in annotatedglosses %}
+                <td>{% if annotatedgloss.isRepresentative %}
+                    <span style="color:green;font-size:20px;">&#x2713;</span>{% endif %}
+                </td>
             {% endfor %}
             </tr>
         </table>
 
         <br>
+        <table class="table table-responsive">
+            <caption class="text-left"
+                     style="padding-bottom:20px;">{% trans "Sentence Comprised of Representative Glosses" %}</caption>
+            {% for dataset_lang, sentence in abbreviated_sentence.items %}
+            <tr>
+                <td>{{dataset_lang.name}}</td><td>{{sentence}}</td>
+            </tr>
+            {% endfor %}
+        </table>
 
+        <br>
         <table class="table">
         {% for dataset_lang, sentence_text in sentencetranslations.items %}
             <tr>

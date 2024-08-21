@@ -2050,7 +2050,8 @@ def construct_scrollbar(qs, search_type, language_code):
                 href_type = 'morpheme'
             elif item.is_annotatedgloss():
                 sentence = AnnotatedSentenceTranslation.objects.filter(annotatedsentence=item.annotatedsentence).first()
-                sentence_prefix = sentence.text[:20] if sentence else ''
+                sentence_words = sentence.text.split()
+                sentence_prefix = ' '.join(sentence_words[:5]) if sentence else str(item.annotatedsentence.id)
                 data_label = str(item.gloss.idgloss) + ' (' + sentence_prefix + '...)'
                 items.append(dict(id=str(item.annotatedsentence.id), glossid=str(item.gloss.id),
                                   data_label=data_label, gloss_label=str(item.gloss.idgloss),

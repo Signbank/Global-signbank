@@ -20,6 +20,7 @@ from django.contrib import messages
 from django.contrib.sites.models import Site
 from django.template.loader import render_to_string
 from django.contrib.auth.models import User, Group
+from django.utils.safestring import mark_safe
 
 import csv
 from guardian.core import ObjectPermissionChecker
@@ -6980,6 +6981,24 @@ class AnnotatedSentenceDetailView(DetailView):
 
         annotatedglosses = AnnotatedGloss.objects.filter(annotatedsentence=annotatedsentence).order_by('starttime')
         context['annotatedglosses'] = annotatedglosses
+
+        annotatedglosses_representative = AnnotatedGloss.objects.filter(annotatedsentence=annotatedsentence,
+                                                                        isRepresentative=True).order_by('starttime')
+        representative_glosses = dict()
+        for language in dataset_languages:
+            representative_glosses[language] = []
+        for representive_gloss in annotatedglosses_representative:
+            for language in dataset_languages:
+                annotationidgloss = representive_gloss.gloss.annotation_idgloss(language.language_code_2char)
+                representative_glosses[language].append(annotationidgloss)
+
+        abbreviated_sentence = dict()
+        for language in dataset_languages:
+            gloss_list = representative_glosses[language]
+            raw_string = '&nbsp;&nbsp;&nbsp;&nbsp;'.join(gloss_list)
+            abbreviated_sentence[language] = mark_safe(raw_string)
+
+        context['abbreviated_sentence'] = abbreviated_sentence
 
         context['active_id'] = annotatedsentence.id
 
