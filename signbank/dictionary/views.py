@@ -76,13 +76,14 @@ def gloss(request, glossid):
     else:
         search_results = []
     if search_results and len(search_results) > 0:
-        if request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+        if request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'annotatedsentence']:
             # if the results have the wrong type
             request.session['search_results'] = []
     if 'search_type' in request.session.keys():
         # check that the search type matches the results
         # the session variables are used by the ajax call
-        if request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+        if request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
+                                                  'sign_or_morpheme', 'sign_handshape']:
             # search type is not correct, see if the results were not erased in the last step
             if request.session['search_results']:
                 # this was not set to None in the previous step, results have the right type

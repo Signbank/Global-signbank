@@ -50,7 +50,7 @@
     $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
 
 	var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
-
+    var search_type = 'sign';
     {% include "dictionary/search_result_bar.html" %}		
 	
 </script>

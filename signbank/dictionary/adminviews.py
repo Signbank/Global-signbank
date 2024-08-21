@@ -884,10 +884,11 @@ class GlossDetailView(DetailView):
         else:
             search_results = []
         if search_results and len(search_results) > 0:
-            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'sense']:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'sense', 'annotatedsentence']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'sense', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            if self.request.session['search_type'] not in ['sign', 'sense', 'morpheme', 'annotatedsentence',
+                                                           'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
@@ -898,6 +899,8 @@ class GlossDetailView(DetailView):
 
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
+
+        context['search_type'] = 'sign'
 
         if 'dark_mode' in self.request.session.keys():
             dark_mode_session = self.request.session['dark_mode']
@@ -1501,10 +1504,11 @@ class GlossVideosView(DetailView):
         else:
             search_results = []
         if search_results and len(search_results) > 0:
-            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'annotatedsentence']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
+                                                           'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
@@ -1512,6 +1516,8 @@ class GlossVideosView(DetailView):
 
         # Call the base implementation first to get a context
         context = super(GlossVideosView, self).get_context_data(**kwargs)
+
+        context['search_type'] = 'sign'
 
         # Pass info about which fields we want to see
         gl = context['gloss']
@@ -2103,7 +2109,7 @@ class HandshapeDetailView(DetailView):
         # Check the type of the current search results
         if 'search_results' in self.request.session.keys():
             if self.request.session['search_results'] and len(self.request.session['search_results']) > 0:
-                if self.request.session['search_results'][0]['href_type'] in ['gloss', 'morpheme']:
+                if self.request.session['search_results'][0]['href_type'] in ['gloss', 'morpheme', 'annotatedsentence']:
                     # if the previous search does not match the search type
                     self.request.session['search_results'] = []
 
@@ -2568,10 +2574,11 @@ class QueryListView(ListView):
         else:
             search_results = []
         if search_results and len(search_results) > 0:
-            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'annotatedsentence']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape', 'sense']:
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
+                                                           'sign_or_morpheme', 'sign_handshape', 'sense']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
@@ -2631,10 +2638,11 @@ class QueryListView(ListView):
         else:
             search_results = []
         if search_results and len(search_results) > 0:
-            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'annotatedsentence']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape', 'sense']:
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
+                                                           'sign_or_morpheme', 'sign_handshape', 'sense']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
@@ -2709,10 +2717,11 @@ class SearchHistoryView(ListView):
         else:
             search_results = []
         if search_results and len(search_results) > 0:
-            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'sense']:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'sense', 'annotatedsentence']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape', 'sense']:
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
+                                                           'sign_or_morpheme', 'sign_handshape', 'sense']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
@@ -2943,10 +2952,11 @@ class GlossFrequencyView(DetailView):
         else:
             search_results = []
         if search_results and len(search_results) > 0:
-            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme']:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'annotatedsentence']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape']:
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
+                                                           'sign_or_morpheme', 'sign_handshape']:
                 # search_type is 'handshape'
                 self.request.session['search_results'] = []
         else:
@@ -4979,10 +4989,10 @@ class MorphemeDetailView(DetailView):
             search_results = []
 
         if search_results and len(search_results) > 0:
-            if self.request.session['search_results'][0]['href_type'] not in ['morpheme', 'gloss']:
+            if self.request.session['search_results'][0]['href_type'] not in ['morpheme', 'gloss', 'annotatedsentence']:
                 self.request.session['search_results'] = []
         if 'search_type' in self.request.session.keys():
-            if self.request.session['search_type'] not in ['morpheme', 'sign_or_morpheme']:
+            if self.request.session['search_type'] not in ['morpheme', 'annotatedsentence', 'sign_or_morpheme']:
                 # user has not queried morphemes
                 # search_type is 'handshape', 'sign', 'sign_handshape'
                 self.request.session['search_results'] = []
@@ -5225,7 +5235,8 @@ class MorphemeDetailView(DetailView):
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""
     if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \
-            and request.session['search_type'] in ['sign', 'morpheme', 'sign_or_morpheme', 'sign_handshape', 'sense']:
+            and request.session['search_type'] in ['sign', 'morpheme', 'annotatedsentence',
+                                                   'sign_or_morpheme', 'sign_handshape', 'sense']:
         return JsonResponse(request.session['search_results'], safe=False)
     else:
         return JsonResponse([], safe=False)

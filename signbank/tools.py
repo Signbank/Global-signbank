@@ -2052,7 +2052,9 @@ def construct_scrollbar(qs, search_type, language_code):
                 sentence = AnnotatedSentenceTranslation.objects.filter(annotatedsentence=item.annotatedsentence).first()
                 sentence_prefix = sentence.text[:20] if sentence else ''
                 data_label = str(item.gloss.idgloss) + ' (' + sentence_prefix + '...)'
-                items.append(dict(id=str(item.annotatedsentence.id), data_label=data_label, href_type='annotatedsentence'))
+                items.append(dict(id=str(item.annotatedsentence.id), glossid=str(item.gloss.id),
+                                  data_label=data_label, gloss_label=str(item.gloss.idgloss),
+                                  href_type='annotatedsentence'))
                 continue
             else:
                 href_type = 'gloss'

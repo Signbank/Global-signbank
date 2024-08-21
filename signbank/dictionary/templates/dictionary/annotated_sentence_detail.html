@@ -12,8 +12,9 @@
 {% block extrajs %}
 
 <script type="text/javascript">
-var url = '{{ PREFIX_URL }}';
+var url = '{{PREFIX_URL}}';
 var language_code = '{{LANGUAGE_CODE}}';
+var search_type = '{{search_type}}';
 var search_results_url = '{% url 'dictionary:annotatedsentence_ajax_search_results' %}';
 
 {% include "dictionary/search_result_bar.html" %}

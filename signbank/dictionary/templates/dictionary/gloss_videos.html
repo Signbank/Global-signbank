@@ -23,6 +23,7 @@
     var csrf_token = '{{csrf_token}}';
     var this_gloss_id = {{gloss.id}};
 
+    var search_type = 'sign';
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
     {% include "dictionary/search_result_bar.html" %}
