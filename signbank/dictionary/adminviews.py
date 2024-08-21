@@ -7083,7 +7083,7 @@ class AnnotatedGlossListView(ListView):
         # Get the initial selection
         if len(get) > 0 and 'query' not in self.request.GET:
             qs = AnnotatedGloss.objects.all().prefetch_related('gloss').filter(
-                gloss__lemma__dataset__in=selected_datasets).order_by('annotatedsentence__id')
+                gloss__lemma__dataset__in=selected_datasets).order_by('annotatedsentence__id', 'starttime')
         else:
             qs = AnnotatedGloss.objects.none()
 
