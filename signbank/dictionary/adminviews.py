@@ -6967,7 +6967,7 @@ class AnnotatedSentenceDetailView(DetailView):
             sentencetranslations[tr.language] = tr.text
         context['sentencetranslations'] = sentencetranslations
 
-        annotatedglosses = AnnotatedGloss.objects.filter(annotatedsentence=annotatedsentence)
+        annotatedglosses = AnnotatedGloss.objects.filter(annotatedsentence=annotatedsentence).order_by('starttime')
         context['annotatedglosses'] = annotatedglosses
 
         context['active_id'] = annotatedsentence.id
