@@ -261,7 +261,7 @@ function do_export_csv(e1) {
             </td>
             <td>
             {% get_obj_perms request.user for lemma.dataset as "dataset_perms" %}
-            {% if "change_dataset" in dataset_perms %}
+            {% if "change_permission" in dataset_perms %}
                 <a class="change-entry" href="{% url 'dictionary:change_lemma' lemma.pk %}" >
                     <span class="glyphicon glyphicon-pencil" data-toggle="tooltip" data-original-title="{% trans 'Update' %}"></span>
                 </a>

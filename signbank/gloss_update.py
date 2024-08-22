@@ -553,7 +553,7 @@ def api_update_gloss(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_permission', Dataset)
     if dataset not in change_permit_datasets:
         errors[gettext("Dataset")] = gettext("No change permission for dataset.")
         results['errors'] = errors
@@ -689,7 +689,7 @@ def api_delete_gloss(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_permission', Dataset)
     if dataset not in change_permit_datasets:
         errors[gettext("Dataset")] = gettext("No change permission for dataset.")
         results['errors'] = errors
@@ -769,7 +769,7 @@ def api_restore_gloss(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_permission', Dataset)
     if dataset not in change_permit_datasets:
         errors[gettext("Dataset")] = gettext("No change permission for dataset.")
         results['errors'] = errors
@@ -943,7 +943,7 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_permission', Dataset)
     if dataset not in change_permit_datasets:
         errors[gettext("Dataset")] = gettext("No change permission for dataset.")
         results['errors'] = errors
@@ -1086,7 +1086,7 @@ def api_create_gloss_nmevideo(request, datasetid, glossid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_permission', Dataset)
     if dataset not in change_permit_datasets:
         errors[gettext("Dataset")] = gettext("No change permission for dataset.")
         results['errors'] = errors
@@ -1170,7 +1170,7 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
         results['updatestatus'] = "Failed"
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_permission', Dataset)
     if dataset not in change_permit_datasets:
         errors[gettext("Dataset")] = gettext("No change permission for dataset.")
         results['errors'] = errors

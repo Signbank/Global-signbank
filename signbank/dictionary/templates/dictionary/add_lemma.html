@@ -58,7 +58,7 @@
                  <td class='td td-light'><select id="id_dataset" name="dataset" required="">
                          {% for s_dataset in selected_datasets %}
                          {% get_obj_perms request.user for s_dataset as "dataset_perms" %}
-                         {% if "change_dataset" in dataset_perms %}
+                         {% if "change_permission" in dataset_perms %}
                          {% if last_used_dataset and last_used_dataset == s_dataset.acronym %}
                          <option value="{{ s_dataset.id }}" selected="selected"
                                  dataset_languages="{% for dataset_lang in s_dataset.translation_languages.all %}{{ dataset_lang.language_code_2char }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ s_dataset.acronym }}</option>

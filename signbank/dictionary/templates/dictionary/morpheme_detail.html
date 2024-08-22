@@ -294,7 +294,7 @@ function checkKey(e)
     </ul>
     </div>
     {% get_obj_perms request.user for morpheme.lemma.dataset as "dataset_perms" %}
-    {% if "change_dataset" in dataset_perms %}
+    {% if "change_permission" in dataset_perms %}
     {% if perms.dictionary.change_morpheme %}
     <div class='pull-right' style="margin-right:15px;margin-top:10px;z-index:100;">
 
@@ -392,7 +392,7 @@ function checkKey(e)
     </div>
     {% endif %}
 
-    {% if "change_dataset" in dataset_perms %}
+    {% if "change_permission" in dataset_perms %}
     {% if perms.dictionary.change_morpheme %}
     <div class="editform">
         <fieldset>
@@ -778,7 +778,7 @@ function checkKey(e)
                {% for media_okay,pk,path,file_type,type,alternative_gloss,file_name in other_media %}
                <tr>
                    {% get_obj_perms request.user for morpheme.lemma.dataset as "dataset_perms" %}
-                   {% if "change_dataset" in dataset_perms %}
+                   {% if "change_permission" in dataset_perms %}
                      <td>
                         <span class='glyphicon glyphicon-trash other-video-delete' data-toggle='modal' data-target='#delete_other_media_{{pk}}'></span>
 

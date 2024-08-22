@@ -335,7 +335,7 @@ def csv_create_gloss(request, datasetid):
     if not dataset or not request.user.is_authenticated:
         return JsonResponse({})
 
-    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_permission', Dataset)
     if dataset not in change_permit_datasets:
         return JsonResponse({})
 
@@ -374,7 +374,7 @@ def api_create_gloss(request, datasetid):
         results['errors'] = [gettext("Dataset ID does not exist.")]
         return JsonResponse(results)
 
-    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    change_permit_datasets = get_objects_for_user(request.user, 'change_permission', Dataset)
     if dataset not in change_permit_datasets:
         results['errors'] = [gettext("No change permission for dataset for user ") + str(request.user)]
         return JsonResponse(results)

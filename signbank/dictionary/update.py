@@ -97,9 +97,9 @@ def add_gloss(request):
         except (ObjectDoesNotExist, IntegerField, ValueError, TypeError):
             return show_error(request, _("The given Lemma Idgloss ID is unknown."), form, dataset_languages)
 
-    # Check for 'change_dataset' permission
-    if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
-            and ('change_dataset' not in get_group_perms(request.user, dataset))\
+    # Check for 'change_permission' permission
+    if dataset and ('change_permission' not in get_user_perms(request.user, dataset)) \
+            and ('change_permission' not in get_group_perms(request.user, dataset))\
             and not request.user.is_staff:
         return show_error(request, _("You are not authorized to change the selected dataset."), form, dataset_languages)
 
@@ -839,7 +839,7 @@ def update_gloss(request, glossid):
 
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-        if ds in guardian.shortcuts.get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
+        if ds in guardian.shortcuts.get_objects_for_user(request.user, ['view_permission'],
                                                          Dataset, any_perm=True):
             newvalue = value
             setattr(gloss, field, ds)
@@ -2319,9 +2319,9 @@ def add_morpheme(request):
                                  _("The given Lemma Idgloss ID is unknown."))
             return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
 
-    # Check for 'change_dataset' permission
-    if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
-            and ('change_dataset' not in get_group_perms(request.user, dataset))\
+    # Check for 'change_permission' permission
+    if dataset and ('change_permission' not in get_user_perms(request.user, dataset)) \
+            and ('change_permission' not in get_group_perms(request.user, dataset))\
             and not request.user.is_staff:
         messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
         return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
@@ -2489,7 +2489,7 @@ def update_morpheme(request, morphemeid):
 
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-        if ds in guardian.shortcuts.get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
+        if ds in guardian.shortcuts.get_objects_for_user(request.user, ['view_permission'],
                                                          Dataset, any_perm=True):
             newvalue = value
             setattr(morpheme, field, ds)
@@ -2925,7 +2925,7 @@ def update_dataset(request, datasetid):
                                  _('You must be in group Dataset Manager to modify dataset details.'))
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
-        user_change_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        user_change_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_permission', Dataset, accept_global_perms=False)
         if dataset not in user_change_datasets:
             return HttpResponseForbidden("Dataset Update Not Allowed")
 
@@ -3043,7 +3043,7 @@ def update_excluded_choices(request):
     selected_datasets = get_selected_datasets_for_user(request.user)
 
     managed_datasets = []
-    change_dataset_permission = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    change_dataset_permission = get_objects_for_user(request.user, 'change_permission', Dataset)
     for dataset in selected_datasets:
         if dataset in change_dataset_permission:
             managed_datasets.append(dataset)
@@ -3192,8 +3192,8 @@ def remove_eaf_files(request):
         messages.add_message(request, messages.ERROR, _('Dataset does not exist.'))
         return HttpResponseRedirect(reverse('admin_dataset_view'))
 
-    # Check for 'change_dataset' permission
-    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+    # Check for 'change_permission' permission
+    user_change_datasets = get_objects_for_user(request.user, 'change_permission', Dataset, accept_global_perms=False)
     if not user_change_datasets.exists() or dataset not in user_change_datasets:
         messages.add_message(request, messages.ERROR, _("You are not authorized to remove eaf files."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -3243,8 +3243,8 @@ def upload_eaf_files(request):
             messages.add_message(request, messages.ERROR, _('Dataset does not exist.'))
             return HttpResponseRedirect(reverse('admin_dataset_manager'))
 
-        # Check for 'change_dataset' permission
-        user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset, accept_global_perms=False)
+        # Check for 'change_permission' permission
+        user_change_datasets = get_objects_for_user(request.user, 'change_permission', Dataset, accept_global_perms=False)
         if not user_change_datasets.exists() or dataset not in user_change_datasets:
             messages.add_message(request, messages.ERROR, _("You are not authorized to upload eaf files."))
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
@@ -3499,7 +3499,7 @@ def assign_lemma_dataset_to_gloss(request, glossid):
 
     if not request.user.is_superuser:
         # check that user can write to the dataset
-        datasets_user_can_change = get_objects_for_user(request.user, 'change_dataset', Dataset)
+        datasets_user_can_change = get_objects_for_user(request.user, 'change_permission', Dataset)
         if dataset_of_dummy not in datasets_user_can_change:
             failure_message = _('You do not have change permission for') + ' ' + dummy_lemma.dataset.name
             return HttpResponse(json.dumps({'glossid': str(glossid),
@@ -3524,7 +3524,7 @@ def okay_to_update_gloss(request, gloss):
     if not gloss or not gloss.lemma:
         return False
 
-    if gloss.lemma.dataset not in guardian.shortcuts.get_objects_for_user(request.user, ['change_dataset'],
+    if gloss.lemma.dataset not in guardian.shortcuts.get_objects_for_user(request.user, ['change_permission'],
                                                                           Dataset, any_perm=True):
         return False
     
