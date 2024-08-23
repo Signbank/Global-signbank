@@ -3811,7 +3811,7 @@ class DatasetManagerView(ListView):
 
         # make sure the user can write to this dataset
         # from guardian.shortcuts import get_objects_for_user
-        user_change_datasets = get_objects_for_user(self.request.user, 'change_permission', Dataset,
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset,
                                                     accept_global_perms=False)
         if not user_change_datasets or dataset_object not in user_change_datasets:
             messages.add_message(self.request, messages.ERROR, _('No permission to modify dataset permissions.'))
@@ -3910,8 +3910,8 @@ class DatasetManagerView(ListView):
         manage_identifier = 'dataset_' + dataset_object.acronym.replace(' ','')
 
         from guardian.shortcuts import assign_perm, remove_perm
-        datasets_user_can_change = get_objects_for_user(user_object, 'change_permission', Dataset, accept_global_perms=False)
-        datasets_user_can_view = get_objects_for_user(user_object, 'view_permission',
+        datasets_user_can_change = get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False)
+        datasets_user_can_view = get_objects_for_user(user_object, 'view_dataset',
                                                       Dataset, accept_global_perms=False, any_perm=True)
         groups_user_is_in = Group.objects.filter(user=user_object)
 
@@ -4004,7 +4004,6 @@ class DatasetManagerView(ListView):
 
         if 'delete_view_perm' in self.request.GET:
             manage_identifier += '_manage_view'
-
             if dataset_object in datasets_user_can_view:
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.ERROR,
@@ -4015,7 +4014,7 @@ class DatasetManagerView(ListView):
                         # also need to remove change_dataset perm in this case
                         from guardian.shortcuts import remove_perm
                         remove_perm('dictionary.view_dataset', user_object, dataset_object)
-                        remove_perm('change_dataset', user_object, dataset_object)
+                        remove_perm('dictionary.change_dataset', user_object, dataset_object)
                         messages.add_message(self.request, messages.INFO,
                                              _('View (and change) permission for user successfully revoked.'))
                     except (PermissionError, SystemError, OSError):
