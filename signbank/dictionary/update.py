@@ -64,6 +64,7 @@ def add_gloss(request):
         selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
     else:
         selected_datasets = get_selected_datasets_for_user(request.user)
+
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     if dataset:
@@ -97,9 +98,9 @@ def add_gloss(request):
         except (ObjectDoesNotExist, IntegerField, ValueError, TypeError):
             return show_error(request, _("The given Lemma Idgloss ID is unknown."), form, dataset_languages)
 
-    # Check for 'change_permission' permission
-    if dataset and ('change_permission' not in get_user_perms(request.user, dataset)) \
-            and ('change_permission' not in get_group_perms(request.user, dataset))\
+    # Check for 'change_dataset' permission
+    if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
+            and ('change_dataset' not in get_group_perms(request.user, dataset))\
             and not request.user.is_staff:
         return show_error(request, _("You are not authorized to change the selected dataset."), form, dataset_languages)
 
@@ -155,7 +156,6 @@ def add_gloss(request):
             for ua in user_affiliations:
                 new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
                                                                                  gloss=gloss)
-
     except ValidationError as ve:
         return show_error(request, ve.message, form, dataset_languages)
 
@@ -2319,9 +2319,9 @@ def add_morpheme(request):
                                  _("The given Lemma Idgloss ID is unknown."))
             return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})
 
-    # Check for 'change_permission' permission
-    if dataset and ('change_permission' not in get_user_perms(request.user, dataset)) \
-            and ('change_permission' not in get_group_perms(request.user, dataset))\
+    # Check for 'change_dataset' permission
+    if dataset and ('change_dataset' not in get_user_perms(request.user, dataset)) \
+            and ('change_dataset' not in get_group_perms(request.user, dataset))\
             and not request.user.is_staff:
         messages.add_message(request, messages.ERROR, _("You are not authorized to change the selected dataset."))
         return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form})

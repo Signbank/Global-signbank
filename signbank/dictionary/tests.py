@@ -1,6 +1,4 @@
-import guardian.shortcuts
 from django.db.models import CharField, TextField
-#from django.forms import TextInput, Textarea, CharField
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
@@ -19,7 +17,7 @@ from django.test import Client
 from pathlib import Path
 from os import path
 
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, get_user_perms
 
 from signbank.video.models import GlossVideo
 from signbank.dictionary.views import gloss_api_get_sign_name_and_media_info
@@ -166,7 +164,6 @@ class BasicCRUDTests(TestCase):
         # Get the test dataset
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-
         # Construct the Create Gloss form data
         create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
         for language in test_dataset.translation_languages.all():
