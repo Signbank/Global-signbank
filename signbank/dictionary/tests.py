@@ -1400,6 +1400,7 @@ class ManageDatasetTests(TestCase):
         dataset_manager_group.user_set.add(self.user)
         assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        self.assertContains(response, 'The default language of')
         self.assertEqual(response.status_code, 200)
 
         # Try to add a language that is not in the translation language set of the test dataset
@@ -1407,6 +1408,8 @@ class ManageDatasetTests(TestCase):
         language.save()
         form_data = {'dataset_acronym': self.test_dataset.acronym, 'default_language': language.id}
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
+        self.assertContains(response, '{} is not in the set of languages of dataset {}.'.format(
+                                                            language.name, self.test_dataset.acronym))
         self.assertEqual(response.status_code, 200)
 
 
