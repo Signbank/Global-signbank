@@ -79,6 +79,102 @@ from signbank.manage_videos import listing_uploaded_videos
 from signbank.zip_interface import *
 
 
+def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_codes):
+    """Change the sort-order of the query set, depending on the form field [sortOrder]
+
+    This function is used both by AnnotatedSentenceListView.
+    The value of [sortOrder] is 'firstgloss__id' by default.
+    [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_annotatedsentence_list.html
+    Its value is changed by clicking the up/down buttons in the second row of the search result table
+    """
+
+    def order_queryset_by_annotatedglosses(qs, sOrder):
+        print(sOrder)
+        # filter query on dataset and sort based on first gloss of the sentence
+        qs = qs.annotate(
+            firstgloss=Subquery(
+                AnnotatedGloss.objects.filter(
+                    annotatedsentence__id=OuterRef('id')
+                ).order_by('starttime').values('gloss__lemma')[:1]
+            )
+        ).order_by('firstgloss')
+
+        if sOrder[0:1] == '-':
+            # A starting '-' sign means: descending order
+            qs = qs.reverse()
+
+        return qs
+
+    def order_queryset_by_dataset(qs, sOrder):
+        qs = qs.annotate(
+            dataset=Subquery(
+                AnnotatedGloss.objects.filter(
+                    annotatedsentence_id=OuterRef('id')
+                ).values('gloss__lemma__dataset__acronym')[:1]
+            )
+        ).order_by('dataset')
+
+        if sOrder[0:1] == '-':
+            # A starting '-' sign means: descending order
+            qs = qs.reverse()
+        return qs
+        
+    def order_queryset_by_sentencetranslation(qs, sOrder):
+        qs = qs.annotate(
+            translation=Subquery(
+                AnnotatedSentenceTranslation.objects.filter(
+                    annotatedsentence_id=OuterRef('id')
+                ).values('text')
+            )
+        ).order_by('translation')
+        
+        if sOrder[0:1] == '-':
+            # A starting '-' sign means: descending order
+            qs = qs.reverse()
+        return qs
+
+    def order_queryset_by_nrannotatedglosses(qs, sOrder):
+        qs = qs.annotate(
+            nrglosses=Count('annotated_glosses')  # Replace 'glosses' with the related_name or field name
+        ).order_by('nrglosses')
+        
+        if sOrder[0:1] == '-':
+            # A starting '-' sign means: descending order
+            qs = qs.reverse()
+        return qs
+    
+    # Set the default sort order
+    bReversed = False
+    bText = True
+
+    # See if the form contains any sort-order information
+    if 'sortOrder' in get and get['sortOrder']:
+        # Take the user-indicated sort order
+        sOrder = get['sortOrder']
+        if sOrder[0:1] == '-':
+            # A starting '-' sign means: descending order
+            bReversed = True
+    else: 
+        return qs
+
+    # The ordering method depends on the kind of field:
+    # (1) text fields are ordered straightforwardly
+    # (2) fields made from a choice_list need special treatment
+    if sOrder.startswith("dataset_order_") or sOrder.startswith("-dataset_order_"):
+        ordered = order_queryset_by_dataset(qs, sOrder)
+    elif sOrder.startswith("annotatedsentencetranslation_order_") or sOrder.startswith("-annotatedsentencetranslation_order_"):
+        ordered = order_queryset_by_sentencetranslation(qs, sOrder)
+    elif sOrder.startswith("annotatedglossestranslation_order_") or sOrder.startswith("-annotatedglossestranslation_order_"):
+        ordered = order_queryset_by_annotatedglosses(qs, sOrder)
+    elif sOrder.startswith("nrannotatedglosses_order_") or sOrder.startswith("-nrannotatedglosses_order_"):
+        ordered = order_queryset_by_nrannotatedglosses(qs, sOrder)
+    
+    if bReversed and bText:
+        ordered.reverse()
+
+    return ordered
+
+
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
     """Change the sort-order of the query set, depending on the form field [sortOrder]
 
@@ -244,10 +340,11 @@ class Echo:
 class AnnotatedSentenceListView(ListView):
     model = AnnotatedSentence
     template_name = 'dictionary/admin_annotatedsentence_list.html'
-    paginate_by = 5
+    paginate_by = 10
     show_all = False
     search_type = 'annotatedsentence'
     search_form = AnnotatedSentenceSearchForm()
+    queryset_language_codes = []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -288,6 +385,15 @@ class AnnotatedSentenceListView(ListView):
                 ).order_by('starttime').values('gloss')[:1]
             )
         ).filter(dataset__in=selected_datasets).order_by('firstgloss')
+
+        default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+
+        for lang in dataset_languages:
+            if lang.language_code_2char not in self.queryset_language_codes:
+                self.queryset_language_codes.append(lang.language_code_2char)
+        if not self.queryset_language_codes:
+            self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
+        qs = order_annotatedsentence_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
 
         if get.get('show_all_annotatedsentences') == '1':
             self.show_all = True
@@ -330,6 +436,17 @@ class AnnotatedSentenceListView(ListView):
             )
         ).filter(dataset__in=selected_datasets).count()
         results = self.get_queryset()
+
+        get = self.request.GET
+        query_parameters_dict = {}
+        query_parameters_keys = []
+        for key in list(get.keys()):
+            query_parameters_dict[key] = get.get(key)
+            query_parameters_keys.append(key)
+        context['sort_order'] = str(get.get('sortOrder'))
+        context['language_query_keys'] = [language.language_code_2char for language in dataset_languages]
+        context['query_parameters_dict'] = query_parameters_dict
+        context['query_parameters_keys'] = query_parameters_keys
         context['annotatedsentence_count'] = nr_sentences_in_dataset
         context['dataset_languages'] = dataset_languages
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)

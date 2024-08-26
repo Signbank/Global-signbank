@@ -16,11 +16,32 @@
 <script type='text/javascript'>
 var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
 var csrf_token = '{{csrf_token}}';
-var page_number = {{ page_number }};
 var paginate_by = '{{paginate_by}}';
 var page_number = {{page_obj.number}};
-var populate_fields_keys = {{populate_fields_keys|safe}};
-var populate_fields = {{populate_fields|safe}};
+var query_parameters_dict = {{ query_parameters_dict|safe }};
+var query_parameters_keys = {{ query_parameters_keys|safe }};
+var language_query_keys = {{ language_query_keys|safe }};
+
+$(document).ready(function() {
+    // initialize language-based query fields
+    for (var i = 0; i < language_query_keys.length; i++) {
+        var this_var = language_query_keys[i];
+        if (query_parameters_keys.includes("annotatedsentence_"+this_var)) {
+            query_parameter_name = "annotatedsentence_"+this_var
+            var $sentencetranslation_search = $("input[name='"+query_parameter_name+"']");
+            var translation_input = query_parameters_dict[query_parameter_name];
+            $sentencetranslation_search.val(translation_input);
+        }
+    }
+    if (query_parameters_dict['no_glosses'] != "0") {
+        var $noGlossesSelect = $("#id_no_glosses"); // jQuery selector for the select field
+        $noGlossesSelect.val('1'); // Set the select field to 'true' or another desired value
+    }
+    if (query_parameters_dict['has_glosses'] != "0") {
+        var $hasGlossesSelect = $("#id_has_glosses"); // jQuery selector for the select field
+        $hasGlossesSelect.val('1'); // Set the select field to 'true' or another desired value
+    }
+})
 
 function clearForm() {
       $('input').each(function() {
@@ -59,6 +80,23 @@ function do_show_all(el) {
     document.getElementById('adminsearch').submit();
 }
 
+function do_sort_column(field_name, action, frmName) {
+  // Combine @field_name and @action into [sOrder]
+  var sOrder = field_name;
+  if (action == 'desc') {
+    // Descending sort order is signified by a '-' prefix
+    sOrder = '-' + sOrder;
+  } else if (action == 'del') {
+    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
+    sOrder = '';
+  }
+  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
+  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
+
+  // Submit the form with the indicated name
+  $("#" + frmName).submit();
+}
+
 </script>
 {% endblock %}
 
@@ -81,43 +119,49 @@ function do_show_all(el) {
     
         <div id='query-area' class='collapse {% if request.GET|length == 0 %} in {% endif %}'>
             <div id='searchformwell' class='well search-results-collapsable'>
-                    <div>
-                        <table class='table' id='searchfields'>
-                            {% for dataset_lang in dataset_languages %}
-                            <tr>
-                                {% with searchform|get_annotatedsentence_form_field_for_language:dataset_lang as annotatedsentence_field %}
-                                <td>
-                                    <div class='input-group'>
-                                        <label class='input-group-addon' for='id_annotatedsentence_{{ dataset_lang.language_code_2char }}'>
-                                            {{annotatedsentence_field.label}}
-                                        </label>
-                                        <input name='annotatedsentence_{{dataset_lang.language_code_2char}}' type='text' class='form-control'>
-                                    </div>
-                                </td>
-                                {% endwith %}
-                            </tr>
-                            {% endfor %}
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='{{ sort_order }}' type='hidden'>
+                </div>
+                <div>
+                    <table class='table' id='searchfields'>
+                        {% for dataset_lang in dataset_languages %}
+                        <tr>
+                            {% with searchform|get_annotatedsentence_form_field_for_language:dataset_lang as annotatedsentence_field %}
+                            <td>
+                                <div class='input-group'>
+                                    <label class='input-group-addon' for='id_annotatedsentence_{{ dataset_lang.language_code_2char }}'>
+                                        {{annotatedsentence_field.label}}
+                                    </label>
+                                    <input name='annotatedsentence_{{dataset_lang.language_code_2char}}' 
+                                            id='id_annotatedsentence_{{dataset_lang.language_code_2char}}' 
+                                            type='text' 
+                                            class='form-control'>
+                                </div>
+                            </td>
+                            {% endwith %}
+                        </tr>
+                        {% endfor %}
 
-                            <tr id="annotatedsentence_with_no_glosses">
-                                <td>
-                                    <div class='input-group'>
-                                    <label class='input-group-addon' for='id_no_glosses'>{{searchform.no_glosses.label}}</label>
-                                        {{searchform.no_glosses}}
-                                    </div>
-                                </td>
-                             </tr>
-    
-                             <tr id="annotatedsentence_with_glosses">
-                                <td>
-                                    <div class='input-group'>
-                                    <label class='input-group-addon' for='id_has_glosses'>{{searchform.has_glosses.label}}</label>
-                                        {{searchform.has_glosses}}
-                                    </div>
-                                </td>
-                             </tr>
-    
-                        </table>
-                    </div>
+                        <tr id="annotatedsentence_with_no_glosses">
+                            <td>
+                                <div class='input-group'>
+                                <label class='input-group-addon' name='no_glosses' for='id_no_glosses'>{{searchform.no_glosses.label}}</label>
+                                    {{searchform.no_glosses}}
+                                </div>
+                            </td>
+                            </tr>
+
+                            <tr id="annotatedsentence_with_glosses">
+                            <td>
+                                <div class='input-group'>
+                                <label class='input-group-addon' name='has_glosses' for='id_has_glosses'>{{searchform.has_glosses.label}}</label>
+                                    {{searchform.has_glosses}}
+                                </div>
+                            </td>
+                            </tr>
+
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -152,10 +196,10 @@ function do_show_all(el) {
             
     <br/>  
     
+    </form>
+
     {% if object_list %}
 
-    </form>
-    
     <table class='table table-condensed'>
         <thead>
         <tr>
@@ -172,6 +216,83 @@ function do_show_all(el) {
             <th>{% trans "Delete" %}</th>
             {% endif %}
         </tr>
+
+        <tr>
+            {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+            {% with "dataset_order_" as field %}
+            {% with minfield="-"|add:field %}
+             <th>
+               <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch');">
+                 {% if sort_order == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+               </a>
+               <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch');">
+                 {% if sort_order == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+               </a>
+               {% if sort_order == minfield or sort_order == field  %}
+                 <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch');">x</a>
+               {% endif %}
+             </th>
+             {% endwith %}
+             {% endwith %}
+            {% endif %}
+
+            {% for dataset_lang in dataset_languages %}
+            {% with "annotatedsentencetranslation_order_"|add:dataset_lang.language_code_2char as field %}
+            {% with minfield="-"|add:field %}
+             <th>
+               <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch');">
+                 {% if sort_order == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+               </a>
+               <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch');">
+                 {% if sort_order == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+               </a>
+               {% if sort_order == minfield or sort_order == field  %}
+                 <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch');">x</a>
+               {% endif %}
+             </th>
+             {% endwith %}
+             {% endwith %}
+            {% endfor %}
+
+            {% for dataset_lang in dataset_languages %}
+            {% with "annotatedglossestranslation_order_"|add:dataset_lang.language_code_2char as field %}
+            {% with minfield="-"|add:field %}
+             <th>
+               <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch');">
+                 {% if sort_order == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+               </a>
+               <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch');">
+                 {% if sort_order == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+               </a>
+               {% if sort_order == minfield or sort_order == field  %}
+                 <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch');">x</a>
+               {% endif %}
+             </th>
+             {% endwith %}
+             {% endwith %}
+            {% endfor %}
+
+            {% with "nrannotatedglosses_order_" as field %}
+            {% with minfield="-"|add:field %}
+             <th>
+               <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch');">
+                 {% if sort_order == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+               </a>
+               <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch');">
+                 {% if sort_order == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+               </a>
+               {% if sort_order == minfield or sort_order == field  %}
+                 <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch');">x</a>
+               {% endif %}
+             </th>
+             {% endwith %}
+             {% endwith %}
+  
+              <th></th>
+        
+        </tr>
+
+
         </thead>
         <tbody>
         {% for sentence in object_list %}
