@@ -1,8 +1,8 @@
 from django.contrib import admin
 from django import forms
 from django.db import models
-from signbank.video.models import GlossVideo, GlossVideoHistory
-from signbank.dictionary.models import Dataset
+from signbank.video.models import GlossVideo, GlossVideoHistory, AnnotatedVideo
+from signbank.dictionary.models import Dataset, AnnotatedGloss
 from django.contrib.auth.models import User
 from signbank.settings.base import *
 from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBANK_GROUPS
@@ -213,6 +213,57 @@ class GlossVideoHistoryAdmin(admin.ModelAdmin):
     search_fields = ['^gloss__annotationidglosstranslation__text']
 
 
+class AnnotatedVideoDatasetFilter(admin.SimpleListFilter):
+
+    title = _('Dataset')
+    parameter_name = 'dataset'
+
+    def lookups(self, request, model_admin):
+        datasets = Dataset.objects.all()
+        return (tuple(
+            (dataset.id, dataset.acronym) for dataset in datasets
+        ))
+
+    def queryset(self, request, queryset):
+        if self.value():
+            annotated_glosses = AnnotatedGloss.objects.filter(gloss__lemma__dataset_id=self.value())
+            annotated_sentences_ids = [ag.annotatedsentence.id for ag in annotated_glosses]
+            if not annotated_sentences_ids:
+                return None
+            return queryset.filter(annotatedsentence_id__in=annotated_sentences_ids)
+        return queryset.all()
+
+class AnnotatedVideoAdmin(admin.ModelAdmin):
+    actions = None
+    fields = ['annotatedsentence', 'videofile', 'eaffile', 'source']
+    list_display = ['dataset', 'video_file', 'eaf_file', 'annotatedsentence']
+
+    def dataset(self, obj=None):
+        if obj is None:
+            return ""
+        annotated_glosses = AnnotatedGloss.objects.filter(annotatedsentence=obj.annotatedsentence)
+        if not annotated_glosses:
+            return ""
+        dataset = annotated_glosses.first().gloss.lemma.dataset
+        return dataset.acronym
+
+    def video_file(self, obj=None):
+        if obj is None:
+            return ""
+
+        return str(obj.videofile.name)
+
+    def eaf_file(self, obj=None):
+        if obj is None:
+            return ""
+        return str(obj.videofile.name)
+
+    def get_list_display_links(self, request, list_display):
+        self.list_display_links = (None, )
+        return self.list_display_links
+
+
 admin.site.register(GlossVideo, GlossVideoAdmin)
 admin.site.register(GlossVideoHistory, GlossVideoHistoryAdmin)
+admin.site.register(AnnotatedVideo, AnnotatedVideoAdmin)
 

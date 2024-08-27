@@ -1210,7 +1210,8 @@ class GlossDetailView(DetailView):
         annotated_sentences = annotated_sentences_1.union(annotated_sentences_2).order_by('-is_representative')
         annotated_sentences_with_video = []
         for annotated_sentence in annotated_sentences:
-            if annotated_sentence.has_video() and annotated_sentence not in annotated_sentences_with_video:
+            video_path = annotated_sentence.get_video_path()
+            if video_path and annotated_sentence not in annotated_sentences_with_video:
                 annotated_sentences_with_video.append(annotated_sentence)
         annotated_sentences = annotated_sentences_with_video
         if len(annotated_sentences) <= 3:
@@ -6981,6 +6982,11 @@ class AnnotatedSentenceDetailView(DetailView):
 
         annotatedglosses = AnnotatedGloss.objects.filter(annotatedsentence=annotatedsentence).order_by('starttime')
         context['annotatedglosses'] = annotatedglosses
+
+        dataset = annotatedglosses.first().gloss.lemma.dataset
+        context['dataset'] = dataset
+        first_gloss = annotatedglosses.first().gloss
+        context['first_gloss'] = first_gloss
 
         annotatedglosses_representative = AnnotatedGloss.objects.filter(annotatedsentence=annotatedsentence,
                                                                         isRepresentative=True).order_by('starttime')

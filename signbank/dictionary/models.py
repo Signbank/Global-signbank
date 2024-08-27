@@ -622,7 +622,7 @@ class ExampleSentence(models.Model):
     
     def has_video(self):
         """Test to see if the video for this sign is present"""
-        
+
         return self.get_video() not in ['', None]
 
     def add_video(self, user, videofile, recorded):
@@ -4022,8 +4022,13 @@ class AnnotatedSentence(models.Model):
     """An annotated sentence is linked to an annotatedvideo, annotatedgloss, annotatedsentencetranslation(s), and annotatedsentencecontext(s)"""
 
     def get_dataset(self):
-        return self.annotated_glosses.first().gloss.lemma.dataset
-    
+        annotated_glosses = AnnotatedGloss.objects.filter(annotatedsentence=self)
+        if not annotated_glosses:
+            default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+            return default_dataset
+        dataset = annotated_glosses.first().gloss.lemma.dataset
+        return dataset
+
     def has_translations(self):
         if self.annotated_sentence_translations.count() > 0:
             return True
@@ -4176,7 +4181,8 @@ class AnnotatedSentence(models.Model):
         return annotatedVideo
     
     def __str__(self):
-        return " | ".join(self.get_annotatedstc_translations())
+        translations = self.get_annotatedstc_translations()
+        return " | ".join(translations)
 
 class AnnotatedSentenceSource(models.Model):
     """A source to choose for a sentence"""

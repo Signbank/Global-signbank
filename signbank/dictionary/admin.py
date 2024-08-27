@@ -18,6 +18,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import override, gettext_lazy as _
 
+from signbank.video.models import AnnotatedVideo
+
+
 class DatasetAdmin(GuardedModelAdmin):
     model = Dataset
     list_display = ('name', 'is_public', 'signlanguage',)
