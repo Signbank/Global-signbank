@@ -8,6 +8,7 @@
 <tr id = "glossrow_{{annotated_gloss.id}}_{{focus_gloss.id}}" class="gloss_row">
 
 <!--    <td>{{annotated_gloss.id}}</td>-->
+        <td></td>
 
 <!--    <td class="field_hasvideo">{%if focus_gloss.get_image_path %}-->
 <!--    {% url 'dictionary:protected_media' '' as protected_media_url %}-->
@@ -46,7 +47,7 @@
     <td class="field_{{field}}">
 
     {% if field == 'id' %}
-        <div><a href="{{PREFIX_URL}}/dictionary/annotatedsentence/{{value}}">{{value}}</a></div>
+        <div><a href="{{PREFIX_URL}}/dictionary/annotatedsentence/{{value}}">{{value}}</a>.</div>
     {% else %}
         <div>{{value}}</div>
     {% endif %}

@@ -715,7 +715,7 @@ function do_toggle_language(el) {
                     </div>
 
                     <div  class="panel panel-default panel-light">
-                      <div class="panel-heading panel-light" data-toggle="collapse" data-target="#sentence_search">{% trans "Search Annotated Gloss" %}</div>
+                      <div class="panel-heading panel-light" data-toggle="collapse" data-target="#sentence_search">{% trans "Search Annotated Sentence" %}</div>
 
                       <div id='sentence_search' class='collapse-light collapse'>
                       <table class='table table-condensed table-condensed-light'>
@@ -832,7 +832,7 @@ function do_toggle_language(el) {
     {% regroup object_list by gloss as gloss_list %}
     {% for gloss in gloss_list %}
     <tr>
-<!--        <td>{{gloss.grouper}}</td>-->
+        <td>{{gloss.grouper.id}}</td>
     {% for dataset_lang in dataset_languages %}
     {% with gloss.grouper|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
     <td class="annotation_{{dataset_lang.language_code_2char}}">

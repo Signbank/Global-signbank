@@ -2116,7 +2116,10 @@ def map_search_results_to_gloss_list(search_results):
         return [], []
     gloss_ids = []
     for search_result in search_results:
-        gloss_ids.append(search_result['id'])
+        if search_result['href_type'] == 'annotatedsentence':
+            gloss_ids.append(search_result['glossid'])
+        else:
+            gloss_ids.append(search_result['id'])
     return gloss_ids, Gloss.objects.filter(id__in=gloss_ids)
 
 
