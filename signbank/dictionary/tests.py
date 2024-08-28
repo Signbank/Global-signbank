@@ -513,7 +513,7 @@ class ImportExportTests(TestCase):
 
     def test_DatasetListView_ECV_export_permission_change_dataset(self):
 
-        print('Test DatasetListView export_ecv with permission change_permission')
+        print('Test DatasetListView export_ecv with permission change_dataset')
         print('Test Dataset is: ', self.test_dataset.acronym)
 
         location_ecv_files = ECV_FOLDER
