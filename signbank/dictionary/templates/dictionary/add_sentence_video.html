@@ -15,7 +15,7 @@
 {% block content %}
 
 {% get_obj_perms request.user for gloss.lemma.dataset as "dataset_perms" %}
-{% if "change_permission" in dataset_perms %}
+{% if "change_dataset" in dataset_perms %}
 <div class='editform', style="width:500px">
     <fieldset>
         <legend>{% trans "Upload New Example Sentence Video" %}</legend>

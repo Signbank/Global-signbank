@@ -544,7 +544,7 @@ def add_new_morpheme(request):
 def import_csv_create(request):
     user = request.user
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_permission', Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     selected_datasets = get_selected_datasets_for_user(user)
@@ -951,7 +951,7 @@ def import_csv_create(request):
 def import_csv_update(request):
     user = request.user
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_permission', Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     selected_datasets = get_selected_datasets_for_user(user)
@@ -1508,7 +1508,7 @@ def import_csv_update(request):
 def import_csv_lemmas(request):
     user = request.user
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_permission', Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     selected_datasets = get_selected_datasets_for_user(user)
@@ -2296,7 +2296,7 @@ def package(request):
 @put_api_user_in_request
 def info(request):
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_permission', Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(request.user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     # Put the default dataset in first position
@@ -2803,7 +2803,7 @@ def gloss_api_get_sign_name_and_media_info(request):
 def import_csv_create_sentences(request):
     user = request.user
     import guardian
-    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_permission', Dataset)
+    user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
     selected_datasets = get_selected_datasets_for_user(user)

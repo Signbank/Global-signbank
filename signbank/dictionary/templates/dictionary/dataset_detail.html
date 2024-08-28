@@ -57,7 +57,7 @@ textarea:focus {
 
     <div class='pull-right'>
         {% get_obj_perms request.user for dataset as "dataset_perms" %}
-        {% if "change_permission" in dataset_perms %}
+        {% if "change_dataset" in dataset_perms %}
         {% if request.user|has_group:"Dataset_Manager" %}
          <span id='edit_message' style="padding-right: 1.8em;"></span>
          <button id='enable_edit' class='btn btn-default navbar-btn'>{% trans "Edit" %}</button>
@@ -91,7 +91,7 @@ textarea:focus {
                     {% endif %}
                 {% endfor %}
                 {% get_obj_perms request.user for dataset as "dataset_perms" %}
-                {% if "change_permission" in dataset_perms %}
+                {% if "change_dataset" in dataset_perms %}
                 {% if request.user|has_group:"Dataset_Manager" %}
                     <form name='add_owner_form' id='add_owner_form' method='get'>
                         <table class='table table-condensed' style="background: transparent;">

@@ -198,7 +198,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
     </table>
         {% if dataset.get_metadata_path and dataset.uploaded_eafs %}
         {% get_obj_perms request.user for dataset as "dataset_perms" %}
-        {% if "change_permission" in dataset_perms %}
+        {% if "change_dataset" in dataset_perms %}
         {% if not corpus %}
         <form name='create_corpus_form' id='create_corpus_form' method='get'>
             <div class="hidden">
@@ -289,7 +289,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
             <td>
             {% if request.user|has_group:"Dataset_Manager" %}
             {% get_obj_perms request.user for dataset as "dataset_perms" %}
-            {% if "change_permission" in dataset_perms %}
+            {% if "change_dataset" in dataset_perms %}
             <form name='process_speakers_form' id='process_speakers_form' method='get'>
                 <div class="hidden">
                     <input name='dataset_name' class='form-control form-control-light' value='{{dataset.acronym}}' >
@@ -325,7 +325,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                       <dd class="col-sm-2">
                            {% if request.user|has_group:"Dataset_Manager" %}
                            {% get_obj_perms request.user for dataset as "dataset_perms" %}
-                           {% if "change_permission" in dataset_perms %}
+                           {% if "change_dataset" in dataset_perms %}
                            {% csrf_token %}
                            <input type='hidden' name='sourceid' value='{{gloss.pk}}'>
                                     <div class='btn-group' >
@@ -382,7 +382,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                           <dt class="col-sm-6">{% trans "PATH" %}</dt>
                           {% if request.user|has_group:"Dataset_Manager" %}
                           {% get_obj_perms request.user for dataset as "dataset_perms" %}
-                          {% if "change_permission" in dataset_perms %}
+                          {% if "change_dataset" in dataset_perms %}
                           <dt class="col-sm-2">{% trans "DELETE" %}</dt>
                           {% endif %}
                           {% endif %}
@@ -405,7 +405,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
                         <dd class="col-sm-6" >{{path}}</dd>
                            {% if request.user|has_group:"Dataset_Manager" %}
                            {% get_obj_perms request.user for dataset as "dataset_perms" %}
-                           {% if "change_permission" in dataset_perms %}
+                           {% if "change_dataset" in dataset_perms %}
                             <dd class="col-sm-2" id='{{dataset.acronym}}_{{document_identifier}}_{{path}}' value=''
                                 name="{{dataset.acronym}}_{{document_identifier}}_{{path}}">
                                     <input type="checkbox" name="select_document:{{path}}"
@@ -428,7 +428,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
     {% if dataset.get_metadata_path and dataset.uploaded_eafs %}
     {% if request.user|has_group:"Dataset_Manager" %}
     {% get_obj_perms request.user for dataset as "dataset_perms" %}
-    {% if "change_permission" in dataset_perms %}
+    {% if "change_dataset" in dataset_perms %}
     <button id='remove_eafs_btn'
             {% if duplicates %}
             class='btn btn-danger'
@@ -488,7 +488,7 @@ Participant&#9;Region&#9;Age&#9;Gender&#9;Handedness
     {% if dataset.get_metadata_path and dataset.uploaded_eafs %}
     {% if request.user|has_group:"Dataset_Manager" %}
     {% get_obj_perms request.user for dataset as "dataset_perms" %}
-    {% if "change_permission" in dataset_perms %}
+    {% if "change_dataset" in dataset_perms %}
     <button id='refresh_all_btn' class='btn btn-primary' data-toggle='modal' data-target='#refresh_all_modal'>{% trans "Refresh All Documents" %}</button>
 
     <div class="modal fade" id="refresh_all_modal" tabindex="-1" role="dialog" aria-labelledby="#modalRefreshAll" aria-hidden="true">

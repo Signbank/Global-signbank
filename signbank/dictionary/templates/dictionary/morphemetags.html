@@ -14,7 +14,7 @@
                    {% load underscore_to_space %}
                  <span class='tagname'>{{tag.name|underscore_to_space}}</span>
                  {% get_obj_perms request.user for morpheme.dataset as "dataset_perms" %}
-                 {% if "change_permission" in dataset_perms %}
+                 {% if "change_dataset" in dataset_perms %}
                  <span class='tagcount'>
                      <a class='tagdelete editform'
                         id='{{tag.name}}'
@@ -28,7 +28,7 @@
           </ul>
       {% endif %}
       {% get_obj_perms request.user for morpheme.dataset as "dataset_perms" %}
-      {% if "change_permission" in dataset_perms %}
+      {% if "change_dataset" in dataset_perms %}
       <div id="tagcontainer"></div>
       <div class='editform'>
           <form id='tagaddform' 

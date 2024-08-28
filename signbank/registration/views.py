@@ -345,11 +345,11 @@ def user_profile(request):
     view_permit_datasets = []
     for dataset in Dataset.objects.all():
         permissions_for_dataset = get_user_perms(request.user, dataset)
-        if 'view_permission' in permissions_for_dataset:
+        if 'view_dataset' in permissions_for_dataset:
             view_permit_datasets.append(dataset)
     change_permit_datasets = []
     for dataset_user_can_view in view_permit_datasets:
-        if 'change_permission' in get_user_perms(request.user, dataset_user_can_view):
+        if 'change_dataset' in get_user_perms(request.user, dataset_user_can_view):
             change_permit_datasets.append(dataset_user_can_view)
     user_has_queries = SearchHistory.objects.filter(user=request.user).count()
     user_can_change_glosses = len(change_permit_datasets) > 0

@@ -13,7 +13,7 @@
                <div class='aff tagAFF' style="background:{{aff.field_color}};border-color:{{aff.field_color}};">
                  <span class='affname'>{{aff.acronym}}</span>
                 {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
-                {% if "change_permission" in dataset_perms %}
+                {% if "change_dataset" in dataset_perms %}
                  <span class='affcount'>
                      <a class='affdelete editform'
                         id='{{aff.id}}' value='{{aff.id}}' name='{{aff.acronym}}'
@@ -28,7 +28,7 @@
       {% endif %}
       {% endwith %}
     {% get_obj_perms request.user for gloss.dataset as "dataset_perms" %}
-    {% if "change_permission" in dataset_perms %}
+    {% if "change_dataset" in dataset_perms %}
       <div id="affcontainer"></div>
       <div class='editform'>
           <form id='affaddform'

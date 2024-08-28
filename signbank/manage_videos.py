@@ -72,7 +72,7 @@ def upload_zipped_videos_folder(request):
 
     # make sure the user can write to this dataset
     from guardian.shortcuts import get_objects_for_user
-    user_change_datasets = get_objects_for_user(request.user, 'change_permission', Dataset,
+    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset,
                                                 accept_global_perms=False)
     if not user_change_datasets or dataset not in user_change_datasets:
         messages.add_message(request, messages.ERROR, _('No change dataset permission.'))
@@ -258,7 +258,7 @@ def import_video_to_gloss_json(request):
 
     # make sure the user can write to this dataset
     from guardian.shortcuts import get_objects_for_user
-    user_change_datasets = get_objects_for_user(request.user, 'change_permission', Dataset,
+    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset,
                                                 accept_global_perms=False)
     if not user_change_datasets or dataset not in user_change_datasets:
         return JsonResponse({})

@@ -107,7 +107,7 @@ tr > td > form > input[type="submit"] {
       {% for dataset in object_list %}
       {% if request.user|has_group:"Dataset_Manager" %}
       {% get_obj_perms request.user for dataset as "dataset_perms" %}
-      {% if "change_permission" in dataset_perms %}
+      {% if "change_dataset" in dataset_perms %}
         <tr style="z-index:0;">
             <td>
                 <table class="table table-condensed">

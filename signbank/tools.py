@@ -1722,7 +1722,7 @@ def get_users_without_dataset():
     users_with_no_dataset = []
 
     for user in User.objects.all():
-        if user.is_active and len(get_objects_for_user(user, ['view_permission'], Dataset, any_perm=True)) == 0:
+        if user.is_active and len(get_objects_for_user(user, ['view_dataset'], Dataset, any_perm=True)) == 0:
             users_with_no_dataset.append(user)
 
     return users_with_no_dataset

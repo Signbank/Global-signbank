@@ -414,7 +414,7 @@ class GlossListView(ListView):
         # make sure the user can write to this dataset
         import guardian
         # from guardian.shortcuts import get_objects_for_user
-        user_change_datasets = guardian.shortcuts.get_objects_for_user(self.request.user, 'change_permission', Dataset)
+        user_change_datasets = guardian.shortcuts.get_objects_for_user(self.request.user, 'change_dataset', Dataset)
         if not user_change_datasets or dataset_object not in user_change_datasets:
             messages.add_message(self.request, messages.ERROR, _('No permission to export dataset.'))
             return HttpResponseRedirect(settings.PREFIX_URL + '/signs/search/')
@@ -851,7 +851,7 @@ class GlossDetailView(DetailView):
                 return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_permission',
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset',
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
@@ -1292,7 +1292,7 @@ class GlossDetailView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated:
-                qs = get_objects_for_user(user, 'view_permission', Dataset, accept_global_perms=True, any_perm=True)
+                qs = get_objects_for_user(user, 'view_dataset', Dataset, accept_global_perms=True, any_perm=True)
                 dataset_choices = {}
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
@@ -1477,7 +1477,7 @@ class GlossVideosView(DetailView):
                 return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_permission',
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset',
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
@@ -1586,7 +1586,7 @@ class GlossRelationsDetailView(DetailView):
                 return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_permission',
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset',
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
@@ -2916,7 +2916,7 @@ class GlossFrequencyView(DetailView):
                 return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_permission',
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset',
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
@@ -2982,7 +2982,7 @@ class GlossFrequencyView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated:
-                qs = get_objects_for_user(user, 'view_permission',
+                qs = get_objects_for_user(user, 'view_dataset',
                                           Dataset, accept_global_perms=True, any_perm=True)
                 dataset_choices = {}
                 for dataset in qs:
@@ -3128,7 +3128,7 @@ class LemmaFrequencyView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated:
-                qs = get_objects_for_user(user, 'view_permission',
+                qs = get_objects_for_user(user, 'view_dataset',
                                           Dataset, accept_global_perms=True, any_perm=True)
                 dataset_choices = {}
                 for dataset in qs:
@@ -3553,7 +3553,7 @@ class DatasetListView(ListView):
 
         # make sure the user can write to this dataset
         from guardian.shortcuts import get_objects_for_user, assign_perm
-        user_view_datasets = get_objects_for_user(self.request.user, 'view_permission',
+        user_view_datasets = get_objects_for_user(self.request.user, 'view_dataset',
                                                   Dataset, accept_global_perms=True, any_perm=True)
         may_request_dataset = True
         if dataset_object.is_public and not dataset_object in user_view_datasets:
@@ -4036,8 +4036,8 @@ class DatasetManagerView(ListView):
                 else:
                     # can remove permission
                     try:
-                        remove_perm('change_permission', user_object, dataset_object)
-                        other_datasets_user_can_change = get_objects_for_user(user_object, 'change_permission', Dataset,
+                        remove_perm('change_dataset', user_object, dataset_object)
+                        other_datasets_user_can_change = get_objects_for_user(user_object, 'change_dataset', Dataset,
                                                                             accept_global_perms=True)
                         if len(other_datasets_user_can_change) == 0:
                             # this was the only dataset the user could change
@@ -4180,7 +4180,7 @@ class DatasetManagerView(ListView):
             checker.prefetch_perms(qs)
 
             for dataset in qs:
-                checker.has_perm('change_permission', dataset)
+                checker.has_perm('change_dataset', dataset)
 
             return qs
         else:
@@ -4385,7 +4385,7 @@ class DatasetFieldChoiceView(ListView):
         selected_datasets = get_selected_datasets_for_user(self.request.user)
 
         managed_datasets = []
-        change_dataset_permission = get_objects_for_user(self.request.user, 'change_permission', Dataset)
+        change_dataset_permission = get_objects_for_user(self.request.user, 'change_dataset', Dataset)
         for dataset in selected_datasets:
             if dataset in change_dataset_permission:
                 dataset_excluded_choices = dataset.exclude_choices.all()
@@ -4510,7 +4510,7 @@ class DatasetFieldChoiceView(ListView):
             checker.prefetch_perms(qs)
 
             for dataset in qs:
-                checker.has_perm('change_permission', dataset)
+                checker.has_perm('change_dataset', dataset)
 
             return qs
         else:
@@ -4612,7 +4612,7 @@ class DatasetFrequencyView(DetailView):
             return HttpResponseRedirect(reverse('registration:login'))
 
         dataset = self.object
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_permission',
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset',
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset not in datasets_user_can_view:
@@ -4761,7 +4761,7 @@ class DatasetFrequencyView(DetailView):
 
         # make sure the user can write to this dataset
         # from guardian.shortcuts import get_objects_for_user
-        user_change_datasets = get_objects_for_user(self.request.user, 'change_permission', Dataset, accept_global_perms=False)
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
         if not user_change_datasets.exists() or dataset_object not in user_change_datasets:
             messages.add_message(self.request, messages.ERROR, _('No permission to import speakers for this dataset.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
@@ -4800,7 +4800,7 @@ class DatasetFrequencyView(DetailView):
 
         # make sure the user can write to this dataset
         # from guardian.shortcuts import get_objects_for_user
-        user_change_datasets = get_objects_for_user(self.request.user, 'change_permission', Dataset, accept_global_perms=False)
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
         if not user_change_datasets.exists() or dataset_object not in user_change_datasets:
             messages.add_message(self.request, messages.ERROR, _('No permission to create a corpus for this dataset.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
@@ -4840,7 +4840,7 @@ class DatasetFrequencyView(DetailView):
 
         # make sure the user can write to this dataset
         # from guardian.shortcuts import get_objects_for_user
-        user_change_datasets = get_objects_for_user(self.request.user, 'change_permission', Dataset, accept_global_perms=False)
+        user_change_datasets = get_objects_for_user(self.request.user, 'change_dataset', Dataset, accept_global_perms=False)
         if not user_change_datasets.exists() or dataset_object not in user_change_datasets:
             messages.add_message(self.request, messages.ERROR, _('No permission to update the corpus for this dataset.'))
             return HttpResponseRedirect(reverse('admin_dataset_view'))
@@ -4953,7 +4953,7 @@ class MorphemeDetailView(DetailView):
                 return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_morpheme = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_permission',
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset',
                                                       Dataset, accept_global_perms=False, any_perm=True)
 
         if dataset_of_requested_morpheme not in selected_datasets:
@@ -5198,7 +5198,7 @@ class MorphemeDetailView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated:
-                qs = get_objects_for_user(user, 'view_permission',
+                qs = get_objects_for_user(user, 'view_dataset',
                                           Dataset, accept_global_perms=False, any_perm=True)
                 dataset_choices = dict()
                 for dataset in qs:
@@ -6352,7 +6352,7 @@ class LemmaUpdateView(UpdateView):
             return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_lemma = self.object.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, 'view_permission',
+        datasets_user_can_view = get_objects_for_user(request.user, 'view_dataset',
                                                       Dataset, accept_global_perms=False, any_perm=True)
 
         if dataset_of_requested_lemma not in selected_datasets:
