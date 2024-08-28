@@ -7,38 +7,38 @@
 
 <tr id = "glossrow_{{annotated_gloss.id}}_{{focus_gloss.id}}" class="gloss_row">
 
-    <td>{{annotated_gloss.id}}</td>
+<!--    <td>{{annotated_gloss.id}}</td>-->
 
-    <td class="field_hasvideo">{%if focus_gloss.get_image_path %}
-    {% url 'dictionary:protected_media' '' as protected_media_url %}
+<!--    <td class="field_hasvideo">{%if focus_gloss.get_image_path %}-->
+<!--    {% url 'dictionary:protected_media' '' as protected_media_url %}-->
 
-      <div class="thumbnail_container">
-      <a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.id}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">
+<!--      <div class="thumbnail_container">-->
+<!--      <a href="{{PREFIX_URL}}/dictionary/gloss/{{focus_gloss.id}}{% if user.is_anonymous %}.html{% else %}/{% endif %}">-->
 
-        <div id='glossvideo_{{annotated_gloss.id}}_{{focus_gloss.id}}'>
-            <img class="thumbnail" src="{{protected_media_url}}{{focus_gloss.get_image_url}}">
+<!--        <div id='glossvideo_{{annotated_gloss.id}}_{{focus_gloss.id}}'>-->
+<!--            <img class="thumbnail" src="{{protected_media_url}}{{focus_gloss.get_image_url}}">-->
 
-            {% if focus_gloss.has_video %}
-            <video id="videoplayer" class="thumbnail-video"
-                   src="{{protected_media_url}}{{focus_gloss.get_video_url}}"
-                   type="video/mp4" muted="muted" style="display:none;"></video>
-            {% endif %}
-        </div>
+<!--            {% if focus_gloss.has_video %}-->
+<!--            <video id="videoplayer" class="thumbnail-video"-->
+<!--                   src="{{protected_media_url}}{{focus_gloss.get_video_url}}"-->
+<!--                   type="video/mp4" muted="muted" style="display:none;"></video>-->
+<!--            {% endif %}-->
+<!--        </div>-->
 
-      </a>
-      </div>
-      {% endif %}
-    </td>
+<!--      </a>-->
+<!--      </div>-->
+<!--      {% endif %}-->
+<!--    </td>-->
 
 
     {% for dataset_lang in dataset_languages %}
-    {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+<!--    {% with focus_gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}-->
     <td class="annotation_{{dataset_lang.language_code_2char}}">
-      {% if annotationidglosstranslation %}
-        <div>{{annotationidglosstranslation}}</div>
-      {% endif %}
+<!--      {% if annotationidglosstranslation %}-->
+<!--        <div>{{annotationidglosstranslation}}</div>-->
+<!--      {% endif %}-->
     </td>
-    {% endwith %}
+<!--    {% endwith %}-->
     {% endfor %}
 
 

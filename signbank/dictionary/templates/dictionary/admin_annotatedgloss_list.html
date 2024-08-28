@@ -829,10 +829,31 @@ function do_toggle_language(el) {
     <tr id='glosslist_table_header_dummy'></tr>
     </thead>
     <tbody class="tbody tbody-light">
-    {% for annotatedgloss in object_list %}
-    <tr id="focusgloss_{{annotatedgloss.id}}">
+    {% regroup object_list by gloss as gloss_list %}
+    {% for gloss in gloss_list %}
+    <tr>
+<!--        <td>{{gloss.grouper}}</td>-->
+    {% for dataset_lang in dataset_languages %}
+    {% with gloss.grouper|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+    <td class="annotation_{{dataset_lang.language_code_2char}}">
+      {% if annotationidglosstranslation %}
+        <div>{{annotationidglosstranslation}}</div>
+      {% endif %}
+    </td>
+    {% endwith %}
+    {% endfor %}
+    </tr>
+    {% for sentence in gloss.list %}
+<!--    <tr><td></td><td>{{sentence.annotatedsentence}}</td></tr>-->
+        <tr id="focusgloss_{{sentence.id}}">
         </tr>
     {% endfor %}
+    {% endfor %}
+
+<!--    {% for annotatedgloss in object_list %}-->
+<!--    <tr id="focusgloss_{{annotatedgloss.id}}">-->
+<!--        </tr>-->
+<!--    {% endfor %}-->
     </tbody>
 </table>
 </div>

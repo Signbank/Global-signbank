@@ -7150,7 +7150,17 @@ class AnnotatedGlossListView(ListView):
         if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        # Return the resulting filtered (not sorted) queryset
+        # Allow the queryset to be grouped without duplicates
+        by_glossid = qs.order_by('gloss__id', 'annotatedsentence__id')
+        values_of_qs = qs.values('id', 'gloss__id', 'annotatedsentence__id')
+        by_glossids = [(ag['id'], ag['gloss__id'], ag['annotatedsentence__id']) for ag in values_of_qs]
+        list_annotatedglossids = []
+        list_of_gloss_sentence = []
+        for id, glossid, sentenceid in by_glossids:
+            if (glossid, sentenceid) not in list_of_gloss_sentence:
+                list_of_gloss_sentence.append((glossid, sentenceid))
+                list_annotatedglossids.append(id)
+        qs = qs.filter(id__in=list_annotatedglossids).order_by('gloss__id', 'annotatedsentence__id')
         return qs
 
 
