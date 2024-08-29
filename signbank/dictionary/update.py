@@ -1950,7 +1950,7 @@ def edit_annotated_sentence(request, glossid, annotatedsentenceid):
     
     if AnnotatedSentence.objects.filter(id=annotatedsentenceid).count() == 1:
         annotated_sentence = AnnotatedSentence.objects.get(id=annotatedsentenceid)
-        if annotated_sentence.annotatedvideo.source:
+        if annotated_sentence.get_video_path() and annotated_sentence.annotatedvideo.source:
             annotated_sentence_sources = annotated_sentence_sources.exclude(id=annotated_sentence.annotatedvideo.source.id)
         annotated_translations = annotated_sentence.get_annotatedstc_translations_dict_with()
         annotated_contexts = annotated_sentence.get_annotatedstc_contexts_dict_with()

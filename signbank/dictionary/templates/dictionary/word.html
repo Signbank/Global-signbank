@@ -49,9 +49,11 @@
     $('#searchresults').css({'top': Math.round($('#signbank-bar').height())});
     $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height())});
 
+    var search_type = '{{search_type}}';
+    var model_view = 'gloss';
+    var active_id = '{{active_id}}';
 	var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
-    var search_type = 'sign';
-    {% include "dictionary/search_result_bar.html" %}		
+    {% include "dictionary/search_result_bar.html" %}
 	
 </script>
 {% endblock %}

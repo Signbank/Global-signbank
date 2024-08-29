@@ -901,7 +901,7 @@ class GlossDetailView(DetailView):
         # Call the base implementation first to get a context
         context = super(GlossDetailView, self).get_context_data(**kwargs)
 
-        context['search_type'] = 'sign'
+        context['search_type'] = self.request.session['search_type']
 
         if 'dark_mode' in self.request.session.keys():
             dark_mode_session = self.request.session['dark_mode']
@@ -1519,7 +1519,7 @@ class GlossVideosView(DetailView):
         # Call the base implementation first to get a context
         context = super(GlossVideosView, self).get_context_data(**kwargs)
 
-        context['search_type'] = 'sign'
+        context['search_type'] = self.request.session['search_type']
 
         # Pass info about which fields we want to see
         gl = context['gloss']
@@ -1617,8 +1617,18 @@ class GlossRelationsDetailView(DetailView):
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
 
+        if 'search_type' in self.request.session.keys():
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
+                                                           'sign_or_morpheme', 'sign_handshape']:
+                # search_type is 'handshape'
+                self.request.session['search_results'] = []
+        else:
+            self.request.session['search_type'] = 'sign'
+
         # Call the base implementation first to get a context
         context = super(GlossRelationsDetailView, self).get_context_data(**kwargs)
+
+        context['search_type'] = self.request.session['search_type']
 
         context['language'] = interface_language
 
@@ -2970,6 +2980,8 @@ class GlossFrequencyView(DetailView):
         # Pass info about which fields we want to see
         gl = context['gloss']
         context['active_id'] = gl.id
+        context['search_type'] = self.request.session['search_type']
+
         labels = gl.field_labels()
 
         # set a session variable to be able to pass the gloss's id to the ajax_complete method
@@ -7028,7 +7040,7 @@ class AnnotatedGlossListView(ListView):
 
     model = AnnotatedGloss
     paginate_by = 50
-    search_type = 'sign'
+    search_type = 'annotatedsentence'
     view_type = 'gloss_list'
     web_search = False
     dataset_name = settings.DEFAULT_DATASET_ACRONYM
@@ -7094,8 +7106,6 @@ class AnnotatedGlossListView(ListView):
     def get_queryset(self):
         get = self.request.GET
 
-        self.search_type = self.request.GET.get('search_type', 'sign')
-        setattr(self.request.session, 'search_type', self.search_type)
         self.view_type = self.request.GET.get('view_type', 'gloss_list')
         setattr(self.request, 'view_type', self.view_type)
         self.web_search = get_web_search(self.request)
@@ -7133,8 +7143,7 @@ class AnnotatedGlossListView(ListView):
         query_parameters = query_parameters_from_get(self.search_form, get, query_parameters)
         qs = apply_video_filters_to_results('AnnotatedGloss', qs, query_parameters)
 
-        if self.search_type != 'sign':
-            query_parameters['search_type'] = self.search_type
+        query_parameters['search_type'] = self.search_type
 
         qs = queryset_sentences_from_get(self.sentence_search_form, get, qs)
         query_parameters = query_parameters_from_get(self.sentence_search_form, get, query_parameters)

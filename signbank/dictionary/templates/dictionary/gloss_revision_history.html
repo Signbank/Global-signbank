@@ -12,7 +12,9 @@
 
 {% block extrajs %}
     <script type='text/javascript'>
-    var search_type = 'sign';
+    var search_type = '{{search_type}}';
+    var model_view = 'gloss';
+    var active_id = '{{active_id}}';
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
     {% include "dictionary/search_result_bar.html" %}	

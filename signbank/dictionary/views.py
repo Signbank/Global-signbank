@@ -79,16 +79,14 @@ def gloss(request, glossid):
         if request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'annotatedsentence']:
             # if the results have the wrong type
             request.session['search_results'] = []
+
     if 'search_type' in request.session.keys():
-        # check that the search type matches the results
-        # the session variables are used by the ajax call
         if request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
                                                   'sign_or_morpheme', 'sign_handshape']:
-            # search type is not correct, see if the results were not erased in the last step
-            if request.session['search_results']:
-                # this was not set to None in the previous step, results have the right type
-                # search type is set to handshape but there are glosses in the search results
-                request.session['search_type'] = 'sign_or_morpheme'
+            # search_type is 'handshape'
+            request.session['search_results'] = []
+    else:
+        request.session['search_type'] = 'sign'
 
     selected_datasets = get_selected_datasets_for_user(request.user)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
@@ -109,6 +107,7 @@ def gloss(request, glossid):
                               'translations_per_language': {},
                               'gloss': gloss,
                               'active_id': glossid,  # used by search_result_bar.html
+                              'search_type': request.session['search_type'],
                               'annotation_idgloss': {},
                               'dataset_languages': dataset_languages,
                               'selected_datasets': selected_datasets,
@@ -161,6 +160,7 @@ def gloss(request, glossid):
                                'translations_per_language': {},
                                'gloss': gloss,
                                'active_id': glossid,  # used by search_result_bar.html
+                               'search_type': request.session['search_type'],
                                'annotation_idgloss': annotation_idgloss,
                                'dataset_languages': dataset_languages,
                                'selected_datasets': selected_datasets,
@@ -184,6 +184,14 @@ def morpheme(request, glossid):
     except ObjectDoesNotExist:
         raise Http404
 
+    if 'search_type' in request.session.keys():
+        if request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
+                                                  'sign_or_morpheme', 'sign_handshape']:
+            # search_type is 'handshape'
+            request.session['search_results'] = []
+    else:
+        request.session['search_type'] = 'morpheme'
+
     if not(request.user.has_perm('dictionary.search_gloss') or morpheme.inWeb):
         feedbackmessage = _('You are not allowed to see this morpheme.')
 
@@ -196,6 +204,7 @@ def morpheme(request, glossid):
                               'translations_per_language': {},
                               'gloss': morpheme,
                               'active_id': glossid,  # used by search_result_bar.html
+                              'search_type': request.session['search_type'],
                               'annotation_idgloss': {},
                               'dataset_languages': dataset_languages,
                               'selected_datasets': selected_datasets,
@@ -250,6 +259,7 @@ def morpheme(request, glossid):
                                'gloss': morpheme,
                                'annotation_idgloss': annotation_idgloss,
                                'active_id': glossid,  # used by search_result_bar.html
+                               'search_type': request.session['search_type'],
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 
@@ -2670,11 +2680,20 @@ def gloss_revision_history(request,gloss_pk):
             'new_value': check_value_to_translated_human_value(revision.field_name, revision.new_value) }
         revisions.append(revision_dict)
 
+    if 'search_type' in request.session.keys():
+        if request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
+                                                  'sign_or_morpheme', 'sign_handshape']:
+            # search_type is 'handshape'
+            request.session['search_results'] = []
+    else:
+        request.session['search_type'] = 'sign'
+
     return render(request, 'dictionary/gloss_revision_history.html',
                   {'gloss': gloss, 'revisions':revisions,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'active_id': gloss_pk,
+                   'search_type': request.session['search_type'],
                    'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface,
                    'SHOW_QUERY_PARAMETERS_AS_BUTTON': show_query_parameters_as_button

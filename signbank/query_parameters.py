@@ -504,7 +504,8 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         'morpheme': _("Search Morpheme"),
         'sign_handshape': _("Search Sign by Handshape"),
         'handshape': _("Search Handshape"),
-        'lemma': _("Search Lemma")
+        'lemma': _("Search Lemma"),
+        'annotatedsentence': _("Annotated Sentence")
     }
     query_dict = dict()
     for key in query_parameters:
