@@ -3,7 +3,7 @@ window.onload = function() {
 
   // the following lines will be replaced by docker/configurator, when it runs in a docker-container
   window.ui = SwaggerUIBundle({
-    url: "https://cls.ru.nl/staff/wstoop/signbank-api.json",
+    url: "https://signbank.github.io/Global-signbank/signbank-api.json",
     dom_id: '#swagger-ui',
     deepLinking: true,
     presets: [
