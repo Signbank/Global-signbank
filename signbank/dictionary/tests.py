@@ -274,7 +274,7 @@ class BasicCRUDTests(TestCase):
         # Search
         search_value_handedness = str(self.handedness_fieldchoice_1.machine_value)
 
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
         response = client.get('/signs/search/',{'handedness[]': search_value_handedness})
         self.assertEqual(len(response.context['object_list']), 2)
 
@@ -292,8 +292,8 @@ class BasicCRUDTests(TestCase):
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.search_gloss', self.user)
         assign_perm('dictionary.add_gloss', self.user)
         assign_perm('dictionary.change_gloss', self.user)
@@ -376,8 +376,8 @@ class BasicQueryTests(TestCase):
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
 
@@ -1138,7 +1138,7 @@ class FrontEndTests(TestCase):
                             .format(self.hidden_gloss.pk))
 
         #With permissions you also see something
-        assign_perm('dictionary.view_dataset', self.user, self.test_dataset)
+        assign_perm('view_dataset', self.user, self.test_dataset)
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         self.assertNotEqual(len(response.content),0)
 
@@ -1148,7 +1148,7 @@ class FrontEndTests(TestCase):
         self.client = Client()
         self.client.login(username='test-user', password='test-user')
 
-        assign_perm('dictionary.view_dataset', self.user, self.test_dataset)
+        assign_perm('view_dataset', self.user, self.test_dataset)
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
 
         invalid_patterns = ['= ;','= var']
@@ -1491,7 +1491,7 @@ class LemmaTests(TestCase):
 
         # Give the test user permission to change a dataset
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
         self.user.save()
 
         # search for the lemma without glosses: test_lemma_without_gloss
@@ -1617,8 +1617,8 @@ class HandshapeTests(TestCase):
         # set the test dataset
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
 
         self.client.login(username='test-user', password='test-user')
 
@@ -1641,8 +1641,8 @@ class HandshapeTests(TestCase):
         # set the test dataset
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
 
         # Create 10 lemmas for use in testing
         language = Language.objects.get(id=get_default_language_id())
@@ -1809,7 +1809,7 @@ class MultipleSelectTests(TestCase):
         #Create a client and log in
         client = Client(enforce_csrf_checks=False)
         client.login(username='test-user', password='test-user')
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
 
         # Create a lemma
         new_lemma = LemmaIdgloss(dataset=test_dataset)
@@ -2551,7 +2551,7 @@ class testFrequencyAnalysis(TestCase):
 
         self.client.login(username='test-user', password='test-user')
 
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
 
         response = self.client.get('/analysis/frequencies/', follow=True)
         self.assertEqual(response.status_code,200)
@@ -3429,7 +3429,7 @@ class MinimalPairsTests(TestCase):
 
         self.client.login(username='test-user', password='test-user')
 
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
         response = self.client.get('/analysis/minimalpairs/', {'paginate_by':20}, follow=True)
 
         objects_on_page = response.__dict__['context_data']['objects_on_page']
@@ -3544,7 +3544,7 @@ class MinimalPairsTests(TestCase):
 
         self.client.login(username='test-user', password='test-user')
 
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
         response = self.client.get('/analysis/minimalpairs/', {'paginate_by':20}, follow=True)
 
         objects_on_page = response.__dict__['context_data']['objects_on_page']
@@ -3744,7 +3744,7 @@ class SensesCRUDTests(TestCase):
         assign_perm('dictionary.change_dataset', self.user, test_dataset)
         assign_perm('dictionary.add_gloss', self.user)
         assign_perm('dictionary.change_gloss', self.user)
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
 
@@ -3915,7 +3915,7 @@ class SensesCRUDTests(TestCase):
         assign_perm('dictionary.change_gloss', self.user)
         assign_perm('dictionary.add_sense', self.user)
 
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
 
@@ -4018,7 +4018,7 @@ class SensesCRUDTests(TestCase):
         assign_perm('dictionary.change_gloss', self.user)
         assign_perm('dictionary.add_sense', self.user)
 
-        assign_perm('dictionary.view_dataset', self.user, test_dataset)
+        assign_perm('view_dataset', self.user, test_dataset)
         assign_perm('dictionary.search_gloss', self.user)
         self.user.save()
 

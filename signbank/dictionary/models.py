@@ -3104,11 +3104,6 @@ class Dataset(models.Model):
 
     exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
 
-    class Meta:
-        permissions = (
-            ('can_view_dataset', _('View dataset')),
-        )
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

@@ -137,7 +137,7 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                     if dataset_obj.is_public:
 
                         # Give user access to view the database
-                        assign_perm('dictionary.view_dataset', new_user, dataset_obj)
+                        assign_perm('view_dataset', new_user, dataset_obj)
 
                         for owner in owners_of_dataset:
 
@@ -314,7 +314,8 @@ def users_without_dataset(request):
                 continue
 
             user = User.objects.get(pk=int(user.split('_')[-1]))
-            assign_perm('dictionary.view_dataset', user, main_dataset)
+
+            assign_perm('view_dataset', user, main_dataset)
 
             users_with_access.append(user.first_name + ' ' + user.last_name)
 
