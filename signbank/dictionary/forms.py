@@ -1501,7 +1501,7 @@ class AnnotatedGlossForm(forms.ModelForm):
 
     isRepresentative = forms.ChoiceField(label=_('Is Representative'), choices=[('0', '-')],
                                          widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
-    sentenceContains = forms.CharField(label=_('Sentence Contains'),
+    annotatedSentenceContains = forms.CharField(label=_('Annotated Sentence Contains'),
                                        widget=forms.TextInput(attrs=ATTRS_FOR_FORMS), required=False)
 
     class Meta:

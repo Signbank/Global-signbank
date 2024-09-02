@@ -82,13 +82,15 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
     return query_parameters
 
 
-def apply_language_filters_to_results(qs, query_parameters):
+def apply_language_filters_to_results(model, qs, query_parameters):
     # Evaluate all gloss/language search fields
     # this needs to be done explicitly so the respective filters are applied in sequence
     # [identified during testing:] if the filters are mapped to Q expressions they end up filtering too many results away
     # in the case that more than one field has been filled in
     # Here the expressions and order matches that of get_queryset
     # the function convert_query_parameters_to_filter (below) creates the Q expression for filtering
+    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
+
     gloss_search_field_prefix = "glosssearch_"
     len_gloss_search_field_prefix = len(gloss_search_field_prefix)
     keyword_search_field_prefix = "keyword_"
@@ -101,21 +103,24 @@ def apply_language_filters_to_results(qs, query_parameters):
         if get_key.startswith(gloss_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_gloss_search_field_prefix:]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
-            query_filter_annotation_text = 'annotationidglosstranslation__text__' + text_filter
+            query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__' + text_filter
+            query_filter_annotation_language = gloss_prefix + 'annotationidglosstranslation__language'
             qs = qs.filter(**{query_filter_annotation_text: get_value,
-                              'annotationidglosstranslation__language': language})
+                              query_filter_annotation_language: language})
         elif get_key.startswith(lemma_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_lemma_search_field_prefix:]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
-            query_filter_lemma_text = 'lemma__lemmaidglosstranslation__text__' + text_filter
+            query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__' + text_filter
+            query_filter_lemma_language = gloss_prefix + 'lemma__lemmaidglosstranslation__language'
             qs = qs.filter(**{query_filter_lemma_text: get_value,
-                              'lemma__lemmaidglosstranslation__language': language})
+                              query_filter_lemma_language: language})
         elif get_key.startswith(keyword_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_keyword_search_field_prefix:]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
-            query_filter_sense_text = 'translation__translation__text__' + text_filter
+            query_filter_sense_text = gloss_prefix + 'translation__translation__text__' + text_filter
+            query_filter_sense_language = gloss_prefix + 'translation__language'
             qs = qs.filter(**{query_filter_sense_text: get_value,
-                              'translation__language': language})
+                              query_filter_sense_language: language})
     return qs
 
 
@@ -184,7 +189,7 @@ def convert_query_parameters_to_filter(query_parameters):
 
     query_list = []
     for get_key, get_value in query_parameters.items():
-        if get_key == 'search_type':
+        if get_key in ['search_type', 'isRepresentative', 'annotatedSentenceContains']:
             continue
         elif get_key.startswith(glosssearch) or get_key.startswith(lemmasearch) \
                 or get_key.startswith(keywordsearch):
@@ -413,6 +418,43 @@ def convert_query_parameters_to_filter(query_parameters):
         query = list_to_query(query_list)
     return query
 
+
+def convert_query_parameters_to_annotatedgloss_filter(query_parameters):
+    # this function maps the query parameters to a giant Q expression
+
+    query_list = []
+    for get_key, get_value in query_parameters.items():
+        print(get_key, get_value)
+        if get_key in ['isRepresentative'] and get_value:
+            if get_value == 'yes':
+                annotatedglosses = AnnotatedGloss.objects.filter(isRepresentative__exact=True).distinct()
+            else:
+                annotatedglosses = AnnotatedGloss.objects.filter(isRepresentative__exact=False).distinct()
+
+            relevant_glosses = [ag.id for ag in annotatedglosses]
+            query_list.append(Q(id__in=relevant_glosses))
+
+        elif get_key in ['annotatedSentenceContains'] and get_value:
+            sentence_translations_with_this_text = AnnotatedSentenceTranslation.objects.filter(
+                text__icontains=get_value)
+            sentences_with_this_text = [est.annotatedsentence.id for est in sentence_translations_with_this_text]
+            query_list.append(Q(annotatedsentence__id__in=sentences_with_this_text))
+        else:
+            continue
+
+    # make a filter from the list of Q elements
+    # a singleton is treated differently from more than one
+    if not query_list:
+        # query_list is empty, this will return everything since nothing was filtered
+        query = Q()
+    elif len(query_list) == 1:
+        query = query_list[0]
+    else:
+        # length of query_list is greater than 1
+        query = list_to_query(query_list)
+    return query
+
+
 def pretty_print_query_fields(dataset_languages,query_parameters):
     # this function determines what to show when a Query Parameters table is shown
     # some of the fields do not match those in the Gloss Search Form
@@ -456,6 +498,8 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
                 query_dict[key] = gettext("Is Representative")
             elif key == 'sentenceContains':
                 query_dict[key] = gettext("Sentence Contains")
+            elif key == 'annotatedSentenceContains':
+                query_dict[key] = gettext("Annotated Sentence Contains")
             elif key in form_fields:
                 query_dict[key] = GlossSearchForm.get_field(key).label.encode('utf-8').decode()
             else:
@@ -509,7 +553,7 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         'sign_handshape': _("Search Sign by Handshape"),
         'handshape': _("Search Handshape"),
         'lemma': _("Search Lemma"),
-        'annotatedsentence': _("Annotated Sentence")
+        'annotatedsentence': _("Annotated Gloss Sentence")
     }
     query_dict = dict()
     for key in query_parameters:
@@ -614,7 +658,7 @@ def query_parameters_toggle_fields(query_parameters):
     query_fields_focus = []
     query_fields_parameters = []
     for qp_key in query_parameters.keys():
-        if qp_key == 'search_type':
+        if qp_key in ['search_type', 'isRepresentative', 'annotatedSentenceContains']:
             continue
         if qp_key.startswith(GlossSearchForm.gloss_search_field_prefix) or \
                 qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
@@ -657,6 +701,8 @@ def query_parameters_toggle_fields(query_parameters):
             toggle_query_parameter = (query_field, _("Is Representative"))
         elif query_field == 'sentenceContains':
             toggle_query_parameter = (query_field, _("Sentence Contains"))
+        elif query_field == 'annotatedSentenceContains':
+            toggle_query_parameter = (query_field, _("Annotated Sentence Contains"))
         else:
             print('toggle drop through: ', query_field)
             toggle_query_parameter = (query_field, query_field.capitalize())
@@ -1182,7 +1228,7 @@ def queryset_annotatedgloss_from_get(searchform, GET, qs):
                 or get_value in ['', '0']:
             continue
         elif searchform.fields[get_key].widget.input_type in ['text']:
-            if get_key in ['sentenceContains']:
+            if get_key in ['annotatedSentenceContains']:
                 sentence_translations_with_this_text = AnnotatedSentenceTranslation.objects.filter(
                     text__icontains=get_value)
                 sentences_with_this_text = [est.annotatedsentence.id for est in sentence_translations_with_this_text]
