@@ -13,7 +13,7 @@ from signbank.dictionary.models import (Dialect, Gloss, Morpheme, Definition, Re
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter,
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
-                                        SenseTranslation)
+                                        SenseTranslation, AnnotatedGloss)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
@@ -1494,3 +1494,35 @@ class BatchEditForm(forms.Form):
             if self.instance.fields[field_key]:
                 print(self.instance.fields[field_key])
 
+
+class AnnotatedGlossForm(forms.ModelForm):
+
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    isRepresentative = forms.ChoiceField(label=_('Is Representative'), choices=[('0', '-')],
+                                         widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    sentenceContains = forms.CharField(label=_('Sentence Contains'),
+                                       widget=forms.TextInput(attrs=ATTRS_FOR_FORMS), required=False)
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = AnnotatedGloss
+
+        fields = ['isRepresentative']
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls.__dict__['base_fields']
+        return fields
+
+    @classmethod
+    def get_field(cls, fieldname):
+        field = cls.__dict__['base_fields'][fieldname]
+        return field
+
+    def __init__(self, *args, **kwargs):
+        super(AnnotatedGlossForm, self).__init__(*args, **kwargs)
+
+        self.fields['isRepresentative'].choices = [('0', '-'), ('yes', _('Yes')), ('no', _('No'))]

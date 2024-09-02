@@ -452,6 +452,10 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
         elif key not in gloss_fields:
             if key == 'negative':
                 query_dict[key] = gettext("Negative")
+            elif key == 'isRepresentative':
+                query_dict[key] = gettext("Is Representative")
+            elif key == 'sentenceContains':
+                query_dict[key] = gettext("Sentence Contains")
             elif key in form_fields:
                 query_dict[key] = GlossSearchForm.get_field(key).label.encode('utf-8').decode()
             else:
@@ -649,6 +653,10 @@ def query_parameters_toggle_fields(query_parameters):
             toggle_query_parameter = (query_field, _("Sentence Type"))
         elif query_field == 'negative':
             toggle_query_parameter = (query_field, _("Negative"))
+        elif query_field == 'isRepresentative':
+            toggle_query_parameter = (query_field, _("Is Representative"))
+        elif query_field == 'sentenceContains':
+            toggle_query_parameter = (query_field, _("Sentence Contains"))
         else:
             print('toggle drop through: ', query_field)
             toggle_query_parameter = (query_field, query_field.capitalize())
@@ -1152,6 +1160,41 @@ def queryset_sentences_from_get(searchform, GET, qs):
                     qs = qs.filter(sense__exampleSentences__in=sentences_with_negative_type).distinct()
                 else:  # only senses sentences that are not negative
                     qs = qs.filter(sense__exampleSentences__in=sentences_with_other_type).distinct()
+    return qs
+
+
+def queryset_annotatedgloss_from_get(searchform, GET, qs):
+    # this function is used by AnnotatedGlossListView get_queryset
+    """
+    Function used by AnnotatedGlossListView
+    Called from get_queryset
+    :form: AnnotatedGlossForm
+    :view: AnnotatedGlossListView
+    :model: AnnotatedGloss
+    """
+    if not searchform:
+        return qs
+    for get_key, get_value in GET.items():
+        if get_key.endswith('[]'):
+            # no multi-select search fields
+            continue
+        elif get_key not in searchform.fields.keys() \
+                or get_value in ['', '0']:
+            continue
+        elif searchform.fields[get_key].widget.input_type in ['text']:
+            if get_key in ['sentenceContains']:
+                sentence_translations_with_this_text = AnnotatedSentenceTranslation.objects.filter(
+                    text__icontains=get_value)
+                sentences_with_this_text = [est.annotatedsentence.id for est in sentence_translations_with_this_text]
+                qs = qs.filter(annotatedsentence__id__in=sentences_with_this_text).distinct()
+        elif searchform.fields[get_key].widget.input_type in ['select']:
+            if get_key in ['isRepresentative']:
+                sentences_with_negative_type = AnnotatedGloss.objects.filter(isRepresentative__exact=True)
+                sentences_with_other_type = AnnotatedGloss.objects.filter(isRepresentative__exact=False)
+                if get_value == 'yes':  # only annotated glosses that are representative
+                    qs = qs.filter(id__in=sentences_with_negative_type).distinct()
+                else:  # only annotated glosses that are not representative
+                    qs = qs.filter(id__in=sentences_with_other_type).distinct()
     return qs
 
 

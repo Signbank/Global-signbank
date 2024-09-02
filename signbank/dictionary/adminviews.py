@@ -57,7 +57,8 @@ from signbank.query_parameters import (convert_query_parameters_to_filter, prett
                                        set_up_fieldchoice_translations, set_up_language_fields,
                                        set_up_signlanguage_dialects_fields,
                                        queryset_glosssense_from_get, query_parameters_from_get,
-                                       queryset_sentences_from_get, query_parameters_toggle_fields)
+                                       queryset_sentences_from_get, query_parameters_toggle_fields,
+                                       queryset_annotatedgloss_from_get)
 from signbank.search_history import available_query_parameters_in_search_history, languages_in_query, display_parameters, \
     get_query_parameters, save_query_parameters, fieldnames_from_query_parameters
 from signbank.frequency import import_corpus_speakers, configure_corpus_documents_for_dataset, update_corpus_counts, \
@@ -7036,6 +7037,18 @@ class AnnotatedSentenceDetailView(DetailView):
         return context
 
 
+def order_queryset_by_annotaedgloss(qs, sOrder):
+    language_code_2char = sOrder[-2:]
+    sOrderAsc = sOrder
+    if sOrder[0:1] == '-':
+        # A starting '-' sign means: descending order
+        sOrderAsc = sOrder[1:]
+    annotationidglosstranslation = AnnotationIdglossTranslation.objects.filter(gloss=OuterRef('gloss__id')).filter(
+        language__language_code_2char__iexact=language_code_2char).distinct()
+    qs = qs.annotate(**{sOrderAsc: Subquery(annotationidglosstranslation.values('text')[:1])}).order_by(sOrder, 'annotatedsentence__id')
+    return qs
+
+
 class AnnotatedGlossListView(ListView):
 
     model = AnnotatedGloss
@@ -7050,14 +7063,14 @@ class AnnotatedGlossListView(ListView):
     search_form_data = QueryDict(mutable=True)
     template_name = 'dictionary/admin_annotatedgloss_list.html'
     search_form = GlossSearchForm()
-    sentence_search_form = SentenceForm()
+    sentence_search_form = AnnotatedGlossForm()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         fields_with_choices = fields_to_fieldcategory_dict(settings.GLOSS_CHOICE_FIELDS)
         set_up_fieldchoice_translations(self.search_form, fields_with_choices)
-        sentence_fields_with_choices = {'sentenceType': 'SentenceType'}
-        set_up_fieldchoice_translations(self.sentence_search_form, sentence_fields_with_choices)
+        # sentence_fields_with_choices = {'sentenceType': 'SentenceType'}
+        # set_up_fieldchoice_translations(self.sentence_search_form, sentence_fields_with_choices)
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -7069,9 +7082,15 @@ class AnnotatedGlossListView(ListView):
         context = get_context_data_for_list_view(self.request, self, self.kwargs, context)
 
         context = get_context_data_for_gloss_search_form(self.request, self, self.search_form, self.kwargs,
-                                                         context, self.sentence_search_form)
+                                                         context)
 
-        context['annotatedglosscount'] = AnnotatedGloss.objects.filter(gloss__lemma__dataset__in=context['selected_datasets']).count()
+        context['sentenceform'] = self.sentence_search_form
+
+        if not self.last_used_dataset:
+            if 'last_used_dataset' in self.request.session.keys():
+                self.last_used_dataset = self.request.session['last_used_dataset']
+            else:
+                self.last_used_dataset = context['selected_datasets'].first().acronym
 
         context['page_number'] = context['page_obj'].number
 
@@ -7082,6 +7101,7 @@ class AnnotatedGlossListView(ListView):
             dataset_display_languages.append(lang.language_code_2char)
         lang_attr_name = dataset_display_languages[0]
 
+        context['annotatedglosscount'] = len(self.object_list)
         items = construct_scrollbar(self.object_list, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -7119,6 +7139,9 @@ class AnnotatedGlossListView(ListView):
             selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
         dataset_languages = get_dataset_languages(selected_datasets)
 
+        if 'last_used_dataset' in self.request.session.keys():
+            self.last_used_dataset = self.request.session['last_used_dataset']
+
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
 
         if USE_REGULAR_EXPRESSIONS and not valid_regex:
@@ -7145,7 +7168,7 @@ class AnnotatedGlossListView(ListView):
 
         query_parameters['search_type'] = self.search_type
 
-        qs = queryset_sentences_from_get(self.sentence_search_form, get, qs)
+        qs = queryset_annotatedgloss_from_get(self.sentence_search_form, get, qs)
         query_parameters = query_parameters_from_get(self.sentence_search_form, get, query_parameters)
 
         # save the query parameters to a session variable
@@ -7159,6 +7182,21 @@ class AnnotatedGlossListView(ListView):
         if 'last_used_dataset' not in self.request.session.keys():
             self.request.session['last_used_dataset'] = self.last_used_dataset
 
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        last_used_dataset_default_language_lang_attr = Dataset.objects.get(acronym=self.last_used_dataset).default_language.language_code_2char
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = last_used_dataset_default_language_lang_attr
+
+        # sort order matches interface language if available, otherwise the default language for the dataset
+        order_by = 'annotationidglosstranslation_order_' + lang_attr_name
+
         # Allow the queryset to be grouped without duplicates
         by_glossid = qs.order_by('gloss__id', 'annotatedsentence__id')
         values_of_qs = qs.values('id', 'gloss__id', 'annotatedsentence__id')
@@ -7170,6 +7208,7 @@ class AnnotatedGlossListView(ListView):
                 list_of_gloss_sentence.append((glossid, sentenceid))
                 list_annotatedglossids.append(id)
         qs = qs.filter(id__in=list_annotatedglossids).order_by('gloss__id', 'annotatedsentence__id')
+        qs = order_queryset_by_annotaedgloss(qs, order_by)
         return qs
 
 
@@ -7251,8 +7290,10 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
             display_value = str(this.annotatedsentence.id)
         elif fieldname == 'annotatedsentence':
             translations = this.annotatedsentence.annotated_sentence_translations.all()
-            default_translation = translations.filter(language=default_language).first()
-            display_value = default_translation.text if default_translation else ''
+            translation_list = [(translation.language, translation.text) for translation in translations]
+            # default_translation = translations.filter(language=default_language).first()
+            # display_value = default_translation.text if default_translation else ''
+            display_value = translation_list
         elif fieldname == 'isRepresentative':
             display_value = this.isRepresentative
         elif fieldname == 'annotatedvideo':

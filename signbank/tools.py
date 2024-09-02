@@ -2129,7 +2129,7 @@ def get_interface_language_and_default_language_codes(request):
     if request.LANGUAGE_CODE in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
         interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
     else:
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[settings.LANGUAGE_CODE]
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[default_language_code]
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     interface_language_code = interface_language.language_code_2char
 
