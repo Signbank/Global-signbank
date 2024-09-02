@@ -3738,6 +3738,7 @@ class DatasetListView(ListView):
             datasets_with_public_glosses = get_datasets_with_public_glosses()
             viewable_datasets = list(
                 set([ds.id for ds in datasets_with_public_glosses]))
+
             qs = Dataset.objects.filter(id__in=viewable_datasets)
             datasets_to_choose_from = qs.annotate(checked=ExpressionWrapper(Q(id__in=selected_dataset_ids),
                                                                             output_field=BooleanField())).order_by('acronym')
@@ -3918,6 +3919,7 @@ class DatasetManagerView(ListView):
 
         if 'add_view_perm' in self.request.GET:
             manage_identifier += '_manage_view'
+
             if dataset_object in datasets_user_can_view:
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.INFO,
@@ -3985,7 +3987,7 @@ class DatasetManagerView(ListView):
                 manage_identifier += '_manage_view'
                 return HttpResponseRedirect(reverse('admin_dataset_manager') + '?' + manage_identifier)
             try:
-                assign_perm('dictionary.change_dataset', user_object, dataset_object)
+                assign_perm('change_dataset', user_object, dataset_object)
 
                 # put user in Editor group
                 editor_group = Group.objects.get(name='Editor')

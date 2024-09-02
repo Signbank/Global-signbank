@@ -179,7 +179,7 @@ class BasicCRUDTests(TestCase):
         self.assertContains(response, "You are not authorized to change the selected dataset.")
 
         # Give the test user permission to change a dataset
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
         response = client.post('/dictionary/update/gloss/', create_gloss_form_data)
 
         glosses = Gloss.objects.filter(lemma__dataset=test_dataset)
@@ -499,7 +499,7 @@ class ImportExportTests(TestCase):
         print('Test DatasetListView export_ecv with empty dataset')
 
         # Give the test user permission to change a dataset
-        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
         client = Client(enforce_csrf_checks=False, json_encoder=DjangoJSONEncoder)
@@ -523,7 +523,7 @@ class ImportExportTests(TestCase):
             return
 
         # Give the test user permission to change a dataset
-        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
         client = Client(enforce_csrf_checks=False, json_encoder=DjangoJSONEncoder)
@@ -605,7 +605,7 @@ class ImportExportTests(TestCase):
         print('Test Dataset is: ', self.test_dataset.acronym)
 
         # Give the test user permission to change a dataset
-        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
         assign_perm('dictionary.export_csv', self.user)
@@ -631,7 +631,7 @@ class ImportExportTests(TestCase):
         print('Test Dataset is: ', self.test_dataset.acronym)
 
         # Give the test user permission to change a dataset
-        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
         # Create test lemma idgloss
@@ -739,7 +739,7 @@ class ImportExportTests(TestCase):
         print('Test Dataset is: ', self.test_dataset.acronym)
 
         # Give the test user permission to change a dataset
-        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         print('User has permmission to change dataset.')
 
         gloss_id = 1
@@ -830,7 +830,7 @@ class VideoTests(TestCase):
         test_dataset = Dataset.objects.get(name=dataset_name)
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
 
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
         print('User granted permmission to change dataset.')
 
         # Create a lemma
@@ -926,7 +926,7 @@ class VideoTests(TestCase):
         test_dataset = Dataset.objects.get(name=dataset_name)
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
 
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
         print('User granted permmission to change dataset.')
 
         # Create a lemma
@@ -1259,7 +1259,7 @@ class ManageDatasetTests(TestCase):
         logged_in = self.client.login(username=self.user.username, password=self.user_password)
         self.assertTrue(logged_in)
 
-        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
 
         # Grant view permission
         form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
@@ -1337,7 +1337,7 @@ class ManageDatasetTests(TestCase):
         # Make the user member of the group dataset managers
         dataset_manager_group = Group.objects.get(name='Dataset_Manager')
         dataset_manager_group.user_set.add(self.user)
-        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
 
         # Grant view permission
         form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username, 'add_view_perm': 'Grant'}
@@ -1398,7 +1398,7 @@ class ManageDatasetTests(TestCase):
         # Make the user member of the group dataset managers
         dataset_manager_group = Group.objects.get(name='Dataset_Manager')
         dataset_manager_group.user_set.add(self.user)
-        assign_perm('dictionary.change_dataset', self.user, self.test_dataset)
+        assign_perm('change_dataset', self.user, self.test_dataset)
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'The default language of')
         self.assertEqual(response.status_code, 200)
@@ -1519,7 +1519,7 @@ class LemmaTests(TestCase):
         response = client.post('/dictionary/lemma/', {'delete_lemmas': 'delete_lemmas'}, follow=True)
         self.assertContains(response, 'You do not have change permission on the dataset of the lemma you are attempting to delete.')
 
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
         self.user.save()
 
         response = client.post('/dictionary/lemma/?lemma_en=without', {'delete_lemmas': 'delete_lemmas'}, follow=True)
@@ -3741,7 +3741,7 @@ class SensesCRUDTests(TestCase):
         # Get the test dataset
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.add_gloss', self.user)
         assign_perm('dictionary.change_gloss', self.user)
         assign_perm('view_dataset', self.user, test_dataset)
@@ -3910,7 +3910,7 @@ class SensesCRUDTests(TestCase):
         # Get the test dataset
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.add_gloss', self.user)
         assign_perm('dictionary.change_gloss', self.user)
         assign_perm('dictionary.add_sense', self.user)
@@ -4013,7 +4013,7 @@ class SensesCRUDTests(TestCase):
         # Get the test dataset
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-        assign_perm('dictionary.change_dataset', self.user, test_dataset)
+        assign_perm('change_dataset', self.user, test_dataset)
         assign_perm('dictionary.add_gloss', self.user)
         assign_perm('dictionary.change_gloss', self.user)
         assign_perm('dictionary.add_sense', self.user)
