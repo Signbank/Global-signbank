@@ -27,7 +27,11 @@
     color: black !important;
     font-weight: bold;
 }
+.select2-selection__choice {
+    color: black;
+}
 </style>
+<link rel="stylesheet" href="{{STATIC_URL}}css/select2-dark-mode.css">
 
 <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini.js"></script>
 <script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.checkbox.js"></script>
@@ -66,12 +70,17 @@ $(document).ready(function(){
         $('option',target_pulldown).each(function(){
             var this_code = $(this).attr('value');
             var this_color = pulldown_lookup[this_code];
-            $(this).attr('style','background-color:#'+this_color);
+            if (this_color===undefined || this_color=='ffffff') {
+               $(this).attr('style','color:inherit;background-color:inherit;');
+            } else {
+                $(this).attr('style','color:black;background-color:#'+this_color);
+            }
         });
     }
 
     function makeMultipleSelect(fieldId,fieldVar) {
         var target_pulldown = document.getElementById(fieldId);
+        if (!target_pulldown) { return; }
         target_pulldown.setAttribute('multiple','multiple');
         target_pulldown.setAttribute('class',"js-example-basic-multiple form-control");
         target_pulldown.setAttribute('name',fieldVar);
@@ -99,7 +108,11 @@ $(document).ready(function(){
             var pulldown_colors_str = new String(pulldown_colors);
             var pulldown_lookup = JSON.parse(pulldown_colors_str);
             var this_color = pulldown_lookup[this_code];
-            var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;background-color:#"+this_color+"'>"+color_text+"</span>");
+            if (this_color===undefined || this_color=='ffffff') {
+               var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:inherit;background-color:inherit'>"+color_text+"</span>");
+            } else {
+                var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:black;background-color:#"+this_color+"'>"+color_text+"</span>");
+            }
             return $color_text_node
         } else {
             return color_text;
@@ -119,12 +132,18 @@ $(document).ready(function(){
 
      $('.js-example-basic-multiple').val(null).trigger('change');
 
+     function identityOption(optionNode) {
+        var color_text = optionNode.text;
+        var $color_text_node = $("<span style='display:block;padding:0;line-height:30px;color:inherit;background-color:inherit'>"+color_text+"</span>");
+        return $color_text_node
+     }
      makeMultipleSelect('id_tags', 'tags[]');
      $('#id_tags').select2({
         allowClear: true,
         dropdownAutoWidth: true,
         width: 'resolve',
-        placeholder: ''
+        placeholder: '',
+        templateResult: identityOption
      });
      $('#id_tags').val(null).trigger('change');
 
@@ -270,10 +289,11 @@ function do_set_lemma_language(el) {
 {{ form.media.css }}
 {{ form.media.js }}
 
-<form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/morphemes/search'>
+<form name='adminsearch' id='adminsearch' class="search-form search-form-light"
+      method='get' action='{{PREFIX_URL}}/morphemes/search'>
 {% csrf_token %}
-<div class="panel panel-default">
-    <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
+<div class="panel panel-default panel-light">
+    <div class="panel-heading panel-light" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
             {% if USE_REGULAR_EXPRESSIONS %}
             <span class="hasTooltip">
                 <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
@@ -283,8 +303,8 @@ function do_set_lemma_language(el) {
             {% endif %}
     </div>
 
-    <div id='query-area' class='collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
-        <div id='searchformwell' class='well search-results-collapsable'>
+    <div id='query-area' class='collapse-light collapse {% if request.GET|length == 0 and not show_all %} in {% endif %}'>
+        <div id='searchformwell' class='well well-light search-results-collapsable'>
 
         <!-- EK: A sort-order specification is in a hidden form field, which is filled by JS:do_sort_column() -->
             <!-- this is empty as an initial value because the view python code sets it -->
@@ -297,8 +317,8 @@ function do_set_lemma_language(el) {
             {% for dataset_lang in dataset_languages %}
                 <tr>
                     {% with searchform|get_morpheme_search_field_for_language:dataset_lang as search_field %}
-                    <td>
-                        <div class='input-group'>
+                    <td class='td td-light'>
+                        <div class='input-group input-group-light'>
                         <label class='input-group-addon' for='id_annotation_idgloss_{{dataset_lang.language_code_2char}}'>
                             {{search_field.label}}
                         </label>
@@ -311,7 +331,7 @@ function do_set_lemma_language(el) {
                     {% endwith %}
 
                     {% with searchform|get_lemma_form_field_for_language:dataset_lang as lemma_field %}
-                    <td><div class='input-group'>
+                    <td class='td td-light'><div class='input-group input-group-light'>
 
                         <label class='input-group-addon' for='id_lemma_{{dataset_lang.language_code_2char}}'>
                             {{lemma_field.label}}
@@ -324,7 +344,7 @@ function do_set_lemma_language(el) {
                     {% endwith %}
 
                     {% with searchform|get_keyword_form_field_for_language:dataset_lang as keyword_field %}
-                    <td><div class='input-group'>
+                    <td class='td td-light'><div class='input-group input-group-light'>
                         <label class='input-group-addon' for='id_keyword_{{dataset_lang.language_code_2char}}'>
                             {{keyword_field.label}}
                         </label>
@@ -339,27 +359,27 @@ function do_set_lemma_language(el) {
             </table>
         </div>
 
-            <div class="panel panel-default">
-                <div class="panel-heading" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Basic Properties" %}</div>
+            <div class="panel panel-default panel-light">
+                <div class="panel-heading panel-light" data-toggle="collapse" data-target="#searchpanels">{% trans "Search by Basic Properties" %}</div>
 
-                <div id='searchpanels' class='collapse'>
+                <div id='searchpanels' class='collapse-light collapse'>
 
-                <table class='table'>
+                <table class='table table-condensed table-condensed-light'>
                     {% for fieldname,field,label in input_names_fields_and_labels.main %}
-                    <tr><td><label for='id_{{fieldname}}'>{{label}}</label>{{field}}</td></tr>
+                    <tr><td class='td td-light'><label for='id_{{fieldname}}'>{{label}}</label>{{field}}</td></tr>
                     {% endfor %}
                 </table>
 
                 </div>
               </div>
 
-            <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
+            <div  class="panel panel-default panel-light">
+              <div class="panel-heading panel-light" data-toggle="collapse" data-target="#morph_search">{% trans "Search by Morphology" %}</div>
 
-              <div id='morph_search' class='collapse'>
-                    <table class='table'>
+              <div id='morph_search' class='collapse-light collapse'>
+                    <table class='table table-condensed table-condensed-light'>
                         <tr id='mrpType_selection'>
-                            <td><label>{{searchform.mrpType.label}}</label>
+                            <td class='td td-light'><label>{{searchform.mrpType.label}}</label>
                                 {{searchform.mrpType}}
                             </td>
                         </tr>
@@ -367,18 +387,23 @@ function do_set_lemma_language(el) {
               </div>
             </div>
 
-            <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>
+            <div  class="panel panel-default panel-light">
+              <div class="panel-heading panel-light" data-toggle="collapse" data-target="#phon_search">{% trans "Search by Phonology" %}</div>
 
-              <div id='phon_search' class='collapse'>
-              <table class='table table-condensed'>
+              <div id='phon_search' class='collapse-light collapse'>
+              <table class='table table-condensed table-condensed-light'>
                 <tr>
 
                   <td>
-                    <table class='table table-condensed'>
+                    <table class='table table-condensed table-condensed-light'>
                         {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
 
-                            <tr><td><label for='id_{{fieldname}}'>{{label}}</label></td><td>{{field}}</td></tr>
+                            <tr>
+                                <td class='td td-light'>
+                                <label for='id_{{fieldname}}'>{{label}}</label>
+                                </td>
+                                <td class='td td-light'>{{field}}</td>
+                            </tr>
 
                         {% endfor %}
 
@@ -390,18 +415,20 @@ function do_set_lemma_language(el) {
               </div>
             </div>
 
-            <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse" data-target="#sem_search">{% trans "Search by Semantics" %}</div>
+            <div  class="panel panel-default panel-light">
+              <div class="panel-heading panel-light" data-toggle="collapse" data-target="#sem_search">{% trans "Search by Semantics" %}</div>
 
-              <div id='sem_search' class='collapse'>
-              <table class='table table-condensed'>
+              <div id='sem_search' class='collapse-light collapse'>
+              <table class='table table-condensed table-condensed-light'>
                 <tr>
 
                   <td>
-                    <table class='table table-condensed'>
+                    <table class='table table-condensed table-condensed-light'>
                         {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
 
-                            <tr><td><label for='id_{{fieldname}}'>{{label}}</label>{{field}}</td></tr>
+                            <tr><td class='td td-light'>
+                                <label for='id_{{fieldname}}'>{{label}}</label>{{field}}</td>
+                            </tr>
 
                         {% endfor %}
 
@@ -415,16 +442,16 @@ function do_set_lemma_language(el) {
               </div>
             </div>
 
-            <div  class="panel panel-default">
-              <div class="panel-heading" data-toggle="collapse"
+            <div  class="panel panel-default panel-light">
+              <div class="panel-heading panel-light" data-toggle="collapse"
                    data-target="#pub_search">{% trans "Search by Publication Status and Notes" %}</div>
 
-              <div id='pub_search' class='collapse'>
-              <table class='table pub-row'>
+              <div id='pub_search' class='collapse-light collapse'>
+              <table class='table table-condensed table-condensed-light'>
               {% for publication_id, publication_label, publication_field in search_by_publication_fields %}
               <tr>
-                  <td style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
-                  <td>{{publication_field}}</td>
+                  <td class='td td-light' style="padding-left:30px;"><label for='id_{{publication_id}}'>{{publication_label}}</label></td>
+                  <td class='td td-light'>{{publication_field}}</td>
               </tr>
               {% endfor %}
               </table>
@@ -433,7 +460,7 @@ function do_set_lemma_language(el) {
     </div>
 </div>
 
-        <div class='btn-group' style="margin-bottom: 20px">
+        <div class='btn-group btn-group-light' style="margin-bottom: 20px">
            <button class='btn btn-primary' type='submit'
                    id='morpheme_search_button'
                    onclick="do_adminsearch(this);"
@@ -441,14 +468,14 @@ function do_set_lemma_language(el) {
             <input type='hidden' id='do_morpheme_search' name='morpheme_search' value="">
 
             {% if perms.dictionary.export_csv %}
-            <button class='btn btn-default' type='submit'
+            <button class='btn btn-default btn-default-light' type='submit'
                     onclick="do_export_csv(this);"
                     id='button_export_csv' value='CSV'>CSV</button>
             <input type='hidden' id='format' name='format' value="">
             <input type='hidden' name='show_all' value="{{show_all}}">
             {% endif %}
 
-           <input class='btn btn-default' type='reset' onclick="clearForm();"
+           <input class='btn btn-default btn-default-light' type='reset' onclick="clearForm();"
                    value='{% trans "Reset" %}'>
         </div>
 
@@ -457,24 +484,25 @@ function do_set_lemma_language(el) {
 
 <div></div>
 
-<form name="show_pages">
-<div class='form-group' id='paginate_by'>
+<form name="show_pages" class='pages-form pages-form-light'>
+<div class='form-group form-group-light' id='paginate_by'>
 <label for='paginate_by'>{% trans "Results Per Page" %}</label>
-<select class='form-control' name="paginate_by">
+<select class='form-control form-control-light' name="paginate_by">
     <option {% if paginate_by == 50 %}selected{% endif %}>50</option>
     <option {% if paginate_by == 25 %}selected{% endif %}>25</option>
     <option {% if paginate_by == 10 %}selected{% endif %}>10</option>
 </select>
 {% csrf_token %}
-<input type="submit" value='{% trans "Refresh" %}' />
+<input type="submit" value='{% trans "Refresh" %}'
+       class="btn btn-default btn-default-light">
 </div>
 </form>
 
    {% if perms.dictionary.add_morpheme %}
-   <div  class="panel panel-default">
-      <div class="panel-heading" data-toggle="collapse"  data-target='#add_morpheme_form'>{% trans "Add New Morpheme" %}</div>
+   <div  class="panel panel-default panel-light">
+      <div class="panel-heading panel-light" data-toggle="collapse"  data-target='#add_morpheme_form'>{% trans "Add New Morpheme" %}</div>
 
-         <div id='add_morpheme_form' class='collapse'>
+         <div id='add_morpheme_form' class='collapse-light collapse'>
              <form action='{% url "dictionary:add_morpheme" %}' method='post'>
                  {% csrf_token %}
                  <table class='table'>
@@ -567,8 +595,8 @@ function do_set_lemma_language(el) {
 <p>{% trans "Number of Matches:" %} {{page_obj.paginator.count}} {% trans "out of" %} {{glosscount}}.</p>
 
 {% if object_list %}
-<table class='table table-condensed'>
-    <thead>
+<table class='table table-condensed table-condensed-light'>
+    <thead class="thead thead-light">
       <tr>
           <th></th>
           {% for dataset_lang in dataset_languages %}
@@ -649,17 +677,8 @@ function do_set_lemma_language(el) {
     </thead>
     <tbody>
     {% for morpheme in object_list %}
-            <!-- EK: the color depends on: (1) tag for wrong sign, (2) availability of video, and (3) morpheme database value for 'isNew' -->
-            {% tags_for_object morpheme as tag_list %}
-            {% if tag_list|wrong_sign %}
-                <tr class="danger">
-            {% elif not morpheme.has_video %}
-                <tr class="warning">
-            {% elif morpheme.isNew %}
-                <tr class="info">
-            {% else %}
-                <tr>
-            {% endif %}
+
+    <tr>
 
       <td>{%if morpheme.get_image_path %}<div class="thumbnail_container"><img class="thumbnail" src="{{protected_media_url}}{{morpheme.get_image_path}}"></div>{% endif %}</td>
 

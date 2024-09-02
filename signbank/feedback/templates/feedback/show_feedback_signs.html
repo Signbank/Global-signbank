@@ -53,8 +53,9 @@ $(window).ready(function(){
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 
-    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;">
-    <ul class='nav nav-tabs'>
+    <div id="view_tabs" class='view-tabs view-tabs-light'
+         style="margin-right:15px;margin-top:10px;z-index:100;">
+    <ul class='nav nav-tabs nav-tabs-light'>
         <li class="nav-item" id="general_feedback_tab" style="border-top-width: 2px;">
             <a class='nav-link' href="{{PREFIX_URL}}/feedback/overview/">{% trans "General Feedback" %}</a>
         </li>
@@ -75,12 +76,9 @@ $(window).ready(function(){
   <h3>{% trans "Sign Feedback" %}</h3>
   {% for fb in signfb %}
     <div class="panel-group" id="signfb{{fb.pk}}">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h4 class="panel-title">
-              {{fb.date|date:"d M Y"}}: {{fb.user.first_name}} {{fb.user.last_name}} |
-            <a data-toggle="collapse" data-parent="#signfb{{fb.pk}}" href="#signcollapse{{fb.pk}}">{% trans "View" %}</a>
-          </h4>
+      <div class="panel panel-default panel-light">
+        <div class="panel-heading panel-light" data-toggle="collapse" data-parent="#signfb{{fb.pk}}" href="#signcollapse{{fb.pk}}">
+              {{fb.date|date:"d M Y"}}: {{fb.user.first_name}} {{fb.user.last_name}} | {% trans "View" %}
         </div>
         <div id="signcollapse{{fb.pk}}" class="panel-collapse collapse col-md-4">
 
@@ -109,7 +107,7 @@ $(window).ready(function(){
         </dl>
 
          <div class='btn-group col-md-offset-3'>
-            <button class='delete btn btn-default' type='submit' value='Delete Comment'
+            <button class='delete btn btn-default btn-default-light' type='submit' value='Delete Comment'
                     data-toggle='modal' data-target='#delete_comment_sign_{{fb.id}}'>{% trans "Delete" %}</button>
          </div>
 
@@ -128,8 +126,8 @@ $(window).ready(function(){
                       <input type='hidden' name='id' value='deletefeedbacksign_{{fb.pk}}'>
                       <input type='hidden' name='value' value='confirmed'>
                       <div class="modal-footer">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
-                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
                       </div>
                   </form>
 

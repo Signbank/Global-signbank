@@ -1,0 +1,97 @@
+
+.preview {
+    background-color: white !important;
+    height: 40;
+    width: auto;
+    position: relative;
+    padding: 0 0 0 0 !important;
+}
+
+select option {
+    background-color: white;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.bootstrap-select.btn-group .dropdown-menu li a:hover {
+    color: blue !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.dropdown-menu {
+    display: visible !important;
+    z-index: 5;
+}
+
+.dropdown-item:active{
+    color: blue;
+    background-color: darkviolet;
+}
+
+.bootstrap-select {
+    color: black !important;
+    background-color: white !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+.btn-group {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    border-bottom: none; /* Prevent double borders */
+}
+/*
+.btn {
+    padding: 2 2 2 2;
+}
+*/
+.btn-group button:not(:last-child) {
+  border-right: none; /* Prevent double borders */
+  margin-top: 5px;
+}
+.runQuery {
+    border: 1px var(--button-default);
+    color: white;
+    text-align: center;
+    padding-top: 8px;
+    padding-left: 12px;
+    padding-bottom: 6px;
+    padding-right: 12px;
+    border-radius: 6px;
+    background-color: var(--button-default);
+}
+.runQuery:hover {
+    text-decoration: none;
+    background-color: none;
+}
+.queryButton {
+    background-color: inherit;
+    /* padding: 6px 12px; */
+}
+.queryButton > a {
+    margin-top: 8px;
+    margin-bottom: 0px;
+}
+.queryButton:hover {
+    background-color: none;
+}
+.querySaveInfo {
+    border: 1px solid;
+    padding: 6px 12px;
+    margin-bottom: 0px;
+    margin-top: 4px;
+    white-space: normal;
+    border-radius: 6px;
+    border-bottom-left-radius: 6px !important;
+    border-top-left-radius: 6px !important;
+    color: white;
+    background-color: rgb(66, 139, 202);
+    line-height: 18px;
+}
+.querySaveInfo:hover {
+    color: white;
+    background-color: rgb(66, 139, 202);
+    text-decoration: none;
+}

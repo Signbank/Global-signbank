@@ -73,11 +73,11 @@ $('.select_dummy_lemma').on("change", function(){
 
 {% block content %}
 
-<div>
+<div style="backgroun-color:var(--ultron);color:var(--beam);">
 <h3>{% trans "Glosses Without Lemma" %}</h3>
 {% if glosses_without_lemma %}
 <p>{% trans "The following glosses do not have a lemma or dataset." %}</p>
-<table class="table table-condensed">
+<table class="table table-condensed table-condensed-light">
     <thead>
     <tr><th width="100px;">{% trans "Gloss ID" %}</th><th>{% trans "Dataset: Translation Languages" %}</th>
         <th width="100px;">{% trans "Languages" %}</th><th width="300px;">{% trans "Annotations" %}</th>
@@ -88,11 +88,12 @@ $('.select_dummy_lemma').on("change", function(){
     {% for gloss, annotations, language_names in glosses_without_lemma %}
         <tr>
             <td width="100px;">{{gloss.id}}</td>
-            <td width="300px;">
+            <td class="td td-light" width="300px;">
                 <form id="assign_lemma_to_gloss_{{gloss.id}}"
                       action='{% url "dictionary:assign_lemma_dataset_to_gloss" gloss.id %}' method='POST'>
                 {% csrf_token %}
-                <select class="select_dummy_lemma form-select" id="selectdummylemma_{{gloss.id}}" value="">
+                <select class="select_dummy_lemma form-select" style="background-color: inherit;color:inherit;"
+                        id="selectdummylemma_{{gloss.id}}" value="">
                     <option value="" selected="selected">{% trans "Please choose a dataset." %}</option>
                 {% for dummy, dummy_label in dummy_lemmas %}
                     {% if language_names in dummy_label %}
@@ -105,16 +106,17 @@ $('.select_dummy_lemma').on("change", function(){
                                        maxlength="40" type="text"
                                        size="40" />
                     {% if perms.dictionary.change_gloss %}
-                    <button class="assign_lemma" id="assign_lemma_{{gloss.id}}" value='{{gloss.id}}' data-lemmaid=''
+                    <button class="assign_lemma btn-primary" id="assign_lemma_{{gloss.id}}" value='{{gloss.id}}' data-lemmaid=''
                             type="submit">{% trans "Save" %}</button>
                     {% endif %}
                 </form>
             </td>
-            <td width="400px;" colspan="2">
-                <table class="table table-condensed">
+            <td class="td td-light" width="400px;" colspan="2">
+                <table class="table">
                 {% for ann in annotations %}
                     <tr>
-                        <td width="100px;">{{ann.language}}</td><td width="300px;">{{ann.text}}</td>
+                        <td class="td td-light" width="100px;">{{ann.language}}</td>
+                        <td class="td td-light" width="300px;">{{ann.text}}</td>
                     </tr>
                 {% endfor %}
                 </table>

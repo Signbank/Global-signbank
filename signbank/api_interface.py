@@ -81,6 +81,8 @@ def api_fields(dataset, language_code='en', advanced=False):
         for field in gloss_fields:
             api_fields_2023.append(field.verbose_name.title())
 
+        api_fields_2023.append(gettext("NME Videos"))
+
     return api_fields_2023
 
 
@@ -152,7 +154,7 @@ def get_gloss_data_json(request, datasetid, glossid):
         return JsonResponse({})
 
     gloss_id = int(glossid)
-    gloss = Gloss.objects.filter(lemma__dataset=dataset, id=gloss_id).first()
+    gloss = Gloss.objects.filter(lemma__dataset=dataset, id=gloss_id, archived=False).first()
 
     if not gloss:
         return JsonResponse({})
@@ -183,7 +185,7 @@ def check_gloss_existence_for_uploaded_video(dataset):
                     video_file_path = os.path.join(goal_directory, language3char, file)
                     format = probe_format(video_file_path)
                     (filename_without_extension, extension) = os.path.splitext(file)
-                    gloss = Gloss.objects.filter(lemma__dataset=dataset,
+                    gloss = Gloss.objects.filter(lemma__dataset=dataset, archived=False,
                                                  annotationidglosstranslation__language__language_code_3char=language3char,
                                                  annotationidglosstranslation__text__exact=filename_without_extension).first()
                     if format.startswith('h264'):
@@ -385,7 +387,7 @@ def import_video_to_gloss(request, video_file_path):
     json_path_key = 'import_videos/' + dataset_acronym + '/' + language_3_code + '/' + filename
     import_video_data[json_path_key] = dict()
     (filename_without_extension, extension) = os.path.splitext(filename)
-    gloss = Gloss.objects.filter(lemma__dataset__acronym=dataset_acronym,
+    gloss = Gloss.objects.filter(lemma__dataset__acronym=dataset_acronym, archived=False,
                                  annotationidglosstranslation__language__language_code_3char=language_3_code,
                                  annotationidglosstranslation__text__exact=filename_without_extension).first()
     if not gloss:

@@ -29,6 +29,11 @@ def url(request):
             if 'view_dataset' in permissions_for_dataset:
                 viewable_datasets.append(dataset)
 
+    if 'dark_mode' not in request.session.keys():
+        # initialise
+        request.session['dark_mode'] = "False"
+        request.session.modified = True
+
     return {'URL': settings.URL,
             'PREFIX_URL': settings.PREFIX_URL,
             'viewable_datasets': [(dataset, dataset in selected_datasets) for dataset in viewable_datasets],

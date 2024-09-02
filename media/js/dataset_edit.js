@@ -59,7 +59,7 @@ $(document).ready(function() {
 function disable_edit() {
     //$('#affix-bar').show(); // The affix bar appears on top of the Delete modal popup window, so it is hidden during editting
     $('.edit').editable('disable');
-    $('.edit').css('color', 'black');
+    $('.edit').css('color', 'inherit');
     $('#edit_message').text('');
     if (busy_editing) {
 
@@ -92,7 +92,7 @@ function enable_edit() {
     $('.edit').editable('enable');
     $('.edit').css('color', 'red');
     $('#edit_message').text('Click on red text to edit  ');
-    $('#edit_message').css('color', 'black');
+    $('#edit_message').css('color', 'inherit');
 
     $('#enable_edit').removeClass('btn-primary').addClass('btn-danger');
 
@@ -131,7 +131,7 @@ function configure_edit() {
     $.fn.editable.defaults['tooltip'] = 'Click to edit...';
     $.fn.editable.defaults['placeholder'] = '-';
     $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">Save</button>';
-    $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" type="cancel">Cancel</button>';
+    $.fn.editable.defaults['cancel'] = '<button class="btn btn-default btn-default-light" type="cancel">Cancel</button>';
     $.fn.editable.defaults['cols'] = '80';
     $.fn.editable.defaults['rows'] = '5';
     $.fn.editable.defaults['submitdata'] = {'csrfmiddlewaretoken': csrf_token};

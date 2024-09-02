@@ -167,7 +167,7 @@ function configure_edit() {
     $.fn.editable.defaults['tooltip'] = 'Click to edit...';
     $.fn.editable.defaults['placeholder'] = '-';
     $.fn.editable.defaults['submit'] = '<button class="btn btn-primary" type="submit">Ok</button>';
-    $.fn.editable.defaults['cancel'] = '<button class="btn btn-default" type="cancel">Cancel</button>';
+    $.fn.editable.defaults['cancel'] = '<button class="btn btn-default btn-default-light" style="" type="cancel">Cancel</button>';
     $.fn.editable.defaults['width'] = 'none';
     $.fn.editable.defaults['height'] = 'none';
     $.fn.editable.defaults['submitdata'] = {'csrfmiddlewaretoken': csrf_token};

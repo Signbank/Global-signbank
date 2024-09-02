@@ -1,9 +1,10 @@
 /* variant style for black - main page style */
 
 
-html { 
-  background-image: url(../../images/global/black_02.gif); 
-} 
+html {
+  background: var(--ultron);
+  color: var(--beam);
+}
 
 #leftcontentborder {
   background-image: url(../../images/global/black_03.gif);
@@ -14,7 +15,7 @@ html {
 }
 
  #header {
-		background-image: url(../../images/global/black_02.gif); 
+		background-image: url(../../images/global/black_02.gif);
         padding:0;
         background:#BB2F2C;
         height:110px;
@@ -107,6 +108,8 @@ legend
 .modal-dialog {
   margin: 300px auto;
   z-index: 1100 !important;
+  background-color: inherit;
+  color: inherit;
 }
 
 .global_sb_logo
@@ -122,6 +125,7 @@ legend
     width: 100%;
     position: fixed;
     background-color: #ffffff;
+    color: black;
 }
 
 .navbar-fixed-top {
@@ -131,24 +135,33 @@ legend
 .navbar-upper {
     z-index: 550;
 }
-
+.navbar-form {
+    z-index: 500;
+}
 .navbar-nav > li > a {
     padding-top: 5px;
     padding-bottom: 5px;
+    background-color: inherit;
+    color: inherit;
 }
 
 .navbar-nav > ul {
     margin-left: 15px;
     float: left;
+    background-color: inherit;
+    color: inherit;
 }
 
 .navbar-form, .navbar-text {
     margin-top: 3px;
     margin-bottom: 3px;
+    color: inherit;
 }
 
 .navbar-collapse {
     max-height: 100% !important;
+    background-color: inherit;
+    color: inherit;
 }
 
 .btn {

@@ -31,49 +31,49 @@ function select_no_datasets() {
 
 {% if object_list %}
 <form name="selectdatasets" id="selectdatasets" method="post" action="{{PREFIX_URL}}/datasets/change_selection">
-<button id="select_all_top" value='select_all' onclick="select_all_datasets()" class="btn btn-default">{% trans "Select All" %}</button>
-<button id="select_none_top" value='select_none' onclick="select_no_datasets()" class="btn btn-default">{% trans "Select None" %}</button>
-<input class="btn btn-default" type="submit" value="{% trans 'Save selection' %}"/>
+<button id="select_all_top" value='select_all' onclick="select_all_datasets()" class="btn btn-default btn-default-light">{% trans "Select All" %}</button>
+<button id="select_none_top" value='select_none' onclick="select_no_datasets()" class="btn btn-default btn-default-light">{% trans "Select None" %}</button>
+<input class="btn btn-default btn-default-light" type="submit" value="{% trans 'Save selection' %}"/>
 {% csrf_token %}
-<table class='table table-condensed'>
-    <thead>
+<table class='table table-condensed table-condensed-light'>
+    <thead class="thead thead-light">
       <tr>
-          <th width="5%">{% trans "Selected" %}</th>
-          <th width="10%">{% trans "Dataset Acronym" %}</th>
-          <th width="15%">{% trans "Dataset Name" %}</th>
-          <th width="35%">{% trans "Description" %}</th>
-          <th width="35%">{% trans "Copyright" %}</th>
+          <th class='th th-light' width="5%">{% trans "Selected" %}</th>
+          <th class='th th-light' width="10%">{% trans "Dataset Acronym" %}</th>
+          <th class='th th-light' width="15%">{% trans "Dataset Name" %}</th>
+          <th class='th th-light' width="35%">{% trans "Description" %}</th>
+          <th class='th th-light' width="35%">{% trans "Copyright" %}</th>
 
       </tr>
     </thead>
     {% if not user.is_anonymous %}
-    <tbody>
+    <tbody class="tbody tbody-light">
       {% for dataset in object_list %}
           {% get_obj_perms request.user for dataset as "dataset_perms" %}
             {% if "view_dataset" in dataset_perms %}
             <tr>
-                <td><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.user.0.user %}checked{% endif %}/></td>
-                <td>
+                <td class='td td-light'><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.user.0.user %}checked{% endif %}/></td>
+                <td class='td td-light'>
                     <a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.acronym }}</a>
                 </td>
-                <td>{{ dataset.name }}</td>
-                <td>{{ dataset.description }}</td>
-                <td>{{ dataset.copyright }}</td>
+                <td class='td td-light'>{{ dataset.name }}</td>
+                <td class='td td-light'>{{ dataset.description }}</td>
+                <td class='td td-light'>{{ dataset.copyright }}</td>
             </tr>
             {% endif %}
       {% endfor %}
     </tbody>
     {% else %}
-    <tbody>
+    <tbody class="tbody tbody-light">
         {% for dataset in object_list %}
             <tr>
-                <td><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.checked %}checked{% endif %}/></td>
-                <td>
+                <td class='td td-light'><input type="checkbox" name="dataset_{{ dataset.acronym }}" value="true" {% if dataset.checked %}checked{% endif %}/></td>
+                <td class='td td-light'>
                     <a href="{{PREFIX_URL}}/datasets/{{dataset.acronym}}" >{{ dataset.acronym }}</a>
                 </td>
-                <td>{{ dataset.name }}</td>
-                <td>{{ dataset.description }}</td>
-                <td>{{ dataset.copyright }}</td>
+                <td class='td td-light'>{{ dataset.name }}</td>
+                <td class='td td-light'>{{ dataset.description }}</td>
+                <td class='td td-light'>{{ dataset.copyright }}</td>
             </tr>
         {% endfor %}
     </tbody>
@@ -81,9 +81,9 @@ function select_no_datasets() {
 </table>
 
 
-<button id="select_all" value='select_all' onclick="select_all_datasets()" class="btn btn-default">{% trans "Select All" %}</button>
-<button id="select_none" value='select_none' onclick="select_no_datasets()" class="btn btn-default">{% trans "Select None" %}</button>
-<input class="btn btn-default" type="submit" value="{% trans 'Save selection' %}"/>
+<button id="select_all" value='select_all' onclick="select_all_datasets()" class="btn btn-default btn-default-light">{% trans "Select All" %}</button>
+<button id="select_none" value='select_none' onclick="select_no_datasets()" class="btn btn-default btn-default-light">{% trans "Select None" %}</button>
+<input class="btn btn-default btn-default-light" type="submit" value="{% trans 'Save selection' %}"/>
 </form>
 
 {% else %}
