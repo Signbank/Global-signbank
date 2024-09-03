@@ -1968,6 +1968,7 @@ def edit_annotated_sentence(request, glossid, annotatedsentenceid):
         'annotated_contexts': annotated_contexts,
         'annotations_table_html': annotations_table_html,
         'annotated_sentence_sources': annotated_sentence_sources,
+        'redirect': request.META.get('HTTP_REFERER'),
     }
     return render(request, template, context)
 
@@ -1981,6 +1982,7 @@ def save_edit_annotated_sentence(request):
     gloss = Gloss.objects.get(id=request.POST.get('glossid'), archived=False)
     annotated_sentence = AnnotatedSentence.objects.get(id=request.POST.get('annotatedsentenceid'))
     annotations = request.POST['feedbackdata']
+    annotations = json.loads(annotations)
 
     with atomic():
         annotated_sentence.annotated_glosses.all().delete()
@@ -2051,6 +2053,7 @@ def delete_annotated_sentence(request, glossid):
         annotated_video.delete()
     annotated_sentence.delete()
 
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
 def add_othermedia(request):

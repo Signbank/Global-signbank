@@ -3973,7 +3973,7 @@ class AnnotatedGloss(models.Model):
         return self.endtime/1000
     
     def show_annotationidglosstranslation(self):
-        return self.gloss.annotationidglosstranslation_set.filter(language = self.annotatedsentence.get_dataset().default_language).first().text
+        return self.gloss.annotationidglosstranslation_set.filter(language = self.gloss.lemma.dataset.default_language).first().text
 
 
 class AnnotatedSentenceTranslation(models.Model):
@@ -4000,7 +4000,13 @@ class AnnotatedSentence(models.Model):
     """An annotated sentence is linked to an annotatedvideo, annotatedgloss, annotatedsentencetranslation(s), and annotatedsentencecontext(s)"""
 
     def get_dataset(self):
-        return self.annotated_glosses.first().gloss.lemma.dataset
+        if self.annotated_glosses.count() > 0:
+            return self.annotated_glosses.first().gloss.lemma.dataset
+        return None
+
+    def get_first_gloss(self):
+        first_gloss = self.annotated_glosses.order_by('starttime').first().gloss
+        return first_gloss
     
     def has_translations(self):
         if self.annotated_sentence_translations.count() > 0:
@@ -4016,26 +4022,16 @@ class AnnotatedSentence(models.Model):
         """Add annotations to the annotated sentence"""
         dataset = gloss.lemma.dataset
 
-        arrays = []
-        segments = annotations.split(";")
-        for segment in segments:
-            values = segment.split(":")
-            if len(values) == 4:
-                arrays.append(values)
-
-        for annotation in arrays:
-            gloss_translation = annotation[0]
+        for annotation in annotations:
+            gloss_translation = annotation['gloss']
             annotationIdGlossTranslation = AnnotationIdglossTranslation.objects.filter(text__exact=gloss_translation, language__in=dataset.translation_languages.all(), gloss__lemma__dataset=dataset).first()
             if annotationIdGlossTranslation is None:
                 print("No annotation found for: ", gloss_translation)
                 continue
             else:
-                repr = False
-                if annotation[1] == "1":
-                    repr = True
-
-                starttime = int(annotation[2])
-                endtime = int(annotation[3])
+                repr = annotation['representative']
+                starttime = int(annotation['starttime'])
+                endtime = int(annotation['endtime'])
 
                 excluded = False
                 if start_cut >= 0 and end_cut >= 0:
@@ -4097,7 +4093,10 @@ class AnnotatedSentence(models.Model):
         return {k: v for k, v in self.get_annotatedstc_translations_dict_with().items() if v}
 
     def get_annotatedstc_translations(self):
-        return [k+": "+v for k,v in self.get_annotatedstc_translations_dict_without().items()]
+        if self.annotated_glosses.count() > 0: #apparently there are sentences without glosses, TODO: find out why and delete them
+            return [k+": "+v for k,v in self.get_annotatedstc_translations_dict_without().items()]
+        else:
+            return []
 
     def get_annotatedstc_contexts_dict_with(self):
         """Return a dictionary of contexts for this annotated sentence with the language code as key"""
@@ -4152,6 +4151,9 @@ class AnnotatedSentence(models.Model):
         annotatedVideo.save()
         
         return annotatedVideo
+
+    def count_glosses(self):
+        return self.annotated_glosses.count()
     
     def __str__(self):
         return " | ".join(self.get_annotatedstc_translations())

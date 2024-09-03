@@ -26,7 +26,7 @@ from signbank.dictionary.adminviews import (GlossListView, MorphemeListView, Dat
                                             dataset_detail_view_by_acronym, FieldChoiceView, DatasetFrequencyView,
                                             QueryListView, SemanticFieldListView, DerivationHistoryListView,
                                             SearchHistoryView, SenseListView, LemmaListView, ToggleListView,
-                                            DatasetMediaView, BatchEditView)
+                                            DatasetMediaView, BatchEditView, AnnotatedSentenceListView)
 from signbank.dictionary.views import add_image, delete_image, add_new_morpheme, add_handshape_image
 
 from django.contrib import admin
@@ -64,6 +64,7 @@ urlpatterns = [
 
     # Hardcoding a number of special urls:
     re_path(r'^signs/search/$', GlossListView.as_view(), {'show_all': False}, name='signs_search'),
+    re_path(r'^annotatedsentences/show_all/$', login_required(AnnotatedSentenceListView.as_view()),{'show_all': True}),
     re_path(r'^signs/show_all/$', GlossListView.as_view(),{'show_all': True}),
     re_path(r'^signs/add/$', signbank.dictionary.views.add_new_sign),
     re_path(r'^signs/import_csv_create/$', signbank.dictionary.views.import_csv_create, name='import_csv_create'),
