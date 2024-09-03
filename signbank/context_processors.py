@@ -26,7 +26,7 @@ def url(request):
                 viewable_datasets.append(dataset)
                 continue
             permissions_for_dataset = get_user_perms(request.user, dataset)
-            if 'view_dataset' in permissions_for_dataset or 'can_view_dataset' in permissions_for_dataset:
+            if 'view_dataset' in permissions_for_dataset:
                 viewable_datasets.append(dataset)
 
     if 'dark_mode' not in request.session.keys():

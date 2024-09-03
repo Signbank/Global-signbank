@@ -71,6 +71,7 @@ def addvideo(request):
                 
                 gloss = Gloss.objects.filter(id=object_id).first()
                 annotations = form.cleaned_data['feedbackdata']
+                annotations = json.loads(annotations)
                 annotatedSentence.add_annotations(annotations, gloss)
                 
                 translations = form.cleaned_data['translations']

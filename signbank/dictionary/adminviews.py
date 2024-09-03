@@ -74,12 +74,108 @@ from signbank.dictionary.senses_display import (senses_per_language, senses_per_
                                                 senses_translations_per_language_list,
                                                 senses_sentences_per_language_list)
 from signbank.dictionary.context_data import (get_context_data_for_list_view, get_context_data_for_gloss_search_form,
-                                              get_web_search)
+                                                get_web_search)
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to, gloss_related_objects,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
 from signbank.manage_videos import listing_uploaded_videos
 from signbank.zip_interface import *
+
+
+def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_codes):
+    """Change the sort-order of the query set, depending on the form field [sortOrder]
+
+    This function is used both by AnnotatedSentenceListView.
+    The value of [sortOrder] is 'firstgloss__id' by default.
+    [sortOrder] is a hidden field inside the "adminsearch" html form in the template admin_annotatedsentence_list.html
+    Its value is changed by clicking the up/down buttons in the second row of the search result table
+    """
+
+    def order_queryset_by_annotatedglosses(qs, sOrder):
+        print(sOrder)
+        # filter query on dataset and sort based on first gloss of the sentence
+        qs = qs.annotate(
+            firstgloss=Subquery(
+                AnnotatedGloss.objects.filter(
+                    annotatedsentence__id=OuterRef('id')
+                ).order_by('starttime').values('gloss__lemma')[:1]
+            )
+        ).order_by('firstgloss')
+
+        if sOrder[0:1] == '-':
+            # A starting '-' sign means: descending order
+            qs = qs.reverse()
+
+        return qs
+
+    def order_queryset_by_dataset(qs, sOrder):
+        qs = qs.annotate(
+            dataset=Subquery(
+                AnnotatedGloss.objects.filter(
+                    annotatedsentence_id=OuterRef('id')
+                ).values('gloss__lemma__dataset__acronym')[:1]
+            )
+        ).order_by('dataset')
+
+        if sOrder[0:1] == '-':
+            # A starting '-' sign means: descending order
+            qs = qs.reverse()
+        return qs
+        
+    def order_queryset_by_sentencetranslation(qs, sOrder):
+        qs = qs.annotate(
+            translation=Subquery(
+                AnnotatedSentenceTranslation.objects.filter(
+                    annotatedsentence_id=OuterRef('id')
+                ).values('text')
+            )
+        ).order_by('translation')
+        
+        if sOrder[0:1] == '-':
+            # A starting '-' sign means: descending order
+            qs = qs.reverse()
+        return qs
+
+    def order_queryset_by_nrannotatedglosses(qs, sOrder):
+        qs = qs.annotate(
+            nrglosses=Count('annotated_glosses')  # Replace 'glosses' with the related_name or field name
+        ).order_by('nrglosses')
+        
+        if sOrder[0:1] == '-':
+            # A starting '-' sign means: descending order
+            qs = qs.reverse()
+        return qs
+    
+    # Set the default sort order
+    bReversed = False
+    bText = True
+
+    # See if the form contains any sort-order information
+    if 'sortOrder' in get and get['sortOrder']:
+        # Take the user-indicated sort order
+        sOrder = get['sortOrder']
+        if sOrder[0:1] == '-':
+            # A starting '-' sign means: descending order
+            bReversed = True
+    else: 
+        return qs
+
+    # The ordering method depends on the kind of field:
+    # (1) text fields are ordered straightforwardly
+    # (2) fields made from a choice_list need special treatment
+    if sOrder.startswith("dataset_order_") or sOrder.startswith("-dataset_order_"):
+        ordered = order_queryset_by_dataset(qs, sOrder)
+    elif sOrder.startswith("annotatedsentencetranslation_order_") or sOrder.startswith("-annotatedsentencetranslation_order_"):
+        ordered = order_queryset_by_sentencetranslation(qs, sOrder)
+    elif sOrder.startswith("annotatedglossestranslation_order_") or sOrder.startswith("-annotatedglossestranslation_order_"):
+        ordered = order_queryset_by_annotatedglosses(qs, sOrder)
+    elif sOrder.startswith("nrannotatedglosses_order_") or sOrder.startswith("-nrannotatedglosses_order_"):
+        ordered = order_queryset_by_nrannotatedglosses(qs, sOrder)
+    
+    if bReversed and bText:
+        ordered.reverse()
+
+    return ordered
 
 
 def order_queryset_by_sort_order(get, qs, queryset_language_codes):
@@ -242,6 +338,127 @@ class Echo:
     def write(self, value):
         """Write the value by returning it, instead of storing in a buffer."""
         return value
+
+
+class AnnotatedSentenceListView(ListView):
+    model = AnnotatedSentence
+    template_name = 'dictionary/admin_annotatedsentence_list.html'
+    paginate_by = 10
+    show_all = False
+    search_type = 'annotatedsentence'
+    search_form = AnnotatedSentenceSearchForm()
+    queryset_language_codes = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_paginate_by(self, queryset):
+        return self.request.GET.get('paginate_by', self.paginate_by)
+
+    def get_queryset(self):
+        self.show_all = self.kwargs.get('show_all', False)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        get = self.request.GET
+        valid_regex, search_fields, field_values = check_language_fields_annotatedsentence(
+            self.search_form, AnnotatedSentenceSearchForm, get, dataset_languages
+        )
+
+        if USE_REGULAR_EXPRESSIONS and not valid_regex:
+            error_message_regular_expression(self.request, search_fields, field_values)
+            qs = AnnotatedSentence.objects.none()
+            return qs
+
+        if get.get('reset') == '1':
+            qs = AnnotatedSentence.objects.none()
+            return qs
+        
+        # filter query on dataset and sort based on first gloss of the sentence
+        qs = AnnotatedSentence.objects.annotate(
+            dataset=Subquery(
+                AnnotatedGloss.objects.filter(
+                    annotatedsentence_id=OuterRef('id')
+                ).values('gloss__lemma__dataset')[:1]
+            ),
+            firstgloss=Subquery(
+                AnnotatedGloss.objects.filter(
+                    annotatedsentence__id=OuterRef('id')
+                ).order_by('starttime').values('gloss')[:1]
+            )
+        ).filter(dataset__in=selected_datasets).order_by('firstgloss')
+
+        default_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+
+        for lang in dataset_languages:
+            if lang.language_code_2char not in self.queryset_language_codes:
+                self.queryset_language_codes.append(lang.language_code_2char)
+        if not self.queryset_language_codes:
+            self.queryset_language_codes = [ default_dataset.default_language.language_code_2char ]
+        qs = order_annotatedsentence_queryset_by_sort_order(self.request.GET, qs, self.queryset_language_codes)
+
+        if get.get('show_all_annotatedsentences') == '1':
+            self.show_all = True
+
+        if get.get('no_glosses') == '1':
+            qs = qs.annotate(
+                num_annotated_glosses=Count('annotated_glosses')
+            ).filter(num_annotated_glosses=0)
+
+        if get.get('has_glosses') == '1':
+            qs = qs.annotate(
+                num_annotated_glosses=Count('annotated_glosses')
+            ).filter(num_annotated_glosses__gt=0)
+
+        if not self.show_all and not get:
+            qs = AnnotatedSentence.objects.none()
+
+        for get_key, get_value in get.items():
+            if get_key.startswith(AnnotatedSentenceSearchForm.annotatedsentence_search_field_prefix) and get_value:
+                language_code_2char = get_key[len(AnnotatedSentenceSearchForm.annotatedsentence_search_field_prefix):]
+                language = Language.objects.get(language_code_2char=language_code_2char)
+                qs = qs.filter(
+                    annotated_sentence_translations__text__icontains=get_value,
+                    annotated_sentence_translations__language=language
+                )
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        set_up_language_fields(AnnotatedSentence, self, self.search_form)
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        nr_sentences_in_dataset = AnnotatedSentence.objects.annotate(
+            dataset=Subquery(
+                AnnotatedGloss.objects.filter(
+                    annotatedsentence_id=OuterRef('id')
+                ).values('gloss__lemma__dataset')[:1]
+            )
+        ).filter(dataset__in=selected_datasets).count()
+        results = self.get_queryset()
+
+        get = self.request.GET
+        query_parameters_dict = {}
+        query_parameters_keys = []
+        for key in list(get.keys()):
+            query_parameters_dict[key] = get.get(key)
+            query_parameters_keys.append(key)
+        context['sort_order'] = str(get.get('sortOrder'))
+        context['language_query_keys'] = [language.language_code_2char for language in dataset_languages]
+        context['query_parameters_dict'] = query_parameters_dict
+        context['query_parameters_keys'] = query_parameters_keys
+        context['annotatedsentence_count'] = nr_sentences_in_dataset
+        context['dataset_languages'] = dataset_languages
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+        context['searchform'] = self.search_form
+        context['show_all'] = self.show_all
+        context['search_type'] = self.search_type
+        context['search_matches'] = results.count()
+
+        return context
 
 
 class GlossListView(ListView):
@@ -854,7 +1071,7 @@ class GlossDetailView(DetailView):
                 return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
+        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
@@ -1299,7 +1516,7 @@ class GlossDetailView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated:
-                qs = get_objects_for_user(user, ['view_dataset', 'can_view_dataset'], Dataset, accept_global_perms=True, any_perm=True)
+                qs = get_objects_for_user(user, ['view_dataset'], Dataset, accept_global_perms=True, any_perm=True)
                 dataset_choices = {}
                 for dataset in qs:
                     dataset_choices[dataset.acronym] = dataset.acronym
@@ -1484,7 +1701,7 @@ class GlossVideosView(DetailView):
                 return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
+        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
@@ -1596,7 +1813,7 @@ class GlossRelationsDetailView(DetailView):
                 return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
+        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
@@ -2905,7 +3122,7 @@ class FrequencyListView(ListView):
             checker.prefetch_perms(qs)
 
             for dataset in qs:
-                checker.has_perm('can_view_dataset', dataset) or checker.has_perm('view_dataset', dataset)
+                checker.has_perm('view_dataset', dataset)
 
             return qs
         else:
@@ -2945,7 +3162,7 @@ class GlossFrequencyView(DetailView):
                 return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_gloss = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
+        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset_of_requested_gloss not in selected_datasets:
@@ -3014,7 +3231,7 @@ class GlossFrequencyView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated:
-                qs = get_objects_for_user(user, ['view_dataset', 'can_view_dataset'],
+                qs = get_objects_for_user(user, ['view_dataset'],
                                           Dataset, accept_global_perms=True, any_perm=True)
                 dataset_choices = {}
                 for dataset in qs:
@@ -3160,7 +3377,7 @@ class LemmaFrequencyView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated:
-                qs = get_objects_for_user(user, ['view_dataset', 'can_view_dataset'],
+                qs = get_objects_for_user(user, ['view_dataset'],
                                           Dataset, accept_global_perms=True, any_perm=True)
                 dataset_choices = {}
                 for dataset in qs:
@@ -3585,14 +3802,14 @@ class DatasetListView(ListView):
 
         # make sure the user can write to this dataset
         from guardian.shortcuts import get_objects_for_user, assign_perm
-        user_view_datasets = get_objects_for_user(self.request.user, ['view_dataset', 'can_view_dataset'],
+        user_view_datasets = get_objects_for_user(self.request.user, ['view_dataset'],
                                                   Dataset, accept_global_perms=True, any_perm=True)
         may_request_dataset = True
         if dataset_object.is_public and not dataset_object in user_view_datasets:
             # the user currently has no view permission for the requested dataset
             # Give permission to access dataset
             may_request_dataset = True
-            assign_perm('can_view_dataset', self.request.user, dataset_object)
+            assign_perm('view_dataset', self.request.user, dataset_object)
             messages.add_message(self.request, messages.INFO,
                                              _('View permission for user successfully granted.'))
         elif not dataset_object.is_public and not dataset_object in user_view_datasets:
@@ -3748,7 +3965,7 @@ class DatasetListView(ListView):
             checker.prefetch_perms(qs)
 
             for dataset in qs:
-                checker.has_perm('can_view_dataset', dataset) or checker.has_perm('view_dataset', dataset)
+                checker.has_perm('view_dataset', dataset)
 
             qs = qs.annotate(Count('lemmaidgloss__gloss')).order_by('acronym')
 
@@ -3945,7 +4162,7 @@ class DatasetManagerView(ListView):
 
         from guardian.shortcuts import assign_perm, remove_perm
         datasets_user_can_change = get_objects_for_user(user_object, 'change_dataset', Dataset, accept_global_perms=False)
-        datasets_user_can_view = get_objects_for_user(user_object, ['view_dataset', 'can_view_dataset'],
+        datasets_user_can_view = get_objects_for_user(user_object, ['view_dataset'],
                                                       Dataset, accept_global_perms=False, any_perm=True)
         groups_user_is_in = Group.objects.filter(user=user_object)
 
@@ -3961,7 +4178,7 @@ class DatasetManagerView(ListView):
                 return HttpResponseRedirect(reverse('admin_dataset_manager')+'?'+manage_identifier)
 
             try:
-                assign_perm('can_view_dataset', user_object, dataset_object)
+                assign_perm('view_dataset', user_object, dataset_object)
                 messages.add_message(self.request, messages.INFO,
                                  _('View permission for user successfully granted.'))
 
@@ -4048,7 +4265,6 @@ class DatasetManagerView(ListView):
                     try:
                         # also need to remove change_dataset perm in this case
                         from guardian.shortcuts import remove_perm
-                        remove_perm('can_view_dataset', user_object, dataset_object)
                         remove_perm('change_dataset', user_object, dataset_object)
                         messages.add_message(self.request, messages.INFO,
                                              _('View (and change) permission for user successfully revoked.'))
@@ -4647,7 +4863,7 @@ class DatasetFrequencyView(DetailView):
             return HttpResponseRedirect(reverse('registration:login'))
 
         dataset = self.object
-        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
+        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
                                                       Dataset, accept_global_perms=True, any_perm=True)
 
         if dataset not in datasets_user_can_view:
@@ -4988,7 +5204,7 @@ class MorphemeDetailView(DetailView):
                 return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_morpheme = self.object.lemma.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
+        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
                                                       Dataset, accept_global_perms=False, any_perm=True)
 
         if dataset_of_requested_morpheme not in selected_datasets:
@@ -5233,7 +5449,7 @@ class MorphemeDetailView(DetailView):
             context['dataset_choices'] = {}
             user = self.request.user
             if user.is_authenticated:
-                qs = get_objects_for_user(user, ['view_dataset', 'can_view_dataset'],
+                qs = get_objects_for_user(user, ['view_dataset'],
                                           Dataset, accept_global_perms=False, any_perm=True)
                 dataset_choices = dict()
                 for dataset in qs:
@@ -6396,7 +6612,7 @@ class LemmaUpdateView(UpdateView):
             return HttpResponseRedirect(reverse('registration:login'))
 
         dataset_of_requested_lemma = self.object.dataset
-        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset', 'can_view_dataset'],
+        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
                                                       Dataset, accept_global_perms=False, any_perm=True)
 
         if dataset_of_requested_lemma not in selected_datasets:
