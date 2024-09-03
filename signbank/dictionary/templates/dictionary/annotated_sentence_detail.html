@@ -1,0 +1,139 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+{% load annotation_idgloss_translation %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Annotated Sentence Details{% endblocktrans %}
+{% endblock %}
+
+{% block extrahead %}
+<style>
+.highlight {
+    background-color: rgb(255, 149, 63);
+}
+</style>
+{% endblock %}
+
+{% block extrajs %}
+
+<script type="text/javascript">
+var url = '{{PREFIX_URL}}';
+var language_code = '{{LANGUAGE_CODE}}';
+var search_type = '{{search_type}}';
+var model_view = 'annotatedsentence';
+var search_results_url = '{% url 'dictionary:annotatedsentence_ajax_search_results' %}';
+
+{% include "dictionary/search_result_bar.html" %}
+$(document).ready(function() {
+    const video = document.getElementById('sentence-video');
+    const glosses = document.querySelectorAll('#glossContainer span');
+    video.addEventListener('timeupdate', () => {
+        var currentTime = Math.floor(video.currentTime);
+        for (var gloss of glosses) {
+            var start = parseInt(gloss.getAttribute('data-start'));
+            var end = parseInt(gloss.getAttribute('data-end'));
+            if (currentTime >= start && currentTime <= end) {
+                gloss.classList.add('highlight');
+            } else {
+                gloss.classList.remove('highlight');
+            }
+        }
+    });
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+<div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
+    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+    <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;margin-top:3px;">
+    </div>
+    {% endif %}
+</div>
+
+<div style="padding-top:200px;overflow-y: auto;">
+    {% get_obj_perms request.user for dataset as "dataset_perms" %}
+    {% if "change_dataset" in dataset_perms %}
+    <div class='pull-right' style="margin-right:15px;margin-top:10px;">
+         <a class="btn btn-primary" href="{% url 'dictionary:edit_annotated_sentence' glossid=first_gloss.id annotatedsentenceid=annotatedsentence.id %}">{% trans "Edit" %}</a>
+    </div>
+    {% endif %}
+
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
+        <h3>{% trans "Annotated Sentence" %}</h3>
+        <br>
+        <table class="table table-responsive">
+            <caption class="text-left" style="padding-bottom:20px;">{% trans "Annotated Glosses" %}</caption>
+            {% for dataset_lang in dataset_languages %}
+            <tr>
+                <td>{{dataset_lang.name}}</td>
+            {% for annotatedgloss in annotatedglosses %}
+            {% with annotatedgloss.gloss as gloss %}
+            {% with gloss|get_annotation_idgloss_translation_no_default:dataset_lang as annotationidglosstranslation %}
+                <td style="white-space:nowrap;"><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{{annotationidglosstranslation}}</a></td>
+            {% endwith %}
+            {% endwith %}
+            {% endfor %}
+            </tr>
+            {% endfor %}
+            <tr>
+            <td>{% trans "Start Time" %}</td>
+            {% for annotatedgloss in annotatedglosses %}
+                <td>{{annotatedgloss.starttime}}</td>
+            {% endfor %}
+            </tr>
+            <tr>
+            <td>{% trans "Representative" %}</td>
+            {% for annotatedgloss in annotatedglosses %}
+                <td>{% if annotatedgloss.isRepresentative %}
+                    <span style="color:green;font-size:20px;">&#x2713;</span>{% endif %}
+                </td>
+            {% endfor %}
+            </tr>
+        </table>
+
+        <br>
+        <table class="table table-responsive">
+            <caption class="text-left"
+                     style="padding-bottom:20px;">{% trans "Sentence Comprised of Representative Glosses" %}</caption>
+            {% for dataset_lang, sentence in abbreviated_sentence.items %}
+            <tr>
+                <td>{{dataset_lang.name}}</td><td>{{sentence}}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <br>
+        <table class="table">
+        {% for dataset_lang, sentence_text in sentencetranslations.items %}
+            <tr>
+                <td>{{dataset_lang.name}}</td>
+                <td>{{sentence_text}}</td>
+            </tr>
+        {% endfor %}
+        </table>
+
+        <br>
+        <div>
+            <video id="sentence-video" controls width="400px">
+                <source src="{{ protected_media_url }}/{{ annotatedsentence.annotatedvideo.videofile}}" type="video/mp4">
+            </video>
+
+            <br><br><h3>{% trans "Glosses" %}</h3><br>
+            <div id="glossContainer">
+                {% for annotated_gloss in annotatedglosses %}
+                    <span class="annotated-gloss" data-start="{{ annotated_gloss.get_start }}" data-end="{{ annotated_gloss.get_end }}">
+                        <a href="{{ PREFIX_URL }}/dictionary/gloss/{{ annotated_gloss.gloss.id }}">{{ annotated_gloss.show_annotationidglosstranslation }}</a>
+                    </span>
+                {% endfor %}
+            </div><br>
+
+        <br><br>
+        </div>
+</div>
+
+{% endblock %}

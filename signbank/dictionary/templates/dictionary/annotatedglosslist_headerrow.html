@@ -1,0 +1,39 @@
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load bootstrap3 %}
+{% load tagging_tags %}
+{% load wrong_sign %}
+
+    <tr>
+        <th class="field_hasvideo" style="border-bottom: 1px solid grey; white-space:nowrap;"></th>
+
+        {% trans "Annotation ID Gloss" as annotation_header %}
+        <th class="annotations_multicolumn" colspan="{{width_gloss_columns}}"
+            style="border-bottom: 1px solid grey; white-space:nowrap;">{{ annotation_header }}</th>
+
+          {% for fieldname,column in column_headers %}
+            <th class="field_{{fieldname}}" style="border-bottom: 1px solid grey; white-space:nowrap;"></th>
+          {% endfor %}
+
+      </tr>
+      <tr>
+
+          <th class="field_hasvideo" style="border-bottom: 1px solid grey; white-space:nowrap;"></th>
+
+           {% for dataset_lang in dataset_languages %}
+          <th class="annotation_{{dataset_lang.language_code_2char}}" id="annotation_{{dataset_lang.language_code_2char}}"
+              style="vertical-align:top; border-bottom: 1px solid grey;">{% if SHOW_DATASET_INTERFACE_OPTIONS %}
+              <div>{{ dataset_lang.name }}</div>
+              {% endif %}
+          </th>
+          {% endfor %}
+
+          {% for fieldname,column in column_headers %}
+            <th class="field_{{fieldname}}" id="field_{{fieldname}}"
+                style="vertical-align:top; border-bottom: 1px solid grey; white-space:nowrap;">
+                <div>{{column}}</div>
+            </th>
+          {% endfor %}
+
+      </tr>

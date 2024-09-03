@@ -105,9 +105,9 @@ function do_sort_column(field_name, action, frmName) {
 
 <div id="definitionblock">
     
-    <form name='adminsearch' id='adminsearch' method='get' action='{{PREFIX_URL}}/dictionary/annotatedsentence/'>
-    <div class="panel panel-default">
-        <div class="panel-heading" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
+    <form name='adminsearch' id='adminsearch' class="search-form search-form-light" method='get' action='{{PREFIX_URL}}/dictionary/annotatedsentence/'>
+    <div class="panel panel-default panel-light">
+        <div class="panel-heading panel-light" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
                 {% if USE_REGULAR_EXPRESSIONS %}
                 <span class="hasTooltip">
                     <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
@@ -118,24 +118,24 @@ function do_sort_column(field_name, action, frmName) {
         </div>
     
         <div id='query-area' class='collapse {% if request.GET|length == 0 %} in {% endif %}'>
-            <div id='searchformwell' class='well search-results-collapsable'>
+            <div id='searchformwell' class='well well-light search-results-collapsable'>
                 <div class="hidden">
                     <input name='sortOrder' class='form-control' value='{{ sort_order }}' type='hidden'>
                 </div>
                 <div>
-                    <table class='table' id='searchfields'>
+                    <table class='table table-condensed table-condensed-light' id='searchfields' style="width:65%;">
                         {% for dataset_lang in dataset_languages %}
                         <tr>
                             {% with searchform|get_annotatedsentence_form_field_for_language:dataset_lang as annotatedsentence_field %}
-                            <td>
-                                <div class='input-group'>
+                            <td class='td td-light'>
+                                <div class='input-group input-group-light'>
                                     <label class='input-group-addon' for='id_annotatedsentence_{{ dataset_lang.language_code_2char }}'>
                                         {{annotatedsentence_field.label}}
                                     </label>
                                     <input name='annotatedsentence_{{dataset_lang.language_code_2char}}' 
                                             id='id_annotatedsentence_{{dataset_lang.language_code_2char}}' 
                                             type='text' 
-                                            class='form-control'>
+                                            class='form-control form-control-light'>
                                 </div>
                             </td>
                             {% endwith %}
@@ -143,8 +143,8 @@ function do_sort_column(field_name, action, frmName) {
                         {% endfor %}
 
                         <tr id="annotatedsentence_with_no_glosses">
-                            <td>
-                                <div class='input-group'>
+                            <td class='td td-light'>
+                                <div class='input-group input-group-light'>
                                 <label class='input-group-addon' name='no_glosses' for='id_no_glosses'>{{searchform.no_glosses.label}}</label>
                                     {{searchform.no_glosses}}
                                 </div>
@@ -152,8 +152,8 @@ function do_sort_column(field_name, action, frmName) {
                             </tr>
 
                             <tr id="annotatedsentence_with_glosses">
-                            <td>
-                                <div class='input-group'>
+                            <td class='td td-light'>
+                                <div class='input-group input-group-light'>
                                 <label class='input-group-addon' name='has_glosses' for='id_has_glosses'>{{searchform.has_glosses.label}}</label>
                                     {{searchform.has_glosses}}
                                 </div>
@@ -173,13 +173,13 @@ function do_sort_column(field_name, action, frmName) {
                 value='annotatedsentence'>{% trans "Search Annotated Sentence" %}
         </button>
         <input type='hidden' id='do_annotatedsentence_search' name='search_annotatedsentence' value="">
-        <button class='btn btn-default' type='submit'
+        <button class='btn btn-default btn-default-light' type='submit'
                 id='show_all_annotatedsentences_button'
                 onclick="do_show_all(this);"
                 value='annotatedsentence'>{% trans "Show All" %}
         </button>
         <input type='hidden' id='show_all_annotatedsentences' name='show_all_annotatedsentences' value="">
-        <input class='btn btn-default' type='submit' onclick="clearForm();"
+        <input class='btn btn-default btn-default-light' type='submit' onclick="clearForm();"
                 value='{% trans "Reset" %}'>
         <input type='hidden' id="reset" name="reset" value="">
     </div>

@@ -2044,12 +2044,21 @@ def get_value_for_ecv(gloss, fieldname):
 
 def construct_scrollbar(qs, search_type, language_code):
     items = []
-    if search_type in ['sign', 'sign_or_morpheme', 'morpheme', 'sign_handshape']:
+    if search_type in ['sign', 'sign_or_morpheme', 'morpheme', 'sign_handshape', 'annotatedsentence']:
         for item in qs:
             if item.is_morpheme():
-                item_is_morpheme = 'morpheme'
+                href_type = 'morpheme'
+            elif item.is_annotatedgloss():
+                sentence = AnnotatedSentenceTranslation.objects.filter(annotatedsentence=item.annotatedsentence).first()
+                sentence_words = sentence.text.split()
+                sentence_prefix = ' '.join(sentence_words[:5]) if sentence else ''
+                data_label = str(item.gloss.idgloss) + ' (' + str(item.annotatedsentence.id) + '. ' + sentence_prefix + '...)'
+                items.append(dict(id=str(item.annotatedsentence.id), glossid=str(item.gloss.id),
+                                  data_label=data_label, gloss_label=str(item.gloss.idgloss),
+                                  href_type='annotatedsentence'))
+                continue
             else:
-                item_is_morpheme = 'gloss'
+                href_type = 'gloss'
             annotationidglosstranslations = item.annotationidglosstranslation_set.filter(
                 language__language_code_2char__exact=language_code
             )
@@ -2057,11 +2066,11 @@ def construct_scrollbar(qs, search_type, language_code):
                 gloss_text = annotationidglosstranslations.first().text
                 if not gloss_text:
                     gloss_text = item.idgloss
-                items.append(dict(id=str(item.id), data_label=gloss_text, href_type=item_is_morpheme))
+                items.append(dict(id=str(item.id), data_label=gloss_text, href_type=href_type))
             else:
                 # no annotations found for gloss
                 # idgloss defaults to the id if nothing is found
-                items.append(dict(id=str(item.id), data_label=item.idgloss, href_type=item_is_morpheme))
+                items.append(dict(id=str(item.id), data_label=item.idgloss, href_type=href_type))
 
     elif search_type in ['handshape']:
         for item in qs:
@@ -2107,7 +2116,10 @@ def map_search_results_to_gloss_list(search_results):
         return [], []
     gloss_ids = []
     for search_result in search_results:
-        gloss_ids.append(search_result['id'])
+        if search_result['href_type'] == 'annotatedsentence':
+            gloss_ids.append(search_result['glossid'])
+        else:
+            gloss_ids.append(search_result['id'])
     return gloss_ids, Gloss.objects.filter(id__in=gloss_ids)
 
 
@@ -2117,7 +2129,7 @@ def get_interface_language_and_default_language_codes(request):
     if request.LANGUAGE_CODE in dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR).keys():
         interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[request.LANGUAGE_CODE]
     else:
-        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[settings.LANGUAGE_CODE]
+        interface_language_3char = dict(settings.LANGUAGES_LANGUAGE_CODE_3CHAR)[default_language_code]
     interface_language = Language.objects.get(language_code_3char=interface_language_3char)
     interface_language_code = interface_language.language_code_2char
 

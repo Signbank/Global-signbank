@@ -41,7 +41,7 @@
                         <button type="button" id="start-button" class="btn btn-primary" data-dismiss="modal">{% trans "Set" %}</button>
                     </td>
                     <td style="width:50%">
-                        End: <input type="text" id="end-point" name="end-ms" value="{{ annotated_sentence.annotatedvideo.get_end_ms }}" readonly>
+                        End: <input type="text" id="end-point" name="end-ms" value="{% if annotated_sentence.has_video %}{{ annotated_sentence.annotatedvideo.get_end_ms }}{% else %}0{% endif %}" readonly>
                         <button type="button" id="end-button" class="btn btn-primary" data-dismiss="modal">{% trans "Set" %}</button>
                     </td>
                 </tr>
