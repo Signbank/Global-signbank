@@ -7075,8 +7075,6 @@ class AnnotatedGlossListView(ListView):
         super().__init__(*args, **kwargs)
         fields_with_choices = fields_to_fieldcategory_dict(settings.GLOSS_CHOICE_FIELDS)
         set_up_fieldchoice_translations(self.search_form, fields_with_choices)
-        # sentence_fields_with_choices = {'sentenceType': 'SentenceType'}
-        # set_up_fieldchoice_translations(self.sentence_search_form, sentence_fields_with_choices)
 
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
@@ -7095,8 +7093,9 @@ class AnnotatedGlossListView(ListView):
         if not self.last_used_dataset:
             if 'last_used_dataset' in self.request.session.keys():
                 self.last_used_dataset = self.request.session['last_used_dataset']
-            else:
+            if not self.last_used_dataset:
                 self.last_used_dataset = context['selected_datasets'].first().acronym
+                self.request.session['last_used_dataset'] = self.last_used_dataset
 
         context['page_number'] = context['page_obj'].number
 
@@ -7147,6 +7146,9 @@ class AnnotatedGlossListView(ListView):
 
         if 'last_used_dataset' in self.request.session.keys():
             self.last_used_dataset = self.request.session['last_used_dataset']
+        if not self.last_used_dataset:
+            self.last_used_dataset = selected_datasets.first().acronym
+            self.request.session['last_used_dataset'] = self.last_used_dataset
 
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
@@ -7238,9 +7240,6 @@ class AnnotatedGlossListView(ListView):
 
         self.request.session['search_type'] = self.search_type
         self.request.session['web_search'] = self.web_search
-
-        if 'last_used_dataset' not in self.request.session.keys():
-            self.request.session['last_used_dataset'] = self.last_used_dataset
 
         # Allow the queryset to be grouped without duplicates
         by_glossid = qs.order_by('gloss__id', 'annotatedsentence__id')
