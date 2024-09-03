@@ -171,6 +171,8 @@ def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_co
         ordered = order_queryset_by_annotatedglosses(qs, sOrder)
     elif sOrder.startswith("nrannotatedglosses_order_") or sOrder.startswith("-nrannotatedglosses_order_"):
         ordered = order_queryset_by_nrannotatedglosses(qs, sOrder)
+    else:
+        ordered = qs
     
     if bReversed and bText:
         ordered.reverse()
