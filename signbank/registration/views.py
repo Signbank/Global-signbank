@@ -137,7 +137,7 @@ def register(request, success_url=settings.PREFIX_URL + '/accounts/register/comp
                     if dataset_obj.is_public:
 
                         # Give user access to view the database
-                        assign_perm('can_view_dataset', new_user, dataset_obj)
+                        assign_perm('view_dataset', new_user, dataset_obj)
 
                         for owner in owners_of_dataset:
 
@@ -314,7 +314,7 @@ def users_without_dataset(request):
                 continue
 
             user = User.objects.get(pk=int(user.split('_')[-1]))
-            assign_perm('can_view_dataset', user, main_dataset)
+            assign_perm('view_dataset', user, main_dataset)
 
             users_with_access.append(user.first_name + ' ' + user.last_name)
 
@@ -345,7 +345,7 @@ def user_profile(request):
     view_permit_datasets = []
     for dataset in Dataset.objects.all():
         permissions_for_dataset = get_user_perms(request.user, dataset)
-        if 'view_dataset' in permissions_for_dataset or 'can_view_dataset' in permissions_for_dataset:
+        if 'view_dataset' in permissions_for_dataset:
             view_permit_datasets.append(dataset)
     change_permit_datasets = []
     for dataset_user_can_view in view_permit_datasets:

@@ -3104,11 +3104,6 @@ class Dataset(models.Model):
 
     exclude_choices = models.ManyToManyField('FieldChoice', help_text="Exclude these field choices", blank=True)
 
-    class Meta:
-        permissions = (
-            ('can_view_dataset', _('View dataset')),
-        )
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -3193,7 +3188,7 @@ class Dataset(models.Model):
                                                        with_group_users=False)
         for user in all_users:
             if user in users_who_can_access_me.keys():
-                if 'can_view_dataset' in users_who_can_access_me[user] or 'view_dataset' in users_who_can_access_me[user]:
+                if 'view_dataset' in users_who_can_access_me[user]:
                     users_who_can_view_dataset.append(user)
 
         return users_who_can_view_dataset
