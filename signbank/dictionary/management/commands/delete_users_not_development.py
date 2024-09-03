@@ -1,25 +1,24 @@
-from django.core.mail import send_mail
-from django.core.management.base import BaseCommand, CommandError
-
-from signbank.settings import base
-from signbank.tools import get_users_without_dataset
-from signbank.dictionary.models import User
+from django.core.management.base import BaseCommand
+from signbank.dictionary.models import User, UserProfile
 
 class Command(BaseCommand):
-    help = 'Sends a list of all users without a dataset to an email addresss'
 
-    def add_arguments(self, parser):
-        parser.add_argument('address', type=str)
+    help = 'remove users except for development'
+    args = ''
 
     def handle(self, *args, **options):
 
-        users_without_dataset = User.objects.all()
-
-        if len(users_without_dataset) == 0:
+        all_users = User.objects.all().distinct()
+        if not all_users.count():
             return
 
-        for user in users_without_dataset:
-            if user.username not in ['susanodd', 'wessel', 'wesseltest',
-                                     'AnonymousUser', 'DivyaKanekal', 'jetske', 'jetsketest',
-                                     'micha', 'michatest']:
+        for user in all_users:
+
+            if user.username not in ['susanodd', 'wessel', 'AnonymousUser',
+                                     'DivyaKanekal', 'jetske',
+                                     'micha']:
+
+                userprofile = UserProfile.objects.filter(user=user)
+                if userprofile:
+                    userprofile.delete()
                 user.delete()
