@@ -2412,7 +2412,7 @@ textarea:focus {
                                     <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
                                 </video>                               
                             
-                                <br><br><i>Glosses</i><br>
+                                <br><br><i>{% trans "Glosses" %}</i><br>
                                 <div id="glossContainer_{{ forloop.counter }}">
                                     {% for annotated_gloss in annotated_sentence.annotated_glosses.all %}
                                         <span data-start="{{ annotated_gloss.get_start }}" data-end="{{ annotated_gloss.get_end }}">

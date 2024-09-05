@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-13 13:20+0200\n"
+"POT-Creation-Date: 2024-09-05 10:56+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -175,47 +175,47 @@ msgstr ""
 msgid "View Permission for Public Signs in Datasets"
 msgstr ""
 
-#: signbank/registration/templates/user_profile.html:77
+#: signbank/registration/templates/user_profile.html:78
 msgid "Selected Datasets"
 msgstr ""
 
-#: signbank/registration/templates/user_profile.html:78
+#: signbank/registration/templates/user_profile.html:79
 msgid "View Permission"
 msgstr ""
 
-#: signbank/registration/templates/user_profile.html:79
+#: signbank/registration/templates/user_profile.html:80
 msgid "Change Permission"
 msgstr ""
 
-#: signbank/registration/templates/user_profile.html:87
+#: signbank/registration/templates/user_profile.html:90
 msgid "days remaining"
 msgstr ""
 
-#: signbank/registration/templates/user_profile.html:117
+#: signbank/registration/templates/user_profile.html:121
 msgid "Extend Expiry"
 msgstr ""
 
-#: signbank/registration/templates/user_profile.html:125
+#: signbank/registration/templates/user_profile.html:130
 msgid "Affiliation"
 msgstr "Affiliatie"
 
-#: signbank/registration/templates/user_profile.html:132
+#: signbank/registration/templates/user_profile.html:144
 msgid "Signbank API Tokens"
 msgstr "Signbank API-tokens"
 
-#: signbank/registration/templates/user_profile.html:135
+#: signbank/registration/templates/user_profile.html:149
 msgid "A Signbank API Token was created on"
 msgstr "Een Signbank API-token is aangemaakt op"
 
-#: signbank/registration/templates/user_profile.html:145
+#: signbank/registration/templates/user_profile.html:159
 msgid "Generate Signbank API Token"
 msgstr "Maak een Signbank API-token aan"
 
-#: signbank/registration/templates/user_profile.html:158
+#: signbank/registration/templates/user_profile.html:176
 msgid "Recently Saved Queries"
 msgstr "Bewaarde zoekopdrachten"
 
-#: signbank/registration/templates/user_profile.html:161
+#: signbank/registration/templates/user_profile.html:181
 msgid "Search History"
 msgstr "Zoek-geschiedenis"
 
