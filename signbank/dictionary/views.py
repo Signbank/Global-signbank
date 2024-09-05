@@ -35,7 +35,7 @@ from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value, \
     check_value_to_translated_human_value
 
-import signbank.settings
+import signbank.settings.server_specific
 from signbank.settings.base import *
 from django.utils.translation import override, gettext_lazy as _
 

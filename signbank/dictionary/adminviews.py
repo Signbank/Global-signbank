@@ -4267,6 +4267,7 @@ class DatasetManagerView(ListView):
                     try:
                         # also need to remove change_dataset perm in this case
                         from guardian.shortcuts import remove_perm
+                        remove_perm('view_dataset', user_object, dataset_object)
                         remove_perm('change_dataset', user_object, dataset_object)
                         messages.add_message(self.request, messages.INFO,
                                              _('View (and change) permission for user successfully revoked.'))
