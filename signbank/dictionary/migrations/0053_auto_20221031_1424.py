@@ -16,9 +16,12 @@ def copy_semanticfield_names_to_translations(apps, schema_editor):
     SemanticField = apps.get_model('dictionary', 'SemanticField')
     SemanticFieldTranslation = apps.get_model('dictionary', 'SemanticFieldTranslation')
     Language = apps.get_model('dictionary', 'Language')
-    translation_language_eng = Language.objects.get(language_code_3char='eng')
-    translation_language_nld = Language.objects.get(language_code_3char='nld')
-    translation_language_zho = Language.objects.get(language_code_3char='zho')
+    translation_language_eng, created = Language.objects.get_or_create(language_code_3char='eng', name='English',
+                                                                       name_en='English', name_nl='Engels', name_zh_hans='English')
+    translation_language_nld, created = Language.objects.get_or_create(language_code_3char='nld', name='Dutch',
+                                                                       name_en='Dutch', name_nl='Nederlands', name_zh_hans='Dutch')
+    translation_language_zho, created = Language.objects.get_or_create(language_code_3char='zho', name='Chinese',
+                                                                       name_en='Chinese', name_nl='Chinees', name_zh_hans='Chinese')
     semanticfields = SemanticField.objects.filter(machine_value__gt=1)
     for semfield in semanticfields:
         translations_for_semfield = [sft.language for sft in SemanticFieldTranslation.objects.filter(semField=semfield)]
@@ -51,9 +54,12 @@ def copy_derivationhistory_names_to_translations(apps, schema_editor):
     DerivationHistory = apps.get_model('dictionary', 'DerivationHistory')
     DerivationHistoryTranslation = apps.get_model('dictionary', 'DerivationHistoryTranslation')
     Language = apps.get_model('dictionary', 'Language')
-    translation_language_eng = Language.objects.get(language_code_3char='eng')
-    translation_language_nld = Language.objects.get(language_code_3char='nld')
-    translation_language_zho = Language.objects.get(language_code_3char='zho')
+    translation_language_eng, created = Language.objects.get_or_create(language_code_3char='eng', name='English',
+                                                                       name_en='English', name_nl='Engels', name_zh_hans='English')
+    translation_language_nld, created = Language.objects.get_or_create(language_code_3char='nld', name='Dutch',
+                                                                       name_en='Dutch', name_nl='Nederlands', name_zh_hans='Dutch')
+    translation_language_zho, created = Language.objects.get_or_create(language_code_3char='zho', name='Chinese',
+                                                                       name_en='Chinese', name_nl='Chinees', name_zh_hans='Chinese')
     derivationhistories = DerivationHistory.objects.all()
     for derivhist in derivationhistories:
         translations_for_derivhist = [dht.language for dht in DerivationHistoryTranslation.objects.filter(derivHist=derivhist)]

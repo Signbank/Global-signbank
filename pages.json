@@ -1,0 +1,797 @@
+[
+  {
+    "model": "pages.page",
+    "pk": 1,
+    "fields": {
+      "url": "/feedback/",
+      "title": "Feedback",
+      "title_en": "Feedback",
+      "title_nl": "Feedback",
+      "title_zh_hans": "反馈",
+      "template_name": "",
+      "publish": true,
+      "parent": null,
+      "index": 1
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 2,
+    "fields": {
+      "url": "/feedback/site/",
+      "title": "Site Feedback",
+      "title_en": "Site Feedback",
+      "title_nl": "Site feedback",
+      "title_zh_hans": "建议和意见",
+      "template_name": "",
+      "publish": true,
+      "parent": 1,
+      "index": 1
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 3,
+    "fields": {
+      "url": "/feedback/missing/",
+      "title": "Report a Missing Sign",
+      "title_en": "Report a Missing Sign",
+      "title_nl": "Meld een ontbrekend gebaar",
+      "title_zh_hans": "报告缺少的手势",
+      "template_name": "",
+      "publish": true,
+      "parent": 1,
+      "index": 2
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 5,
+    "fields": {
+      "url": "/about/handshapes/",
+      "title": "Phonology: Handshapes",
+      "title_en": "Phonology: Handshapes",
+      "title_nl": "Fonologie: handvormen",
+      "title_zh_hans": "Phonology: Handshapes",
+      "template_name": "",
+      "publish": false,
+      "parent": 7,
+      "index": 3
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 6,
+    "fields": {
+      "url": "/",
+      "title": "Home",
+      "title_en": "Home",
+      "title_nl": "Home",
+      "title_zh_hans": "首页",
+      "template_name": "",
+      "publish": true,
+      "parent": null,
+      "index": -5
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 7,
+    "fields": {
+      "url": "/about/",
+      "title": "About",
+      "title_en": "About",
+      "title_nl": "Over",
+      "title_zh_hans": "关于",
+      "template_name": "",
+      "publish": true,
+      "parent": null,
+      "index": 0
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 8,
+    "fields": {
+      "url": "/about/copyright/",
+      "title": "Copyright",
+      "title_en": "Copyright",
+      "title_nl": "Copyright",
+      "title_zh_hans": "版权声明",
+      "template_name": "",
+      "publish": true,
+      "parent": 7,
+      "index": 0
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 9,
+    "fields": {
+      "url": "/about/manual/",
+      "title": "Manual",
+      "title_en": "Manual",
+      "title_nl": "Handleiding",
+      "title_zh_hans": "操作指南",
+      "template_name": "",
+      "publish": true,
+      "parent": 7,
+      "index": 1
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 10,
+    "fields": {
+      "url": "/about/guidelines/",
+      "title": "Guidelines For Adding Signs",
+      "title_en": "Guidelines For Adding Signs",
+      "title_nl": "Richtlijnen voor toevoegen gebaren",
+      "title_zh_hans": "创建新手势须知",
+      "template_name": "",
+      "publish": true,
+      "parent": 7,
+      "index": 2
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 12,
+    "fields": {
+      "url": "/about/locations/",
+      "title": "Phonology: Locations",
+      "title_en": "Phonology: Locations",
+      "title_nl": "Fonologie: locaties",
+      "title_zh_hans": "Phonology: Locations",
+      "template_name": "",
+      "publish": false,
+      "parent": 7,
+      "index": 5
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 13,
+    "fields": {
+      "url": "/signs/",
+      "title": "Signs",
+      "title_en": "Signs",
+      "title_nl": "Gebaren",
+      "title_zh_hans": "手势",
+      "template_name": "",
+      "publish": true,
+      "parent": null,
+      "index": -2
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 14,
+    "fields": {
+      "url": "/signs/search/",
+      "title": "Search",
+      "title_en": "Search",
+      "title_nl": "Zoeken",
+      "title_zh_hans": "搜索",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 1
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 15,
+    "fields": {
+      "url": "/signs/add/",
+      "title": "Add New Sign",
+      "title_en": "Add New Sign",
+      "title_nl": "Voeg nieuw gebaar toe",
+      "title_zh_hans": "添加新手势",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 8
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 16,
+    "fields": {
+      "url": "/analysis/homonyms/",
+      "title": "Homonym List",
+      "title_en": "Homonym List",
+      "title_nl": "Homoniemenlijst",
+      "title_zh_hans": "同形异义词表",
+      "template_name": "",
+      "publish": true,
+      "parent": 35,
+      "index": 1
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 17,
+    "fields": {
+      "url": "/signs/dictionary/",
+      "title": "Dictionary View",
+      "title_en": "Dictionary View",
+      "title_nl": "Woordenboek",
+      "title_zh_hans": "词典浏览",
+      "template_name": "",
+      "publish": false,
+      "parent": 13,
+      "index": 0
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 18,
+    "fields": {
+      "url": "/about/handshapechanges/",
+      "title": "Phonology: Handshape Changes",
+      "title_en": "Phonology: Handshape Changes",
+      "title_nl": "Fonologie: handvormveranderingen",
+      "title_zh_hans": "Phonology: Handshape changes",
+      "template_name": "",
+      "publish": false,
+      "parent": 7,
+      "index": 4
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 19,
+    "fields": {
+      "url": "/feedback/overview",
+      "title": "Feedback Overview",
+      "title_en": "Feedback Overview",
+      "title_nl": "Feedbackoverzicht",
+      "title_zh_hans": "反馈记录",
+      "template_name": "",
+      "publish": true,
+      "parent": 1,
+      "index": 8
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 21,
+    "fields": {
+      "url": "/signs/recently_added/",
+      "title": "Recently Added Signs",
+      "title_en": "Recently Added Signs",
+      "title_nl": "Recentelijk toegevoegde gebaren",
+      "title_zh_hans": "最近添加",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 9
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 22,
+    "fields": {
+      "url": "/morphemes/add/",
+      "title": "Add New Morpheme",
+      "title_en": "Add New Morpheme",
+      "title_nl": "Voeg nieuw morfeem toe",
+      "title_zh_hans": "添加新语素",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 8
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 23,
+    "fields": {
+      "url": "/morphemes/search/",
+      "title": "Search Morpheme",
+      "title_en": "Search Morpheme",
+      "title_nl": "Zoek morfeem",
+      "title_zh_hans": "搜索语素",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 2
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 24,
+    "fields": {
+      "url": "/signs/show_all/",
+      "title": "Show All Signs",
+      "title_en": "Show All Signs",
+      "title_nl": "Toon alle gebaren",
+      "title_zh_hans": "Show all signs",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 5
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 27,
+    "fields": {
+      "url": "/datasets",
+      "title": "Datasets",
+      "title_en": "Datasets",
+      "title_nl": "Datasets",
+      "title_zh_hans": "数据集",
+      "template_name": "",
+      "publish": true,
+      "parent": null,
+      "index": -3
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 28,
+    "fields": {
+      "url": "/datasets/available",
+      "title": "View Available Datasets",
+      "title_en": "View Available Datasets",
+      "title_nl": "Beschikbare datasets",
+      "title_zh_hans": "查看可用数据集",
+      "template_name": "",
+      "publish": true,
+      "parent": 27,
+      "index": 1
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 29,
+    "fields": {
+      "url": "/datasets/select",
+      "title": "Select Datasets",
+      "title_en": "Select Datasets",
+      "title_nl": "Selecteer datasets",
+      "title_zh_hans": "选择数据集",
+      "template_name": "",
+      "publish": true,
+      "parent": 27,
+      "index": 2
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 30,
+    "fields": {
+      "url": "/signs/search_handshape/",
+      "title": "Search Handshape",
+      "title_en": "Search Handshape",
+      "title_nl": "Zoek handvorm",
+      "title_zh_hans": "搜索手型",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 3
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 32,
+    "fields": {
+      "url": "/datasets/manager",
+      "title": "Manage Datasets",
+      "title_en": "Manage Datasets",
+      "title_nl": "Datasets beheren",
+      "title_zh_hans": "管理数据集",
+      "template_name": "",
+      "publish": true,
+      "parent": 27,
+      "index": 3
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 33,
+    "fields": {
+      "url": "/about/conditions/",
+      "title": "Conditions of Use",
+      "title_en": "Conditions of Use",
+      "title_nl": "Voorwaarden voor gebruik",
+      "title_zh_hans": "Conditions of use",
+      "template_name": "",
+      "publish": true,
+      "parent": 7,
+      "index": 4
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 34,
+    "fields": {
+      "url": "/analysis/minimalpairs/",
+      "title": "Minimal Pairs List",
+      "title_en": "Minimal Pairs List",
+      "title_nl": "Minimale paren",
+      "title_zh_hans": "",
+      "template_name": "",
+      "publish": true,
+      "parent": 35,
+      "index": 2
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 35,
+    "fields": {
+      "url": "/analysis/",
+      "title": "Analysis",
+      "title_en": "Analysis",
+      "title_nl": "Analyse",
+      "title_zh_hans": "Analysis",
+      "template_name": "",
+      "publish": true,
+      "parent": null,
+      "index": -1
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 36,
+    "fields": {
+      "url": "/analysis/frequencies/",
+      "title": "Frequencies",
+      "title_en": "Frequencies",
+      "title_nl": "Frequenties",
+      "title_zh_hans": "Frequencies",
+      "template_name": "",
+      "publish": true,
+      "parent": 35,
+      "index": 3
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 37,
+    "fields": {
+      "url": "/signs/import_csv_update/",
+      "title": "Import CSV Update Glosses",
+      "title_en": "Import CSV Update Glosses",
+      "title_nl": "Import CSV Update Glosses",
+      "title_zh_hans": "从CSV导入",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 15
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 38,
+    "fields": {
+      "url": "/signs/import_csv_create/",
+      "title": "Import CSV Create New Glosses",
+      "title_en": "Import CSV Create New Glosses",
+      "title_nl": "Importeer CSV: Maak glossen aan",
+      "title_zh_hans": "Import CSV Create New Glosses",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 14
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 39,
+    "fields": {
+      "url": "/dictionary/lemma/",
+      "title": "Search Lemmas",
+      "title_en": "Search Lemmas",
+      "title_nl": "Zoek lemma's",
+      "title_zh_hans": "Search Lemmas",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 2
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 40,
+    "fields": {
+      "url": "/about/acknowledgments/",
+      "title": "Acknowledgments",
+      "title_en": "Acknowledgments",
+      "title_nl": "Subsidiegevers",
+      "title_zh_hans": "Acknowledgments",
+      "template_name": "",
+      "publish": true,
+      "parent": 7,
+      "index": 5
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 41,
+    "fields": {
+      "url": "/signs/import_csv_lemmas/",
+      "title": "Import CSV Update Lemmas",
+      "title_en": "Import CSV Update Lemmas",
+      "title_nl": "Import CSV Update Lemmas",
+      "title_zh_hans": "Import CSV Update Lemmas",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 13
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 42,
+    "fields": {
+      "url": "/morphemes/show_all/",
+      "title": "Show All Morphemes",
+      "title_en": "Show All Morphemes",
+      "title_nl": "Toon alle morfemen",
+      "title_zh_hans": "Show All Morphemes",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 6
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 43,
+    "fields": {
+      "url": "/handshapes/show_all/",
+      "title": "Show All Handshapes",
+      "title_en": "Show All Handshapes",
+      "title_nl": "Toon alle handvormen",
+      "title_zh_hans": "Show All Handshapes",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 7
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 45,
+    "fields": {
+      "url": "/settings/",
+      "title": "Settings",
+      "title_en": "Settings",
+      "title_nl": "Instellingen",
+      "title_zh_hans": "Settings",
+      "template_name": "",
+      "publish": true,
+      "parent": null,
+      "index": 2
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 46,
+    "fields": {
+      "url": "/settings/field_colors/",
+      "title": "Manage Field Choice Colors",
+      "title_en": "Manage Field Choice Colors",
+      "title_nl": "Beheer veldkeuze kleuren",
+      "title_zh_hans": "Manage Field Choice Colors",
+      "template_name": "",
+      "publish": true,
+      "parent": 45,
+      "index": 0
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 47,
+    "fields": {
+      "url": "/settings/glosslist_colors/",
+      "title": "Preview Gloss Colors Search",
+      "title_en": "Preview Gloss Colors Search",
+      "title_nl": "Preview Gloss Colors Search",
+      "title_zh_hans": "Preview Gloss Colors Search",
+      "template_name": "",
+      "publish": false,
+      "parent": 45,
+      "index": 2
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 48,
+    "fields": {
+      "url": "/settings/semanticfields/",
+      "title": "Semantic Fields",
+      "title_en": "Semantic Fields",
+      "title_nl": "Semantische velden",
+      "title_zh_hans": "Semantic Fields",
+      "template_name": "",
+      "publish": true,
+      "parent": 45,
+      "index": 3
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 49,
+    "fields": {
+      "url": "/settings/derivationhistory_list/",
+      "title": "Derivation Histories",
+      "title_en": "Derivation Histories",
+      "title_nl": "Derivatieachtergronden",
+      "title_zh_hans": "Derivation Histories",
+      "template_name": "",
+      "publish": true,
+      "parent": 45,
+      "index": 4
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 50,
+    "fields": {
+      "url": "/analysis/queries/",
+      "title": "Query View",
+      "title_en": "Query View",
+      "title_nl": "Querylijstweergave",
+      "title_zh_hans": "Query View",
+      "template_name": "",
+      "publish": true,
+      "parent": 35,
+      "index": 3
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 51,
+    "fields": {
+      "url": "/about/release/",
+      "title": "Release Notes",
+      "title_en": "Release Notes",
+      "title_nl": "Updates en wijzigingen",
+      "title_zh_hans": "Release Notes",
+      "template_name": "",
+      "publish": true,
+      "parent": 7,
+      "index": 6
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 52,
+    "fields": {
+      "url": "/analysis/search_history/",
+      "title": "Search History",
+      "title_en": "Search History",
+      "title_nl": "Zoek-geschiedenis",
+      "title_zh_hans": "Search History",
+      "template_name": "",
+      "publish": true,
+      "parent": 35,
+      "index": 5
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 53,
+    "fields": {
+      "url": "/datasets/show_glosses_with_no_lemma",
+      "title": "Show Signs Without Lemma",
+      "title_en": "Show Signs Without Lemma",
+      "title_nl": "Toon gebaren zonder lemma",
+      "title_zh_hans": "Show Signs Without Lemma",
+      "template_name": "",
+      "publish": true,
+      "parent": 27,
+      "index": 4
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 54,
+    "fields": {
+      "url": "/dictionary/keywords/",
+      "title": "Split Up Senses",
+      "title_en": "Split Up Senses",
+      "title_nl": "Koppel trefwoorden aan glos-betekenissen",
+      "title_zh_hans": "Split Up Senses",
+      "template_name": "",
+      "publish": true,
+      "parent": 35,
+      "index": 6
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 55,
+    "fields": {
+      "url": "/signs/import_csv_create_sentences/",
+      "title": "Import CSV Create Sentences",
+      "title_en": "Import CSV Create Sentences",
+      "title_nl": "Importeer CSV Zinnen creëren",
+      "title_zh_hans": "Import CSV Create Sentences",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 16
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 56,
+    "fields": {
+      "url": "/signs/senses/search/",
+      "title": "Search Senses",
+      "title_en": "Search Senses",
+      "title_nl": "Zoek betekenissen",
+      "title_zh_hans": "Search Senses",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 17
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 57,
+    "fields": {
+      "url": "/lemmas/show_all/",
+      "title": "Show All Lemmas",
+      "title_en": "Show All Lemmas",
+      "title_nl": "Toon alle lemmata",
+      "title_zh_hans": "Show All Lemmas",
+      "template_name": "",
+      "publish": true,
+      "parent": 13,
+      "index": 6
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 58,
+    "fields": {
+      "url": "/analysis/toggle_view/",
+      "title": "Annotation Toggle View",
+      "title_en": "Annotation Toggle View",
+      "title_nl": "Annotatie-schakelaars",
+      "title_zh_hans": "Annotation Toggle View",
+      "template_name": "",
+      "publish": true,
+      "parent": 35,
+      "index": 4
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 59,
+    "fields": {
+      "url": "/datasets/recent_feedback",
+      "title": "Dataset Feedback",
+      "title_en": "Dataset Feedback",
+      "title_nl": "Dataset Feedback",
+      "title_zh_hans": "Dataset Feedback",
+      "template_name": "",
+      "publish": true,
+      "parent": 27,
+      "index": 5
+    }
+  },
+  {
+    "model": "pages.page",
+    "pk": 60,
+    "fields": {
+      "url": "/analysis/batch_edit_view/",
+      "title": "Batch Edit",
+      "title_en": "Batch Edit",
+      "title_nl": "Batchbewerking",
+      "title_zh_hans": "Batch Edit",
+      "template_name": "",
+      "publish": true,
+      "parent": 35,
+      "index": 6
+    }
+  }
+]

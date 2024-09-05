@@ -1,0 +1,3305 @@
+[
+  {
+    "model": "auth.permission",
+    "pk": 1,
+    "fields": {
+      "name": "Can add permission",
+      "content_type": 1,
+      "codename": "add_permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 2,
+    "fields": {
+      "name": "Can change permission",
+      "content_type": 1,
+      "codename": "change_permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 3,
+    "fields": {
+      "name": "Can delete permission",
+      "content_type": 1,
+      "codename": "delete_permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 4,
+    "fields": {
+      "name": "Can add group",
+      "content_type": 2,
+      "codename": "add_group"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 5,
+    "fields": {
+      "name": "Can change group",
+      "content_type": 2,
+      "codename": "change_group"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 6,
+    "fields": {
+      "name": "Can delete group",
+      "content_type": 2,
+      "codename": "delete_group"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 7,
+    "fields": {
+      "name": "Can add user",
+      "content_type": 3,
+      "codename": "add_user"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 8,
+    "fields": {
+      "name": "Can change user",
+      "content_type": 3,
+      "codename": "change_user"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 9,
+    "fields": {
+      "name": "Can delete user",
+      "content_type": 3,
+      "codename": "delete_user"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 10,
+    "fields": {
+      "name": "Can add content type",
+      "content_type": 4,
+      "codename": "add_contenttype"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 11,
+    "fields": {
+      "name": "Can change content type",
+      "content_type": 4,
+      "codename": "change_contenttype"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 12,
+    "fields": {
+      "name": "Can delete content type",
+      "content_type": 4,
+      "codename": "delete_contenttype"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 13,
+    "fields": {
+      "name": "Can add session",
+      "content_type": 5,
+      "codename": "add_session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 14,
+    "fields": {
+      "name": "Can change session",
+      "content_type": 5,
+      "codename": "change_session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 15,
+    "fields": {
+      "name": "Can delete session",
+      "content_type": 5,
+      "codename": "delete_session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 16,
+    "fields": {
+      "name": "Can add site",
+      "content_type": 6,
+      "codename": "add_site"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 17,
+    "fields": {
+      "name": "Can change site",
+      "content_type": 6,
+      "codename": "change_site"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 18,
+    "fields": {
+      "name": "Can delete site",
+      "content_type": 6,
+      "codename": "delete_site"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 19,
+    "fields": {
+      "name": "Can add log entry",
+      "content_type": 7,
+      "codename": "add_logentry"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 20,
+    "fields": {
+      "name": "Can change log entry",
+      "content_type": 7,
+      "codename": "change_logentry"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 21,
+    "fields": {
+      "name": "Can delete log entry",
+      "content_type": 7,
+      "codename": "delete_logentry"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 22,
+    "fields": {
+      "name": "Can add attachment",
+      "content_type": 8,
+      "codename": "add_attachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 23,
+    "fields": {
+      "name": "Can change attachment",
+      "content_type": 8,
+      "codename": "change_attachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 24,
+    "fields": {
+      "name": "Can delete attachment",
+      "content_type": 8,
+      "codename": "delete_attachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 25,
+    "fields": {
+      "name": "Can add translation",
+      "content_type": 9,
+      "codename": "add_translation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 26,
+    "fields": {
+      "name": "Can change translation",
+      "content_type": 9,
+      "codename": "change_translation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 27,
+    "fields": {
+      "name": "Can delete translation",
+      "content_type": 9,
+      "codename": "delete_translation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 28,
+    "fields": {
+      "name": "Can add keyword",
+      "content_type": 10,
+      "codename": "add_keyword"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 29,
+    "fields": {
+      "name": "Can change keyword",
+      "content_type": 10,
+      "codename": "change_keyword"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 30,
+    "fields": {
+      "name": "Can delete keyword",
+      "content_type": 10,
+      "codename": "delete_keyword"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 31,
+    "fields": {
+      "name": "Can add definition",
+      "content_type": 11,
+      "codename": "add_definition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 32,
+    "fields": {
+      "name": "Can change definition",
+      "content_type": 11,
+      "codename": "change_definition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 33,
+    "fields": {
+      "name": "Can delete definition",
+      "content_type": 11,
+      "codename": "delete_definition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 34,
+    "fields": {
+      "name": "Can add language",
+      "content_type": 12,
+      "codename": "add_language"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 35,
+    "fields": {
+      "name": "Can change language",
+      "content_type": 12,
+      "codename": "change_language"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 36,
+    "fields": {
+      "name": "Can delete language",
+      "content_type": 12,
+      "codename": "delete_language"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 37,
+    "fields": {
+      "name": "Can add dialect",
+      "content_type": 13,
+      "codename": "add_dialect"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 38,
+    "fields": {
+      "name": "Can change dialect",
+      "content_type": 13,
+      "codename": "change_dialect"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 39,
+    "fields": {
+      "name": "Can delete dialect",
+      "content_type": 13,
+      "codename": "delete_dialect"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 40,
+    "fields": {
+      "name": "Can add relation to foreign sign",
+      "content_type": 14,
+      "codename": "add_relationtoforeignsign"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 41,
+    "fields": {
+      "name": "Can change relation to foreign sign",
+      "content_type": 14,
+      "codename": "change_relationtoforeignsign"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 42,
+    "fields": {
+      "name": "Can delete relation to foreign sign",
+      "content_type": 14,
+      "codename": "delete_relationtoforeignsign"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 43,
+    "fields": {
+      "name": "Can add gloss",
+      "content_type": 15,
+      "codename": "add_gloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 44,
+    "fields": {
+      "name": "Can change gloss",
+      "content_type": 15,
+      "codename": "change_gloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 45,
+    "fields": {
+      "name": "Can delete gloss",
+      "content_type": 15,
+      "codename": "delete_gloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 46,
+    "fields": {
+      "name": "Can Update Video",
+      "content_type": 15,
+      "codename": "update_video"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 47,
+    "fields": {
+      "name": "Can Search/View Full Gloss Details",
+      "content_type": 15,
+      "codename": "search_gloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 48,
+    "fields": {
+      "name": "Can export sign details as CSV",
+      "content_type": 15,
+      "codename": "export_csv"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 49,
+    "fields": {
+      "name": "Can publish signs and definitions",
+      "content_type": 15,
+      "codename": "can_publish"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 50,
+    "fields": {
+      "name": "Can delete unpub signs or defs",
+      "content_type": 15,
+      "codename": "can_delete_unpublished"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 51,
+    "fields": {
+      "name": "Can delete pub signs and defs",
+      "content_type": 15,
+      "codename": "can_delete_published"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 52,
+    "fields": {
+      "name": "Include all properties in sign detail view",
+      "content_type": 15,
+      "codename": "view_advanced_properties"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 53,
+    "fields": {
+      "name": "Can add relation",
+      "content_type": 16,
+      "codename": "add_relation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 54,
+    "fields": {
+      "name": "Can change relation",
+      "content_type": 16,
+      "codename": "change_relation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 55,
+    "fields": {
+      "name": "Can delete relation",
+      "content_type": 16,
+      "codename": "delete_relation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 56,
+    "fields": {
+      "name": "Can add interpreter feedback",
+      "content_type": 17,
+      "codename": "add_interpreterfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 57,
+    "fields": {
+      "name": "Can change interpreter feedback",
+      "content_type": 17,
+      "codename": "change_interpreterfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 58,
+    "fields": {
+      "name": "Can delete interpreter feedback",
+      "content_type": 17,
+      "codename": "delete_interpreterfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 59,
+    "fields": {
+      "name": "Can View Interpreter Feedback",
+      "content_type": 17,
+      "codename": "view_interpreterfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 60,
+    "fields": {
+      "name": "Can add general feedback",
+      "content_type": 18,
+      "codename": "add_generalfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 61,
+    "fields": {
+      "name": "Can change general feedback",
+      "content_type": 18,
+      "codename": "change_generalfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 62,
+    "fields": {
+      "name": "Can delete general feedback",
+      "content_type": 18,
+      "codename": "delete_generalfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 63,
+    "fields": {
+      "name": "Can add sign feedback",
+      "content_type": 19,
+      "codename": "add_signfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 64,
+    "fields": {
+      "name": "Can change sign feedback",
+      "content_type": 19,
+      "codename": "change_signfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 65,
+    "fields": {
+      "name": "Can delete sign feedback",
+      "content_type": 19,
+      "codename": "delete_signfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 66,
+    "fields": {
+      "name": "Can add missing sign feedback",
+      "content_type": 20,
+      "codename": "add_missingsignfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 67,
+    "fields": {
+      "name": "Can change missing sign feedback",
+      "content_type": 20,
+      "codename": "change_missingsignfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 68,
+    "fields": {
+      "name": "Can delete missing sign feedback",
+      "content_type": 20,
+      "codename": "delete_missingsignfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 69,
+    "fields": {
+      "name": "Can add registration profile",
+      "content_type": 21,
+      "codename": "add_registrationprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 70,
+    "fields": {
+      "name": "Can change registration profile",
+      "content_type": 21,
+      "codename": "change_registrationprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 71,
+    "fields": {
+      "name": "Can delete registration profile",
+      "content_type": 21,
+      "codename": "delete_registrationprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 72,
+    "fields": {
+      "name": "Can add user profile",
+      "content_type": 22,
+      "codename": "add_userprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 73,
+    "fields": {
+      "name": "Can change user profile",
+      "content_type": 22,
+      "codename": "change_userprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 74,
+    "fields": {
+      "name": "Can delete user profile",
+      "content_type": 22,
+      "codename": "delete_userprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 75,
+    "fields": {
+      "name": "Can add page",
+      "content_type": 23,
+      "codename": "add_page"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 76,
+    "fields": {
+      "name": "Can change page",
+      "content_type": 23,
+      "codename": "change_page"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 77,
+    "fields": {
+      "name": "Can delete page",
+      "content_type": 23,
+      "codename": "delete_page"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 78,
+    "fields": {
+      "name": "Can add page video",
+      "content_type": 24,
+      "codename": "add_pagevideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 79,
+    "fields": {
+      "name": "Can change page video",
+      "content_type": 24,
+      "codename": "change_pagevideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 80,
+    "fields": {
+      "name": "Can delete page video",
+      "content_type": 24,
+      "codename": "delete_pagevideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 81,
+    "fields": {
+      "name": "Can add attachment",
+      "content_type": 25,
+      "codename": "add_attachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 82,
+    "fields": {
+      "name": "Can change attachment",
+      "content_type": 25,
+      "codename": "change_attachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 83,
+    "fields": {
+      "name": "Can delete attachment",
+      "content_type": 25,
+      "codename": "delete_attachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 84,
+    "fields": {
+      "name": "Can add video",
+      "content_type": 26,
+      "codename": "add_video"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 85,
+    "fields": {
+      "name": "Can change video",
+      "content_type": 26,
+      "codename": "change_video"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 86,
+    "fields": {
+      "name": "Can delete video",
+      "content_type": 26,
+      "codename": "delete_video"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 87,
+    "fields": {
+      "name": "Can add gloss video",
+      "content_type": 27,
+      "codename": "add_glossvideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 88,
+    "fields": {
+      "name": "Can change gloss video",
+      "content_type": 27,
+      "codename": "change_glossvideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 89,
+    "fields": {
+      "name": "Can delete gloss video",
+      "content_type": 27,
+      "codename": "delete_glossvideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 90,
+    "fields": {
+      "name": "Can add migration history",
+      "content_type": 28,
+      "codename": "add_migrationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 91,
+    "fields": {
+      "name": "Can change migration history",
+      "content_type": 28,
+      "codename": "change_migrationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 92,
+    "fields": {
+      "name": "Can delete migration history",
+      "content_type": 28,
+      "codename": "delete_migrationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 93,
+    "fields": {
+      "name": "Can add revision",
+      "content_type": 29,
+      "codename": "add_revision"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 94,
+    "fields": {
+      "name": "Can change revision",
+      "content_type": 29,
+      "codename": "change_revision"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 95,
+    "fields": {
+      "name": "Can delete revision",
+      "content_type": 29,
+      "codename": "delete_revision"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 96,
+    "fields": {
+      "name": "Can add version",
+      "content_type": 30,
+      "codename": "add_version"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 97,
+    "fields": {
+      "name": "Can change version",
+      "content_type": 30,
+      "codename": "change_version"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 98,
+    "fields": {
+      "name": "Can delete version",
+      "content_type": 30,
+      "codename": "delete_version"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 99,
+    "fields": {
+      "name": "Can add tag",
+      "content_type": 31,
+      "codename": "add_tag"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 100,
+    "fields": {
+      "name": "Can change tag",
+      "content_type": 31,
+      "codename": "change_tag"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 101,
+    "fields": {
+      "name": "Can delete tag",
+      "content_type": 31,
+      "codename": "delete_tag"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 102,
+    "fields": {
+      "name": "Can add tagged item",
+      "content_type": 32,
+      "codename": "add_taggeditem"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 103,
+    "fields": {
+      "name": "Can change tagged item",
+      "content_type": 32,
+      "codename": "change_taggeditem"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 104,
+    "fields": {
+      "name": "Can delete tagged item",
+      "content_type": 32,
+      "codename": "delete_taggeditem"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 105,
+    "fields": {
+      "name": "Can add field choice",
+      "content_type": 33,
+      "codename": "add_fieldchoice"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 106,
+    "fields": {
+      "name": "Can change field choice",
+      "content_type": 33,
+      "codename": "change_fieldchoice"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 107,
+    "fields": {
+      "name": "Can delete field choice",
+      "content_type": 33,
+      "codename": "delete_fieldchoice"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 108,
+    "fields": {
+      "name": "Can add morphology definition",
+      "content_type": 34,
+      "codename": "add_morphologydefinition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 109,
+    "fields": {
+      "name": "Can change morphology definition",
+      "content_type": 34,
+      "codename": "change_morphologydefinition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 110,
+    "fields": {
+      "name": "Can delete morphology definition",
+      "content_type": 34,
+      "codename": "delete_morphologydefinition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 111,
+    "fields": {
+      "name": "Can create an ECV export file of Signbank",
+      "content_type": 15,
+      "codename": "export_ecv"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 112,
+    "fields": {
+      "name": "Can add user profile",
+      "content_type": 35,
+      "codename": "add_userprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 113,
+    "fields": {
+      "name": "Can change user profile",
+      "content_type": 35,
+      "codename": "change_userprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 114,
+    "fields": {
+      "name": "Can delete user profile",
+      "content_type": 35,
+      "codename": "delete_userprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 115,
+    "fields": {
+      "name": "Can add other video",
+      "content_type": 36,
+      "codename": "add_othervideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 116,
+    "fields": {
+      "name": "Can change other video",
+      "content_type": 36,
+      "codename": "change_othervideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 117,
+    "fields": {
+      "name": "Can delete other video",
+      "content_type": 36,
+      "codename": "delete_othervideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 118,
+    "fields": {
+      "name": "Can add gloss video history",
+      "content_type": 38,
+      "codename": "add_glossvideohistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 119,
+    "fields": {
+      "name": "Can change gloss video history",
+      "content_type": 38,
+      "codename": "change_glossvideohistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 120,
+    "fields": {
+      "name": "Can delete gloss video history",
+      "content_type": 38,
+      "codename": "delete_glossvideohistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 121,
+    "fields": {
+      "name": "Can add morpheme",
+      "content_type": 39,
+      "codename": "add_morpheme"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 122,
+    "fields": {
+      "name": "Can change morpheme",
+      "content_type": 39,
+      "codename": "change_morpheme"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 123,
+    "fields": {
+      "name": "Can delete morpheme",
+      "content_type": 39,
+      "codename": "delete_morpheme"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 124,
+    "fields": {
+      "name": "Can add other media",
+      "content_type": 37,
+      "codename": "add_othermedia"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 125,
+    "fields": {
+      "name": "Can change other media",
+      "content_type": 37,
+      "codename": "change_othermedia"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 126,
+    "fields": {
+      "name": "Can delete other media",
+      "content_type": 37,
+      "codename": "delete_othermedia"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 127,
+    "fields": {
+      "name": "Can add deleted gloss",
+      "content_type": 40,
+      "codename": "add_deletedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 128,
+    "fields": {
+      "name": "Can change deleted gloss",
+      "content_type": 40,
+      "codename": "change_deletedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 129,
+    "fields": {
+      "name": "Can delete deleted gloss",
+      "content_type": 40,
+      "codename": "delete_deletedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 130,
+    "fields": {
+      "name": "Can add deleted gloss or media",
+      "content_type": 41,
+      "codename": "add_deletedglossormedia"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 131,
+    "fields": {
+      "name": "Can change deleted gloss or media",
+      "content_type": 41,
+      "codename": "change_deletedglossormedia"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 132,
+    "fields": {
+      "name": "Can delete deleted gloss or media",
+      "content_type": 41,
+      "codename": "delete_deletedglossormedia"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 133,
+    "fields": {
+      "name": "Can add simultaneous morphology definition",
+      "content_type": 42,
+      "codename": "add_simultaneousmorphologydefinition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 134,
+    "fields": {
+      "name": "Can change simultaneous morphology definition",
+      "content_type": 42,
+      "codename": "change_simultaneousmorphologydefinition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 135,
+    "fields": {
+      "name": "Can delete simultaneous morphology definition",
+      "content_type": 42,
+      "codename": "delete_simultaneousmorphologydefinition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 136,
+    "fields": {
+      "name": "Can add sign language",
+      "content_type": 12,
+      "codename": "add_signlanguage"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 137,
+    "fields": {
+      "name": "Can change sign language",
+      "content_type": 12,
+      "codename": "change_signlanguage"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 138,
+    "fields": {
+      "name": "Can delete sign language",
+      "content_type": 12,
+      "codename": "delete_signlanguage"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 139,
+    "fields": {
+      "name": "Can add language",
+      "content_type": 43,
+      "codename": "add_language"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 140,
+    "fields": {
+      "name": "Can change language",
+      "content_type": 43,
+      "codename": "change_language"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 141,
+    "fields": {
+      "name": "Can delete language",
+      "content_type": 43,
+      "codename": "delete_language"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 142,
+    "fields": {
+      "name": "Can add user object permission",
+      "content_type": 44,
+      "codename": "add_userobjectpermission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 143,
+    "fields": {
+      "name": "Can change user object permission",
+      "content_type": 44,
+      "codename": "change_userobjectpermission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 144,
+    "fields": {
+      "name": "Can delete user object permission",
+      "content_type": 44,
+      "codename": "delete_userobjectpermission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 145,
+    "fields": {
+      "name": "Can add group object permission",
+      "content_type": 45,
+      "codename": "add_groupobjectpermission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 146,
+    "fields": {
+      "name": "Can change group object permission",
+      "content_type": 45,
+      "codename": "change_groupobjectpermission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 147,
+    "fields": {
+      "name": "Can delete group object permission",
+      "content_type": 45,
+      "codename": "delete_groupobjectpermission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 148,
+    "fields": {
+      "name": "Can add dataset",
+      "content_type": 46,
+      "codename": "add_dataset"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 149,
+    "fields": {
+      "name": "Can change dataset",
+      "content_type": 46,
+      "codename": "change_dataset"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 150,
+    "fields": {
+      "name": "Can delete dataset",
+      "content_type": 46,
+      "codename": "delete_dataset"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 151,
+    "fields": {
+      "name": "View dataset",
+      "content_type": 46,
+      "codename": "view_dataset"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 152,
+    "fields": {
+      "name": "Can add handshape",
+      "content_type": 47,
+      "codename": "add_handshape"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 153,
+    "fields": {
+      "name": "Can change handshape",
+      "content_type": 47,
+      "codename": "change_handshape"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 154,
+    "fields": {
+      "name": "Can delete handshape",
+      "content_type": 47,
+      "codename": "delete_handshape"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 155,
+    "fields": {
+      "name": "Can add blend morphology",
+      "content_type": 48,
+      "codename": "add_blendmorphology"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 156,
+    "fields": {
+      "name": "Can change blend morphology",
+      "content_type": 48,
+      "codename": "change_blendmorphology"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 157,
+    "fields": {
+      "name": "Can delete blend morphology",
+      "content_type": 48,
+      "codename": "delete_blendmorphology"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 158,
+    "fields": {
+      "name": "Can add annotation idgloss translation",
+      "content_type": 49,
+      "codename": "add_annotationidglosstranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 159,
+    "fields": {
+      "name": "Can change annotation idgloss translation",
+      "content_type": 49,
+      "codename": "change_annotationidglosstranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 160,
+    "fields": {
+      "name": "Can delete annotation idgloss translation",
+      "content_type": 49,
+      "codename": "delete_annotationidglosstranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 161,
+    "fields": {
+      "name": "Can add lemma idgloss",
+      "content_type": 50,
+      "codename": "add_lemmaidgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 162,
+    "fields": {
+      "name": "Can change lemma idgloss",
+      "content_type": 50,
+      "codename": "change_lemmaidgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 163,
+    "fields": {
+      "name": "Can delete lemma idgloss",
+      "content_type": 50,
+      "codename": "delete_lemmaidgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 164,
+    "fields": {
+      "name": "Can add lemma idgloss translation",
+      "content_type": 51,
+      "codename": "add_lemmaidglosstranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 165,
+    "fields": {
+      "name": "Can change lemma idgloss translation",
+      "content_type": 51,
+      "codename": "change_lemmaidglosstranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 166,
+    "fields": {
+      "name": "Can delete lemma idgloss translation",
+      "content_type": 51,
+      "codename": "delete_lemmaidglosstranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 167,
+    "fields": {
+      "name": "Can add gloss revision",
+      "content_type": 52,
+      "codename": "add_glossrevision"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 168,
+    "fields": {
+      "name": "Can change gloss revision",
+      "content_type": 52,
+      "codename": "change_glossrevision"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 169,
+    "fields": {
+      "name": "Can delete gloss revision",
+      "content_type": 52,
+      "codename": "delete_glossrevision"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 170,
+    "fields": {
+      "name": "Can add corpus",
+      "content_type": 53,
+      "codename": "add_corpus"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 171,
+    "fields": {
+      "name": "Can change corpus",
+      "content_type": 53,
+      "codename": "change_corpus"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 172,
+    "fields": {
+      "name": "Can delete corpus",
+      "content_type": 53,
+      "codename": "delete_corpus"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 173,
+    "fields": {
+      "name": "Can add document",
+      "content_type": 54,
+      "codename": "add_document"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 174,
+    "fields": {
+      "name": "Can change document",
+      "content_type": 54,
+      "codename": "change_document"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 175,
+    "fields": {
+      "name": "Can delete document",
+      "content_type": 54,
+      "codename": "delete_document"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 176,
+    "fields": {
+      "name": "Can add gloss frequency",
+      "content_type": 55,
+      "codename": "add_glossfrequency"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 177,
+    "fields": {
+      "name": "Can change gloss frequency",
+      "content_type": 55,
+      "codename": "change_glossfrequency"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 178,
+    "fields": {
+      "name": "Can delete gloss frequency",
+      "content_type": 55,
+      "codename": "delete_glossfrequency"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 179,
+    "fields": {
+      "name": "Can add speaker",
+      "content_type": 56,
+      "codename": "add_speaker"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 180,
+    "fields": {
+      "name": "Can change speaker",
+      "content_type": 56,
+      "codename": "change_speaker"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 181,
+    "fields": {
+      "name": "Can delete speaker",
+      "content_type": 56,
+      "codename": "delete_speaker"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 182,
+    "fields": {
+      "name": "Can add semantic field",
+      "content_type": 57,
+      "codename": "add_semanticfield"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 183,
+    "fields": {
+      "name": "Can change semantic field",
+      "content_type": 57,
+      "codename": "change_semanticfield"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 184,
+    "fields": {
+      "name": "Can delete semantic field",
+      "content_type": 57,
+      "codename": "delete_semanticfield"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 185,
+    "fields": {
+      "name": "Can add semantic field translation",
+      "content_type": 58,
+      "codename": "add_semanticfieldtranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 186,
+    "fields": {
+      "name": "Can change semantic field translation",
+      "content_type": 58,
+      "codename": "change_semanticfieldtranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 187,
+    "fields": {
+      "name": "Can delete semantic field translation",
+      "content_type": 58,
+      "codename": "delete_semanticfieldtranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 188,
+    "fields": {
+      "name": "Can add derivation history",
+      "content_type": 59,
+      "codename": "add_derivationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 189,
+    "fields": {
+      "name": "Can change derivation history",
+      "content_type": 59,
+      "codename": "change_derivationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 190,
+    "fields": {
+      "name": "Can delete derivation history",
+      "content_type": 59,
+      "codename": "delete_derivationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 191,
+    "fields": {
+      "name": "Can add derivation history translation",
+      "content_type": 60,
+      "codename": "add_derivationhistorytranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 192,
+    "fields": {
+      "name": "Can change derivation history translation",
+      "content_type": 60,
+      "codename": "change_derivationhistorytranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 193,
+    "fields": {
+      "name": "Can delete derivation history translation",
+      "content_type": 60,
+      "codename": "delete_derivationhistorytranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 194,
+    "fields": {
+      "name": "Can add morpheme feedback",
+      "content_type": 61,
+      "codename": "add_morphemefeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 195,
+    "fields": {
+      "name": "Can change morpheme feedback",
+      "content_type": 61,
+      "codename": "change_morphemefeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 196,
+    "fields": {
+      "name": "Can delete morpheme feedback",
+      "content_type": 61,
+      "codename": "delete_morphemefeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 197,
+    "fields": {
+      "name": "Can add query parameter",
+      "content_type": 62,
+      "codename": "add_queryparameter"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 198,
+    "fields": {
+      "name": "Can change query parameter",
+      "content_type": 62,
+      "codename": "change_queryparameter"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 199,
+    "fields": {
+      "name": "Can delete query parameter",
+      "content_type": 62,
+      "codename": "delete_queryparameter"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 200,
+    "fields": {
+      "name": "Can add search history",
+      "content_type": 63,
+      "codename": "add_searchhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 201,
+    "fields": {
+      "name": "Can change search history",
+      "content_type": 63,
+      "codename": "change_searchhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 202,
+    "fields": {
+      "name": "Can delete search history",
+      "content_type": 63,
+      "codename": "delete_searchhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 203,
+    "fields": {
+      "name": "Can add query parameter derivation history",
+      "content_type": 64,
+      "codename": "add_queryparameterderivationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 204,
+    "fields": {
+      "name": "Can change query parameter derivation history",
+      "content_type": 64,
+      "codename": "change_queryparameterderivationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 205,
+    "fields": {
+      "name": "Can delete query parameter derivation history",
+      "content_type": 64,
+      "codename": "delete_queryparameterderivationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 206,
+    "fields": {
+      "name": "Can add query parameter field choice",
+      "content_type": 65,
+      "codename": "add_queryparameterfieldchoice"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 207,
+    "fields": {
+      "name": "Can change query parameter field choice",
+      "content_type": 65,
+      "codename": "change_queryparameterfieldchoice"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 208,
+    "fields": {
+      "name": "Can delete query parameter field choice",
+      "content_type": 65,
+      "codename": "delete_queryparameterfieldchoice"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 209,
+    "fields": {
+      "name": "Can add query parameter handshape",
+      "content_type": 66,
+      "codename": "add_queryparameterhandshape"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 210,
+    "fields": {
+      "name": "Can change query parameter handshape",
+      "content_type": 66,
+      "codename": "change_queryparameterhandshape"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 211,
+    "fields": {
+      "name": "Can delete query parameter handshape",
+      "content_type": 66,
+      "codename": "delete_queryparameterhandshape"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 212,
+    "fields": {
+      "name": "Can add query parameter semantic field",
+      "content_type": 67,
+      "codename": "add_queryparametersemanticfield"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 213,
+    "fields": {
+      "name": "Can change query parameter semantic field",
+      "content_type": 67,
+      "codename": "change_queryparametersemanticfield"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 214,
+    "fields": {
+      "name": "Can delete query parameter semantic field",
+      "content_type": 67,
+      "codename": "delete_queryparametersemanticfield"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 215,
+    "fields": {
+      "name": "Can add query parameter boolean",
+      "content_type": 68,
+      "codename": "add_queryparameterboolean"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 216,
+    "fields": {
+      "name": "Can change query parameter boolean",
+      "content_type": 68,
+      "codename": "change_queryparameterboolean"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 217,
+    "fields": {
+      "name": "Can delete query parameter boolean",
+      "content_type": 68,
+      "codename": "delete_queryparameterboolean"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 218,
+    "fields": {
+      "name": "Can add query parameter multilingual",
+      "content_type": 69,
+      "codename": "add_queryparametermultilingual"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 219,
+    "fields": {
+      "name": "Can change query parameter multilingual",
+      "content_type": 69,
+      "codename": "change_queryparametermultilingual"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 220,
+    "fields": {
+      "name": "Can delete query parameter multilingual",
+      "content_type": 69,
+      "codename": "delete_queryparametermultilingual"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 221,
+    "fields": {
+      "name": "Can view permission",
+      "content_type": 1,
+      "codename": "view_permission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 222,
+    "fields": {
+      "name": "Can view group",
+      "content_type": 2,
+      "codename": "view_group"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 223,
+    "fields": {
+      "name": "Can view user",
+      "content_type": 3,
+      "codename": "view_user"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 224,
+    "fields": {
+      "name": "Can view content type",
+      "content_type": 4,
+      "codename": "view_contenttype"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 225,
+    "fields": {
+      "name": "Can view session",
+      "content_type": 5,
+      "codename": "view_session"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 226,
+    "fields": {
+      "name": "Can view site",
+      "content_type": 6,
+      "codename": "view_site"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 227,
+    "fields": {
+      "name": "Can view log entry",
+      "content_type": 7,
+      "codename": "view_logentry"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 228,
+    "fields": {
+      "name": "Can view attachment",
+      "content_type": 8,
+      "codename": "view_attachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 229,
+    "fields": {
+      "name": "Can view definition",
+      "content_type": 11,
+      "codename": "view_definition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 230,
+    "fields": {
+      "name": "Can view deleted gloss or media",
+      "content_type": 41,
+      "codename": "view_deletedglossormedia"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 231,
+    "fields": {
+      "name": "Can view dialect",
+      "content_type": 13,
+      "codename": "view_dialect"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 232,
+    "fields": {
+      "name": "Can view field choice",
+      "content_type": 33,
+      "codename": "view_fieldchoice"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 233,
+    "fields": {
+      "name": "Can view gloss",
+      "content_type": 15,
+      "codename": "view_gloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 234,
+    "fields": {
+      "name": "Can view keyword",
+      "content_type": 10,
+      "codename": "view_keyword"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 235,
+    "fields": {
+      "name": "Can view morphology definition",
+      "content_type": 34,
+      "codename": "view_morphologydefinition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 236,
+    "fields": {
+      "name": "Can view other media",
+      "content_type": 37,
+      "codename": "view_othermedia"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 237,
+    "fields": {
+      "name": "Can view relation",
+      "content_type": 16,
+      "codename": "view_relation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 238,
+    "fields": {
+      "name": "Can view relation to foreign sign",
+      "content_type": 14,
+      "codename": "view_relationtoforeignsign"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 239,
+    "fields": {
+      "name": "Can view translation",
+      "content_type": 9,
+      "codename": "view_translation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 240,
+    "fields": {
+      "name": "Can view user profile",
+      "content_type": 35,
+      "codename": "view_userprofile"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 241,
+    "fields": {
+      "name": "Can view morpheme",
+      "content_type": 39,
+      "codename": "view_morpheme"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 242,
+    "fields": {
+      "name": "Can view simultaneous morphology definition",
+      "content_type": 42,
+      "codename": "view_simultaneousmorphologydefinition"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 243,
+    "fields": {
+      "name": "Can view sign language",
+      "content_type": 12,
+      "codename": "view_signlanguage"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 244,
+    "fields": {
+      "name": "Can view language",
+      "content_type": 43,
+      "codename": "view_language"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 245,
+    "fields": {
+      "name": "Can view dataset",
+      "content_type": 46,
+      "codename": "can_view_dataset"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 246,
+    "fields": {
+      "name": "Can view handshape",
+      "content_type": 47,
+      "codename": "view_handshape"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 247,
+    "fields": {
+      "name": "Can view blend morphology",
+      "content_type": 48,
+      "codename": "view_blendmorphology"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 248,
+    "fields": {
+      "name": "Can view annotation idgloss translation",
+      "content_type": 49,
+      "codename": "view_annotationidglosstranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 249,
+    "fields": {
+      "name": "Can view lemma idgloss",
+      "content_type": 50,
+      "codename": "view_lemmaidgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 250,
+    "fields": {
+      "name": "Can view lemma idgloss translation",
+      "content_type": 51,
+      "codename": "view_lemmaidglosstranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 251,
+    "fields": {
+      "name": "Can view gloss revision",
+      "content_type": 52,
+      "codename": "view_glossrevision"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 252,
+    "fields": {
+      "name": "Can view corpus",
+      "content_type": 53,
+      "codename": "view_corpus"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 253,
+    "fields": {
+      "name": "Can view document",
+      "content_type": 54,
+      "codename": "view_document"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 254,
+    "fields": {
+      "name": "Can view gloss frequency",
+      "content_type": 55,
+      "codename": "view_glossfrequency"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 255,
+    "fields": {
+      "name": "Can view speaker",
+      "content_type": 56,
+      "codename": "view_speaker"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 256,
+    "fields": {
+      "name": "Can view semantic field",
+      "content_type": 57,
+      "codename": "view_semanticfield"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 257,
+    "fields": {
+      "name": "Can view semantic field translation",
+      "content_type": 58,
+      "codename": "view_semanticfieldtranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 258,
+    "fields": {
+      "name": "Can view derivation history",
+      "content_type": 59,
+      "codename": "view_derivationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 259,
+    "fields": {
+      "name": "Can view derivation history translation",
+      "content_type": 60,
+      "codename": "view_derivationhistorytranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 260,
+    "fields": {
+      "name": "Can view query parameter",
+      "content_type": 62,
+      "codename": "view_queryparameter"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 261,
+    "fields": {
+      "name": "Can view search history",
+      "content_type": 63,
+      "codename": "view_searchhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 262,
+    "fields": {
+      "name": "Can view query parameter derivation history",
+      "content_type": 64,
+      "codename": "view_queryparameterderivationhistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 263,
+    "fields": {
+      "name": "Can view query parameter field choice",
+      "content_type": 65,
+      "codename": "view_queryparameterfieldchoice"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 264,
+    "fields": {
+      "name": "Can view query parameter handshape",
+      "content_type": 66,
+      "codename": "view_queryparameterhandshape"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 265,
+    "fields": {
+      "name": "Can view query parameter semantic field",
+      "content_type": 67,
+      "codename": "view_queryparametersemanticfield"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 266,
+    "fields": {
+      "name": "Can view query parameter boolean",
+      "content_type": 68,
+      "codename": "view_queryparameterboolean"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 267,
+    "fields": {
+      "name": "Can view query parameter multilingual",
+      "content_type": 69,
+      "codename": "view_queryparametermultilingual"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 268,
+    "fields": {
+      "name": "Can view general feedback",
+      "content_type": 18,
+      "codename": "view_generalfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 269,
+    "fields": {
+      "name": "Can view missing sign feedback",
+      "content_type": 20,
+      "codename": "view_missingsignfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 270,
+    "fields": {
+      "name": "Can view sign feedback",
+      "content_type": 19,
+      "codename": "view_signfeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 271,
+    "fields": {
+      "name": "Can view morpheme feedback",
+      "content_type": 61,
+      "codename": "view_morphemefeedback"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 272,
+    "fields": {
+      "name": "Can view page",
+      "content_type": 23,
+      "codename": "view_page"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 273,
+    "fields": {
+      "name": "Can view page video",
+      "content_type": 24,
+      "codename": "view_pagevideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 274,
+    "fields": {
+      "name": "Can view attachment",
+      "content_type": 25,
+      "codename": "view_attachment"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 275,
+    "fields": {
+      "name": "Can view gloss video",
+      "content_type": 27,
+      "codename": "view_glossvideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 276,
+    "fields": {
+      "name": "Can view gloss video history",
+      "content_type": 38,
+      "codename": "view_glossvideohistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 277,
+    "fields": {
+      "name": "Can view video",
+      "content_type": 26,
+      "codename": "view_video"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 278,
+    "fields": {
+      "name": "Can view revision",
+      "content_type": 29,
+      "codename": "view_revision"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 279,
+    "fields": {
+      "name": "Can view version",
+      "content_type": 30,
+      "codename": "view_version"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 280,
+    "fields": {
+      "name": "Can view tag",
+      "content_type": 31,
+      "codename": "view_tag"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 281,
+    "fields": {
+      "name": "Can view tagged item",
+      "content_type": 32,
+      "codename": "view_taggeditem"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 282,
+    "fields": {
+      "name": "Can view group object permission",
+      "content_type": 45,
+      "codename": "view_groupobjectpermission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 283,
+    "fields": {
+      "name": "Can view user object permission",
+      "content_type": 44,
+      "codename": "view_userobjectpermission"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 284,
+    "fields": {
+      "name": "Can add example sentence",
+      "content_type": 70,
+      "codename": "add_examplesentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 285,
+    "fields": {
+      "name": "Can change example sentence",
+      "content_type": 70,
+      "codename": "change_examplesentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 286,
+    "fields": {
+      "name": "Can delete example sentence",
+      "content_type": 70,
+      "codename": "delete_examplesentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 287,
+    "fields": {
+      "name": "Can view example sentence",
+      "content_type": 70,
+      "codename": "view_examplesentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 288,
+    "fields": {
+      "name": "Can add sense translation",
+      "content_type": 71,
+      "codename": "add_sensetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 289,
+    "fields": {
+      "name": "Can change sense translation",
+      "content_type": 71,
+      "codename": "change_sensetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 290,
+    "fields": {
+      "name": "Can delete sense translation",
+      "content_type": 71,
+      "codename": "delete_sensetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 291,
+    "fields": {
+      "name": "Can view sense translation",
+      "content_type": 71,
+      "codename": "view_sensetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 292,
+    "fields": {
+      "name": "Can add sense",
+      "content_type": 72,
+      "codename": "add_sense"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 293,
+    "fields": {
+      "name": "Can change sense",
+      "content_type": 72,
+      "codename": "change_sense"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 294,
+    "fields": {
+      "name": "Can delete sense",
+      "content_type": 72,
+      "codename": "delete_sense"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 295,
+    "fields": {
+      "name": "Can view sense",
+      "content_type": 72,
+      "codename": "view_sense"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 296,
+    "fields": {
+      "name": "Can add Gloss sense",
+      "content_type": 73,
+      "codename": "add_glosssense"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 297,
+    "fields": {
+      "name": "Can change Gloss sense",
+      "content_type": 73,
+      "codename": "change_glosssense"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 298,
+    "fields": {
+      "name": "Can delete Gloss sense",
+      "content_type": 73,
+      "codename": "delete_glosssense"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 299,
+    "fields": {
+      "name": "Can view Gloss sense",
+      "content_type": 73,
+      "codename": "view_glosssense"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 300,
+    "fields": {
+      "name": "Can add example sentence translation",
+      "content_type": 74,
+      "codename": "add_examplesentencetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 301,
+    "fields": {
+      "name": "Can change example sentence translation",
+      "content_type": 74,
+      "codename": "change_examplesentencetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 302,
+    "fields": {
+      "name": "Can delete example sentence translation",
+      "content_type": 74,
+      "codename": "delete_examplesentencetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 303,
+    "fields": {
+      "name": "Can view example sentence translation",
+      "content_type": 74,
+      "codename": "view_examplesentencetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 304,
+    "fields": {
+      "name": "Can add example video history",
+      "content_type": 75,
+      "codename": "add_examplevideohistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 305,
+    "fields": {
+      "name": "Can change example video history",
+      "content_type": 75,
+      "codename": "change_examplevideohistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 306,
+    "fields": {
+      "name": "Can delete example video history",
+      "content_type": 75,
+      "codename": "delete_examplevideohistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 307,
+    "fields": {
+      "name": "Can view example video history",
+      "content_type": 75,
+      "codename": "view_examplevideohistory"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 308,
+    "fields": {
+      "name": "Can add example video",
+      "content_type": 76,
+      "codename": "add_examplevideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 309,
+    "fields": {
+      "name": "Can change example video",
+      "content_type": 76,
+      "codename": "change_examplevideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 310,
+    "fields": {
+      "name": "Can delete example video",
+      "content_type": 76,
+      "codename": "delete_examplevideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 311,
+    "fields": {
+      "name": "Can view example video",
+      "content_type": 76,
+      "codename": "view_examplevideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 312,
+    "fields": {
+      "name": "Can add Sense exampleSentence",
+      "content_type": 77,
+      "codename": "add_senseexamplesentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 313,
+    "fields": {
+      "name": "Can change Sense exampleSentence",
+      "content_type": 77,
+      "codename": "change_senseexamplesentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 314,
+    "fields": {
+      "name": "Can delete Sense exampleSentence",
+      "content_type": 77,
+      "codename": "delete_senseexamplesentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 315,
+    "fields": {
+      "name": "Can view Sense exampleSentence",
+      "content_type": 77,
+      "codename": "view_senseexamplesentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 316,
+    "fields": {
+      "name": "Can add affiliated user",
+      "content_type": 78,
+      "codename": "add_affiliateduser"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 317,
+    "fields": {
+      "name": "Can change affiliated user",
+      "content_type": 78,
+      "codename": "change_affiliateduser"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 318,
+    "fields": {
+      "name": "Can delete affiliated user",
+      "content_type": 78,
+      "codename": "delete_affiliateduser"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 319,
+    "fields": {
+      "name": "Can view affiliated user",
+      "content_type": 78,
+      "codename": "view_affiliateduser"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 320,
+    "fields": {
+      "name": "Can add Token",
+      "content_type": 79,
+      "codename": "add_signbanktoken"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 321,
+    "fields": {
+      "name": "Can change Token",
+      "content_type": 79,
+      "codename": "change_signbanktoken"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 322,
+    "fields": {
+      "name": "Can delete Token",
+      "content_type": 79,
+      "codename": "delete_signbanktoken"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 323,
+    "fields": {
+      "name": "Can view Token",
+      "content_type": 79,
+      "codename": "view_signbanktoken"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 324,
+    "fields": {
+      "name": "Can add affiliated gloss",
+      "content_type": 80,
+      "codename": "add_affiliatedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 325,
+    "fields": {
+      "name": "Can change affiliated gloss",
+      "content_type": 80,
+      "codename": "change_affiliatedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 326,
+    "fields": {
+      "name": "Can delete affiliated gloss",
+      "content_type": 80,
+      "codename": "delete_affiliatedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 327,
+    "fields": {
+      "name": "Can view affiliated gloss",
+      "content_type": 80,
+      "codename": "view_affiliatedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 328,
+    "fields": {
+      "name": "Can add affiliation",
+      "content_type": 81,
+      "codename": "add_affiliation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 329,
+    "fields": {
+      "name": "Can change affiliation",
+      "content_type": 81,
+      "codename": "change_affiliation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 330,
+    "fields": {
+      "name": "Can delete affiliation",
+      "content_type": 81,
+      "codename": "delete_affiliation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 331,
+    "fields": {
+      "name": "Can view affiliation",
+      "content_type": 81,
+      "codename": "view_affiliation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 332,
+    "fields": {
+      "name": "Can add annotated gloss",
+      "content_type": 82,
+      "codename": "add_annotatedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 333,
+    "fields": {
+      "name": "Can change annotated gloss",
+      "content_type": 82,
+      "codename": "change_annotatedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 334,
+    "fields": {
+      "name": "Can delete annotated gloss",
+      "content_type": 82,
+      "codename": "delete_annotatedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 335,
+    "fields": {
+      "name": "Can view annotated gloss",
+      "content_type": 82,
+      "codename": "view_annotatedgloss"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 336,
+    "fields": {
+      "name": "Can add annotated sentence context",
+      "content_type": 83,
+      "codename": "add_annotatedsentencecontext"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 337,
+    "fields": {
+      "name": "Can change annotated sentence context",
+      "content_type": 83,
+      "codename": "change_annotatedsentencecontext"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 338,
+    "fields": {
+      "name": "Can delete annotated sentence context",
+      "content_type": 83,
+      "codename": "delete_annotatedsentencecontext"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 339,
+    "fields": {
+      "name": "Can view annotated sentence context",
+      "content_type": 83,
+      "codename": "view_annotatedsentencecontext"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 340,
+    "fields": {
+      "name": "Can add annotated sentence",
+      "content_type": 84,
+      "codename": "add_annotatedsentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 341,
+    "fields": {
+      "name": "Can change annotated sentence",
+      "content_type": 84,
+      "codename": "change_annotatedsentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 342,
+    "fields": {
+      "name": "Can delete annotated sentence",
+      "content_type": 84,
+      "codename": "delete_annotatedsentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 343,
+    "fields": {
+      "name": "Can view annotated sentence",
+      "content_type": 84,
+      "codename": "view_annotatedsentence"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 344,
+    "fields": {
+      "name": "Can add annotated sentence translation",
+      "content_type": 85,
+      "codename": "add_annotatedsentencetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 345,
+    "fields": {
+      "name": "Can change annotated sentence translation",
+      "content_type": 85,
+      "codename": "change_annotatedsentencetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 346,
+    "fields": {
+      "name": "Can delete annotated sentence translation",
+      "content_type": 85,
+      "codename": "delete_annotatedsentencetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 347,
+    "fields": {
+      "name": "Can view annotated sentence translation",
+      "content_type": 85,
+      "codename": "view_annotatedsentencetranslation"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 348,
+    "fields": {
+      "name": "Can add annotated video",
+      "content_type": 86,
+      "codename": "add_annotatedvideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 349,
+    "fields": {
+      "name": "Can change annotated video",
+      "content_type": 86,
+      "codename": "change_annotatedvideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 350,
+    "fields": {
+      "name": "Can delete annotated video",
+      "content_type": 86,
+      "codename": "delete_annotatedvideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 351,
+    "fields": {
+      "name": "Can view annotated video",
+      "content_type": 86,
+      "codename": "view_annotatedvideo"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 352,
+    "fields": {
+      "name": "Can add Token",
+      "content_type": 87,
+      "codename": "add_signbankapitoken"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 353,
+    "fields": {
+      "name": "Can change Token",
+      "content_type": 87,
+      "codename": "change_signbankapitoken"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 354,
+    "fields": {
+      "name": "Can delete Token",
+      "content_type": 87,
+      "codename": "delete_signbankapitoken"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 355,
+    "fields": {
+      "name": "Can view Token",
+      "content_type": 87,
+      "codename": "view_signbankapitoken"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 356,
+    "fields": {
+      "name": "Can add NME Gloss Video",
+      "content_type": 88,
+      "codename": "add_glossvideonme"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 357,
+    "fields": {
+      "name": "Can change NME Gloss Video",
+      "content_type": 88,
+      "codename": "change_glossvideonme"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 358,
+    "fields": {
+      "name": "Can delete NME Gloss Video",
+      "content_type": 88,
+      "codename": "delete_glossvideonme"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 359,
+    "fields": {
+      "name": "Can view NME Gloss Video",
+      "content_type": 88,
+      "codename": "view_glossvideonme"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 360,
+    "fields": {
+      "name": "Can add gloss video description",
+      "content_type": 89,
+      "codename": "add_glossvideodescription"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 361,
+    "fields": {
+      "name": "Can change gloss video description",
+      "content_type": 89,
+      "codename": "change_glossvideodescription"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 362,
+    "fields": {
+      "name": "Can delete gloss video description",
+      "content_type": 89,
+      "codename": "delete_glossvideodescription"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 363,
+    "fields": {
+      "name": "Can view gloss video description",
+      "content_type": 89,
+      "codename": "view_glossvideodescription"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 364,
+    "fields": {
+      "name": "Can add annotated sentence source",
+      "content_type": 90,
+      "codename": "add_annotatedsentencesource"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 365,
+    "fields": {
+      "name": "Can change annotated sentence source",
+      "content_type": 90,
+      "codename": "change_annotatedsentencesource"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 366,
+    "fields": {
+      "name": "Can delete annotated sentence source",
+      "content_type": 90,
+      "codename": "delete_annotatedsentencesource"
+    }
+  },
+  {
+    "model": "auth.permission",
+    "pk": 367,
+    "fields": {
+      "name": "Can view annotated sentence source",
+      "content_type": 90,
+      "codename": "view_annotatedsentencesource"
+    }
+  }
+]

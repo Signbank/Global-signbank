@@ -1,0 +1,722 @@
+[
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 1,
+    "fields": {
+      "app_label": "auth",
+      "model": "permission"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 2,
+    "fields": {
+      "app_label": "auth",
+      "model": "group"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 3,
+    "fields": {
+      "app_label": "auth",
+      "model": "user"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 4,
+    "fields": {
+      "app_label": "contenttypes",
+      "model": "contenttype"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 5,
+    "fields": {
+      "app_label": "sessions",
+      "model": "session"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 6,
+    "fields": {
+      "app_label": "sites",
+      "model": "site"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 7,
+    "fields": {
+      "app_label": "admin",
+      "model": "logentry"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 8,
+    "fields": {
+      "app_label": "django_summernote",
+      "model": "attachment"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 9,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "translation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 10,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "keyword"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 11,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "definition"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 12,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "signlanguage"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 13,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "dialect"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 14,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "relationtoforeignsign"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 15,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "gloss"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 16,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "relation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 17,
+    "fields": {
+      "app_label": "feedback",
+      "model": "interpreterfeedback"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 18,
+    "fields": {
+      "app_label": "feedback",
+      "model": "generalfeedback"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 19,
+    "fields": {
+      "app_label": "feedback",
+      "model": "signfeedback"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 20,
+    "fields": {
+      "app_label": "feedback",
+      "model": "missingsignfeedback"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 21,
+    "fields": {
+      "app_label": "registration",
+      "model": "registrationprofile"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 22,
+    "fields": {
+      "app_label": "registration",
+      "model": "userprofile"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 23,
+    "fields": {
+      "app_label": "pages",
+      "model": "page"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 24,
+    "fields": {
+      "app_label": "pages",
+      "model": "pagevideo"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 25,
+    "fields": {
+      "app_label": "attachments",
+      "model": "attachment"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 26,
+    "fields": {
+      "app_label": "video",
+      "model": "video"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 27,
+    "fields": {
+      "app_label": "video",
+      "model": "glossvideo"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 28,
+    "fields": {
+      "app_label": "south",
+      "model": "migrationhistory"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 29,
+    "fields": {
+      "app_label": "reversion",
+      "model": "revision"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 30,
+    "fields": {
+      "app_label": "reversion",
+      "model": "version"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 31,
+    "fields": {
+      "app_label": "tagging",
+      "model": "tag"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 32,
+    "fields": {
+      "app_label": "tagging",
+      "model": "taggeditem"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 33,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "fieldchoice"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 34,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "morphologydefinition"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 35,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "userprofile"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 36,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "othervideo"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 37,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "othermedia"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 38,
+    "fields": {
+      "app_label": "video",
+      "model": "glossvideohistory"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 39,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "morpheme"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 40,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "deletedgloss"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 41,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "deletedglossormedia"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 42,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "simultaneousmorphologydefinition"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 43,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "language"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 44,
+    "fields": {
+      "app_label": "guardian",
+      "model": "userobjectpermission"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 45,
+    "fields": {
+      "app_label": "guardian",
+      "model": "groupobjectpermission"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 46,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "dataset"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 47,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "handshape"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 48,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "blendmorphology"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 49,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "annotationidglosstranslation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 50,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "lemmaidgloss"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 51,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "lemmaidglosstranslation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 52,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "glossrevision"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 53,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "corpus"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 54,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "document"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 55,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "glossfrequency"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 56,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "speaker"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 57,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "semanticfield"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 58,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "semanticfieldtranslation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 59,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "derivationhistory"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 60,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "derivationhistorytranslation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 61,
+    "fields": {
+      "app_label": "feedback",
+      "model": "morphemefeedback"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 62,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "queryparameter"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 63,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "searchhistory"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 64,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "queryparameterderivationhistory"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 65,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "queryparameterfieldchoice"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 66,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "queryparameterhandshape"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 67,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "queryparametersemanticfield"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 68,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "queryparameterboolean"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 69,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "queryparametermultilingual"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 70,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "examplesentence"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 71,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "sensetranslation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 72,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "sense"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 73,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "glosssense"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 74,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "examplesentencetranslation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 75,
+    "fields": {
+      "app_label": "video",
+      "model": "examplevideohistory"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 76,
+    "fields": {
+      "app_label": "video",
+      "model": "examplevideo"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 77,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "senseexamplesentence"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 78,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "affiliateduser"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 79,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "signbanktoken"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 80,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "affiliatedgloss"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 81,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "affiliation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 82,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "annotatedgloss"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 83,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "annotatedsentencecontext"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 84,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "annotatedsentence"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 85,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "annotatedsentencetranslation"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 86,
+    "fields": {
+      "app_label": "video",
+      "model": "annotatedvideo"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 87,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "signbankapitoken"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 88,
+    "fields": {
+      "app_label": "video",
+      "model": "glossvideonme"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 89,
+    "fields": {
+      "app_label": "video",
+      "model": "glossvideodescription"
+    }
+  },
+  {
+    "model": "contenttypes.contenttype",
+    "pk": 90,
+    "fields": {
+      "app_label": "dictionary",
+      "model": "annotatedsentencesource"
+    }
+  }
+]

@@ -28,6 +28,8 @@ class Migration(migrations.Migration):
             signlanguage=sl,acronym='YDS',default_language=l)            
         d.save()
 
+        d.translation_languages.add(l)
+
     operations = [
         migrations.AddField(
             model_name='dataset',

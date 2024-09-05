@@ -14,6 +14,7 @@ class Migration(migrations.Migration):
     def insert_language(apps,schema_editor):
         Language = apps.get_model('dictionary','language')
         l = Language(name="English",name_en="English",language_code_2char="en",
+                     name_nl="Engels", name_zh_hans="English",
                     language_code_3char="eng",description="Default English")
         l.save()
 

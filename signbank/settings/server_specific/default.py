@@ -308,3 +308,5 @@ GUARDED_GLOSS_DELETE = False
 GUARDED_MORPHEME_DELETE = True
 
 FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler',]
+
+SWITCH_TO_MYSQL = False
