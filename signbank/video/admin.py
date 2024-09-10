@@ -256,7 +256,7 @@ class AnnotatedVideoAdmin(admin.ModelAdmin):
     def eaf_file(self, obj=None):
         if obj is None:
             return ""
-        return str(obj.videofile.name)
+        return str(obj.eaffile.name)
 
     def get_list_display_links(self, request, list_display):
         self.list_display_links = (None, )
