@@ -33,7 +33,9 @@ def make_db_small(filename):
                    'django_site',
                    'guardian_groupobjectpermission',
                    'guardian_userobjectpermission',
-                   'dictionary_userprofile'
+                   'dictionary_userprofile',
+                   'django_content_type',
+                   'sqlite_sequence'
                    ]
     
     # Empty all other tables
