@@ -1,0 +1,36 @@
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+
+{% load bootstrap3 %}
+{% load tagging_tags %}
+
+<tr id = "glossrow_{{annotated_gloss.id}}_{{focus_gloss.id}}" class="gloss_row">
+
+    <td class="field_hasvideo"></td>
+
+    {% for dataset_lang in dataset_languages %}
+    <td class="annotation_{{dataset_lang.language_code_2char}}">
+
+    </td>
+    {% endfor %}
+
+
+    {% for field,value in column_values %}
+    <td class="field_{{field}}">
+
+    {% if field == 'id' %}
+        <div><a href="{{PREFIX_URL}}/dictionary/annotatedsentence/{{value}}">{{value}}</a>.</div>
+    {% elif field == 'annotatedsentence' %}
+        <div>
+        {% for lang, translation in value %}
+            <p class="example_{{lang.language_code_2char}}">{{lang.name}}: {{translation}}</p>
+        {% endfor %}
+        </div>
+    {% else %}
+        <div>{{value}}</div>
+    {% endif %}
+    </td>
+    {% endfor %}
+
+</tr>

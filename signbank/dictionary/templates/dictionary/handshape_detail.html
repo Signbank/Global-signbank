@@ -27,7 +27,7 @@
 
     // This script gets and inserts the users last searched items on the handshape page
     var search_results_url = '{% url 'dictionary:handshape_ajax_search_results' %}';
-
+    var search_type = 'handshape';
     {% include "dictionary/search_result_bar.html" %}
 
     </script>

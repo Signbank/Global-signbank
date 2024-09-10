@@ -82,13 +82,15 @@ def query_parameters_this_gloss(phonology_focus, phonology_matrix):
     return query_parameters
 
 
-def apply_language_filters_to_results(qs, query_parameters):
+def apply_language_filters_to_results(model, qs, query_parameters):
     # Evaluate all gloss/language search fields
     # this needs to be done explicitly so the respective filters are applied in sequence
     # [identified during testing:] if the filters are mapped to Q expressions they end up filtering too many results away
     # in the case that more than one field has been filled in
     # Here the expressions and order matches that of get_queryset
     # the function convert_query_parameters_to_filter (below) creates the Q expression for filtering
+    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
+
     gloss_search_field_prefix = "glosssearch_"
     len_gloss_search_field_prefix = len(gloss_search_field_prefix)
     keyword_search_field_prefix = "keyword_"
@@ -101,21 +103,24 @@ def apply_language_filters_to_results(qs, query_parameters):
         if get_key.startswith(gloss_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_gloss_search_field_prefix:]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
-            query_filter_annotation_text = 'annotationidglosstranslation__text__' + text_filter
+            query_filter_annotation_text = gloss_prefix + 'annotationidglosstranslation__text__' + text_filter
+            query_filter_annotation_language = gloss_prefix + 'annotationidglosstranslation__language'
             qs = qs.filter(**{query_filter_annotation_text: get_value,
-                              'annotationidglosstranslation__language': language})
+                              query_filter_annotation_language: language})
         elif get_key.startswith(lemma_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_lemma_search_field_prefix:]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
-            query_filter_lemma_text = 'lemma__lemmaidglosstranslation__text__' + text_filter
+            query_filter_lemma_text = gloss_prefix + 'lemma__lemmaidglosstranslation__text__' + text_filter
+            query_filter_lemma_language = gloss_prefix + 'lemma__lemmaidglosstranslation__language'
             qs = qs.filter(**{query_filter_lemma_text: get_value,
-                              'lemma__lemmaidglosstranslation__language': language})
+                              query_filter_lemma_language: language})
         elif get_key.startswith(keyword_search_field_prefix) and get_value != '':
             language_code_2char = get_key[len_keyword_search_field_prefix:]
             language = Language.objects.filter(language_code_2char=language_code_2char).first()
-            query_filter_sense_text = 'translation__translation__text__' + text_filter
+            query_filter_sense_text = gloss_prefix + 'translation__translation__text__' + text_filter
+            query_filter_sense_language = gloss_prefix + 'translation__language'
             qs = qs.filter(**{query_filter_sense_text: get_value,
-                              'translation__language': language})
+                              query_filter_sense_language: language})
     return qs
 
 
@@ -138,7 +143,7 @@ def matching_file__does_not_exist(videofile):
 
 
 def apply_video_filters_to_results(model, qs, query_parameters):
-    gloss_prefix = 'gloss__' if model in ['GlossSense'] else ''
+    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
     filter_id = gloss_prefix + 'id__in'
     gloss_ids = [gl.id if model == 'Gloss' else gl.gloss.id for gl in qs]
     if 'hasvideo' not in query_parameters.keys():
@@ -184,7 +189,7 @@ def convert_query_parameters_to_filter(query_parameters):
 
     query_list = []
     for get_key, get_value in query_parameters.items():
-        if get_key == 'search_type':
+        if get_key in ['search_type', 'isRepresentative', 'annotatedSentenceContains']:
             continue
         elif get_key.startswith(glosssearch) or get_key.startswith(lemmasearch) \
                 or get_key.startswith(keywordsearch):
@@ -413,6 +418,43 @@ def convert_query_parameters_to_filter(query_parameters):
         query = list_to_query(query_list)
     return query
 
+
+def convert_query_parameters_to_annotatedgloss_filter(query_parameters):
+    # this function maps the query parameters to a giant Q expression
+
+    query_list = []
+    for get_key, get_value in query_parameters.items():
+        print(get_key, get_value)
+        if get_key in ['isRepresentative'] and get_value:
+            if get_value == 'yes':
+                annotatedglosses = AnnotatedGloss.objects.filter(isRepresentative__exact=True).distinct()
+            else:
+                annotatedglosses = AnnotatedGloss.objects.filter(isRepresentative__exact=False).distinct()
+
+            relevant_glosses = [ag.id for ag in annotatedglosses]
+            query_list.append(Q(id__in=relevant_glosses))
+
+        elif get_key in ['annotatedSentenceContains'] and get_value:
+            sentence_translations_with_this_text = AnnotatedSentenceTranslation.objects.filter(
+                text__icontains=get_value)
+            sentences_with_this_text = [est.annotatedsentence.id for est in sentence_translations_with_this_text]
+            query_list.append(Q(annotatedsentence__id__in=sentences_with_this_text))
+        else:
+            continue
+
+    # make a filter from the list of Q elements
+    # a singleton is treated differently from more than one
+    if not query_list:
+        # query_list is empty, this will return everything since nothing was filtered
+        query = Q()
+    elif len(query_list) == 1:
+        query = query_list[0]
+    else:
+        # length of query_list is greater than 1
+        query = list_to_query(query_list)
+    return query
+
+
 def pretty_print_query_fields(dataset_languages,query_parameters):
     # this function determines what to show when a Query Parameters table is shown
     # some of the fields do not match those in the Gloss Search Form
@@ -452,6 +494,12 @@ def pretty_print_query_fields(dataset_languages,query_parameters):
         elif key not in gloss_fields:
             if key == 'negative':
                 query_dict[key] = gettext("Negative")
+            elif key == 'isRepresentative':
+                query_dict[key] = gettext("Is Representative")
+            elif key == 'sentenceContains':
+                query_dict[key] = gettext("Sentence Contains")
+            elif key == 'annotatedSentenceContains':
+                query_dict[key] = gettext("Annotated Sentence Contains")
             elif key in form_fields:
                 query_dict[key] = GlossSearchForm.get_field(key).label.encode('utf-8').decode()
             else:
@@ -504,7 +552,8 @@ def pretty_print_query_values(dataset_languages,query_parameters):
         'morpheme': _("Search Morpheme"),
         'sign_handshape': _("Search Sign by Handshape"),
         'handshape': _("Search Handshape"),
-        'lemma': _("Search Lemma")
+        'lemma': _("Search Lemma"),
+        'annotatedsentence': _("Annotated Gloss Sentence")
     }
     query_dict = dict()
     for key in query_parameters:
@@ -609,7 +658,7 @@ def query_parameters_toggle_fields(query_parameters):
     query_fields_focus = []
     query_fields_parameters = []
     for qp_key in query_parameters.keys():
-        if qp_key == 'search_type':
+        if qp_key in ['search_type', 'isRepresentative', 'annotatedSentenceContains']:
             continue
         if qp_key.startswith(GlossSearchForm.gloss_search_field_prefix) or \
                 qp_key.startswith(GlossSearchForm.lemma_search_field_prefix) or \
@@ -648,6 +697,12 @@ def query_parameters_toggle_fields(query_parameters):
             toggle_query_parameter = (query_field, _("Sentence Type"))
         elif query_field == 'negative':
             toggle_query_parameter = (query_field, _("Negative"))
+        elif query_field == 'isRepresentative':
+            toggle_query_parameter = (query_field, _("Is Representative"))
+        elif query_field == 'sentenceContains':
+            toggle_query_parameter = (query_field, _("Sentence Contains"))
+        elif query_field == 'annotatedSentenceContains':
+            toggle_query_parameter = (query_field, _("Annotated Sentence Contains"))
         else:
             print('toggle drop through: ', query_field)
             toggle_query_parameter = (query_field, query_field.capitalize())
@@ -844,9 +899,9 @@ def set_up_language_fields(model, view, form):
     This is done dynamically since they depend on the selected datasets.
     Called from get_context_data method of the view
     If only one translation language is used, the name of the language is omitted from the field label.
-    :model: Gloss, Morpheme, GlossSense, LemmaIdgloss
-    :form: GlossSearchForm, MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm
-    :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView, LemmaListView
+    :model: Gloss, Morpheme, GlossSense, LemmaIdgloss, AnnotatedSentence
+    :form: GlossSearchForm, MorphemeSearchForm, FocusGlossSearchForm, LemmaSearchForm, AnnotatedSentenceForm
+    :view: GlossListView, MorphemeListView, SenseListView, MinimalPairsListView, LemmaListView, AnnotatedSentenceListView
     """
     selected_datasets = get_selected_datasets_for_user(view.request.user)
     dataset_languages = get_dataset_languages(selected_datasets)
@@ -880,6 +935,13 @@ def set_up_language_fields(model, view, form):
             if count_languages > 1 or language.language_code_2char not in interface_language:
                 lemma_field_label += (" (%s)" % language.name)
             form.fields[lemma_field_name] = forms.CharField(label=lemma_field_label)
+
+        if hasattr(form, 'annotatedsentence_search_field_prefix'):
+            annotatedsentence_field_name = form.annotatedsentence_search_field_prefix + language.language_code_2char
+            annotatedsentence_field_label = _("Sentence")
+            if count_languages > 1 or language.language_code_2char not in interface_language:
+                annotatedsentence_field_label += (" (%s)" % language.name)
+            form.fields[annotatedsentence_field_name] = forms.CharField(label=annotatedsentence_field_label)
 
 
 def set_up_signlanguage_dialects_fields(view, form):
@@ -915,7 +977,7 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
     """
     if not searchform:
         return qs
-    gloss_prefix = 'gloss__' if model in ['GlossSense'] else ''
+    gloss_prefix = 'gloss__' if model in ['GlossSense', 'AnnotatedGloss'] else ''
     text_filter = 'iregex' if USE_REGULAR_EXPRESSIONS else 'icontains'
     for get_key, get_value in GET.items():
         if get_key.endswith('[]'):
@@ -1099,14 +1161,14 @@ def queryset_glosssense_from_get(model, formclass, searchform, GET, qs):
                 key = gloss_prefix + get_key + '__exact'
                 val = {'0': '', '1': None, '2': True, '3': False}[get_value]
             else:
-                print('Gloss/GlossSense Search input type select fall through: ', get_key, get_value)
+                print('1102. Gloss/GlossSense Search input type select fall through: ', get_key, get_value)
                 continue
 
             kwargs = {key: val}
             qs = qs.filter(**kwargs)
         else:
             # everything should already be taken care of
-            print('Gloss/GlossSense Search input type fall through: ', get_key, get_value,
+            print('1109. Gloss/GlossSense Search input type fall through: ', get_key, get_value,
                   searchform.fields[get_key].widget.input_type)
 
     return qs
@@ -1151,6 +1213,41 @@ def queryset_sentences_from_get(searchform, GET, qs):
                     qs = qs.filter(sense__exampleSentences__in=sentences_with_negative_type).distinct()
                 else:  # only senses sentences that are not negative
                     qs = qs.filter(sense__exampleSentences__in=sentences_with_other_type).distinct()
+    return qs
+
+
+def queryset_annotatedgloss_from_get(searchform, GET, qs):
+    # this function is used by AnnotatedGlossListView get_queryset
+    """
+    Function used by AnnotatedGlossListView
+    Called from get_queryset
+    :form: AnnotatedGlossForm
+    :view: AnnotatedGlossListView
+    :model: AnnotatedGloss
+    """
+    if not searchform:
+        return qs
+    for get_key, get_value in GET.items():
+        if get_key.endswith('[]'):
+            # no multi-select search fields
+            continue
+        elif get_key not in searchform.fields.keys() \
+                or get_value in ['', '0']:
+            continue
+        elif searchform.fields[get_key].widget.input_type in ['text']:
+            if get_key in ['annotatedSentenceContains']:
+                sentence_translations_with_this_text = AnnotatedSentenceTranslation.objects.filter(
+                    text__icontains=get_value)
+                sentences_with_this_text = [est.annotatedsentence.id for est in sentence_translations_with_this_text]
+                qs = qs.filter(annotatedsentence__id__in=sentences_with_this_text).distinct()
+        elif searchform.fields[get_key].widget.input_type in ['select']:
+            if get_key in ['isRepresentative']:
+                sentences_with_negative_type = AnnotatedGloss.objects.filter(isRepresentative__exact=True)
+                sentences_with_other_type = AnnotatedGloss.objects.filter(isRepresentative__exact=False)
+                if get_value == 'yes':  # only annotated glosses that are representative
+                    qs = qs.filter(id__in=sentences_with_negative_type).distinct()
+                else:  # only annotated glosses that are not representative
+                    qs = qs.filter(id__in=sentences_with_other_type).distinct()
     return qs
 
 

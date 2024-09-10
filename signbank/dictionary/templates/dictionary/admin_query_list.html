@@ -26,7 +26,7 @@
     var query_fields_parameters = JSON.stringify({{query_fields_parameters|safe}});
 
     var csrf_token = '{{csrf_token}}';
-
+    var search_type = '{{search_type}}';
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
 
@@ -490,8 +490,13 @@ table {
     </table>
     <div class="btn-group">
     <div class="btn-group">
+    {% if search_type == 'annotatedsentence' %}
+    <button class="btn queryButton" type='submit' style="height:40px;"><a href="{{PREFIX_URL}}/signs/annotatedgloss/search/?query" class="runQuery"
+                                                                          type="button">{% trans "Run Query" %}</a></button>
+    {% else %}
     <button class="btn queryButton" type='submit' style="height:40px;"><a href="{{PREFIX_URL}}/signs/search/?query" class="runQuery"
                                                                           type="button">{% trans "Run Query" %}</a></button>
+    {% endif %}
     </div>
     {% if all_parameters_available_to_save %}
     <div class="btn-group">

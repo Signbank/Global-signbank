@@ -1,0 +1,413 @@
+{% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Annotated sentences{% endblocktrans %}
+{% endblock %}
+
+{% load annotation_idgloss_translation %}
+
+{% block extrajs %}
+<script type="text/javascript" src="{{STATIC_URL}}js/jquery.jeditable.mini.js"></script>
+
+<script type='text/javascript'>
+var show_dataset_interface_options = {{ SHOW_DATASET_INTERFACE_OPTIONS|yesno:"true,false" }};
+var csrf_token = '{{csrf_token}}';
+var paginate_by = '{{paginate_by}}';
+var page_number = {{page_obj.number}};
+var query_parameters_dict = {{ query_parameters_dict|safe }};
+var query_parameters_keys = {{ query_parameters_keys|safe }};
+var language_query_keys = {{ language_query_keys|safe }};
+
+$(document).ready(function() {
+    // initialize language-based query fields
+    for (var i = 0; i < language_query_keys.length; i++) {
+        var this_var = language_query_keys[i];
+        if (query_parameters_keys.includes("annotatedsentence_"+this_var)) {
+            query_parameter_name = "annotatedsentence_"+this_var
+            var $sentencetranslation_search = $("input[name='"+query_parameter_name+"']");
+            var translation_input = query_parameters_dict[query_parameter_name];
+            $sentencetranslation_search.val(translation_input);
+        }
+    }
+    if (query_parameters_dict['no_glosses'] != "0") {
+        var $noGlossesSelect = $("#id_no_glosses"); // jQuery selector for the select field
+        $noGlossesSelect.val('1'); // Set the select field to 'true' or another desired value
+    }
+    if (query_parameters_dict['has_glosses'] != "0") {
+        var $hasGlossesSelect = $("#id_has_glosses"); // jQuery selector for the select field
+        $hasGlossesSelect.val('1'); // Set the select field to 'true' or another desired value
+    }
+})
+
+function clearForm() {
+      $('input').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden' || this_type == 'submit') { return; };
+        $(this).val('');
+      });
+      $('select').each(function() {
+        var this_field = $(this).attr('name');
+        if (this_field == undefined) { return; };
+        var this_type = $(this).attr('type');
+        if (this_type == 'hidden') { return; };
+        $(this).val('0');
+      });
+     $("input[name='search']").val('');
+     $('#show_all_annotatedsentences').val('');
+     $('#show_all').val('False');
+     $('#reset').val('reset');
+}
+
+function do_adminsearch(el) {
+    $('#do_annotatedsentence_search').val('OK');
+    $('#reset').val('');
+    $("#adminsearch").attr('action', '{{PREFIX_URL}}/dictionary/annotatedsentence/');
+    document.getElementById('adminsearch').submit();
+}
+
+function do_show_all(el) {
+    $('#do_annotatedsentence_search').val('');
+    $('#reset').val('');
+    $('#show_all_annotatedsentences').val('True');
+    $('#show_all').val('True');
+    $("#adminsearch").attr('action', '{{PREFIX_URL}}/dictionary/annotatedsentence/');
+    document.getElementById('adminsearch').submit();
+}
+
+function do_sort_column(field_name, action, frmName) {
+  // Combine @field_name and @action into [sOrder]
+  var sOrder = field_name;
+  if (action == 'desc') {
+    // Descending sort order is signified by a '-' prefix
+    sOrder = '-' + sOrder;
+  } else if (action == 'del') {
+    // "Deleting" (pressing 'x') the sort order of a column means: return to the default 'idgloss' sort order
+    sOrder = '';
+  }
+  // Set the value of the [sortOrder] field defined in dictionary/forms.py::GlossSearchForm
+  $("#" + frmName + " input[name='sortOrder']").val(sOrder);
+
+  // Submit the form with the indicated name
+  $("#" + frmName).submit();
+}
+
+</script>
+{% endblock %}
+
+{% block content %}
+
+
+<div id="definitionblock">
+    
+    <form name='adminsearch' id='adminsearch' class="search-form search-form-light" method='get' action='{{PREFIX_URL}}/dictionary/annotatedsentence/'>
+    <div class="panel panel-default panel-light">
+        <div class="panel-heading panel-light" data-toggle="collapse" data-target="#query-area">{% trans "Form Your Query" %}
+                {% if USE_REGULAR_EXPRESSIONS %}
+                <span class="hasTooltip">
+                    <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                      title=""></span>
+                    {% include "tooltip.html" with include_tags=True %}
+                </span>
+                {% endif %}
+        </div>
+    
+        <div id='query-area' class='collapse {% if request.GET|length == 0 %} in {% endif %}'>
+            <div id='searchformwell' class='well well-light search-results-collapsable'>
+                <div class="hidden">
+                    <input name='sortOrder' class='form-control' value='{{ sort_order }}' type='hidden'>
+                </div>
+                <div>
+                    <table class='table table-condensed table-condensed-light' id='searchfields' style="width:65%;">
+                        {% for dataset_lang in dataset_languages %}
+                        <tr>
+                            {% with searchform|get_annotatedsentence_form_field_for_language:dataset_lang as annotatedsentence_field %}
+                            <td class='td td-light'>
+                                <div class='input-group input-group-light'>
+                                    <label class='input-group-addon' for='id_annotatedsentence_{{ dataset_lang.language_code_2char }}'>
+                                        {{annotatedsentence_field.label}}
+                                    </label>
+                                    <input name='annotatedsentence_{{dataset_lang.language_code_2char}}' 
+                                            id='id_annotatedsentence_{{dataset_lang.language_code_2char}}' 
+                                            type='text' 
+                                            class='form-control form-control-light'>
+                                </div>
+                            </td>
+                            {% endwith %}
+                        </tr>
+                        {% endfor %}
+
+                        <tr id="annotatedsentence_with_no_glosses">
+                            <td class='td td-light'>
+                                <div class='input-group input-group-light'>
+                                <label class='input-group-addon' name='no_glosses' for='id_no_glosses'>{{searchform.no_glosses.label}}</label>
+                                    {{searchform.no_glosses}}
+                                </div>
+                            </td>
+                            </tr>
+
+                            <tr id="annotatedsentence_with_glosses">
+                            <td class='td td-light'>
+                                <div class='input-group input-group-light'>
+                                <label class='input-group-addon' name='has_glosses' for='id_has_glosses'>{{searchform.has_glosses.label}}</label>
+                                    {{searchform.has_glosses}}
+                                </div>
+                            </td>
+                            </tr>
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class='btn-group' style="margin-bottom: 20px">
+        <button class='btn btn-primary' type='submit'
+                id='annotatedsentence_search_button'
+                onclick="do_adminsearch(this);"
+                value='annotatedsentence'>{% trans "Search Annotated Sentence" %}
+        </button>
+        <input type='hidden' id='do_annotatedsentence_search' name='search_annotatedsentence' value="">
+        <button class='btn btn-default btn-default-light' type='submit'
+                id='show_all_annotatedsentences_button'
+                onclick="do_show_all(this);"
+                value='annotatedsentence'>{% trans "Show All" %}
+        </button>
+        <input type='hidden' id='show_all_annotatedsentences' name='show_all_annotatedsentences' value="">
+        <input class='btn btn-default btn-default-light' type='submit' onclick="clearForm();"
+                value='{% trans "Reset" %}'>
+        <input type='hidden' id="reset" name="reset" value="">
+    </div>
+
+    <div>
+        {% trans "Number of Matches:" %} {{search_matches}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{annotatedsentence_count}}.
+    
+        {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
+        {% trans "Datasets:" %}
+        {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}.{% endif %}
+        {% endfor %}
+        {% endif %}
+    </div>
+            
+    <br/>  
+    
+    </form>
+
+    {% if object_list %}
+
+    <table class='table table-condensed'>
+        <thead>
+        <tr>
+            {% if SHOW_DATASET_INTERFACE_OPTIONS %}<th>{% trans "Dataset" %}</th>{% endif %}
+            {% for dataset_lang in dataset_languages %}
+            <th>{% trans "Translation" %} ({{ dataset_lang.name }})</th>
+            {% endfor %}
+            {% for dataset_lang in dataset_languages %}
+            <th>{% trans "Glosses" %} ({{ dataset_lang.name }})</th>
+            {% endfor %}
+            <th>{% trans "Number of Glosses" %}</th>
+            {% if perms.dictionary.change_annotatedsentence %}
+            <th>{% trans "Update" %}</th>
+            <th>{% trans "Delete" %}</th>
+            {% endif %}
+        </tr>
+
+        <tr>
+            {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+            {% with "dataset_order_" as field %}
+            {% with minfield="-"|add:field %}
+             <th>
+               <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch');">
+                 {% if sort_order == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+               </a>
+               <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch');">
+                 {% if sort_order == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+               </a>
+               {% if sort_order == minfield or sort_order == field  %}
+                 <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch');">x</a>
+               {% endif %}
+             </th>
+             {% endwith %}
+             {% endwith %}
+            {% endif %}
+
+            {% for dataset_lang in dataset_languages %}
+            {% with "annotatedsentencetranslation_order_"|add:dataset_lang.language_code_2char as field %}
+            {% with minfield="-"|add:field %}
+             <th>
+               <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch');">
+                 {% if sort_order == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+               </a>
+               <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch');">
+                 {% if sort_order == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+               </a>
+               {% if sort_order == minfield or sort_order == field  %}
+                 <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch');">x</a>
+               {% endif %}
+             </th>
+             {% endwith %}
+             {% endwith %}
+            {% endfor %}
+
+            {% for dataset_lang in dataset_languages %}
+            {% with "annotatedglossestranslation_order_"|add:dataset_lang.language_code_2char as field %}
+            {% with minfield="-"|add:field %}
+             <th>
+               <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch');">
+                 {% if sort_order == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+               </a>
+               <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch');">
+                 {% if sort_order == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+               </a>
+               {% if sort_order == minfield or sort_order == field  %}
+                 <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch');">x</a>
+               {% endif %}
+             </th>
+             {% endwith %}
+             {% endwith %}
+            {% endfor %}
+
+            {% with "nrannotatedglosses_order_" as field %}
+            {% with minfield="-"|add:field %}
+             <th>
+               <a href="#" onclick="do_sort_column('{{field}}','asc', 'adminsearch');">
+                 {% if sort_order == field %}<font color="red">&#x25B2;</font>{% else %}&#x25B2; {% endif %}
+               </a>
+               <a href="#" onclick="do_sort_column('{{field}}','desc', 'adminsearch');">
+                 {% if sort_order == minfield %}<font color="red">&#x25BC;</font>{% else %}&#x25BC;{% endif %}
+               </a>
+               {% if sort_order == minfield or sort_order == field  %}
+                 <a href="#" onclick="do_sort_column('{{field}}','del', 'adminsearch');">x</a>
+               {% endif %}
+             </th>
+             {% endwith %}
+             {% endwith %}
+  
+              <th></th>
+        
+        </tr>
+
+
+        </thead>
+        <tbody>
+        {% for sentence in object_list %}
+            <tr>
+                {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+                <td>
+                    {{ sentence.get_dataset.acronym }}
+                </td>
+                {% endif %}
+                {% for dataset_lang in dataset_languages %}
+                    {% with sentence|get_annotatedsentence_translation:dataset_lang as sentencetranslation %}
+                    <td>
+                    {% if sentencetranslation != "" %}
+                        {{sentencetranslation}}
+                    {% endif %}
+                    </td>
+                    {% endwith %}
+                {% endfor %}
+                {% for dataset_lang in dataset_languages %}
+                    <td>
+                        {% for annotated_gloss in sentence.annotated_glosses.all %}
+                        <a href="{{ PREFIX_URL }}/dictionary/gloss/{{ annotated_gloss.gloss.id }}">{{ annotated_gloss|get_annotatedgloss_translation:dataset_lang }}</a>
+                        {% endfor %}
+                    </td>
+                {% endfor %}
+                <td>
+                    {{ sentence.count_glosses }}
+                </td>
+                
+                {% if perms.dictionary.change_annotatedsentence %}
+                <td>
+                    <a href="{% url 'dictionary:edit_annotated_sentence' glossid=sentence.get_first_gloss.id annotatedsentenceid=sentence.id %}">
+                        <span class="sense-icon glyphicon glyphicon-edit pull-right" style="color:red" ></span>
+                    </a>
+                </td>
+                <td>
+                    <span class='sense-icon glyphicon glyphicon-trash sense_delete pull-right' style="color:red"  data-toggle='modal' data-target='#delete_annotated_sentence_modal_{{sentence.id}}'></span>
+                    <div class="modal fade" id="delete_annotated_sentence_modal_{{sentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteAnnotatedSentence" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered modal-sm left-modal">
+                            <div class="modal-content">
+                                <div class='modal-header'>
+                                    <h2 id='modalTitleDeleteAnnotatedSentence'>{% trans "Delete this annotated sentence" %}</h2>
+                                </div><br>
+                                <div class='modal-body'>
+                                    <p>{% trans "Are you sure you want to delete this? This cannot be undone." %}</p>
+                                </div>     
+                                <form method="post" action="{% url 'dictionary:delete_annotated_sentence' sentence.get_first_gloss.id %}" >
+                                    {% csrf_token %}
+                                    <input type='hidden' name='dataset' value='{{sentence.get_first_gloss.lemma.dataset.id}}'>
+                                    <input type='hidden' name='annotatedsentenceid' value='{{sentence.id}}'>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                        <input type="submit" class="btn btn-primary" value='{% trans "Confirm Delete" %}'>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    {% if is_paginated %}
+
+    <div class="pagination">
+        <span class="step-links">
+
+            <ul class='pagination pagination-sm'>
+            {% if page_obj.has_previous %}
+                <li><a href="?page={{page_obj.previous_page_number}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">&laquo;</a></li>
+            {% endif %}
+
+            {% if  page_obj.number > 10 %}
+                <li><a>...</a></li>
+            {% endif %}
+
+            {% for p in page_obj.paginator.page_range %}
+                {% if p < page_obj.number|add:"10" and p > page_obj.number|add:"-10" %}
+                {% if p == page_obj.number %}
+                <li class='active'>
+                <a href="?page={{p}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">{{p}}</a>
+                </li>
+                {% else %}
+                <li>
+                <a href="?page={{p}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">{{p}}</a>
+                </li>
+                {% endif %}
+                {% endif %}
+
+            {% endfor %}
+
+            {% if page_obj.paginator.num_pages > page_obj.number|add:10 %}
+                <li><a>...</a></li>
+                <li>
+                <a href="?page={{page_obj.paginator.num_pages}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">{{page_obj.paginator.num_pages}}</a>
+                </li>
+            {% endif %}
+
+            {% if page_obj.has_next %}
+                <li><a href="?page={{page_obj.next_page_number}}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{key}}={{value}}{% endif %}{% endfor %}">&raquo;</a></li>
+            {% endif %}
+
+            </ul>
+
+        </span>
+    </div>
+    {% endif %}
+    {% else %}
+    {% trans "No sentences found. Please enter a query." %}
+    {% endif %}
+
+</div>
+
+
+{% endblock content %}

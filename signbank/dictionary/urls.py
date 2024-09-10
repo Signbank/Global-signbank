@@ -5,10 +5,10 @@ from django.urls import re_path, path, include
 from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 
-from signbank.dictionary.adminviews import GlossListView, GlossDetailView, GlossFrequencyView, GlossRelationsDetailView, MorphemeDetailView, \
-    MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView, \
-    create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView, \
-    DerivationHistoryListView, GlossVideosView, KeywordListView
+from signbank.dictionary.adminviews import (GlossListView, GlossDetailView, GlossFrequencyView, GlossRelationsDetailView, MorphemeDetailView,
+    MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView,
+    create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView,
+    DerivationHistoryListView, GlossVideosView, KeywordListView, AnnotatedSentenceDetailView, AnnotatedSentenceListView)
 
 from signbank.dictionary.views import create_citation_image
 
@@ -156,6 +156,7 @@ urlpatterns = [
     re_path(r'^ajax/searchresults/$',signbank.dictionary.adminviews.gloss_ajax_search_results, name='ajax_search_results'),
     re_path(r'^ajax/handshapesearchresults/$', signbank.dictionary.adminviews.handshape_ajax_search_results, name='handshape_ajax_search_results'),
     re_path(r'^ajax/lemmasearchresults/$', signbank.dictionary.adminviews.lemma_ajax_search_results, name='lemma_ajax_search_results'),
+    re_path(r'^ajax/annotatedsearchresults/$', signbank.dictionary.adminviews.annotatedsentence_ajax_search_results, name='annotatedsentence_ajax_search_results'),
     re_path(r'^ajax/lemma/(?P<dataset_id>.*)/(?P<language_code>.*)/(?P<q>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.lemma_ajax_complete), name='lemma_complete'),
     re_path(r'^ajax/sensetranslation/(?P<dataset_id>.*)/(?P<language_code>.*)/(?P<q>.*)$', permission_required('dictionary.change_gloss')(signbank.dictionary.adminviews.sensetranslation_ajax_complete), name='sensetranslation_complete'),
     re_path(r'^ajax/homonyms/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.homonyms_ajax_complete, name='homonyms_ajax_complete'),
@@ -165,6 +166,12 @@ urlpatterns = [
     re_path(r'^ajax/senserow/(?P<sense_id>.*)/$', signbank.dictionary.adminviews.senselist_ajax_complete, name='senselist_ajax_complete'),
     re_path(r'^ajax/senselistheader/$', signbank.dictionary.adminviews.senselistheader_ajax, name='senselistheader_ajax'),
     re_path(r'^ajax/lemmaglossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.lemmaglosslist_ajax_complete, name='lemmaglosslist_ajax_complete'),
+
+    re_path(r'^ajax/annotatedglosslistheader/$', signbank.dictionary.adminviews.annotatedglosslistheader_ajax,
+            name='annotatedglosslistheader_ajax'),
+    re_path(r'^ajax/annotatedglossrow/(?P<annotatedgloss_id>\d+)/$', signbank.dictionary.adminviews.annotatedglosslist_ajax_complete,
+            name='annotatedglosslist_ajax_complete'),
+
     re_path(r'^ajax/choice_lists/$', signbank.dictionary.views.choice_lists,name='choice_lists'),
 
     re_path(r'^missingvideo.html$', signbank.dictionary.views.missing_video_view),
@@ -247,10 +254,12 @@ urlpatterns = [
         name='admin_derivationhistory_list'),
     # Lemma Idgloss views
     re_path(r'^lemma/$', login_required(LemmaListView.as_view()), name='admin_lemma_list'),
+    re_path(r'^annotatedsentence/$', login_required(AnnotatedSentenceListView.as_view()), name='admin_annotatedsentence_list'),
     re_path(r'^lemma/add/$', permission_required('dictionary.add_lemmaidgloss')(LemmaCreateView.as_view()), name='create_lemma'),
     re_path(r'^lemma/delete/(?P<pk>\d+)', permission_required('dictionary.delete_lemmaidgloss')(LemmaDeleteView.as_view()), name='delete_lemma'),
     re_path(r'lemma/add/(?P<glossid>\d+)$', signbank.dictionary.adminviews.create_lemma_for_gloss, name='create_lemma_gloss'),
     re_path(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
+    re_path(r'^annotatedsentence/(?P<pk>\d+)', AnnotatedSentenceDetailView.as_view(), name='admin_annotated_sentence_view'),
 
     re_path(r'^keywords/$', KeywordListView.as_view(), name='admin_keyword_list'),
 

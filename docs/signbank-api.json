@@ -596,6 +596,528 @@
           }
         ]
       }
+    },
+    "/dictionary/api_update_gloss_morphology/{datasetid}/{glossid}/": 
+    {
+      "post": 
+      {
+        "description": "Updates the morphology fields for a gloss. Note the required `schema` of the request body below.",
+        "parameters": 
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this gloss is part of",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "ID of the gloss to update",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": 
+        {
+          "required": true,
+          "content": 
+          {
+            "application/json":
+             {
+              "schema": 
+              {
+                "type": "object",
+                "properties": 
+                {
+                  "Sequential Morphology": 
+                  {
+                    "type": "string",
+                    "description": "The sequential morphology of the gloss, formatted as 'GLOSS1 + GLOSS2 + GLOSS3'."
+                  },
+                  "Simultaneous Morphology": 
+                  {
+                    "type": "string",
+                    "description": "The simultaneous morphology of the gloss, formatted as 'MORPHEME1:meaning1, MORPHEME2:meaning2'. Requires morphemes."
+                  },
+                  "Blend Morphology": 
+                  {
+                    "type": "string",
+                    "description": "The blend morphology of the gloss, formatted as 'GLOSS1:role1, GLOSS2:role2'."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Update successful"
+          }
+        },
+        "tags": ["Updating Signbank data"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_update_gloss_nmevideo/{datasetid}/{glossid}/{videoid}/": 
+    {
+      "post": 
+      {
+        "description": "Updates the details of a 'non-manual element' video for a gloss. To replace the video, delete it using `api_delete_gloss_nmevideo` and create a new NME video using `api_create_gloss_nmevideo`.",
+        "parameters": 
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this gloss is part of",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "ID of the gloss to update",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "videoid",
+            "in": "path",
+            "description": "ID of the video to update",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": 
+        {
+          "required": true,
+          "content": 
+          {
+            "application/json": 
+            {
+              "schema": 
+              {
+                "type": "object",
+                "properties": 
+                {
+                  "Description (English)": 
+                  {
+                    "type": "string",
+                    "description": "Description of the video in English."
+                  },
+                  "Description (Dutch)": 
+                  {
+                    "type": "string",
+                    "description": "Description of the video in Dutch."
+                  },
+                  "Index": 
+                  {
+                    "type": "integer",
+                    "description": "Display number in sequence."
+                  }
+                },
+                "required": 
+                [
+                  "Description (English)",
+                  "Description (Dutch)",
+                  "Index"
+                ]
+              }
+            }
+          }
+        },
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Update successful"
+          }
+        },
+        "tags": ["Updating Signbank data"],
+        "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/upload_zipped_videos_folder_json/{datasetid}/": 
+    {
+      "post": 
+      {
+        "description": "Uploads and unzips a zipped videos folder to the import_videos folder for a specific dataset.",
+        "parameters": 
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "The dataset ID required to provide language-based fields such as Annotation, Lemma, Senses, which are available for the translation languages of the dataset. Defaults to NGT (dataset ID 5) if the user does not have access.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "file",
+            "in": "query",
+            "description": "The URL of the zip file to upload. The file path must include an IP address from the other computer. The zip file archive has the structure `<dataset_acronym>/<language_code_3char>/<annotation_text>.mp4`. For dataset NGT, this looks like `NGT/nld/OLIFANT.mp4`, and for an English language, this looks like: `ASL/eng/FINGERSPELLING.mp4`. The videos need to be in `mp4` format. It is recommended to use the English gloss annotation for languages with UTF-8 characters or symbols because of file naming and storage. For example, right-to-left languages flip the order of the extension to the left. Because Signbank is multilingual, not using English in these cases may not work as expected because all the files are stored in the same file system, albeit in separate folders.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "File uploaded and unzipped successfully.",
+            "content": 
+            {
+              "application/json": 
+              {
+                "schema": 
+                {
+                  "type": "object",
+                  "properties": 
+                  {
+                    "filename": 
+                    {
+                      "type": "string",
+                      "description": "The name of the uploaded zip file."
+                    },
+                    "unzippedvideos": 
+                    {
+                      "type": "object",
+                      "description": "The unzipped videos categorized by language code.",
+                      "additionalProperties": 
+                      {
+                        "type": "array",
+                        "items": 
+                        {
+                          "type": "string",
+                          "description": "The names of the unzipped video files."
+                        }
+                      }
+                    }
+                  },
+                  "example": 
+                  {
+                    "filename": "tst_videos.zip",
+                    "unzippedvideos": 
+                    {
+                      "nld": 
+                      [
+                        "STOMP-B.mp4",
+                        "POMPOEN-A.mp4"
+                      ],
+                      "eng": []
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": 
+        [
+          "Updating Signbank data"
+        ],
+        "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/upload_videos_to_glosses/{datasetid}": 
+    {
+      "post": 
+      {
+        "description": "Imports the video files found for the dataset in the `import_videos` folder into the corresponding glosses. If a video for a gloss already exists, it is overwritten. After the operation, the video files are deleted from `import_videos`.",
+        "parameters": 
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset to import videos for. The user must be in Group DatasetManager for the dataset.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Videos imported successfully.",
+            "content": 
+            {
+              "application/json": 
+              {
+                "schema": 
+                {
+                  "type": "object",
+                  "properties": 
+                  {
+                    "import_videos_status": 
+                    {
+                      "type": "array",
+                      "description": "List of the status of each imported video file.",
+                      "items": 
+                      {
+                        "type": "object",
+                        "additionalProperties": 
+                        {
+                          "type": "object",
+                          "properties": 
+                          {
+                            "gloss": 
+                            {
+                              "type": "string",
+                              "description": "The ID of the gloss to which the video was imported."
+                            },
+                            "videofile": 
+                            {
+                              "type": "string",
+                              "description": "The name of the video file that was imported."
+                            },
+                            "Video": 
+                            {
+                              "type": "string",
+                              "description": "URL to the new video in the gloss."
+                            },
+                            "status": 
+                            {
+                              "type": "string",
+                              "description": "Status of the import operation (e.g., Success, Error)."
+                            },
+                            "errors": 
+                            {
+                              "type": "string",
+                              "description": "Error message if the import operation failed; empty if successful."
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "example": 
+                  {
+                    "import_videos_status": 
+                    [
+                      {
+                        "import_videos/tstMH/nld/STOMP-B.mp4": 
+                        {
+                          "gloss": "42090",
+                          "videofile": "STOMP-B.mp4",
+                          "Video": "https://signbank-dev.cls.ru.nl//dictionary/protected_media/glossvideo/tstMH/ST/STOMP-42090.mp4",
+                          "status": "Success",
+                          "errors": ""
+                        }
+                      },
+                      {
+                        "import_videos/tstMH/nld/POMPOEN-A.mp4": 
+                        {
+                          "gloss": "42087",
+                          "videofile": "POMPOEN-A.mp4",
+                          "Video": "https://signbank-dev.cls.ru.nl//dictionary/protected_media/glossvideo/tstMH/PO/POMPOEN-42087.mp4",
+                          "status": "Success",
+                          "errors": ""
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Updating Signbank data"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },    
+    "/dictionary/api_delete_gloss/{datasetid}/{glossid}/": 
+    {
+      "post": 
+      {
+        "description": "Deletes a gloss for a specified dataset.",
+        "parameters": 
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this gloss belongs to.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "ID of the gloss to delete.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Gloss deleted successfully."
+          }
+        },
+        "tags": ["Deleting and restoring Signbank data"],
+        "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_restore_gloss/{datasetid}/{glossid}/": 
+    {
+      "post": 
+      {
+        "description": "Restores a deleted gloss for a specified dataset.",
+        "parameters": [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this gloss belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "ID of the gloss to restore.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "confirmed": {
+                    "type": "string",
+                    "description": "Confirmation flag to proceed with restoration. Must be 'True'."
+                  }
+                },
+                "required": ["confirmed"]
+              },
+              "example": {
+                "confirmed": "True"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gloss restored successfully."
+          }
+        },
+        "tags": ["Deleting and restoring Signbank data"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_delete_gloss_nmevideo/{datasetid}/{glossid}/{videoid}/": 
+    {
+      "post": {
+        "description": "Deletes a non-manual element (NME) video associated with a gloss for a specified dataset.",
+        "parameters": [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this gloss belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "ID of the gloss that the NME video is associated with.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "videoid",
+            "in": "path",
+            "description": "ID of the NME video to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "NME video deleted successfully."
+          }
+        },
+        "tags": ["Deleting and restoring Signbank data"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   }
 }

@@ -48,7 +48,7 @@ $(document).ready(function () {
     $('#annotatedSentenceForm').submit(function (event) {
         // Get all table rows except the header row
         var rows = $('#feedback table tbody tr');
-        var feedbackData = '';
+        var feedbackData = [];
 
         // Iterate over each table row
         rows.each(function() {
@@ -58,18 +58,23 @@ $(document).ready(function () {
             var starttime = row.find('td:eq(2)').text(); // Get the starttime value
             var endtime = row.find('td:eq(3)').text(); // Get the endtime value
 
-            // Concatenate gloss and its attributes with a separator
-            feedbackData += gloss + ':' + representative + ':' + starttime + ':' + endtime + ';';
+            // Concatenate gloss and its attributes to json format
+            feedbackData.push({
+                gloss: gloss,
+                representative: representative,
+                starttime: starttime,
+                endtime: endtime
+            });
         });
+        
 
         // Append the feedback data to a hidden input field in the form
         $('<input>').attr({
             type: 'hidden',
             name: 'feedbackdata',
-            value: feedbackData
+            value: JSON.stringify(feedbackData)
         }).appendTo('#annotatedSentenceForm');
         
-        // Continue with form submission
         return true;
     });
 

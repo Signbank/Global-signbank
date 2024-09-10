@@ -96,6 +96,9 @@
     var this_gloss_id = {{gloss.id}};
 
     var json_default_query_parameters = {{json_default_query_parameters|safe}};
+    var search_type = '{{search_type}}';
+    var active_id = '{{active_id}}';
+    var model_view = 'gloss';
     var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 </script>
 
@@ -1290,7 +1293,7 @@ textarea:focus {
                                             <div class="modal" id="exampleVidModal_{{examplesentence.id}}">
                                                 <div class="modal-content" style="width:40%">
                                                     <div id="videocontainer_{{examplesentence.id}}"  style="width:100%">
-                                                        {% if examplesentence.has_video %}                                            
+                                                        {% if examplesentence.has_video %}
                                                             <div id="player">
                                                                 <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}?v={% now 'YmdHis' %}" controls type="video/mp4" muted></video>
                                                                 </div>
@@ -2377,7 +2380,7 @@ textarea:focus {
             <table class='table table-condensed' style="width:100%;">
                 <tr style="display:flex; flex-wrap:wrap;">
                     {% for annotated_sentence in annotated_sentences %}
-                        {% if annotated_sentence.has_video %}
+                        {% if annotated_sentence.get_video_path %}
                             <td style="flex: 0 0 30%;">
                                 <span class='sense-icon glyphicon glyphicon-trash sense_delete pull-right' style="color:red"  data-toggle='modal' data-target='#delete_annotated_sentence_modal_{{annotated_sentence.id}}'></span>
                                 <div class="modal fade" id="delete_annotated_sentence_modal_{{annotated_sentence.id}}" role="dialog" aria-labelledby="#modalTitleDeleteAnnotatedSentence" aria-hidden="true">
@@ -2409,7 +2412,7 @@ textarea:focus {
                                     <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
                                 </video>                               
                             
-                                <br><br><i>Glosses</i><br>
+                                <br><br><i>{% trans "Glosses" %}</i><br>
                                 <div id="glossContainer_{{ forloop.counter }}">
                                     {% for annotated_gloss in annotated_sentence.annotated_glosses.all %}
                                         <span data-start="{{ annotated_gloss.get_start }}" data-end="{{ annotated_gloss.get_end }}">

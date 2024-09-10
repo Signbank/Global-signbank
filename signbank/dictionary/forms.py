@@ -8,12 +8,12 @@ from django.db.transaction import atomic
 from signbank.video.fields import VideoUploadToFLVField
 from signbank.dictionary.models import (Dialect, Gloss, Morpheme, Definition, Relation, RelationToForeignSign,
                                         MorphologyDefinition, OtherMedia, Handshape, SemanticField, DerivationHistory,
-                                        AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss,
+                                        AnnotationIdglossTranslation, Dataset, FieldChoice, LemmaIdgloss, AnnotatedSentence,
                                         LemmaIdglossTranslation, Translation, Keyword, Language, SignLanguage,
                                         QueryParameterFieldChoice, SearchHistory, QueryParameter,
                                         QueryParameterMultilingual, QueryParameterHandshape, SemanticFieldTranslation,
                                         ExampleSentence, Affiliation, AffiliatedUser, AffiliatedGloss, GlossSense,
-                                        SenseTranslation)
+                                        SenseTranslation, AnnotatedGloss)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from django.conf import settings
 from tagging.models import Tag
@@ -395,6 +395,42 @@ def check_language_fields(searchform, formclass, queryDict, languages):
             language_field_values[menu_bar_field] = queryDict[menu_bar_field]
             menu_bar_field_label = GlossSearchForm.get_field(menu_bar_field).label
             language_field_labels[menu_bar_field] = gettext(menu_bar_field_label)
+
+    import re
+    # check for matches starting with: + * [ ( ) ?
+    # or ending with a +
+    regexp = re.compile(r'^[+*\[()?]|([^+]+\+$)')
+    for language_field in language_field_values.keys():
+        try:
+            re.compile(language_field_values[language_field])
+        except re.error:
+            language_fields_okay = False
+            search_fields.append(language_field_labels[language_field])
+            field_values.append(language_field_values[language_field])
+            break
+        if regexp.search(language_field_values[language_field]):
+            language_fields_okay = False
+            search_fields.append(language_field_labels[language_field])
+            field_values.append(language_field_values[language_field])
+
+    return language_fields_okay, search_fields, field_values
+
+def check_language_fields_annotatedsentence(searchform, formclass, queryDict, languages):
+    # this function inspects the search parameters from GlossSearchForm looking for occurrences of + at the start
+    language_fields_okay = True
+    search_fields = []
+    field_values = []
+    if not queryDict or not USE_REGULAR_EXPRESSIONS:
+        return language_fields_okay, search_fields, field_values
+
+    language_field_labels = dict()
+    language_field_values = dict()
+    for language in languages:
+        # add for AnnotatedSentence
+        if hasattr(searchform, 'annotatedsentence_search_field_prefix'):
+            annotatedsentence_field_name = formclass.annotatedsentence_search_field_prefix + language.language_code_2char
+            if annotatedsentence_field_name in queryDict.keys():
+                language_field_values[annotatedsentence_field_name] = queryDict[annotatedsentence_field_name]
 
     import re
     # check for matches starting with: + * [ ( ) ?
@@ -821,6 +857,27 @@ class ImageUploadForHandshapeForm(forms.Form):
     handshape_id = forms.CharField(widget=forms.HiddenInput)
     redirect = forms.CharField(widget=forms.HiddenInput, required=False)
 
+
+class AnnotatedSentenceSearchForm(forms.ModelForm):
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    search = forms.CharField(label=_("Search"))
+    sortOrder = forms.CharField(label=_("Sort Order"))
+    no_glosses = forms.ChoiceField(label=_('Only show results without glosses'), choices=[],
+                                   widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    has_glosses = forms.ChoiceField(label=_('Only show results with glosses'), choices=[],
+                                    widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    annotatedsentence_search_field_prefix = "annotatedsentence_"
+
+    class Meta:
+        model = AnnotatedSentence
+        fields = ['search']
+
+    def __init__(self, *args, **kwargs):
+        super(AnnotatedSentenceSearchForm, self).__init__(*args, **kwargs)
+
+        for boolean_field in ['no_glosses', 'has_glosses']:
+            self.fields[boolean_field].choices = [(0, _('No')), (1, _('Yes'))]
 
 class LemmaSearchForm(forms.ModelForm):
     use_required_attribute = False  # otherwise the html required attribute will show up on every form
@@ -1494,3 +1551,35 @@ class BatchEditForm(forms.Form):
             if self.instance.fields[field_key]:
                 print(self.instance.fields[field_key])
 
+
+class AnnotatedGlossForm(forms.ModelForm):
+
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    isRepresentative = forms.ChoiceField(label=_('Is Representative'), choices=[('0', '-')],
+                                         widget=forms.Select(attrs=ATTRS_FOR_BOOLEAN_FORMS))
+    annotatedSentenceContains = forms.CharField(label=_('Annotated Sentence Contains'),
+                                       widget=forms.TextInput(attrs=ATTRS_FOR_FORMS), required=False)
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = AnnotatedGloss
+
+        fields = ['isRepresentative']
+
+    @classmethod
+    def get_field_names(cls):
+        fields = cls.__dict__['base_fields']
+        return fields
+
+    @classmethod
+    def get_field(cls, fieldname):
+        field = cls.__dict__['base_fields'][fieldname]
+        return field
+
+    def __init__(self, *args, **kwargs):
+        super(AnnotatedGlossForm, self).__init__(*args, **kwargs)
+
+        self.fields['isRepresentative'].choices = [('0', '-'), ('yes', _('Yes')), ('no', _('No'))]
