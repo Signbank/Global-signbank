@@ -1,0 +1,626 @@
+[
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 0,
+    "fields": {
+      "name": "-",
+      "name_en": "-",
+      "name_nl": "-",
+      "name_zh_hans": "-",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 1,
+    "fields": {
+      "name": "N/A",
+      "name_en": "N/A",
+      "name_nl": "N/A",
+      "name_zh_hans": "N/A",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 2,
+    "fields": {
+      "name": "Day",
+      "name_en": "Day",
+      "name_nl": "Dag",
+      "name_zh_hans": "日",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 3,
+    "fields": {
+      "name": "Deaf",
+      "name_en": "Deaf",
+      "name_nl": "Doof",
+      "name_zh_hans": "聋",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 4,
+    "fields": {
+      "name": "Animal",
+      "name_en": "Animal",
+      "name_nl": "Dier",
+      "name_zh_hans": "动物",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 5,
+    "fields": {
+      "name": "Arithmetic",
+      "name_en": "Arithmetic",
+      "name_nl": "Wiskunde",
+      "name_zh_hans": "算术",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 6,
+    "fields": {
+      "name": "Arts",
+      "name_en": "Arts",
+      "name_nl": "Kunst",
+      "name_zh_hans": "艺术",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 7,
+    "fields": {
+      "name": "Body part",
+      "name_en": "Body part",
+      "name_nl": "Lichaamsdeel",
+      "name_zh_hans": "身体器官",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 8,
+    "fields": {
+      "name": "Car",
+      "name_en": "Car",
+      "name_nl": "Auto",
+      "name_zh_hans": "车",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 9,
+    "fields": {
+      "name": "Cooking",
+      "name_en": "Cooking",
+      "name_nl": "Koken",
+      "name_zh_hans": "烹饪",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 10,
+    "fields": {
+      "name": "City",
+      "name_en": "City",
+      "name_nl": "Stad",
+      "name_zh_hans": "城市",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 11,
+    "fields": {
+      "name": "Clothing",
+      "name_en": "Clothing",
+      "name_nl": "Kleding",
+      "name_zh_hans": "服装",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 12,
+    "fields": {
+      "name": "Colour",
+      "name_en": "Colour",
+      "name_nl": "Kleur",
+      "name_zh_hans": "颜色",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 13,
+    "fields": {
+      "name": "Drink",
+      "name_en": "Drink",
+      "name_nl": "Drank",
+      "name_zh_hans": "饮品",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 14,
+    "fields": {
+      "name": "Education",
+      "name_en": "Education",
+      "name_nl": "Onderwijs",
+      "name_zh_hans": "教育",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 15,
+    "fields": {
+      "name": "Family",
+      "name_en": "Family",
+      "name_nl": "Familie",
+      "name_zh_hans": "家庭",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 18,
+    "fields": {
+      "name": "Furniture",
+      "name_en": "Furniture",
+      "name_nl": "Meubels",
+      "name_zh_hans": "家具",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 19,
+    "fields": {
+      "name": "Government",
+      "name_en": "Government",
+      "name_nl": "Overheid",
+      "name_zh_hans": "政府",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 21,
+    "fields": {
+      "name": "Health",
+      "name_en": "Health",
+      "name_nl": "Gezondheid",
+      "name_zh_hans": "健康",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 23,
+    "fields": {
+      "name": "Language act",
+      "name_en": "Language act",
+      "name_nl": "Taaluiting",
+      "name_zh_hans": "语言行为",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 24,
+    "fields": {
+      "name": "Law",
+      "name_en": "Law",
+      "name_nl": "Juridisch",
+      "name_zh_hans": "法律",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 25,
+    "fields": {
+      "name": "Material",
+      "name_en": "Material",
+      "name_nl": "Materiaal",
+      "name_zh_hans": "材料",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 26,
+    "fields": {
+      "name": "Metalinguistic",
+      "name_en": "Metalinguistic",
+      "name_nl": "Metalinguïstisch",
+      "name_zh_hans": "元语言的",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 27,
+    "fields": {
+      "name": "Mind",
+      "name_en": "Mind",
+      "name_nl": "Geest",
+      "name_zh_hans": "思维",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 28,
+    "fields": {
+      "name": "Money",
+      "name_en": "Money",
+      "name_nl": "Geld",
+      "name_zh_hans": "钱",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 29,
+    "fields": {
+      "name": "Nature",
+      "name_en": "Nature",
+      "name_nl": "Natuur",
+      "name_zh_hans": "自然",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 30,
+    "fields": {
+      "name": "Number",
+      "name_en": "Number",
+      "name_nl": "Getal",
+      "name_zh_hans": "数",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 31,
+    "fields": {
+      "name": "People",
+      "name_en": "People",
+      "name_nl": "Mensen",
+      "name_zh_hans": "人",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 32,
+    "fields": {
+      "name": "Physical act",
+      "name_en": "Physical act",
+      "name_nl": "Fysieke handeling",
+      "name_zh_hans": "身体行为",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 33,
+    "fields": {
+      "name": "Quality",
+      "name_en": "Quality",
+      "name_nl": "Kwaliteit",
+      "name_zh_hans": "质量",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 34,
+    "fields": {
+      "name": "Quantity",
+      "name_en": "Quantity",
+      "name_nl": "Kwantiteit",
+      "name_zh_hans": "数量",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 35,
+    "fields": {
+      "name": "Question",
+      "name_en": "Question",
+      "name_nl": "Vraag",
+      "name_zh_hans": "提问",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 36,
+    "fields": {
+      "name": "Recreation",
+      "name_en": "Recreation",
+      "name_nl": "Recreatie",
+      "name_zh_hans": "娱乐",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 37,
+    "fields": {
+      "name": "Salutation",
+      "name_en": "Salutation",
+      "name_nl": "Begroeting",
+      "name_zh_hans": "称呼",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 38,
+    "fields": {
+      "name": "Sensation",
+      "name_en": "Sensation",
+      "name_nl": "Gevoel",
+      "name_zh_hans": "感觉",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 39,
+    "fields": {
+      "name": "Sexuality",
+      "name_en": "Sexuality",
+      "name_nl": "Sexualiteit",
+      "name_zh_hans": "性",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 40,
+    "fields": {
+      "name": "Shape",
+      "name_en": "Shape",
+      "name_nl": "Vorm",
+      "name_zh_hans": "型",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 41,
+    "fields": {
+      "name": "Shopping",
+      "name_en": "Shopping",
+      "name_nl": "Winkelen",
+      "name_zh_hans": "购物",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 42,
+    "fields": {
+      "name": "Sport",
+      "name_en": "Sport",
+      "name_nl": "Sport",
+      "name_zh_hans": "体育",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 43,
+    "fields": {
+      "name": "Technology",
+      "name_en": "Technology",
+      "name_nl": "Technologie",
+      "name_zh_hans": "技术",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 44,
+    "fields": {
+      "name": "Time",
+      "name_en": "Time",
+      "name_nl": "Tijd",
+      "name_zh_hans": "时间",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 45,
+    "fields": {
+      "name": "Travel",
+      "name_en": "Travel",
+      "name_nl": "Reizen",
+      "name_zh_hans": "旅行",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 46,
+    "fields": {
+      "name": "Utensil",
+      "name_en": "Utensil",
+      "name_nl": "Gebruiksvoorwerp",
+      "name_zh_hans": "器具",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 47,
+    "fields": {
+      "name": "Weather",
+      "name_en": "Weather",
+      "name_nl": "Weer",
+      "name_zh_hans": "天气",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 48,
+    "fields": {
+      "name": "Work",
+      "name_en": "Work",
+      "name_nl": "Werk",
+      "name_zh_hans": "工作",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 49,
+    "fields": {
+      "name": "Space",
+      "name_en": "Space",
+      "name_nl": "Ruimte",
+      "name_zh_hans": "场所",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 50,
+    "fields": {
+      "name": "Linguistics",
+      "name_en": "Linguistics",
+      "name_nl": "Taalkunde",
+      "name_zh_hans": "语言学",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 51,
+    "fields": {
+      "name": "Geography",
+      "name_en": "Geography",
+      "name_nl": "Geografie",
+      "name_zh_hans": "Geography",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 52,
+    "fields": {
+      "name": "Emotion",
+      "name_en": "Emotion",
+      "name_nl": "Emotie",
+      "name_zh_hans": "Emotion",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 53,
+    "fields": {
+      "name": "Month",
+      "name_en": "Month",
+      "name_nl": "Maand",
+      "name_zh_hans": "Month",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 54,
+    "fields": {
+      "name": "Fruit",
+      "name_en": "Fruit",
+      "name_nl": "Fruit",
+      "name_zh_hans": "Fruit",
+      "field_color": "ffffff",
+      "description": null
+    }
+  },
+  {
+    "model": "dictionary.semanticfield",
+    "pk": 55,
+    "fields": {
+      "name": "Religion",
+      "name_en": "Religion",
+      "name_nl": "Religie",
+      "name_zh_hans": "Religion",
+      "field_color": "ffffff",
+      "description": null
+    }
+  }
+]
