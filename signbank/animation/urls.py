@@ -6,5 +6,5 @@ import signbank.animation.views
 
 urlpatterns = [
     re_path(r'^animation/(?P<animationid>\d+)$', signbank.animation.views.animation),
-    re_path(r'^upload/', signbank.video.views.addvideo)
+    re_path(r'^upload/', signbank.animation.views.addanimation)
     ]
