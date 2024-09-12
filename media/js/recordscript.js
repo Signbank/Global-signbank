@@ -148,7 +148,7 @@ function sleep (time) {
  */
 function processBlobs(recordedBlobs){
     // Add the recorded video to a hidden file input field
-    if(recordedBlobs[0].size<5242880){ // Hardcoded: better take settings.FILE_UPLOAD_MAX_MEMORY_SIZE value
+    if(recordedBlobs[0].size<15728640){ // Hardcoded: better take settings.FILE_UPLOAD_MAX_MEMORY_SIZE value
         console.log("Blobs: ", recordedBlobs)
         const blob = new Blob(recordedBlobs)
         var file = new File([blob], "temp.webm",{type:"video/webm, lastModified:new Date().getTime()"})
