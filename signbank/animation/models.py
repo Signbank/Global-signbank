@@ -37,7 +37,7 @@ def get_two_letter_dir(idgloss):
     return foldername
 
 class AnimationStorage(FileSystemStorage):
-    """Implement our shadowing video storage system"""
+    """Implement our shadowing animation storage system"""
 
     def __init__(self, location=settings.MEDIA_ROOT, base_url=settings.MEDIA_URL):
         super(AnimationStorage, self).__init__(location, base_url)
@@ -110,3 +110,32 @@ class GlossAnimation(models.Model):
     def get_absolute_url(self):
 
         return self.fbxfile.name
+
+
+class GlossAnimationHistory(models.Model):
+    """History of video uploading and deletion"""
+
+    action = models.CharField("Animation History Action", max_length=6, choices=ACTION_CHOICES, default='watch')
+    # When was this action done?
+    datestamp = models.DateTimeField("Date and time of action", auto_now_add=True)
+    # See 'fbxfile' in animation.views.addanimation
+    uploadfile = models.TextField("User upload path", default='(not specified)')
+    # See 'goal_location' in addanimation
+    goal_location = models.TextField("Full target path", default='(not specified)')
+
+    # WAS: Many-to-many link: to the user that has uploaded or deleted this video
+    # WAS: actor = models.ManyToManyField("", User)
+    # The user that has uploaded or deleted this video
+    actor = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
+
+    # One-to-many link: to the Gloss in dictionary.models.Gloss
+    gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
+
+    def __str__(self):
+
+        # Basic feedback from one History item: gloss-action-date
+        name = self.gloss.idgloss + ': ' + self.action + ', (' + str(self.datestamp) + ')'
+        return str(name.encode('ascii', errors='replace'))
+
+    class Meta:
+        ordering = ['datestamp']

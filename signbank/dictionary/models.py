@@ -2630,6 +2630,33 @@ class Gloss(models.Model):
         from tagging.models import Tag
         return Tag.objects.get_for_object(self)
 
+    def add_animation(self, user, fbxfile):
+        # Preventing circular import
+        from signbank.animation.models import GlossAnimation, get_animation_file_path, GlossAnimationHistory
+
+        # Create a new GlossAnimation object
+        if isinstance(fbxfile, File) or fbxfile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
+            animation = GlossAnimation(gloss=self, upload_to=get_animation_file_path)
+            # Backup the existing animation objects stored in the database
+            existing_animations = GlossAnimation.objects.filter(gloss=self)
+            for animation_object in existing_animations:
+                animation_object.reversion(revert=False)
+
+            # Create a GlossAnimationHistory object
+            relative_path = get_animation_file_path(animation, str(fbxfile))
+            animation_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
+            glossanimationhistory = GlossAnimationHistory(action="upload", gloss=self, actor=user,
+                                                          uploadfile=fbxfile, goal_location=animation_file_full_path)
+            glossanimationhistory.save()
+
+            # Save the new fbx file in the animation object
+            animation.fbxfile.save(relative_path, fbxfile)
+        else:
+            return GlossAnimation(gloss=self, upload_to=get_animation_file_path)
+        animation.save()
+
+        return animation
+
 # register Gloss for tags
 try:
     tagging.register(Gloss)
