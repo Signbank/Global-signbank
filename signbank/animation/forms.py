@@ -21,11 +21,9 @@ class AnimationUploadForObjectForm(forms.Form):
 
     fbxfile = forms.FileField(label=_("Upload FBX File"),
                               widget=forms.FileInput(attrs={'accept': 'application/octet-stream'}))
-    object_id = forms.CharField(widget=forms.HiddenInput)
+    gloss_id = forms.CharField(widget=forms.HiddenInput)
     object_type = forms.CharField(widget=forms.HiddenInput)
-    redirect = forms.CharField(widget=forms.HiddenInput, required=False)
-    recorded = forms.BooleanField(initial=False, required=False)
-    offset = forms.IntegerField(required=False)
+    redirect = forms.CharField(widget=forms.HiddenInput)
 
     def __init__(self, *args, **kwargs):
         languages = kwargs.pop('languages', [])

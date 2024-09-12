@@ -10,11 +10,9 @@ import time
 import stat
 import shutil
 
-from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video
-
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
-from signbank.settings.base import WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, FFMPEG_PROGRAM
+from signbank.settings.server_specific import WRITABLE_FOLDER, ANIMATION_DIRECTORY
 # from django.contrib.auth.models import User
 from datetime import datetime
 
@@ -48,7 +46,7 @@ class AnimationStorage(FileSystemStorage):
 
 storage = AnimationStorage()
 
-# The 'action' choices are used in the GlossVideoHistory class
+# The 'action' choices are used in the GlossAnimationHistory class
 ACTION_CHOICES = (('delete', 'delete'),
                   ('upload', 'upload'),
                   ('rename', 'rename'),
@@ -89,7 +87,7 @@ def get_animation_file_path(instance, filename):
 
 
 class GlossAnimation(models.Model):
-    """A video that represents a particular idgloss"""
+    """An animation that represents a particular idgloss"""
 
     fbxfile = models.FileField("FBX file", storage=storage,
                                  validators=[validate_file_extension])
@@ -113,7 +111,7 @@ class GlossAnimation(models.Model):
 
 
 class GlossAnimationHistory(models.Model):
-    """History of video uploading and deletion"""
+    """History of animation uploading and deletion"""
 
     action = models.CharField("Animation History Action", max_length=6, choices=ACTION_CHOICES, default='watch')
     # When was this action done?
@@ -123,13 +121,16 @@ class GlossAnimationHistory(models.Model):
     # See 'goal_location' in addanimation
     goal_location = models.TextField("Full target path", default='(not specified)')
 
-    # WAS: Many-to-many link: to the user that has uploaded or deleted this video
+    # WAS: Many-to-many link: to the user that has uploaded or deleted this animation
     # WAS: actor = models.ManyToManyField("", User)
-    # The user that has uploaded or deleted this video
+    # The user that has uploaded or deleted this animation
     actor = models.ForeignKey(authmodels.User, on_delete=models.CASCADE)
 
     # One-to-many link: to the Gloss in dictionary.models.Gloss
     gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ['datestamp']
 
     def __str__(self):
 
@@ -137,5 +138,6 @@ class GlossAnimationHistory(models.Model):
         name = self.gloss.idgloss + ': ' + self.action + ', (' + str(self.datestamp) + ')'
         return str(name.encode('ascii', errors='replace'))
 
-    class Meta:
-        ordering = ['datestamp']
+    def save(self, *args, **kwargs):
+
+        super(GlossAnimationHistory, self).save(*args, **kwargs)

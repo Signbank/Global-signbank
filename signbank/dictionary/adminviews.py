@@ -29,6 +29,8 @@ from guardian.shortcuts import get_objects_for_user
 from signbank.feedback.models import *
 from signbank.video.forms import VideoUploadForObjectForm
 from signbank.video.models import GlossVideoDescription, GlossVideo, GlossVideoNME
+from signbank.animation.models import GlossAnimation
+from signbank.animation.forms import AnimationUploadForObjectForm
 from tagging.models import Tag, TaggedItem
 from signbank.settings.server_specific import *
 
@@ -7573,3 +7575,78 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
                    'column_values': column_values,
                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
+
+
+class AnimationCreateView(CreateView):
+    model = GlossAnimation
+    template_name = 'dictionary/add_animation.html'
+    last_used_dataset = None
+    fields = []
+
+    def get_context_data(self, **kwargs):
+        context = super(AnimationCreateView, self).get_context_data(**kwargs)
+
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+        context['dataset'] = selected_datasets.first()
+
+        if len(selected_datasets) == 1:
+            self.last_used_dataset = selected_datasets[0].acronym
+        elif 'last_used_dataset' in self.request.session.keys():
+            self.last_used_dataset = self.request.session['last_used_dataset']
+
+        context['last_used_dataset'] = self.last_used_dataset
+
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
+        context['add_animation_form'] = AnimationUploadForObjectForm(self.request.GET, languages=dataset_languages, dataset=self.last_used_dataset)
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        dataset = None
+        if 'dataset' in request.POST and request.POST['dataset'] is not None:
+            dataset = Dataset.objects.get(pk=request.POST['dataset'])
+            selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
+        else:
+            selected_datasets = get_selected_datasets_for_user(request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+
+        dataset = selected_datasets.first()
+
+        show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+        form = AnimationUploadForObjectForm(request.POST, languages=dataset_languages, dataset=self.last_used_dataset)
+
+        for item, value in request.POST.items():
+            print(item, value)
+
+        if form.is_valid():
+            try:
+                animation = form.save()
+                print("ANIMATION " + str(animation.pk))
+            except ValidationError as ve:
+                messages.add_message(request, messages.ERROR, ve.message)
+                return render(request, 'dictionary/add_animation.html',
+                              {'add_animation_form': AnimationUploadForObjectForm(request.POST,
+                                                                 languages=dataset_languages,
+                                                                 dataset=self.last_used_dataset),
+                               'dataset_languages': dataset_languages,
+                               'dataset': dataset,
+                               'selected_datasets': get_selected_datasets_for_user(request.user),
+                               'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                               'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+
+            return HttpResponseRedirect(reverse('dictionary:admin_gloss_list'))
+        else:
+            return render(request, 'dictionary/add_animation.html', {'add_animation_form': form,
+                                                             'dataset_languages': dataset_languages,
+                                                             'dataset': dataset,
+                                                             'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                             'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
+                                                             'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})

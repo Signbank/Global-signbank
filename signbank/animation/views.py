@@ -30,12 +30,12 @@ def addanimation(request):
         form = AnimationUploadForObjectForm(request.POST, request.FILES, languages=dataset_languages, dataset=dataset)
         if form.is_valid():
             # Unpack the form
-            object_id = form.cleaned_data['object_id']
+            gloss_id = form.cleaned_data['gloss_id']
             object_type = form.cleaned_data['object_type']
             fbxfile = form.cleaned_data['fbxfile']
             redirect_url = form.cleaned_data['redirect']
             if object_type == 'gloss_animation':
-                gloss = Gloss.objects.filter(id=object_id).first()
+                gloss = Gloss.objects.filter(id=int(gloss_id)).first()
                 if not gloss:
                     redirect(redirect_url)
                 gloss.add_animation(request.user, fbxfile)
