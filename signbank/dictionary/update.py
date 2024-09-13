@@ -2042,6 +2042,10 @@ def delete_annotated_sentence(request, glossid):
     if not request.method == "POST":
         return HttpResponseForbidden("Annotated Sentence Deletion method must be POST")
 
+    if not request.user.has_perm('dictionary.delete_annotatedsentence'):
+        messages.add_message(request, messages.ERROR, _('Annotated Sentence Deletion Not Allowed'))
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
+
     annotated_sentence = AnnotatedSentence.objects.get(id=request.POST['annotatedsentenceid'])
     annotated_videos = AnnotatedVideo.objects.filter(annotatedsentence=annotated_sentence)
     for annotated_video in annotated_videos:
