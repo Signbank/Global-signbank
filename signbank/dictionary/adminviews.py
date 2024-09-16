@@ -7650,3 +7650,34 @@ class AnimationCreateView(CreateView):
                                                              'selected_datasets': get_selected_datasets_for_user(request.user),
                                                              'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                                                              'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
+
+
+class AnimationDetailView(DetailView):
+    model = GlossAnimation
+    template_name = 'dictionary/gloss_animation.html'
+    last_used_dataset = None
+    fields = []
+
+    def get_context_data(self, **kwargs):
+        context = super(AnimationDetailView, self).get_context_data(**kwargs)
+
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+        context['dataset'] = selected_datasets.first()
+
+        if len(selected_datasets) == 1:
+            self.last_used_dataset = selected_datasets[0].acronym
+        elif 'last_used_dataset' in self.request.session.keys():
+            self.last_used_dataset = self.request.session['last_used_dataset']
+
+        context['last_used_dataset'] = self.last_used_dataset
+
+        context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
+        context['add_animation_form'] = AnimationUploadForObjectForm(self.request.GET, languages=dataset_languages, dataset=self.last_used_dataset)
+
+        return context

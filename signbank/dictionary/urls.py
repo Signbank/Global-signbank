@@ -9,7 +9,7 @@ from signbank.dictionary.adminviews import (GlossListView, GlossDetailView, Glos
     MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView,
     create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView,
     DerivationHistoryListView, GlossVideosView, KeywordListView, AnnotatedSentenceDetailView, AnnotatedSentenceListView,
-                                            AnimationCreateView)
+                                            AnimationCreateView, AnimationDetailView)
 
 from signbank.dictionary.views import create_citation_image
 
@@ -262,6 +262,7 @@ urlpatterns = [
     re_path(r'lemma/update/(?P<pk>\d+)$', permission_required('dictionary.change_lemmaidgloss')(LemmaUpdateView.as_view()), name='change_lemma'),
     re_path(r'^annotatedsentence/(?P<pk>\d+)', AnnotatedSentenceDetailView.as_view(), name='admin_annotated_sentence_view'),
     re_path(r'animation/add/$', permission_required('dictionary.change_glosss')(AnimationCreateView.as_view()), name='create_animation'),
+    re_path(r'^animation/(?P<pk>\d+)', AnimationDetailView.as_view(), name='admin_animation_view'),
 
     re_path(r'^keywords/$', KeywordListView.as_view(), name='admin_keyword_list'),
 
