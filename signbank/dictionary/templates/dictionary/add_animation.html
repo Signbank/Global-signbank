@@ -12,6 +12,7 @@
 
     <script type="text/javascript">
     var url = '{{PREFIX_URL}}';
+    var csrf_token = '{{csrf_token}}';
 
     var gloss_bloodhound = new Bloodhound({
       datumTokenizer: function(d) { return d.tokens; },
