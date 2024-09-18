@@ -94,11 +94,11 @@ var MeshesAndAnims = protected_media_url + '/MeshesAndAnims/';
     var zin = urlParams.get("zin") // IK,BEN,GOMER
     var limit = urlParams.get("limit") // limit=50, if you want to limit the amount of animations
     var gltf = urlParams.get("gltf") // gltf=1, if you want to load animations with gltf extension
-    var local = urlParams.get("local") // local=1, if you want to load animations from local folder
+    var local = 1;
     var blending = urlParams.get("blending") // blending=1, if you want to blend animations
     var debug = urlParams.get("debug") // debug=1, if you want to see debug terminal
     var lockRot = urlParams.get("lockRot") // debug=1, if you want to see debug terminal
-    var externalAnim = urlParams.get("externalAnim") // externalAnim="https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/appel.glb", if you want to load animations from external source
+    var externalAnim = urlParams.get("https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/appel.glb")
     var noGui = urlParams.get("noGui") // noGui=1, if you don't want to see the GUI
     var meshRotation = urlParams.get("meshRotation") // meshRotation=0-360, if you want to rotate the mesh container y-rotation
     var onboard = urlParams.get("onboard") // onboard=0 or false, if you dont want to play the onboard animation
@@ -184,7 +184,7 @@ var MeshesAndAnims = protected_media_url + '/MeshesAndAnims/';
 
       // Play the onboard animation after 2 seconds
       if (ParamsManager.onboard) {
-        setTimeout(onboardAnimation, 2000);
+        setTimeout(onboardAnimation, 20000);
       }
     });
 
@@ -443,9 +443,10 @@ var MeshesAndAnims = protected_media_url + '/MeshesAndAnims/';
     </div>
   </div>
 
-
-  <canvas id="renderCanvas"></canvas>
-
+  <div style="width:100%;">
+  <canvas id="renderCanvas" width="600" height="400"></canvas>
+  <br><br>
+  <div class='btn-group' style="width: 600px;flex-wrap: wrap;">
   <!-- Define clickable buttons for user to interact with the website -->
   <button onclick="animationSequencing(true); recordingMethod=''">Load Animation sequence and Record them</button>
   <button onclick="animationSequencing()">Load Animation Sequence and play them</button>
@@ -457,7 +458,8 @@ var MeshesAndAnims = protected_media_url + '/MeshesAndAnims/';
   <!-- <button onclick="var gui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI', true, scene);createRootContainer(gui);">get gui</button> -->
 
 
-  <button type="button" class="btn btn-primary" onclick="retargetUE('https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/ERROR-SC.fbx', 'https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/AAP.fbx', 'https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/APPEL.fbx', '{{PREFIX_URL}}/upload')">test retargetUE</button>
-
+  <button type="button" class="btn btn-primary" onclick="retargetUE('https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/ERROR-SC.fbx', 'https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/AAP.fbx', 'https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/APPEL.fbx', '{{settings.WRITABLE_FOLDER}}/MeshesAndAnims/')">test retargetUE</button>
+  </div>
+</div>
 
 {% endblock %}

@@ -126,9 +126,9 @@ function sendCommandUEAnim(animURL, skeletonPath = null) {
 function sendCommandUEAnimRetargetSend(sourceMeshPath, targetMeshPath, animPath, sendPath) {
     console.log("sendCommandUEAnimRetargetSend", sourceMeshPath, targetMeshPath, animPath, sendPath);
     // Make sure animPath is a string containing /Game/ImportedAssets/
-    if (typeof animPath !== 'string' || !animPath.includes('/Game/ImportedAssets/')) {
-        return Promise.reject(new Error("animPath must be a string containing /Game/ImportedAssets/"));
-    }
+//    if (typeof animPath !== 'string' || !animPath.includes('/Game/ImportedAssets/')) {
+//        return Promise.reject(new Error("animPath must be a string containing /Game/ImportedAssets/"));
+//    }
 
     return sendMessageUEProxy('rig_retarget_send', sourceMeshPath + "," + targetMeshPath + "," + animPath + "," + sendPath)
         .then(sourceMeshPathUE => {
@@ -154,7 +154,7 @@ function sendCommandUEAnimRetargetSend(sourceMeshPath, targetMeshPath, animPath,
  * @returns {Promise<boolean>} - A promise that resolves to true if all steps succeed, or false if any step fails.
  */
 function retargetUE(sourceMeshURL, targetMeshURL, animURL, sendPath, sourceMeshPath = null, targetMeshPath = null, skeletonPath = null) {
-    const UEDestPath = `/Game/ImportedAssets/`;
+    const UEDestPath = MeshesAndAnims;
     const animName = animURL.split('/').pop().split('.')[0].replace('.fbx', '');
 
     // Derive mesh names from the URLs
