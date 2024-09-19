@@ -9,7 +9,7 @@ from signbank.dictionary.adminviews import (GlossListView, GlossDetailView, Glos
     MorphemeListView, HandshapeDetailView, HandshapeListView, LemmaListView, LemmaCreateView, LemmaDeleteView, LemmaFrequencyView,
     create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView,
     DerivationHistoryListView, GlossVideosView, KeywordListView, AnnotatedSentenceDetailView, AnnotatedSentenceListView,
-                                            AnimationCreateView, AnimationDetailView)
+                                            AnimationCreateView, AnimationDetailView, GlossAnimationsView)
 
 from signbank.dictionary.views import create_citation_image
 
@@ -241,6 +241,7 @@ urlpatterns = [
     re_path(r'^handshapes/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
     re_path(r'^gloss/(?P<gloss_pk>\d+)/history', signbank.dictionary.views.gloss_revision_history, name='gloss_revision_history'),
     re_path(r'^gloss/(?P<pk>\d+)/glossvideos', GlossVideosView.as_view(), name='gloss_videos'),
+    re_path(r'^gloss/(?P<pk>\d+)/glossanimations', GlossAnimationsView.as_view(), name='gloss_animations'),
     re_path(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view'),
     re_path(r'^gloss_preview/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view_colors'),
     re_path(r'^gloss_frequency/(?P<gloss_id>.*)/$', GlossFrequencyView.as_view(), name='admin_frequency_gloss'),

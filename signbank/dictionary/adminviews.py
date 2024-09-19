@@ -5507,12 +5507,13 @@ def annotatedsentence_ajax_search_results(request):
     else:
         return JsonResponse([], safe=False)
 
+
 def gloss_ajax_complete(request, prefix):
     """Return a list of glosses matching the search term
     as a JSON structure suitable for typeahead."""
 
     result = []
-
+    print(request.session.keys())
     if 'datasetid' in request.session.keys():
         datasetid = request.session['datasetid']
     else:
@@ -7595,15 +7596,14 @@ class AnimationCreateView(CreateView):
         context['dataset_languages'] = dataset_languages
         context['dataset'] = selected_datasets.first()
 
-        if len(selected_datasets) == 1:
-            self.last_used_dataset = selected_datasets[0].acronym
-        elif 'last_used_dataset' in self.request.session.keys():
-            self.last_used_dataset = self.request.session['last_used_dataset']
-
+        self.last_used_dataset = selected_datasets.first().acronym
+        self.request.session['last_used_dataset'] = selected_datasets.first().acronym
         context['last_used_dataset'] = self.last_used_dataset
 
         context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['add_animation_form'] = AnimationUploadForObjectForm(self.request.GET, languages=dataset_languages, dataset=self.last_used_dataset)
+
+        self.request.session['datasetid'] = str(selected_datasets.first().id)
 
         return context
 
@@ -7655,6 +7655,7 @@ class AnimationCreateView(CreateView):
 class AnimationDetailView(DetailView):
     model = GlossAnimation
     template_name = 'dictionary/gloss_animation.html'
+    context_object_name = 'animation'
     last_used_dataset = None
     fields = []
 
@@ -7679,5 +7680,98 @@ class AnimationDetailView(DetailView):
 
         context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
         context['add_animation_form'] = AnimationUploadForObjectForm(self.request.GET, languages=dataset_languages, dataset=self.last_used_dataset)
+
+        return context
+
+
+class GlossAnimationsView(DetailView):
+
+    model = Gloss
+    context_object_name = 'gloss'
+    last_used_dataset = None
+    template_name = 'dictionary/gloss_animations.html'
+
+    def get(self, request, *args, **kwargs):
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+
+        try:
+            self.object = super().get_object()
+            if self.object.archived:
+                raise ObjectDoesNotExist
+        except (Http404, ObjectDoesNotExist):
+            translated_message = _('The requested gloss does not exist.')
+            return show_warning(request, translated_message, selected_datasets)
+
+        if not self.object.lemma or not self.object.lemma.dataset:
+            translated_message = _('Requested gloss has no lemma or dataset.')
+            return show_warning(request, translated_message, selected_datasets)
+
+        if not request.user.is_authenticated:
+            if self.object.inWeb:
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
+            else:
+                return HttpResponseRedirect(reverse('registration:login'))
+
+        dataset_of_requested_gloss = self.object.lemma.dataset
+        datasets_user_can_view = get_objects_for_user(request.user, ['view_dataset'],
+                                                      Dataset, accept_global_perms=True, any_perm=True)
+
+        if dataset_of_requested_gloss not in selected_datasets:
+            translated_message = _('The gloss you are trying to view is not in your selected datasets.')
+            return show_warning(request, translated_message, selected_datasets)
+
+        if dataset_of_requested_gloss not in datasets_user_can_view:
+            if self.object.inWeb:
+                return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
+            else:
+                translated_message = _('The gloss you are trying to view is not in a dataset you can view.')
+                return show_warning(request, translated_message, selected_datasets)
+
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        if 'search_results' in self.request.session.keys():
+            search_results = self.request.session['search_results']
+        else:
+            search_results = []
+        if search_results and len(search_results) > 0:
+            if self.request.session['search_results'][0]['href_type'] not in ['gloss', 'morpheme', 'annotatedsentence']:
+                self.request.session['search_results'] = []
+        if 'search_type' in self.request.session.keys():
+            if self.request.session['search_type'] not in ['sign', 'morpheme', 'annotatedsentence',
+                                                           'sign_or_morpheme', 'sign_handshape']:
+                # search_type is 'handshape'
+                self.request.session['search_results'] = []
+        else:
+            self.request.session['search_type'] = 'sign'
+
+        # Call the base implementation first to get a context
+        context = super(GlossAnimationsView, self).get_context_data(**kwargs)
+
+        context['search_type'] = self.request.session['search_type']
+
+        # Pass info about which fields we want to see
+        gl = context['gloss']
+        context['active_id'] = gl.id
+        labels = gl.field_labels()
+
+        # the lemma field is non-empty because it's caught in the get method
+        dataset_of_requested_gloss = gl.lemma.dataset
+
+        # set a session variable to be able to pass the gloss's id to the ajax_complete method
+        # the last_used_dataset name is updated to that of this gloss
+        # if a sequesce of glosses are being created by hand, this keeps the dataset setting the same
+        self.request.session['datasetid'] = dataset_of_requested_gloss.pk
+        self.last_used_dataset = dataset_of_requested_gloss.acronym
+
+        self.request.session['last_used_dataset'] = self.last_used_dataset
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = get_dataset_languages(selected_datasets)
+        context['dataset_languages'] = dataset_languages
+
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+        context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         return context
