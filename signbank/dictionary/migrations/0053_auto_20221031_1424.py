@@ -21,8 +21,6 @@ def get_translation_languages(language_model):
             'language_code_3char': languages_3char[language_2char],
             'name': language_name
         }
-        for field in translation_fields:
-            fields_dict[field.replace('-', '_')] = language_name
         language_object, created = language_model.objects.get_or_create(**fields_dict)
         language_objects.append(language_object)
 
