@@ -1,5 +1,4 @@
 bin/develop.py migrate
-bin/develop.py createsuperuser
 
 echo 'from django.contrib.contenttypes.models import ContentType; ContentType.objects.all().delete()' | bin/develop.py shell
 echo 'from signbank.dictionary.models import FieldChoice; FieldChoice.objects.all().delete()' | bin/develop.py shell
@@ -16,5 +15,13 @@ bin/develop.py loaddata fixtures/handshapes.json
 bin/develop.py loaddata fixtures/semanticfields.json
 bin/develop.py loaddata fixtures/derivationhistories.json
 
+# Copy values from default fields to translated fields
+echo 'from signbank.dictionary.models import Language; print("\n".join(Language.objects.values_list("language_code_2char", flat=True)))' \
+| bin/develop.py shell | xargs -i bin/develop.py update_translation_fields --language={}
+
 echo
-echo "IMPORTANT: Add yourself to Dataset_Manager group in admin"
+echo Creat a superuser:
+bin/develop.py createsuperuser
+
+echo
+echo "IMPORTANT: Add this superuser to Dataset_Manager group in admin"

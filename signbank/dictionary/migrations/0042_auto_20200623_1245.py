@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -11,35 +12,13 @@ class Migration(migrations.Migration):
         ('dictionary', '0041_auto_20200623_1231'),
     ]
 
-    operations = [
-        migrations.AddField(
-            model_name='fieldchoice',
-            name='name_en',
-            field=models.CharField(max_length=50, null=True),
-        ),
-        migrations.AddField(
-            model_name='fieldchoice',
-            name='name_nl',
-            field=models.CharField(max_length=50, null=True),
-        ),
-        migrations.AddField(
-            model_name='fieldchoice',
-            name='name_zh_hans',
-            field=models.CharField(max_length=50, null=True),
-        ),
-        migrations.AddField(
-            model_name='handshape',
-            name='name_en',
-            field=models.CharField(max_length=50, null=True, verbose_name='English name'),
-        ),
-        migrations.AddField(
-            model_name='handshape',
-            name='name_nl',
-            field=models.CharField(max_length=50, null=True, verbose_name='English name'),
-        ),
-        migrations.AddField(
-            model_name='handshape',
-            name='name_zh_hans',
-            field=models.CharField(max_length=50, null=True, verbose_name='English name'),
-        ),
-    ]
+    def get_migration_addfields(self, model_name, name_base, field):
+        addfields = []
+        for lang in settings.LANGUAGES:
+            addfields.append(
+                migrations.AddField(model_name=model_name, name=name_base+'_'+lang[0].replace('-', '_'), field=field)
+            )
+        return addfields
+
+    operations = get_migration_addfields(None, 'fieldchoice', 'name', models.CharField(max_length=50, null=True))\
+                 + get_migration_addfields(None, 'handshape', 'name', models.CharField(max_length=50, null=True))

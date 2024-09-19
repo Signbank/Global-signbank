@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -18,19 +19,23 @@ class Migration(migrations.Migration):
                     language_code_3char="eng",description="Default English")
         l.save()
 
+    def get_translation_fields(self):
+        return [
+            ('name_'+lang[0].replace('-', '_'), models.CharField(max_length=50, null=True))
+            for lang in settings.LANGUAGES
+        ]
+
+
     operations = [
         migrations.CreateModel(
             name='Language',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=50)),
-                ('name_en', models.CharField(max_length=50, null=True)),
-                ('name_nl', models.CharField(max_length=50, null=True)),
-                ('name_zh_hans', models.CharField(max_length=50, null=True)),
                 ('language_code_2char', models.CharField(help_text='Language code (2 characters long) of a written language. This also includes codes of the form zh-Hans, cf. IETF BCP 47', max_length=7)),
                 ('language_code_3char', models.CharField(help_text='ISO 639-3 language code (3 characters long) of a written language.', max_length=3)),
                 ('description', models.TextField()),
-            ],
+            ] + get_translation_fields(None),
             options={
                 'ordering': ['name'],
             },

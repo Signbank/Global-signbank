@@ -4,9 +4,6 @@
     "pk": 0,
     "fields": {
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "field_color": "ffffff",
       "description": null
     }
@@ -16,9 +13,6 @@
     "pk": 1,
     "fields": {
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "field_color": "ffffff",
       "description": null
     }
@@ -28,9 +22,6 @@
     "pk": 4,
     "fields": {
       "name": "Arc",
-      "name_en": "Arc",
-      "name_nl": "Arc",
-      "name_zh_hans": "Arc",
       "field_color": "ffffff",
       "description": null
     }
@@ -40,9 +31,6 @@
     "pk": 6,
     "fields": {
       "name": "Straight",
-      "name_en": "Straight",
-      "name_nl": "Straight",
-      "name_zh_hans": "Straight",
       "field_color": "ffffff",
       "description": null
     }
@@ -52,9 +40,6 @@
     "pk": 12,
     "fields": {
       "name": "Zigzag",
-      "name_en": "Zigzag",
-      "name_nl": "Zigzag",
-      "name_zh_hans": "Zigzag",
       "field_color": "ffffff",
       "description": null
     }
@@ -64,9 +49,6 @@
     "pk": 37,
     "fields": {
       "name": "Circle",
-      "name_en": "Circle",
-      "name_nl": "Circle",
-      "name_zh_hans": "Circle",
       "field_color": "ffffff",
       "description": null
     }
@@ -76,9 +58,6 @@
     "pk": 44,
     "fields": {
       "name": "Motivated shape",
-      "name_en": "Motivated shape",
-      "name_nl": "Motivated shape",
-      "name_zh_hans": "Motivated shape",
       "field_color": "ffffff",
       "description": null
     }
@@ -88,9 +67,6 @@
     "pk": 45,
     "fields": {
       "name": "Spiral",
-      "name_en": "Spiral",
-      "name_nl": "Spiral",
-      "name_zh_hans": "Spiral",
       "field_color": "ffffff",
       "description": null
     }

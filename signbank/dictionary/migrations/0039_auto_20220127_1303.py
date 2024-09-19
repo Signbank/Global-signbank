@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 import django.db.models.deletion
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -12,6 +13,12 @@ class Migration(migrations.Migration):
         ('dictionary', '0038_auto_20201028_1533'),
     ]
 
+    def get_translation_fields(self):
+        return [
+            ('name_'+lang[0].replace('-', '_'), models.CharField(max_length=50, null=True))
+            for lang in settings.LANGUAGES
+        ]
+
     operations = [
         migrations.CreateModel(
             name='SemanticField',
@@ -19,7 +26,7 @@ class Migration(migrations.Migration):
                 ('machine_value', models.IntegerField(primary_key=True, serialize=False, verbose_name='Machine value')),
                 ('name', models.CharField(max_length=20, unique=True)),
                 ('description', models.TextField(blank=True, null=True)),
-            ],
+            ] + get_translation_fields(None),
         ),
         migrations.CreateModel(
             name='SemanticFieldTranslation',
@@ -28,7 +35,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=20)),
                 ('language', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='dictionary.Language')),
                 ('semField', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='dictionary.SemanticField')),
-            ],
+            ] + get_translation_fields(None),
         ),
         migrations.AddField(
             model_name='gloss',

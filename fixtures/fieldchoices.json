@@ -5,9 +5,6 @@
     "fields": {
       "field": "Handedness",
       "name": "1",
-      "name_en": "1",
-      "name_nl": "1",
-      "name_zh_hans": "1",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -18,9 +15,6 @@
     "fields": {
       "field": "Handedness",
       "name": "2a",
-      "name_en": "2a",
-      "name_nl": "2a",
-      "name_zh_hans": "2a",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -31,9 +25,6 @@
     "fields": {
       "field": "Handedness",
       "name": "2s",
-      "name_en": "2s",
-      "name_nl": "2s",
-      "name_zh_hans": "2s",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -44,9 +35,6 @@
     "fields": {
       "field": "Handedness",
       "name": "X",
-      "name_en": "X",
-      "name_nl": "X",
-      "name_zh_hans": "X",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -57,9 +45,6 @@
     "fields": {
       "field": "Handshape",
       "name": "5",
-      "name_en": "5",
-      "name_nl": "5",
-      "name_zh_hans": "5",
       "machine_value": 3,
       "field_color": "c4ffc4"
     }
@@ -70,9 +55,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Money",
-      "name_en": "Money",
-      "name_nl": "Geld",
-      "name_zh_hans": "Money",
       "machine_value": 4,
       "field_color": "c4ffc4"
     }
@@ -83,9 +65,6 @@
     "fields": {
       "field": "Handshape",
       "name": "V",
-      "name_en": "V",
-      "name_nl": "V",
-      "name_zh_hans": "V",
       "machine_value": 5,
       "field_color": "c4ffc4"
     }
@@ -96,9 +75,6 @@
     "fields": {
       "field": "Handshape",
       "name": "B",
-      "name_en": "B",
-      "name_nl": "B",
-      "name_zh_hans": "B",
       "machine_value": 6,
       "field_color": "c4ffc4"
     }
@@ -109,9 +85,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Y",
-      "name_en": "Y",
-      "name_nl": "Y",
-      "name_zh_hans": "Y",
       "machine_value": 7,
       "field_color": "c4ffc4"
     }
@@ -122,9 +95,6 @@
     "fields": {
       "field": "Handshape",
       "name": "S",
-      "name_en": "S",
-      "name_nl": "S",
-      "name_zh_hans": "S",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -135,9 +105,6 @@
     "fields": {
       "field": "Handshape",
       "name": "L",
-      "name_en": "L",
-      "name_nl": "L",
-      "name_zh_hans": "L",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -148,9 +115,6 @@
     "fields": {
       "field": "Handshape",
       "name": "C_spread",
-      "name_en": "C_spread",
-      "name_nl": "C_spreid",
-      "name_zh_hans": "C_spread",
       "machine_value": 12,
       "field_color": "ffffff"
     }
@@ -161,9 +125,6 @@
     "fields": {
       "field": "Handshape",
       "name": "B_curved",
-      "name_en": "B_curved",
-      "name_nl": "B_krom",
-      "name_zh_hans": "B_curved",
       "machine_value": 13,
       "field_color": "c4ffc4"
     }
@@ -174,9 +135,6 @@
     "fields": {
       "field": "Handshape",
       "name": "N",
-      "name_en": "N",
-      "name_nl": "N",
-      "name_zh_hans": "N",
       "machine_value": 14,
       "field_color": "ffffff"
     }
@@ -187,9 +145,6 @@
     "fields": {
       "field": "Handshape",
       "name": "1",
-      "name_en": "1",
-      "name_nl": "1",
-      "name_zh_hans": "1",
       "machine_value": 15,
       "field_color": "c4ffc4"
     }
@@ -200,9 +155,6 @@
     "fields": {
       "field": "Handshape",
       "name": "W",
-      "name_en": "W",
-      "name_nl": "W",
-      "name_zh_hans": "W",
       "machine_value": 16,
       "field_color": "c4ffc4"
     }
@@ -213,9 +165,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Beak2",
-      "name_en": "Beak2",
-      "name_nl": "Snavel2",
-      "name_zh_hans": "Beak2",
       "machine_value": 17,
       "field_color": "ffffff"
     }
@@ -226,9 +175,6 @@
     "fields": {
       "field": "Handshape",
       "name": "5r",
-      "name_en": "5r",
-      "name_nl": "5r",
-      "name_zh_hans": "5r",
       "machine_value": 19,
       "field_color": "ffffff"
     }
@@ -239,9 +185,6 @@
     "fields": {
       "field": "Handshape",
       "name": "V_curved",
-      "name_en": "V_curved",
-      "name_nl": "V_krom",
-      "name_zh_hans": "V_curved",
       "machine_value": 20,
       "field_color": "c4ffc4"
     }
@@ -252,9 +195,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Beak",
-      "name_en": "Beak",
-      "name_nl": "Snavel",
-      "name_zh_hans": "Beak",
       "machine_value": 22,
       "field_color": "ffffff"
     }
@@ -265,9 +205,6 @@
     "fields": {
       "field": "Handshape",
       "name": "A",
-      "name_en": "A",
-      "name_nl": "A",
-      "name_zh_hans": "A",
       "machine_value": 24,
       "field_color": "c4ffc4"
     }
@@ -278,9 +215,6 @@
     "fields": {
       "field": "Handshape",
       "name": "I",
-      "name_en": "I",
-      "name_nl": "I",
-      "name_zh_hans": "I",
       "machine_value": 25,
       "field_color": "ffffff"
     }
@@ -291,9 +225,6 @@
     "fields": {
       "field": "Handshape",
       "name": "B_bent",
-      "name_en": "B_bent",
-      "name_nl": "B_hoek",
-      "name_zh_hans": "B_bent",
       "machine_value": 26,
       "field_color": "d9d9d9"
     }
@@ -304,9 +235,6 @@
     "fields": {
       "field": "Handshape",
       "name": "C",
-      "name_en": "C",
-      "name_nl": "C",
-      "name_zh_hans": "C",
       "machine_value": 27,
       "field_color": "c4ffc4"
     }
@@ -317,9 +245,6 @@
     "fields": {
       "field": "Handshape",
       "name": "T",
-      "name_en": "T",
-      "name_nl": "T",
-      "name_zh_hans": "T",
       "machine_value": 28,
       "field_color": "c4ffc4"
     }
@@ -330,9 +255,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Baby_beak",
-      "name_en": "Baby_beak",
-      "name_nl": "Baby_snavel",
-      "name_zh_hans": "Baby_beak",
       "machine_value": 29,
       "field_color": "ffffff"
     }
@@ -343,9 +265,6 @@
     "fields": {
       "field": "Handshape",
       "name": "5m",
-      "name_en": "5m",
-      "name_nl": "5m",
-      "name_zh_hans": "5m",
       "machine_value": 30,
       "field_color": "ffffff"
     }
@@ -356,9 +275,6 @@
     "fields": {
       "field": "Handshape",
       "name": "O",
-      "name_en": "O",
-      "name_nl": "O",
-      "name_zh_hans": "O",
       "machine_value": 32,
       "field_color": "c4ffc4"
     }
@@ -369,9 +285,6 @@
     "fields": {
       "field": "Handshape",
       "name": "4",
-      "name_en": "4",
-      "name_nl": "4",
-      "name_zh_hans": "4",
       "machine_value": 35,
       "field_color": "ffffff"
     }
@@ -382,9 +295,6 @@
     "fields": {
       "field": "Handshape",
       "name": "3",
-      "name_en": "3",
-      "name_nl": "3",
-      "name_zh_hans": "3",
       "machine_value": 37,
       "field_color": "ffffff"
     }
@@ -395,9 +305,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Baby_O",
-      "name_en": "Baby_O",
-      "name_nl": "Baby_O",
-      "name_zh_hans": "Baby_O",
       "machine_value": 38,
       "field_color": "ffffff"
     }
@@ -408,9 +315,6 @@
     "fields": {
       "field": "Handshape",
       "name": "5m_closed",
-      "name_en": "5m_closed",
-      "name_nl": "5m_gesloten",
-      "name_zh_hans": "5m_closed",
       "machine_value": 43,
       "field_color": "ffffff"
     }
@@ -421,9 +325,6 @@
     "fields": {
       "field": "Handshape",
       "name": "R",
-      "name_en": "R",
-      "name_nl": "R",
-      "name_zh_hans": "R",
       "machine_value": 47,
       "field_color": "ffffff"
     }
@@ -434,9 +335,6 @@
     "fields": {
       "field": "Handshape",
       "name": "5r_closed",
-      "name_en": "5r_closed",
-      "name_nl": "5r_gesloten",
-      "name_zh_hans": "5r_closed",
       "machine_value": 49,
       "field_color": "ffffff"
     }
@@ -447,9 +345,6 @@
     "fields": {
       "field": "Handshape",
       "name": "L2",
-      "name_en": "L2",
-      "name_nl": "L2",
-      "name_zh_hans": "L2",
       "machine_value": 52,
       "field_color": "ffffff"
     }
@@ -460,9 +355,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Horns",
-      "name_en": "Horns",
-      "name_nl": "Hoorn",
-      "name_zh_hans": "Horns",
       "machine_value": 59,
       "field_color": "ffffff"
     }
@@ -473,9 +365,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Baby_C",
-      "name_en": "Baby_C",
-      "name_nl": "Baby_C",
-      "name_zh_hans": "Baby_C",
       "machine_value": 62,
       "field_color": "c4ffc4"
     }
@@ -486,9 +375,6 @@
     "fields": {
       "field": "Handshape",
       "name": "C2_spread",
-      "name_en": "C2_spread",
-      "name_nl": "C2_spreid",
-      "name_zh_hans": "C2_spread",
       "machine_value": 75,
       "field_color": "ffffff"
     }
@@ -499,9 +385,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Middle finger",
-      "name_en": "Middle finger",
-      "name_nl": "Middelvinger",
-      "name_zh_hans": "Middle finger",
       "machine_value": 80,
       "field_color": "ffffff"
     }
@@ -512,9 +395,6 @@
     "fields": {
       "field": "Location",
       "name": "Neutral space > head",
-      "name_en": "Neutral space > head",
-      "name_nl": "Neutrale ruimte > hoofd",
-      "name_zh_hans": "中性位置 > 头",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -525,9 +405,6 @@
     "fields": {
       "field": "Location",
       "name": "Neutral space",
-      "name_en": "Neutral space",
-      "name_nl": "Neutrale ruimte",
-      "name_zh_hans": "中性位置",
       "machine_value": 3,
       "field_color": "c4ffc4"
     }
@@ -538,9 +415,6 @@
     "fields": {
       "field": "Location",
       "name": "Shoulder",
-      "name_en": "Shoulder",
-      "name_nl": "Schouder",
-      "name_zh_hans": "肩",
       "machine_value": 4,
       "field_color": "c4ffc4"
     }
@@ -551,9 +425,6 @@
     "fields": {
       "field": "Location",
       "name": "Forehead",
-      "name_en": "Forehead",
-      "name_nl": "Voorhoofd",
-      "name_zh_hans": "额",
       "machine_value": 7,
       "field_color": "c4ffc4"
     }
@@ -564,9 +435,6 @@
     "fields": {
       "field": "Location",
       "name": "Chest",
-      "name_en": "Chest",
-      "name_nl": "Borst",
-      "name_zh_hans": "胸",
       "machine_value": 8,
       "field_color": "c4ffc4"
     }
@@ -577,9 +445,6 @@
     "fields": {
       "field": "Location",
       "name": "Neck",
-      "name_en": "Neck",
-      "name_nl": "Nek",
-      "name_zh_hans": "颈",
       "machine_value": 9,
       "field_color": "c4ffc4"
     }
@@ -590,9 +455,6 @@
     "fields": {
       "field": "Location",
       "name": "Head",
-      "name_en": "Head",
-      "name_nl": "Hoofd",
-      "name_zh_hans": "头",
       "machine_value": 10,
       "field_color": "c4ffc4"
     }
@@ -603,9 +465,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: back",
-      "name_en": "Weak hand: back",
-      "name_nl": "Zwakke hand: rug",
-      "name_zh_hans": "弱手：手背",
       "machine_value": 11,
       "field_color": "c4ffc4"
     }
@@ -616,9 +475,6 @@
     "fields": {
       "field": "Location",
       "name": "Chin",
-      "name_en": "Chin",
-      "name_nl": "Kin",
-      "name_zh_hans": "颏",
       "machine_value": 12,
       "field_color": "c4ffc4"
     }
@@ -629,9 +485,6 @@
     "fields": {
       "field": "Location",
       "name": "Eye",
-      "name_en": "Eye",
-      "name_nl": "Oog",
-      "name_zh_hans": "眼",
       "machine_value": 15,
       "field_color": "c4ffc4"
     }
@@ -642,9 +495,6 @@
     "fields": {
       "field": "Location",
       "name": "Cheekbone",
-      "name_en": "Cheekbone",
-      "name_nl": "Jukbeen",
-      "name_zh_hans": "颧骨",
       "machine_value": 16,
       "field_color": "ffffff"
     }
@@ -655,9 +505,6 @@
     "fields": {
       "field": "Location",
       "name": "Face",
-      "name_en": "Face",
-      "name_nl": "Gezicht",
-      "name_zh_hans": "脸",
       "machine_value": 17,
       "field_color": "ffffff"
     }
@@ -668,9 +515,6 @@
     "fields": {
       "field": "Location",
       "name": "Ear",
-      "name_en": "Ear",
-      "name_nl": "Oor",
-      "name_zh_hans": "耳",
       "machine_value": 18,
       "field_color": "c4ffc4"
     }
@@ -681,9 +525,6 @@
     "fields": {
       "field": "Location",
       "name": "Mouth",
-      "name_en": "Mouth",
-      "name_nl": "Mond",
-      "name_zh_hans": "嘴",
       "machine_value": 19,
       "field_color": "c4ffc4"
     }
@@ -694,9 +535,6 @@
     "fields": {
       "field": "Location",
       "name": "Arm",
-      "name_en": "Arm",
-      "name_nl": "Arm",
-      "name_zh_hans": "臂",
       "machine_value": 21,
       "field_color": "c4ffc4"
     }
@@ -707,9 +545,6 @@
     "fields": {
       "field": "Location",
       "name": "Nose",
-      "name_en": "Nose",
-      "name_nl": "Neus",
-      "name_zh_hans": "鼻",
       "machine_value": 22,
       "field_color": "c4ffc4"
     }
@@ -720,9 +555,6 @@
     "fields": {
       "field": "Location",
       "name": "Cheek",
-      "name_en": "Cheek",
-      "name_nl": "Wang",
-      "name_zh_hans": "颊",
       "machine_value": 23,
       "field_color": "c4ffc4"
     }
@@ -733,9 +565,6 @@
     "fields": {
       "field": "Location",
       "name": "Belly",
-      "name_en": "Belly",
-      "name_nl": "Buik",
-      "name_zh_hans": "腹",
       "machine_value": 26,
       "field_color": "ffffff"
     }
@@ -746,9 +575,6 @@
     "fields": {
       "field": "Location",
       "name": "Tongue",
-      "name_en": "Tongue",
-      "name_nl": "Tong",
-      "name_zh_hans": "舌",
       "machine_value": 27,
       "field_color": "ffffff"
     }
@@ -759,9 +585,6 @@
     "fields": {
       "field": "Location",
       "name": "Chin > neutral space",
-      "name_en": "Chin > neutral space",
-      "name_nl": "Kin > neutrale ruimte",
-      "name_zh_hans": "颏 > 中性位置",
       "machine_value": 28,
       "field_color": "ffffff"
     }
@@ -772,9 +595,6 @@
     "fields": {
       "field": "Location",
       "name": "Head ipsi",
-      "name_en": "Head ipsi",
-      "name_nl": "Hoofd ipsi",
-      "name_zh_hans": "头同侧",
       "machine_value": 30,
       "field_color": "ffffff"
     }
@@ -785,9 +605,6 @@
     "fields": {
       "field": "Location",
       "name": "Forehead > chin",
-      "name_en": "Forehead > chin",
-      "name_nl": "Voorhoofd > kin",
-      "name_zh_hans": "额 > 颏",
       "machine_value": 31,
       "field_color": "ffffff"
     }
@@ -798,9 +615,6 @@
     "fields": {
       "field": "Location",
       "name": "Head > shoulder",
-      "name_en": "Head > shoulder",
-      "name_nl": "Hoofd > schouder",
-      "name_zh_hans": "头 > 肩",
       "machine_value": 32,
       "field_color": "ffffff"
     }
@@ -811,9 +625,6 @@
     "fields": {
       "field": "Location",
       "name": "Forehead > chest",
-      "name_en": "Forehead > chest",
-      "name_nl": "Voorhoofd > borst",
-      "name_zh_hans": "额 > 胸",
       "machine_value": 34,
       "field_color": "ffffff"
     }
@@ -824,9 +635,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: palm",
-      "name_en": "Weak hand: palm",
-      "name_nl": "Zwakke hand: palm",
-      "name_zh_hans": "弱手：手掌",
       "machine_value": 36,
       "field_color": "c4ffc4"
     }
@@ -837,9 +645,6 @@
     "fields": {
       "field": "Location",
       "name": "Back of head",
-      "name_en": "Back of head",
-      "name_nl": "Achterkant van het hoofd",
-      "name_zh_hans": "头后",
       "machine_value": 37,
       "field_color": "ffffff"
     }
@@ -850,9 +655,6 @@
     "fields": {
       "field": "Location",
       "name": "Temple",
-      "name_en": "Temple",
-      "name_nl": "Slaap",
-      "name_zh_hans": "颞",
       "machine_value": 43,
       "field_color": "c4ffc4"
     }
@@ -863,9 +665,6 @@
     "fields": {
       "field": "Location",
       "name": "Leg",
-      "name_en": "Leg",
-      "name_nl": "Been",
-      "name_zh_hans": "腿",
       "machine_value": 45,
       "field_color": "ffffff"
     }
@@ -876,9 +675,6 @@
     "fields": {
       "field": "Location",
       "name": "Mouth > chest",
-      "name_en": "Mouth > chest",
-      "name_nl": "Mond > borst",
-      "name_zh_hans": "嘴 > 胸",
       "machine_value": 48,
       "field_color": "ffffff"
     }
@@ -889,9 +685,6 @@
     "fields": {
       "field": "Location",
       "name": "Wrist",
-      "name_en": "Wrist",
-      "name_nl": "Pols",
-      "name_zh_hans": "腕",
       "machine_value": 50,
       "field_color": "c4ffc4"
     }
@@ -902,9 +695,6 @@
     "fields": {
       "field": "Location",
       "name": "Neck > chest",
-      "name_en": "Neck > chest",
-      "name_nl": "Nek > borst",
-      "name_zh_hans": "颈 > 胸",
       "machine_value": 52,
       "field_color": "ffffff"
     }
@@ -915,9 +705,6 @@
     "fields": {
       "field": "Location",
       "name": "Upper arm",
-      "name_en": "Upper arm",
-      "name_nl": "Bovenarm",
-      "name_zh_hans": "上臂",
       "machine_value": 54,
       "field_color": "ffffff"
     }
@@ -928,9 +715,6 @@
     "fields": {
       "field": "Location",
       "name": "Shoulder contra",
-      "name_en": "Shoulder contra",
-      "name_nl": "Schouder contra",
-      "name_zh_hans": "肩异侧",
       "machine_value": 55,
       "field_color": "ffffff"
     }
@@ -941,9 +725,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: thumb",
-      "name_en": "Weak hand: thumb",
-      "name_nl": "Zwakke hand: duim",
-      "name_zh_hans": "弱手：拇指",
       "machine_value": 59,
       "field_color": "ffffff"
     }
@@ -954,9 +735,6 @@
     "fields": {
       "field": "Location",
       "name": "Upper lip",
-      "name_en": "Upper lip",
-      "name_nl": "Bovenlip",
-      "name_zh_hans": "上唇",
       "machine_value": 63,
       "field_color": "ffffff"
     }
@@ -967,9 +745,6 @@
     "fields": {
       "field": "Location",
       "name": "Forehead contra",
-      "name_en": "Forehead contra",
-      "name_nl": "Voorhoofd contra",
-      "name_zh_hans": "额异侧",
       "machine_value": 64,
       "field_color": "ffffff"
     }
@@ -980,9 +755,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: finger tips",
-      "name_en": "Weak hand: finger tips",
-      "name_nl": "Zwakke hand: vingertoppen",
-      "name_zh_hans": "弱手：指尖",
       "machine_value": 66,
       "field_color": "c4ffc4"
     }
@@ -993,9 +765,6 @@
     "fields": {
       "field": "Location",
       "name": "Head > neutral space",
-      "name_en": "Head > neutral space",
-      "name_nl": "Hoofd > neutrale ruimte",
-      "name_zh_hans": "头 > 中性位置",
       "machine_value": 69,
       "field_color": "ffffff"
     }
@@ -1006,9 +775,6 @@
     "fields": {
       "field": "Location",
       "name": "Chin > chest",
-      "name_en": "Chin > chest",
-      "name_nl": "Kin > borst",
-      "name_zh_hans": "颏 > 胸",
       "machine_value": 70,
       "field_color": "ffffff"
     }
@@ -1019,9 +785,6 @@
     "fields": {
       "field": "Location",
       "name": "Cheek contra",
-      "name_en": "Cheek contra",
-      "name_nl": "Wang contra",
-      "name_zh_hans": "颊异侧",
       "machine_value": 72,
       "field_color": "ffffff"
     }
@@ -1032,9 +795,6 @@
     "fields": {
       "field": "Location",
       "name": "Chest contra",
-      "name_en": "Chest contra",
-      "name_nl": "Borst contra",
-      "name_zh_hans": "胸异侧",
       "machine_value": 74,
       "field_color": "ffffff"
     }
@@ -1045,9 +805,6 @@
     "fields": {
       "field": "Location",
       "name": "Neck contra",
-      "name_en": "Neck contra",
-      "name_nl": "Neck contra",
-      "name_zh_hans": "颈异侧",
       "machine_value": 75,
       "field_color": "ffffff"
     }
@@ -1058,9 +815,6 @@
     "fields": {
       "field": "Location",
       "name": "Elbow",
-      "name_en": "Elbow",
-      "name_nl": "Elleboog",
-      "name_zh_hans": "肘",
       "machine_value": 77,
       "field_color": "ffffff"
     }
@@ -1071,9 +825,6 @@
     "fields": {
       "field": "Location",
       "name": "Temple > chest",
-      "name_en": "Temple > chest",
-      "name_nl": "Slaap > borst",
-      "name_zh_hans": "颞 > 胸",
       "machine_value": 78,
       "field_color": "ffffff"
     }
@@ -1084,9 +835,6 @@
     "fields": {
       "field": "Location",
       "name": "Thumb",
-      "name_en": "Thumb",
-      "name_nl": "Duim",
-      "name_zh_hans": "拇指",
       "machine_value": 79,
       "field_color": "ffffff"
     }
@@ -1097,9 +845,6 @@
     "fields": {
       "field": "Location",
       "name": "Back",
-      "name_en": "Back",
-      "name_nl": "Rug",
-      "name_zh_hans": "背",
       "machine_value": 83,
       "field_color": "ffffff"
     }
@@ -1110,9 +855,6 @@
     "fields": {
       "field": "Location",
       "name": "Ear > cheek",
-      "name_en": "Ear > cheek",
-      "name_nl": "Oor > wang",
-      "name_zh_hans": "耳 > 颊",
       "machine_value": 84,
       "field_color": "ffffff"
     }
@@ -1123,9 +865,6 @@
     "fields": {
       "field": "Location",
       "name": "Knee",
-      "name_en": "Knee",
-      "name_nl": "Knie",
-      "name_zh_hans": "膝",
       "machine_value": 85,
       "field_color": "ffffff"
     }
@@ -1136,9 +875,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Interlocked",
-      "name_en": "Interlocked",
-      "name_nl": "In elkaar",
-      "name_zh_hans": "连锁",
       "machine_value": 27,
       "field_color": "ffffff"
     }
@@ -1149,9 +885,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Person",
-      "name_en": "Person",
-      "name_nl": "Persoon",
-      "name_zh_hans": "人/人称",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -1162,9 +895,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Public figure",
-      "name_en": "Public figure",
-      "name_nl": "Publiek persoon",
-      "name_zh_hans": "公众人物",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -1175,9 +905,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Place",
-      "name_en": "Place",
-      "name_nl": "Plaats",
-      "name_zh_hans": "场所",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -1188,9 +915,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Region",
-      "name_en": "Region",
-      "name_nl": "Regio",
-      "name_zh_hans": "区域",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -1201,9 +925,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Brand",
-      "name_en": "Brand",
-      "name_nl": "Merk",
-      "name_zh_hans": "品牌",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -1214,9 +935,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Country",
-      "name_en": "Country",
-      "name_nl": "Land",
-      "name_zh_hans": "国家",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -1227,9 +945,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Device",
-      "name_en": "Device",
-      "name_nl": "Apparaat",
-      "name_zh_hans": "设备",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -1240,9 +955,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Product",
-      "name_en": "Product",
-      "name_nl": "Produkt",
-      "name_zh_hans": "产品",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -1253,9 +965,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Project",
-      "name_en": "Project",
-      "name_nl": "Project",
-      "name_zh_hans": "项目",
       "machine_value": 10,
       "field_color": "ffffff"
     }
@@ -1266,9 +975,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Place nickname",
-      "name_en": "Place nickname",
-      "name_nl": "Bijnaam voor een plaats",
-      "name_zh_hans": "场所昵称",
       "machine_value": 11,
       "field_color": "ffffff"
     }
@@ -1279,9 +985,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Event",
-      "name_en": "Event",
-      "name_nl": "Evenement",
-      "name_zh_hans": "事件",
       "machine_value": 12,
       "field_color": "ffffff"
     }
@@ -1292,9 +995,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Newspaper",
-      "name_en": "Newspaper",
-      "name_nl": "Krant",
-      "name_zh_hans": "报纸",
       "machine_value": 13,
       "field_color": "ffffff"
     }
@@ -1305,9 +1005,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Story character",
-      "name_en": "Story character",
-      "name_nl": "Karakter in verhaal",
-      "name_zh_hans": "故事人物",
       "machine_value": 14,
       "field_color": "ffffff"
     }
@@ -1318,9 +1015,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Continent",
-      "name_en": "Continent",
-      "name_nl": "Continent",
-      "name_zh_hans": "大陆",
       "machine_value": 15,
       "field_color": "ffffff"
     }
@@ -1331,9 +1025,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Organisation",
-      "name_en": "Organisation",
-      "name_nl": "Organisatie",
-      "name_zh_hans": "组织",
       "machine_value": 16,
       "field_color": "ffffff"
     }
@@ -1344,9 +1035,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Company",
-      "name_en": "Company",
-      "name_nl": "Bedrijf",
-      "name_zh_hans": "公司",
       "machine_value": 17,
       "field_color": "ffffff"
     }
@@ -1357,9 +1045,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Team",
-      "name_en": "Team",
-      "name_nl": "Team",
-      "name_zh_hans": "队伍",
       "machine_value": 18,
       "field_color": "ffffff"
     }
@@ -1370,9 +1055,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Drink",
-      "name_en": "Drink",
-      "name_nl": "Drank",
-      "name_zh_hans": "饮品",
       "machine_value": 19,
       "field_color": "ffffff"
     }
@@ -1383,9 +1065,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Magazine",
-      "name_en": "Magazine",
-      "name_nl": "Tijdschrift",
-      "name_zh_hans": "杂志",
       "machine_value": 20,
       "field_color": "ffffff"
     }
@@ -1396,9 +1075,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Backwards",
-      "name_en": "Backwards",
-      "name_nl": "Naar achteren",
-      "name_zh_hans": "向后",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -1409,9 +1085,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Backwards > downwards",
-      "name_en": "Backwards > downwards",
-      "name_nl": "Naar achteren > omlaag",
-      "name_zh_hans": "向后 > 向下",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -1422,9 +1095,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards",
-      "name_en": "Downwards",
-      "name_nl": "Omlaag",
-      "name_zh_hans": "向下",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -1435,9 +1105,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Forwards",
-      "name_en": "Forwards",
-      "name_nl": "Naar voren",
-      "name_zh_hans": "向前",
       "machine_value": 16,
       "field_color": "ffffff"
     }
@@ -1448,9 +1115,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Forwards > downwards",
-      "name_en": "Forwards > downwards",
-      "name_nl": "Naar voren > omlaag",
-      "name_zh_hans": "向前 > 向下",
       "machine_value": 17,
       "field_color": "ffffff"
     }
@@ -1461,9 +1125,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Upwards",
-      "name_en": "Upwards",
-      "name_nl": "Omhoog",
-      "name_zh_hans": "向上",
       "machine_value": 32,
       "field_color": "ffffff"
     }
@@ -1474,9 +1135,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Upwards > downwards",
-      "name_en": "Upwards > downwards",
-      "name_nl": "Omhoog > omlaag",
-      "name_zh_hans": "向上 > 向下",
       "machine_value": 33,
       "field_color": "ffffff"
     }
@@ -1487,9 +1145,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "To and fro",
-      "name_en": "To and fro",
-      "name_nl": "Heen en weer",
-      "name_zh_hans": "前后往复",
       "machine_value": 46,
       "field_color": "ffffff"
     }
@@ -1500,9 +1155,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Variable",
-      "name_en": "Variable",
-      "name_nl": "Variabel",
-      "name_zh_hans": "可变的",
       "machine_value": 49,
       "field_color": "ffffff"
     }
@@ -1513,9 +1165,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Radial/ulnar",
-      "name_en": "Radial/ulnar",
-      "name_nl": "Duim/pink",
-      "name_zh_hans": "桡骨/尺骨",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -1526,9 +1175,6 @@
     "fields": {
       "field": "MovementShape",
       "name": "Arc",
-      "name_en": "Arc",
-      "name_nl": "Boog",
-      "name_zh_hans": "弧形",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -1539,9 +1185,6 @@
     "fields": {
       "field": "MovementShape",
       "name": "Straight",
-      "name_en": "Straight",
-      "name_nl": "Recht",
-      "name_zh_hans": "直线",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -1552,9 +1195,6 @@
     "fields": {
       "field": "MovementShape",
       "name": "Zigzag",
-      "name_en": "Zigzag",
-      "name_nl": "Zigzag",
-      "name_zh_hans": "曲折",
       "machine_value": 12,
       "field_color": "ffffff"
     }
@@ -1565,9 +1205,6 @@
     "fields": {
       "field": "MovementShape",
       "name": "Circle",
-      "name_en": "Circle",
-      "name_nl": "Cirkel",
-      "name_zh_hans": "环形",
       "machine_value": 37,
       "field_color": "ffffff"
     }
@@ -1578,9 +1215,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Ulnar",
-      "name_en": "Ulnar",
-      "name_nl": "Pink",
-      "name_zh_hans": "尺骨",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -1591,9 +1225,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Palm",
-      "name_en": "Palm",
-      "name_nl": "Palm",
-      "name_zh_hans": "手掌",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -1604,9 +1235,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Finger tips",
-      "name_en": "Finger tips",
-      "name_nl": "Vingertoppen",
-      "name_zh_hans": "指尖",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -1617,9 +1245,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Radial",
-      "name_en": "Radial",
-      "name_nl": "Duim",
-      "name_zh_hans": "桡骨",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -1630,9 +1255,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back",
-      "name_en": "Back",
-      "name_nl": "Rug",
-      "name_zh_hans": "后",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -1643,9 +1265,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Variable",
-      "name_en": "Variable",
-      "name_nl": "Variabel",
-      "name_zh_hans": "可变的",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -1656,9 +1275,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back > palm",
-      "name_en": "Back > palm",
-      "name_nl": "Rug > palm",
-      "name_zh_hans": "手背 > 手掌",
       "machine_value": 15,
       "field_color": "ffffff"
     }
@@ -1669,9 +1285,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Ulnar > palm",
-      "name_en": "Ulnar > palm",
-      "name_nl": "Pink > palm",
-      "name_zh_hans": "尺骨 > 手掌",
       "machine_value": 17,
       "field_color": "ffffff"
     }
@@ -1682,9 +1295,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Ulnar > palm > radial",
-      "name_en": "Ulnar > palm > radial",
-      "name_nl": "Pink > palm > duim",
-      "name_zh_hans": "尺骨 > 手掌 > 桡骨",
       "machine_value": 19,
       "field_color": "ffffff"
     }
@@ -1695,9 +1305,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Brush",
-      "name_en": "Brush",
-      "name_nl": "Brush",
-      "name_zh_hans": "擦过",
       "machine_value": 2,
       "field_color": "c4ffc4"
     }
@@ -1708,9 +1315,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Final",
-      "name_en": "Final",
-      "name_nl": "Eind",
-      "name_zh_hans": "终止",
       "machine_value": 4,
       "field_color": "c4ffc4"
     }
@@ -1721,9 +1325,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Initial",
-      "name_en": "Initial",
-      "name_nl": "Begin",
-      "name_zh_hans": "起始",
       "machine_value": 5,
       "field_color": "c4ffc4"
     }
@@ -1734,9 +1335,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Continuous",
-      "name_en": "Continuous",
-      "name_nl": "Continu",
-      "name_zh_hans": "持续",
       "machine_value": 6,
       "field_color": "c4ffc4"
     }
@@ -1747,9 +1345,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Opening",
-      "name_en": "Opening",
-      "name_nl": "Openen",
-      "name_zh_hans": "开",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -1760,9 +1355,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Closing",
-      "name_en": "Closing",
-      "name_nl": "Sluiten",
-      "name_zh_hans": "闭",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -1773,9 +1365,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Bending",
-      "name_en": "Bending",
-      "name_nl": "Buigen",
-      "name_zh_hans": "折",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -1786,9 +1375,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Curving",
-      "name_en": "Curving",
-      "name_nl": "Krommen",
-      "name_zh_hans": "弯",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -1799,9 +1385,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Unspreading",
-      "name_en": "Unspreading",
-      "name_nl": "On-spreiden",
-      "name_zh_hans": "未漫延",
       "machine_value": 10,
       "field_color": "ffffff"
     }
@@ -1812,9 +1395,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Spreading",
-      "name_en": "Spreading",
-      "name_nl": "Spreiden",
-      "name_zh_hans": "漫延",
       "machine_value": 21,
       "field_color": "ffffff"
     }
@@ -1825,9 +1405,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Rotation",
-      "name_en": "Rotation",
-      "name_nl": "Rotatie",
-      "name_zh_hans": "旋转",
       "machine_value": 2,
       "field_color": "c4ffc4"
     }
@@ -1838,9 +1415,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Extension",
-      "name_en": "Extension",
-      "name_nl": "Extensie",
-      "name_zh_hans": "伸展",
       "machine_value": 3,
       "field_color": "c5ffc5"
     }
@@ -1851,9 +1425,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Flexion",
-      "name_en": "Flexion",
-      "name_nl": "Flectie",
-      "name_zh_hans": "收缩",
       "machine_value": 4,
       "field_color": "c4ffc4"
     }
@@ -1864,9 +1435,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Radial flexion",
-      "name_en": "Radial flexion",
-      "name_nl": "Radiale flectie",
-      "name_zh_hans": "桡骨收缩",
       "machine_value": 5,
       "field_color": "c4ffc4"
     }
@@ -1877,9 +1445,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Ulnar flexion",
-      "name_en": "Ulnar flexion",
-      "name_nl": "Ulnaire flectie",
-      "name_zh_hans": "尺骨收缩",
       "machine_value": 6,
       "field_color": "c4ffc4"
     }
@@ -1890,9 +1455,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Supination",
-      "name_en": "Supination",
-      "name_nl": "Supinatie",
-      "name_zh_hans": "内翻",
       "machine_value": 7,
       "field_color": "c4ffc4"
     }
@@ -1903,9 +1465,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Pronation",
-      "name_en": "Pronation",
-      "name_nl": "Pronatie",
-      "name_zh_hans": "外翻",
       "machine_value": 8,
       "field_color": "c4ffc4"
     }
@@ -1916,9 +1475,6 @@
     "fields": {
       "field": "MorphologyType",
       "name": "Compound part 1",
-      "name_en": "Compound part 1",
-      "name_nl": "Samenstelling deel 1",
-      "name_zh_hans": "复合成分1",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -1929,9 +1485,6 @@
     "fields": {
       "field": "MorphologyType",
       "name": "Compound part 2",
-      "name_en": "Compound part 2",
-      "name_nl": "Samenstelling deel 2",
-      "name_zh_hans": "复合成分2",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -1942,9 +1495,6 @@
     "fields": {
       "field": "MorphologyType",
       "name": "Compound part 3",
-      "name_en": "Compound part 3",
-      "name_nl": "Samenstelling deel 3",
-      "name_zh_hans": "复合成分3",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -1955,9 +1505,6 @@
     "fields": {
       "field": "MorphologyType",
       "name": "Compound part 4",
-      "name_en": "Compound part 4",
-      "name_nl": "Samenstelling deel 4",
-      "name_zh_hans": "复合成分4",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -1968,9 +1515,6 @@
     "fields": {
       "field": "SemField",
       "name": "Day",
-      "name_en": "Day",
-      "name_nl": "Dag",
-      "name_zh_hans": "日",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -1981,9 +1525,6 @@
     "fields": {
       "field": "SemField",
       "name": "Deaf",
-      "name_en": "Deaf",
-      "name_nl": "Doof",
-      "name_zh_hans": "聋",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -1994,9 +1535,6 @@
     "fields": {
       "field": "SemField",
       "name": "Animal",
-      "name_en": "Animal",
-      "name_nl": "Dier",
-      "name_zh_hans": "动物",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -2007,9 +1545,6 @@
     "fields": {
       "field": "SemField",
       "name": "Arithmetic",
-      "name_en": "Arithmetic",
-      "name_nl": "Wiskunde",
-      "name_zh_hans": "算术",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -2020,9 +1555,6 @@
     "fields": {
       "field": "SemField",
       "name": "Arts",
-      "name_en": "Arts",
-      "name_nl": "Kunst",
-      "name_zh_hans": "艺术",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -2033,9 +1565,6 @@
     "fields": {
       "field": "SemField",
       "name": "Body part",
-      "name_en": "Body part",
-      "name_nl": "Lichaamsdeel",
-      "name_zh_hans": "身体器官",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -2046,9 +1575,6 @@
     "fields": {
       "field": "SemField",
       "name": "Car",
-      "name_en": "Car",
-      "name_nl": "Auto",
-      "name_zh_hans": "车",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -2059,9 +1585,6 @@
     "fields": {
       "field": "SemField",
       "name": "City",
-      "name_en": "City",
-      "name_nl": "Stad",
-      "name_zh_hans": "城市",
       "machine_value": 10,
       "field_color": "ffffff"
     }
@@ -2072,9 +1595,6 @@
     "fields": {
       "field": "SemField",
       "name": "Clothing",
-      "name_en": "Clothing",
-      "name_nl": "Kleding",
-      "name_zh_hans": "服装",
       "machine_value": 11,
       "field_color": "ffffff"
     }
@@ -2085,9 +1605,6 @@
     "fields": {
       "field": "SemField",
       "name": "Colour",
-      "name_en": "Colour",
-      "name_nl": "Kleur",
-      "name_zh_hans": "颜色",
       "machine_value": 12,
       "field_color": "ffffff"
     }
@@ -2098,9 +1615,6 @@
     "fields": {
       "field": "SemField",
       "name": "Cooking",
-      "name_en": "Cooking",
-      "name_nl": "Koken",
-      "name_zh_hans": "烹饪",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -2111,9 +1625,6 @@
     "fields": {
       "field": "SemField",
       "name": "Drink",
-      "name_en": "Drink",
-      "name_nl": "Drank",
-      "name_zh_hans": "饮品",
       "machine_value": 13,
       "field_color": "ffffff"
     }
@@ -2124,9 +1635,6 @@
     "fields": {
       "field": "SemField",
       "name": "Education",
-      "name_en": "Education",
-      "name_nl": "Onderwijs",
-      "name_zh_hans": "教育",
       "machine_value": 14,
       "field_color": "ffffff"
     }
@@ -2137,9 +1645,6 @@
     "fields": {
       "field": "SemField",
       "name": "Family",
-      "name_en": "Family",
-      "name_nl": "Familie",
-      "name_zh_hans": "家庭",
       "machine_value": 15,
       "field_color": "ffffff"
     }
@@ -2150,9 +1655,6 @@
     "fields": {
       "field": "SemField",
       "name": "Furniture",
-      "name_en": "Furniture",
-      "name_nl": "Meubels",
-      "name_zh_hans": "家具",
       "machine_value": 18,
       "field_color": "ffffff"
     }
@@ -2163,9 +1665,6 @@
     "fields": {
       "field": "SemField",
       "name": "Government",
-      "name_en": "Government",
-      "name_nl": "Overheid",
-      "name_zh_hans": "政府",
       "machine_value": 19,
       "field_color": "ffffff"
     }
@@ -2176,9 +1675,6 @@
     "fields": {
       "field": "SemField",
       "name": "Health",
-      "name_en": "Health",
-      "name_nl": "Gezondheid",
-      "name_zh_hans": "健康",
       "machine_value": 21,
       "field_color": "ffffff"
     }
@@ -2189,9 +1685,6 @@
     "fields": {
       "field": "SemField",
       "name": "Language act",
-      "name_en": "Language act",
-      "name_nl": "Taaluiting",
-      "name_zh_hans": "语言行为",
       "machine_value": 23,
       "field_color": "ffffff"
     }
@@ -2202,9 +1695,6 @@
     "fields": {
       "field": "SemField",
       "name": "Law",
-      "name_en": "Law",
-      "name_nl": "Juridisch",
-      "name_zh_hans": "法律",
       "machine_value": 24,
       "field_color": "ffffff"
     }
@@ -2215,9 +1705,6 @@
     "fields": {
       "field": "SemField",
       "name": "Material",
-      "name_en": "Material",
-      "name_nl": "Materiaal",
-      "name_zh_hans": "材料",
       "machine_value": 25,
       "field_color": "ffffff"
     }
@@ -2228,9 +1715,6 @@
     "fields": {
       "field": "SemField",
       "name": "Metalinguistic",
-      "name_en": "Metalinguistic",
-      "name_nl": "Metalinguïstisch",
-      "name_zh_hans": "元语言的",
       "machine_value": 26,
       "field_color": "ffffff"
     }
@@ -2241,9 +1725,6 @@
     "fields": {
       "field": "SemField",
       "name": "Mind",
-      "name_en": "Mind",
-      "name_nl": "Geest",
-      "name_zh_hans": "思维",
       "machine_value": 27,
       "field_color": "ffffff"
     }
@@ -2254,9 +1735,6 @@
     "fields": {
       "field": "SemField",
       "name": "Money",
-      "name_en": "Money",
-      "name_nl": "Geld",
-      "name_zh_hans": "钱",
       "machine_value": 28,
       "field_color": "ffffff"
     }
@@ -2267,9 +1745,6 @@
     "fields": {
       "field": "SemField",
       "name": "Nature",
-      "name_en": "Nature",
-      "name_nl": "Natuur",
-      "name_zh_hans": "自然",
       "machine_value": 29,
       "field_color": "ffffff"
     }
@@ -2280,9 +1755,6 @@
     "fields": {
       "field": "SemField",
       "name": "Number",
-      "name_en": "Number",
-      "name_nl": "Getal",
-      "name_zh_hans": "数",
       "machine_value": 30,
       "field_color": "ffffff"
     }
@@ -2293,9 +1765,6 @@
     "fields": {
       "field": "SemField",
       "name": "People",
-      "name_en": "People",
-      "name_nl": "Mensen",
-      "name_zh_hans": "人",
       "machine_value": 31,
       "field_color": "ffffff"
     }
@@ -2306,9 +1775,6 @@
     "fields": {
       "field": "SemField",
       "name": "Physical act",
-      "name_en": "Physical act",
-      "name_nl": "Fysieke handeling",
-      "name_zh_hans": "身体行为",
       "machine_value": 32,
       "field_color": "ffffff"
     }
@@ -2319,9 +1785,6 @@
     "fields": {
       "field": "SemField",
       "name": "Quality",
-      "name_en": "Quality",
-      "name_nl": "Kwaliteit",
-      "name_zh_hans": "质量",
       "machine_value": 33,
       "field_color": "ffffff"
     }
@@ -2332,9 +1795,6 @@
     "fields": {
       "field": "SemField",
       "name": "Quantity",
-      "name_en": "Quantity",
-      "name_nl": "Kwantiteit",
-      "name_zh_hans": "数量",
       "machine_value": 34,
       "field_color": "ffffff"
     }
@@ -2345,9 +1805,6 @@
     "fields": {
       "field": "SemField",
       "name": "Question",
-      "name_en": "Question",
-      "name_nl": "Vraag",
-      "name_zh_hans": "提问",
       "machine_value": 35,
       "field_color": "ffffff"
     }
@@ -2358,9 +1815,6 @@
     "fields": {
       "field": "SemField",
       "name": "Recreation",
-      "name_en": "Recreation",
-      "name_nl": "Recreatie",
-      "name_zh_hans": "娱乐",
       "machine_value": 36,
       "field_color": "ffffff"
     }
@@ -2371,9 +1825,6 @@
     "fields": {
       "field": "SemField",
       "name": "Salutation",
-      "name_en": "Salutation",
-      "name_nl": "Begroeting",
-      "name_zh_hans": "称呼",
       "machine_value": 37,
       "field_color": "ffffff"
     }
@@ -2384,9 +1835,6 @@
     "fields": {
       "field": "SemField",
       "name": "Sensation",
-      "name_en": "Sensation",
-      "name_nl": "Gevoel",
-      "name_zh_hans": "感觉",
       "machine_value": 38,
       "field_color": "ffffff"
     }
@@ -2397,9 +1845,6 @@
     "fields": {
       "field": "SemField",
       "name": "Sexuality",
-      "name_en": "Sexuality",
-      "name_nl": "Sexualiteit",
-      "name_zh_hans": "性",
       "machine_value": 39,
       "field_color": "ffffff"
     }
@@ -2410,9 +1855,6 @@
     "fields": {
       "field": "SemField",
       "name": "Shape",
-      "name_en": "Shape",
-      "name_nl": "Vorm",
-      "name_zh_hans": "型",
       "machine_value": 40,
       "field_color": "ffffff"
     }
@@ -2423,9 +1865,6 @@
     "fields": {
       "field": "SemField",
       "name": "Shopping",
-      "name_en": "Shopping",
-      "name_nl": "Winkelen",
-      "name_zh_hans": "购物",
       "machine_value": 41,
       "field_color": "ffffff"
     }
@@ -2436,9 +1875,6 @@
     "fields": {
       "field": "SemField",
       "name": "Sport",
-      "name_en": "Sport",
-      "name_nl": "Sport",
-      "name_zh_hans": "体育",
       "machine_value": 42,
       "field_color": "ffffff"
     }
@@ -2449,9 +1885,6 @@
     "fields": {
       "field": "SemField",
       "name": "Technology",
-      "name_en": "Technology",
-      "name_nl": "Technologie",
-      "name_zh_hans": "技术",
       "machine_value": 43,
       "field_color": "ffffff"
     }
@@ -2462,9 +1895,6 @@
     "fields": {
       "field": "SemField",
       "name": "Time",
-      "name_en": "Time",
-      "name_nl": "Tijd",
-      "name_zh_hans": "时间",
       "machine_value": 44,
       "field_color": "ffffff"
     }
@@ -2475,9 +1905,6 @@
     "fields": {
       "field": "SemField",
       "name": "Travel",
-      "name_en": "Travel",
-      "name_nl": "Reizen",
-      "name_zh_hans": "旅行",
       "machine_value": 45,
       "field_color": "ffffff"
     }
@@ -2488,9 +1915,6 @@
     "fields": {
       "field": "SemField",
       "name": "Utensil",
-      "name_en": "Utensil",
-      "name_nl": "Gebruiksvoorwerp",
-      "name_zh_hans": "器具",
       "machine_value": 46,
       "field_color": "ffffff"
     }
@@ -2501,9 +1925,6 @@
     "fields": {
       "field": "SemField",
       "name": "Weather",
-      "name_en": "Weather",
-      "name_nl": "Weer",
-      "name_zh_hans": "天气",
       "machine_value": 47,
       "field_color": "ffffff"
     }
@@ -2514,9 +1935,6 @@
     "fields": {
       "field": "SemField",
       "name": "Work",
-      "name_en": "Work",
-      "name_nl": "Werk",
-      "name_zh_hans": "工作",
       "machine_value": 48,
       "field_color": "ffffff"
     }
@@ -2527,9 +1945,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Baby_beak_open",
-      "name_en": "Baby_beak_open",
-      "name_nl": "Baby_snavel_open",
-      "name_zh_hans": "Baby_beak_open",
       "machine_value": 83,
       "field_color": "c4ffc4"
     }
@@ -2540,9 +1955,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Beak_open",
-      "name_en": "Beak_open",
-      "name_nl": "Snavel_open",
-      "name_zh_hans": "Beak_open",
       "machine_value": 84,
       "field_color": "ffffff"
     }
@@ -2553,9 +1965,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Beak2_open",
-      "name_en": "Beak2_open",
-      "name_nl": "Snavel2_open",
-      "name_zh_hans": "Beak2_open",
       "machine_value": 85,
       "field_color": "ffffff"
     }
@@ -2566,9 +1975,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Beak_spread",
-      "name_en": "Beak_spread",
-      "name_nl": "Snavel_spreid",
-      "name_zh_hans": "Beak_spread",
       "machine_value": 86,
       "field_color": "ffffff"
     }
@@ -2579,9 +1985,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Beak_open_spread",
-      "name_en": "Beak_open_spread",
-      "name_nl": "Snavel_open_spreid",
-      "name_zh_hans": "Beak_open_spread",
       "machine_value": 87,
       "field_color": "ffffff"
     }
@@ -2592,9 +1995,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Other",
-      "name_en": "Other",
-      "name_nl": "Overig",
-      "name_zh_hans": "Other",
       "machine_value": 135,
       "field_color": "ffffff"
     }
@@ -2605,9 +2005,6 @@
     "fields": {
       "field": "Handshape",
       "name": "C2_closed",
-      "name_en": "C2_closed",
-      "name_nl": "C2_gesloten",
-      "name_zh_hans": "C2_closed",
       "machine_value": 136,
       "field_color": "ffffff"
     }
@@ -2618,9 +2015,6 @@
     "fields": {
       "field": "Handshape",
       "name": "B+1",
-      "name_en": "B+1",
-      "name_nl": "B+1",
-      "name_zh_hans": "",
       "machine_value": 138,
       "field_color": "ffffff"
     }
@@ -2631,9 +2025,6 @@
     "fields": {
       "field": "Handshape",
       "name": "O > 5m",
-      "name_en": "O > 5m",
-      "name_nl": "O > 5m",
-      "name_zh_hans": "O > 5m",
       "machine_value": 139,
       "field_color": "ffffff"
     }
@@ -2644,9 +2035,6 @@
     "fields": {
       "field": "SemField",
       "name": "Space",
-      "name_en": "Space",
-      "name_nl": "Ruimte",
-      "name_zh_hans": "场所",
       "machine_value": 49,
       "field_color": "ffffff"
     }
@@ -2657,9 +2045,6 @@
     "fields": {
       "field": "SemField",
       "name": "Linguistics",
-      "name_en": "Linguistics",
-      "name_nl": "Taalkunde",
-      "name_zh_hans": "语言学",
       "machine_value": 50,
       "field_color": "ffffff"
     }
@@ -2670,9 +2055,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Closing > opening",
-      "name_en": "Closing > opening",
-      "name_nl": "Sluiten > openen",
-      "name_zh_hans": "闭 > 开",
       "machine_value": 32,
       "field_color": "ffffff"
     }
@@ -2683,9 +2065,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Opening > closing",
-      "name_en": "Opening > closing",
-      "name_nl": "Openen > sluiten",
-      "name_zh_hans": "开 > 闭",
       "machine_value": 38,
       "field_color": "ffffff"
     }
@@ -2696,9 +2075,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Rubbing",
-      "name_en": "Rubbing",
-      "name_nl": "Wrijven",
-      "name_zh_hans": "摩擦",
       "machine_value": 39,
       "field_color": "ffffff"
     }
@@ -2709,9 +2085,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Wiggling",
-      "name_en": "Wiggling",
-      "name_nl": "Wiebelen",
-      "name_zh_hans": "摆动",
       "machine_value": 42,
       "field_color": "ffffff"
     }
@@ -2722,9 +2095,6 @@
     "fields": {
       "field": "Handshape",
       "name": "N > B",
-      "name_en": "N > B",
-      "name_nl": "N > B",
-      "name_zh_hans": "N > B",
       "machine_value": 142,
       "field_color": "ffffff"
     }
@@ -2735,9 +2105,6 @@
     "fields": {
       "field": "Handshape",
       "name": "C > I",
-      "name_en": "C > I",
-      "name_nl": "C > I",
-      "name_zh_hans": "C > I",
       "machine_value": 145,
       "field_color": "ffffff"
     }
@@ -2748,9 +2115,6 @@
     "fields": {
       "field": "Handshape",
       "name": "1_curved",
-      "name_en": "1_curved",
-      "name_nl": "1_krom",
-      "name_zh_hans": "1_curved",
       "machine_value": 21,
       "field_color": "ffffff"
     }
@@ -2761,9 +2125,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: pinkie",
-      "name_en": "Weak hand: pinkie",
-      "name_nl": "Zwakke hand: pink",
-      "name_zh_hans": "弱手：小指",
       "machine_value": 88,
       "field_color": "ffffff"
     }
@@ -2774,9 +2135,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: web space",
-      "name_en": "Weak hand: web space",
-      "name_nl": "Zwakke hand: tussen duim en wijsvinger",
-      "name_zh_hans": "弱手：蹼",
       "machine_value": 89,
       "field_color": "ffffff"
     }
@@ -2787,9 +2145,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: front",
-      "name_en": "Weak hand: front",
-      "name_nl": "Zwakke hand: voorkant",
-      "name_zh_hans": "弱手：前",
       "machine_value": 90,
       "field_color": "c4ffc4"
     }
@@ -2800,9 +2155,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Double",
-      "name_en": "Double",
-      "name_nl": "Dubbel",
-      "name_zh_hans": "两次",
       "machine_value": 12,
       "field_color": "c4ffc4"
     }
@@ -2813,9 +2165,6 @@
     "fields": {
       "field": "Location",
       "name": "Virtual object",
-      "name_en": "Virtual object",
-      "name_nl": "Virtueel object",
-      "name_zh_hans": "虚拟对象",
       "machine_value": 91,
       "field_color": "ffffff"
     }
@@ -2826,9 +2175,6 @@
     "fields": {
       "field": "Location",
       "name": "Horizontal plane",
-      "name_en": "Horizontal plane",
-      "name_nl": "Horizontaal vlak",
-      "name_zh_hans": "水平面",
       "machine_value": 92,
       "field_color": "ffffff"
     }
@@ -2839,9 +2185,6 @@
     "fields": {
       "field": "Location",
       "name": "Flank",
-      "name_en": "Flank",
-      "name_nl": "Zij",
-      "name_zh_hans": "侧腹",
       "machine_value": 93,
       "field_color": "ffffff"
     }
@@ -2852,9 +2195,6 @@
     "fields": {
       "field": "Location",
       "name": "Hip",
-      "name_en": "Hip",
-      "name_nl": "Heup",
-      "name_zh_hans": "臀",
       "machine_value": 94,
       "field_color": "ffffff"
     }
@@ -2865,9 +2205,6 @@
     "fields": {
       "field": "Location",
       "name": "Lower arm",
-      "name_en": "Lower arm",
-      "name_nl": "Onderarm",
-      "name_zh_hans": "下臂",
       "machine_value": 95,
       "field_color": "ffffff"
     }
@@ -2878,9 +2215,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: index finger",
-      "name_en": "Weak hand: index finger",
-      "name_nl": "Zwakke hand: wijsvinger",
-      "name_zh_hans": "弱手：食指",
       "machine_value": 96,
       "field_color": "ffffff"
     }
@@ -2891,9 +2225,6 @@
     "fields": {
       "field": "Location",
       "name": "Trunk",
-      "name_en": "Trunk",
-      "name_nl": "Bovenlichaam",
-      "name_zh_hans": "躯干",
       "machine_value": 97,
       "field_color": "c4ffc4"
     }
@@ -2904,9 +2235,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: middle finger",
-      "name_en": "Weak hand: middle finger",
-      "name_nl": "Zwakke hand: middelvinger",
-      "name_zh_hans": "弱手：中指",
       "machine_value": 98,
       "field_color": "ffffff"
     }
@@ -2917,9 +2245,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: ring finger",
-      "name_en": "Weak hand: ring finger",
-      "name_nl": "Zwakke hand: ringvinger",
-      "name_zh_hans": "弱手：无名指",
       "machine_value": 99,
       "field_color": "ffffff"
     }
@@ -2930,9 +2255,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: thumb side",
-      "name_en": "Weak hand: thumb side",
-      "name_nl": "Zwakke hand: duimkant",
-      "name_zh_hans": "弱手：拇指侧",
       "machine_value": 100,
       "field_color": "c4ffc4"
     }
@@ -2943,9 +2265,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: pinkie side",
-      "name_en": "Weak hand: pinkie side",
-      "name_nl": "Zwakke hand: pinkkant",
-      "name_zh_hans": "弱手：小指侧",
       "machine_value": 101,
       "field_color": "ffffff"
     }
@@ -2956,9 +2275,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Contralateral",
-      "name_en": "Contralateral",
-      "name_nl": "Contralateraal",
-      "name_zh_hans": "异侧",
       "machine_value": 50,
       "field_color": "ffffff"
     }
@@ -2969,9 +2285,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Ipsilateral",
-      "name_en": "Ipsilateral",
-      "name_nl": "Ipsilateraal",
-      "name_zh_hans": "同侧",
       "machine_value": 51,
       "field_color": "ffffff"
     }
@@ -2982,9 +2295,6 @@
     "fields": {
       "field": "MovementShape",
       "name": "Motivated shape",
-      "name_en": "Motivated shape",
-      "name_nl": "Gemotiveerde vorm",
-      "name_zh_hans": "激发手型",
       "machine_value": 44,
       "field_color": "ffe1cd"
     }
@@ -2995,9 +2305,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Base",
-      "name_en": "Base",
-      "name_nl": "Pols",
-      "name_zh_hans": "基关节",
       "machine_value": 22,
       "field_color": "ffffff"
     }
@@ -3008,9 +2315,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Interwoven",
-      "name_en": "Interwoven",
-      "name_nl": "Verweven",
-      "name_zh_hans": "交织",
       "machine_value": 40,
       "field_color": "ffffff"
     }
@@ -3021,9 +2325,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Cross",
-      "name_en": "Cross",
-      "name_nl": "Gekruist",
-      "name_zh_hans": "交叉",
       "machine_value": 41,
       "field_color": "ffffff"
     }
@@ -3034,9 +2335,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Front",
-      "name_en": "Front",
-      "name_nl": "Voor",
-      "name_zh_hans": "前",
       "machine_value": 42,
       "field_color": "ffffff"
     }
@@ -3047,9 +2345,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Back",
-      "name_en": "Back",
-      "name_nl": "Achter",
-      "name_zh_hans": "后",
       "machine_value": 43,
       "field_color": "ffffff"
     }
@@ -3060,9 +2355,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Front/back",
-      "name_en": "Front/back",
-      "name_nl": "Voor/achter",
-      "name_zh_hans": "前/后",
       "machine_value": 44,
       "field_color": "ffffff"
     }
@@ -3073,9 +2365,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Above",
-      "name_en": "Above",
-      "name_nl": "Boven",
-      "name_zh_hans": "之上",
       "machine_value": 45,
       "field_color": "ffffff"
     }
@@ -3086,9 +2375,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Below",
-      "name_en": "Below",
-      "name_nl": "Onder",
-      "name_zh_hans": "之下",
       "machine_value": 46,
       "field_color": "ffffff"
     }
@@ -3099,9 +2385,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Above/below",
-      "name_en": "Above/below",
-      "name_nl": "Boven/onder",
-      "name_zh_hans": "之上/之下",
       "machine_value": 47,
       "field_color": "ffffff"
     }
@@ -3112,9 +2395,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Inside",
-      "name_en": "Inside",
-      "name_nl": "Erin",
-      "name_zh_hans": "内",
       "machine_value": 48,
       "field_color": "ffffff"
     }
@@ -3125,9 +2405,6 @@
     "fields": {
       "field": "PathOnPath",
       "name": "Rotation",
-      "name_en": "Rotation",
-      "name_nl": "Rotatie",
-      "name_zh_hans": "",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -3138,9 +2415,6 @@
     "fields": {
       "field": "PathOnPath",
       "name": "Radial flexion/ulnar flexion",
-      "name_en": "Radial flexion/ulnar flexion",
-      "name_nl": "Radiale flectie/ulnaire flectie",
-      "name_zh_hans": "",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -3151,9 +2425,6 @@
     "fields": {
       "field": "PathOnPath",
       "name": "Extension/flexion",
-      "name_en": "Extension/flexion",
-      "name_nl": "Extensie/flectie",
-      "name_zh_hans": "",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -3164,9 +2435,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand",
-      "name_en": "Weak hand",
-      "name_nl": "Zwakke hand",
-      "name_zh_hans": "弱手",
       "machine_value": 5,
       "field_color": "c4ffc4"
     }
@@ -3177,9 +2445,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Beak2_open_spread",
-      "name_en": "Beak2_open_spread",
-      "name_nl": "Snavel2_open_spreid",
-      "name_zh_hans": "Beak2_open_spread",
       "machine_value": 152,
       "field_color": "ffffff"
     }
@@ -3190,9 +2455,6 @@
     "fields": {
       "field": "Handshape",
       "name": "9",
-      "name_en": "9",
-      "name_nl": "9",
-      "name_zh_hans": "9",
       "machine_value": 48,
       "field_color": "ffffff"
     }
@@ -3203,9 +2465,6 @@
     "fields": {
       "field": "Handshape",
       "name": "D",
-      "name_en": "D",
-      "name_nl": "D",
-      "name_zh_hans": "D",
       "machine_value": 34,
       "field_color": "ffffff"
     }
@@ -3216,9 +2475,6 @@
     "fields": {
       "field": "Handshape",
       "name": "F",
-      "name_en": "F",
-      "name_nl": "F",
-      "name_zh_hans": "F",
       "machine_value": 39,
       "field_color": "ffffff"
     }
@@ -3229,9 +2485,6 @@
     "fields": {
       "field": "Handshape",
       "name": "M",
-      "name_en": "M",
-      "name_nl": "M",
-      "name_zh_hans": "M",
       "machine_value": 40,
       "field_color": "ffffff"
     }
@@ -3242,9 +2495,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Q",
-      "name_en": "Q",
-      "name_nl": "Q",
-      "name_zh_hans": "Q",
       "machine_value": 18,
       "field_color": "ffffff"
     }
@@ -3255,9 +2505,6 @@
     "fields": {
       "field": "Handshape",
       "name": "A > 5",
-      "name_en": "A > 5",
-      "name_nl": "A > 5",
-      "name_zh_hans": "A > 5",
       "machine_value": 153,
       "field_color": "ffffff"
     }
@@ -3268,9 +2515,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Closing + wiggling",
-      "name_en": "Closing + wiggling",
-      "name_nl": "Sluiten + wiebelen",
-      "name_zh_hans": "闭 + 摆动",
       "machine_value": 44,
       "field_color": "ffffff"
     }
@@ -3281,9 +2525,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand > arm",
-      "name_en": "Weak hand > arm",
-      "name_nl": "Zwakke hand > arm",
-      "name_zh_hans": "弱手 > 臂",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -3294,9 +2535,6 @@
     "fields": {
       "field": "Location",
       "name": "Mouth > weak hand",
-      "name_en": "Mouth > weak hand",
-      "name_nl": "Mond > zwakke hand",
-      "name_zh_hans": "嘴 > 弱手",
       "machine_value": 58,
       "field_color": "ffffff"
     }
@@ -3307,9 +2545,6 @@
     "fields": {
       "field": "Location",
       "name": "Chin > weak hand: palm",
-      "name_en": "Chin > weak hand: palm",
-      "name_nl": "Kin > zwakke hand: palm",
-      "name_zh_hans": "颏 > 弱手：手掌",
       "machine_value": 33,
       "field_color": "ffffff"
     }
@@ -3320,9 +2555,6 @@
     "fields": {
       "field": "ContactType",
       "name": "None > initial",
-      "name_en": "None > initial",
-      "name_nl": "Geen > begin",
-      "name_zh_hans": "无 > 起始",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -3333,9 +2565,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Continuous > final",
-      "name_en": "Continuous > final",
-      "name_nl": "Continu > eind",
-      "name_zh_hans": "持续 > 终止",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -3346,9 +2575,6 @@
     "fields": {
       "field": "ContactType",
       "name": "None > final",
-      "name_en": "None > final",
-      "name_nl": "Geen > eind",
-      "name_zh_hans": "无 > 终止",
       "machine_value": 11,
       "field_color": "ffffff"
     }
@@ -3359,9 +2585,6 @@
     "fields": {
       "field": "Location",
       "name": "Chin > weak hand: index finger",
-      "name_en": "Chin > weak hand: index finger",
-      "name_nl": "Kin > zwakke hand: wijsvinger",
-      "name_zh_hans": "颏 > 弱手：食指",
       "machine_value": 102,
       "field_color": "ffffff"
     }
@@ -3372,9 +2595,6 @@
     "fields": {
       "field": "Location",
       "name": "Nose > chin",
-      "name_en": "Nose > chin",
-      "name_nl": "Neus > kin",
-      "name_zh_hans": "鼻 > 颏",
       "machine_value": 103,
       "field_color": "ffffff"
     }
@@ -3385,9 +2605,6 @@
     "fields": {
       "field": "Location",
       "name": "Forehead > weak hand: palm",
-      "name_en": "Forehead > weak hand: palm",
-      "name_nl": "Voorhoofd > zwakke hand: palm",
-      "name_zh_hans": "额 > 弱手：手掌",
       "machine_value": 104,
       "field_color": "ffffff"
     }
@@ -3398,9 +2615,6 @@
     "fields": {
       "field": "Location",
       "name": "Forehead > neutral space",
-      "name_en": "Forehead > neutral space",
-      "name_nl": "Voorhoofd > neutrale ruimte",
-      "name_zh_hans": "额 > 中性位置",
       "machine_value": 106,
       "field_color": "ffffff"
     }
@@ -3411,9 +2625,6 @@
     "fields": {
       "field": "Location",
       "name": "Head > weak hand: palm",
-      "name_en": "Head > weak hand: palm",
-      "name_nl": "Hoofd > zwakke hand: palm",
-      "name_zh_hans": "头 > 弱手：手掌",
       "machine_value": 107,
       "field_color": "ffffff"
     }
@@ -3424,9 +2635,6 @@
     "fields": {
       "field": "Location",
       "name": "Cheek > chin",
-      "name_en": "Cheek > chin",
-      "name_nl": "Wang > kin",
-      "name_zh_hans": "颊 > 颏",
       "machine_value": 108,
       "field_color": "ffffff"
     }
@@ -3437,9 +2645,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: base",
-      "name_en": "Weak hand: base",
-      "name_nl": "Zwakke hand: basis",
-      "name_zh_hans": "弱手：基关节",
       "machine_value": 109,
       "field_color": "ffffff"
     }
@@ -3450,9 +2655,6 @@
     "fields": {
       "field": "Location",
       "name": "Face > head",
-      "name_en": "Face > head",
-      "name_nl": "Gezicht > hoofd",
-      "name_zh_hans": "脸 > 头",
       "machine_value": 110,
       "field_color": "ffffff"
     }
@@ -3463,9 +2665,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: thumb side > arm",
-      "name_en": "Weak hand: thumb side > arm",
-      "name_nl": "Zwakke hand: duimkant > arm",
-      "name_zh_hans": "弱手：拇指侧 > 臂",
       "machine_value": 111,
       "field_color": "ffffff"
     }
@@ -3476,9 +2675,6 @@
     "fields": {
       "field": "Location",
       "name": "Mouth > weak hand: palm",
-      "name_en": "Mouth > weak hand: palm",
-      "name_nl": "Mond > zwakke hand: palm",
-      "name_zh_hans": "嘴 > 弱手：手掌",
       "machine_value": 112,
       "field_color": "ffffff"
     }
@@ -3489,9 +2685,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Contralateral + upwards",
-      "name_en": "Contralateral + upwards",
-      "name_nl": "Contralateraal + omhoog",
-      "name_zh_hans": "异侧 + 向上",
       "machine_value": 52,
       "field_color": "ffffff"
     }
@@ -3502,9 +2695,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Contralateral + downwards",
-      "name_en": "Contralateral + downwards",
-      "name_nl": "Contralateraal + omlaag",
-      "name_zh_hans": "异侧 + 向下",
       "machine_value": 53,
       "field_color": "ffffff"
     }
@@ -3515,9 +2705,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Contralateral + forwards",
-      "name_en": "Contralateral + forwards",
-      "name_nl": "Contralateraal + naar voren",
-      "name_zh_hans": "异侧 + 向前",
       "machine_value": 54,
       "field_color": "ffffff"
     }
@@ -3528,9 +2715,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards > ipsilateral",
-      "name_en": "Downwards > ipsilateral",
-      "name_nl": "Omlaag > ipsilateraal",
-      "name_zh_hans": "向下 > 同侧",
       "machine_value": 55,
       "field_color": "ffffff"
     }
@@ -3541,9 +2725,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards + forwards",
-      "name_en": "Downwards + forwards",
-      "name_nl": "Omlaag + naar voren",
-      "name_zh_hans": "向下 + 向前",
       "machine_value": 56,
       "field_color": "ffffff"
     }
@@ -3554,9 +2735,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards + ipsilateral",
-      "name_en": "Downwards + ipsilateral",
-      "name_nl": "Omlaag + ipsilateraal",
-      "name_zh_hans": "向下 + 同侧",
       "machine_value": 57,
       "field_color": "ffffff"
     }
@@ -3567,9 +2745,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards + ipsilateral > downwards",
-      "name_en": "Downwards + ipsilateral > downwards",
-      "name_nl": "Omlaag + ipsilateraal > omlaag",
-      "name_zh_hans": "向下 + 同侧 > 向下",
       "machine_value": 58,
       "field_color": "ffffff"
     }
@@ -3580,9 +2755,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards > contralateral",
-      "name_en": "Downwards > contralateral",
-      "name_nl": "Omlaag > contralateraal",
-      "name_zh_hans": "向下 > 异侧",
       "machine_value": 59,
       "field_color": "ffffff"
     }
@@ -3593,9 +2765,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Forwards + ipsilateral",
-      "name_en": "Forwards + ipsilateral",
-      "name_nl": "Naar voren + ipsilateraal",
-      "name_zh_hans": "向前 + 同侧",
       "machine_value": 60,
       "field_color": "ffffff"
     }
@@ -3606,9 +2775,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Forwards + upwards",
-      "name_en": "Forwards + upwards",
-      "name_nl": "Naar voren + omhoog",
-      "name_zh_hans": "向前 + 向上",
       "machine_value": 61,
       "field_color": "ffffff"
     }
@@ -3619,9 +2785,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Forwards > ipsilateral",
-      "name_en": "Forwards > ipsilateral",
-      "name_nl": "Naar voren > ipsilateraal",
-      "name_zh_hans": "向前 > 同侧",
       "machine_value": 62,
       "field_color": "ffffff"
     }
@@ -3632,9 +2795,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Forwards > contralateral",
-      "name_en": "Forwards > contralateral",
-      "name_nl": "Naar voren > contralateraal",
-      "name_zh_hans": "向前 > 异侧",
       "machine_value": 63,
       "field_color": "ffffff"
     }
@@ -3645,9 +2805,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Forwards > ipsilateral > forwards",
-      "name_en": "Forwards > ipsilateral > forwards",
-      "name_nl": "Naar voren > ipsilateraal > naar voren",
-      "name_zh_hans": "向前 > 同侧 > 向前",
       "machine_value": 64,
       "field_color": "ffffff"
     }
@@ -3658,9 +2815,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Ipsilateral + upwards",
-      "name_en": "Ipsilateral + upwards",
-      "name_nl": "Ipsilateraal + omhoog",
-      "name_zh_hans": "同侧 + 向前",
       "machine_value": 65,
       "field_color": "ffffff"
     }
@@ -3671,9 +2825,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Ipsilateral > downwards > contralateral",
-      "name_en": "Ipsilateral > downwards > contralateral",
-      "name_nl": "Ipsilateraal > omlaag > contralateraal",
-      "name_zh_hans": "同侧 > 向下 > 异侧",
       "machine_value": 66,
       "field_color": "ffffff"
     }
@@ -3684,9 +2835,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Ipsilateral > upwards",
-      "name_en": "Ipsilateral > upwards",
-      "name_nl": "Ipsilateraal > omhoog",
-      "name_zh_hans": "同侧 > 向上",
       "machine_value": 67,
       "field_color": "ffffff"
     }
@@ -3697,9 +2845,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Ipsilateral > downwards",
-      "name_en": "Ipsilateral > downwards",
-      "name_nl": "Ipsilateraal > omlaag",
-      "name_zh_hans": "同侧 > 向下",
       "machine_value": 68,
       "field_color": "ffffff"
     }
@@ -3710,9 +2855,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards/upwards",
-      "name_en": "Downwards/upwards",
-      "name_nl": "Omlaag/omhoog",
-      "name_zh_hans": "向上/向上",
       "machine_value": 69,
       "field_color": "ffffff"
     }
@@ -3723,9 +2865,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back + base",
-      "name_en": "Back + base",
-      "name_nl": "Rug + pols",
-      "name_zh_hans": "手背 + 基关节",
       "machine_value": 25,
       "field_color": "ffffff"
     }
@@ -3736,9 +2875,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Base + palm",
-      "name_en": "Base + palm",
-      "name_nl": "Pols + palm",
-      "name_zh_hans": "基关节 + 手掌",
       "machine_value": 26,
       "field_color": "ffffff"
     }
@@ -3749,9 +2885,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Base + ulnar",
-      "name_en": "Base + ulnar",
-      "name_nl": "Pols + pink",
-      "name_zh_hans": "基关节 + 尺骨",
       "machine_value": 27,
       "field_color": "ffffff"
     }
@@ -3762,9 +2895,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Base > base",
-      "name_en": "Base > base",
-      "name_nl": "Pols > pols",
-      "name_zh_hans": "基关节 > 基关节",
       "machine_value": 28,
       "field_color": "ffffff"
     }
@@ -3775,9 +2905,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Base > ulnar",
-      "name_en": "Base > ulnar",
-      "name_nl": "Pols > pink",
-      "name_zh_hans": "基关节 > 尺骨",
       "machine_value": 29,
       "field_color": "ffffff"
     }
@@ -3788,9 +2915,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Palm > base",
-      "name_en": "Palm > base",
-      "name_nl": "Palm > pols",
-      "name_zh_hans": "手掌 > 基关节",
       "machine_value": 30,
       "field_color": "ffffff"
     }
@@ -3801,9 +2925,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back + ulnar",
-      "name_en": "Back + ulnar",
-      "name_nl": "Rug + pink",
-      "name_zh_hans": "手背 + 尺骨",
       "machine_value": 31,
       "field_color": "ffffff"
     }
@@ -3814,9 +2935,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Radial/ulnar",
-      "name_en": "Radial/ulnar",
-      "name_nl": "Duim/pink",
-      "name_zh_hans": "桡骨/尺骨",
       "machine_value": 32,
       "field_color": "ffffff"
     }
@@ -3827,9 +2945,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Base",
-      "name_en": "Base",
-      "name_nl": "Pols",
-      "name_zh_hans": "基关节",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -3840,9 +2955,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Finger tips",
-      "name_en": "Finger tips",
-      "name_nl": "Vingertoppen",
-      "name_zh_hans": "指尖",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -3853,9 +2965,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Radial",
-      "name_en": "Radial",
-      "name_nl": "Duim",
-      "name_zh_hans": "桡骨",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -3866,9 +2975,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Ulnar",
-      "name_en": "Ulnar",
-      "name_nl": "Pink",
-      "name_zh_hans": "尺骨",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -3879,9 +2985,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Palm",
-      "name_en": "Palm",
-      "name_nl": "Palm",
-      "name_zh_hans": "手掌",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -3892,9 +2995,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Back",
-      "name_en": "Back",
-      "name_nl": "Rug",
-      "name_zh_hans": "手背",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -3905,9 +3005,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Finger tips/base",
-      "name_en": "Finger tips/base",
-      "name_nl": "Vingertoppen/pols",
-      "name_zh_hans": "指尖/基关节",
       "machine_value": 24,
       "field_color": "ffffff"
     }
@@ -3918,9 +3015,6 @@
     "fields": {
       "field": "Location",
       "name": "Belly + forehead",
-      "name_en": "Belly + forehead",
-      "name_nl": "Buik + voorhoofd",
-      "name_zh_hans": "腹 + 额",
       "machine_value": 14,
       "field_color": "ffffff"
     }
@@ -3931,9 +3025,6 @@
     "fields": {
       "field": "Location",
       "name": "Head > chest",
-      "name_en": "Head > chest",
-      "name_nl": "Hoofd > borst",
-      "name_zh_hans": "头 > 胸",
       "machine_value": 113,
       "field_color": "ffffff"
     }
@@ -3944,9 +3035,6 @@
     "fields": {
       "field": "Location",
       "name": "Mouth > cheek",
-      "name_en": "Mouth > cheek",
-      "name_nl": "Mond > wang",
-      "name_zh_hans": "嘴 > 颊",
       "machine_value": 114,
       "field_color": "ffffff"
     }
@@ -3957,9 +3045,6 @@
     "fields": {
       "field": "Location",
       "name": "Shoulder > shoulder",
-      "name_en": "Shoulder > shoulder",
-      "name_nl": "Schouder > schouder",
-      "name_zh_hans": "肩 > 肩",
       "machine_value": 115,
       "field_color": "ffffff"
     }
@@ -3970,9 +3055,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Up and down",
-      "name_en": "Up and down",
-      "name_nl": "Op en neer",
-      "name_zh_hans": "上下往复",
       "machine_value": 70,
       "field_color": "ffffff"
     }
@@ -3983,9 +3065,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Ipsilateral > contralateral",
-      "name_en": "Ipsilateral > contralateral",
-      "name_nl": "Ipsilateraal > contralateraal",
-      "name_zh_hans": "同侧 > 异侧",
       "machine_value": 71,
       "field_color": "ffffff"
     }
@@ -3996,9 +3075,6 @@
     "fields": {
       "field": "Location",
       "name": "Parallel plane",
-      "name_en": "Parallel plane",
-      "name_nl": "Parallel vlak",
-      "name_zh_hans": "平行平面",
       "machine_value": 116,
       "field_color": "c4ffc4"
     }
@@ -4009,9 +3085,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Opening + rubbing",
-      "name_en": "Opening + rubbing",
-      "name_nl": "Openen + wrijven",
-      "name_zh_hans": "开 + 摩擦",
       "machine_value": 45,
       "field_color": "ffffff"
     }
@@ -4022,9 +3095,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Uncurving",
-      "name_en": "Uncurving",
-      "name_nl": "Strekken",
-      "name_zh_hans": "非弯",
       "machine_value": 46,
       "field_color": "ffffff"
     }
@@ -4035,9 +3105,6 @@
     "fields": {
       "field": "Handshape",
       "name": "T_open",
-      "name_en": "T_open",
-      "name_nl": "T_open",
-      "name_zh_hans": "T_open",
       "machine_value": 154,
       "field_color": "ffffff"
     }
@@ -4048,9 +3115,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Backwards + upwards",
-      "name_en": "Backwards + upwards",
-      "name_nl": "Naar achteren + omhoog",
-      "name_zh_hans": "向后 + 向上",
       "machine_value": 72,
       "field_color": "ffffff"
     }
@@ -4061,9 +3125,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Upwards > forwards > downwards",
-      "name_en": "Upwards > forwards > downwards",
-      "name_nl": "Omhoog > naar voren > omlaag",
-      "name_zh_hans": "向上 > 向前 > 向下",
       "machine_value": 73,
       "field_color": "ffffff"
     }
@@ -4074,9 +3135,6 @@
     "fields": {
       "field": "Location",
       "name": "Chin > weak hand: thumb side",
-      "name_en": "Chin > weak hand: thumb side",
-      "name_nl": "Kin > zwakke hand: duimkant",
-      "name_zh_hans": "颏 > 弱手：拇指",
       "machine_value": 117,
       "field_color": "ffffff"
     }
@@ -4087,9 +3145,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Radial and ulnar flexion",
-      "name_en": "Radial and ulnar flexion",
-      "name_nl": "Radiale en ulnaire flectie",
-      "name_zh_hans": "桡骨和尺骨收缩",
       "machine_value": 12,
       "field_color": "c4ffc4"
     }
@@ -4100,9 +3155,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Palm > back",
-      "name_en": "Palm > back",
-      "name_nl": "Palm > rug",
-      "name_zh_hans": "手掌 > 手背",
       "machine_value": 33,
       "field_color": "ffffff"
     }
@@ -4113,9 +3165,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Radial > ulnar",
-      "name_en": "Radial > ulnar",
-      "name_nl": "Duim > pink",
-      "name_zh_hans": "桡骨/尺骨",
       "machine_value": 34,
       "field_color": "ffffff"
     }
@@ -4126,9 +3175,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Baby_beak > A",
-      "name_en": "Baby_beak > A",
-      "name_nl": "Baby_snavel > A",
-      "name_zh_hans": "Baby_beak > A",
       "machine_value": 155,
       "field_color": "ffffff"
     }
@@ -4139,9 +3185,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Contralateral > forwards",
-      "name_en": "Contralateral > forwards",
-      "name_nl": "Contralateraal > naar voren",
-      "name_zh_hans": "异侧 > 向前",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -4152,9 +3195,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Backwards/forwards",
-      "name_en": "Backwards/forwards",
-      "name_nl": "Naar achteren/naar voren",
-      "name_zh_hans": "向后 > 向前",
       "machine_value": 15,
       "field_color": "ffffff"
     }
@@ -4165,9 +3205,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Backwards + downwards",
-      "name_en": "Backwards + downwards",
-      "name_nl": "Naar achteren + omlaag",
-      "name_zh_hans": "向后 + 向下",
       "machine_value": 87,
       "field_color": "ffffff"
     }
@@ -4178,9 +3215,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "Alternative citation form",
-      "name_en": "Alternative citation form",
-      "name_nl": "Andere citatievorm",
-      "name_zh_hans": "可选引用形式",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -4191,9 +3225,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "Citation form with mouthing",
-      "name_en": "Citation form with mouthing",
-      "name_nl": "Citatievorm met mouthing",
-      "name_zh_hans": "无口动的引用形式",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -4204,9 +3235,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "Sign in sentence context",
-      "name_en": "Sign in sentence context",
-      "name_nl": "Gebaar in zinscontext",
-      "name_zh_hans": "句子中的手势",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -4217,9 +3245,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "Handy signs: experiments (mouthing, short)",
-      "name_en": "Handy signs: experiments (mouthing, short)",
-      "name_nl": "Handy signs: experimenten (mondbeeld, kort)",
-      "name_zh_hans": "Handy signs: experiments (mouthing, short)",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -4230,9 +3255,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "SignPhon: citation form",
-      "name_en": "SignPhon: citation form",
-      "name_nl": "SignPhon: citatievorm",
-      "name_zh_hans": "SignPhon: citation form",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -4243,9 +3265,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "SignPhon: sentence",
-      "name_en": "SignPhon: sentence",
-      "name_nl": "SignPhon: zin",
-      "name_zh_hans": "SignPhon: sentence",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -4256,9 +3275,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Ipsilateral/contralateral",
-      "name_en": "Ipsilateral/contralateral",
-      "name_nl": "Ipsilateraal/contralateraal",
-      "name_zh_hans": "同侧/异侧",
       "machine_value": 88,
       "field_color": "ffffff"
     }
@@ -4269,9 +3285,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back/palm",
-      "name_en": "Back/palm",
-      "name_nl": "Rug/palm",
-      "name_zh_hans": "手背/手掌",
       "machine_value": 23,
       "field_color": "ffffff"
     }
@@ -4282,9 +3295,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Pronation/supination",
-      "name_en": "Pronation/supination",
-      "name_nl": "Pronatie/supinatie",
-      "name_zh_hans": "外翻/内翻",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -4295,9 +3305,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Front",
-      "name_en": "Front",
-      "name_nl": "Voor",
-      "name_zh_hans": "前",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -4308,9 +3315,6 @@
     "fields": {
       "field": "Location",
       "name": "Mouth > chin",
-      "name_en": "Mouth > chin",
-      "name_nl": "Mond > kin",
-      "name_zh_hans": "嘴 > 颏",
       "machine_value": 13,
       "field_color": "ffffff"
     }
@@ -4321,9 +3325,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards > forwards",
-      "name_en": "Downwards > forwards",
-      "name_nl": "Omlaag > naar voren",
-      "name_zh_hans": "向下 > 向前",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -4334,9 +3335,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Finger tips/base",
-      "name_en": "Finger tips/base",
-      "name_nl": "Vingertoppen/pols",
-      "name_zh_hans": "指尖/基关节",
       "machine_value": 35,
       "field_color": "ffffff"
     }
@@ -4347,9 +3345,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Base/front",
-      "name_en": "Base/front",
-      "name_nl": "Pols/voor",
-      "name_zh_hans": "基关节/前",
       "machine_value": 36,
       "field_color": "ffffff"
     }
@@ -4360,9 +3355,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Front",
-      "name_en": "Front",
-      "name_nl": "Voor",
-      "name_zh_hans": "前",
       "machine_value": 25,
       "field_color": "ffffff"
     }
@@ -4373,9 +3365,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Ipsilateral and contralateral",
-      "name_en": "Ipsilateral and contralateral",
-      "name_nl": "Ipsilateraal en contralateraal",
-      "name_zh_hans": "同侧和异侧",
       "machine_value": 89,
       "field_color": "ffffff"
     }
@@ -4386,9 +3375,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Front + ulnar",
-      "name_en": "Front + ulnar",
-      "name_nl": "Voor + pink",
-      "name_zh_hans": "前 + 尺骨",
       "machine_value": 10,
       "field_color": "ffffff"
     }
@@ -4399,9 +3385,6 @@
     "fields": {
       "field": "Location",
       "name": "Neutral space/weak hand: front",
-      "name_en": "Neutral space/weak hand: front",
-      "name_nl": "Neutrale ruimte/zwakke hand: voor",
-      "name_zh_hans": "中性位置/弱手：前",
       "machine_value": 29,
       "field_color": "ffffff"
     }
@@ -4412,9 +3395,6 @@
     "fields": {
       "field": "Location",
       "name": "Chest > trunk",
-      "name_en": "Chest > trunk",
-      "name_nl": "Borst > bovenlichaam",
-      "name_zh_hans": "胸 > 躯干",
       "machine_value": 35,
       "field_color": "ffffff"
     }
@@ -4425,9 +3405,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Continuous > none",
-      "name_en": "Continuous > none",
-      "name_nl": "Continu > geen",
-      "name_zh_hans": "持续 > 无",
       "machine_value": 13,
       "field_color": "ffffff"
     }
@@ -4438,9 +3415,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "Handy signs: experiments (mouthing, long)",
-      "name_en": "Handy signs: experiments (mouthing, long)",
-      "name_nl": "Handy signs: experimenten (mondbeeld, lang)",
-      "name_zh_hans": "Handy signs: experiments (mouthing, long)",
       "machine_value": 10,
       "field_color": "ffffff"
     }
@@ -4451,9 +3425,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "Handy signs: experiments (no mouthing, long)",
-      "name_en": "Handy signs: experiments (no mouthing, long)",
-      "name_nl": "Handy signs: experimenten (geen mondbeeld, lang)",
-      "name_zh_hans": "Handy signs: experiments (no mouthing, long)",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -4464,9 +3435,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "Handy signs: experiments (no mouthing, short)",
-      "name_en": "Handy signs: experiments (no mouthing, short)",
-      "name_nl": "Handy signs: experimenten (geen mondbeeld, kort)",
-      "name_zh_hans": "Handy signs: experiments (no mouthing, short)",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -4477,9 +3445,6 @@
     "fields": {
       "field": "Location",
       "name": "Variable",
-      "name_en": "Variable",
-      "name_nl": "Variabel",
-      "name_zh_hans": "可变的",
       "machine_value": 118,
       "field_color": "ffe1cd"
     }
@@ -4490,9 +3455,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Base + front",
-      "name_en": "Base + front",
-      "name_nl": "Pols + voor",
-      "name_zh_hans": "基关节 + 前",
       "machine_value": 24,
       "field_color": "ffffff"
     }
@@ -4503,9 +3465,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Base > palm",
-      "name_en": "Base > palm",
-      "name_nl": "Pols > palm",
-      "name_zh_hans": "基关节 > 手掌",
       "machine_value": 37,
       "field_color": "ffffff"
     }
@@ -4516,9 +3475,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Opening + wiggling",
-      "name_en": "Opening + wiggling",
-      "name_nl": "Openen + wiebelen",
-      "name_zh_hans": "开 + 摆动",
       "machine_value": 47,
       "field_color": "ffffff"
     }
@@ -4529,9 +3485,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards/upwards + ipsilateral",
-      "name_en": "Downwards/upwards + ipsilateral",
-      "name_nl": "Omlaag/omhoog + ipsilateraal",
-      "name_zh_hans": "向下/向上 + 同侧",
       "machine_value": 90,
       "field_color": "ffffff"
     }
@@ -4542,9 +3495,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Ipsilateral + up and down",
-      "name_en": "Ipsilateral + up and down",
-      "name_nl": "Ipsilateraal + op en neer",
-      "name_zh_hans": "同侧 + 上下往复",
       "machine_value": 91,
       "field_color": "ffffff"
     }
@@ -4555,9 +3505,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Extension > flexion",
-      "name_en": "Extension > flexion",
-      "name_nl": "Extensie > flectie",
-      "name_zh_hans": "伸展 > 收缩",
       "machine_value": 13,
       "field_color": "ffffff"
     }
@@ -4568,9 +3515,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Extension/flexion",
-      "name_en": "Extension/flexion",
-      "name_nl": "Extensie/flectie",
-      "name_zh_hans": "伸展/收缩",
       "machine_value": 14,
       "field_color": "ffffff"
     }
@@ -4581,9 +3525,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Fingerspelling",
-      "name_en": "Fingerspelling",
-      "name_nl": "Vingerspellen",
-      "name_zh_hans": "指拼",
       "machine_value": 26,
       "field_color": "ffffff"
     }
@@ -4594,9 +3535,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Back/palm",
-      "name_en": "Back/palm",
-      "name_nl": "Rug/palm",
-      "name_zh_hans": "手背/手掌",
       "machine_value": 27,
       "field_color": "ffffff"
     }
@@ -4607,9 +3545,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Back/palm > palm",
-      "name_en": "Back/palm > palm",
-      "name_nl": "Rug/palm > palm",
-      "name_zh_hans": "手背/手掌 > 手掌",
       "machine_value": 28,
       "field_color": "ffffff"
     }
@@ -4620,9 +3555,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back/base",
-      "name_en": "Back/base",
-      "name_nl": "Rug/pols",
-      "name_zh_hans": "手背/基关节",
       "machine_value": 38,
       "field_color": "ffffff"
     }
@@ -4633,9 +3565,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Base > front",
-      "name_en": "Base > front",
-      "name_nl": "Pols > voor",
-      "name_zh_hans": "基关节 > 前",
       "machine_value": 39,
       "field_color": "ffffff"
     }
@@ -4646,9 +3575,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Palm + ulnar",
-      "name_en": "Palm + ulnar",
-      "name_nl": "Palm + pink",
-      "name_zh_hans": "手掌 + 尺骨",
       "machine_value": 40,
       "field_color": "ffffff"
     }
@@ -4659,9 +3585,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Ulnar > base > radial",
-      "name_en": "Ulnar > base > radial",
-      "name_nl": "Pink > pols > duim",
-      "name_zh_hans": "尺骨 > 基关节 > 桡骨",
       "machine_value": 41,
       "field_color": "ffffff"
     }
@@ -4672,9 +3595,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Ulnar > front",
-      "name_en": "Ulnar > front",
-      "name_nl": "Pink > voor",
-      "name_zh_hans": "尺骨 > 前",
       "machine_value": 42,
       "field_color": "ffffff"
     }
@@ -4685,9 +3605,6 @@
     "fields": {
       "field": "Location",
       "name": "Head + neutral space",
-      "name_en": "Head + neutral space",
-      "name_nl": "Hoofd + neutrale ruimte",
-      "name_zh_hans": "头 + 中性位置",
       "machine_value": 119,
       "field_color": "ffffff"
     }
@@ -4698,9 +3615,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Finger tips > palm",
-      "name_en": "Finger tips > palm",
-      "name_nl": "Vingertoppen > palm",
-      "name_zh_hans": "指尖 > 手掌",
       "machine_value": 43,
       "field_color": "ffffff"
     }
@@ -4711,9 +3625,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Forwards > upwards",
-      "name_en": "Forwards > upwards",
-      "name_nl": "Naar voren > omhoog",
-      "name_zh_hans": "向前 > 向上",
       "machine_value": 92,
       "field_color": "ffffff"
     }
@@ -4724,9 +3635,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Finger tips > base",
-      "name_en": "Finger tips > base",
-      "name_nl": "Vingertoppen > pols",
-      "name_zh_hans": "指尖 > 基关节",
       "machine_value": 44,
       "field_color": "ffffff"
     }
@@ -4737,9 +3645,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back > front",
-      "name_en": "Back > front",
-      "name_nl": "Rug > voor",
-      "name_zh_hans": "手背 > 前",
       "machine_value": 45,
       "field_color": "ffffff"
     }
@@ -4750,9 +3655,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back > finger tips",
-      "name_en": "Back > finger tips",
-      "name_nl": "Rug > vingertoppen",
-      "name_zh_hans": "手背 > 指尖",
       "machine_value": 46,
       "field_color": "ffffff"
     }
@@ -4763,9 +3665,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Ulnar > base",
-      "name_en": "Ulnar > base",
-      "name_nl": "Pink > pols",
-      "name_zh_hans": "尺骨 > 基关节",
       "machine_value": 47,
       "field_color": "ffffff"
     }
@@ -4776,9 +3675,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back/finger tips",
-      "name_en": "Back/finger tips",
-      "name_nl": "Rug/vingertoppen",
-      "name_zh_hans": "手背/指尖",
       "machine_value": 48,
       "field_color": "ffffff"
     }
@@ -4789,9 +3685,6 @@
     "fields": {
       "field": "Location",
       "name": "Eye > neutral space",
-      "name_en": "Eye > neutral space",
-      "name_nl": "Oog > neutrale ruimte",
-      "name_zh_hans": "眼 > 中性位置",
       "machine_value": 120,
       "field_color": "ffffff"
     }
@@ -4802,9 +3695,6 @@
     "fields": {
       "field": "Location",
       "name": "Neutral space > nose",
-      "name_en": "Neutral space > nose",
-      "name_nl": "Neutrale ruimte > neus",
-      "name_zh_hans": "中性位置 > 鼻",
       "machine_value": 121,
       "field_color": "ffffff"
     }
@@ -4815,9 +3705,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Backwards + ipsilateral",
-      "name_en": "Backwards + ipsilateral",
-      "name_nl": "Naar achteren + ipsilateraal",
-      "name_zh_hans": "向后 + 同侧",
       "machine_value": 93,
       "field_color": "ffffff"
     }
@@ -4828,9 +3715,6 @@
     "fields": {
       "field": "Location",
       "name": "Nose > neutral space",
-      "name_en": "Nose > neutral space",
-      "name_nl": "Neus > neutrale ruimte",
-      "name_zh_hans": "鼻 > 中性位置",
       "machine_value": 122,
       "field_color": "ffffff"
     }
@@ -4841,9 +3725,6 @@
     "fields": {
       "field": "Location",
       "name": "Shoulder > weak hand: palm",
-      "name_en": "Shoulder > weak hand: palm",
-      "name_nl": "Schouder > zwakke hand: palm",
-      "name_zh_hans": "肩 > 弱手：手掌",
       "machine_value": 123,
       "field_color": "ffffff"
     }
@@ -4854,9 +3735,6 @@
     "fields": {
       "field": "Valence",
       "name": "Intransitive",
-      "name_en": "Intransitive",
-      "name_nl": "Intransitief",
-      "name_zh_hans": "不及物",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -4867,9 +3745,6 @@
     "fields": {
       "field": "Valence",
       "name": "Transitive",
-      "name_en": "Transitive",
-      "name_nl": "Transitief",
-      "name_zh_hans": "及物",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -4880,9 +3755,6 @@
     "fields": {
       "field": "Valence",
       "name": "Ditransitive",
-      "name_en": "Ditransitive",
-      "name_nl": "Ditransitief",
-      "name_zh_hans": "双及物",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -4893,9 +3765,6 @@
     "fields": {
       "field": "Valence",
       "name": "Transitive and intransitive",
-      "name_en": "Transitive and intransitive",
-      "name_nl": "Transitief en intransitief",
-      "name_zh_hans": "及物和不及物",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -4906,9 +3775,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Articulator: SF",
-      "name_en": "Articulator: SF",
-      "name_nl": "Articulator: SF",
-      "name_zh_hans": "Articulator: SF",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -4919,9 +3785,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Orientation (relative)",
-      "name_en": "Orientation (relative)",
-      "name_nl": "Oriëntatie (relatief)",
-      "name_zh_hans": "Orientation (relative)",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -4932,9 +3795,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Palm + radial",
-      "name_en": "Palm + radial",
-      "name_nl": "Palm + duim",
-      "name_zh_hans": "手掌 + 桡骨",
       "machine_value": 49,
       "field_color": "ffffff"
     }
@@ -4945,9 +3805,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards + towards",
-      "name_en": "Downwards + towards",
-      "name_nl": "Omlaag en naar locatie toe",
-      "name_zh_hans": "向下 + 朝向",
       "machine_value": 94,
       "field_color": "ffffff"
     }
@@ -4958,9 +3815,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Proximal",
-      "name_en": "Proximal",
-      "name_nl": "Proximaal",
-      "name_zh_hans": "接近",
       "machine_value": 95,
       "field_color": "ffffff"
     }
@@ -4971,9 +3825,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Towards location",
-      "name_en": "Towards location",
-      "name_nl": "Naar locatie toe",
-      "name_zh_hans": "Towards",
       "machine_value": 96,
       "field_color": "ffffff"
     }
@@ -4984,9 +3835,6 @@
     "fields": {
       "field": "MovementShape",
       "name": "Spiral",
-      "name_en": "Spiral",
-      "name_nl": "Spiraal",
-      "name_zh_hans": "螺旋型",
       "machine_value": 45,
       "field_color": "ffffff"
     }
@@ -4997,9 +3845,6 @@
     "fields": {
       "field": "WordClass",
       "name": "Noun",
-      "name_en": "Noun",
-      "name_nl": "Naamwoord",
-      "name_zh_hans": "Nomen",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -5010,9 +3855,6 @@
     "fields": {
       "field": "WordClass",
       "name": "Verb",
-      "name_en": "Verb",
-      "name_nl": "Werkwoord",
-      "name_zh_hans": "Verb",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -5023,9 +3865,6 @@
     "fields": {
       "field": "WordClass",
       "name": "Particle",
-      "name_en": "Particle",
-      "name_nl": "Partikel",
-      "name_zh_hans": "Particle",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -5036,9 +3875,6 @@
     "fields": {
       "field": "WordClass",
       "name": "Adjective",
-      "name_en": "Adjective",
-      "name_nl": "Adjectief",
-      "name_zh_hans": "Adjective",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -5049,9 +3885,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Hands: Handedness",
-      "name_en": "Hands: Handedness",
-      "name_nl": "Handen: aantal handen",
-      "name_zh_hans": "Hands: Handedness",
       "machine_value": 10,
       "field_color": "ffffff"
     }
@@ -5062,9 +3895,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Hands: Arrangement",
-      "name_en": "Hands: Arrangement",
-      "name_nl": "Handen: positie",
-      "name_zh_hans": "Hands: Arrangement",
       "machine_value": 11,
       "field_color": "ffffff"
     }
@@ -5075,9 +3905,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Articulator: NSF",
-      "name_en": "Articulator: NSF",
-      "name_nl": "Articulator: NSF",
-      "name_zh_hans": "Articulator: NSF",
       "machine_value": 12,
       "field_color": "ffffff"
     }
@@ -5088,9 +3915,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Articulator: Aperture",
-      "name_en": "Articulator: Aperture",
-      "name_nl": "Articulator: opening",
-      "name_zh_hans": "Articulator: Aperture",
       "machine_value": 13,
       "field_color": "ffffff"
     }
@@ -5101,9 +3925,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Articulator: Finger shape",
-      "name_en": "Articulator: Finger shape",
-      "name_nl": "Articulator: vorm van vingers",
-      "name_zh_hans": "Articulator: Finger shape",
       "machine_value": 14,
       "field_color": "ffffff"
     }
@@ -5114,9 +3935,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Articulator: Spreading",
-      "name_en": "Articulator: Spreading",
-      "name_nl": "Articulator: spreiding",
-      "name_zh_hans": "Articulator: Spreading",
       "machine_value": 15,
       "field_color": "ffffff"
     }
@@ -5127,9 +3945,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Orientation (absolute)",
-      "name_en": "Orientation (absolute)",
-      "name_nl": "Oriëntatie (absoluut)",
-      "name_zh_hans": "Orientation (absolute)",
       "machine_value": 23,
       "field_color": "ffffff"
     }
@@ -5140,9 +3955,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Location: Location",
-      "name_en": "Location: Location",
-      "name_nl": "Locatie: locatie",
-      "name_zh_hans": "Location: Location",
       "machine_value": 25,
       "field_color": "ffffff"
     }
@@ -5153,9 +3965,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Location: Contact type",
-      "name_en": "Location: Contact type",
-      "name_nl": "Locatie: contacttype",
-      "name_zh_hans": "Location: Contact type",
       "machine_value": 27,
       "field_color": "ffffff"
     }
@@ -5166,9 +3975,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Movement: Local",
-      "name_en": "Movement: Local",
-      "name_nl": "Beweging: lokaal",
-      "name_zh_hans": "Movement: Local",
       "machine_value": 28,
       "field_color": "ffffff"
     }
@@ -5179,9 +3985,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Movement: Path shape",
-      "name_en": "Movement: Path shape",
-      "name_nl": "Beweging: vorm van pad",
-      "name_zh_hans": "Movement: Path shape",
       "machine_value": 29,
       "field_color": "ffffff"
     }
@@ -5192,9 +3995,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Movement: Repetition",
-      "name_en": "Movement: Repetition",
-      "name_nl": "Beweging: herhaling",
-      "name_zh_hans": "Movement: Repetition",
       "machine_value": 30,
       "field_color": "ffffff"
     }
@@ -5205,9 +4005,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Movement: Manner",
-      "name_en": "Movement: Manner",
-      "name_nl": "Beweging: manier van bewegen",
-      "name_zh_hans": "Movement: Manner",
       "machine_value": 31,
       "field_color": "ffffff"
     }
@@ -5218,9 +4015,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Movement: Path direction",
-      "name_en": "Movement: Path direction",
-      "name_nl": "Beweging: richting van pad",
-      "name_zh_hans": "Movement: Path direction",
       "machine_value": 32,
       "field_color": "ffffff"
     }
@@ -5231,9 +4025,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Distal",
-      "name_en": "Distal",
-      "name_nl": "Distaal",
-      "name_zh_hans": "Distal",
       "machine_value": 98,
       "field_color": "ffffff"
     }
@@ -5244,9 +4035,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Lateral",
-      "name_en": "Lateral",
-      "name_nl": "Lateraal",
-      "name_zh_hans": "Lateral",
       "machine_value": 99,
       "field_color": "ffffff"
     }
@@ -5257,9 +4045,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Counting",
-      "name_en": "Counting",
-      "name_nl": "Tellen",
-      "name_zh_hans": "Counting",
       "machine_value": 29,
       "field_color": "ffffff"
     }
@@ -5270,9 +4055,6 @@
     "fields": {
       "field": "Location",
       "name": "Ear > chest",
-      "name_en": "Ear > chest",
-      "name_nl": "Oor > borst",
-      "name_zh_hans": "Ear > chest",
       "machine_value": 124,
       "field_color": "ffffff"
     }
@@ -5283,9 +4065,6 @@
     "fields": {
       "field": "WordClass",
       "name": "Noun or verb",
-      "name_en": "Noun or verb",
-      "name_nl": "Naamwoord of werkwoord",
-      "name_zh_hans": "Noun or verb",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -5296,9 +4075,6 @@
     "fields": {
       "field": "WordClass",
       "name": "Interjection",
-      "name_en": "Interjection",
-      "name_nl": "Interjectie",
-      "name_zh_hans": "Interjection",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -5309,9 +4085,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "From location",
-      "name_en": "From location",
-      "name_nl": "Van locatie af",
-      "name_zh_hans": "From location",
       "machine_value": 100,
       "field_color": "ffffff"
     }
@@ -5322,9 +4095,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Note",
-      "name_en": "Note",
-      "name_nl": "Notitie",
-      "name_zh_hans": "Note",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -5335,9 +4105,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Private Note",
-      "name_en": "Private Note",
-      "name_nl": "Privénotitie",
-      "name_zh_hans": "Private Note",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -5348,9 +4115,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Phonology",
-      "name_en": "Phonology",
-      "name_nl": "Fonologie",
-      "name_zh_hans": "Phonology",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -5361,9 +4125,6 @@
     "fields": {
       "field": "NoteType",
       "name": "To Do",
-      "name_en": "To Do",
-      "name_nl": "To Do",
-      "name_zh_hans": "To Do",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -5374,9 +4135,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Suggestion for other gloss",
-      "name_en": "Suggestion for other gloss",
-      "name_nl": "Suggestie voor andere gloss",
-      "name_zh_hans": "Suggestion for other gloss",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -5387,9 +4145,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Discuss between annotators",
-      "name_en": "Discuss between annotators",
-      "name_nl": "Discussie annotatoren",
-      "name_zh_hans": "Discuss between annotators",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -5400,9 +4155,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Etymology",
-      "name_en": "Etymology",
-      "name_nl": "Etymologie",
-      "name_zh_hans": "Etymology",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -5413,9 +4165,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Base > back",
-      "name_en": "Base > back",
-      "name_nl": "Pols > rug",
-      "name_zh_hans": "",
       "machine_value": 50,
       "field_color": "ffffff"
     }
@@ -5426,9 +4175,6 @@
     "fields": {
       "field": "MovementShape",
       "name": "Cross",
-      "name_en": "Cross",
-      "name_nl": "Kruis",
-      "name_zh_hans": "",
       "machine_value": 46,
       "field_color": "ffffff"
     }
@@ -5439,9 +4185,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Final > continuous",
-      "name_en": "Final > continuous",
-      "name_nl": "Eind > continu",
-      "name_zh_hans": "",
       "machine_value": 14,
       "field_color": "ffffff"
     }
@@ -5452,9 +4195,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: palm-up",
-      "name_en": "AO: palm-up",
-      "name_nl": "AO: palm-omhoog",
-      "name_zh_hans": "",
       "machine_value": 30,
       "field_color": "ffffff"
     }
@@ -5465,9 +4205,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: palm-down",
-      "name_en": "AO: palm-down",
-      "name_nl": "AO: palm-omlaag",
-      "name_zh_hans": "",
       "machine_value": 31,
       "field_color": "ffffff"
     }
@@ -5478,9 +4215,6 @@
     "fields": {
       "field": "Location",
       "name": "R-loc",
-      "name_en": "R-loc",
-      "name_nl": "R-loc",
-      "name_zh_hans": "",
       "machine_value": 125,
       "field_color": "ffe1cd"
     }
@@ -5491,9 +4225,6 @@
     "fields": {
       "field": "Location",
       "name": "R-loc > R-loc",
-      "name_en": "R-loc > R-loc",
-      "name_nl": "R-loc > R-loc",
-      "name_zh_hans": "",
       "machine_value": 126,
       "field_color": "ffe1cd"
     }
@@ -5504,9 +4235,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Contralateral > ipsilateral",
-      "name_en": "Contralateral > ipsilateral",
-      "name_nl": "Contralateraal > ipsilateraal",
-      "name_zh_hans": "",
       "machine_value": 102,
       "field_color": "ffffff"
     }
@@ -5517,9 +4245,6 @@
     "fields": {
       "field": "Location",
       "name": "Head > chest > shoulder",
-      "name_en": "Head > chest > shoulder",
-      "name_nl": "Hoofd > borst > schouder",
-      "name_zh_hans": "",
       "machine_value": 127,
       "field_color": "ffffff"
     }
@@ -5530,9 +4255,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Ulnar > radial",
-      "name_en": "Ulnar > radial",
-      "name_nl": "Pink > duim",
-      "name_zh_hans": "",
       "machine_value": 51,
       "field_color": "ffffff"
     }
@@ -5543,9 +4265,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: palm-inwards",
-      "name_en": "AO: palm-inwards",
-      "name_nl": "AO: palm-naar-binnen",
-      "name_zh_hans": "",
       "machine_value": 32,
       "field_color": "ffffff"
     }
@@ -5556,9 +4275,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: palm-outwards",
-      "name_en": "AO: palm-outwards",
-      "name_nl": "AO: palm-naar-buiten",
-      "name_zh_hans": "",
       "machine_value": 33,
       "field_color": "ffffff"
     }
@@ -5569,9 +4285,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: palm-up/down",
-      "name_en": "AO: palm-up/down",
-      "name_nl": "AO: palm-omhoog/omlaag",
-      "name_zh_hans": "",
       "machine_value": 34,
       "field_color": "ffffff"
     }
@@ -5582,9 +4295,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: fingers-up",
-      "name_en": "AO: fingers-up",
-      "name_nl": "AO: vingers-omhoog",
-      "name_zh_hans": "",
       "machine_value": 35,
       "field_color": "ffffff"
     }
@@ -5595,9 +4305,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: fingers-down",
-      "name_en": "AO: fingers-down",
-      "name_nl": "AO: vingers-omlaag",
-      "name_zh_hans": "",
       "machine_value": 36,
       "field_color": "ffffff"
     }
@@ -5608,9 +4315,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: fingers-contra",
-      "name_en": "AO: fingers-contra",
-      "name_nl": "AO: vingers-contra",
-      "name_zh_hans": "",
       "machine_value": 37,
       "field_color": "ffffff"
     }
@@ -5621,9 +4325,6 @@
     "fields": {
       "field": "Handshape",
       "name": "B_bent > B",
-      "name_en": "B_bent > B",
-      "name_nl": "B_hoek > B",
-      "name_zh_hans": "",
       "machine_value": 170,
       "field_color": "d9d9d9"
     }
@@ -5634,9 +4335,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Back > palm",
-      "name_en": "Back > palm",
-      "name_nl": "Rug > palm",
-      "name_zh_hans": "",
       "machine_value": 38,
       "field_color": "ffffff"
     }
@@ -5647,9 +4345,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "extended",
-      "name_en": "extended",
-      "name_nl": "extended",
-      "name_zh_hans": "extended",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -5660,9 +4355,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "open",
-      "name_en": "open",
-      "name_nl": "open",
-      "name_zh_hans": "open",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -5673,9 +4365,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "curved",
-      "name_en": "curved",
-      "name_nl": "curved",
-      "name_zh_hans": "curved",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -5686,9 +4375,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "bent",
-      "name_en": "bent",
-      "name_nl": "bent",
-      "name_zh_hans": "bent",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -5699,9 +4385,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "flat",
-      "name_en": "flat",
-      "name_nl": "flat",
-      "name_zh_hans": "flat",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -5712,9 +4395,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "flat-open",
-      "name_en": "flat-open",
-      "name_nl": "flat-open",
-      "name_zh_hans": "flat-open",
       "machine_value": 10,
       "field_color": "ffffff"
     }
@@ -5725,9 +4405,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "flat-closed",
-      "name_en": "flat-closed",
-      "name_nl": "flat-closed",
-      "name_zh_hans": "flat-closed",
       "machine_value": 11,
       "field_color": "ffffff"
     }
@@ -5738,9 +4415,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "closed",
-      "name_en": "closed",
-      "name_nl": "closed",
-      "name_zh_hans": "closed",
       "machine_value": 12,
       "field_color": "ffffff"
     }
@@ -5751,9 +4425,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "crossed",
-      "name_en": "crossed",
-      "name_nl": "crossed",
-      "name_zh_hans": "crossed",
       "machine_value": 13,
       "field_color": "ffffff"
     }
@@ -5764,9 +4435,6 @@
     "fields": {
       "field": "Spreading",
       "name": "Unspread",
-      "name_en": "Unspread",
-      "name_nl": "Unspread",
-      "name_zh_hans": "Unspread",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -5777,9 +4445,6 @@
     "fields": {
       "field": "Spreading",
       "name": "Spread",
-      "name_en": "Spread",
-      "name_nl": "Spread",
-      "name_zh_hans": "Spread",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -5790,9 +4455,6 @@
     "fields": {
       "field": "Spreading",
       "name": "Stacked",
-      "name_en": "Stacked",
-      "name_nl": "Stacked",
-      "name_zh_hans": "Stacked",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -5803,9 +4465,6 @@
     "fields": {
       "field": "Spreading",
       "name": "Crossed",
-      "name_en": "Crossed",
-      "name_nl": "Crossed",
-      "name_zh_hans": "Crossed",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -5816,9 +4475,6 @@
     "fields": {
       "field": "Quantity",
       "name": "one",
-      "name_en": "one",
-      "name_nl": "one",
-      "name_zh_hans": "one",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -5829,9 +4485,6 @@
     "fields": {
       "field": "Quantity",
       "name": "two",
-      "name_en": "two",
-      "name_nl": "two",
-      "name_zh_hans": "two",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -5842,9 +4495,6 @@
     "fields": {
       "field": "Quantity",
       "name": "three",
-      "name_en": "three",
-      "name_nl": "three",
-      "name_zh_hans": "three",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -5855,9 +4505,6 @@
     "fields": {
       "field": "Quantity",
       "name": "four",
-      "name_en": "four",
-      "name_nl": "four",
-      "name_zh_hans": "four",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -5868,9 +4515,6 @@
     "fields": {
       "field": "Quantity",
       "name": "all",
-      "name_en": "all",
-      "name_nl": "all",
-      "name_zh_hans": "all",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -5881,9 +4525,6 @@
     "fields": {
       "field": "Thumb",
       "name": "Extended",
-      "name_en": "Extended",
-      "name_nl": "Extended",
-      "name_zh_hans": "Extended",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -5894,9 +4535,6 @@
     "fields": {
       "field": "Thumb",
       "name": "Opposed",
-      "name_en": "Opposed",
-      "name_nl": "Opposed",
-      "name_zh_hans": "Opposed",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -5907,9 +4545,6 @@
     "fields": {
       "field": "Aperture",
       "name": "Open",
-      "name_en": "Open",
-      "name_nl": "Open",
-      "name_zh_hans": "Open",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -5920,9 +4555,6 @@
     "fields": {
       "field": "Aperture",
       "name": "Closed",
-      "name_en": "Closed",
-      "name_nl": "Closed",
-      "name_zh_hans": "Closed",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -5933,9 +4565,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TIMRP",
-      "name_en": "TIMRP",
-      "name_nl": "TIMRP",
-      "name_zh_hans": "TIMRP",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -5946,9 +4575,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TIMR",
-      "name_en": "TIMR",
-      "name_nl": "TIMR",
-      "name_zh_hans": "TIMR",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -5959,9 +4585,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TIMP",
-      "name_en": "TIMP",
-      "name_nl": "TIMP",
-      "name_zh_hans": "TIMP",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -5972,9 +4595,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TIRP",
-      "name_en": "TIRP",
-      "name_nl": "TIRP",
-      "name_zh_hans": "TIRP",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -5985,9 +4605,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TMRP",
-      "name_en": "TMRP",
-      "name_nl": "TMRP",
-      "name_zh_hans": "TMRP",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -5998,9 +4615,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TIM",
-      "name_en": "TIM",
-      "name_nl": "TIM",
-      "name_zh_hans": "TIM",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -6011,9 +4625,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TIR",
-      "name_en": "TIR",
-      "name_nl": "TIR",
-      "name_zh_hans": "TIR",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -6024,9 +4635,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TIP",
-      "name_en": "TIP",
-      "name_nl": "TIP",
-      "name_zh_hans": "TIP",
       "machine_value": 10,
       "field_color": "ffffff"
     }
@@ -6037,9 +4645,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TMR",
-      "name_en": "TMR",
-      "name_nl": "TMR",
-      "name_zh_hans": "TMR",
       "machine_value": 11,
       "field_color": "ffffff"
     }
@@ -6050,9 +4655,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TMP",
-      "name_en": "TMP",
-      "name_nl": "TMP",
-      "name_zh_hans": "TMP",
       "machine_value": 12,
       "field_color": "ffffff"
     }
@@ -6063,9 +4665,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TRP",
-      "name_en": "TRP",
-      "name_nl": "TRP",
-      "name_zh_hans": "TRP",
       "machine_value": 13,
       "field_color": "ffffff"
     }
@@ -6076,9 +4675,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TI",
-      "name_en": "TI",
-      "name_nl": "TI",
-      "name_zh_hans": "TI",
       "machine_value": 14,
       "field_color": "ffffff"
     }
@@ -6089,9 +4685,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TM",
-      "name_en": "TM",
-      "name_nl": "TM",
-      "name_zh_hans": "TM",
       "machine_value": 15,
       "field_color": "ffffff"
     }
@@ -6102,9 +4695,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TR",
-      "name_en": "TR",
-      "name_nl": "TR",
-      "name_zh_hans": "TR",
       "machine_value": 16,
       "field_color": "ffffff"
     }
@@ -6115,9 +4705,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "TP",
-      "name_en": "TP",
-      "name_nl": "TP",
-      "name_zh_hans": "TP",
       "machine_value": 17,
       "field_color": "ffffff"
     }
@@ -6128,9 +4715,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "T",
-      "name_en": "T",
-      "name_nl": "T",
-      "name_zh_hans": "T",
       "machine_value": 18,
       "field_color": "ffffff"
     }
@@ -6141,9 +4725,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "IMRP",
-      "name_en": "IMRP",
-      "name_nl": "IMRP",
-      "name_zh_hans": "IMRP",
       "machine_value": 19,
       "field_color": "ffffff"
     }
@@ -6154,9 +4735,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "IMR",
-      "name_en": "IMR",
-      "name_nl": "IMR",
-      "name_zh_hans": "IMR",
       "machine_value": 20,
       "field_color": "ffffff"
     }
@@ -6167,9 +4745,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "IMP",
-      "name_en": "IMP",
-      "name_nl": "IMP",
-      "name_zh_hans": "IMP",
       "machine_value": 21,
       "field_color": "ffffff"
     }
@@ -6180,9 +4755,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "IRP",
-      "name_en": "IRP",
-      "name_nl": "IRP",
-      "name_zh_hans": "IRP",
       "machine_value": 22,
       "field_color": "ffffff"
     }
@@ -6193,9 +4765,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "IR",
-      "name_en": "IR",
-      "name_nl": "IR",
-      "name_zh_hans": "IR",
       "machine_value": 23,
       "field_color": "ffffff"
     }
@@ -6206,9 +4775,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "IM",
-      "name_en": "IM",
-      "name_nl": "IM",
-      "name_zh_hans": "IM",
       "machine_value": 24,
       "field_color": "ffffff"
     }
@@ -6219,9 +4785,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "IP",
-      "name_en": "IP",
-      "name_nl": "IP",
-      "name_zh_hans": "IP",
       "machine_value": 25,
       "field_color": "ffffff"
     }
@@ -6232,9 +4795,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "I",
-      "name_en": "I",
-      "name_nl": "I",
-      "name_zh_hans": "I",
       "machine_value": 26,
       "field_color": "ffffff"
     }
@@ -6245,9 +4805,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "MRP",
-      "name_en": "MRP",
-      "name_nl": "MRP",
-      "name_zh_hans": "MRP",
       "machine_value": 27,
       "field_color": "ffffff"
     }
@@ -6258,9 +4815,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "MR",
-      "name_en": "MR",
-      "name_nl": "MR",
-      "name_zh_hans": "MR",
       "machine_value": 28,
       "field_color": "ffffff"
     }
@@ -6271,9 +4825,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "MP",
-      "name_en": "MP",
-      "name_nl": "MP",
-      "name_zh_hans": "MP",
       "machine_value": 29,
       "field_color": "ffffff"
     }
@@ -6284,9 +4835,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "M",
-      "name_en": "M",
-      "name_nl": "M",
-      "name_zh_hans": "M",
       "machine_value": 30,
       "field_color": "ffffff"
     }
@@ -6297,9 +4845,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "RP",
-      "name_en": "RP",
-      "name_nl": "RP",
-      "name_zh_hans": "RP",
       "machine_value": 31,
       "field_color": "ffffff"
     }
@@ -6310,9 +4855,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "R",
-      "name_en": "R",
-      "name_nl": "R",
-      "name_zh_hans": "R",
       "machine_value": 32,
       "field_color": "ffffff"
     }
@@ -6323,9 +4865,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "P",
-      "name_en": "P",
-      "name_nl": "P",
-      "name_zh_hans": "P",
       "machine_value": 33,
       "field_color": "ffffff"
     }
@@ -6336,9 +4875,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "",
-      "name_en": "",
-      "name_nl": "",
-      "name_zh_hans": "",
       "machine_value": 34,
       "field_color": "ffffff"
     }
@@ -6349,9 +4885,6 @@
     "fields": {
       "field": "SemField",
       "name": "Geography",
-      "name_en": "Geography",
-      "name_nl": "Geografie",
-      "name_zh_hans": "Geography",
       "machine_value": 51,
       "field_color": "ffffff"
     }
@@ -6362,9 +4895,6 @@
     "fields": {
       "field": "Handedness",
       "name": "2t",
-      "name_en": "2t",
-      "name_nl": "2t",
-      "name_zh_hans": "2t",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -6375,9 +4905,6 @@
     "fields": {
       "field": "Handshape",
       "name": "E",
-      "name_en": "E",
-      "name_nl": "E",
-      "name_zh_hans": "",
       "machine_value": 172,
       "field_color": "ffffff"
     }
@@ -6388,9 +4915,6 @@
     "fields": {
       "field": "Handshape",
       "name": "B > A",
-      "name_en": "B > A",
-      "name_nl": "B > A",
-      "name_zh_hans": "",
       "machine_value": 173,
       "field_color": "ffffff"
     }
@@ -6401,9 +4925,6 @@
     "fields": {
       "field": "Handshape",
       "name": "B > L",
-      "name_en": "B > L",
-      "name_nl": "B > L",
-      "name_zh_hans": "",
       "machine_value": 174,
       "field_color": "ffffff"
     }
@@ -6414,9 +4935,6 @@
     "fields": {
       "field": "Handshape",
       "name": "B > S",
-      "name_en": "B > S",
-      "name_nl": "b > S",
-      "name_zh_hans": "",
       "machine_value": 175,
       "field_color": "ffffff"
     }
@@ -6427,9 +4945,6 @@
     "fields": {
       "field": "Handshape",
       "name": "B > middlefinger",
-      "name_en": "B > middlefinger",
-      "name_nl": "B > middelvinger",
-      "name_zh_hans": "",
       "machine_value": 176,
       "field_color": "ffffff"
     }
@@ -6440,9 +4955,6 @@
     "fields": {
       "field": "Handshape",
       "name": "F > L",
-      "name_en": "F > L",
-      "name_nl": "F > L",
-      "name_zh_hans": "",
       "machine_value": 177,
       "field_color": "ffffff"
     }
@@ -6453,9 +4965,6 @@
     "fields": {
       "field": "Handshape",
       "name": "G",
-      "name_en": "G",
-      "name_nl": "G",
-      "name_zh_hans": "",
       "machine_value": 178,
       "field_color": "ffffff"
     }
@@ -6466,9 +4975,6 @@
     "fields": {
       "field": "Handshape",
       "name": "K",
-      "name_en": "K",
-      "name_nl": "K",
-      "name_zh_hans": "",
       "machine_value": 179,
       "field_color": "ffffff"
     }
@@ -6479,9 +4985,6 @@
     "fields": {
       "field": "Handshape",
       "name": "P",
-      "name_en": "P",
-      "name_nl": "P",
-      "name_zh_hans": "",
       "machine_value": 180,
       "field_color": "ffffff"
     }
@@ -6492,9 +4995,6 @@
     "fields": {
       "field": "Handshape",
       "name": "I > L",
-      "name_en": "I > L",
-      "name_nl": "I > L",
-      "name_zh_hans": "",
       "machine_value": 181,
       "field_color": "ffffff"
     }
@@ -6505,9 +5005,6 @@
     "fields": {
       "field": "Handshape",
       "name": "I > W",
-      "name_en": "I > W",
-      "name_nl": "I > W",
-      "name_zh_hans": "",
       "machine_value": 182,
       "field_color": "ffffff"
     }
@@ -6518,9 +5015,6 @@
     "fields": {
       "field": "Handshape",
       "name": "M > V",
-      "name_en": "M > V",
-      "name_nl": "M > V",
-      "name_zh_hans": "",
       "machine_value": 183,
       "field_color": "ffffff"
     }
@@ -6531,9 +5025,6 @@
     "fields": {
       "field": "Handshape",
       "name": "N > E",
-      "name_en": "N > E",
-      "name_nl": "N > E",
-      "name_zh_hans": "",
       "machine_value": 184,
       "field_color": "ffffff"
     }
@@ -6544,9 +5035,6 @@
     "fields": {
       "field": "Handshape",
       "name": "O > K",
-      "name_en": "O > K",
-      "name_nl": "O > K",
-      "name_zh_hans": "",
       "machine_value": 185,
       "field_color": "ffffff"
     }
@@ -6557,9 +5045,6 @@
     "fields": {
       "field": "Handshape",
       "name": "S > I",
-      "name_en": "S > I",
-      "name_nl": "S > I",
-      "name_zh_hans": "",
       "machine_value": 186,
       "field_color": "ffffff"
     }
@@ -6570,9 +5055,6 @@
     "fields": {
       "field": "Handshape",
       "name": "T > L",
-      "name_en": "T > L",
-      "name_nl": "T > L",
-      "name_zh_hans": "",
       "machine_value": 187,
       "field_color": "ffffff"
     }
@@ -6583,9 +5065,6 @@
     "fields": {
       "field": "Handshape",
       "name": "T > V",
-      "name_en": "T > V",
-      "name_nl": "T > V",
-      "name_zh_hans": "",
       "machine_value": 188,
       "field_color": "ffffff"
     }
@@ -6596,9 +5075,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Y > R",
-      "name_en": "Y > R",
-      "name_nl": "Y > R",
-      "name_zh_hans": "",
       "machine_value": 189,
       "field_color": "ffffff"
     }
@@ -6609,9 +5085,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Variable",
-      "name_en": "Variable",
-      "name_nl": "Variabel",
-      "name_zh_hans": "",
       "machine_value": 190,
       "field_color": "ffe1cd"
     }
@@ -6622,9 +5095,6 @@
     "fields": {
       "field": "Handshape",
       "name": "3 > O",
-      "name_en": "3 > O",
-      "name_nl": "3 > O",
-      "name_zh_hans": "",
       "machine_value": 191,
       "field_color": "ffffff"
     }
@@ -6635,9 +5105,6 @@
     "fields": {
       "field": "Handshape",
       "name": "4 > O",
-      "name_en": "4 > O",
-      "name_nl": "4 > O",
-      "name_zh_hans": "",
       "machine_value": 192,
       "field_color": "ffffff"
     }
@@ -6648,9 +5115,6 @@
     "fields": {
       "field": "Handshape",
       "name": "A > T",
-      "name_en": "A > T",
-      "name_nl": "A > T",
-      "name_zh_hans": "A > T",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -6661,9 +5125,6 @@
     "fields": {
       "field": "Handshape",
       "name": "L > O",
-      "name_en": "L > O",
-      "name_nl": "L > O",
-      "name_zh_hans": "",
       "machine_value": 193,
       "field_color": "ffffff"
     }
@@ -6674,9 +5135,6 @@
     "fields": {
       "field": "Handshape",
       "name": "W > Beak2",
-      "name_en": "W > Beak2",
-      "name_nl": "W > Beak2",
-      "name_zh_hans": "",
       "machine_value": 194,
       "field_color": "ffffff"
     }
@@ -6687,9 +5145,6 @@
     "fields": {
       "field": "Handshape",
       "name": "A > O",
-      "name_en": "A > O",
-      "name_nl": "A > O",
-      "name_zh_hans": "",
       "machine_value": 195,
       "field_color": "ffffff"
     }
@@ -6700,9 +5155,6 @@
     "fields": {
       "field": "Handshape",
       "name": "I > N",
-      "name_en": "I > N",
-      "name_nl": "I > N",
-      "name_zh_hans": "",
       "machine_value": 196,
       "field_color": "ffffff"
     }
@@ -6713,9 +5165,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Palm + radial/ulnar",
-      "name_en": "Palm + radial/ulnar",
-      "name_nl": "Palm + duim/pink",
-      "name_zh_hans": "",
       "machine_value": 52,
       "field_color": "ffffff"
     }
@@ -6726,9 +5175,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Next-to",
-      "name_en": "Next-to",
-      "name_nl": "Naast",
-      "name_zh_hans": "",
       "machine_value": 49,
       "field_color": "ffffff"
     }
@@ -6739,9 +5185,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "Around",
-      "name_en": "Around",
-      "name_nl": "Rondom",
-      "name_zh_hans": "",
       "machine_value": 50,
       "field_color": "ffffff"
     }
@@ -6752,9 +5195,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Flower",
-      "name_en": "Flower",
-      "name_nl": "Bloem",
-      "name_zh_hans": "Flower",
       "machine_value": 197,
       "field_color": "ffffff"
     }
@@ -6765,9 +5205,6 @@
     "fields": {
       "field": "Handshape",
       "name": "ILY",
-      "name_en": "ILY",
-      "name_nl": "ILY",
-      "name_zh_hans": "ILY",
       "machine_value": 198,
       "field_color": "ffffff"
     }
@@ -6778,9 +5215,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Flower > Beak_open_spread",
-      "name_en": "Flower > Beak_open_spread",
-      "name_nl": "Bloem > Snavel_open_spreid",
-      "name_zh_hans": "Flower > Beak_open_spread",
       "machine_value": 199,
       "field_color": "ffffff"
     }
@@ -6791,9 +5225,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Flexion > extension",
-      "name_en": "Flexion > extension",
-      "name_nl": "Flectie > extensie",
-      "name_zh_hans": "Flexion > extension",
       "machine_value": 15,
       "field_color": "ffffff"
     }
@@ -6804,9 +5235,6 @@
     "fields": {
       "field": "Location",
       "name": "Armpit",
-      "name_en": "Armpit",
-      "name_nl": "Oksel",
-      "name_zh_hans": "Armpit",
       "machine_value": 128,
       "field_color": "ffffff"
     }
@@ -6817,9 +5245,6 @@
     "fields": {
       "field": "Location",
       "name": "Eyebrow",
-      "name_en": "Eyebrow",
-      "name_nl": "Wenkbrauw",
-      "name_zh_hans": "Eyebrow",
       "machine_value": 129,
       "field_color": "ffffff"
     }
@@ -6830,9 +5255,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Supination > pronation",
-      "name_en": "Supination > pronation",
-      "name_nl": "Supinatie > pronatie",
-      "name_zh_hans": "Supination > pronation",
       "machine_value": 16,
       "field_color": "ffffff"
     }
@@ -6843,9 +5265,6 @@
     "fields": {
       "field": "Location",
       "name": "Bridge of the nose",
-      "name_en": "Bridge of the nose",
-      "name_nl": "Neusbrug",
-      "name_zh_hans": "Bridge of the nose",
       "machine_value": 130,
       "field_color": "ffffff"
     }
@@ -6856,9 +5275,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Backwards > forwards",
-      "name_en": "Backwards > forwards",
-      "name_nl": "Naar achteren > naar voren",
-      "name_zh_hans": "Backwards > forwards",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -6869,9 +5285,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Palm > ulnar",
-      "name_en": "Palm > ulnar",
-      "name_nl": "Palm > pink",
-      "name_zh_hans": "Palm > ulnar",
       "machine_value": 39,
       "field_color": "ffffff"
     }
@@ -6882,9 +5295,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: palm-forwards",
-      "name_en": "AO: palm-forwards",
-      "name_nl": "AO: palm-naar-voren",
-      "name_zh_hans": "",
       "machine_value": 40,
       "field_color": "ffffff"
     }
@@ -6895,9 +5305,6 @@
     "fields": {
       "field": "SemField",
       "name": "Emotion",
-      "name_en": "Emotion",
-      "name_nl": "Emotie",
-      "name_zh_hans": "Emotion",
       "machine_value": 52,
       "field_color": "ffffff"
     }
@@ -6908,9 +5315,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: palm-backwards",
-      "name_en": "AO: palm-backwards",
-      "name_nl": "AO: palm-naar-achteren",
-      "name_zh_hans": "",
       "machine_value": 41,
       "field_color": "ffffff"
     }
@@ -6921,9 +5325,6 @@
     "fields": {
       "field": "Location",
       "name": "Belly > chest",
-      "name_en": "Belly > chest",
-      "name_nl": "Buik > borst",
-      "name_zh_hans": "",
       "machine_value": 132,
       "field_color": "ffffff"
     }
@@ -6934,9 +5335,6 @@
     "fields": {
       "field": "Handshape",
       "name": "3_curved",
-      "name_en": "3_curved",
-      "name_nl": "3_krom",
-      "name_zh_hans": "",
       "machine_value": 200,
       "field_color": "ffffff"
     }
@@ -6947,9 +5345,6 @@
     "fields": {
       "field": "Handshape",
       "name": "4 > 5",
-      "name_en": "4 > 5",
-      "name_nl": "4 > 5",
-      "name_zh_hans": "",
       "machine_value": 201,
       "field_color": "ffffff"
     }
@@ -6960,9 +5355,6 @@
     "fields": {
       "field": "Location",
       "name": "Chin contra",
-      "name_en": "Chin contra",
-      "name_nl": "Kin contra",
-      "name_zh_hans": "",
       "machine_value": 133,
       "field_color": "ffffff"
     }
@@ -6973,9 +5365,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Finger tips/ulnar",
-      "name_en": "Finger tips/ulnar",
-      "name_nl": "Vingertoppen/pink",
-      "name_zh_hans": "",
       "machine_value": 53,
       "field_color": "ffffff"
     }
@@ -6986,9 +5375,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Continuous > continuous",
-      "name_en": "Continuous > continuous",
-      "name_nl": "Continu > continu",
-      "name_zh_hans": "",
       "machine_value": 15,
       "field_color": "ffffff"
     }
@@ -6999,9 +5385,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Closing + rubbing",
-      "name_en": "Closing + rubbing",
-      "name_nl": "Sluiten + wrijven",
-      "name_zh_hans": "",
       "machine_value": 48,
       "field_color": "ffffff"
     }
@@ -7012,9 +5395,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Opening + spreading",
-      "name_en": "Opening + spreading",
-      "name_nl": "Openen + spreiden",
-      "name_zh_hans": "",
       "machine_value": 49,
       "field_color": "ffffff"
     }
@@ -7025,9 +5405,6 @@
     "fields": {
       "field": "Location",
       "name": "Forehead > shoulder",
-      "name_en": "Forehead > shoulder",
-      "name_nl": "Voorhoofd > schouder",
-      "name_zh_hans": "",
       "machine_value": 134,
       "field_color": "ffffff"
     }
@@ -7038,9 +5415,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "Elicitation image",
-      "name_en": "Elicitation image",
-      "name_nl": "Elicitatie-plaatje",
-      "name_zh_hans": "Elicitation image",
       "machine_value": 11,
       "field_color": "ffffff"
     }
@@ -7051,9 +5425,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Definition",
-      "name_en": "Definition",
-      "name_nl": "Definitie",
-      "name_zh_hans": "定义",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -7064,9 +5435,6 @@
     "fields": {
       "field": "WordClass",
       "name": "Adverb",
-      "name_en": "Adverb",
-      "name_nl": "Bijwoord",
-      "name_zh_hans": "Adverb",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -7077,9 +5445,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Iconicity rating (1-7)",
-      "name_en": "Iconicity rating (1-7)",
-      "name_nl": "Iconiciteitsrating (1-7)",
-      "name_zh_hans": "Iconicity rating (1-7)",
       "machine_value": 10,
       "field_color": "ffffff"
     }
@@ -7090,9 +5455,6 @@
     "fields": {
       "field": "Handshape",
       "name": "MRP",
-      "name_en": "MRP",
-      "name_nl": "MRP",
-      "name_zh_hans": "MRP",
       "machine_value": 202,
       "field_color": "ffffff"
     }
@@ -7103,9 +5465,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Source",
-      "name_en": "Source",
-      "name_nl": "Bron",
-      "name_zh_hans": "Source",
       "machine_value": 11,
       "field_color": "ffffff"
     }
@@ -7116,9 +5475,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "lax",
-      "name_en": "lax",
-      "name_nl": "ontspannen",
-      "name_zh_hans": "lax",
       "machine_value": 14,
       "field_color": "ffffff"
     }
@@ -7129,9 +5485,6 @@
     "fields": {
       "field": "Handshape",
       "name": "5_lax",
-      "name_en": "5_lax",
-      "name_nl": "5_ontspannen",
-      "name_zh_hans": "5_lax",
       "machine_value": 203,
       "field_color": "ffffff"
     }
@@ -7142,9 +5495,6 @@
     "fields": {
       "field": "Handshape",
       "name": "S > L",
-      "name_en": "S > L",
-      "name_nl": "S > L",
-      "name_zh_hans": "S > L",
       "machine_value": 204,
       "field_color": "ffffff"
     }
@@ -7155,9 +5505,6 @@
     "fields": {
       "field": "Handshape",
       "name": "5_claw",
-      "name_en": "5_claw",
-      "name_nl": "5_klauw",
-      "name_zh_hans": "5_claw",
       "machine_value": 205,
       "field_color": "ffffff"
     }
@@ -7168,9 +5515,6 @@
     "fields": {
       "field": "Location",
       "name": "Breasts",
-      "name_en": "Breasts",
-      "name_nl": "Borsten",
-      "name_zh_hans": "乳房",
       "machine_value": 135,
       "field_color": "ffffff"
     }
@@ -7181,9 +5525,6 @@
     "fields": {
       "field": "Location",
       "name": "Breasts_ipsi",
-      "name_en": "Breasts_ipsi",
-      "name_nl": "Borsten_ipsi",
-      "name_zh_hans": "Breasts_ipsi",
       "machine_value": 136,
       "field_color": "ffffff"
     }
@@ -7194,9 +5535,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "AO: palm-down > palm-up",
-      "name_en": "AO: palm-down > palm-up",
-      "name_nl": "AO: palm-omlaag > palm-omhoog",
-      "name_zh_hans": "AO: palm-down > palm-up",
       "machine_value": 42,
       "field_color": "ffffff"
     }
@@ -7207,9 +5545,6 @@
     "fields": {
       "field": "Location",
       "name": "Mouth ipsi",
-      "name_en": "Mouth ipsi",
-      "name_nl": "Mond ipsi",
-      "name_zh_hans": "Mouth ipsi",
       "machine_value": 137,
       "field_color": "ffffff"
     }
@@ -7220,9 +5555,6 @@
     "fields": {
       "field": "Location",
       "name": "Cheek > cheek",
-      "name_en": "Cheek > cheek",
-      "name_nl": "Wang > wang",
-      "name_zh_hans": "脸颊 > 脸颊",
       "machine_value": 138,
       "field_color": "ffffff"
     }
@@ -7233,9 +5565,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: thenar",
-      "name_en": "Weak hand: thenar",
-      "name_nl": "Zwakke hand: thenar",
-      "name_zh_hans": "Weak hand: thenar",
       "machine_value": 139,
       "field_color": "ffffff"
     }
@@ -7246,9 +5575,6 @@
     "fields": {
       "field": "Location",
       "name": "Earlobe",
-      "name_en": "Earlobe",
-      "name_nl": "Oorlel",
-      "name_zh_hans": "耳垂",
       "machine_value": 140,
       "field_color": "ffffff"
     }
@@ -7259,9 +5585,6 @@
     "fields": {
       "field": "Location",
       "name": "West",
-      "name_en": "West",
-      "name_nl": "Westen",
-      "name_zh_hans": "西",
       "machine_value": 141,
       "field_color": "ffffff"
     }
@@ -7272,9 +5595,6 @@
     "fields": {
       "field": "Location",
       "name": "East",
-      "name_en": "East",
-      "name_nl": "Oosten",
-      "name_zh_hans": "东",
       "machine_value": 142,
       "field_color": "ffffff"
     }
@@ -7285,9 +5605,6 @@
     "fields": {
       "field": "Location",
       "name": "Between legs",
-      "name_en": "Between legs",
-      "name_nl": "Tussen benen",
-      "name_zh_hans": "两腿之间",
       "machine_value": 143,
       "field_color": "ffffff"
     }
@@ -7298,9 +5615,6 @@
     "fields": {
       "field": "Location",
       "name": "Crotch",
-      "name_en": "Crotch",
-      "name_nl": "Kruis",
-      "name_zh_hans": "Crotch",
       "machine_value": 144,
       "field_color": "ffffff"
     }
@@ -7311,9 +5625,6 @@
     "fields": {
       "field": "Location",
       "name": "Flank/head",
-      "name_en": "Flank/head",
-      "name_nl": "Zij/hoofd",
-      "name_zh_hans": "Flank/head",
       "machine_value": 145,
       "field_color": "ffffff"
     }
@@ -7324,9 +5635,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Baby_C_extended",
-      "name_en": "Baby_C_extended",
-      "name_nl": "Baby_C_gestrekt",
-      "name_zh_hans": "Baby_C_extended",
       "machine_value": 206,
       "field_color": "ffffff"
     }
@@ -7337,9 +5645,6 @@
     "fields": {
       "field": "Location",
       "name": "Teeth",
-      "name_en": "Teeth",
-      "name_nl": "Tanden",
-      "name_zh_hans": "牙",
       "machine_value": 146,
       "field_color": "ffffff"
     }
@@ -7350,9 +5655,6 @@
     "fields": {
       "field": "Location",
       "name": "Between collarbones",
-      "name_en": "Between collarbones",
-      "name_nl": "Tussen sleutelbenen",
-      "name_zh_hans": "Between collarbones",
       "machine_value": 147,
       "field_color": "ffffff"
     }
@@ -7363,9 +5665,6 @@
     "fields": {
       "field": "Location",
       "name": "Between fingers",
-      "name_en": "Between fingers",
-      "name_nl": "Tussen vingers",
-      "name_zh_hans": "手指之间",
       "machine_value": 148,
       "field_color": "ffffff"
     }
@@ -7376,9 +5675,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Unbending",
-      "name_en": "Unbending",
-      "name_nl": "Strekken (MCP)",
-      "name_zh_hans": "Unbending",
       "machine_value": 50,
       "field_color": "ffffff"
     }
@@ -7389,9 +5685,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Downwards",
-      "name_en": "Downwards",
-      "name_nl": "Downwards",
-      "name_zh_hans": "Downwards",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -7402,9 +5695,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Towards each other",
-      "name_en": "Towards each other",
-      "name_nl": "Towards each other",
-      "name_zh_hans": "Towards each other",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -7415,9 +5705,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Backwards",
-      "name_en": "Backwards",
-      "name_nl": "Backwards",
-      "name_zh_hans": "Backwards",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -7428,9 +5715,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Upwards",
-      "name_en": "Upwards",
-      "name_nl": "Upwards",
-      "name_zh_hans": "Upwards",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -7441,9 +5725,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Inwards",
-      "name_en": "Inwards",
-      "name_nl": "Inwards",
-      "name_zh_hans": "Inwards",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -7454,9 +5735,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Forwards",
-      "name_en": "Forwards",
-      "name_nl": "Forwards",
-      "name_zh_hans": "Forwards",
       "machine_value": 7,
       "field_color": "ffffff"
     }
@@ -7467,9 +5745,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Backwards > forwards",
-      "name_en": "Backwards > forwards",
-      "name_nl": "Backwards > forwards",
-      "name_zh_hans": "Backwards > forwards",
       "machine_value": 8,
       "field_color": "ffffff"
     }
@@ -7480,9 +5755,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Inwards, forwards",
-      "name_en": "Inwards, forwards",
-      "name_nl": "Inwards, forwards",
-      "name_zh_hans": "Inwards, forwards",
       "machine_value": 9,
       "field_color": "ffffff"
     }
@@ -7493,9 +5765,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Forwards, sidewards",
-      "name_en": "Forwards, sidewards",
-      "name_nl": "Forwards, sidewards",
-      "name_zh_hans": "Forwards, sidewards",
       "machine_value": 10,
       "field_color": "ffffff"
     }
@@ -7506,9 +5775,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Downwards, sidewards",
-      "name_en": "Downwards, sidewards",
-      "name_nl": "Downwards, sidewards",
-      "name_zh_hans": "Downwards, sidewards",
       "machine_value": 11,
       "field_color": "ffffff"
     }
@@ -7519,9 +5785,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Variable",
-      "name_en": "Variable",
-      "name_nl": "Variable",
-      "name_zh_hans": "Variable",
       "machine_value": 12,
       "field_color": "ffffff"
     }
@@ -7532,9 +5795,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Outwards",
-      "name_en": "Outwards",
-      "name_nl": "Outwards",
-      "name_zh_hans": "Outwards",
       "machine_value": 13,
       "field_color": "ffffff"
     }
@@ -7545,9 +5805,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Backs towards each other",
-      "name_en": "Backs towards each other",
-      "name_nl": "Backs towards each other",
-      "name_zh_hans": "Backs towards each other",
       "machine_value": 14,
       "field_color": "ffffff"
     }
@@ -7558,9 +5815,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Inwards > backwards",
-      "name_en": "Inwards > backwards",
-      "name_nl": "Inwards > backwards",
-      "name_zh_hans": "Inwards > backwards",
       "machine_value": 15,
       "field_color": "ffffff"
     }
@@ -7571,9 +5825,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Sidewards",
-      "name_en": "Sidewards",
-      "name_nl": "Sidewards",
-      "name_zh_hans": "Sidewards",
       "machine_value": 16,
       "field_color": "ffffff"
     }
@@ -7584,9 +5835,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "Forwards, downwards",
-      "name_en": "Forwards, downwards",
-      "name_nl": "Forwards, downwards",
-      "name_zh_hans": "Forwards, downwards",
       "machine_value": 17,
       "field_color": "ffffff"
     }
@@ -7597,9 +5845,6 @@
     "fields": {
       "field": "Location",
       "name": "Bottom/crotch",
-      "name_en": "Bottom/crotch",
-      "name_nl": "Billen/kruis",
-      "name_zh_hans": "Bottom/crotch",
       "machine_value": 149,
       "field_color": "ffffff"
     }
@@ -7610,9 +5855,6 @@
     "fields": {
       "field": "Location",
       "name": "Head contra",
-      "name_en": "Head contra",
-      "name_nl": "Hoofd contra",
-      "name_zh_hans": "Head contra",
       "machine_value": 150,
       "field_color": "ffffff"
     }
@@ -7623,9 +5865,6 @@
     "fields": {
       "field": "Location",
       "name": "Leg > waist",
-      "name_en": "Leg > waist",
-      "name_nl": "Benen > middel",
-      "name_zh_hans": "Leg > waist",
       "machine_value": 151,
       "field_color": "ffffff"
     }
@@ -7636,9 +5875,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Backwards + contralateral",
-      "name_en": "Backwards + contralateral",
-      "name_nl": "Naar achteren + contralateraal",
-      "name_zh_hans": "Backwards + contralateral",
       "machine_value": 103,
       "field_color": "ffffff"
     }
@@ -7649,9 +5885,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Consecutive closing",
-      "name_en": "Consecutive closing",
-      "name_nl": "Een voor een sluiten",
-      "name_zh_hans": "Consecutive closing",
       "machine_value": 51,
       "field_color": "ffffff"
     }
@@ -7662,9 +5895,6 @@
     "fields": {
       "field": "Handshape",
       "name": "5i",
-      "name_en": "5i",
-      "name_nl": "5w",
-      "name_zh_hans": "5i",
       "machine_value": 207,
       "field_color": "ffffff"
     }
@@ -7675,9 +5905,6 @@
     "fields": {
       "field": "Location",
       "name": "Mouth contra",
-      "name_en": "Mouth contra",
-      "name_nl": "Mond contra",
-      "name_zh_hans": "Mouth contra",
       "machine_value": 152,
       "field_color": "ffffff"
     }
@@ -7688,9 +5915,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Frequency rating (1-7)",
-      "name_en": "Frequency rating (1-7)",
-      "name_nl": "Frequentierating (1-7)",
-      "name_zh_hans": "Frequency rating (1-7)",
       "machine_value": 12,
       "field_color": "ffffff"
     }
@@ -7701,9 +5925,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Front > back",
-      "name_en": "Front > back",
-      "name_nl": "Voor > achter",
-      "name_zh_hans": "Front > back",
       "machine_value": 54,
       "field_color": "ffffff"
     }
@@ -7714,9 +5935,6 @@
     "fields": {
       "field": "Location",
       "name": "Shoulder > chest",
-      "name_en": "Shoulder > chest",
-      "name_nl": "Schouder > borst",
-      "name_zh_hans": "Shoulder > chest",
       "machine_value": 153,
       "field_color": "ffffff"
     }
@@ -7727,9 +5945,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back + radial",
-      "name_en": "Back + radial",
-      "name_nl": "Rug + duimkant",
-      "name_zh_hans": "Back + radial",
       "machine_value": 55,
       "field_color": "ffffff"
     }
@@ -7740,9 +5955,6 @@
     "fields": {
       "field": "OriChange",
       "name": "Extension + pronation",
-      "name_en": "Extension + pronation",
-      "name_nl": "Extensie + pronatie",
-      "name_zh_hans": "Extension + pronation",
       "machine_value": 17,
       "field_color": "ffffff"
     }
@@ -7753,9 +5965,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Back > radial",
-      "name_en": "Back > radial",
-      "name_nl": "Rug > duimkant",
-      "name_zh_hans": "Back > radial",
       "machine_value": 56,
       "field_color": "ffffff"
     }
@@ -7766,9 +5975,6 @@
     "fields": {
       "field": "Handshape",
       "name": "S > V",
-      "name_en": "S > V",
-      "name_nl": "S > V",
-      "name_zh_hans": "S > V",
       "machine_value": 208,
       "field_color": "ffffff"
     }
@@ -7779,9 +5985,6 @@
     "fields": {
       "field": "SemField",
       "name": "Month",
-      "name_en": "Month",
-      "name_nl": "Maand",
-      "name_zh_hans": "Month",
       "machine_value": 53,
       "field_color": "ffffff"
     }
@@ -7792,9 +5995,6 @@
     "fields": {
       "field": "SemField",
       "name": "Fruit",
-      "name_en": "Fruit",
-      "name_nl": "Fruit",
-      "name_zh_hans": "Fruit",
       "machine_value": 54,
       "field_color": "ffffff"
     }
@@ -7805,9 +6005,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Food",
-      "name_en": "Food",
-      "name_nl": "Eten",
-      "name_zh_hans": "Food",
       "machine_value": 21,
       "field_color": "ffffff"
     }
@@ -7818,9 +6015,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Final > none",
-      "name_en": "Final > none",
-      "name_nl": "Eind > geen",
-      "name_zh_hans": "Final > none",
       "machine_value": 16,
       "field_color": "ffffff"
     }
@@ -7831,9 +6025,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards > upwards",
-      "name_en": "Downwards > upwards",
-      "name_nl": "Omlaag > omhoog",
-      "name_zh_hans": "",
       "machine_value": 104,
       "field_color": "ffffff"
     }
@@ -7844,9 +6035,6 @@
     "fields": {
       "field": "Handshape",
       "name": "Middle finger > I",
-      "name_en": "Middle finger > I",
-      "name_nl": "Middelvinger > I",
-      "name_zh_hans": "",
       "machine_value": 209,
       "field_color": "ffffff"
     }
@@ -7857,9 +6045,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Front/palm",
-      "name_en": "Front/palm",
-      "name_nl": "Voor/palm",
-      "name_zh_hans": "",
       "machine_value": 57,
       "field_color": "ffffff"
     }
@@ -7870,9 +6055,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards + contralateral",
-      "name_en": "Downwards + contralateral",
-      "name_nl": "Omlaag + contralateraal",
-      "name_zh_hans": "Downwards + contralateral",
       "machine_value": 105,
       "field_color": "ffffff"
     }
@@ -7883,9 +6065,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: fingers",
-      "name_en": "Weak hand: fingers",
-      "name_nl": "Zwakke hand: vingers",
-      "name_zh_hans": "",
       "machine_value": 210,
       "field_color": "ffffff"
     }
@@ -7896,9 +6075,6 @@
     "fields": {
       "field": "Location",
       "name": "Weak hand: knuckles",
-      "name_en": "Weak hand: knuckles",
-      "name_nl": "Zwakke hand: knokkels",
-      "name_zh_hans": "",
       "machine_value": 211,
       "field_color": "ffffff"
     }
@@ -7909,9 +6085,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "Back > ulnar",
-      "name_en": "Back > ulnar",
-      "name_nl": "Rug > pink",
-      "name_zh_hans": "",
       "machine_value": 58,
       "field_color": "ffffff"
     }
@@ -7922,9 +6095,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Upwards > ipsilateral",
-      "name_en": "Upwards > ipsilateral",
-      "name_nl": "Omhoog > ipsilateraal",
-      "name_zh_hans": "",
       "machine_value": 106,
       "field_color": "ffffff"
     }
@@ -7935,9 +6105,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "None > spreading",
-      "name_en": "None > spreading",
-      "name_nl": "Geen > spreiding",
-      "name_zh_hans": "",
       "machine_value": 52,
       "field_color": "ffffff"
     }
@@ -7948,9 +6115,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "Finger tips > back",
-      "name_en": "Finger tips > back",
-      "name_nl": "Vingertoppen > rug",
-      "name_zh_hans": "",
       "machine_value": 58,
       "field_color": "ffffff"
     }
@@ -7961,9 +6125,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Forwards > backwards",
-      "name_en": "Forwards > backwards",
-      "name_nl": "Naar voren > naar achteren",
-      "name_zh_hans": "",
       "machine_value": 107,
       "field_color": "ffffff"
     }
@@ -7974,9 +6135,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "Language",
-      "name_en": "Language",
-      "name_nl": "Taal",
-      "name_zh_hans": "Language",
       "machine_value": 22,
       "field_color": "ffffff"
     }
@@ -7987,9 +6145,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "FMU Cluster",
-      "name_en": "FMU Cluster",
-      "name_nl": "FMU Cluster",
-      "name_zh_hans": "FMU Cluster",
       "machine_value": 33,
       "field_color": "ffffff"
     }
@@ -8000,9 +6155,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Movement: Syllabicity",
-      "name_en": "Movement: Syllabicity",
-      "name_nl": "Beweging: syllabiciteit",
-      "name_zh_hans": "Movement: Syllabicity",
       "machine_value": 34,
       "field_color": "ffffff"
     }
@@ -8013,9 +6165,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Hands: Symmetry",
-      "name_en": "Hands: Symmetry",
-      "name_nl": "Handen: symmetrie",
-      "name_zh_hans": "Hands: Symmetry",
       "machine_value": 35,
       "field_color": "ffffff"
     }
@@ -8026,9 +6175,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Articulator: Self-referential",
-      "name_en": "Articulator: Self-referential",
-      "name_nl": "Articulator: zelf-referentieel",
-      "name_zh_hans": "Articulator: Self-referential",
       "machine_value": 36,
       "field_color": "ffffff"
     }
@@ -8039,9 +6185,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "Movement: Hand-internal",
-      "name_en": "Movement: Hand-internal",
-      "name_nl": "Beweging: hand-intern",
-      "name_zh_hans": "Movement: Hand-internal",
       "machine_value": 37,
       "field_color": "ffffff"
     }
@@ -8052,9 +6195,6 @@
     "fields": {
       "field": "SemField",
       "name": "Religion",
-      "name_en": "Religion",
-      "name_nl": "Religie",
-      "name_zh_hans": "Religion",
       "machine_value": 55,
       "field_color": "ffffff"
     }
@@ -8065,9 +6205,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "Consecutive opening",
-      "name_en": "Consecutive opening",
-      "name_nl": "Een voor een openen",
-      "name_zh_hans": "Consecutive opening",
       "machine_value": 53,
       "field_color": "ffffff"
     }
@@ -8078,9 +6215,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "Definition",
-      "name_en": "Definition",
-      "name_nl": "Definitie",
-      "name_zh_hans": "Defintion",
       "machine_value": 12,
       "field_color": "#FFFFFF"
     }
@@ -8091,9 +6225,6 @@
     "fields": {
       "field": "NoteType",
       "name": "Project",
-      "name_en": "Project",
-      "name_nl": "Project",
-      "name_zh_hans": "",
       "machine_value": 13,
       "field_color": "00c7fc"
     }
@@ -8104,9 +6235,6 @@
     "fields": {
       "field": "derivHist",
       "name": "Arc",
-      "name_en": "Arc",
-      "name_nl": "Arc",
-      "name_zh_hans": "Arc",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -8117,9 +6245,6 @@
     "fields": {
       "field": "derivHist",
       "name": "Circle",
-      "name_en": "Circle",
-      "name_nl": "Circle",
-      "name_zh_hans": "Circle",
       "machine_value": 37,
       "field_color": "ffffff"
     }
@@ -8130,9 +6255,6 @@
     "fields": {
       "field": "derivHist",
       "name": "Motivated shape",
-      "name_en": "Motivated shape",
-      "name_nl": "Motivated shape",
-      "name_zh_hans": "Motivated shape",
       "machine_value": 44,
       "field_color": "ffffff"
     }
@@ -8143,9 +6265,6 @@
     "fields": {
       "field": "derivHist",
       "name": "Spiral",
-      "name_en": "Spiral",
-      "name_nl": "Spiral",
-      "name_zh_hans": "Spiral",
       "machine_value": 45,
       "field_color": "ffffff"
     }
@@ -8156,9 +6275,6 @@
     "fields": {
       "field": "derivHist",
       "name": "Straight",
-      "name_en": "Straight",
-      "name_nl": "Straight",
-      "name_zh_hans": "Straight",
       "machine_value": 6,
       "field_color": "ffffff"
     }
@@ -8169,9 +6285,6 @@
     "fields": {
       "field": "derivHist",
       "name": "Zigzag",
-      "name_en": "Zigzag",
-      "name_nl": "Zigzag",
-      "name_zh_hans": "Zigzag",
       "machine_value": 12,
       "field_color": "ffffff"
     }
@@ -8182,9 +6295,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8195,9 +6305,6 @@
     "fields": {
       "field": "AbsOriPalm",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8208,9 +6315,6 @@
     "fields": {
       "field": "Aperture",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8221,9 +6325,6 @@
     "fields": {
       "field": "Aperture",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8234,9 +6335,6 @@
     "fields": {
       "field": "ContactType",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8247,9 +6345,6 @@
     "fields": {
       "field": "ContactType",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8260,9 +6355,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8273,9 +6365,6 @@
     "fields": {
       "field": "FingerSelection",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8286,9 +6375,6 @@
     "fields": {
       "field": "Handedness",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8299,9 +6385,6 @@
     "fields": {
       "field": "Handedness",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8312,9 +6395,6 @@
     "fields": {
       "field": "Handshape",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8325,9 +6405,6 @@
     "fields": {
       "field": "Handshape",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8338,9 +6415,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8351,9 +6425,6 @@
     "fields": {
       "field": "HandshapeChange",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8364,9 +6435,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8377,9 +6445,6 @@
     "fields": {
       "field": "JointConfiguration",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8390,9 +6455,6 @@
     "fields": {
       "field": "Location",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8403,9 +6465,6 @@
     "fields": {
       "field": "Location",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8416,9 +6475,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8429,9 +6485,6 @@
     "fields": {
       "field": "MorphemeType",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8442,9 +6495,6 @@
     "fields": {
       "field": "MorphologyType",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8455,9 +6505,6 @@
     "fields": {
       "field": "MorphologyType",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8468,9 +6515,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8481,9 +6525,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8494,9 +6535,6 @@
     "fields": {
       "field": "MovementShape",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8507,9 +6545,6 @@
     "fields": {
       "field": "MovementShape",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8520,9 +6555,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8533,9 +6565,6 @@
     "fields": {
       "field": "NamedEntity",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8546,9 +6575,6 @@
     "fields": {
       "field": "NoteType",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8559,9 +6585,6 @@
     "fields": {
       "field": "NoteType",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8572,9 +6595,6 @@
     "fields": {
       "field": "OriChange",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8585,9 +6605,6 @@
     "fields": {
       "field": "OriChange",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8598,9 +6615,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8611,9 +6625,6 @@
     "fields": {
       "field": "OtherMediaType",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8624,9 +6635,6 @@
     "fields": {
       "field": "PathOnPath",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8637,9 +6645,6 @@
     "fields": {
       "field": "PathOnPath",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8650,9 +6655,6 @@
     "fields": {
       "field": "Quantity",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8663,9 +6665,6 @@
     "fields": {
       "field": "Quantity",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8676,9 +6675,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8689,9 +6685,6 @@
     "fields": {
       "field": "RelOriLoc",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8702,9 +6695,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8715,9 +6705,6 @@
     "fields": {
       "field": "RelOriMov",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8728,9 +6715,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8741,9 +6725,6 @@
     "fields": {
       "field": "RelatArtic",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8754,9 +6735,6 @@
     "fields": {
       "field": "SemField",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8767,9 +6745,6 @@
     "fields": {
       "field": "SemField",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8780,9 +6755,6 @@
     "fields": {
       "field": "Spreading",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8793,9 +6765,6 @@
     "fields": {
       "field": "Spreading",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8806,9 +6775,6 @@
     "fields": {
       "field": "Thumb",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8819,9 +6785,6 @@
     "fields": {
       "field": "Thumb",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8832,9 +6795,6 @@
     "fields": {
       "field": "Valence",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8845,9 +6805,6 @@
     "fields": {
       "field": "Valence",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8858,9 +6815,6 @@
     "fields": {
       "field": "WordClass",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8871,9 +6825,6 @@
     "fields": {
       "field": "WordClass",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8884,9 +6835,6 @@
     "fields": {
       "field": "derivHist",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8897,9 +6845,6 @@
     "fields": {
       "field": "derivHist",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -8910,9 +6855,6 @@
     "fields": {
       "field": "MinorLocation",
       "name": "-",
-      "name_en": "-",
-      "name_nl": null,
-      "name_zh_hans": null,
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8923,9 +6865,6 @@
     "fields": {
       "field": "DominantHandSelectedFingers",
       "name": "-",
-      "name_en": "-",
-      "name_nl": null,
-      "name_zh_hans": null,
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8936,9 +6875,6 @@
     "fields": {
       "field": "DominantHandFlexion",
       "name": "-",
-      "name_en": "-",
-      "name_nl": null,
-      "name_zh_hans": null,
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8949,9 +6885,6 @@
     "fields": {
       "field": "AbsOriFing",
       "name": "-",
-      "name_en": "-",
-      "name_nl": null,
-      "name_zh_hans": null,
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8962,9 +6895,6 @@
     "fields": {
       "field": "MovementMan",
       "name": "-",
-      "name_en": "-",
-      "name_nl": null,
-      "name_zh_hans": null,
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8975,9 +6905,6 @@
     "fields": {
       "field": "iconicity",
       "name": "-",
-      "name_en": "-",
-      "name_nl": null,
-      "name_zh_hans": null,
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -8988,9 +6915,6 @@
     "fields": {
       "field": "Location",
       "name": "Mouth > neutral space",
-      "name_en": "Mouth > neutral space",
-      "name_nl": "Mond > neutrale ruimte",
-      "name_zh_hans": "Mouth > neutral space",
       "machine_value": 212,
       "field_color": "ffffff"
     }
@@ -9001,9 +6925,6 @@
     "fields": {
       "field": "SentenceType",
       "name": "-",
-      "name_en": "-",
-      "name_nl": "-",
-      "name_zh_hans": "-",
       "machine_value": 0,
       "field_color": "ffffff"
     }
@@ -9014,9 +6935,6 @@
     "fields": {
       "field": "SentenceType",
       "name": "N/A",
-      "name_en": "N/A",
-      "name_nl": "N/A",
-      "name_zh_hans": "N/A",
       "machine_value": 1,
       "field_color": "ffffff"
     }
@@ -9027,9 +6945,6 @@
     "fields": {
       "field": "SentenceType",
       "name": "Declarative",
-      "name_en": "Declarative",
-      "name_nl": "Declaratief",
-      "name_zh_hans": "Declarative",
       "machine_value": 2,
       "field_color": "ffffff"
     }
@@ -9040,9 +6955,6 @@
     "fields": {
       "field": "SentenceType",
       "name": "Imperative",
-      "name_en": "Imperative",
-      "name_nl": "Imperatief",
-      "name_zh_hans": "Imperative",
       "machine_value": 3,
       "field_color": "ffffff"
     }
@@ -9053,9 +6965,6 @@
     "fields": {
       "field": "SentenceType",
       "name": "Interrogative",
-      "name_en": "Interrogative",
-      "name_nl": "Interrogatief",
-      "name_zh_hans": "Interrogative",
       "machine_value": 4,
       "field_color": "ffffff"
     }
@@ -9066,9 +6975,6 @@
     "fields": {
       "field": "SentenceType",
       "name": "Exclamatory",
-      "name_en": "Exclamatory",
-      "name_nl": "Exclamatief",
-      "name_zh_hans": "Exclamatory",
       "machine_value": 5,
       "field_color": "ffffff"
     }
@@ -9079,9 +6985,6 @@
     "fields": {
       "field": "ContactType",
       "name": "Double > none",
-      "name_en": "Double > none",
-      "name_nl": "Dubbel > geen",
-      "name_zh_hans": "Double > none",
       "machine_value": 17,
       "field_color": "ffffff"
     }
@@ -9092,9 +6995,6 @@
     "fields": {
       "field": "Location",
       "name": "Chin > Forehead",
-      "name_en": "Chin > Forehead",
-      "name_nl": "Kin > Voorhoofd",
-      "name_zh_hans": "Chin > Forehead",
       "machine_value": 213,
       "field_color": "ffffff"
     }
@@ -9105,9 +7005,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Downwards/upwards > ipsilateral",
-      "name_en": "Downwards/upwards > ipsilateral",
-      "name_nl": "Omlaag/omhoog > ipsilateraal",
-      "name_zh_hans": "Downwards/upwards > ipsilateral",
       "machine_value": 108,
       "field_color": "ffffff"
     }
@@ -9118,9 +7015,6 @@
     "fields": {
       "field": "MovementDir",
       "name": "Ipsilateral > Upwards/downwards",
-      "name_en": "Ipsilateral > Upwards/downwards",
-      "name_nl": "Ipsilateraal > Omlaag/omhoog",
-      "name_zh_hans": "Ipsilateral > Upwards/downwards",
       "machine_value": 109,
       "field_color": "ffffff"
     }
@@ -9131,9 +7025,6 @@
     "fields": {
       "field": "Location",
       "name": "Belly ipsi",
-      "name_en": "Belly ipsi",
-      "name_nl": "Buik ipsi",
-      "name_zh_hans": "Belly ipsi",
       "machine_value": 214,
       "field_color": "ffffff"
     }
@@ -9144,9 +7035,6 @@
     "fields": {
       "field": "Location",
       "name": "Belly contra",
-      "name_en": "Belly contra",
-      "name_nl": "Buik contra",
-      "name_zh_hans": "Belly contra",
       "machine_value": 215,
       "field_color": "ffffff"
     }
