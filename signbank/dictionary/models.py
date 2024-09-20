@@ -2630,6 +2630,16 @@ class Gloss(models.Model):
         from tagging.models import Tag
         return Tag.objects.get_for_object(self)
 
+    def has_animations(self):
+        from signbank.animation.models import GlossAnimation
+        animations = GlossAnimation.objects.filter(gloss=self)
+        return animations.count()
+
+    def get_animations(self):
+        from signbank.animation.models import GlossAnimation
+        animations = GlossAnimation.objects.filter(gloss=self)
+        return animations
+
     def add_animation(self, user, fbxfile):
         # Preventing circular import
         from signbank.animation.models import GlossAnimation, get_animation_file_path, GlossAnimationHistory

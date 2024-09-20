@@ -7614,17 +7614,14 @@ class AnimationCreateView(CreateView):
             selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
         else:
             selected_datasets = get_selected_datasets_for_user(request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
+            dataset = selected_datasets.first()
 
-        dataset = selected_datasets.first()
+        dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         use_regular_expressions = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
         form = AnimationUploadForObjectForm(request.POST, languages=dataset_languages, dataset=self.last_used_dataset)
-
-        for item, value in request.POST.items():
-            print(item, value)
 
         if form.is_valid():
             try:
