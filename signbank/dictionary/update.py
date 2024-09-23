@@ -2042,7 +2042,7 @@ def delete_annotated_sentence(request, glossid):
     if not request.method == "POST":
         return HttpResponseForbidden("Annotated Sentence Deletion method must be POST")
 
-    if not request.user.has_perm('dictionary.annotated_sentence_sense'):
+    if not request.user.has_perm('dictionary.delete_annotatedsentence'):
         messages.add_message(request, messages.ERROR, _('Annotated Sentence Deletion Not Allowed'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
@@ -2054,7 +2054,6 @@ def delete_annotated_sentence(request, glossid):
     annotated_sentence.delete()
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
 def add_othermedia(request):
 
