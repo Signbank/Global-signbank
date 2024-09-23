@@ -46,12 +46,6 @@ def addvideo(request):
                 if not gloss:
                     redirect(redirect_url)
                 gloss.add_video(request.user, vfile, recorded)
-            elif object_type == 'gloss_perspectivevideo':
-                gloss = Gloss.objects.filter(id=object_id).first()
-                if not gloss:
-                    redirect(redirect_url)
-                perspective = form.cleaned_data['perspective']
-                gloss.add_perspective_video(request.user, vfile, perspective, recorded)
             elif object_type == 'gloss_nmevideo':
                 gloss = Gloss.objects.filter(id=object_id).first()
                 if not gloss:

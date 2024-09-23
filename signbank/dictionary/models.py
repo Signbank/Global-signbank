@@ -2318,7 +2318,7 @@ class Gloss(models.Model):
         """Returns the path within the writable and static folder"""
         from signbank.video.models import GlossVideo
 
-        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0)
+        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None).filter(version=0)
         if glossvideo:
             glossvideo = glossvideo.first()
             videofile_path = str(glossvideo.videofile)
@@ -2341,18 +2341,18 @@ class Gloss(models.Model):
     def get_video_path(self):
         from signbank.video.models import GlossVideo
         try:
-            glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).get(version=0)
+            glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None).get(version=0)
             return str(glossvideo.videofile)
         except ObjectDoesNotExist:
             return ''
         except MultipleObjectsReturned:
             # Just return the first
-            glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0)
+            glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None).filter(version=0)
             return str(glossvideos.first().videofile)
 
     def get_video_path_prefix(self):
         try:
-            glossvideo = self.glossvideo_set.exclude(glossvideonme=True, glossvideoperspective__isnull=False).get(version=0)
+            glossvideo = self.glossvideo_set.exclude(glossvideonme=True).get(version=0)
             prefix, extension = os.path.splitext(str(glossvideo))
             return prefix
         except ObjectDoesNotExist:
@@ -2371,7 +2371,7 @@ class Gloss(models.Model):
     def count_videos(self):
         """Return a count of the number of videos as indicated in the database"""
 
-        return self.glossvideo_set.exclude(glossvideonme=True, glossvideoperspective__isnull=False).count()
+        return self.glossvideo_set.exclude(glossvideonme=True).count()
 
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
@@ -2392,7 +2392,7 @@ class Gloss(models.Model):
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = GlossVideo(gloss=self, upload_to=get_video_file_path)
             # Backup the existing video objects stored in the database
-            existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None)
+            existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None)
             for video_object in existing_videos:
                 video_object.reversion(revert=False)
 
@@ -2450,45 +2450,6 @@ class Gloss(models.Model):
             video.videofile.save(relative_path, videofile)
         else:
             return GlossVideoNME(gloss=self)
-        video.save()
-
-        return video
-
-    def has_perspective_videos(self):
-        from signbank.video.models import GlossVideoPerspective
-        perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self)
-        return perspectivevideos.count()
-
-    def get_perspective_videos(self):
-        from signbank.video.models import GlossVideoPerspective
-        perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self)
-        return perspectivevideos
-
-    def add_perspective_video(self, user, videofile, new_perspective, recorded):
-        # Preventing circular import
-        from signbank.video.models import GlossVideoPerspective, GlossVideoHistory, get_video_file_path
-        # Create a new GlossVideo object
-        existing_perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self)
-        existing_perspectivevideos = [vid.perspective for vid in existing_perspectivevideos]
-        if new_perspective in existing_perspectivevideos:
-            # remove existing given new_perspective to avoid duplicate usage
-            existing = GlossVideoPerspective.objects.filter(gloss=self, perspective=new_perspective).first()
-            existing.delete()
-
-        if isinstance(videofile,
-                      File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideoPerspective(gloss=self, perspective=new_perspective, upload_to=get_video_file_path)
-            # Create a GlossVideoHistory object
-            relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective=new_perspective)
-            video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
-            glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
-                                                  uploadfile=videofile, goal_location=video_file_full_path)
-            glossvideohistory.save()
-
-            # Save the new videofile in the video object
-            video.videofile.save(relative_path, videofile)
-        else:
-            return GlossVideoPerspective(gloss=self)
         video.save()
 
         return video

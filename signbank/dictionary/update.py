@@ -23,7 +23,7 @@ from signbank.dictionary.forms import *
 from django.conf import settings
 
 from signbank.video.forms import VideoUploadForObjectForm
-from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory, GlossVideoPerspective
+from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory
 
 from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
@@ -920,10 +920,6 @@ def update_gloss(request, glossid):
 
         return update_nmevideo(request.user, gloss, field, value)
 
-    elif field.startswith('perspectivevideo'):
-
-        return update_perspectivevideo(request.user, gloss, field, value)
-
     elif field.startswith('lemmaidgloss'):
         # Set new lemmaidgloss for this gloss
         # First check whether the gloss dataset is the same as the lemma dataset
@@ -1210,26 +1206,6 @@ def update_nmevideo(user, gloss, field, value):
         filename = os.path.basename(nmevideo.videofile.name)
         filepath = nmevideo.videofile.path
         nmevideo.reversion(revert=False)
-        log_entry = GlossVideoHistory(action="delete", gloss=gloss,
-                                      actor=user,
-                                      uploadfile=filename,
-                                      goal_location=filepath)
-        log_entry.save()
-        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
-
-    else:
-        print('unknown nme video update field: ', field)
-    return HttpResponse(value, {'content-type': 'text/plain'})
-
-
-def update_perspectivevideo(user, gloss, field, value):
-    """Update the GlossVideoPerspective"""
-    if field.startswith('perspectivevideo_delete_'):
-        perspvideoid = field[len('perspectivevideo_delete_'):]
-        perspvideo = GlossVideoPerspective.objects.get(id=int(perspvideoid))
-        filename = os.path.basename(perspvideo.videofile.name)
-        filepath = perspvideo.videofile.path
-        perspvideo.reversion(revert=False)
         log_entry = GlossVideoHistory(action="delete", gloss=gloss,
                                       actor=user,
                                       uploadfile=filename,
