@@ -17,7 +17,6 @@ from signbank.settings.server_specific import WRITABLE_FOLDER, ANIMATION_DIRECTO
 from datetime import datetime
 
 from signbank.dictionary.models import *
-from pyfbx import Fbx
 
 
 if sys.argv[0] == 'mod_wsgi':
@@ -89,7 +88,7 @@ def get_animation_file_path(instance, filename):
 class GlossAnimation(models.Model):
     """An animation that represents a particular idgloss"""
 
-    fbxfile = models.FileField("FBX file", storage=storage,
+    file = models.FileField("Animation file", storage=storage,
                                  validators=[validate_file_extension])
 
     gloss = models.ForeignKey(Gloss, on_delete=models.CASCADE)
@@ -107,7 +106,7 @@ class GlossAnimation(models.Model):
 
     def get_absolute_url(self):
 
-        return self.fbxfile.name
+        return self.file.name
 
 
 class GlossAnimationHistory(models.Model):
@@ -116,7 +115,7 @@ class GlossAnimationHistory(models.Model):
     action = models.CharField("Animation History Action", max_length=6, choices=ACTION_CHOICES, default='watch')
     # When was this action done?
     datestamp = models.DateTimeField("Date and time of action", auto_now_add=True)
-    # See 'fbxfile' in animation.views.addanimation
+    # See 'file' in animation.views.addanimation
     uploadfile = models.TextField("User upload path", default='(not specified)')
     # See 'goal_location' in addanimation
     goal_location = models.TextField("Full target path", default='(not specified)')

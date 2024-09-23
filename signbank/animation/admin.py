@@ -12,16 +12,16 @@ from django.db.models import Q, Count, CharField, TextField, Value as V
 
 class GlossAnimationAdmin(admin.ModelAdmin):
 
-    list_display = ['id', 'gloss', 'fbx_file', 'file_timestamp', 'file_size']
+    list_display = ['id', 'gloss', 'file', 'file_timestamp', 'file_size']
 
     search_fields = ['^gloss__annotationidglosstranslation__text']
 
-    def fbx_file(self, obj=None):
+    def file(self, obj=None):
         # this will display the full path in the list view
         if obj is None:
             return ""
         import os
-        file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.fbxfile))
+        file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.file))
 
         return file_full_path
 
@@ -31,7 +31,7 @@ class GlossAnimationAdmin(admin.ModelAdmin):
             return ""
         import os
         import datetime
-        file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.fbxfile))
+        file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.file))
         if os.path.exists(file_full_path):
             return datetime.datetime.fromtimestamp(os.path.getctime(file_full_path))
         else:
@@ -43,7 +43,7 @@ class GlossAnimationAdmin(admin.ModelAdmin):
             return ""
         else:
             from pathlib import Path
-            file_full_path = Path(WRITABLE_FOLDER, str(obj.fbxfile))
+            file_full_path = Path(WRITABLE_FOLDER, str(obj.file))
             if file_full_path.exists():
                 size = str(file_full_path.stat().st_size)
                 return size

@@ -2640,22 +2640,22 @@ class Gloss(models.Model):
         animations = GlossAnimation.objects.filter(gloss=self)
         return animations
 
-    def add_animation(self, user, fbxfile):
+    def add_animation(self, user, file):
         # Preventing circular import
         from signbank.animation.models import GlossAnimation, get_animation_file_path, GlossAnimationHistory
 
         # Create a new GlossAnimation object
-        if isinstance(fbxfile, File) or fbxfile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
+        if isinstance(file, File) or file.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             animation = GlossAnimation(gloss=self, upload_to=get_animation_file_path)
 
             # Create a GlossAnimationHistory object
-            relative_path = get_animation_file_path(animation, str(fbxfile))
+            relative_path = get_animation_file_path(animation, str(file))
             animation_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
             glossanimationhistory = GlossAnimationHistory(action="upload", gloss=self, actor=user,
-                                                          uploadfile=fbxfile, goal_location=animation_file_full_path)
+                                                          uploadfile=file, goal_location=animation_file_full_path)
 
-            # Save the new fbx file in the animation object
-            animation.fbxfile.save(relative_path, fbxfile)
+            # Save the new file in the animation object
+            animation.file.save(relative_path, file)
             glossanimationhistory.save()
 
         else:
