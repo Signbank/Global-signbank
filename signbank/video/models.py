@@ -131,12 +131,13 @@ class GlossVideoHistory(models.Model):
 # * Changes to the lemmaidglosstranslations: process_lemmaidglosstranslation_changes(...)
 
 
-def get_video_file_path(instance, filename, nmevideo=False, offset=1, version=0):
+def get_video_file_path(instance, filename, nmevideo=False, perspective='', offset=1, version=0):
     """
     Return the full path for storing an uploaded video
     :param instance: A GlossVideo instance
     :param filename: the original file name
     :param nmevideo: boolean whether this is an nme video
+    :param perspective: optional string for either 'left' or 'right'
     :param offset: order in sequence of NME video
     :param version: the version to determine the number of .bak extensions
     :return: 
@@ -144,6 +145,7 @@ def get_video_file_path(instance, filename, nmevideo=False, offset=1, version=0)
     (base, ext) = os.path.splitext(filename)
 
     idgloss = instance.gloss.idgloss
+    two_letter_dir = get_two_letter_dir(idgloss)
 
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
     try:
@@ -152,11 +154,13 @@ def get_video_file_path(instance, filename, nmevideo=False, offset=1, version=0)
         dataset_dir = ""
     if nmevideo:
         nme_video_offset = '_nme_' + str(offset)
+        filename = idgloss + '-' + str(instance.gloss.id) + nme_video_offset + ext + (version * ".bak")
+    elif perspective:
+        video_perpsective = '_' + perspective
+        filename = idgloss + '-' + str(instance.gloss.id) + video_perpsective + ext + (version * ".bak")
     else:
-        nme_video_offset = ''
+        filename = idgloss + '-' + str(instance.gloss.id) + ext + (version * ".bak")
 
-    two_letter_dir = get_two_letter_dir(idgloss)
-    filename = idgloss + '-' + str(instance.gloss.id) + nme_video_offset + ext + (version * ".bak")
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
         from django.utils.encoding import escape_uri_path
@@ -786,6 +790,13 @@ class GlossVideo(models.Model):
             nme_name = name + '_nme' + offset + '.mp4'
 
             glossvideoname = nme_name
+        elif hasattr(self, 'glossvideoperspective'):
+            name, _ = os.path.splitext(self.videofile.name)
+            glossvideoperspective = self.glossvideoperspective
+            perspective = '_' + str(glossvideoperspective.perspective) if glossvideoperspective.perspective else ''
+            perspective_name = name + '_' + perspective + '.mp4'
+
+            glossvideoname = perspective_name
         else:
             glossvideoname = self.videofile.name
         return glossvideoname
@@ -793,6 +804,10 @@ class GlossVideo(models.Model):
     def is_glossvideonme(self):
         """Test if this instance is a NME Gloss Video"""
         return hasattr(self, 'glossvideonme')
+
+    def is_glossvideoperspective(self):
+        """Test if this instance is a Gloss Video Perspective"""
+        return hasattr(self, 'glossvideoperspective')
 
     def move_video(self, move_files_on_disk=True):
         """
@@ -892,7 +907,7 @@ class GlossVideoNME(GlossVideo):
             newloc = basename + ".mp4"
             err = convert_video(oldloc, newloc, force=False)
             self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
-                                                      nmevideo=True, offset=self.offset)
+                                                      nmevideo=True, perspective='', offset=self.offset)
             os.remove(oldloc)
 
     def save(self, *args, **kwargs):
@@ -905,7 +920,7 @@ class GlossVideoNME(GlossVideo):
         :return:
         """
         old_path = str(self.videofile)
-        new_path = get_video_file_path(self, old_path, nmevideo=True, offset=self.offset, version=self.version)
+        new_path = get_video_file_path(self, old_path, nmevideo=True, perspective='', offset=self.offset, version=self.version)
         if old_path != new_path:
             if move_files_on_disk:
                 source = os.path.join(settings.WRITABLE_FOLDER, old_path)
@@ -930,6 +945,76 @@ class GlossVideoNME(GlossVideo):
     def reversion(self, revert=False):
         """Delete the video file of this object"""
         print("DELETE NME VIDEO", self.videofile.name)
+        self.delete_files()
+        self.delete()
+
+
+PERSPECTIVE_CHOICES = (('left', 'Left'),
+                       ('right', 'Right')
+                       )
+
+class GlossVideoPerspective(GlossVideo):
+    perspective = models.CharField(max_length=20, choices=PERSPECTIVE_CHOICES)
+
+    class Meta:
+        verbose_name = gettext("Gloss Video Perspective")
+        ordering = ['perspective', ]
+
+    def get_video_path(self):
+        return self.videofile.name
+
+    def ensure_mp4(self):
+        """Ensure that the video file is an h264 format
+        video, convert it if necessary"""
+
+        # convert video to use the right size and iphone/net friendly bitrate
+        # create a temporary copy in the new format
+        # then move it into place
+
+        (basename, ext) = os.path.splitext(self.videofile.path)
+        if ext == '.mov' or ext == '.webm':
+            oldloc = self.videofile.path
+            newloc = basename + ".mp4"
+            err = convert_video(oldloc, newloc, force=False)
+            self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
+                                                      nmevideo=False, perspective=self.perspective)
+            os.remove(oldloc)
+
+    def save(self, *args, **kwargs):
+        self.ensure_mp4()
+        super(GlossVideoPerspective, self).save(*args, **kwargs)
+
+    def move_video(self, move_files_on_disk=True):
+        """
+        Calculates the new path, moves the video file to the new path and updates the videofile field
+        :return:
+        """
+        old_path = str(self.videofile)
+        new_path = get_video_file_path(self, old_path, nmevideo=False, perspective=self.perspective, version=self.version)
+        if old_path != new_path:
+            if move_files_on_disk:
+                source = os.path.join(settings.WRITABLE_FOLDER, old_path)
+                destination = os.path.join(settings.WRITABLE_FOLDER, new_path)
+                if os.path.exists(source):
+                    destination_dir = os.path.dirname(destination)
+                    if not os.path.exists(destination_dir):
+                        os.makedirs(destination_dir)
+                    if os.path.isdir(destination_dir):
+                        shutil.move(source, destination)
+
+                    self.videofile.name = new_path
+                    self.save()
+
+    def delete_files(self):
+        """Delete the files associated with this object"""
+        try:
+            os.unlink(self.videofile.path)
+        except OSError:
+            pass
+
+    def reversion(self, revert=False):
+        """Delete the video file of this object"""
+        print("DELETE Perspective VIDEO", self.videofile.name)
         self.delete_files()
         self.delete()
 
