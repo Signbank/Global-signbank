@@ -177,7 +177,7 @@
         ]
       }
     },
-    "/dictionary/api_create_gloss/": 
+    "/dictionary/api_create_gloss/{datasetid}/": 
     {
       "post": 
       {
@@ -185,7 +185,7 @@
         "parameters":
         [
           {
-            "name": "Dataset id",
+            "name": "datasetid",
             "in": "path",
             "description": "ID of the dataset this gloss should be part of (not the acronym)",
             "required": true,
@@ -229,29 +229,100 @@
                   },
                   "Senses (Dutch)": 
                   {
-                    "type": "array",
-                    "items": 
-                    {
-                      "type": "array",
-                      "items": 
-                      {
-                        "type": "string"
-                      }
-                    }
+                    "type": "string",
+                    "example": "[['string']]"
                   },
                   "Senses (English)": 
                   {
-                    "type": "array",
-                    "items": 
-                    {
-                      "type": "array",
-                      "items": 
-                      {
-                        "type": "string"
-                      }
-                    }
+                    "type": "string",
+                    "example": "[['string']]"
                   }
                 }
+              }
+            }
+          }
+        },
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Creation successful"
+          }
+        },
+        "tags": ["Adding Signbank data"],
+        "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_create_annotated_sentence/{datasetid}/": 
+    {
+      "post": 
+      {
+        "description": "Creates a new annotated sentence",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this annotated sentence should be part of (not the acronym)",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }     
+        ],
+        "requestBody":
+        {
+          "content": 
+          {
+            "multipart/form-data": 
+            {
+              "schema": 
+              {
+                "type": "object",
+                "properties": 
+                {
+                  "Dataset": 
+                  {
+                    "type": "string",
+                    "description": "Acronym of the dataset, like `NGT` or `ASL`"
+                  },
+                  "Video_file": 
+                  {
+                    "type": "string",
+                    "format": "binary", 
+                    "description": "The video file to upload"
+                  },
+                  "Eaf_file": 
+                  {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The EAF file to upload"
+                  },
+                  "Source": 
+                  {
+                    "type": "string",
+                    "description": "The source of the sentence"
+                  },
+                  "Url": 
+                  {
+                    "type": "string",
+                    "description": "The URL of the sentence"
+                  }
+                },
+                "required": 
+                [
+                  "Dataset",
+                  "Video_file",
+                  "Eaf_file",
+                  "Source",
+                  "Url"
+                ]
               }
             }
           }
