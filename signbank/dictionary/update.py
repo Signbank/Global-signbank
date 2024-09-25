@@ -914,7 +914,7 @@ def update_gloss(request, glossid):
 
     elif field.startswith('annotation_idgloss'):
 
-        return update_annotation_idgloss(gloss, field, value)
+        return update_annotation_idgloss(request, gloss, field, value)
 
     elif field.startswith('nmevideo'):
 
@@ -930,9 +930,9 @@ def update_gloss(request, glossid):
                 gloss.lemma = lemma
                 gloss.save()
             else:
-                messages.add_message(messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
+                messages.add_message(request, messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
         except ObjectDoesNotExist:
-            messages.add_message(messages.ERROR, _("The specified lemma does not exist."))
+            messages.add_message(request, messages.ERROR, _("The specified lemma does not exist."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     else:
@@ -1139,21 +1139,24 @@ def update_keywords(gloss, field, value):
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 
-def update_annotation_idgloss(gloss, field, value):
+def update_annotation_idgloss(request, gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""
 
-    # Determine the language of the keywords
-    language = Language.objects.get(id=get_default_language_id())
     try:
         language_code_2char = field[len('annotation_idgloss_'):]
         language = Language.objects.filter(language_code_2char=language_code_2char).first()
     except ObjectDoesNotExist:
-        pass
+        # do nothing
+        return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
     # value might be empty string
     whitespace = tuple(' \n\r\t')
     if value.startswith(whitespace) or value.endswith(whitespace):
         value = value.strip()
+
+    if not value:
+        # don't allow user to set Annotation ID Gloss to empty
+        return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
     try:
         annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
@@ -1163,12 +1166,14 @@ def update_annotation_idgloss(gloss, field, value):
         annotation_idgloss_translation = AnnotationIdglossTranslation(gloss=gloss, language=language)
         original_value = ''
 
-    if value == '':
-        # don't allow user to set Annotation ID Gloss to empty
-        return HttpResponse(str(original_value), {'content-type': 'text/plain'})
-
     annotation_idgloss_translation.text = value
-    annotation_idgloss_translation.save()
+    try:
+        annotation_idgloss_translation.save()
+    except ValidationError as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        messages.add_message(request, messages.ERROR, feedback_message)
+        reverse_url = 'dictionary:admin_gloss_view'
+        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': str(gloss.pk)}))
 
     return HttpResponse(str(value), {'content-type': 'text/plain'})
 
