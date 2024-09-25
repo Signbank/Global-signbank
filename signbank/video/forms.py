@@ -19,6 +19,7 @@ PERSPECTIVE_CHOICES = (('left', 'Left'),
                        ('right', 'Right')
                        )
 
+
 class VideoUploadForObjectForm(forms.Form):
     """Form for video upload for a particular example sentence"""
     
@@ -29,7 +30,7 @@ class VideoUploadForObjectForm(forms.Form):
     recorded = forms.BooleanField(initial=False, required=False)
     offset = forms.IntegerField(required=False)
     perspective = forms.ChoiceField(label=_('Video Perspective'),
-                                    choices=PERSPECTIVE_CHOICES,
+                                    choices=PERSPECTIVE_CHOICES, required=False,
                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
     eaffile = forms.FileField(label="Upload EAF", widget=forms.FileInput(attrs={'accept':'text/xml'}), required=False)
     feedbackdata = forms.CharField(widget=forms.HiddenInput, required=False)
