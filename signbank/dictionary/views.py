@@ -384,7 +384,7 @@ def import_media(request,video):
                     vfile = File(open(video_file_path, 'rb'))
                     video = gloss.add_video(request.user, vfile, '')
                     vfile.close()
-                    overwritten = GlossVideo.objects.filter(gloss=gloss).count() > 1
+                    overwritten = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None).count() > 1
                     if overwritten:
                         status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Success (Video File Overwritten)')
                     else:
@@ -1878,7 +1878,7 @@ def proposed_new_signs(request):
 
 
 def create_citation_image(request, pk):
-    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False, glossvideonme=None, glossvideoperspective=None)
     try:
         gloss.create_citation_image()
     except:

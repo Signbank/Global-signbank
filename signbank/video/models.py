@@ -1104,10 +1104,13 @@ def process_gloss_changes(sender, instance, **kwargs):
     :return: 
     """
     gloss = instance
-    glossvideos = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None)
+    glossvideos = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None)
     for glossvideo in glossvideos:
         glossvideo.move_video(move_files_on_disk=True)
     glossvideos = GlossVideoNME.objects.filter(gloss=gloss)
+    for glossvideo in glossvideos:
+        glossvideo.move_video(move_files_on_disk=True)
+    glossvideos = GlossVideoPerspective.objects.filter(gloss=gloss)
     for glossvideo in glossvideos:
         glossvideo.move_video(move_files_on_disk=True)
 
@@ -1116,6 +1119,19 @@ def process_gloss_changes(sender, instance, **kwargs):
 def process_nmevideo_changes(sender, instance, **kwargs):
     """
     Makes changes to GlossVideoNME if an offset has changed
+    :param sender:
+    :param instance:
+    :param kwargs:
+    :return:
+    """
+    glossvideo = instance
+    glossvideo.move_video(move_files_on_disk=True)
+
+
+@receiver(models.signals.post_save, sender=GlossVideoPerspective)
+def process_perspectivevideo_changes(sender, instance, **kwargs):
+    """
+    Makes changes to GlossVideoPerspective if an offset has changed
     :param sender:
     :param instance:
     :param kwargs:

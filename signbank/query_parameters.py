@@ -149,7 +149,7 @@ def apply_video_filters_to_results(model, qs, query_parameters):
     if 'hasvideo' not in query_parameters.keys():
         return qs
     elif query_parameters['hasvideo'] == '2':
-        glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, version=0)
+        glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, glossvideonme=None, glossvideoperspective=None, version=0)
         queryset_res = glossvideo_queryset.values('id', 'videofile')
         results = [qv['id'] for qv in queryset_res
                    if matching_file_exists(qv['videofile'])]
@@ -159,7 +159,7 @@ def apply_video_filters_to_results(model, qs, query_parameters):
     else:
         null_videos = qs.filter(Q(**{gloss_prefix + 'glossvideo__isnull': True}))
         gloss_ids_without_video = [gl.id if model == 'Gloss' else gl.gloss.id for gl in null_videos]
-        glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, version=0)
+        glossvideo_queryset = GlossVideo.objects.filter(gloss__id__in=gloss_ids, glossvideonme=None, glossvideoperspective=None, version=0)
         queryset_res = glossvideo_queryset.values('id', 'videofile')
         results = [qv['id'] for qv in queryset_res
                    if matching_file__does_not_exist(qv['videofile'])]
