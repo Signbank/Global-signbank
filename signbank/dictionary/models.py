@@ -2467,19 +2467,22 @@ class Gloss(models.Model):
     def add_perspective_video(self, user, videofile, new_perspective, recorded):
         # Preventing circular import
         from signbank.video.models import GlossVideoPerspective, GlossVideoHistory, get_video_file_path
-        # Create a new GlossVideo object
-        existing_perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self)
-        existing_perspectivevideos = [vid.perspective for vid in existing_perspectivevideos]
-        if new_perspective in existing_perspectivevideos:
-            # remove existing given new_perspective to avoid duplicate usage
-            existing = GlossVideoPerspective.objects.filter(gloss=self, perspective=new_perspective).first()
-            existing.delete()
-        if isinstance(videofile,
-                      File):
-            print(videofile.__dict__, videofile.name)
-        print(videofile, type(videofile), videofile.__dict__)
-        if isinstance(videofile,
-                      File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
+
+        existing_perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, perspective=new_perspective)
+        if existing_perspectivevideos.count() > 1:
+            msg = "Gloss %s has multiple videos with same perspective" \
+                  % (self.pk)
+            raise ValidationError(msg)
+        existing_video = existing_perspectivevideos.first()
+        if existing_video:
+            # overwrite the existing file
+            import shutil
+            existing_location = existing_video.videofile.path
+            file_path = os.path.join(settings.TMP_DIR, videofile.file.name)
+            shutil.move(file_path, existing_location)
+            return existing_video
+
+        if isinstance(videofile, File):
             video = GlossVideoPerspective(gloss=self, perspective=new_perspective, upload_to=get_video_file_path)
             # Create a GlossVideoHistory object
             relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective=new_perspective)
@@ -2491,22 +2494,21 @@ class Gloss(models.Model):
             # Save the new videofile in the video object
             video.videofile.save(relative_path, videofile)
         else:
-            return GlossVideoPerspective(gloss=self)
+            msg = "No video file supplied for perspective video upload of gloss %s" \
+                  % (self.pk)
+            raise ValidationError(msg)
         video.save()
 
         return video
 
     def create_citation_image(self):
         from signbank.video.models import GlossVideo
-        print('create citation')
         glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
-        print('after getting: ', glossvideos)
         if not glossvideos:
-            print('no gloss video')
-            return
+            msg = ("Gloss::create_citation_image: no video for gloss %s"
+                   % self.pk)
+            raise ValidationError(msg)
         glossvideo = glossvideos.first()
-        print(glossvideo.videofile.__dict__)
-        print(glossvideo.__dict__)
         glossvideo.make_poster_image()
 
     def published_definitions(self):
