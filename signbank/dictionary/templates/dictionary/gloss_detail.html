@@ -195,6 +195,18 @@ function checkKey(e)
     <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
     <script type='text/javascript'>
+        function play_perspective() {
+            $('#videoplayer_middle').play();
+            $('#videoplayer_left').play();
+            $('#videoplayer_right').play();
+        }
+
+        function pause_perspective() {
+            $('#videoplayer_middle').pause();
+            $('#videoplayer_left').pause();
+            $('#videoplayer_right').pause();
+        }
+
         // This script gets minimal pairs data and displays it as table rows
         $(document).ready(function() {
             lookup = "#header_mp_rows";
@@ -208,13 +220,33 @@ function checkKey(e)
                     $(lookup).first().append(result);
                 }
             });
+            $('#videoplayer_middle').show();
+            $('#videoplayer_left').hide();
+            $('#videoplayer_right').hide();
         });
 
         $('#searchquery').css({'margin-bottom': 10, 'padding-bottom': 10});
         $('#definitionblock').css({'padding-top': Math.round($('#searchquery').height() + $('#signinfo').height() + 10)});
-  //      $('#definitionblock').css({'padding-top': Math.round($('#signinfo').height() + 10)});
         $('#view_tabs').css({'padding-top': 10, 'margin-top': 10});
 
+        $('#show_left').click(function()
+        {
+            $('#videoplayer_middle').hide();
+            $('#videoplayer_left').show();
+            $('#videoplayer_right').hide();
+        });
+        $('#show_right').click(function()
+        {
+            $('#videoplayer_middle').hide();
+            $('#videoplayer_left').hide();
+            $('#videoplayer_right').show();
+        });
+        $('#show_middle').click(function()
+        {
+            $('#videoplayer_middle').show();
+            $('#videoplayer_left').hide();
+            $('#videoplayer_right').hide();
+        });
     </script>
 {% endblock %}
 
@@ -716,19 +748,25 @@ textarea:focus {
     <div id="videocontainer">
     {% if gloss.has_perspective_videos %}
     {% for perspvideo in gloss.get_perspective_videos %}
-    <button>{{perspvideo.perspective}}</button>
+    <button id="show_{{perspvideo.perspective}}">{{perspvideo.perspective}}</button>
     {% endfor %}
-    <button>middle</button>
+    <button id="show_middle">middle</button>
     {% endif %}
     {% if gloss.has_video %}
 
      <!-- {{gloss.get_video}} -->
 
         <div id="player">
-            <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}" controls type="video/mp4" autoplay muted></video>
-        </div>
-        <div id="replay"></div>
+            <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}" loop playsinline type="video/mp4" autoplay muted></video>
 
+        {% for perspvideo in gloss.get_perspective_videos %}
+            <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}" loop playsinline type="video/mp4" autoplay muted></video>
+        {% endfor %}
+        </div>
+        <div id="buttonbar">
+        <button id="play_perspective" onclick="play_perspective();">{% trans "play" %}</button>
+        <button id="pause_perspective" onclick="pause_perspective();">{% trans "pause" %}</button>
+        </div>
     {% else %}
     <div id='player'>
      <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png'>
