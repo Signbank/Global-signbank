@@ -30,6 +30,7 @@ class VideoUploadForObjectForm(forms.Form):
     translations = forms.CharField(widget=forms.HiddenInput, required=False)
     contexts = forms.CharField(widget=forms.HiddenInput, required=False)
     source_id = forms.ModelChoiceField(queryset=AnnotatedSentenceSource.objects.none(), required=False)
+    url = forms.URLField(label="URL", required=False)
 
     def __init__(self, *args, **kwargs):
         languages = kwargs.pop('languages', [])

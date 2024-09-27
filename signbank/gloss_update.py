@@ -1240,3 +1240,116 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
     results['updatestatus'] = "Success"
 
     return JsonResponse(results)
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_create_annotated_sentence(request, datasetid):
+
+    if not request.method == 'POST': 
+        return JsonResponse({"error": "POST method required."}, status=400)
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        return JsonResponse({"error": "Dataset with given id does not exist."}, status=400)
+
+    dataset_acronym = request.POST.get('Dataset')
+    dataset_by_acronym = Dataset.objects.filter(acronym=dataset_acronym).first()
+    if not dataset_by_acronym:
+        return JsonResponse({"error": "Dataset with given acronym does not exist."}, status=400)
+
+    if dataset.acronym != dataset_by_acronym.acronym:
+        return JsonResponse({"error": "Dataset acronym does not match."}, status=400)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        return JsonResponse({"error": "No change permission for dataset."}, status=400)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({"error": "No permission."}, status=400)
+    
+    source = request.POST.get('Source')
+    url = request.POST.get('Url')
+    video_file = request.FILES.get('Video_file')
+    eaf_file = request.FILES.get('Eaf_file')
+
+    if eaf_file.name.split('.')[-1] != 'eaf':
+        return JsonResponse({"error": "Eaf file must be in .eaf format."}, status=400)
+    if video_file.name.split('.')[-1] not in ['mp4', 'webm', 'mov']:
+        return JsonResponse({"error": "Video file must be in .mp4, .webm, or .mov format."}, status=400)
+
+    # Process the files and fields as needed
+    if not (video_file and eaf_file):
+        return JsonResponse({"error": "Missing a required field."}, status=400)
+
+    from pympi.Elan import Eaf
+    from tempfile import NamedTemporaryFile
+
+    # Create a temporary file
+    with NamedTemporaryFile(delete=False, suffix='.eaf') as tmp_eaf_file:
+        for chunk in eaf_file.chunks():
+            tmp_eaf_file.write(chunk)
+    tmp_eaf_file_path = tmp_eaf_file.name
+
+    # Read the eaf file
+    eaf = Eaf(tmp_eaf_file_path)
+    os.remove(tmp_eaf_file_path)
+
+    # Create an AnnotatedSentence object
+    annotatedSentence = AnnotatedSentence.objects.create()
+
+    # Get glosses and sentences from the eaf file
+    from signbank.video.views import get_glosses_from_eaf
+    annotations, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf, dataset.acronym)
+    if len(annotations) == 0:
+        return JsonResponse({"error": "No annotations found in EAF file."}, status=400)
+
+    # pick a random gloss from dataset, this is only used to -in add_annotations- retrieve the right dataset
+    gloss = Gloss.objects.filter(lemma__dataset=dataset).first()
+    annotatedSentence.add_annotations(annotations, gloss)
+
+    if sentence_dict != {}:
+        annotatedSentence.add_translations(sentence_dict)
+    
+    source_obj = AnnotatedSentenceSource.objects.filter(name=source).first()
+    if source_obj == None and source != '':
+        return JsonResponse({"error": "Annotated sentence source received but not found."}, status=400)
+    
+    # Add the video to the AnnotatedSentence object
+    annotatedVideo = annotatedSentence.add_video(request.user, video_file, eaf_file, source_obj, url)
+
+    if not annotatedVideo:
+        return JsonResponse({"error": "Annotated video not found."}, status=400)
+
+    if len(labels_not_found) > 0:
+        return JsonResponse({"success": "Sentence was added successfully. However, some labels were not found in Signbank: " + ', '.join(labels_not_found)}, status=201)
+    return JsonResponse({"success": "Sentence was added successfully. "}, status=201)
+
+
+@csrf_exempt
+@put_api_user_in_request
+def api_delete_annotated_sentence(request, datasetid, annotatedsentenceid):
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
+        results['errors'] = errors
+        results['updatestatus'] = "Failed"
+        return JsonResponse(results)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        return JsonResponse({"error": "No change permission for dataset."}, status=401)
+
+    annotated_sentence = AnnotatedSentence.objects.get(id=annotatedsentenceid)
+    if not annotated_sentence:
+        return JsonResponse({"error": "Annotated sentence not found."}, status=404)
+    
+    from signbank.video.models import AnnotatedVideo
+    annotated_videos = AnnotatedVideo.objects.filter(annotatedsentence=annotated_sentence)
+    for annotated_video in annotated_videos:
+        annotated_video.delete_files()
+        annotated_video.delete()
+    annotated_sentence.delete()
+
+    return JsonResponse({"success": "Sentence was deleted successfully. "}, status=200)

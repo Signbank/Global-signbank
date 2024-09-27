@@ -83,7 +83,8 @@ def addvideo(request):
                     annotatedSentence.add_contexts(json.loads(contexts))
                     
                 source = form.cleaned_data['source_id']
-                annotatedVideo = annotatedSentence.add_video(request.user, vfile, eaf_file, source)
+                url = form.cleaned_data['url']
+                annotatedVideo = annotatedSentence.add_video(request.user, vfile, eaf_file, source, url)
                 
                 if annotatedVideo == None:
                     messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
@@ -122,53 +123,60 @@ def find_non_overlapping_annotated_glosses(timeslots, annotations_tier_1, annota
 
     return non_overlapping_glosses
 
+
+def get_glosses_from_eaf(eaf, dataset_acronym):
+    from signbank.dictionary.models import AnnotationIdglossTranslation
+    glosses, labels_not_found, sentences = [], [], []
+    sentence_dict = {}
+
+    # Add glosses from the right hand
+    for annotation in eaf.tiers['Glosses R'][0].values():
+        gloss_label = annotation[2]
+        if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
+            start = int(eaf.timeslots[annotation[0]])
+            end = int(eaf.timeslots[annotation[1]])
+            glosses.append([gloss_label, start, end])
+        else:
+            labels_not_found.append(gloss_label)
+
+    # Add glosses from the left hand, if they don't overlap with the right hand
+    for annotation in find_non_overlapping_annotated_glosses(eaf.timeslots, eaf.tiers['Glosses R'][0].values(), eaf.tiers['Glosses L'][0].values()):
+        gloss_label = annotation[2]
+        if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
+            start = int(eaf.timeslots[annotation[0]])
+            end = int(eaf.timeslots[annotation[1]])
+            glosses.append([gloss_label, start, end])
+        else:
+            labels_not_found.append(gloss_label)
+
+    # Sort the list of glosses by the "start" value
+    glosses = sorted(glosses, key=lambda x: x[1])
+
+    if 'Sentences' in eaf.tiers:
+        for annotation in eaf.tiers['Sentences'][0].values():
+            sentences.append(annotation[2])
+    
+    dataset_language = Dataset.objects.get(acronym=dataset_acronym).default_language.language_code_3char
+    for sentence_i, sentence in enumerate(sentences):
+        sentence_dict[dataset_language] = sentence
+
+    return glosses, labels_not_found, sentence_dict
+
+
 def process_eaffile(request):
     import magic
     from pympi.Elan import Eaf
-    from signbank.dictionary.models import AnnotationIdglossTranslation
-    glosses, sentences = [], []
-    sentence_dict = {}
 
     if request.method == 'POST':
         check_gloss_label = request.POST.get('check_gloss_label', '')
         dataset_acronym = request.POST.get('dataset', '')
-        labels_not_found = []
         uploaded_file = request.FILES['eaffile']
         file_type = magic.from_buffer(open(uploaded_file.temporary_file_path(), "rb").read(2040), mime=True)
         if not (uploaded_file.name.endswith('.eaf') and file_type == 'text/xml'):
             return JsonResponse({'error': _('Invalid file. Please try again.')})
 
         eaf = Eaf(uploaded_file.temporary_file_path())
-        
-        # Add glosses from the right hand
-        for annotation in eaf.tiers['Glosses R'][0].values():
-            gloss_label = annotation[2]
-            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
-                start = int(eaf.timeslots[annotation[0]])
-                end = int(eaf.timeslots[annotation[1]])
-                glosses.append([gloss_label, start, end])
-            else:
-                labels_not_found.append(gloss_label)
-
-        # Add glosses from the left hand, if they don't overlap with the right hand
-        for annotation in find_non_overlapping_annotated_glosses(eaf.timeslots, eaf.tiers['Glosses R'][0].values(), eaf.tiers['Glosses L'][0].values()):
-            gloss_label = annotation[2]
-            if AnnotationIdglossTranslation.objects.filter(gloss__lemma__dataset__acronym=dataset_acronym, text__exact=gloss_label).exists():
-                start = int(eaf.timeslots[annotation[0]])
-                end = int(eaf.timeslots[annotation[1]])
-                glosses.append([gloss_label, start, end])
-            else:
-                labels_not_found.append(gloss_label)
-        
-        # Sort the list of glosses by the "start" value
-        glosses = sorted(glosses, key=lambda x: x[1])
-        
-        if 'Sentences' in eaf.tiers:
-            for annotation in eaf.tiers['Sentences'][0].values():
-                sentences.append(annotation[2])
-        
-        for sentence_i, sentence in enumerate(sentences):
-            sentence_dict[sentence_i] = sentence
+        glosses, labels_not_found, sentence_dict = get_glosses_from_eaf(eaf, dataset_acronym)
 
     # Create the annotations table
     annotations_table_html = render(request, 'annotations_table.html', {'glosses_list': glosses, 'check_gloss_label': [check_gloss_label], 'labels_not_found': labels_not_found}).content.decode('utf-8')
