@@ -290,7 +290,8 @@
                   "Dataset": 
                   {
                     "type": "string",
-                    "description": "Acronym of the dataset, like `NGT` or `ASL`"
+                    "description": "Acronym of the dataset, like `NGT` or `ASL`",
+                    "example": "Test dataset"
                   },
                   "Video_file": 
                   {
@@ -307,21 +308,21 @@
                   "Source": 
                   {
                     "type": "string",
-                    "description": "The source of the sentence"
+                    "description": "The source of the sentence",
+                    "example": "Corpus name"
                   },
                   "Url": 
                   {
                     "type": "string",
-                    "description": "The URL of the sentence"
+                    "description": "The URL of the sentence",
+                    "example": "www.corpus.com/sentenceid"
                   }
                 },
                 "required": 
                 [
                   "Dataset",
                   "Video_file",
-                  "Eaf_file",
-                  "Source",
-                  "Url"
+                  "Eaf_file"
                 ]
               }
             }
@@ -1138,6 +1139,50 @@
         },
         "tags": ["Deleting and restoring Signbank data"],
         "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_delete_annotated_sentence/{datasetid}/{annotatedsentenceid}/": 
+    {
+      "post": 
+      {
+        "description": "Deletes an annotated sentence for a specified dataset.",
+        "parameters": 
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this annotated sentence belongs to.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "annotatedsentenceid",
+            "in": "path",
+            "description": "ID of the annotated sentence to delete.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Annotated sentence deleted successfully."
+          }
+        },
+        "tags": ["Deleting and restoring Signbank data"],
+        "security": 
+        [
           {
             "bearerAuth": []
           }
