@@ -2479,8 +2479,11 @@ class Gloss(models.Model):
             import shutil
             existing_location = existing_video.videofile.path
             file_path = os.path.join(settings.TMP_DIR, videofile.file.name)
-            shutil.move(file_path, existing_location)
-            return existing_video
+            try:
+                shutil.copyfile(file_path, existing_location)
+                return existing_video
+            except IOError:
+                existing_video.delete()
 
         if isinstance(videofile, File):
             video = GlossVideoPerspective(gloss=self, perspective=new_perspective, upload_to=get_video_file_path)
