@@ -2476,11 +2476,10 @@ class Gloss(models.Model):
         existing_video = existing_perspectivevideos.first()
         if existing_video:
             # overwrite the existing file
-            import shutil
             existing_location = existing_video.videofile.path
             file_path = os.path.join(settings.TMP_DIR, videofile.file.name)
             try:
-                shutil.copyfile(file_path, existing_location)
+                os.rename(file_path, existing_location)
                 return existing_video
             except IOError:
                 existing_video.delete()
