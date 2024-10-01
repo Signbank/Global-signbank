@@ -2477,7 +2477,7 @@ class Gloss(models.Model):
         if existing_video:
             # overwrite the existing file
             existing_location = existing_video.videofile.path
-            file_path = os.path.join(settings.TMP_DIR, videofile.file.name)
+            file_path = os.path.realpath(videofile.file.name)
             try:
                 os.rename(file_path, existing_location)
                 return existing_video
