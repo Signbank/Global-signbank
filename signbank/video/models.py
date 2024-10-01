@@ -1095,14 +1095,17 @@ def process_lemmaidgloss_changes(sender, instance, **kwargs):
 
 @receiver(models.signals.post_save, sender=Gloss)
 @receiver(models.signals.post_save, sender=Morpheme)
-def process_gloss_changes(sender, instance, **kwargs):
+def process_gloss_changes(sender, instance, update_fields=[], **kwargs):
     """
     Makes changes to GlossVideos if a Gloss.lemma has changed
     :param sender: 
-    :param instance: 
+    :param instance:
+    :param update_fields: indicate whether the video path has changed
     :param kwargs: 
     :return: 
     """
+    if not update_fields or 'path' not in update_fields:
+        return
     gloss = instance
     glossvideos = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None)
     for glossvideo in glossvideos:
@@ -1116,27 +1119,33 @@ def process_gloss_changes(sender, instance, **kwargs):
 
 
 @receiver(models.signals.post_save, sender=GlossVideoNME)
-def process_nmevideo_changes(sender, instance, **kwargs):
+def process_nmevideo_changes(sender, instance, update_fields=[], **kwargs):
     """
     Makes changes to GlossVideoNME if an offset has changed
     :param sender:
     :param instance:
+    :param update_fields: indicate whether the video path has changed
     :param kwargs:
     :return:
     """
+    if not update_fields or 'path' not in update_fields:
+        return
     glossvideo = instance
     glossvideo.move_video(move_files_on_disk=True)
 
 
 @receiver(models.signals.post_save, sender=GlossVideoPerspective)
-def process_perspectivevideo_changes(sender, instance, **kwargs):
+def process_perspectivevideo_changes(sender, instance, update_fields=[], **kwargs):
     """
     Makes changes to GlossVideoPerspective if an offset has changed
     :param sender:
     :param instance:
+    :param update_fields: indicate whether the video path has changed
     :param kwargs:
     :return:
     """
+    if not update_fields or 'path' not in update_fields:
+        return
     glossvideo = instance
     glossvideo.move_video(move_files_on_disk=True)
 

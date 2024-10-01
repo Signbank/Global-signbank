@@ -932,7 +932,7 @@ def update_gloss(request, glossid):
             lemma = LemmaIdgloss.objects.get(pk=value)
             if dataset is None or dataset == lemma.dataset:
                 gloss.lemma = lemma
-                gloss.save()
+                gloss.save(update_fields=['path'])
             else:
                 messages.add_message(request, messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
         except ObjectDoesNotExist:
