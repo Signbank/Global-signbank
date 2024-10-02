@@ -1151,6 +1151,8 @@ def process_perspectivevideo_changes(sender, instance, update_fields=[], **kwarg
 
 
 @receiver(models.signals.pre_delete, sender=GlossVideo)
+@receiver(models.signals.pre_delete, sender=GlossVideoNME)
+@receiver(models.signals.pre_delete, sender=GlossVideoPerspective)
 def delete_files(sender, instance, **kwargs):
     """
     Deletes all associated files when the GlossVideo instance is deleted.
@@ -1160,4 +1162,9 @@ def delete_files(sender, instance, **kwargs):
     :return: 
     """
     if settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE:
+        # default.py has this set to false so primary gloss video files are not deleted
+        instance.delete_files()
+    elif hasattr(instance, 'glossvideonme'):
+        instance.delete_files()
+    elif hasattr(instance, 'glossvideoperspective'):
         instance.delete_files()

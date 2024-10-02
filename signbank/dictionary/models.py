@@ -2469,19 +2469,8 @@ class Gloss(models.Model):
         from signbank.video.models import GlossVideoPerspective, GlossVideoHistory, get_video_file_path
 
         existing_perspectivevideos = GlossVideoPerspective.objects.filter(gloss=self, perspective=new_perspective)
-        if existing_perspectivevideos.count() > 1:
-            msg = "Gloss %s has multiple videos with same perspective" \
-                  % (self.pk)
-            raise ValidationError(msg)
-        existing_video = existing_perspectivevideos.first()
-        if existing_video:
-            # overwrite the existing file
-            existing_location = existing_video.videofile.path
-            file_path = os.path.realpath(videofile.file.name)
-            try:
-                os.rename(file_path, existing_location)
-                return existing_video
-            except IOError:
+        if existing_perspectivevideos.count() > 0:
+            for existing_video in existing_perspectivevideos:
                 existing_video.delete()
 
         if isinstance(videofile, File):
