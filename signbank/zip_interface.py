@@ -16,7 +16,6 @@ import urllib.request
 import tempfile
 import shutil
 import os
-from signbank.video.convertvideo import probe_format
 from signbank.video.models import GlossVideo, GlossVideoHistory
 from django.http import StreamingHttpResponse
 from django.contrib.auth.models import Group, User
@@ -244,9 +243,10 @@ def save_video(video_file_path, goal):
 
     try:
         shutil.copyfile(video_file_path, goal)
-        return True
-    except IOError:
-        return False
+        return True, ""
+    except IOError as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        return False, feedback_message
 
 
 def import_video_file(request, gloss, video_file_path):
@@ -257,11 +257,13 @@ def import_video_file(request, gloss, video_file_path):
             if not goal_gloss_file_path:
                 errors = "Incorrect gloss path for import."
                 errors_deleting = remove_video_file_from_import_videos(video_file_path)
+                if errors_deleting:
+                    print('import_video_file: ', errors_deleting)
                 return "Failed", errors
             existing_videos = GlossVideo.objects.filter(gloss=gloss, version=0)
             if existing_videos.count():
                 # overwrite existing video using shutil
-                success = save_video(video_file_path, goal_gloss_file_path)
+                success, feedback = save_video(video_file_path, goal_gloss_file_path)
                 if success:
                     # make sure the video name stored in GlossVideo matches the uploaded video
                     existing_glossvideo = existing_videos.first()
@@ -279,14 +281,15 @@ def import_video_file(request, gloss, video_file_path):
                     glossvideohistory.save()
                     status, errors = 'Success', ""
                 else:
-                    status, errors = 'Failed', "Failed"
+                    status, errors = 'Failed', feedback
 
             else:
                 # make new GlossVideo object for new video
                 video = GlossVideo(gloss=gloss,
                                    version=0)
+                new_glossvideo_name =os.path.join(video_path, video_file_name)
                 with open(video_file_path, 'rb') as f:
-                    video.videofile.save(os.path.basename(video_file_path), File(f), save=True)
+                    video.videofile.save(new_glossvideo_name, File(f), save=True)
                 video.save()
                 video.make_poster_image()
                 glossvideohistory = GlossVideoHistory(action="import",
@@ -300,5 +303,7 @@ def import_video_file(request, gloss, video_file_path):
         status, errors = "Failed", "Failed"
 
     errors_deleting = remove_video_file_from_import_videos(video_file_path)
+    if errors_deleting:
+        print('import_video_file: ', errors_deleting)
 
     return status, errors
