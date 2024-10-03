@@ -187,10 +187,7 @@ def check_gloss_existence_for_uploaded_video(dataset):
                     gloss = Gloss.objects.filter(lemma__dataset=dataset, archived=False,
                                                  annotationidglosstranslation__language__language_code_3char=language3char,
                                                  annotationidglosstranslation__text__exact=filename_without_extension).first()
-                    if gloss:
-                        list_of_video_gloss_status[language3char].append((file, True, gloss))
-                    else:
-                        list_of_video_gloss_status[language3char].append((file, False, gloss))
+                    list_of_video_gloss_status[language3char].append((file, True, gloss))
 
     return list_of_video_gloss_status
 

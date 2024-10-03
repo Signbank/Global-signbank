@@ -287,8 +287,9 @@ def import_video_file(request, gloss, video_file_path):
                 # make new GlossVideo object for new video
                 video = GlossVideo(gloss=gloss,
                                    version=0)
+                new_glossvideo_name =os.path.join(video_path, video_file_name)
                 with open(video_file_path, 'rb') as f:
-                    video.videofile.save(os.path.basename(video_file_path), File(f), save=True)
+                    video.videofile.save(new_glossvideo_name, File(f), save=True)
                 video.save()
                 video.make_poster_image()
                 glossvideohistory = GlossVideoHistory(action="import",
