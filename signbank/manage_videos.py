@@ -26,7 +26,6 @@ import urllib.request
 import tempfile
 import shutil
 import os
-from signbank.video.convertvideo import probe_format
 from signbank.video.models import GlossVideo, GlossVideoHistory
 from django.http import StreamingHttpResponse
 from django.contrib.auth.models import Group, User
@@ -148,16 +147,11 @@ def listing_uploaded_videos(dataset):
                 for file in os.listdir(language_subfolder):
                     video_file_path = os.path.join(goal_directory, language3char, file)
                     import_folder = os.path.join(dataset_acronym, language3char, file)
-                    format = probe_format(video_file_path)
                     (filename_without_extension, extension) = os.path.splitext(file)
                     gloss = Gloss.objects.filter(lemma__dataset=dataset,
                                                  annotationidglosstranslation__language__language_code_3char=language3char,
                                                  annotationidglosstranslation__text__exact=filename_without_extension).first()
-                    if format.startswith('h264'):
-                        # the output of ffmpeg includes extra information following h264, so only check the prefix
-                        list_of_video_gloss_status[language3char].append((video_file_path, import_folder, file, True, gloss))
-                    else:
-                        list_of_video_gloss_status[language3char].append((video_file_path, import_folder, file, False, gloss))
+                    list_of_video_gloss_status[language3char].append((video_file_path, import_folder, file, True, gloss))
 
     return list_of_video_gloss_status
 
@@ -188,30 +182,18 @@ def import_video_to_gloss_manager(request, video_file_path):
         errors_deleting = remove_video_file_from_import_videos(video_file_path)
         import_video_data["errors"] = errors
         return import_video_data
-    format = probe_format(video_file_path)
-    if format.startswith('h264'):
-        # the output of ffmpeg includes extra information following h264, so only check the prefix
-        status, errors = import_video_file(request, gloss, video_file_path)
-        if not errors:
-            videolink = gloss.get_video_url()
-            imagelink = gloss.get_image_url()
-            import_video_data["gloss"] = str(gloss.id)
-            import_video_data["annotation"] = filename_without_extension
-            import_video_data["videopath"] = videopath
-            import_video_data["videofile"] = filename
-            import_video_data["imagelink"] = '/dictionary/protected_media/' + imagelink
-            import_video_data["videolink"] = '/dictionary/protected_media/' + videolink
-            import_video_data["uploadstatus"] = _("Success")
-            import_video_data["errors"] = errors
-        else:
-            import_video_data["gloss"] = str(gloss.id)
-            import_video_data["annotation"] = filename_without_extension
-            import_video_data["videopath"] = videopath
-            import_video_data["videofile"] = filename
-            import_video_data["imagelink"] = ""
-            import_video_data["videolink"] = ""
-            import_video_data["uploadstatus"] = _("Failure.")
-            import_video_data["errors"] = _("Error saving video file.")
+    status, errors = import_video_file(request, gloss, video_file_path)
+    if not errors:
+        videolink = gloss.get_video_url()
+        imagelink = gloss.get_image_url()
+        import_video_data["gloss"] = str(gloss.id)
+        import_video_data["annotation"] = filename_without_extension
+        import_video_data["videopath"] = videopath
+        import_video_data["videofile"] = filename
+        import_video_data["imagelink"] = '/dictionary/protected_media/' + imagelink
+        import_video_data["videolink"] = '/dictionary/protected_media/' + videolink
+        import_video_data["uploadstatus"] = _("Success")
+        import_video_data["errors"] = errors
     else:
         import_video_data["gloss"] = str(gloss.id)
         import_video_data["annotation"] = filename_without_extension
@@ -219,8 +201,8 @@ def import_video_to_gloss_manager(request, video_file_path):
         import_video_data["videofile"] = filename
         import_video_data["imagelink"] = ""
         import_video_data["videolink"] = ""
-        import_video_data["uploadstatus"] = _("Wrong video format.")
-        import_video_data["errors"] = _("Video file is not h264.")
+        import_video_data["uploadstatus"] = _("Failure.")
+        import_video_data["errors"] = _("Error saving video file.")
     return import_video_data
 
 
