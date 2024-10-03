@@ -4175,6 +4175,7 @@ class DatasetManagerView(ListView):
 
         if 'add_view_perm' in self.request.GET:
             manage_identifier += '_manage_view'
+
             if dataset_object in datasets_user_can_view:
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.INFO,
@@ -4262,7 +4263,6 @@ class DatasetManagerView(ListView):
 
         if 'delete_view_perm' in self.request.GET:
             manage_identifier += '_manage_view'
-
             if dataset_object in datasets_user_can_view:
                 if user_object.is_staff or user_object.is_superuser:
                     messages.add_message(self.request, messages.ERROR,

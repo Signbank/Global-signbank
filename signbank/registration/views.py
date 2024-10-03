@@ -314,6 +314,7 @@ def users_without_dataset(request):
                 continue
 
             user = User.objects.get(pk=int(user.split('_')[-1]))
+
             assign_perm('view_dataset', user, main_dataset)
 
             users_with_access.append(user.first_name + ' ' + user.last_name)
