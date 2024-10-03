@@ -763,27 +763,32 @@ textarea:focus {
     <div id="leftblock">
     <div id="videocontainer">
     {% if gloss.has_perspective_videos %}
+    <div id="buttonbar-top">
     {% for perspvideo in gloss.get_perspective_videos %}
     <button id="show_{{perspvideo.perspective}}">{{perspvideo.perspective}}</button>
     {% endfor %}
     <button id="show_middle">middle</button>
+    </div>
     {% endif %}
     {% if gloss.has_video %}
 
      <!-- {{gloss.get_video}} -->
 
-        <div id="player">
-            <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}" playsinline type="video/mp4" autoplay muted></video>
+        <div id="player" style="">
+            <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}"
+                   playsinline type="video/mp4" autoplay muted></video>
 
         {% for perspvideo in gloss.get_perspective_videos %}
-            <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}" playsinline type="video/mp4" autoplay muted></video>
+            <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}"
+                   playsinline type="video/mp4" autoplay muted></video>
         {% endfor %}
         </div>
-        <div id="buttonbar">
+        <div id="buttonbar" style="margin-top:-25px;">
         <button id="play_perspective" onclick="play_perspective();">{% trans "play" %}</button>
         <button id="pause_perspective" onclick="pause_perspective();">{% trans "pause" %}</button>
         <button id="restart_perspective" onclick="restart_perspective();">{% trans "restart" %}</button>
         </div>
+        <br>
     {% else %}
     <div id='player'>
      <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png'>
@@ -953,7 +958,7 @@ textarea:focus {
 <!-- Perspective videos -->
    <div class="panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
-             data-target='#perspectivevideos'>{% trans "Perspective Videos" %}
+             data-target='#perspectivevideos'>{% trans "Upload Perspective Videos" %}
         </div>
         <div id='perspectivevideos' class='collapse'>
             <div class="panel panel-default panel-light">
