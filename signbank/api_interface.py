@@ -313,6 +313,8 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     try:
         zipped_file_url = request.GET['file']
+        if ' ' in zipped_file_url:
+            raise InvalidURL
     except (OSError, URLError, InvalidURL):
         status_request['errors'] = "Error processing the zip file parameter to the URL."
         return JsonResponse(status_request)
