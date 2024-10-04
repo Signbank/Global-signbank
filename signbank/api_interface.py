@@ -1,4 +1,5 @@
 import json
+from urllib.error import URLError
 
 from signbank.dictionary.models import *
 from django.db.models import FileField
@@ -308,8 +309,13 @@ def upload_zipped_videos_folder_json(request, datasetid):
             os.mkdir(dataset_lang3char_folder, mode=0o775)
 
     # get file as a url parameter: /dictionary/upload_zipped_videos_folder_json/5/?file=file:///path/to/zipfile.zip
-    
-    zipped_file_url = request.GET['file']
+
+    try:
+        zipped_file_url = request.GET['file']
+    except (OSError, URLError):
+        status_request['errors'] = "Error processing the zip file parameter to the URL."
+        return JsonResponse(status_request)
+
     file_path_units = zipped_file_url.split('/')
     file_name = file_path_units[-1]
 
