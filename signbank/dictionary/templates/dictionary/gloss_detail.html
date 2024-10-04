@@ -763,11 +763,21 @@ textarea:focus {
     <div id="leftblock">
     <div id="videocontainer">
     {% if gloss.has_perspective_videos %}
-    <div id="buttonbar-top">
+    <div id="buttonbar-top" style="background-color:transparent;height:auto;">
     {% for perspvideo in gloss.get_perspective_videos %}
-    <button id="show_{{perspvideo.perspective}}">{{perspvideo.perspective}}</button>
+        {% if perspvideo.perspective == 'left' %}
+        <button id="show_left" style="font-size:18px;background-color:transparent;">
+            <span class="glyphicon glyphicon-hand-left"></span></button>
+        {% endif %}
     {% endfor %}
-    <button id="show_middle">middle</button>
+    <button id="show_middle" style="font-size:18px;background-color:transparent;">
+        <span class="glyphicon glyphicon-user"></span></button>
+    {% for perspvideo in gloss.get_perspective_videos %}
+        {% if perspvideo.perspective == 'right' %}
+        <button id="show_right"style="font-size:18px;background-color:transparent;">
+            <span class="glyphicon glyphicon-hand-right"></span></button>
+        {% endif %}
+    {% endfor %}
     </div>
     {% endif %}
     {% if gloss.has_video %}
@@ -783,10 +793,11 @@ textarea:focus {
                    playsinline type="video/mp4" autoplay muted></video>
         {% endfor %}
         </div>
-        <div id="buttonbar" style="margin-top:-25px;">
-        <button id="play_perspective" onclick="play_perspective();">{% trans "play" %}</button>
-        <button id="pause_perspective" onclick="pause_perspective();">{% trans "pause" %}</button>
-        <button id="restart_perspective" onclick="restart_perspective();">{% trans "restart" %}</button>
+        <div id="buttonbar" style="background-color:transparent;">
+        <button id="play_perspective" onclick="play_perspective();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
+        <button id="pause_perspective" onclick="pause_perspective();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
         </div>
         <br>
     {% else %}
