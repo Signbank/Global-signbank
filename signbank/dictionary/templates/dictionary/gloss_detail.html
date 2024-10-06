@@ -766,15 +766,17 @@ textarea:focus {
     <div id="buttonbar-top" style="background-color:transparent;height:auto;">
     {% for perspvideo in gloss.get_perspective_videos %}
         {% if perspvideo.perspective == 'left' %}
-        <button id="show_left" style="font-size:18px;background-color:transparent;">
-            <span class="glyphicon glyphicon-hand-left"></span></button>
+        <button class="btn" id="show_left" style="font-size:18px;background-color:transparent;">
+            <span class="glyphicon glyphicon-hand-left"></span>
+        </button>
         {% endif %}
     {% endfor %}
-    <button id="show_middle" style="font-size:18px;background-color:transparent;">
-        <span class="glyphicon glyphicon-user"></span></button>
+    <button class="btn" id="show_middle" style="font-size:18px;background-color:transparent;">
+        <span class="glyphicon glyphicon-user"></span>
+    </button>
     {% for perspvideo in gloss.get_perspective_videos %}
         {% if perspvideo.perspective == 'right' %}
-        <button id="show_right"style="font-size:18px;background-color:transparent;">
+        <button class="btn" id="show_right"style="font-size:18px;background-color:transparent;">
             <span class="glyphicon glyphicon-hand-right"></span></button>
         {% endif %}
     {% endfor %}
@@ -794,9 +796,9 @@ textarea:focus {
         {% endfor %}
         </div>
         <div id="buttonbar" style="background-color:transparent;">
-        <button id="play_perspective" onclick="play_perspective();"
+        <button class="btn" id="play_perspective" onclick="play_perspective();"
                 style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
-        <button id="pause_perspective" onclick="pause_perspective();"
+        <button class="btn" id="pause_perspective" onclick="pause_perspective();"
                 style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
         </div>
         <br>
