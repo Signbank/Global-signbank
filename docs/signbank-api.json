@@ -743,6 +743,98 @@
         ]
       }
     },
+    "/dictionary/api_update_annotated_sentence/{datasetid}/{annotatedsentenceid}/": 
+    {
+      "post": 
+      {
+        "description": "Updates an annotated sentence with translations, context, source, url, and representative glosses.",
+        "parameters": 
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this annotated sentence is part of",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "annotatedsentenceid",
+            "in": "path",
+            "description": "ID of the annotated sentence to update",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content": 
+          {
+            "application/json": 
+            {
+              "schema": 
+              {
+                "type": "object",
+                "properties": 
+                {
+                  "Translation (Dutch)": 
+                  {
+                    "type": "string"
+                  },
+                  "Translation (English)": 
+                  {
+                    "type": "string"
+                  },
+                  "Context (Dutch)": 
+                  {
+                    "type": "string"
+                  },
+                  "Context (English)": 
+                  {
+                    "type": "string"
+                  },
+                  "Source": 
+                  {
+                    "type": "string"
+                  },
+                  "Url": 
+                  {
+                    "type": "string"
+                  },
+                  "Representative glosses": 
+                  {
+                    "type": "array",
+                    "items": 
+                    {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Update successful"
+          }
+        },
+        "tags": ["Updating Signbank data"],
+        "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/dictionary/api_update_gloss_nmevideo/{datasetid}/{glossid}/{videoid}/": 
     {
       "post": 
