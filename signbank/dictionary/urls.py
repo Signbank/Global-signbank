@@ -226,6 +226,8 @@ urlpatterns = [
             signbank.gloss_update.api_delete_gloss_nmevideo, name='api_delete_gloss_nmevideo'),
     re_path(r'api_create_annotated_sentence/(?P<datasetid>\d+)/$',
             signbank.gloss_update.api_create_annotated_sentence, name='api_create_annotated_sentence'),
+    re_path(r'api_update_annotated_sentence/(?P<datasetid>\d+)/(?P<annotatedsentenceid>\d+)/$',
+            signbank.gloss_update.api_update_annotated_sentence, name='api_update_annotated_sentence'),
     re_path(r'api_delete_annotated_sentence/(?P<datasetid>\d+)/(?P<annotatedsentenceid>\d+)/$',
             signbank.gloss_update.api_delete_annotated_sentence, name='api_delete_annotated_sentence'),
 
