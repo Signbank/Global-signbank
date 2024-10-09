@@ -230,6 +230,9 @@ urlpatterns = [
             signbank.gloss_update.api_update_annotated_sentence, name='api_update_annotated_sentence'),
     re_path(r'api_delete_annotated_sentence/(?P<datasetid>\d+)/(?P<annotatedsentenceid>\d+)/$',
             signbank.gloss_update.api_delete_annotated_sentence, name='api_delete_annotated_sentence'),
+    re_path(r'get_annotated_sentences_of_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
+            signbank.api_interface.get_annotated_sentences_of_gloss_json, name='get_annotated_sentences_of_gloss_json'),
+
 
     re_path(r'restore_gloss/(?P<glossid>\d+)/$',
             signbank.dictionary.update.restore_gloss, name='restore_gloss'),

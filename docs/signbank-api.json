@@ -177,6 +177,51 @@
         ]
       }
     },
+    "/dictionary/get_annotated_sentences_of_gloss/{datasetid}/{glossid}":
+    {
+      "get": 
+      {
+        "description": "Gives you the annotated sentences of a particular gloss in the format of a list with a dictionary for each annotated sentence. The fields in the dictionary are 'Translation ([Language])', 'Context ([Language])', 'Source', 'Url', 'Representative glosses', 'Unrepresentative glosses'. Based on the request, the `LANGUAGE_CODE` set to `nl` or one of the other interface languages yields results in that language.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "The dataset ID.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string",
+              "default": "5"
+            }
+          },
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "The gloss ID.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }     
+        ],
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Detailed information on the annotated sentences of a gloss."
+          }
+        },
+        "tags": ["Collecting information"],
+        "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/dictionary/api_create_gloss/{datasetid}/": 
     {
       "post": 
