@@ -200,6 +200,7 @@ def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
     related_sentences = AnnotatedSentence.objects.filter(annotated_glosses__gloss = gloss).distinct()
     for sentence in related_sentences.all():
         sentence_dict = dict()
+        sentence_dict["id"] = sentence.id
         for language in dataset_languages:
             translations_name = gettext("Translation") + " (" + language.name + ")"
             contexts_name = gettext("Context") + " (" + language.name + ")"
