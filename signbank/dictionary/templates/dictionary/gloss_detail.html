@@ -767,7 +767,7 @@ textarea:focus {
     {% for perspvideo in gloss.get_perspective_videos %}
         {% if perspvideo.perspective == 'left' %}
         <button class="btn" id="show_left" style="font-size:18px;background-color:transparent;">
-            <span class="glyphicon glyphicon-hand-left"></span>
+            <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
         </button>
         {% endif %}
     {% endfor %}
@@ -777,7 +777,7 @@ textarea:focus {
     {% for perspvideo in gloss.get_perspective_videos %}
         {% if perspvideo.perspective == 'right' %}
         <button class="btn" id="show_right"style="font-size:18px;background-color:transparent;">
-            <span class="glyphicon glyphicon-hand-right"></span></button>
+            <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span></button>
         {% endif %}
     {% endfor %}
     </div>
