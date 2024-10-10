@@ -856,7 +856,7 @@
         ]
       }
     },
-    "/dictionary/upload_videos_to_glosses/{datasetid}": 
+    "/dictionary/upload_videos_to_glosses/{datasetid}/":
     {
       "post": 
       {
