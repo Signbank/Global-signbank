@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext as _
+from django.forms.utils import ValidationError
 
 from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
 from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence, Dataset, AnnotatedSentenceSource
@@ -46,6 +47,17 @@ def addvideo(request):
                 if not gloss:
                     redirect(redirect_url)
                 gloss.add_video(request.user, vfile, recorded)
+            elif object_type == 'gloss_perspectivevideo':
+                gloss = Gloss.objects.filter(id=object_id).first()
+                if not gloss:
+                    redirect(redirect_url)
+                perspective = form.cleaned_data['perspective']
+                try:
+                    gloss.add_perspective_video(request.user, vfile, perspective, recorded)
+                except ValidationError as e:
+                    feedback_message = getattr(e, 'message', repr(e))
+                    messages.add_message(request, messages.ERROR, feedback_message)
+                    return redirect(redirect_url)
             elif object_type == 'gloss_nmevideo':
                 gloss = Gloss.objects.filter(id=object_id).first()
                 if not gloss:
@@ -261,6 +273,9 @@ def deletevideo(request, videoid):
     return redirect(url)
 
 
+# CHECK FUNCTIONALITY
+# WHY IS VIDEOID USED AS GLOSSID?
+# IS THIS METHOD USED?
 def video(request, videoid):
     """Redirect to the video url for this videoid"""
 
@@ -271,7 +286,7 @@ def video(request, videoid):
 
 def create_still_images(request):
     processed_videos = []
-    for video in GlossVideo.objects.filter(version=0):
+    for video in GlossVideo.objects.filter(glossvideonme=None, glossvideoperspective=None, version=0):
         generate_still_image(video)
         processed_videos.append(str(video))
     return HttpResponse('Processed videos: <br/>' + "<br/>".join(processed_videos))

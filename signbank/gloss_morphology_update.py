@@ -163,21 +163,21 @@ def api_update_gloss_morphology(request, datasetid, glossid):
         errors[gettext("User")] = gettext("You must be logged in to use this functionality.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
         errors[gettext("Dataset")] = gettext("Dataset ID does not exist.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)
 
     change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
     if dataset not in change_permit_datasets:
         errors[gettext("Dataset")] = gettext("No change permission for dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)
 
     try:
         gloss_id = int(glossid)
@@ -187,7 +187,7 @@ def api_update_gloss_morphology(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss ID must be a number.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)
 
     gloss = Gloss.objects.filter(id=gloss_id).first()
 
@@ -195,43 +195,43 @@ def api_update_gloss_morphology(request, datasetid, glossid):
         errors[gettext("Gloss")] = gettext("Gloss not found.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)
 
     if not gloss.lemma:
         errors[gettext("Gloss")] = gettext("Gloss does not have a lemma.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)
 
     if gloss.lemma.dataset != dataset:
         errors[gettext("Gloss")] = gettext("Gloss not found in the dataset.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)
 
     if not request.user.has_perm('dictionary.change_gloss'):
         errors[gettext("Gloss")] = gettext("No change gloss permission.")
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)
 
     value_dict = get_gloss_update_human_readable_value_dict(request)
     errors = check_fields_can_be_updated(value_dict, interface_language_code)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)
 
     fields_to_update = gloss_update(gloss, value_dict, interface_language_code)
     errors = detect_type_related_problems_for_gloss_update(gloss, fields_to_update, interface_language_code)
     if errors:
         results['errors'] = errors
         results['updatestatus'] = "Failed"
-        return JsonResponse(results)
+        return JsonResponse(results, safe=False)
 
     gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
 
-    results['errors'] = {}
+    results['errors'] = errors
     results['updatestatus'] = "Success"
 
-    return JsonResponse(results)
+    return JsonResponse(results, safe=False)

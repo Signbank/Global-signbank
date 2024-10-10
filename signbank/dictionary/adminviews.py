@@ -1166,6 +1166,7 @@ class GlossDetailView(DetailView):
         context['affiliationform'] = AffiliationUpdateForm()
         context['videoform'] = VideoUploadForObjectForm(languages=dataset_languages)
         context['nmevideoform'] = VideoUploadForObjectForm(languages=dataset_languages)
+        context['perspectivevideoform'] = VideoUploadForObjectForm(languages=dataset_languages)
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
