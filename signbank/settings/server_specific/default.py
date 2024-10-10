@@ -302,6 +302,8 @@ DEBUG_CSV = False
 
 DEBUG_SENSES = False
 
+DEBUG_VIDEOS = False
+
 # Set this to True to avoid deleting glosses that are in relations with other glosses
 GUARDED_GLOSS_DELETE = False
 

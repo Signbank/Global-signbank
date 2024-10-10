@@ -1,10 +1,30 @@
 {% extends "baselayout.html" %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+
+{% load bootstrap3 %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Missing Videos{% endblocktrans %}
+{% endblock %}
 
 {% block content %}
- 
+<div id="definitionblock">
+    {% url 'dictionary:protected_media' '' as protected_media_url %}
+
+<h3>{% trans "Video Files without GlossVideo objects" %}</h3>
+
  <ul>
- {% for gloss in glosses %}
-   <li><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{{gloss.idgloss}}</a> ({{ gloss.lemma.dataset }})</li>
+ {% for gloss, video_path in glosses %}
+   <li><a href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{{gloss|get_default_annotation_idgloss_translation}}</a> ({{ gloss.lemma.dataset }})
+     <div id="videocontainer">
+        <div id="player">
+            <video id='videoplayer' src="{{protected_media_url}}{{video_path}}" controls type="video/mp4" autoplay muted></video>
+        </div>
+     </div>
+   </li>
  {% endfor %}
  </ul>
+</div>
 {% endblock %}
