@@ -395,7 +395,11 @@ function configure_edit() {
      $('.edit_area').editable(edit_post_url, {
          params : { a: 0 },
          type      : 'textarea',
-		 callback : update_view_and_remember_original_value
+		 callback : update_view_and_remember_original_value,
+         onerror : function(settings, original, xhr){
+               alert(xhr.responseText);
+               original.reset();
+         },
      });
      // edit_role needs a new/different edit_post_url
      $('.edit_role').editable(edit_post_url, {
