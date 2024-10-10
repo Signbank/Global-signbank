@@ -1,5 +1,7 @@
 import json
 from urllib.error import URLError
+
+from django.views.decorators.csrf import csrf_exempt
 from requests.exceptions import InvalidURL
 
 from signbank.dictionary.models import *
@@ -452,6 +454,7 @@ def json_finish():
 
 
 @put_api_user_in_request
+@csrf_exempt
 def upload_videos_to_glosses(request, datasetid):
     # get file as a url parameter: /dictionary/upload_videos_to_glosses/5
 

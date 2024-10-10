@@ -135,8 +135,6 @@ def unzip_video_files(dataset, zipped_videos_file, destination):
     unzipped_filename = os.path.basename(zipped_videos_file)
     folder_name, extension = os.path.splitext(unzipped_filename)
     unzipped_folder = os.path.join(destination, folder_name)
-    if os.path.exists(unzipped_folder):
-        shutil.rmtree(unzipped_folder)
 
     return
 

@@ -264,6 +264,7 @@ urlpatterns = [
     re_path(r'^keywords/$', KeywordListView.as_view(), name='admin_keyword_list'),
 
     re_path(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples),
+    re_path(r'missing_video_view', signbank.dictionary.views.missing_video_view),
 
     re_path(r'createcitationimage/(?P<pk>\d+)',
             permission_required('dictionary.change_gloss')(signbank.dictionary.views.create_citation_image),

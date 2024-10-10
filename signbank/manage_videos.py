@@ -202,7 +202,7 @@ def import_video_to_gloss_manager(request, video_file_path):
         import_video_data["imagelink"] = ""
         import_video_data["videolink"] = ""
         import_video_data["uploadstatus"] = _("Failure.")
-        import_video_data["errors"] = _("Error saving video file.")
+        import_video_data["errors"] = errors
     return import_video_data
 
 

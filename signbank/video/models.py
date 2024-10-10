@@ -161,6 +161,8 @@ def get_video_file_path(instance, filename, nmevideo=False, offset=1, version=0)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
         from django.utils.encoding import escape_uri_path
         path = escape_uri_path(path)
+    if settings.DEBUG_VIDEOS:
+        print('get_video_file_path: ', path)
     return path
 
 

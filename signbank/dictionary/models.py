@@ -2390,7 +2390,7 @@ class Gloss(models.Model):
 
         # Create a new GlossVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideo(gloss=self, upload_to=get_video_file_path)
+            video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None)
             # Backup the existing video objects stored in the database
             existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None)
             for video_object in existing_videos:
@@ -2398,22 +2398,22 @@ class Gloss(models.Model):
 
             # Create a GlossVideoHistory object
             relative_path = get_video_file_path(video, str(videofile))
+            # Save the new videofile in the video object
+            try:
+                video.videofile.save(relative_path, videofile)
+            except OSError:
+                msg = "The video could not be saved in the GlossVideo object for gloss " % self.pk
+                raise ValidationError(msg)
+            video.make_poster_image()
+
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
             glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
                                                   uploadfile=videofile, goal_location=video_file_full_path)
             glossvideohistory.save()
 
-            # Save the new videofile in the video object
-            video.videofile.save(relative_path, videofile)
         else:
-            return GlossVideo(gloss=self, upload_to=get_video_file_path)
-        video.save()
-        # video.convert_to_mp4()
-        # video.ch_own_mod_video()
-        # video.make_small_video()
-        video.make_poster_image()
-
-        return video
+            msg = "A GlossVideo object could not be created for gloss " % self.pk
+            raise ValidationError(msg)
 
     def has_nme_videos(self):
         from signbank.video.models import GlossVideoNME
