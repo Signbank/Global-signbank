@@ -235,7 +235,7 @@ class AnnotatedVideoDatasetFilter(admin.SimpleListFilter):
 
 class AnnotatedVideoAdmin(admin.ModelAdmin):
     actions = None
-    fields = ['annotatedsentence', 'videofile', 'eaffile', 'source']
+    fields = ['annotatedsentence', 'videofile', 'eaffile', 'source', 'url']
     list_display = ['dataset', 'video_file', 'eaf_file', 'annotatedsentence']
 
     def dataset(self, obj=None):

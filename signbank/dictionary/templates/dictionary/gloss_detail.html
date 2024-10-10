@@ -2461,6 +2461,12 @@ textarea:focus {
                                         {% endif %}
                                     {% endif %}
                                 </p>
+                                <p>
+                                    {% if annotated_sentence.annotatedvideo.url %}
+                                    <i>{% trans "Original video" %}</i><br>
+                                    <a href="{{ annotated_sentence.annotatedvideo.get_absolute_url }}">{{ annotated_sentence.annotatedvideo.url }}</a>
+                                    {% endif %}
+                                </p>
                             </td>
                         {% else %}
                             <td style="flex: 0 0 30%;"></td>
