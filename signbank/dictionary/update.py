@@ -1171,9 +1171,7 @@ def update_annotation_idgloss(request, gloss, field, value):
         annotation_idgloss_translation.save()
     except ValidationError as e:
         feedback_message = getattr(e, 'message', repr(e))
-        messages.add_message(request, messages.ERROR, feedback_message)
-        reverse_url = 'dictionary:admin_gloss_view'
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': str(gloss.pk)}))
+        return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
     return HttpResponse(str(value), {'content-type': 'text/plain'})
 

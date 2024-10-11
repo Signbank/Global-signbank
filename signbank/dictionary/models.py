@@ -3445,10 +3445,10 @@ class AnnotationIdglossTranslation(models.Model):
                                                           annotationidglosstranslation__language=self.language,
                                                           lemma__dataset=dataset)
             if not (
-                    (len(glosses_with_same_text) == 1 and glosses_with_same_text[0] == self)
-                    or glosses_with_same_text is None or len(glosses_with_same_text) == 0):
-                msg = "The annotation idgloss translation text '%s' is not unique within dataset '%s' for gloss '%s'." \
-                      % (self.text, dataset.acronym, self.gloss.id)
+                    (glosses_with_same_text.count() == 1 and glosses_with_same_text.first() == self)
+                    or glosses_with_same_text is None or glosses_with_same_text.count() == 0):
+                gloss_with_same_text = glosses_with_same_text.first()
+                msg = f"The annotation idgloss translation text '{self.text}' is not unique within dataset '{dataset.acronym}' for gloss '{self.gloss.id}'. Gloss {gloss_with_same_text.id} also has this text."
                 raise ValidationError(msg)
 
         super(AnnotationIdglossTranslation, self).save(*args, **kwargs)
