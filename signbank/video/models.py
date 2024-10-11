@@ -953,6 +953,7 @@ PERSPECTIVE_CHOICES = (('left', 'Left'),
                        ('right', 'Right')
                        )
 
+
 class GlossVideoPerspective(GlossVideo):
     perspective = models.CharField(max_length=20, choices=PERSPECTIVE_CHOICES)
 
@@ -963,25 +964,7 @@ class GlossVideoPerspective(GlossVideo):
     def get_video_path(self):
         return self.videofile.name
 
-    def ensure_mp4(self):
-        """Ensure that the video file is an h264 format
-        video, convert it if necessary"""
-
-        # convert video to use the right size and iphone/net friendly bitrate
-        # create a temporary copy in the new format
-        # then move it into place
-
-        (basename, ext) = os.path.splitext(self.videofile.path)
-        if ext == '.mov' or ext == '.webm':
-            oldloc = self.videofile.path
-            newloc = basename + ".mp4"
-            err = convert_video(oldloc, newloc, force=False)
-            self.videofile.name = get_video_file_path(self, os.path.basename(newloc),
-                                                      nmevideo=False, perspective=self.perspective)
-            os.remove(oldloc)
-
     def save(self, *args, **kwargs):
-        self.ensure_mp4()
         super(GlossVideoPerspective, self).save(*args, **kwargs)
 
     def move_video(self, move_files_on_disk=True):
@@ -989,28 +972,45 @@ class GlossVideoPerspective(GlossVideo):
         Calculates the new path, moves the video file to the new path and updates the videofile field
         :return:
         """
+        if not move_files_on_disk:
+            return
+        # other code does this too. It's a dubious way to obtain the path
         old_path = str(self.videofile)
-        new_path = get_video_file_path(self, old_path, nmevideo=False, perspective=self.perspective, version=self.version)
-        if old_path != new_path:
-            if move_files_on_disk:
-                source = os.path.join(settings.WRITABLE_FOLDER, old_path)
-                destination = os.path.join(settings.WRITABLE_FOLDER, new_path)
-                if os.path.exists(source):
-                    destination_dir = os.path.dirname(destination)
-                    if not os.path.exists(destination_dir):
-                        os.makedirs(destination_dir)
-                    if os.path.isdir(destination_dir):
-                        shutil.move(source, destination)
+        new_path = get_video_file_path(self, old_path, nmevideo=False, perspective=str(self.perspective))
+        if old_path == new_path:
+            return
 
-                    self.videofile.name = new_path
-                    self.save()
+        source = os.path.join(settings.WRITABLE_FOLDER, old_path)
+        destination = os.path.join(settings.WRITABLE_FOLDER, new_path)
+        if os.path.exists(source):
+            destination_dir = os.path.dirname(destination)
+            if not os.path.exists(destination_dir):
+                os.makedirs(destination_dir)
+            if os.path.isdir(destination_dir):
+                shutil.move(source, destination)
+
+            self.videofile.name = new_path
+            self.save()
+        else:
+            # on the production server this is a problem
+            msg = "Perspective video file not found: " + source
+            print(msg)
 
     def delete_files(self):
         """Delete the files associated with this object"""
+        old_path = str(self.videofile)
+        file_system_path = os.path.join(settings.WRITABLE_FOLDER, old_path)
+        if not os.path.exists(file_system_path):
+            # Video file not found on server
+            # on the production server this is a problem
+            msg = "Perspective video file not found: " + file_system_path
+            print(msg)
+            return
         try:
-            os.unlink(self.videofile.path)
+            os.unlink(file_system_path)
         except OSError:
-            pass
+            msg = "Perspective video file could not be deleted: " + file_system_path
+            print(msg)
 
     def reversion(self, revert=False):
         """Delete the video file of this object"""
