@@ -1,5 +1,7 @@
 import json
 
+from django.views.decorators.csrf import csrf_exempt
+
 from signbank.dictionary.models import *
 from django.db.models import FileField
 from django.core.files.base import ContentFile, File
@@ -135,8 +137,6 @@ def unzip_video_files(dataset, zipped_videos_file, destination):
     unzipped_filename = os.path.basename(zipped_videos_file)
     folder_name, extension = os.path.splitext(unzipped_filename)
     unzipped_folder = os.path.join(destination, folder_name)
-    if os.path.exists(unzipped_folder):
-        shutil.rmtree(unzipped_folder)
 
     return
 
@@ -249,6 +249,7 @@ def save_video(video_file_path, goal):
         return False, feedback_message
 
 
+@csrf_exempt
 def import_video_file(request, gloss, video_file_path):
     # request is needed as a parameter to the GlossVideoHistory
     try:
