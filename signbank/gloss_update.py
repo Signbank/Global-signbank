@@ -1296,7 +1296,7 @@ def api_create_annotated_sentence(request, datasetid):
     os.remove(tmp_eaf_file_path)
 
     # Create an AnnotatedSentence object
-    annotatedSentence = AnnotatedSentence.objects.create()
+    annotated_sentence = AnnotatedSentence.objects.create()
 
     # Get glosses and sentences from the eaf file
     from signbank.video.views import get_glosses_from_eaf
@@ -1306,19 +1306,19 @@ def api_create_annotated_sentence(request, datasetid):
 
     # pick a random gloss from dataset, this is only used to -in add_annotations- retrieve the right dataset
     gloss = Gloss.objects.filter(lemma__dataset=dataset).first()
-    annotatedSentence.add_annotations(annotations, gloss)
+    annotated_sentence.add_annotations(annotations, gloss)
 
     if sentence_dict != {}:
-        annotatedSentence.add_translations(sentence_dict)
+        annotated_sentence.add_translations(sentence_dict)
     
     source_obj = AnnotatedSentenceSource.objects.filter(name=source).first()
     if source_obj == None and source != '':
         return JsonResponse({"error": "Annotated sentence source received but not found."}, status=400)
     
     # Add the video to the AnnotatedSentence object
-    annotatedVideo = annotatedSentence.add_video(request.user, video_file, eaf_file, source_obj, url)
+    annotated_video = annotated_sentence.add_video(request.user, video_file, eaf_file, source_obj, url)
 
-    if not annotatedVideo:
+    if not annotated_video:
         return JsonResponse({"error": "Annotated video not found."}, status=400)
 
     if len(labels_not_found) > 0:

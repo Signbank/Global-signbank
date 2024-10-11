@@ -35,7 +35,7 @@ def addvideo(request):
             vfile = form.cleaned_data['videofile']
             redirect_url = form.cleaned_data['redirect']
             recorded = form.cleaned_data['recorded']
-            # Get the object, either a gloss or an example sentences
+            # add the video, depending on which type of object it is added to
             if object_type == 'examplesentence_video':
                 sentence = ExampleSentence.objects.filter(id=object_id).first()
                 if not sentence:
@@ -65,32 +65,31 @@ def addvideo(request):
                     redirect(redirect_url)
                 morpheme.add_video(request.user, vfile, recorded)
             elif object_type == 'annotated_video': 
-                # make an annotated sentence
                 eaf_file = form.cleaned_data['eaffile']
-                annotatedSentence = AnnotatedSentence.objects.create()
+                annotated_sentence = AnnotatedSentence.objects.create()
                 
                 gloss = Gloss.objects.filter(id=object_id).first()
                 annotations = form.cleaned_data['feedbackdata']
                 annotations = json.loads(annotations)
-                annotatedSentence.add_annotations(annotations, gloss)
+                annotated_sentence.add_annotations(annotations, gloss)
                 
                 translations = form.cleaned_data['translations']
                 if translations:
-                    annotatedSentence.add_translations(json.loads(translations))
+                    annotated_sentence.add_translations(json.loads(translations))
 
                 contexts = form.cleaned_data['contexts']
                 if contexts:
-                    annotatedSentence.add_contexts(json.loads(contexts))
+                    annotated_sentence.add_contexts(json.loads(contexts))
                     
                 source = form.cleaned_data['source_id']
                 url = form.cleaned_data['url']
-                annotatedVideo = annotatedSentence.add_video(request.user, vfile, eaf_file, source, url)
+                annotated_video = annotated_sentence.add_video(request.user, vfile, eaf_file, source, url)
                 
-                if annotatedVideo == None:
+                if annotated_video == None:
                     messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
-                    annotatedSentence.delete()
+                    annotated_sentence.delete()
                 else:
-                    annotatedSentence.save()
+                    annotated_sentence.save()
 
             return redirect(redirect_url)
 

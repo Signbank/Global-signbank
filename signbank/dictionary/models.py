@@ -4171,10 +4171,10 @@ class AnnotatedSentence(models.Model):
         """Add a video to the annotated sentence"""
         from signbank.video.models import AnnotatedVideo
 
-        annotatedVideo = AnnotatedVideo.objects.create(annotatedsentence=self, videofile=videofile, eaffile=eaffile, source=source, url=url)
-        annotatedVideo.save()
+        annotated_video = AnnotatedVideo.objects.create(annotatedsentence=self, videofile=videofile, eaffile=eaffile, source=source, url=url)
+        annotated_video.save()
         
-        return annotatedVideo
+        return annotated_video
 
     def count_glosses(self):
         return self.annotated_glosses.count()
