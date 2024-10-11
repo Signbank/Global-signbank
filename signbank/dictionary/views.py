@@ -264,19 +264,54 @@ def morpheme(request, glossid):
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 
-def missing_video_list():
+def video_file_path(gloss):
+    # returns the file system path of the video file without looking in GlossVideo
+    idgloss = gloss.idgloss
+
+    video_dir = settings.GLOSS_VIDEO_DIRECTORY
+    try:
+        dataset_dir = gloss.lemma.dataset.acronym
+    except KeyError:
+        dataset_dir = ""
+
+    two_letter_dir = idgloss[:2]
+    if len(two_letter_dir) == 1:
+        two_letter_dir += '-'
+    filename = idgloss + '-' + str(gloss.id) + ".mp4"
+    path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
+    if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
+        from django.utils.encoding import escape_uri_path
+        path = escape_uri_path(path)
+    return path
+
+
+def missing_video_list(selected_datasets):
     """A list of signs that don't have an
     associated video file"""
 
-    glosses = Gloss.objects.filter(inWeb__exact=True, archived=False)
+    glosses = Gloss.objects.filter(archived=False, morpheme=None, lemma__dataset__in=selected_datasets)
     for gloss in glosses:
-        if not gloss.has_video():
-            yield gloss
+        gloss_video_path = video_file_path(gloss)
+        gloss_video = GlossVideo.objects.filter(gloss=gloss, version=0, glossvideonme=None)
+        if not gloss_video.count():
+            # does not have GlossVideo object
+            file_path = os.path.join(settings.WRITABLE_FOLDER, gloss_video_path)
+            if os.path.exists(file_path.encode('utf-8')):
+                # there is a video file but no GlossVideo object
+                yield gloss, gloss_video_path
+
 
 def missing_video_view(request):
     """A view for the above list"""
 
-    glosses = missing_video_list()
+    # check that the user is logged in
+    if not request.user.is_authenticated:
+        messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+
+    glosses = missing_video_list(selected_datasets)
 
     return render(request, "dictionary/missingvideo.html",
                               {'glosses': glosses})
