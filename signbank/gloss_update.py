@@ -1240,3 +1240,35 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
     results['updatestatus'] = "Success"
 
     return JsonResponse(results)
+
+@csrf_exempt
+@put_api_user_in_request
+def api_add_video(request, gloss_id):
+    if not request.user:
+        return JsonResponse({'error': 'User not found'}, status=401)
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+    if not gloss:
+        return JsonResponse({'error': 'Gloss not found'}, status=404)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({'error': 'No change gloss permission'}, status=403)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+
+    if gloss.lemma.dataset not in change_permit_datasets:
+        return JsonResponse({'error': 'No change permission for dataset'}, status=403)
+
+    if 'file' not in request.FILES:
+        return JsonResponse({'error': 'No file uploaded'}, status=400)
+
+    file_size = request.FILES['file'].size
+
+    dataset = gloss.lemma.dataset
+    
+    # Handle the file upload here (e.g., save it to a model or file system)
+    # For example:
+    # video = Video.objects.create(gloss=gloss, file=file)
+    # video.save()
+
+    return JsonResponse({'message': f'Uploaded video of size {file_size} bytes to dataset {dataset}.'}, status=200)
