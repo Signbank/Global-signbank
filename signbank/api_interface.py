@@ -24,7 +24,7 @@ from django.db.transaction import TransactionManagementError
 
 from tagging.models import TaggedItem, Tag
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
-from signbank.settings.server_specific import VIDEOS_TO_IMPORT_FOLDER
+from signbank.settings.server_specific import VIDEOS_TO_IMPORT_FOLDER, API_VIDEO_ARCHIVES
 import zipfile
 from django.urls import reverse, reverse_lazy
 import urllib.request
@@ -36,6 +36,7 @@ from signbank.video.models import GlossVideo, GlossVideoHistory
 from django.http import StreamingHttpResponse
 from django.contrib.auth.models import Group, User
 from signbank.zip_interface import *
+import base64
 
 
 def api_fields(dataset, language_code='en', advanced=False):
@@ -239,61 +240,32 @@ def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
     return JsonResponse(annotated_sentences, safe=False)
 
 
-def check_gloss_existence_for_uploaded_video(dataset):
-    dataset_acronym = str(dataset.acronym)
-    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset_acronym)
-    list_of_video_gloss_status = dict()
-
-    if os.path.isdir(goal_directory):
-        for language3char in os.listdir(goal_directory):
-            if language3char not in list_of_video_gloss_status.keys():
-                list_of_video_gloss_status[language3char] = []
-            language_subfolder = os.path.join(goal_directory, language3char)
-            if os.path.isdir(language_subfolder):
-                for file in os.listdir(language_subfolder):
-                    video_file_path = os.path.join(goal_directory, language3char, file)
-                    (filename_without_extension, extension) = os.path.splitext(file)
-                    gloss = Gloss.objects.filter(lemma__dataset=dataset, archived=False,
-                                                 annotationidglosstranslation__language__language_code_3char=language3char,
-                                                 annotationidglosstranslation__text__exact=filename_without_extension).first()
-                    list_of_video_gloss_status[language3char].append((file, True, gloss))
-
-    return list_of_video_gloss_status
-
-
 def uploaded_video_files(dataset):
 
     dataset_acronym = str(dataset.acronym)
-    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset_acronym)
+    goal_directory = os.path.join(API_VIDEO_ARCHIVES, dataset_acronym)
     list_of_videos = dict()
 
     if os.path.isdir(goal_directory):
-        for language3char in os.listdir(goal_directory):
-            if language3char not in list_of_videos.keys():
-                list_of_videos[language3char] = []
-            language_subfolder = os.path.join(goal_directory, language3char)
-            if os.path.isdir(language_subfolder):
-                for file in os.listdir(language_subfolder):
-                    list_of_videos[language3char].append(file)
+        for file in os.listdir(goal_directory):
+            list_of_videos[dataset_acronym].append(file)
     return list_of_videos
 
 
 def uploaded_video_filepaths(dataset):
 
     dataset_acronym = str(dataset.acronym)
-    goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset_acronym)
+    goal_directory = os.path.join(API_VIDEO_ARCHIVES, dataset_acronym)
     list_of_video_paths = []
 
     if os.path.isdir(goal_directory):
-        for language3char in os.listdir(goal_directory):
-            language_subfolder = os.path.join(goal_directory, language3char)
-            if os.path.isdir(language_subfolder):
-                for file in os.listdir(language_subfolder):
-                    video_path = os.path.join(goal_directory, language3char, file)
-                    list_of_video_paths.append(video_path)
+        for file in os.listdir(goal_directory):
+            video_path = os.path.join(goal_directory, file)
+            list_of_video_paths.append(video_path)
     return list_of_video_paths
 
 
+@put_api_user_in_request
 def get_unzipped_video_files_json(request, datasetid):
 
     sequence_of_digits = True
@@ -308,13 +280,40 @@ def get_unzipped_video_files_json(request, datasetid):
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset or not request.user.is_authenticated:
-        # ignore the database in the url if necessary
-        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
+        return JsonResponse({})
 
     videos_data = dict()
-    videos_data['import_videos/'+dataset.acronym] = uploaded_video_files(dataset)
+    videos_data[API_VIDEO_ARCHIVES+dataset.acronym] = uploaded_video_files(dataset)
 
     return JsonResponse(videos_data, safe=False)
+
+
+@csrf_exempt
+@put_api_user_in_request
+def get_dataset_zipfile_value_dict(request, dataset):
+    post_data = json.loads(request.body.decode('utf-8'))
+
+    value_dict = dict()
+
+    file_key = gettext("File")
+    if file_key in post_data.keys():
+        print(post_data)
+        # a file may be included in the json data
+        # if there are problems decoding it, the value_dict without it is returned
+        try:
+            uploaded_file = post_data[file_key]
+            uploaded_file_contents = uploaded_file[22:]
+            filename = 'video_archive.zip'
+            goal_path = os.path.join(settings.TMP_DIR, filename)
+            f = open(goal_path, 'wb+')
+            inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
+            f.write(inputbytes)
+            tempfile = File(f)
+            value_dict[file_key] = tempfile
+        except (OSError, EncodingWarning, UnicodeDecodeError):
+            pass
+
+    return value_dict
 
 
 @put_api_user_in_request
@@ -351,52 +350,43 @@ def upload_zipped_videos_folder_json(request, datasetid):
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset or not request.user.is_authenticated:
-        # ignore the database in the url if necessary
-        dataset = Dataset.objects.get(id=settings.DEFAULT_DATASET_PK)
-
-    import_folder_exists = os.path.exists(VIDEOS_TO_IMPORT_FOLDER)
-    if not import_folder_exists:
-        status_request['errors'] = "Upload zip archive: The folder VIDEOS_TO_IMPORT_FOLDER is missing."
+        status_request['errors'] = 'The dataset ID does not match a dataset.'
         return JsonResponse(status_request)
 
-    lang3charcodes = [language.language_code_3char for language in dataset.translation_languages.all()]
+    import_folder = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES)
+    import_folder_exists = os.path.exists(import_folder)
+    if not import_folder_exists:
+        status_request['errors'] = "Upload zip archive: The folder API_VIDEO_ARCHIVES is missing."
+        return JsonResponse(status_request)
 
     # Create the TEMP folder if needed
-    temp_goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, 'TEMP')
+    temp_goal_directory = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, 'TEMP')
     if not os.path.exists(temp_goal_directory):
         os.mkdir(temp_goal_directory, mode=0o775)
 
-    dataset_folder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym)
+    dataset_folder = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, dataset.acronym)
     dataset_folder_exists = os.path.exists(dataset_folder)
     if not dataset_folder_exists:
         os.mkdir(dataset_folder, mode=0o775)
 
-    for lang3char in lang3charcodes:
-        dataset_lang3char_folder = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset.acronym, lang3char)
-        if not os.path.exists(dataset_lang3char_folder):
-            os.mkdir(dataset_lang3char_folder, mode=0o775)
+    value_dict = get_dataset_zipfile_value_dict(request)
 
-    # get file as a url parameter: /dictionary/upload_zipped_videos_folder_json/5/?file=file:///path/to/zipfile.zip
-
-    try:
-        zipped_file_url = request.GET['file']
-        if ' ' in zipped_file_url:
-            raise InvalidURL
-    except (OSError, URLError, InvalidURL):
-        status_request['errors'] = "Error processing the zip file parameter to the URL."
+    file_key = gettext("File")
+    if file_key not in value_dict.keys():
+        status_request['errors'] = "Error processing the zip file."
         return JsonResponse(status_request)
 
-    file_path_units = zipped_file_url.split('/')
-    file_name = file_path_units[-1]
+    zip_file = value_dict[file_key]
+    file_name = zip_file.name
 
     goal_zipped_file = os.path.join(temp_goal_directory, file_name)
 
-    with urllib.request.urlopen(zipped_file_url) as response:
-        with tempfile.NamedTemporaryFile(delete=False) as tmp_zipped_file:
-            shutil.copyfileobj(response, tmp_zipped_file)
+    # with urllib.request.urlopen(zipped_file_url) as response:
+    #     with tempfile.NamedTemporaryFile(delete=False) as tmp_zipped_file:
+    #         shutil.copyfileobj(response, tmp_zipped_file)
 
     chunk_size = 4096
-    temp_zipped = open(tmp_zipped_file.name, 'rb')
+    temp_zipped = open(zip_file.name, 'rb')
     zipped_file = open(goal_zipped_file, 'wb')
     with open(goal_zipped_file, "wb+") as destination:
         while True:
@@ -421,21 +411,21 @@ def upload_zipped_videos_folder_json(request, datasetid):
         # file has no extension
         status_request['filename'] = file_name
         status_request['errors'] = "Upload zip archive: The file has no extension."
-        return JsonResponse(status_request)
+        status_request['zippedfiles'] = []
+        return JsonResponse(status_request, safe=False)
 
     filenames = get_filenames(goal_zipped_file)
-    video_paths_okay = check_subfolders_for_unzipping(dataset.acronym, lang3charcodes, filenames)
+    video_paths_okay = check_subfolders_for_unzipping_ids(dataset.acronym, filenames)
     if not video_paths_okay:
-        default_language_3char = dataset.default_language.language_code_3char
         error_feedback = ("The zip archive has the wrong structure. It should be: "
-                          + str(dataset.acronym) + '/' + default_language_3char + "/annotation.mp4")
+                          + str(dataset.acronym) + '/' + "GLOSSID.mp4")
         status_request['filename'] = file_name
         status_request['errors'] = error_feedback
         status_request['zippedfiles'] = filenames
         return JsonResponse(status_request, safe=False)
 
     with atomic():
-        unzip_video_files(dataset, goal_zipped_file, VIDEOS_TO_IMPORT_FOLDER)
+        unzip_video_files(dataset, goal_zipped_file, API_VIDEO_ARCHIVES)
 
     unzipped_files = uploaded_video_files(dataset)
 
@@ -447,28 +437,25 @@ def upload_zipped_videos_folder_json(request, datasetid):
     return JsonResponse(videos_data, safe=False)
 
 
-def import_video_to_gloss(request, video_file_path):
+def import_video_to_gloss_api(request, video_file_path):
     # request is included as a parameter to add to the GlossVideoHistory in the called functions
 
     import_video_data = dict()
     filename = os.path.basename(video_file_path)
     file_folder_path = os.path.dirname(video_file_path)
     path_units = file_folder_path.split('/')
-    language_3_code = path_units[-1]
-    dataset_acronym = path_units[-2]
-    json_path_key = 'import_videos/' + dataset_acronym + '/' + language_3_code + '/' + filename
+    dataset_acronym = path_units[-1]
+    json_path_key = settings.API_VIDEO_ARCHIVES + dataset_acronym + '/' + filename
     import_video_data[json_path_key] = dict()
     (filename_without_extension, extension) = os.path.splitext(filename)
-    gloss = Gloss.objects.filter(lemma__dataset__acronym=dataset_acronym, archived=False,
-                                 annotationidglosstranslation__language__language_code_3char=language_3_code,
-                                 annotationidglosstranslation__text__exact=filename_without_extension).first()
+    gloss = Gloss.objects.filter(id=filename_without_extension).first()
     if not gloss:
         errors_deleting = remove_video_file_from_import_videos(video_file_path)
         if errors_deleting:
             print('import_video_to_gloss: ', errors_deleting)
         import_video_data[json_path_key]["gloss"] = ''
         import_video_data[json_path_key]["videofile"] = filename
-        import_video_data[json_path_key]["errors"] = "Gloss not found for " + filename_without_extension + ". "
+        import_video_data[json_path_key]["errors"] = "Gloss not found for ID " + filename_without_extension + ". "
         import_video_data[json_path_key]["Video"] = ''
         import_video_data[json_path_key]["importstatus"] = 'Failed'
         return import_video_data
@@ -500,7 +487,7 @@ class VideoImporter:
         elif value == "finish":
             value_json = "]}"
         else:
-            video_data = import_video_to_gloss(request, value)
+            video_data = import_video_to_gloss_api(request, value)
             if self.line > 1:
                 value_json = "," + json.dumps(video_data)
             else:

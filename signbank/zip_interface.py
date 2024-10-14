@@ -60,7 +60,7 @@ def get_filenames_with_filetype(path_to_zip):
                 # this can be an Apple .DS_Store file
                 files_in_zip_archive[entry.filename] = (False, False)
                 continue
-            unique_gloss_match = check_zipfile_video_for_gloss_matche(entry.filename)
+            unique_gloss_match = check_zipfile_video_for_gloss_matches(entry.filename)
             files_in_zip_archive[entry.filename] = (True, unique_gloss_match)
         return files_in_zip_archive
 
@@ -93,7 +93,34 @@ def check_subfolders_for_unzipping(acronym, lang3charcodes, filenames):
     return video_files
 
 
-def check_zipfile_video_for_gloss_matche(zipvideo):
+def check_subfolders_for_unzipping_ids(acronym, filenames):
+    # the zip file possibly has an outer folder container
+    # include both possible structures in the allowed structural paths
+    commonprefix = os.path.commonprefix(filenames)
+    common_prefix_paths = [acronym]
+    if commonprefix != acronym + '/':
+        # if the user has put the zip files inside another folder, e.g., NGT_videos/NGT/nld/
+        subfolders = ([commonprefix] + [commonprefix + acronym + '/'])
+    else:
+        subfolders = ([acronym + '/'] + common_prefix_paths)
+    video_files = []
+    for zipfilename in filenames:
+        if zipfilename in subfolders:
+            # skip directory nesting structures
+            continue
+        if '/' not in zipfilename:
+            # this is not a path, for example, .DS_Store as for Apple
+            continue
+        file_dirname = os.path.dirname(zipfilename)
+        # this is the path to the media file
+        if file_dirname + '/' not in common_prefix_paths:
+            # this path not an allowed nesting structure, ignore this
+            continue
+        video_files.append(zipfilename)
+    return video_files
+
+
+def check_zipfile_video_for_gloss_matches(zipvideo):
     path_units = zipvideo.split('/')
     if len(path_units) < 3:
         # the pathname is not long enough
@@ -205,6 +232,51 @@ def get_gloss_filepath(video_file_path, gloss):
         os.mkdir(destination_folder, mode=0o775)
 
     glossid = str(gloss.id)
+
+    video_file_name = annotation_text + '-' + glossid + extension
+    goal = os.path.join(destination_folder, video_file_name)
+    video_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
+                              dataset_acronym,
+                              two_letter_dir)
+    return goal, video_file_name, video_path
+
+
+def get_gloss_filepath_glossid(video_file_path, gloss):
+
+    filename = os.path.basename(video_file_path)
+    filename_without_extension, _ = os.path.splitext(filename)
+    filepath, extension = os.path.splitext(video_file_path)
+    file_folder_path = os.path.dirname(video_file_path)
+    path_units = file_folder_path.split('/')
+    dataset_acronym = path_units[-1]
+
+    if not gloss.lemma or not gloss.lemma.dataset:
+        return "", "", ""
+
+    language = gloss.lemma.dataset.default_language
+    if not language:
+        return "", "", ""
+    # get the annotation text of the gloss
+    annotationidglosstranslation = gloss.annotationidglosstranslation_set.all().filter(language=language)
+    if not annotationidglosstranslation:
+        # the gloss has no annotations for the language
+        return "", "", ""
+    annotation_text = annotationidglosstranslation.first().text
+
+    glossid = str(gloss.id)
+    if glossid != filename_without_extension:
+        # gloss id does not match zip file name
+        return "", "", ""
+    two_letter_dir = get_two_letter_dir(gloss.idgloss)
+    destination_folder = os.path.join(
+        settings.WRITABLE_FOLDER,
+        settings.GLOSS_VIDEO_DIRECTORY,
+        dataset_acronym,
+        two_letter_dir
+    )
+
+    if not os.path.exists(destination_folder):
+        os.mkdir(destination_folder, mode=0o775)
 
     video_file_name = annotation_text + '-' + glossid + extension
     goal = os.path.join(destination_folder, video_file_name)
