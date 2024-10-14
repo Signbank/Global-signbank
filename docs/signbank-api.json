@@ -177,7 +177,52 @@
         ]
       }
     },
-    "/dictionary/api_create_gloss/": 
+    "/dictionary/get_annotated_sentences_of_gloss/{datasetid}/{glossid}":
+    {
+      "get": 
+      {
+        "description": "Gives you the annotated sentences of a particular gloss in the format of a list with a dictionary for each annotated sentence. The fields in the dictionary are 'Translation ([Language])', 'Context ([Language])', 'Source', 'Url', 'Representative glosses', 'Unrepresentative glosses'. Based on the request, the `LANGUAGE_CODE` set to `nl` or one of the other interface languages yields results in that language.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "The dataset ID.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string",
+              "default": "5"
+            }
+          },
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "The gloss ID.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }     
+        ],
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Detailed information on the annotated sentences of a gloss."
+          }
+        },
+        "tags": ["Collecting information"],
+        "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_create_gloss/{datasetid}/": 
     {
       "post": 
       {
@@ -185,7 +230,7 @@
         "parameters":
         [
           {
-            "name": "Dataset id",
+            "name": "datasetid",
             "in": "path",
             "description": "ID of the dataset this gloss should be part of (not the acronym)",
             "required": true,
@@ -229,29 +274,101 @@
                   },
                   "Senses (Dutch)": 
                   {
-                    "type": "array",
-                    "items": 
-                    {
-                      "type": "array",
-                      "items": 
-                      {
-                        "type": "string"
-                      }
-                    }
+                    "type": "string",
+                    "example": "[['string']]"
                   },
                   "Senses (English)": 
                   {
-                    "type": "array",
-                    "items": 
-                    {
-                      "type": "array",
-                      "items": 
-                      {
-                        "type": "string"
-                      }
-                    }
+                    "type": "string",
+                    "example": "[['string']]"
                   }
                 }
+              }
+            }
+          }
+        },
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Creation successful"
+          }
+        },
+        "tags": ["Adding Signbank data"],
+        "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_create_annotated_sentence/{datasetid}/": 
+    {
+      "post": 
+      {
+        "description": "Creates a new annotated sentence",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this annotated sentence should be part of (not the acronym)",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }     
+        ],
+        "requestBody":
+        {
+          "content": 
+          {
+            "multipart/form-data": 
+            {
+              "schema": 
+              {
+                "type": "object",
+                "properties": 
+                {
+                  "Dataset": 
+                  {
+                    "type": "string",
+                    "description": "Acronym of the dataset, like `NGT` or `ASL`",
+                    "example": "Test dataset"
+                  },
+                  "Video_file": 
+                  {
+                    "type": "string",
+                    "format": "binary", 
+                    "description": "The video file to upload"
+                  },
+                  "Eaf_file": 
+                  {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The EAF file to upload"
+                  },
+                  "Source": 
+                  {
+                    "type": "string",
+                    "description": "The source of the sentence",
+                    "example": "Corpus name"
+                  },
+                  "Url": 
+                  {
+                    "type": "string",
+                    "description": "The URL of the sentence",
+                    "example": "www.corpus.com/sentenceid"
+                  }
+                },
+                "required": 
+                [
+                  "Dataset",
+                  "Video_file",
+                  "Eaf_file"
+                ]
               }
             }
           }
@@ -671,6 +788,98 @@
         ]
       }
     },
+    "/dictionary/api_update_annotated_sentence/{datasetid}/{annotatedsentenceid}/": 
+    {
+      "post": 
+      {
+        "description": "Updates an annotated sentence with translations, context, source, url, and representative glosses.",
+        "parameters": 
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this annotated sentence is part of",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "annotatedsentenceid",
+            "in": "path",
+            "description": "ID of the annotated sentence to update",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content": 
+          {
+            "application/json": 
+            {
+              "schema": 
+              {
+                "type": "object",
+                "properties": 
+                {
+                  "Translation (Dutch)": 
+                  {
+                    "type": "string"
+                  },
+                  "Translation (English)": 
+                  {
+                    "type": "string"
+                  },
+                  "Context (Dutch)": 
+                  {
+                    "type": "string"
+                  },
+                  "Context (English)": 
+                  {
+                    "type": "string"
+                  },
+                  "Source": 
+                  {
+                    "type": "string"
+                  },
+                  "Url": 
+                  {
+                    "type": "string"
+                  },
+                  "Representative glosses": 
+                  {
+                    "type": "array",
+                    "items": 
+                    {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Update successful"
+          }
+        },
+        "tags": ["Updating Signbank data"],
+        "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/dictionary/api_update_gloss_nmevideo/{datasetid}/{glossid}/{videoid}/": 
     {
       "post": 
@@ -1067,6 +1276,50 @@
         },
         "tags": ["Deleting and restoring Signbank data"],
         "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_delete_annotated_sentence/{datasetid}/{annotatedsentenceid}/": 
+    {
+      "post": 
+      {
+        "description": "Deletes an annotated sentence for a specified dataset.",
+        "parameters": 
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this annotated sentence belongs to.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "annotatedsentenceid",
+            "in": "path",
+            "description": "ID of the annotated sentence to delete.",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Annotated sentence deleted successfully."
+          }
+        },
+        "tags": ["Deleting and restoring Signbank data"],
+        "security": 
+        [
           {
             "bearerAuth": []
           }

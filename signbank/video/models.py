@@ -446,6 +446,7 @@ class AnnotatedVideo(models.Model):
                                  validators=[validate_file_extension])
     eaffile = models.FileField("eaf file", upload_to=get_annotated_video_file_path, storage=storage)
     source = models.ForeignKey(AnnotatedSentenceSource, null=True, on_delete=models.SET_NULL)
+    url = models.URLField("URL", null=True, blank=True)
 
     # video version, version = 0 is always the one that will be displayed
     # we will increment the version (via reversion) if a new video is added
@@ -458,7 +459,11 @@ class AnnotatedVideo(models.Model):
         super(AnnotatedVideo, self).save(*args, **kwargs)
 
     def get_absolute_url(self):
-        return self.videofile.url
+        from urllib.parse import urlparse
+        parsed_url = urlparse(self.url)
+        if not parsed_url.scheme:
+            return 'http://' + self.url
+        return self.url
 
     def ensure_mp4(self):
         """Ensure that the video file is an h264 format

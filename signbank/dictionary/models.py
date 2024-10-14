@@ -4083,15 +4083,23 @@ class AnnotatedSentence(models.Model):
         dataset = gloss.lemma.dataset
 
         for annotation in annotations:
-            gloss_translation = annotation['gloss']
+            if type(annotation) == dict:
+                gloss_translation = annotation['gloss']
+            else:
+                gloss_translation = annotation[0]
             annotationIdGlossTranslation = AnnotationIdglossTranslation.objects.filter(text__exact=gloss_translation, language__in=dataset.translation_languages.all(), gloss__lemma__dataset=dataset).first()
             if annotationIdGlossTranslation is None:
                 print("No annotation found for: ", gloss_translation)
                 continue
             else:
-                repr = annotation['representative']
-                starttime = int(annotation['starttime'])
-                endtime = int(annotation['endtime'])
+                if type(annotation) == dict:
+                    repr = annotation['representative']
+                    starttime = int(annotation['starttime'])
+                    endtime = int(annotation['endtime'])
+                else:
+                    repr = False
+                    starttime = int(annotation[1])
+                    endtime = int(annotation[2])
 
                 excluded = False
                 if start_cut >= 0 and end_cut >= 0:
@@ -4202,15 +4210,14 @@ class AnnotatedSentence(models.Model):
         
         return self.get_video() not in ['', None]
 
-    def add_video(self, user, videofile, eaffile, source):
+    def add_video(self, user, videofile, eaffile, source, url):
         """Add a video to the annotated sentence"""
         from signbank.video.models import AnnotatedVideo
 
-        annotatedVideo = AnnotatedVideo.objects.create(annotatedsentence=self, videofile=videofile, eaffile=eaffile)
-        annotatedVideo.source = source
-        annotatedVideo.save()
+        annotated_video = AnnotatedVideo.objects.create(annotatedsentence=self, videofile=videofile, eaffile=eaffile, source=source, url=url)
+        annotated_video.save()
         
-        return annotatedVideo
+        return annotated_video
 
     def count_glosses(self):
         return self.annotated_glosses.count()
