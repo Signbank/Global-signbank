@@ -2052,6 +2052,10 @@ def save_edit_annotated_sentence(request):
             else:
                 annotated_sentence.annotatedvideo.source = None
             annotated_sentence.annotatedvideo.save()
+        if 'url' in request.POST:
+            url = request.POST['url']
+            annotated_sentence.annotatedvideo.url = url
+            annotated_sentence.annotatedvideo.save()
         if 'eaffile' in request.FILES:
             annotated_sentence.annotatedvideo.delete_files(only_eaf=True)
             eaffile = request.FILES['eaffile']

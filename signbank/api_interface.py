@@ -174,6 +174,71 @@ def get_gloss_data_json(request, datasetid, glossid):
     return JsonResponse(gloss_data, safe=False)
 
 
+@put_api_user_in_request
+def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
+
+    from django.utils.translation import gettext_lazy as _, activate, gettext
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
+    if request.user.is_authenticated:
+        interface_language_code = get_interface_language_api(request, request.user)
+
+    dataset_id = int(datasetid)
+    dataset = Dataset.objects.filter(id=dataset_id).first()
+    if not dataset or not request.user.is_authenticated:
+        return JsonResponse({"error": "No dataset found or no permission."}, status=400)
+    dataset_languages = dataset.translation_languages.all()
+
+    gloss_id = int(glossid)
+    gloss = Gloss.objects.filter(lemma__dataset=dataset, id=gloss_id, archived=False).first()
+
+    if not gloss:
+        return JsonResponse({"error": "No gloss found or no permission."}, status=400)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({"error": "No permission to change this gloss."}, status=400)
+
+    annotated_sentences = []
+    related_sentences = AnnotatedSentence.objects.filter(annotated_glosses__gloss = gloss).distinct()
+    for sentence in related_sentences.all():
+        sentence_dict = dict()
+        sentence_dict["id"] = sentence.id
+        for language in dataset_languages:
+            translations_name = gettext("Translation") + " (" + language.name + ")"
+            contexts_name = gettext("Context") + " (" + language.name + ")"
+            translation = sentence.annotated_sentence_translations.filter(language=language).first()
+            if translation:
+                sentence_dict[translations_name] = translation.text
+            else:
+                sentence_dict[translations_name] = ""
+            context = sentence.annotated_sentence_contexts.filter(language=language).first()
+            if context:
+                sentence_dict[contexts_name] = context.text
+            else:
+                sentence_dict[contexts_name] = ""
+        if sentence.annotatedvideo.source:
+            sentence_dict["Source"] = sentence.annotatedvideo.source.id
+        else:
+            sentence_dict["Source"] = ""
+        if sentence.annotatedvideo.url:
+            sentence_dict["Url"] = sentence.annotatedvideo.url
+        else:
+            sentence_dict["Url"] = ""
+        repr_gloss_list = []
+        unrepr_gloss_list = []
+        for annotated_gloss in sentence.annotated_glosses.all():
+            if annotated_gloss.isRepresentative and str(annotated_gloss.gloss.id) not in repr_gloss_list:
+                repr_gloss_list.append(str(annotated_gloss.gloss.id))
+            if not annotated_gloss.isRepresentative and str(annotated_gloss.gloss.id) not in unrepr_gloss_list:
+                unrepr_gloss_list.append(str(annotated_gloss.gloss.id))
+        sentence_dict["Representative glosses"] = repr_gloss_list
+        sentence_dict["Unrepresentative glosses"] = unrepr_gloss_list
+        annotated_sentences.append(sentence_dict)
+    return JsonResponse(annotated_sentences, safe=False)
+
+
 def check_gloss_existence_for_uploaded_video(dataset):
     dataset_acronym = str(dataset.acronym)
     goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset_acronym)
