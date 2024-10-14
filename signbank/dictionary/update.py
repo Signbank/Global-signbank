@@ -64,6 +64,7 @@ def add_gloss(request):
         selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
     else:
         selected_datasets = get_selected_datasets_for_user(request.user)
+
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     if dataset:
@@ -155,7 +156,6 @@ def add_gloss(request):
             for ua in user_affiliations:
                 new_affiliation, created = AffiliatedGloss.objects.get_or_create(affiliation=ua.affiliation,
                                                                                  gloss=gloss)
-
     except ValidationError as ve:
         return show_error(request, ve.message, form, dataset_languages)
 
@@ -839,7 +839,6 @@ def update_gloss(request, glossid):
 
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-        import guardian
         if ds in guardian.shortcuts.get_objects_for_user(request.user, ['view_dataset'],
                                                          Dataset, any_perm=True):
             newvalue = value
@@ -2523,7 +2522,6 @@ def update_morpheme(request, morphemeid):
 
             return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
-        import guardian
         if ds in guardian.shortcuts.get_objects_for_user(request.user, ['view_dataset'],
                                                          Dataset, any_perm=True):
             newvalue = value
