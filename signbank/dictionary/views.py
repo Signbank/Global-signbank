@@ -46,7 +46,7 @@ import datetime as DT
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
 
-from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, BadRequest
 from signbank.gloss_update import api_update_gloss_fields
 from django.utils.translation import gettext_lazy as _, activate
 from signbank.abstract_machine import get_interface_language_api
@@ -2218,13 +2218,14 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
             # handshape images are allowed to be seen in Show All Handshapes
             pass
         else:
-            gloss_pk = int(filename.split('.')[-2].split('-')[-1])
-
             try:
-                if not Gloss.objects.get(pk=gloss_pk, archived=False).inWeb:
-                    return HttpResponse(status=401)
-            except Gloss.DoesNotExist:
+                gloss_pk = int(filename.split('.')[-2].split('-')[-1])
+            except IndexError:
                 return HttpResponse(status=401)
+
+            lookup_gloss = Gloss.objects.filter(pk=gloss_pk, archived=False, inWeb=True)
+            if not lookup_gloss.count() == 1:
+                HttpResponse(status=401)
 
         #If we got here, the gloss was found and in the web dictionary, so we can continue
 
@@ -2234,7 +2235,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     path = dir_path.encode('utf-8') + filename.encode('utf-8')
     try:
         exists = os.path.exists(path)
-    except:
+    except (OSError, FileExistsError):
         exists = False
     if not exists:
         # quote the filename instead to resolve special characters in the url
