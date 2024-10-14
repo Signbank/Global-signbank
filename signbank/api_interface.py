@@ -322,7 +322,13 @@ def upload_zipped_videos_folder_json(request, datasetid):
         return JsonResponse(status_request)
 
     file_path_units = zipped_file_url.split('/')
+    if not file_path_units:
+        status_request['errors'] = "Error processing the zip file parameter to the URL."
+        return JsonResponse(status_request)
     file_name = file_path_units[-1]
+    if not file_name:
+        status_request['errors'] = "Error processing the zip file parameter to the URL."
+        return JsonResponse(status_request)
 
     goal_zipped_file = os.path.join(temp_goal_directory, file_name)
 
