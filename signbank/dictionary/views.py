@@ -11,6 +11,7 @@ from pathlib import Path
 
 import csv
 import time
+import sys
 
 from signbank.dictionary.forms import *
 from signbank.dictionary.models import Gloss
@@ -1763,17 +1764,18 @@ def proposed_new_signs(request):
 
 
 def create_citation_image(request, pk):
-    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
-    try:
-        gloss.create_citation_image()
-    except:
-        print("Citation image for gloss {} could not be created.".format(gloss.id))
-
-    # return to referer
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
+
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False, glossvideonme=None, glossvideoperspective=None)
+    try:
+        gloss.create_citation_image()
+    except ValidationError as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        messages.add_message(request, messages.ERROR, feedback_message)
+
     return redirect(url)
 
 def add_image(request):
@@ -1847,14 +1849,14 @@ def add_image(request):
             try:
                 f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
                 destination = File(f)
-            except:
+            except (SystemError, OSError, IOError):
                 quoted_filename = quote(gloss.idgloss, safe='')
                 filename = quoted_filename + '-' + str(gloss.pk) + extension
                 goal_location_str = os.path.join(goal_path, filename)
                 try:
                     f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
                     destination = File(f)
-                except:
+                except (SystemError, OSError, IOError):
                     print('add_image, failed to open destintation: ', goal_location_str)
                     return redirect(redirect_url)
             # if we get to here, destination has been opened
