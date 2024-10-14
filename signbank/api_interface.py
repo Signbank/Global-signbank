@@ -316,6 +316,7 @@ def get_dataset_zipfile_value_dict(request, dataset):
     return value_dict
 
 
+@csrf_exempt
 @put_api_user_in_request
 def upload_zipped_videos_folder_json(request, datasetid):
 
@@ -323,6 +324,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     if not request.user.is_authenticated:
         status_request['errors'] = 'Please login to use this functionality.'
+        status_request['unzippedvideos'] = []
         return JsonResponse(status_request)
 
     # check if the user can manage this dataset
@@ -330,11 +332,13 @@ def upload_zipped_videos_folder_json(request, datasetid):
         group_manager = Group.objects.get(name='Dataset_Manager')
     except ObjectDoesNotExist:
         status_request['errors'] = 'No group Dataset Manager found.'
+        status_request['unzippedvideos'] = []
         return JsonResponse(status_request)
 
     groups_of_user = request.user.groups.all()
     if group_manager not in groups_of_user:
         status_request['errors'] = 'You must be in group Dataset Manager to upload a zip video archive.'
+        status_request['unzippedvideos'] = []
         return JsonResponse(status_request)
 
     sequence_of_digits = True
@@ -345,18 +349,21 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     if not sequence_of_digits:
         status_request['errors'] = 'The dataset ID must be numerical.'
+        status_request['unzippedvideos'] = []
         return JsonResponse(status_request)
 
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
     if not dataset or not request.user.is_authenticated:
         status_request['errors'] = 'The dataset ID does not match a dataset.'
+        status_request['unzippedvideos'] = []
         return JsonResponse(status_request)
 
     import_folder = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES)
     import_folder_exists = os.path.exists(import_folder)
     if not import_folder_exists:
         status_request['errors'] = "Upload zip archive: The folder API_VIDEO_ARCHIVES is missing."
+        status_request['unzippedvideos'] = []
         return JsonResponse(status_request)
 
     # Create the TEMP folder if needed
@@ -374,6 +381,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
     file_key = gettext("File")
     if file_key not in value_dict.keys():
         status_request['errors'] = "Error processing the zip file."
+        status_request['unzippedvideos'] = []
         return JsonResponse(status_request)
 
     zip_file = value_dict[file_key]
@@ -402,6 +410,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
         # unrecognised file type has been uploaded
         status_request['filename'] = file_name
         status_request['errors'] = "Upload zip archive: The file is not a zip file."
+        status_request['unzippedvideos'] = []
         return JsonResponse(status_request)
 
     norm_filename = os.path.normpath(goal_zipped_file)
@@ -411,7 +420,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
         # file has no extension
         status_request['filename'] = file_name
         status_request['errors'] = "Upload zip archive: The file has no extension."
-        status_request['zippedfiles'] = []
+        status_request['unzippedvideos'] = []
         return JsonResponse(status_request, safe=False)
 
     filenames = get_filenames(goal_zipped_file)
@@ -421,7 +430,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
                           + str(dataset.acronym) + '/' + "GLOSSID.mp4")
         status_request['filename'] = file_name
         status_request['errors'] = error_feedback
-        status_request['zippedfiles'] = filenames
+        status_request['unzippedvideos'] = filenames
         return JsonResponse(status_request, safe=False)
 
     with atomic():
