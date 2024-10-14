@@ -1,4 +1,8 @@
 import json
+from urllib.error import URLError
+
+from django.views.decorators.csrf import csrf_exempt
+from requests.exceptions import InvalidURL
 
 from signbank.dictionary.models import *
 from django.db.models import FileField
@@ -248,16 +252,11 @@ def check_gloss_existence_for_uploaded_video(dataset):
             if os.path.isdir(language_subfolder):
                 for file in os.listdir(language_subfolder):
                     video_file_path = os.path.join(goal_directory, language3char, file)
-                    format = probe_format(video_file_path)
                     (filename_without_extension, extension) = os.path.splitext(file)
                     gloss = Gloss.objects.filter(lemma__dataset=dataset, archived=False,
                                                  annotationidglosstranslation__language__language_code_3char=language3char,
                                                  annotationidglosstranslation__text__exact=filename_without_extension).first()
-                    if format.startswith('h264'):
-                        # the output of ffmpeg includes extra information following h264, so only check the prefix
-                        list_of_video_gloss_status[language3char].append((file, True, gloss))
-                    else:
-                        list_of_video_gloss_status[language3char].append((file, False, gloss))
+                    list_of_video_gloss_status[language3char].append((file, True, gloss))
 
     return list_of_video_gloss_status
 
@@ -315,7 +314,7 @@ def get_unzipped_video_files_json(request, datasetid):
     videos_data = dict()
     videos_data['import_videos/'+dataset.acronym] = uploaded_video_files(dataset)
 
-    return JsonResponse(videos_data)
+    return JsonResponse(videos_data, safe=False)
 
 
 @put_api_user_in_request
@@ -378,8 +377,15 @@ def upload_zipped_videos_folder_json(request, datasetid):
             os.mkdir(dataset_lang3char_folder, mode=0o775)
 
     # get file as a url parameter: /dictionary/upload_zipped_videos_folder_json/5/?file=file:///path/to/zipfile.zip
-    
-    zipped_file_url = request.GET['file']
+
+    try:
+        zipped_file_url = request.GET['file']
+        if ' ' in zipped_file_url:
+            raise InvalidURL
+    except (OSError, URLError, InvalidURL):
+        status_request['errors'] = "Error processing the zip file parameter to the URL."
+        return JsonResponse(status_request)
+
     file_path_units = zipped_file_url.split('/')
     file_name = file_path_units[-1]
 
@@ -426,7 +432,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
         status_request['filename'] = file_name
         status_request['errors'] = error_feedback
         status_request['zippedfiles'] = filenames
-        return JsonResponse(status_request)
+        return JsonResponse(status_request, safe=False)
 
     with atomic():
         unzip_video_files(dataset, goal_zipped_file, VIDEOS_TO_IMPORT_FOLDER)
@@ -435,9 +441,10 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     videos_data = dict()
     videos_data['filename'] = file_name
+    videos_data['errors'] = ""
     videos_data['unzippedvideos'] = unzipped_files
 
-    return JsonResponse(videos_data)
+    return JsonResponse(videos_data, safe=False)
 
 
 def import_video_to_gloss(request, video_file_path):
@@ -457,23 +464,25 @@ def import_video_to_gloss(request, video_file_path):
                                  annotationidglosstranslation__text__exact=filename_without_extension).first()
     if not gloss:
         errors_deleting = remove_video_file_from_import_videos(video_file_path)
+        if errors_deleting:
+            print('import_video_to_gloss: ', errors_deleting)
+        import_video_data[json_path_key]["gloss"] = ''
+        import_video_data[json_path_key]["videofile"] = filename
         import_video_data[json_path_key]["errors"] = "Gloss not found for " + filename_without_extension + ". "
+        import_video_data[json_path_key]["Video"] = ''
+        import_video_data[json_path_key]["importstatus"] = 'Failed'
         return import_video_data
-    format = probe_format(video_file_path)
-    if format.startswith('h264'):
-        # the output of ffmpeg includes extra information following h264, so only check the prefix
-        status, errors = import_video_file(request, gloss, video_file_path)
+
+    status, errors = import_video_file(request, gloss, video_file_path)
+    if status == 'Success':
         video_path = gloss.get_video_url()
-        import_video_data[json_path_key]["gloss"] = str(gloss.id)
-        import_video_data[json_path_key]["videofile"] = filename
         import_video_data[json_path_key]["Video"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
-        import_video_data[json_path_key]["status"] = status
-        import_video_data[json_path_key]["errors"] = errors
     else:
-        import_video_data[json_path_key]["gloss"] = str(gloss.id)
-        import_video_data[json_path_key]["videofile"] = filename
-        import_video_data[json_path_key]["status"] = "Wrong video format."
-        import_video_data[json_path_key]["errors"] = "Video file is not h264."
+        import_video_data[json_path_key]["Video"] = ''
+    import_video_data[json_path_key]["gloss"] = str(gloss.id)
+    import_video_data[json_path_key]["videofile"] = filename
+    import_video_data[json_path_key]["importstatus"] = status
+    import_video_data[json_path_key]["errors"] = errors
 
     return import_video_data
 
@@ -510,6 +519,7 @@ def json_finish():
 
 
 @put_api_user_in_request
+@csrf_exempt
 def upload_videos_to_glosses(request, datasetid):
     # get file as a url parameter: /dictionary/upload_videos_to_glosses/5
 

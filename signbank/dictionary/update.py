@@ -23,7 +23,7 @@ from signbank.dictionary.forms import *
 from django.conf import settings
 
 from signbank.video.forms import VideoUploadForObjectForm
-from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory
+from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory, GlossVideoPerspective
 
 from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
@@ -914,11 +914,15 @@ def update_gloss(request, glossid):
 
     elif field.startswith('annotation_idgloss'):
 
-        return update_annotation_idgloss(gloss, field, value)
+        return update_annotation_idgloss(request, gloss, field, value)
 
     elif field.startswith('nmevideo'):
 
         return update_nmevideo(request.user, gloss, field, value)
+
+    elif field.startswith('perspectivevideo'):
+
+        return update_perspectivevideo(request.user, gloss, field, value)
 
     elif field.startswith('lemmaidgloss'):
         # Set new lemmaidgloss for this gloss
@@ -928,11 +932,11 @@ def update_gloss(request, glossid):
             lemma = LemmaIdgloss.objects.get(pk=value)
             if dataset is None or dataset == lemma.dataset:
                 gloss.lemma = lemma
-                gloss.save()
+                gloss.save(update_fields=['path'])
             else:
-                messages.add_message(messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
+                messages.add_message(request, messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
         except ObjectDoesNotExist:
-            messages.add_message(messages.ERROR, _("The specified lemma does not exist."))
+            messages.add_message(request, messages.ERROR, _("The specified lemma does not exist."))
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
     else:
@@ -1139,21 +1143,24 @@ def update_keywords(gloss, field, value):
     return HttpResponse(str(newvalue), {'content-type': 'text/plain'})
 
 
-def update_annotation_idgloss(gloss, field, value):
+def update_annotation_idgloss(request, gloss, field, value):
     """Update the AnnotationIdGlossTranslation"""
 
-    # Determine the language of the keywords
-    language = Language.objects.get(id=get_default_language_id())
     try:
         language_code_2char = field[len('annotation_idgloss_'):]
         language = Language.objects.filter(language_code_2char=language_code_2char).first()
     except ObjectDoesNotExist:
-        pass
+        # do nothing
+        return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
     # value might be empty string
     whitespace = tuple(' \n\r\t')
     if value.startswith(whitespace) or value.endswith(whitespace):
         value = value.strip()
+
+    if not value:
+        # don't allow user to set Annotation ID Gloss to empty
+        return HttpResponse(str(original_value), {'content-type': 'text/plain'})
 
     try:
         annotation_idgloss_translation = AnnotationIdglossTranslation.objects.get(gloss=gloss, language=language)
@@ -1163,12 +1170,12 @@ def update_annotation_idgloss(gloss, field, value):
         annotation_idgloss_translation = AnnotationIdglossTranslation(gloss=gloss, language=language)
         original_value = ''
 
-    if value == '':
-        # don't allow user to set Annotation ID Gloss to empty
-        return HttpResponse(str(original_value), {'content-type': 'text/plain'})
-
     annotation_idgloss_translation.text = value
-    annotation_idgloss_translation.save()
+    try:
+        annotation_idgloss_translation.save()
+    except ValidationError as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
     return HttpResponse(str(value), {'content-type': 'text/plain'})
 
@@ -1206,6 +1213,26 @@ def update_nmevideo(user, gloss, field, value):
         filename = os.path.basename(nmevideo.videofile.name)
         filepath = nmevideo.videofile.path
         nmevideo.reversion(revert=False)
+        log_entry = GlossVideoHistory(action="delete", gloss=gloss,
+                                      actor=user,
+                                      uploadfile=filename,
+                                      goal_location=filepath)
+        log_entry.save()
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+
+    else:
+        print('unknown nme video update field: ', field)
+    return HttpResponse(value, {'content-type': 'text/plain'})
+
+
+def update_perspectivevideo(user, gloss, field, value):
+    """Update the GlossVideoPerspective"""
+    if field.startswith('perspectivevideo_delete_'):
+        perspvideoid = field[len('perspectivevideo_delete_'):]
+        perspvideo = GlossVideoPerspective.objects.get(id=int(perspvideoid))
+        filename = os.path.basename(perspvideo.videofile.name)
+        filepath = perspvideo.videofile.path
+        perspvideo.reversion(revert=False)
         log_entry = GlossVideoHistory(action="delete", gloss=gloss,
                                       actor=user,
                                       uploadfile=filename,
@@ -2046,7 +2073,7 @@ def delete_annotated_sentence(request, glossid):
     if not request.method == "POST":
         return HttpResponseForbidden("Annotated Sentence Deletion method must be POST")
 
-    if not request.user.has_perm('dictionary.annotated_sentence_sense'):
+    if not request.user.has_perm('dictionary.delete_annotatedsentence'):
         messages.add_message(request, messages.ERROR, _('Annotated Sentence Deletion Not Allowed'))
         return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
@@ -2058,7 +2085,6 @@ def delete_annotated_sentence(request, glossid):
     annotated_sentence.delete()
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-    return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': glossid}))
 
 def add_othermedia(request):
 
