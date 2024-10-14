@@ -32,4 +32,6 @@ unicodecsv==0.14.1
 uWSGI==2.0.23
 requests==2.32.0
 django-cors-headers==4.3.1
+sip==6.8.6
+pyfbx==0.0.8
 

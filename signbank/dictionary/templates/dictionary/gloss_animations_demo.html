@@ -1,0 +1,385 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load bootstrap3 %}
+{% load guardian_tags %}
+{% block bootstrap3_title %}
+{% blocktrans %}Signbank: Gloss Animation{% endblocktrans %}
+{% endblock %}
+
+{% block extrajs %}
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+
+<script type="text/javascript">
+var url = '{{PREFIX_URL}}';
+var csrf_token = '{{csrf_token}}';
+var images = '{{STATIC_URL}}images';
+var protected_media_url = '{% url 'dictionary:protected_media' '' %}';
+var MeshesAndAnims = protected_media_url + '/MeshesAndAnims/';
+
+var this_gloss_id = {{gloss.id}};
+
+var search_type = '{{search_type}}';
+var model_view = 'gloss';
+var active_id = '{{active_id}}';
+var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
+
+{% include "dictionary/search_result_bar.html" %}
+</script>
+
+  <!-- Fetch all scripts that we use -->
+  <script src="{{STATIC_URL}}babylon/SceneAndMeshLoader.js"></script>
+  <script src="{{STATIC_URL}}babylon/animFetchAndDestroy.js"></script>
+  <script src="{{STATIC_URL}}babylon/playAnims.js"></script>
+  <script src="{{STATIC_URL}}babylon/ScreenRecorder.js"></script>
+  <script src="{{STATIC_URL}}babylon/signCollectLoader.js"></script>
+  <script src="{{STATIC_URL}}babylon/cameraController.js"></script>
+  <script src="{{STATIC_URL}}babylon/noiseGenerator.js"></script>
+  <script src="{{STATIC_URL}}babylon/signBuilder.js"></script>
+  <script src="{{STATIC_URL}}babylon/retargetAnims.js"></script>
+  <script src="{{STATIC_URL}}babylon/initialize.js"></script>
+  <script src="{{STATIC_URL}}babylon/messageUEServer.js"></script>
+  <script src="{{STATIC_URL}}babylon/playerControls.js"></script>
+  <script src="{{STATIC_URL}}babylon/onboard.js"></script>
+  <script src="{{STATIC_URL}}babylon/eyeBlink.js"></script>
+  <script>
+    //                                                                                          PINEAPPLE
+    // 🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍🍍
+    //                                                                                   GOMER, JARI, OLINE, LISA
+    //                                                                                      🥑🥑🥑🥑🥑🥑🥑🥑
+
+    /*
+      Setup Dir, URL, engine, and other variables
+    */
+    // Engine vars
+    var engine;
+    var scene;
+    var canvas;
+    var loadedMesh;
+
+    // Directory vars (differentiated between a path for animations and a path for meshes)
+    // const basePath = "http://localhost:8080/MeshesAndAnims/olines_anims/";
+    // const basePath = "/gebarenoverleg_media/fbx/";
+    // let basePath = "https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/";
+    let basePath = MeshesAndAnims;
+    let basePathMesh = MeshesAndAnims;
+
+    // const basePathMesh = "./MeshesAndAnims/"
+
+    // TESTING retarget locally
+    // basePathMesh = "http://localhost:8080/MeshesAndAnims/Nemu/"
+    const retargetServerHost = "{{PREFIX_URL}}";
+    const retargetServerPort = "8080";
+
+    // Animation vars
+    var animAsset;
+    // var animationGroupFrom;
+    // var animationGroupTo;
+    var zinArray = []
+    var recordingMethod;
+    var recordingFile;
+    let keepAnimating = false;
+    // let continueLoop = true;
+    var animations = []
+    var gui;
+    var rootContainer;
+
+    // URL params for gloss, thema, cameraAngle, movingCamera (followed by an example comment)
+    var urlParams = new URLSearchParams(window.location.search);
+    var glos = urlParams.get("glos"); // glos=AAP
+    var thema = urlParams.get("thema"); // thema=oline
+    var cameraAngle = urlParams.get("cameraAngle"); // cameraAngle=270
+    var cameraAngleBeta = urlParams.get("cameraAngleBeta"); // cameraAngle=270
+    var movingCamera = urlParams.get("movingCamera"); // movingCamera=1, if you want camera to keep moving
+    var boneLock = urlParams.get("boneLock"); // boneLock=4, 0 == hip, 4 == neck, etc.
+    var play = urlParams.get("play"); // play=no, if you don't want to play the animation
+    var zin = urlParams.get("zin"); // IK,BEN,GOMER
+    var limit = urlParams.get("limit"); // limit=50, if you want to limit the amount of animations
+    var gltf = urlParams.get("gltf"); // gltf=1, if you want to load animations with gltf extension
+    var local = 1;
+    var blending = urlParams.get("blending"); // blending=1, if you want to blend animations
+    var debug = urlParams.get("debug"); // debug=1, if you want to see debug terminal
+    var lockRot = urlParams.get("lockRot"); // debug=1, if you want to see debug terminal
+    var externalAnim = urlParams.get("https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/appel.glb");
+    var noGui = urlParams.get("noGui"); // noGui=1, if you don't want to see the GUI
+    var meshRotation = urlParams.get("meshRotation"); // meshRotation=0-360, if you want to rotate the mesh container y-rotation
+    var onboard = urlParams.get("onboard"); // onboard=0 or false, if you dont want to play the onboard animation
+    var meshURL = urlParams.get("mesh"); // mesh=meshURL, for if you want a specific mesh to be loaded
+
+    /*
+      Initialize the engine, scene, canvas, and mesh after the DOM has loaded
+      Then play the animation if the play parameter is not set to "no"
+    */
+    document.addEventListener("DOMContentLoaded", function () {
+      // Set the parameters (im not sure if javascript is pass by reference or value, so i return the values and set them again)
+      // [local, play, limit, glos, zin, gltf, animations] = setParams(local, play, limit, glos, zin, gltf, animations);
+      ParamsManager.setParams(local, play, limit, glos, zin, gltf, debug, lockRot, noGui, onboard);
+
+
+      canvas = document.getElementById("renderCanvas");
+      if (!canvas) {
+        throw new Error("The canvas element is not available.");
+      }
+      canvas.responsive = true;
+
+      // Load the scene and mesh. Then initialize the animations
+      initialize(scene, engine, canvas, basePath, basePathMesh, loadedMesh, cameraAngle, cameraAngleBeta, movingCamera, boneLock, blending, meshRotation)
+        .then(([initializedScene, initializedEngine, initializedLoadedMesh]) => {
+          scene = initializedScene;
+          engine = initializedEngine;
+          loadedMesh = initializedLoadedMesh;
+
+          EngineController.engine = engine;
+          EngineController.scene = scene;
+          EngineController.loadedMesh = loadedMesh;
+          // EngineController.setScene(scene);
+          // EngineController.setLoadedMesh(loadedMesh);
+          gui = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI', true, scene)
+          rootContainer = createRootContainer(gui);
+
+          removeAnims(scene, loadedMesh);
+          removeAnims(scene, scene);
+          initAnims();
+        })
+        .catch(error => {
+          console.error('Failed to initialize:', error);
+        });
+
+      function initAnims() {
+        if (externalAnim) {
+          stopLoadAndPlayAnimation(externalAnim, loop=false);
+        }
+        else {
+          // Load the animation
+          getAnims(basePath, scene, loadedMesh, ParamsManager.glos, ParamsManager.gltf)
+            .then(anim => {
+              animAsset = anim;
+              animAsset.animationGroups.push(retargetAnimWithBlendshapes(loadedMesh, animAsset.animationGroups[0], "anim"));
+
+              keepOnlyAnimationGroup(scene, animAsset, loadedMesh, "anim");
+              if (ParamsManager.play != "no") {
+                // playLoadedAnims(scene, loadedMesh);
+                playAnims(scene, loadedMesh, 0, loop=false, noRotation=true);
+                createBlinkAnimation(loadedMesh);
+              }
+            })
+            .catch(error => {
+              console.error('Failed to load animations:', error);
+              console.error("retrying for https://leffe.science.uva.nl:8043/gebarenoverleg_media/fbx/ERROR-SC.fbx");
+              getAnims(basePath, scene, loadedMesh, "ERROR-SC", ParamsManager.gltf)
+                .then(anim => {
+                  animAsset = anim;
+                  animAsset.animationGroups.push(retargetAnimWithBlendshapes(loadedMesh, animAsset.animationGroups[0], "anim"));
+
+                  keepOnlyAnimationGroup(scene, animAsset, loadedMesh, "anim");
+                  if (ParamsManager.play != "no") {
+                    // playLoadedAnims(scene, loadedMesh);
+                    playAnims(scene, loadedMesh, 0, loop=false, noRotation=false);
+                  }
+                })
+                .catch(error => {
+                  console.error('Failed to load animations:', error);
+                });
+          });
+        }
+      }
+
+      // Play the onboard animation after 2 seconds
+      if (ParamsManager.onboard) {
+        setTimeout(onboardAnimation, 20000);
+      }
+    });
+
+
+    /*
+      Functions for buttons start here.
+    */
+    async function testAndFetch() {
+      console.error("test button pressed");
+      keepAnimating = false;
+
+      const glasses = await loadAssetMesh(scene, basePathMesh, filename = "glassesGuyNew.glb");
+      removeAnims(EngineController.scene, EngineController.loadedMesh);
+      removeAnims(EngineController.scene, scene);
+      removeAnims(EngineController.scene, glasses.fetched);
+
+
+      console.log(EngineController.loadedMesh.fetched.skeletons[0].bones[0].getTransformNode());
+      glasses.fetched.skeletons[0].bones[0].getTransformNode().position = BABYLON.Vector3.Zero();
+      EngineController.loadedMesh.fetched.skeletons[0].bones[0].getTransformNode().position = BABYLON.Vector3.Zero();
+
+      EngineController.loadedMesh.retargetMappings.set("glassesGuyNew", calcProportionInfo(glasses.skeletons[0], EngineController.loadedMesh.skeletons[0]));
+      glasses.root.dispose();
+
+      // Todo: add animation from glassesGuyNew and apply it to loadedMesh with a retarget using retargetMappings
+      getAnims(basePath, scene, EngineController.loadedMesh, "APPEL", ParamsManager.gltf)
+        .then(z => {
+          console.log(z.animationGroups);
+          const newAnim = retargetAnim(EngineController.loadedMesh, z.animationGroups[0], "z", EngineController.loadedMesh.retargetMappings.get("glassesGuyNew"));
+          console.log("newAnim", newAnim);
+          EngineController.loadedMesh.fetched.animationGroups.push(newAnim);
+          keepOnlyAnimationGroup(scene, z, EngineController.loadedMesh, "z");
+
+          if (ParamsManager.play != "no") {
+            playLoadedAnims(scene, EngineController.loadedMesh.fetched);
+          }
+        })
+        .catch(error => {
+          console.error('Failed to load animations:', error);
+        });
+    }
+
+    async function testMove(obj, amount = -9e-8) {
+      const glasses = await loadAssetMesh(scene, basePathMesh, filename = "glassesGuyNew.glb");
+      removeAnims(EngineController.scene, EngineController.loadedMesh);
+      removeAnims(EngineController.scene, scene);
+      removeAnims(EngineController.scene, glasses.fetched);
+
+      // dispose of original mesh
+      EngineController.loadedMesh.root.dispose();
+
+      // set camera to neck bone of glasses
+      CameraController.setCameraOnBone(scene, glasses.fetched.meshes[1], glasses.fetched.skeletons[0]);
+
+      getAnims(basePath, scene, glasses.fetched, "APPEL", ParamsManager.gltf)
+        .then(z => {
+          glasses.fetched.animationGroups.push(z.animationGroups[0]);
+          keepOnlyAnimationGroup(scene, z, glasses, "APPEL");
+
+          if (ParamsManager.play != "no") {
+            playLoadedAnims(scene, glasses.fetched);
+          }
+        })
+        .catch(error => {
+          console.error('Failed to load animations:', error);
+        });
+    }
+
+    function stopAnimsAndReturnToRest() {
+      stopAnims(EngineController.scene, EngineController.loadedMesh);
+
+      // Remove the currently loaded animation
+      removeAnims(EngineController.scene, EngineController.loadedMesh);
+      removeAnims(EngineController.scene, scene);
+
+      EngineController.loadedMesh.skeletons[0].returnToRest();
+
+      keepAnimating = false;
+    }
+
+    // Function to play animations sequentially
+    async function animationSequencing(recording = false, keepPlaying = false, frame) {
+      // Stop any ongoing animation loops
+      // continueLoop = false
+      AnimationSequencer.stop();
+      AnimationSequencer.setSequencing(true);
+
+      if (frame == "blend") {
+        //we want to adjust frames
+        AnimationSequencer.setFrom(60);
+        AnimationSequencer.setTo(60);
+      }
+      else {
+        //we want to adjust frames
+        AnimationSequencer.setFrom(30);
+        AnimationSequencer.setTo(30);
+      }
+      keepAnimating = false;
+
+      // Stop any current animations
+      if (stopAnims(EngineController.scene, EngineController.loadedMesh)) {
+        // check if animation is stopped
+        if (removeAnims(EngineController.scene, EngineController.loadedMesh) && removeAnims(EngineController.scene, EngineController.scene)) {
+          // await new Promise(resolve => setTimeout(resolve, 3000));
+          console.log("play animations, recording=" + recording);
+          await AnimationSequencer.start(basePath, EngineController.scene, EngineController.loadedMesh, ParamsManager.animations, recording=recording);
+        }
+      }
+    }
+
+
+
+
+
+  </script>
+
+{% endblock %}
+
+
+<style>
+#renderCanvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+</style>
+
+<script type='text/javascript'>
+    $('#searchresults').css({'padding-top': 10});
+    $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height() + $('#signinfo').height() + 30)});
+</script>
+
+
+{% block content %}
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+
+<div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
+    {% if request.session.search_results %}{# See if search_results in sessions is empty #}
+        <div id="results-inline" class="btn-group" role="group" aria-label="search results" style="white-space:nowrap;">
+
+        </div>
+    {% endif %}
+</div>
+
+{% if request.GET.warning %}
+    <div class="alert alert-warning">{{ request.GET.warning }}</div>
+{% endif %}
+
+<div id="signinfo" class='navbar navbar-collapse' style="border:0;">
+    <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:500;" class='view-tabs view-tabs-light'>
+    <ul class='nav nav-tabs nav-tabs-light'>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}.html">{% trans "Public View" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}">{% trans "Details" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_relations/{{gloss.id}}">{% trans "Relations" %}</a>
+        </li>
+        {% if gloss.has_frequency_data %}
+            <li class="nav-item">
+                <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss_frequency/{{gloss.id}}/">{% trans "Frequencies" %}</a>
+            </li>
+        {% endif %}
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/history">{% trans "Revision History" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossvideos">{% trans "Videos" %}</a>
+        </li>
+        <li class="nav-item">
+            <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/gloss/{{gloss.id}}/glossanimations">{% trans "Animations" %}</a>
+        </li>
+    </ul>
+    </div>
+</div>
+
+  <div id="definitionblock" style="width:100%;">
+  {% for animation in gloss.get_animations %}
+    <br><br>
+  <canvas id="renderCanvas" width="600" height="400"></canvas>
+  <br><br>
+  <div class='btn-group' style="width: 600px;flex-wrap: wrap;">
+
+  <button type="button" class="btn btn-primary"
+          onclick="retargetUE('{{protected_media_url}}{{animation.get_absolute_url}}', '{{protected_media_url}}{{animation.get_absolute_url}}', '{{protected_media_url}}{{animation.get_absolute_url}}', '{{protected_media_url}}{{animation.get_absolute_url}}', '{{protected_media_url}}{{animation.get_absolute_url}}', '{{protected_media_url}}{{animation.get_absolute_url}}', '{{protected_media_url}}{{animation.get_absolute_url}}')">Show</button>
+  </div>
+  {% endfor %}
+  <br>
+  <br>
+</div>
+
+{% endblock %}
