@@ -225,6 +225,15 @@ urlpatterns = [
             signbank.gloss_update.api_create_gloss_nmevideo, name='api_create_gloss_nmevideo'),
     re_path(r'api_delete_gloss_nmevideo/(?P<datasetid>\d+)/(?P<glossid>\d+)/(?P<videoid>\d+)/$',
             signbank.gloss_update.api_delete_gloss_nmevideo, name='api_delete_gloss_nmevideo'),
+    re_path(r'api_create_annotated_sentence/(?P<datasetid>\d+)/$',
+            signbank.gloss_update.api_create_annotated_sentence, name='api_create_annotated_sentence'),
+    re_path(r'api_update_annotated_sentence/(?P<datasetid>\d+)/(?P<annotatedsentenceid>\d+)/$',
+            signbank.gloss_update.api_update_annotated_sentence, name='api_update_annotated_sentence'),
+    re_path(r'api_delete_annotated_sentence/(?P<datasetid>\d+)/(?P<annotatedsentenceid>\d+)/$',
+            signbank.gloss_update.api_delete_annotated_sentence, name='api_delete_annotated_sentence'),
+    re_path(r'get_annotated_sentences_of_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
+            signbank.api_interface.get_annotated_sentences_of_gloss_json, name='get_annotated_sentences_of_gloss_json'),
+
 
     re_path(r'restore_gloss/(?P<glossid>\d+)/$',
             signbank.dictionary.update.restore_gloss, name='restore_gloss'),
@@ -268,6 +277,7 @@ urlpatterns = [
     re_path(r'^keywords/$', KeywordListView.as_view(), name='admin_keyword_list'),
 
     re_path(r'find_interesting_frequency_examples',signbank.dictionary.views.find_interesting_frequency_examples),
+    re_path(r'missing_video_view', signbank.dictionary.views.missing_video_view),
 
     re_path(r'createcitationimage/(?P<pk>\d+)',
             permission_required('dictionary.change_gloss')(signbank.dictionary.views.create_citation_image),

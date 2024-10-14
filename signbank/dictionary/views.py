@@ -11,6 +11,7 @@ from pathlib import Path
 
 import csv
 import time
+import sys
 
 from signbank.dictionary.forms import *
 from signbank.dictionary.models import Gloss
@@ -263,172 +264,57 @@ def morpheme(request, glossid):
                                'DEFINITION_FIELDS' : settings.DEFINITION_FIELDS})
 
 
-def missing_video_list():
+def video_file_path(gloss):
+    # returns the file system path of the video file without looking in GlossVideo
+    idgloss = gloss.idgloss
+
+    video_dir = settings.GLOSS_VIDEO_DIRECTORY
+    try:
+        dataset_dir = gloss.lemma.dataset.acronym
+    except KeyError:
+        dataset_dir = ""
+
+    two_letter_dir = idgloss[:2]
+    if len(two_letter_dir) == 1:
+        two_letter_dir += '-'
+    filename = idgloss + '-' + str(gloss.id) + ".mp4"
+    path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
+    if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
+        from django.utils.encoding import escape_uri_path
+        path = escape_uri_path(path)
+    return path
+
+
+def missing_video_list(selected_datasets):
     """A list of signs that don't have an
     associated video file"""
 
-    glosses = Gloss.objects.filter(inWeb__exact=True, archived=False)
+    glosses = Gloss.objects.filter(archived=False, morpheme=None, lemma__dataset__in=selected_datasets)
     for gloss in glosses:
-        if not gloss.has_video():
-            yield gloss
+        gloss_video_path = video_file_path(gloss)
+        gloss_video = GlossVideo.objects.filter(gloss=gloss, version=0, glossvideonme=None)
+        if not gloss_video.count():
+            # does not have GlossVideo object
+            file_path = os.path.join(settings.WRITABLE_FOLDER, gloss_video_path)
+            if os.path.exists(file_path.encode('utf-8')):
+                # there is a video file but no GlossVideo object
+                yield gloss, gloss_video_path
+
 
 def missing_video_view(request):
     """A view for the above list"""
 
-    glosses = missing_video_list()
+    # check that the user is logged in
+    if not request.user.is_authenticated:
+        messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
+        return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+
+    glosses = missing_video_list(selected_datasets)
 
     return render(request, "dictionary/missingvideo.html",
                               {'glosses': glosses})
-
-def import_media(request,video):
-    """
-    Importing media is done as follows:
-    1. In the main folder for importing media all folders with names equal to dataset names are opened.
-    2. In each folder with a dataset name all folders with name equal to a three letter language code of the dataset
-    at hand are opened.
-    3 In the folders with a three letter language code as name all media file are imported.
-    
-    E.g. view the following folder structure:
-     <import folder>/ASL/eng/HOUSE.mp4
-     
-     where 'ASL' is the name of a dataset and 'eng' is the three letter language code of English which is one of the 
-     dataset languages of the dataset 'ASL'.
-    """
-
-    overwritten_files = []
-    errors = []
-
-    if video:
-        import_folder = settings.VIDEOS_TO_IMPORT_FOLDER
-    else:
-        import_folder = settings.IMAGES_TO_IMPORT_FOLDER
-
-    # selected_datasets and dataset_languages are used by the Signbank header, these are passed to the view
-    selected_datasets = get_selected_datasets_for_user(request.user)
-    dataset_languages = get_dataset_languages(selected_datasets)
-    # gather the possible folder names for the selected datasets
-    selected_datasets_folder_options = [ ds.acronym for ds in selected_datasets ] + [ ds.name for ds in selected_datasets ]
-    # initialize data structures used while traversing the folders
-    files_per_dataset_per_language = {}
-    status_per_dataset_per_language = {}
-
-    for dataset_folder_name in [name for name in os.listdir(import_folder) if os.path.isdir(os.path.join(import_folder, name))]:
-
-        # only consider selected datasets to avoid feedback about other datasets
-        if dataset_folder_name not in selected_datasets_folder_options:
-            continue
-        # Check whether the folder name is equal to a dataset name
-        try:
-            dataset = Dataset.objects.get(name=dataset_folder_name)
-        except ObjectDoesNotExist:
-            try:
-                dataset = Dataset.objects.get(acronym=dataset_folder_name)
-            except ObjectDoesNotExist:
-                # this should not occur, we have already continued on non-selected folders
-                print('import_media, unidentified dataset folder: '+dataset_folder_name)
-                continue
-        files_per_dataset_per_language[dataset_folder_name] = {}
-        status_per_dataset_per_language[dataset_folder_name] = {}
-
-        dataset_folder_path = os.path.join(import_folder, dataset_folder_name)
-        for lang3code_folder_name in [name for name in os.listdir(dataset_folder_path) if os.path.isdir(os.path.join(dataset_folder_path, name))]:
-            # Check whether the folder name is equal to a three letter code for language of the dataset at hand
-            languages = dataset.translation_languages.filter(language_code_3char=lang3code_folder_name)
-            if languages:
-                language = languages[0]
-            else:
-                errors.append('Unidentified language folder for dataset '+dataset_folder_name+': '+lang3code_folder_name)
-                continue
-            files_per_dataset_per_language[dataset_folder_name][lang3code_folder_name] = []
-            status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name] = {}
-
-            lang3code_folder_path = os.path.join(dataset_folder_path, lang3code_folder_name) + "/"
-            for filename in os.listdir(lang3code_folder_path):
-                files_per_dataset_per_language[dataset_folder_name][lang3code_folder_name].append(filename)
-                status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = ''
-                (filename_without_extension, extension) = os.path.splitext(filename)
-                extension = extension[1:]  # Remove the dot
-                glosses = Gloss.objects.filter(lemma__dataset=dataset, annotationidglosstranslation__language=language,
-                                             annotationidglosstranslation__text__exact=filename_without_extension)
-                if glosses:
-                    gloss = glosses.first()
-                    if glosses.count() > 1:
-                        # not sure if this can happen
-                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Warning: Duplicate gloss found.')
-                        continue
-                else:
-                    status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Fail: Gloss Not Found')
-                    continue
-
-                default_annotationidgloss = get_default_annotationidglosstranslation(gloss)
-
-                if not video:
-                    overwritten, was_allowed = save_media(lang3code_folder_path, lang3code_folder_name,
-                                                          GLOSS_IMAGE_DIRECTORY, gloss, extension)
-
-                    if not was_allowed:
-                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Permission denied')
-
-                        errors.append('Failed to move media file for '+default_annotationidgloss+
-                                      '. Either the source could not be read or the destination could not be written.')
-                        print('Failed to move media file for ',GLOSS_IMAGE_DIRECTORY,lang3code_folder_path,default_annotationidgloss)
-                        continue
-
-                    if overwritten:
-                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Success (Image File Overwritten)')
-                    else:
-                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Success')
-
-                else:
-                    video_file_path = os.path.join(lang3code_folder_path, filename)
-                    vfile = File(open(video_file_path, 'rb'))
-                    video = gloss.add_video(request.user, vfile, '')
-                    vfile.close()
-                    overwritten = GlossVideo.objects.filter(gloss=gloss).count() > 1
-                    if overwritten:
-                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Success (Video File Overwritten)')
-                    else:
-                        status_per_dataset_per_language[dataset_folder_name][lang3code_folder_name][filename] = _('Success')
-
-                    try:
-                        os.remove(video_file_path)
-                    except OSError as oserror:
-                        errors.append("OSError: {}".format(oserror))
-                        errors.append("Cannot delete the source video: " + video_file_path)
-
-                if overwritten:
-                    overwritten_files.append(filename)
-
-    if overwritten_files:
-        print('import_media, overwritten_files: ', overwritten_files)
-
-    files_per_dataset_per_language_list = []
-    for ds in files_per_dataset_per_language.keys():
-
-        for lang3chr in files_per_dataset_per_language[ds].keys():
-
-            mediapaths = []
-            for mediapath in files_per_dataset_per_language[ds][lang3chr]:
-                try:
-                    status = status_per_dataset_per_language[ds][lang3chr][mediapath]
-                except KeyError:
-                    status = ''
-                mediapaths.append((mediapath, status))
-            import_media_body_row = { 'dataset': ds,
-                                      'lang3chr': lang3chr,
-                                      'mediapaths': mediapaths }
-            files_per_dataset_per_language_list.append(import_media_body_row)
-
-    if errors:
-        print('import_media, errors: ', errors)
-
-    return render(request,'dictionary/import_media.html',
-                  {'files_per_dataset_per_language': files_per_dataset_per_language_list,
-                          'errors': errors,
-                          'dataset_languages': dataset_languages,
-                          'selected_datasets': selected_datasets,
-                          'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
-                          'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
 
 def try_code(request, pk):
@@ -1878,17 +1764,18 @@ def proposed_new_signs(request):
 
 
 def create_citation_image(request, pk):
-    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
-    try:
-        gloss.create_citation_image()
-    except:
-        print("Citation image for gloss {} could not be created.".format(gloss.id))
-
-    # return to referer
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
+
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False, glossvideonme=None, glossvideoperspective=None)
+    try:
+        gloss.create_citation_image()
+    except ValidationError as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        messages.add_message(request, messages.ERROR, feedback_message)
+
     return redirect(url)
 
 def add_image(request):
@@ -1962,14 +1849,14 @@ def add_image(request):
             try:
                 f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
                 destination = File(f)
-            except:
+            except (SystemError, OSError, IOError):
                 quoted_filename = quote(gloss.idgloss, safe='')
                 filename = quoted_filename + '-' + str(gloss.pk) + extension
                 goal_location_str = os.path.join(goal_path, filename)
                 try:
                     f = open(goal_location_str.encode(sys.getfilesystemencoding()), 'wb+')
                     destination = File(f)
-                except:
+                except (SystemError, OSError, IOError):
                     print('add_image, failed to open destintation: ', goal_location_str)
                     return redirect(redirect_url)
             # if we get to here, destination has been opened
