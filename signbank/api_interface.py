@@ -292,16 +292,13 @@ def get_unzipped_video_files_json(request, datasetid):
     return JsonResponse(videos_data, safe=False)
 
 
-@csrf_exempt
-@put_api_user_in_request
-def get_dataset_zipfile_value_dict(request, dataset):
+def get_dataset_zipfile_value_dict(request):
     post_data = json.loads(request.body.decode('utf-8'))
 
     value_dict = dict()
 
     file_key = gettext("File")
     if file_key in post_data.keys():
-        print(post_data)
         # a file may be included in the json data
         # if there are problems decoding it, the value_dict without it is returned
         try:
