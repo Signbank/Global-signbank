@@ -305,7 +305,7 @@ def get_dataset_zipfile_value_dict(request):
         try:
             #'data:application/zip;base64,
             uploaded_file = post_data[file_key]
-            uploaded_file_contents = uploaded_file[28:]
+            uploaded_file_contents = uploaded_file[22:]
             filename = 'video_archive.zip'
             goal_path = os.path.join(settings.TMP_DIR, filename)
             f = open(goal_path, 'wb+')
