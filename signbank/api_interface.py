@@ -360,12 +360,22 @@ def upload_zipped_videos_folder_json(request, datasetid):
     # Create the TEMP folder if needed
     temp_goal_directory = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, 'TEMP')
     if not os.path.exists(temp_goal_directory):
-        os.mkdir(temp_goal_directory, mode=0o775)
+        try:
+            os.mkdir(temp_goal_directory, mode=0o775)
+        except (OSError, PermissionError):
+            results['errors'] = "Upload zip archive: The folder API_VIDEO_ARCHIVES/TEMP is missing."
+            results['unzippedvideos'] = []
+            return JsonResponse(results)
 
     dataset_folder = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, dataset.acronym)
     dataset_folder_exists = os.path.exists(dataset_folder)
     if not dataset_folder_exists:
-        os.mkdir(dataset_folder, mode=0o775)
+        try:
+            os.mkdir(dataset_folder, mode=0o775)
+        except (OSError, PermissionError):
+            results['errors'] = "Upload zip archive: The folder API_VIDEO_ARCHIVES/" + dataset.acronym + " cannot be created."
+            results['unzippedvideos'] = []
+            return JsonResponse(results)
 
     value_dict = get_dataset_zipfile_value_dict(request)
 
