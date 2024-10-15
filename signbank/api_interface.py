@@ -309,7 +309,7 @@ def get_dataset_zipfile_value_dict(request):
             filename = 'video_archive.zip'
             goal_path = os.path.join(settings.TMP_DIR, filename)
             f = open(goal_path, 'wb+')
-            inputbytes = io.BytesIO(uploaded_file_contents)
+            inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
             f.write(inputbytes)
             tempfile = File(f)
             value_dict[file_key] = tempfile
