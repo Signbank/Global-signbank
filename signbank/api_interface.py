@@ -303,7 +303,9 @@ def get_dataset_zipfile_value_dict(request):
         # a file may be included in the json data
         # if there are problems decoding it, the value_dict without it is returned
         try:
-            uploaded_file_contents = post_data[file_key]
+            #'data:application/zip;base64,
+            uploaded_file = post_data[file_key]
+            uploaded_file_contents = uploaded_file[28:]
             filename = 'video_archive.zip'
             goal_path = os.path.join(settings.TMP_DIR, filename)
             f = open(goal_path, 'wb+')
