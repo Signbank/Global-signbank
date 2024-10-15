@@ -1,3 +1,4 @@
+import io
 import json
 from urllib.error import URLError
 
@@ -302,12 +303,11 @@ def get_dataset_zipfile_value_dict(request):
         # a file may be included in the json data
         # if there are problems decoding it, the value_dict without it is returned
         try:
-            uploaded_file = post_data[file_key]
-            uploaded_file_contents = uploaded_file[22:]
+            uploaded_file_contents = post_data[file_key]
             filename = 'video_archive.zip'
             goal_path = os.path.join(settings.TMP_DIR, filename)
             f = open(goal_path, 'wb+')
-            inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
+            inputbytes = io.BytesIO(uploaded_file_contents)
             f.write(inputbytes)
             tempfile = File(f)
             value_dict[file_key] = tempfile
