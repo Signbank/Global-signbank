@@ -294,8 +294,8 @@ def get_unzipped_video_files_json(request, datasetid):
 
 
 def get_dataset_zipfile_value_dict(request):
-    post_data = json.loads(request.body.decode('utf-8'))
-    print(post_data.keys())
+    # post_data = json.loads(request.body.decode('utf-8'))
+    # print(post_data.keys())
     value_dict = dict()
 
     file_key = gettext("File")
