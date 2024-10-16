@@ -319,7 +319,7 @@ def get_dataset_zipfile_value_dict(request):
         # if there are problems decoding it, the value_dict without it is returned
         try:
             #'data:application/zip;base64,
-            chunk_size = 24
+            chunk_size = 1028
             uploaded_file = post_data[file_key]
             # remove the data URI
             uploaded_file_contents = uploaded_file.split(',')[1]
@@ -327,12 +327,17 @@ def get_dataset_zipfile_value_dict(request):
             goal_path = os.path.join(settings.TMP_DIR, filename)
             f = open(goal_path, 'wb+')
             inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
-            for i in range(0, len(inputbytes), chunk_size):
-                f.write(inputbytes[i:i+chunk_size])
-            f.close()
+            file_size = len(inputbytes)
+            print('file size: ', file_size)
+            for i in range(0, file_size, chunk_size):
+                chunk = inputbytes[i:i+chunk_size]
+                print('chunk written: ', i)
+                f.write(chunk)
             tempfile = File(f)
             value_dict[file_key] = tempfile
-        except (OSError, EncodingWarning, UnicodeDecodeError):
+        except (OSError, EncodingWarning, UnicodeDecodeError) as e:
+            feedback_message = getattr(e, 'message', repr(e))
+            print('exception: ', feedback_message)
             pass
 
     return value_dict
