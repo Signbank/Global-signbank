@@ -297,8 +297,6 @@ def get_unzipped_video_files_json(request, datasetid):
 def get_dataset_zipfile_value_dict(request):
 
     post_data = json.loads(request.body.decode('utf-8'))
-    print(post_data)
-    # print(post_data.keys())
     value_dict = dict()
 
     file_key = gettext("File")
@@ -312,12 +310,11 @@ def get_dataset_zipfile_value_dict(request):
             f.write(chunk)
         tempfile = File(f)
         value_dict[file_key] = tempfile
-    else:
+    # else:
         # if there are problems with the file, the value_dict without it is returned
         # print('no file found in request')
-        # print(request)
 
-    # elif file_key in post_data.keys():
+    elif file_key in post_data.keys():
         # a file may be included in the json data
         # if there are problems decoding it, the value_dict without it is returned
         try:
