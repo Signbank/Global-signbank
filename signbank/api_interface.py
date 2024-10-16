@@ -319,7 +319,7 @@ def get_dataset_zipfile_value_dict(request):
         # if there are problems decoding it, the value_dict without it is returned
         try:
             #'data:application/zip;base64,
-            chunk_size = 1028
+            chunk_size = 2048
             uploaded_file = post_data[file_key]
             # remove the data URI
             uploaded_file_contents = uploaded_file.split(',')[1]
@@ -328,10 +328,10 @@ def get_dataset_zipfile_value_dict(request):
             f = open(goal_path, 'wb+')
             inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
             file_size = len(inputbytes)
-            print('file size: ', file_size)
             for i in range(0, file_size, chunk_size):
                 chunk = inputbytes[i:i+chunk_size]
-                print('chunk written: ', i)
+                if not chunk:
+                    break
                 f.write(chunk)
             tempfile = File(f)
             value_dict[file_key] = tempfile
