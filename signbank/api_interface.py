@@ -4,6 +4,7 @@ from urllib.error import URLError
 
 from django.views.decorators.csrf import csrf_exempt
 from requests.exceptions import InvalidURL
+from urllib3.exceptions import DecodeError
 
 from signbank.dictionary.models import *
 from django.db.models import FileField
@@ -294,7 +295,9 @@ def get_unzipped_video_files_json(request, datasetid):
 
 
 def get_dataset_zipfile_value_dict(request):
-    # post_data = json.loads(request.body.decode('utf-8'))
+
+    post_data = json.loads(request.body)
+    print(post_data)
     # print(post_data.keys())
     value_dict = dict()
 
@@ -311,25 +314,29 @@ def get_dataset_zipfile_value_dict(request):
         value_dict[file_key] = tempfile
     else:
         # if there are problems with the file, the value_dict without it is returned
-        print('no file found in request')
-        print(request)
+        # print('no file found in request')
+        # print(request)
 
     # elif file_key in post_data.keys():
-    #     # a file may be included in the json data
-    #     # if there are problems decoding it, the value_dict without it is returned
-    #     try:
-    #         #'data:application/zip;base64,
-    #         uploaded_file = post_data[file_key]
-    #         uploaded_file_contents = uploaded_file.split(',')[1].strip()
-    #         filename = 'video_archive.zip'
-    #         goal_path = os.path.join(settings.TMP_DIR, filename)
-    #         f = open(goal_path, 'wb+')
-    #         inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
-    #         f.write(inputbytes)
-    #         tempfile = File(f)
-    #         value_dict[file_key] = tempfile
-    #     except (OSError, EncodingWarning, UnicodeDecodeError):
-    #         pass
+        # a file may be included in the json data
+        # if there are problems decoding it, the value_dict without it is returned
+        try:
+            #'data:application/zip;base64,
+            chunk_size = 24
+            uploaded_file = post_data[file_key]
+            # remove the data URI
+            uploaded_file_contents = uploaded_file.split(',')[1]
+            filename = 'video_archive.zip'
+            goal_path = os.path.join(settings.TMP_DIR, filename)
+            f = open(goal_path, 'wb+')
+            inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
+            for i in range(0, len(inputbytes), chunk_size):
+                f.write(inputbytes[i:i+chunk_size])
+            f.close()
+            tempfile = File(f)
+            value_dict[file_key] = tempfile
+        except (OSError, EncodingWarning, UnicodeDecodeError):
+            pass
 
     return value_dict
 
