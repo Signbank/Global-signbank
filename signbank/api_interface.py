@@ -33,6 +33,7 @@ import urllib.request
 import tempfile
 import shutil
 import os
+import stat
 from signbank.video.convertvideo import probe_format
 from signbank.video.models import GlossVideo, GlossVideoHistory
 from django.http import StreamingHttpResponse
@@ -248,12 +249,13 @@ def get_annotated_sentences_of_gloss_json(request, datasetid, glossid):
 def uploaded_video_files(dataset):
 
     dataset_acronym = str(dataset.acronym)
-    goal_directory = os.path.join(API_VIDEO_ARCHIVES, dataset_acronym)
-    list_of_videos = dict()
+    goal_directory = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, dataset_acronym)
+    list_of_videos = []
 
     if os.path.isdir(goal_directory):
         for file in os.listdir(goal_directory):
-            list_of_videos[dataset_acronym].append(file)
+            list_of_videos.append(file)
+
     return list_of_videos
 
 
@@ -294,10 +296,6 @@ def get_unzipped_video_files_json(request, datasetid):
     return JsonResponse(videos_data, safe=False)
 
 
-def read_in_chunks(bytes_string, chunk_size=1024):
-    for i in range(0, len(bytes_string), chunk_size):
-        yield bytes_string[i:i+chunk_size]
-
 def get_dataset_zipfile_value_dict(request):
 
     post_data = json.loads(request.body.decode('utf-8'))
@@ -315,17 +313,20 @@ def get_dataset_zipfile_value_dict(request):
             uploaded_file_contents = uploaded_file.split(',')[1]
             filename = 'video_archive.zip'
             goal_path = os.path.join(settings.TMP_DIR, filename)
+
             f = open(goal_path, 'wb+')
             inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
             file_size = len(inputbytes)
-            print('file size: ', file_size)
-            for chunk in read_in_chunks(inputbytes):
+            chunk_size = 1028
+            for i in range(0, file_size, chunk_size):
+                chunk = inputbytes[i:i+chunk_size]
+                if not chunk:
+                    break
                 f.write(chunk)
-            print('after write')
             f.close()
-            print('after close')
+            os.chmod(goal_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
+
             tempfile = File(f)
-            print('after temp file assignment')
             value_dict[file_key] = tempfile
         except (OSError, EncodingWarning, UnicodeDecodeError) as e:
             feedback_message = getattr(e, 'message', repr(e))
@@ -402,25 +403,14 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     zip_file = value_dict[file_key]
     file_name = zip_file.name
+    goal_zipped_file = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, 'TEMP', 'video_archive.zip')
 
-    goal_zipped_file = os.path.join(temp_goal_directory, file_name)
-
-    # with urllib.request.urlopen(zipped_file_url) as response:
-    #     with tempfile.NamedTemporaryFile(delete=False) as tmp_zipped_file:
-    #         shutil.copyfileobj(response, tmp_zipped_file)
-
-    chunk_size = 4096
-    temp_zipped = open(zip_file.name, 'rb')
-    zipped_file = open(goal_zipped_file, 'wb')
-    with open(goal_zipped_file, "wb+") as destination:
-        while True:
-            chunk = temp_zipped.read(chunk_size)
-            if chunk == b"":
-                break  # end of file
-            destination.write(chunk)
-        destination.close()
-
-    shutil.copyfileobj(temp_zipped, zipped_file)
+    try:
+        shutil.move(zip_file.name, str(goal_zipped_file))
+    except (OSError, PermissionError):
+        results['errors'] = "Could not copy the zip file to the destination folder."
+        results['unzippedvideos'] = []
+        return JsonResponse(results)
 
     if not zipfile.is_zipfile(goal_zipped_file):
         # unrecognised file type has been uploaded
@@ -450,7 +440,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
         return JsonResponse(results, safe=False)
 
     with atomic():
-        unzip_video_files(dataset, goal_zipped_file, API_VIDEO_ARCHIVES)
+        unzip_video_files_ids(dataset, goal_zipped_file, API_VIDEO_ARCHIVES)
 
     unzipped_files = uploaded_video_files(dataset)
 

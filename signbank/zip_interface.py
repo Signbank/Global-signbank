@@ -97,12 +97,11 @@ def check_subfolders_for_unzipping_ids(acronym, filenames):
     # the zip file possibly has an outer folder container
     # include both possible structures in the allowed structural paths
     commonprefix = os.path.commonprefix(filenames)
-    common_prefix_paths = [acronym]
     if commonprefix != acronym + '/':
         # if the user has put the zip files inside another folder, e.g., NGT_videos/NGT/nld/
-        subfolders = ([commonprefix] + [commonprefix + acronym + '/'])
+        subfolders = [commonprefix] + [commonprefix + acronym + '/']
     else:
-        subfolders = ([acronym + '/'] + common_prefix_paths)
+        subfolders = [acronym + '/']
     video_files = []
     for zipfilename in filenames:
         if zipfilename in subfolders:
@@ -113,7 +112,7 @@ def check_subfolders_for_unzipping_ids(acronym, filenames):
             continue
         file_dirname = os.path.dirname(zipfilename)
         # this is the path to the media file
-        if file_dirname + '/' not in common_prefix_paths:
+        if file_dirname + '/' not in subfolders:
             # this path not an allowed nesting structure, ignore this
             continue
         video_files.append(zipfilename)
@@ -166,6 +165,29 @@ def unzip_video_files(dataset, zipped_videos_file, destination):
     unzipped_folder = os.path.join(destination, folder_name)
 
     return
+
+
+def unzip_video_files_ids(dataset, zipped_videos_file, destination):
+    with zipfile.ZipFile(zipped_videos_file, "r") as zf:
+        for name in zf.namelist():
+            if not name.endswith('.mp4'):
+                # this can be an Apple .DS_Store file
+                continue
+            # this is a video
+            # check that the path is correct before extracting
+            filename = os.path.basename(name)
+            folder_name = os.path.dirname(name)
+            path_units = folder_name.split('/')
+            if len(path_units) != 1:
+                # path does not have form dataset/lang3char/annotation.mp4
+                continue
+            acronym = path_units[-1]
+            if acronym != str(dataset.acronym):
+                # path is not correct, ignore
+                continue
+            localfilepath = zf.extract(name, destination)
+            new_location = os.path.join(WRITABLE_FOLDER, destination, str(dataset.acronym), filename)
+            shutil.move(localfilepath, new_location)
 
 
 def uploaded_zip_archives(dataset):
