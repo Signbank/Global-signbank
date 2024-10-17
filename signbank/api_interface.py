@@ -294,6 +294,10 @@ def get_unzipped_video_files_json(request, datasetid):
     return JsonResponse(videos_data, safe=False)
 
 
+def read_in_chunks(bytes_string, chunk_size=1024):
+    for i in range(0, len(bytes_string), chunk_size):
+        yield bytes_string[i:i+chunk_size]
+
 def get_dataset_zipfile_value_dict(request):
 
     post_data = json.loads(request.body.decode('utf-8'))
@@ -301,26 +305,11 @@ def get_dataset_zipfile_value_dict(request):
 
     file_key = gettext("File")
 
-    if request.FILES:
-        uploaded_file = request.FILES['file']
-        filename = uploaded_file.name
-        goal_path = os.path.join(settings.TMP_DIR, filename)
-        f = open(goal_path, 'wb+')
-        for chunk in uploaded_file.chunks():
-            f.write(chunk)
-        tempfile = File(f)
-        value_dict[file_key] = tempfile
-    # else:
-        # if there are problems with the file, the value_dict without it is returned
-        # print('no file found in request')
-
-    elif file_key in post_data.keys():
+    if file_key in post_data.keys():
         # a file may be included in the json data
         # if there are problems decoding it, the value_dict without it is returned
         try:
             #'data:application/zip;base64,
-            print(post_data.keys())
-            chunk_size = 1024
             uploaded_file = post_data[file_key]
             # remove the data URI
             uploaded_file_contents = uploaded_file.split(',')[1]
@@ -330,13 +319,13 @@ def get_dataset_zipfile_value_dict(request):
             inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
             file_size = len(inputbytes)
             print('file size: ', file_size)
-            for i in range(0, file_size, chunk_size):
-                chunk = inputbytes[i:i+chunk_size]
-                print('chunk: ', i)
+            for chunk in read_in_chunks(inputbytes):
                 f.write(chunk)
-            print('after writes')
+            print('after write')
             f.close()
+            print('after close')
             tempfile = File(f)
+            print('after temp file assignment')
             value_dict[file_key] = tempfile
         except (OSError, EncodingWarning, UnicodeDecodeError) as e:
             feedback_message = getattr(e, 'message', repr(e))
