@@ -19,9 +19,12 @@ import signbank.dictionary.adminviews
 import signbank.api_interface
 import signbank.manage_videos
 import signbank.abstract_machine
+import signbank.csv_interface
 import signbank.gloss_update
 import signbank.dictionary.batch_edit
+import signbank.dictionary.update
 import signbank.gloss_morphology_update
+import signbank.frequency
 
 app_name = 'dictionary'
 urlpatterns = [
