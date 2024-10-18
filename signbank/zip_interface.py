@@ -347,15 +347,18 @@ def save_video(video_file_path, goal):
 
 
 @csrf_exempt
-def import_video_file(request, gloss, video_file_path):
+def import_video_file(request, gloss, video_file_path, useid=False):
     # request is needed as a parameter to the GlossVideoHistory
     try:
         with atomic():
-            goal_gloss_file_path, video_file_name, video_path = get_gloss_filepath(video_file_path, gloss)
+            if useid:
+                goal_gloss_file_path, video_file_name, video_path = get_gloss_filepath_glossid(video_file_path, gloss)
+            else:
+                goal_gloss_file_path, video_file_name, video_path = get_gloss_filepath(video_file_path, gloss)
             if not goal_gloss_file_path:
                 errors = "Incorrect gloss path for import."
                 errors_deleting = remove_video_file_from_import_videos(video_file_path)
-                if errors_deleting:
+                if errors_deleting and settings.DEBUG_VIDEOS:
                     print('import_video_file: ', errors_deleting)
                 return "Failed", errors
             existing_videos = GlossVideo.objects.filter(gloss=gloss, version=0)
@@ -383,9 +386,9 @@ def import_video_file(request, gloss, video_file_path):
 
             else:
                 # make new GlossVideo object for new video
-                video = GlossVideo(gloss=gloss,
+                video = GlossVideo(gloss=gloss, glossvideonme=None, glossvideoperspective=None,
                                    version=0)
-                new_glossvideo_name =os.path.join(video_path, video_file_name)
+                new_glossvideo_name = os.path.join(video_path, video_file_name)
                 with open(video_file_path, 'rb') as f:
                     video.videofile.save(new_glossvideo_name, File(f), save=True)
                 video.save()
@@ -401,7 +404,7 @@ def import_video_file(request, gloss, video_file_path):
         status, errors = "Failed", "Failed"
 
     errors_deleting = remove_video_file_from_import_videos(video_file_path)
-    if errors_deleting:
+    if errors_deleting and settings.DEBUG_VIDEOS:
         print('import_video_file: ', errors_deleting)
 
     return status, errors

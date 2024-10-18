@@ -2390,7 +2390,7 @@ class Gloss(models.Model):
 
         # Create a new GlossVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None)
+            video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
             # Backup the existing video objects stored in the database
             existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None)
             for video_object in existing_videos:

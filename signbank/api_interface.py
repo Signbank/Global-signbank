@@ -16,7 +16,7 @@ from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTE
 from signbank.api_token import put_api_user_in_request
 from signbank.abstract_machine import get_interface_language_api
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, BadRequest
 
 from django.shortcuts import get_object_or_404
 
@@ -40,6 +40,7 @@ from django.http import StreamingHttpResponse
 from django.contrib.auth.models import Group, User
 from signbank.zip_interface import *
 import base64
+from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
 
 
 def api_fields(dataset, language_code='en', advanced=False):
@@ -262,7 +263,7 @@ def uploaded_video_files(dataset):
 def uploaded_video_filepaths(dataset):
 
     dataset_acronym = str(dataset.acronym)
-    goal_directory = os.path.join(API_VIDEO_ARCHIVES, dataset_acronym)
+    goal_directory = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, dataset_acronym)
     list_of_video_paths = []
 
     if os.path.isdir(goal_directory):
@@ -463,10 +464,10 @@ def import_video_to_gloss_api(request, video_file_path):
     json_path_key = settings.API_VIDEO_ARCHIVES + dataset_acronym + '/' + filename
     import_video_data[json_path_key] = dict()
     (filename_without_extension, extension) = os.path.splitext(filename)
-    gloss = Gloss.objects.filter(id=filename_without_extension).first()
+    gloss = Gloss.objects.filter(id=int(filename_without_extension)).first()
     if not gloss:
         errors_deleting = remove_video_file_from_import_videos(video_file_path)
-        if errors_deleting:
+        if errors_deleting and settings.DEBUG_VIDEOS:
             print('import_video_to_gloss: ', errors_deleting)
         import_video_data[json_path_key]["gloss"] = ''
         import_video_data[json_path_key]["videofile"] = filename
@@ -475,7 +476,7 @@ def import_video_to_gloss_api(request, video_file_path):
         import_video_data[json_path_key]["importstatus"] = 'Failed'
         return import_video_data
 
-    status, errors = import_video_file(request, gloss, video_file_path)
+    status, errors = import_video_file(request, gloss, video_file_path, useid=True)
     if status == 'Success':
         video_path = gloss.get_video_url()
         import_video_data[json_path_key]["Video"] = settings.URL + settings.PREFIX_URL + '/dictionary/protected_media/' + video_path
@@ -522,36 +523,27 @@ def json_finish():
 @csrf_exempt
 @put_api_user_in_request
 def upload_videos_to_glosses(request, datasetid):
-    # get file as a url parameter: /dictionary/upload_videos_to_glosses/5
+    # Do this AFTER uploading a zip archive using: /dictionary/upload_videos_to_glosses/5
 
-    has_permission = True
-    errors = ""
+    interface_language_code = request.headers.get('Accept-Language', 'en')
+    if interface_language_code not in settings.MODELTRANSLATION_LANGUAGES:
+        interface_language_code = 'en'
+    activate(interface_language_code)
 
-    if not request.user.is_authenticated:
-        has_permission = False
-        errors = 'Please login to use the requested functionality.'
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        return BadRequest(gettext("Dataset not found."))
+
+    if 'change_dataset' not in get_user_perms(request.user, dataset):
+        return BadRequest(gettext("No permission to change dataset"))
 
     # check if the user can manage this dataset
-    try:
-        group_manager = Group.objects.get(name='Dataset_Manager')
-    except ObjectDoesNotExist:
-        group_manager = None
-        has_permission = False
-        errors = 'No group Dataset_Manager found.'
-
+    group_manager = Group.objects.get(name='Dataset_Manager')
     groups_of_user = request.user.groups.all()
-    if has_permission and group_manager not in groups_of_user:
-        has_permission = False
-        errors = 'You must be in group Dataset Manager to upload a zip video archive.'
+    if group_manager not in groups_of_user:
+        return BadRequest(gettext('You must be in group Dataset Manager to import gloss videos.'))
 
-    if has_permission and not errors:
-        dataset_id = int(datasetid)
-        dataset = Dataset.objects.filter(id=dataset_id).first()
-        # get paths of uploaded videos to import
-        video_file_paths = uploaded_video_filepaths(dataset)
-    else:
-        # if the user does not have permission, an empty file is generated
-        video_file_paths = []
+    video_file_paths = uploaded_video_filepaths(dataset)
 
     pseudo_buffer = VideoImporter()
     return StreamingHttpResponse(
