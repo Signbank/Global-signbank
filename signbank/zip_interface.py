@@ -1,4 +1,5 @@
 import json
+from gzip import WRITE
 
 from django.views.decorators.csrf import csrf_exempt
 
@@ -8,7 +9,8 @@ from django.core.files.base import ContentFile, File
 from tagging.models import Tag, TaggedItem
 from signbank.dictionary.forms import *
 from django.utils.translation import override, gettext_lazy as _, activate
-from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
+from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS, \
+    API_VIDEO_ARCHIVES
 
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
 from signbank.settings.server_specific import VIDEOS_TO_IMPORT_FOLDER
@@ -164,30 +166,31 @@ def unzip_video_files(dataset, zipped_videos_file, destination):
     folder_name, extension = os.path.splitext(unzipped_filename)
     unzipped_folder = os.path.join(destination, folder_name)
 
+    # originally there was a cleanup here
     return
 
 
 def unzip_video_files_ids(dataset, zipped_videos_file, destination):
+
     with zipfile.ZipFile(zipped_videos_file, "r") as zf:
         for name in zf.namelist():
             if not name.endswith('.mp4'):
                 # this can be an Apple .DS_Store file
                 continue
             # this is a video
-            # check that the path is correct before extracting
             filename = os.path.basename(name)
-            folder_name = os.path.dirname(name)
-            path_units = folder_name.split('/')
-            if len(path_units) != 1:
-                # path does not have form dataset/GLOSSID.mp4
+
+            # The ZipFile module does not like os.path.join paths
+            # The zip file needs to be unzipped in the same location as itself, then files are moved
+            unzip_location = WRITABLE_FOLDER + destination + 'TEMP'
+            new_location = WRITABLE_FOLDER + destination + str(dataset.acronym) + '/' + filename
+            try:
+                localfilepath = zf.extract(name, unzip_location)
+
+                shutil.move(localfilepath, new_location)
+            except (OSError, PermissionError):
+                print('File system error unzipping')
                 continue
-            acronym = path_units[-1]
-            if acronym != str(dataset.acronym):
-                # path is not correct, ignore
-                continue
-            localfilepath = zf.extract(name, destination)
-            new_location = os.path.join(destination, str(dataset.acronym), filename)
-            shutil.move(localfilepath, new_location)
 
 
 def uploaded_zip_archives(dataset):
