@@ -179,14 +179,14 @@ def unzip_video_files_ids(dataset, zipped_videos_file, destination):
             folder_name = os.path.dirname(name)
             path_units = folder_name.split('/')
             if len(path_units) != 1:
-                # path does not have form dataset/lang3char/annotation.mp4
+                # path does not have form dataset/GLOSSID.mp4
                 continue
             acronym = path_units[-1]
             if acronym != str(dataset.acronym):
                 # path is not correct, ignore
                 continue
             localfilepath = zf.extract(name, destination)
-            new_location = os.path.join(WRITABLE_FOLDER, destination, str(dataset.acronym), filename)
+            new_location = os.path.join(destination, str(dataset.acronym), filename)
             shutil.move(localfilepath, new_location)
 
 
