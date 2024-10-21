@@ -24,10 +24,6 @@
     {
       "url": "https://signbank-test.cls.ru.nl",
       "description": "Development server"
-    },
-    {
-      "url": "localhost:8000",
-      "description": "Development server"
     }
   ],
   "components": 
