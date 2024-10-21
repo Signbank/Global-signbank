@@ -981,6 +981,7 @@
       "post":
       {
         "description": "Uploads and unzips a zipped videos folder to the api_video_archives folder for a specific dataset.",
+        "parameters":
         [
           {
             "name": "datasetid",
@@ -1004,7 +1005,8 @@
                 "type": "object",
                 "properties": {
                   "File": {
-                    "type": "base64-encoded file"
+                    "type": "string",
+                    "format": "byte"
                   }
                 }
               }
