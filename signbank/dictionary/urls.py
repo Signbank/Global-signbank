@@ -232,8 +232,6 @@ urlpatterns = [
             signbank.gloss_update.api_delete_annotated_sentence, name='api_delete_annotated_sentence'),
     re_path(r'get_annotated_sentences_of_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.api_interface.get_annotated_sentences_of_gloss_json, name='get_annotated_sentences_of_gloss_json'),
-    re_path(r'test_abstract_machine_zip/(?P<datasetid>\d+)/$',
-            signbank.dictionary.views.test_abstract_machine_zip, name='test_abstract_machine_zip'),
 
 
     re_path(r'restore_gloss/(?P<glossid>\d+)/$',
