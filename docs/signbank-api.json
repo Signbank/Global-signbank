@@ -992,20 +992,37 @@
             {
               "type": "string"
             }
-          },
+          }
+        ],
+        "requestBody":
+        {
+          "content":
           {
+<<<<<<< Updated upstream
             "name": "file",
             "in": "query",
             "description": "The URL of the zip file to upload. The file path must include an IP address from the other computer. The zip file archive has the structure `<dataset_acronym>/<language_code_3char>/<annotation_text>.mp4`. For dataset NGT, this looks like `NGT/nld/OLIFANT.mp4`, and for an English language, this looks like: `ASL/eng/FINGERSPELLING.mp4`. The videos need to be in `mp4` format. It is recommended to use the English gloss annotation for languages with UTF-8 characters or symbols because of file naming and storage. For example, right-to-left languages flip the order of the extension to the left. Because Signbank is multilingual, not using English in these cases may not work as expected because all the files are stored in the same file system, albeit in separate folders.",
             "required": true,
             "schema": 
+=======
+            "application/json":
+>>>>>>> Stashed changes
             {
-              "type": "string",
-              "format": "uri"
+              "schema":
+              {
+                "type": "object",
+                "properties":
+                {
+                  "File":
+                  {
+                    "type": "base64-encoded file"
+                  }
+                }
+              }
             }
           }
-        ],
-        "responses": 
+        },
+        "responses":
         {
           "200": 
           {
