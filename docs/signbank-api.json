@@ -19,6 +19,14 @@
     },
     {
       "url": "https://signbank-dev.cls.ru.nl",
+      "description": "Development server (empty database)"
+    },
+    {
+      "url": "https://signbank-test.cls.ru.nl",
+      "description": "Development server"
+    },
+    {
+      "url": "localhost:8000",
       "description": "Development server"
     }
   ],
@@ -976,13 +984,13 @@
     {
       "post": 
       {
-        "description": "Uploads and unzips a zipped videos folder to the import_videos folder for a specific dataset.",
+        "description": "Uploads and unzips a zipped videos folder to the api_video_archives folder for a specific dataset.",
         "parameters": 
         [
           {
             "name": "datasetid",
             "in": "path",
-            "description": "The dataset ID required to provide language-based fields such as Annotation, Lemma, Senses, which are available for the translation languages of the dataset. Defaults to NGT (dataset ID 5) if the user does not have access.",
+            "description": "The dataset ID is required.",
             "required": true,
             "schema": 
             {
@@ -992,7 +1000,7 @@
           {
             "name": "file",
             "in": "query",
-            "description": "The URL of the zip file to upload. The file path must include an IP address from the other computer. The zip file archive has the structure `<dataset_acronym>/<language_code_3char>/<annotation_text>.mp4`. For dataset NGT, this looks like `NGT/nld/OLIFANT.mp4`, and for an English language, this looks like: `ASL/eng/FINGERSPELLING.mp4`. The videos need to be in `mp4` format. It is recommended to use the English gloss annotation for languages with UTF-8 characters or symbols because of file naming and storage. For example, right-to-left languages flip the order of the extension to the left. Because Signbank is multilingual, not using English in these cases may not work as expected because all the files are stored in the same file system, albeit in separate folders.",
+            "description": "The zip file archive has the structure `<dataset_acronym>/<gloss_id>.mp4`. For dataset NGT, this looks like `NGT/4681.mp4`. The videos need to be in `mp4` format.",
             "required": true,
             "schema": 
             {
@@ -1038,15 +1046,10 @@
                   "example": 
                   {
                     "filename": "tst_videos.zip",
-                    "unzippedvideos": 
-                    {
-                      "nld": 
+                    "unzippedvideos":
                       [
-                        "STOMP-B.mp4",
-                        "POMPOEN-A.mp4"
-                      ],
-                      "eng": []
-                    }
+                        "4681.mp4"
+                      ]
                   }
                 }
               }
@@ -1069,7 +1072,7 @@
     {
       "post": 
       {
-        "description": "Imports the video files found for the dataset in the `import_videos` folder into the corresponding glosses. If a video for a gloss already exists, it is overwritten. After the operation, the video files are deleted from `import_videos`.",
+        "description": "Imports the video files found for the dataset in the `api_video_archives` folder into the corresponding glosses. If a video for a gloss already exists, it is overwritten. After the operation, the video files are deleted from `api_video_archives`.",
         "parameters": 
         [
           {
@@ -1097,7 +1100,7 @@
                   "type": "object",
                   "properties": 
                   {
-                    "import_videos_status": 
+                    "api_video_archives_status":
                     {
                       "type": "array",
                       "description": "List of the status of each imported video file.",
@@ -1141,24 +1144,24 @@
                   },
                   "example": 
                   {
-                    "import_videos_status": 
+                    "api_video_archives_status":
                     [
                       {
-                        "import_videos/tstMH/nld/STOMP-B.mp4": 
+                        "api_video_archives/tstMH/42090.mp4":
                         {
                           "gloss": "42090",
-                          "videofile": "STOMP-B.mp4",
-                          "Video": "https://signbank-dev.cls.ru.nl//dictionary/protected_media/glossvideo/tstMH/ST/STOMP-42090.mp4",
+                          "videofile": "42090.mp4",
+                          "Video": "https://signbank-test.cls.ru.nl//dictionary/protected_media/glossvideo/tstMH/ST/STOMP-42090.mp4",
                           "status": "Success",
                           "errors": ""
                         }
                       },
                       {
-                        "import_videos/tstMH/nld/POMPOEN-A.mp4": 
+                        "api_video_archives/tstMH/42087.mp4":
                         {
                           "gloss": "42087",
-                          "videofile": "POMPOEN-A.mp4",
-                          "Video": "https://signbank-dev.cls.ru.nl//dictionary/protected_media/glossvideo/tstMH/PO/POMPOEN-42087.mp4",
+                          "videofile": "42087.mp4",
+                          "Video": "https://signbank-test.cls.ru.nl//dictionary/protected_media/glossvideo/tstMH/PO/POMPOEN-42087.mp4",
                           "status": "Success",
                           "errors": ""
                         }
