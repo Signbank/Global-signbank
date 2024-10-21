@@ -992,19 +992,26 @@
             {
               "type": "string"
             }
-          },
-          {
-            "name": "file",
-            "in": "query",
-            "description": "The zip file archive has the structure `<dataset_acronym>/<gloss_id>.mp4`. For dataset NGT, this looks like `NGT/4681.mp4`. The videos need to be in `mp4` format.",
-            "required": true,
-            "schema":
-            {
-              "type": "string",
-              "format": "uri"
-            }
           }
         ],
+        "requestBody":
+        {
+          "content":
+          {
+            "application/json":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties": {
+                  "File": {
+                    "type": "base64-encoded file"
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses":
         {
           "200":
