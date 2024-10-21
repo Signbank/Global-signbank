@@ -1769,7 +1769,7 @@ def create_citation_image(request, pk):
     else:
         url = '/'
 
-    gloss = get_object_or_404(Gloss, pk=pk, archived=False, glossvideonme=None, glossvideoperspective=None)
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
     try:
         gloss.create_citation_image()
     except ValidationError as e:
