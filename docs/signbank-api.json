@@ -1005,7 +1005,8 @@
                 "type": "object",
                 "properties": {
                   "File": {
-                    "type": "base64-encoded file"
+                    "type": "string",
+                    "format": "byte"
                   }
                 }
               }
