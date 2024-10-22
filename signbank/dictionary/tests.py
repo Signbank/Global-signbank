@@ -1627,7 +1627,7 @@ class HandshapeTests(TestCase):
         new_handshape = self.create_handshape()
         #We can now request a details
         print('Test HandshapeDetailView for new handshape.')
-        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
+        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value)+'/', follow=True)
         self.assertEqual(response.status_code,200)
 
 
@@ -1681,7 +1681,7 @@ class HandshapeTests(TestCase):
 
         #We can now request a details
         print('Test HandshapeDetailView for new handshape.')
-        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value), follow=True)
+        response = self.client.get('/dictionary/handshape/'+str(new_handshape.machine_value)+'/', follow=True)
         self.assertEqual(response.status_code,200)
 
         new_handshape_value_string = '_' + str(new_handshape.machine_value)
