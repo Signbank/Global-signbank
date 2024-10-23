@@ -2401,13 +2401,13 @@ class Gloss(models.Model):
             raise ValidationError(msg)
 
     def has_nme_videos(self):
-        from signbank.video.models import GlossVideoNME
-        nmevideos = GlossVideoNME.objects.filter(gloss=self)
+        from signbank.video.models import GlossVideo
+        nmevideos = GlossVideo.objects.filter(gloss=self, glossvideonme=True, glossvideoperspective=None)
         return nmevideos.count()
 
     def get_nme_videos(self):
-        from signbank.video.models import GlossVideoNME
-        nmevideos = GlossVideoNME.objects.filter(gloss=self)
+        from signbank.video.models import GlossVideo
+        nmevideos = GlossVideo.objects.filter(gloss=self, glossvideonme=True, glossvideoperspective=None)
         return nmevideos
 
     def add_nme_video(self, user, videofile, new_offset, recorded):
