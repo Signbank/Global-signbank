@@ -821,7 +821,7 @@ class GlossVideo(models.Model):
         Calculates the new path, moves the video file to the new path and updates the videofile field
         :return: 
         """
-        old_path = str(str(self.videofile))
+        old_path = str(self.videofile)
         new_path = get_video_file_path(self, old_path, version=self.version)
         if old_path != new_path:
             if move_files_on_disk:
@@ -898,7 +898,7 @@ class GlossVideoNME(GlossVideo):
                     GlossVideoDescription.objects.create(text=text, nmevideo=self, language=language)
 
     def get_video_path(self):
-        return self.videofile.name
+        return str(self.videofile)
 
     def ensure_mp4(self):
         """Ensure that the video file is an h264 format
@@ -969,7 +969,7 @@ class GlossVideoPerspective(GlossVideo):
         ordering = ['perspective', ]
 
     def get_video_path(self):
-        return self.videofile.name
+        return str(self.videofile)
 
     def save(self, *args, **kwargs):
         super(GlossVideoPerspective, self).save(*args, **kwargs)

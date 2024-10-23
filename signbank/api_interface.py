@@ -453,7 +453,7 @@ def import_video_to_gloss_api(request, video_file_path):
     json_path_key = settings.API_VIDEO_ARCHIVES + dataset_acronym + '/' + filename
     import_video_data[json_path_key] = dict()
     (filename_without_extension, extension) = os.path.splitext(filename)
-    gloss = Gloss.objects.filter(id=int(filename_without_extension)).first()
+    gloss = Gloss.objects.filter(id=int(filename_without_extension), archived=False).first()
     if not gloss:
         errors_deleting = remove_video_file_from_import_videos(video_file_path)
         if errors_deleting and settings.DEBUG_VIDEOS:

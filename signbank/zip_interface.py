@@ -280,12 +280,13 @@ def get_gloss_filepath_glossid(video_file_path, gloss):
 
     language = gloss.lemma.dataset.default_language
     if not language:
-        return "", "", ""
+        language = gloss.lemma.dataset.translation_languages.first()
+
     # get the annotation text of the gloss
     annotationidglosstranslation = gloss.annotationidglosstranslation_set.all().filter(language=language)
     if not annotationidglosstranslation:
         # the gloss has no annotations for the language
-        return "", "", ""
+        annotationidglosstranslation = gloss.annotationidglosstranslation_set.all()
     annotation_text = annotationidglosstranslation.first().text
 
     glossid = str(gloss.id)
