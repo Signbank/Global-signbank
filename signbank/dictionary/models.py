@@ -2310,21 +2310,22 @@ class Gloss(models.Model):
         """Returns the path within the writable and static folder"""
         from signbank.video.models import GlossVideo
 
-        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0)
-        if glossvideo:
-            glossvideo = glossvideo.first()
-            videofile_path = str(glossvideo.videofile)
-            videofile_path_without_extension, extension = os.path.splitext(videofile_path)
+        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0).first()
+        if not glossvideo:
+            return ''
 
-            if check_existence:
-                for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
-                    imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
-                    try:
-                        imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
-                    except:
-                        imagefile_path_exists = False
-                    if check_existence and imagefile_path_exists:
-                        return imagefile_path
+        videofile_path = str(glossvideo.videofile)
+        videofile_path_without_extension, extension = os.path.splitext(videofile_path)
+
+        for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+            imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
+            imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
+            print('image path: ', imagefile_path)
+            if imagefile_path_exists and check_existence:
+                return imagefile_path
+            else:
+                return imagefile_path
+        # no matches
         return ''
 
     def get_image_url(self):
