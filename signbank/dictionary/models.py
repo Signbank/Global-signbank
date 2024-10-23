@@ -602,14 +602,6 @@ class ExampleSentence(models.Model):
             examplevideos = self.examplevideo_set.filter(version=0)
             return str(examplevideos[0].videofile)
 
-    def get_video_path_prefix(self):
-        try:
-            examplesentence = self.examplesentence_set.get(version=0)
-            prefix, extension = os.path.splitext(str(examplesentence))
-            return prefix
-        except ObjectDoesNotExist:
-            return ''
-        
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
 
@@ -2340,28 +2332,17 @@ class Gloss(models.Model):
 
     def get_video_path(self):
         from signbank.video.models import GlossVideo
-        try:
-            glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).get(version=0)
-            return str(glossvideo.videofile)
-        except ObjectDoesNotExist:
-            return ''
-        except MultipleObjectsReturned:
-            # Just return the first
-            glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0)
-            return str(glossvideos.first().videofile)
-
-    def get_video_path_prefix(self):
-        try:
-            glossvideo = self.glossvideo_set.exclude(glossvideonme=True, glossvideoperspective__isnull=False).get(version=0)
-            prefix, extension = os.path.splitext(str(glossvideo))
-            return prefix
-        except ObjectDoesNotExist:
-            return ''
+        # there cannot be more that one like this
+        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0).first()
+        if not glossvideo:
+            return ""
+        return str(glossvideo.videofile)
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
 
         video_path = self.get_video_path()
+        print('video path: ', video_path)
         filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
         if os.path.exists(filepath.encode('utf-8')):
             return video_path
