@@ -306,7 +306,7 @@ def get_dataset_zipfile_value_dict(request):
         return value_dict
 
     try:
-        filename = uploaded_file.filename
+        filename = uploaded_file.name
         goal_path = os.path.join(settings.TMP_DIR, filename)
         f = open(goal_path, 'wb+')
         for chunk in uploaded_file.chunks():
