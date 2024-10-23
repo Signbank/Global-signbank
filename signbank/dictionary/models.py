@@ -2320,15 +2320,12 @@ class Gloss(models.Model):
         for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
             imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
             imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
-            print('image path: ', imagefile_path)
-            if check_existence:
-                if imagefile_path_exists:
-                    return imagefile_path
-                else:
-                    return ""
-            else:
+            if imagefile_path_exists:
+                print('image found: ', imagefile_path)
                 return imagefile_path
         # no match
+        if check_existence:
+            print('no image found, tried: ', settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS)
         return ''
 
     def get_image_url(self):
