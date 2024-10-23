@@ -300,7 +300,8 @@ def get_unzipped_video_files_json(request, datasetid):
 def get_dataset_zipfile_value_dict(request):
 
     # post_data = json.loads(request.body.decode('utf-8'))
-    post_data = request.FILES
+    post_data = request.body.FILES
+    print(post_data)
     value_dict = dict()
 
     file_key = gettext("File")
@@ -310,7 +311,7 @@ def get_dataset_zipfile_value_dict(request):
             uploaded_file = post_data[file_key]
             filename = 'video_archive.zip'
             goal_path = os.path.join(settings.TMP_DIR, filename)
-
+            print(goal_path)
             f = open(goal_path, 'wb+')
             for chunk in uploaded_file.chunks():
                 if not chunk:
@@ -524,16 +525,16 @@ def upload_videos_to_glosses(request, datasetid):
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
-        return BadRequest(gettext("Dataset not found."))
+        return JsonResponse({"error": gettext("Dataset not found.")}, status=400)
 
     if 'change_dataset' not in get_user_perms(request.user, dataset):
-        return BadRequest(gettext("No permission to change dataset"))
+        return JsonResponse({"error": gettext("No permission to change dataset")}, status=400)
 
     # check if the user can manage this dataset
     group_manager = Group.objects.get(name='Dataset_Manager')
     groups_of_user = request.user.groups.all()
     if group_manager not in groups_of_user:
-        return BadRequest(gettext('You must be in group Dataset Manager to import gloss videos.'))
+        return JsonResponse({"error": gettext('You must be in group Dataset Manager to import gloss videos.')}, status=400)
 
     video_file_paths = uploaded_video_filepaths(dataset)
 
