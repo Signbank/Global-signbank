@@ -1006,7 +1006,7 @@
                 "properties": {
                   "File": {
                     "type": "string",
-                    "format": "byte",
+                    "format": "binary",
                     "description": "The zip archive file to upload"
                   }
                 }
