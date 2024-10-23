@@ -4,7 +4,7 @@ from urllib.error import URLError
 
 from django.views.decorators.csrf import csrf_exempt
 from requests.exceptions import InvalidURL
-from urllib3.exceptions import DecodeError
+from urllib3.exceptions import DecodeError, RequestError
 
 from signbank.dictionary.models import *
 from django.db.models import FileField
@@ -299,33 +299,29 @@ def get_unzipped_video_files_json(request, datasetid):
 
 def get_dataset_zipfile_value_dict(request):
 
-    # post_data = json.loads(request.body.decode('utf-8'))
-    post_data = request.body.FILES
-    print(post_data)
     value_dict = dict()
+    try:
+        uploaded_file = request.FILES.get('File')
+    except (AttributeError, KeyError):
+        return value_dict
 
-    file_key = gettext("File")
+    try:
+        filename = uploaded_file.filename
+        goal_path = os.path.join(settings.TMP_DIR, filename)
+        f = open(goal_path, 'wb+')
+        for chunk in uploaded_file.chunks():
+            if not chunk:
+                break
+            f.write(chunk)
+        f.close()
+        os.chmod(goal_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
 
-    if file_key in post_data.keys():
-        try:
-            uploaded_file = post_data[file_key]
-            filename = 'video_archive.zip'
-            goal_path = os.path.join(settings.TMP_DIR, filename)
-            print(goal_path)
-            f = open(goal_path, 'wb+')
-            for chunk in uploaded_file.chunks():
-                if not chunk:
-                    break
-                f.write(chunk)
-            f.close()
-            os.chmod(goal_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
-
-            tempfile = File(f)
-            value_dict[file_key] = tempfile
-        except (OSError, EncodingWarning, UnicodeDecodeError) as e:
-            feedback_message = getattr(e, 'message', repr(e))
-            print('exception: ', feedback_message)
-            pass
+        tempfile = File(f)
+        value_dict['File'] = tempfile
+    except (OSError, EncodingWarning, UnicodeDecodeError) as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        print('exception: ', feedback_message)
+        pass
 
     return value_dict
 
@@ -397,7 +393,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     zip_file = value_dict[file_key]
     file_name = zip_file.name
-    goal_zipped_file = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, 'TEMP', 'video_archive.zip')
+    goal_zipped_file = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, 'TEMP', file_name)
 
     try:
         shutil.move(zip_file.name, str(goal_zipped_file))
