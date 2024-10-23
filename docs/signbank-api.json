@@ -998,7 +998,7 @@
         {
           "content":
           {
-            "application/json":
+            "multipart/form-data":
             {
               "schema":
               {
@@ -1006,10 +1006,15 @@
                 "properties": {
                   "File": {
                     "type": "string",
-                    "format": "byte"
+                    "format": "byte",
+                    "description": "The zip archive file to upload"
                   }
                 }
-              }
+              },
+              "required":
+                [
+                  "File"
+                ]
             }
           }
         },
