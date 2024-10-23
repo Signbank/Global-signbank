@@ -2321,11 +2321,14 @@ class Gloss(models.Model):
             imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
             imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
             print('image path: ', imagefile_path)
-            if imagefile_path_exists and check_existence:
-                return imagefile_path
+            if check_existence:
+                if imagefile_path_exists:
+                    return imagefile_path
+                else:
+                    return ""
             else:
                 return imagefile_path
-        # no matches
+        # no match
         return ''
 
     def get_image_url(self):
