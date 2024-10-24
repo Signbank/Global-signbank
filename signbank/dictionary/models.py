@@ -2314,8 +2314,7 @@ class Gloss(models.Model):
         glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0).first()
         if not glossvideo:
             # calculate image path independent of video
-            from signbank.tools import get_default_annotationidglosstranslation
-            annotation = get_default_annotationidglosstranslation(self)
+            annotation = self.annotationidglosstranslation_set.all().first().text
             idgloss = self.idgloss
             two_letter_dir = idgloss[:2]
             if len(two_letter_dir) == 1:
