@@ -235,25 +235,33 @@ def deletesentencevideo(request, videoid):
 
 
 @login_required
-def deletevideo(request, videoid):
+def deletevideo(request, glossid):
     """Remove the video for this gloss, if there is an older version
     then reinstate that as the current video (act like undo)"""
 
-    if request.method == "POST":
-        # deal with any existing video for this sign
-        gloss = get_object_or_404(Gloss, pk=videoid, archived=False)
-        vids = GlossVideo.objects.filter(gloss=gloss).order_by('version')
-        for v in vids:
-            # this will remove the most recent video, ie it's equivalent
-            # to delete if version=0
-            v.reversion(revert=True)
+    # return to referer
+    if 'HTTP_REFERER' in request.META:
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
 
-            # Issue #162: log the deletion history
-            log_entry = GlossVideoHistory(action="delete", gloss=gloss,
-                                          actor=request.user,
-                                          uploadfile=os.path.basename(v.videofile.name),
-                                          goal_location=v.videofile.path)
-            log_entry.save()
+    if not request.method == "POST":
+        return redirect(url)
+
+    # deal with any existing video for this sign
+    gloss = get_object_or_404(Gloss, pk=glossid, archived=False)
+    vids = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None).order_by('version')
+    for v in vids:
+        # this will remove the most recent video, ie it's equivalent
+        # to delete if version=0
+        v.reversion(revert=True)
+
+        # Issue #162: log the deletion history
+        log_entry = GlossVideoHistory(action="delete", gloss=gloss,
+                                      actor=request.user,
+                                      uploadfile=os.path.basename(v.videofile.name),
+                                      goal_location=v.videofile.path)
+        log_entry.save()
 
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
 
@@ -266,17 +274,12 @@ def deletevideo(request, videoid):
     deleted_video.save()
 
     try:
-        video = gloss.glossvideo_set.get(version=0)
-        video.make_small_video()
+        video = gloss.glossvideo_set.exclude(glossvideonme__isnull=False, glossvideoperspective__isnull=False).get(version=0)
+        # video.make_small_video()
         video.make_poster_image()
     except ObjectDoesNotExist:
         pass
 
-    # return to referer
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
     return redirect(url)
 
 

@@ -611,7 +611,7 @@ class GlossVideo(models.Model):
         super().__init__(*args, **kwargs)
 
     def save(self, *args, **kwargs):
-        self.ensure_mp4()
+        # self.ensure_mp4()
         super(GlossVideo, self).save(*args, **kwargs)
 
     def process(self):
