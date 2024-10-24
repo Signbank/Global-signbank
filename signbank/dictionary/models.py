@@ -602,14 +602,6 @@ class ExampleSentence(models.Model):
             examplevideos = self.examplevideo_set.filter(version=0)
             return str(examplevideos[0].videofile)
 
-    def get_video_path_prefix(self):
-        try:
-            examplesentence = self.examplesentence_set.get(version=0)
-            prefix, extension = os.path.splitext(str(examplesentence))
-            return prefix
-        except ObjectDoesNotExist:
-            return ''
-        
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
 
@@ -2318,21 +2310,37 @@ class Gloss(models.Model):
         """Returns the path within the writable and static folder"""
         from signbank.video.models import GlossVideo
 
-        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0)
-        if glossvideo:
-            glossvideo = glossvideo.first()
-            videofile_path = str(glossvideo.videofile)
-            videofile_path_without_extension, extension = os.path.splitext(videofile_path)
-
+        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0).first()
+        if not glossvideo:
+            # calculate image path independent of video
+            annotation = self.annotationidglosstranslation_set.all().first().text
+            idgloss = self.idgloss
+            two_letter_dir = idgloss[:2]
+            if len(two_letter_dir) == 1:
+                two_letter_dir += '-'
+            dataset_folder = self.lemma.dataset.acronym
+            image_path_folder = "glossimage/" + dataset_folder + '/' + two_letter_dir
+            image_file_without_extension = annotation + '-' + str(self.pk) + '.'
+            for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+                imagefile_path = image_path_folder + '/' + image_file_without_extension + extension
+                imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
+                if imagefile_path_exists:
+                    return imagefile_path
             if check_existence:
-                for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
-                    imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
-                    try:
-                        imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
-                    except:
-                        imagefile_path_exists = False
-                    if check_existence and imagefile_path_exists:
-                        return imagefile_path
+                print('no image found, tried: ', settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS)
+            return ''
+
+        videofile_path = str(glossvideo.videofile)
+        videofile_path_without_extension, extension = os.path.splitext(videofile_path)
+
+        for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+            imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
+            imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
+            if imagefile_path_exists:
+                return imagefile_path
+        # no match
+        if check_existence:
+            print('no image found, tried: ', settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS)
         return ''
 
     def get_image_url(self):
@@ -2340,23 +2348,11 @@ class Gloss(models.Model):
 
     def get_video_path(self):
         from signbank.video.models import GlossVideo
-        try:
-            glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).get(version=0)
-            return str(glossvideo.videofile)
-        except ObjectDoesNotExist:
-            return ''
-        except MultipleObjectsReturned:
-            # Just return the first
-            glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0)
-            return str(glossvideos.first().videofile)
-
-    def get_video_path_prefix(self):
-        try:
-            glossvideo = self.glossvideo_set.exclude(glossvideonme=True, glossvideoperspective__isnull=False).get(version=0)
-            prefix, extension = os.path.splitext(str(glossvideo))
-            return prefix
-        except ObjectDoesNotExist:
-            return ''
+        # there cannot be more that one like this
+        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0).first()
+        if not glossvideo:
+            return ""
+        return str(glossvideo.videofile)
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
@@ -2390,7 +2386,7 @@ class Gloss(models.Model):
 
         # Create a new GlossVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
-            video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None)
+            video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
             # Backup the existing video objects stored in the database
             existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None)
             for video_object in existing_videos:

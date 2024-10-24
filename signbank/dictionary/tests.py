@@ -3623,7 +3623,7 @@ class GlossApiGetSignNameAndMediaInfoTests(TestCase):
         new_gloss.save()
         self.gloss_id = new_gloss.id
 
-        test_gloss_video = GlossVideo(gloss=new_gloss)
+        test_gloss_video = GlossVideo(gloss=new_gloss, glossvideonme=None, glossvideoperspective=None)
         test_gloss_video.videofile = self.video_url
         test_gloss_video.save()
 
