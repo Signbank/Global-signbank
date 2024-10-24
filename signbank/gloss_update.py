@@ -1038,16 +1038,7 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
 
     if create and uploaded_file:
         file_key = gettext("File")
-        filename = uploaded_file.name
-        goal_path = os.path.join(settings.TMP_DIR, filename)
-        f = open(goal_path, 'wb+')
-        for chunk in uploaded_file.chunks():
-            if not chunk:
-                break
-            f.write(chunk)
-        f.close()
-        video_file = File(f)
-        nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
+        nmevideo = gloss.add_nme_video(request.user, uploaded_file, index, 'False')
         value_dict[file_key] = nmevideo
 
     dataset = gloss.lemma.dataset
