@@ -1,5 +1,7 @@
 
 from django.utils.translation import gettext_lazy as _, activate, gettext
+
+from signbank.attachments.views import upload_file
 from signbank.dictionary.models import *
 from signbank.video.models import GlossVideoDescription, GlossVideoNME
 from signbank.tools import get_default_annotationidglosstranslation
@@ -1019,35 +1021,36 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
 @csrf_exempt
 @put_api_user_in_request
 def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
-    post_data = json.loads(request.body.decode('utf-8'))
 
     value_dict = dict()
+    uploaded_file = None
+    if create:
+        try:
+            uploaded_file = request.FILES.get('File')
+        except (AttributeError, KeyError):
+            return value_dict
 
     index_key = gettext("Index")
-    if index_key in post_data.keys():
-        index_str = post_data[index_key]
+    if index_key in request.POST.keys():
+        index_str = request.POST.get(index_key)
         index = int(index_str)
     else:
         index = 1
     value_dict[index_key] = index
 
-    file_key = gettext("File")
-    if file_key in post_data.keys() and create:
-        # a file may be included in the json data
-        # if there are problems decoding it, the value_dict without it is returned
-        try:
-            uploaded_file = post_data[file_key]
-            uploaded_file_contents = uploaded_file[22:]
-            filename = get_default_annotationidglosstranslation(gloss) + '_' + str(gloss.id) + '.mp4'
-            goal_path = os.path.join(settings.TMP_DIR, filename)
-            f = open(goal_path, 'wb+')
-            inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
-            f.write(inputbytes)
-            video_file = File(f)
-            nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
-            value_dict[file_key] = nmevideo
-        except (OSError, EncodingWarning, UnicodeDecodeError):
-            pass
+    if create and uploaded_file:
+        file_key = gettext("File")
+        filename = get_default_annotationidglosstranslation(gloss) + '_' + str(gloss.id) + '.mp4'
+        goal_path = os.path.join(settings.TMP_DIR, filename)
+        f = open(goal_path, 'wb+')
+        for chunk in uploaded_file.chunks():
+            if not chunk:
+                break
+            f.write(chunk)
+        f.close()
+        video_file = File(f)
+        nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
+        value_dict[file_key] = nmevideo
 
     dataset = gloss.lemma.dataset
 
@@ -1058,7 +1061,7 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
                           for language in dataset_languages]
 
     for field in description_fields:
-        value = post_data.get(field, '')
+        value = request.POST.get(field, '')
         value_dict[field] = value.strip()
 
     return value_dict
