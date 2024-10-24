@@ -26,7 +26,6 @@ from datetime import datetime, date
 from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
     WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
-from signbank.tools import get_default_annotationidglosstranslation
 
 
 # -*- coding: utf-8 -*-
