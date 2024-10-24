@@ -425,7 +425,7 @@
         {
           "content":
           {
-            "application/json":
+            "multipart/form-data":
             {
               "schema":
               {
@@ -447,10 +447,15 @@
                   },
                   "File":
                   {
-                    "type": "base64-encoded file"
+                    "type": "string",
+                    "format": "binary"
                   }
                 }
-              }
+              },
+              "required":
+                [
+                  "File"
+                ]
             }
           }
         },
