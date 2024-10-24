@@ -1038,19 +1038,15 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
 
     if create and uploaded_file:
         file_key = gettext("File")
-        filename = get_default_annotationidglosstranslation(gloss) + '_' + str(gloss.id) + '.mp4'
+        filename = uploaded_file.name
         goal_path = os.path.join(settings.TMP_DIR, filename)
-        source_path = os.path.join(settings.TMP_DIR, uploaded_file.name)
-        fo = open(goal_path, 'wb+')
-        fi = open(source_path, 'rb')
-        chunk_size = 1024
-        while True:
-            chunk = fi.read(chunk_size)
-            if chunk == b"":
+        f = open(goal_path, 'wb+')
+        for chunk in uploaded_file.chunks():
+            if not chunk:
                 break
-            fo.write(chunk)
-        fo.close()
-        video_file = File(fo)
+            f.write(chunk)
+        f.close()
+        video_file = File(f)
         nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
         value_dict[file_key] = nmevideo
 
