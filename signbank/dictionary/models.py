@@ -26,6 +26,7 @@ from datetime import datetime, date
 from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
     WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
+from signbank.tools import get_default_annotationidglosstranslation
 
 
 # -*- coding: utf-8 -*-
@@ -2312,6 +2313,22 @@ class Gloss(models.Model):
 
         glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0).first()
         if not glossvideo:
+            # calculate image path independent of video
+            annotation = get_default_annotationidglosstranslation(self)
+            idgloss = self.idgloss
+            two_letter_dir = idgloss[:2]
+            if len(two_letter_dir) == 1:
+                two_letter_dir += '-'
+            dataset_folder = self.lemma.dataset.acronym
+            image_path_folder = "glossimage/" + dataset_folder + '/' + two_letter_dir
+            image_file_without_extension = annotation + '-' + str(self.pk) + '.'
+            for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+                imagefile_path = image_path_folder + '/' + image_file_without_extension + extension
+                imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
+                if imagefile_path_exists:
+                    return imagefile_path
+            if check_existence:
+                print('no image found, tried: ', settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS)
             return ''
 
         videofile_path = str(glossvideo.videofile)
@@ -2321,7 +2338,6 @@ class Gloss(models.Model):
             imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
             imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
             if imagefile_path_exists:
-                print('image found: ', imagefile_path)
                 return imagefile_path
         # no match
         if check_existence:
@@ -2343,7 +2359,6 @@ class Gloss(models.Model):
         """Return the video object for this gloss or None if no video available"""
 
         video_path = self.get_video_path()
-        print('video path: ', video_path)
         filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
         if os.path.exists(filepath.encode('utf-8')):
             return video_path
@@ -2398,13 +2413,13 @@ class Gloss(models.Model):
             raise ValidationError(msg)
 
     def has_nme_videos(self):
-        from signbank.video.models import GlossVideo
-        nmevideos = GlossVideo.objects.filter(gloss=self, glossvideonme=True, glossvideoperspective=None)
+        from signbank.video.models import GlossVideoNME
+        nmevideos = GlossVideoNME.objects.filter(gloss=self)
         return nmevideos.count()
 
     def get_nme_videos(self):
-        from signbank.video.models import GlossVideo
-        nmevideos = GlossVideo.objects.filter(gloss=self, glossvideonme=True, glossvideoperspective=None)
+        from signbank.video.models import GlossVideoNME
+        nmevideos = GlossVideoNME.objects.filter(gloss=self)
         return nmevideos
 
     def add_nme_video(self, user, videofile, new_offset, recorded):
