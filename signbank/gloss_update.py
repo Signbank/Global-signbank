@@ -1018,8 +1018,6 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
     return JsonResponse(results, safe=False)
 
 
-@csrf_exempt
-@put_api_user_in_request
 def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
 
     value_dict = dict()
@@ -1042,8 +1040,9 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
         file_key = gettext("File")
         filename = get_default_annotationidglosstranslation(gloss) + '_' + str(gloss.id) + '.mp4'
         goal_path = os.path.join(settings.TMP_DIR, filename)
+        source_path = os.path.join(settings.TMP_DIR, uploaded_file.name)
         fo = open(goal_path, 'wb+')
-        fi = open(uploaded_file.name, 'rb')
+        fi = open(source_path, 'rb')
         chunk_size = 1024
         while True:
             chunk = fi.read(chunk_size)
