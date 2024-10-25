@@ -821,7 +821,7 @@ class GlossVideo(models.Model):
         Calculates the new path, moves the video file to the new path and updates the videofile field
         :return: 
         """
-        old_path = str(str(self.videofile))
+        old_path = str(self.videofile)
         new_path = get_video_file_path(self, old_path, version=self.version)
         if old_path != new_path:
             if move_files_on_disk:
@@ -918,7 +918,6 @@ class GlossVideoNME(GlossVideo):
             os.remove(oldloc)
 
     def save(self, *args, **kwargs):
-        self.ensure_mp4()
         super(GlossVideoNME, self).save(*args, **kwargs)
 
     def move_video(self, move_files_on_disk=True):
