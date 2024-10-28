@@ -2335,7 +2335,8 @@ class Gloss(models.Model):
                     return imagefile_path
 
     def get_image_url(self):
-        return escape_uri_path(self.get_image_path())
+        image_path = self.get_image_path()
+        return escape_uri_path(image_path) if image_path else ''
 
     def get_video_path(self):
         from signbank.video.models import GlossVideo
