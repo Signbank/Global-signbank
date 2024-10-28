@@ -1135,6 +1135,9 @@ def process_nmevideo_changes(sender, instance, update_fields=[], **kwargs):
     :param kwargs:
     :return:
     """
+    if settings.DEBUG_VIDEOS:
+        move_videos = not update_fields or 'offset' not in update_fields
+        print('process_nmevideo_changes move videos: ', str(instance), move_videos)
     if not update_fields or 'offset' not in update_fields:
         return
     glossvideo = instance
@@ -1152,7 +1155,7 @@ def process_perspectivevideo_changes(sender, instance, update_fields=[], **kwarg
     :return:
     """
     if settings.DEBUG_VIDEOS:
-        move_videos = update_fields
+        move_videos = not update_fields
         print('process_perspectivevideo_changes move videos: ', str(instance), move_videos)
     if not update_fields:
         return
