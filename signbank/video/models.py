@@ -650,10 +650,6 @@ class GlossVideo(models.Model):
         poster_file = str(poster_file.replace(GLOSS_VIDEO_DIRECTORY, GLOSS_IMAGE_DIRECTORY, 1))
         return poster_file
 
-    def get_absolute_url(self):
-
-        return self.videofile.url
-
     def ensure_mp4(self):
         """Ensure that the video file is an h264 format
         video, convert it if necessary"""
@@ -729,6 +725,9 @@ class GlossVideo(models.Model):
     def delete_files(self):
         """Delete the files associated with this object"""
 
+        if settings.DEBUG_VIDEOS:
+            print('delete_files GlossVideo: ', str(self.videofile))
+
         small_video_path = self.small_video()
         try:
             os.unlink(self.videofile.path)
@@ -737,7 +736,9 @@ class GlossVideo(models.Model):
                 os.unlink(small_video_path)
             if poster_path:
                 os.unlink(poster_path)
-        except OSError:
+        except (OSError, PermissionError):
+            if settings.DEBUG_VIDEOS:
+                print('delete_files exception GlossVideo OSError, PermissionError: ', str(self.videofile))
             pass
 
     def reversion(self, revert=False):
@@ -796,6 +797,8 @@ class GlossVideo(models.Model):
         # this coercion to a string type sometimes causes special characters in the filename to be a problem
         # code has been introduced elsewhere to make sure paths are the correct encoding
         glossvideoname = self.videofile.name
+        if settings.DEBUG_VIDEOS:
+            print('__str__ GlossVideo: ', self.videofile.name)
         return glossvideoname
 
     def is_glossvideonme(self):
@@ -888,6 +891,8 @@ class GlossVideoNME(GlossVideo):
                     GlossVideoDescription.objects.create(text=text, nmevideo=self, language=language)
 
     def get_video_path(self):
+        if settings.DEBUG_VIDEOS:
+            print('get_video_path GlossVideoNME: ', str(self.videofile))
         return self.videofile.name
 
     def ensure_mp4(self):
@@ -916,7 +921,7 @@ class GlossVideoNME(GlossVideo):
         :return:
         """
         old_path = str(self.videofile)
-        new_path = get_video_file_path(self, old_path, nmevideo=True, perspective='', offset=self.offset, version=self.version)
+        new_path = get_video_file_path(self, old_path, nmevideo=True, perspective='', offset=self.offset, version=0)
         if old_path != new_path:
             if move_files_on_disk:
                 source = os.path.join(settings.WRITABLE_FOLDER, old_path)
@@ -933,9 +938,13 @@ class GlossVideoNME(GlossVideo):
 
     def delete_files(self):
         """Delete the files associated with this object"""
+        if settings.DEBUG_VIDEOS:
+            print('delete_files GlossVideoNME: ', str(self.videofile))
         try:
             os.unlink(self.videofile.path)
-        except OSError:
+        except (OSError, PermissionError):
+            if settings.DEBUG_VIDEOS:
+                print('delete_files exception GlossVideo OSError, PermissionError: ', str(self.videofile))
             pass
 
     def reversion(self, revert=False):
@@ -1143,7 +1152,7 @@ def process_perspectivevideo_changes(sender, instance, update_fields=[], **kwarg
     :return:
     """
     if settings.DEBUG_VIDEOS:
-        move_videos = not update_fields or 'path' not in update_fields
+        move_videos = update_fields or 'path' in update_fields
         print('process_perspectivevideo_changes move videos: ', str(instance), move_videos)
     if not update_fields or 'path' not in update_fields:
         return
