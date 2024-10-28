@@ -1830,10 +1830,7 @@ def add_image(request):
             )
             goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
-            try:
-                exists = os.path.exists(goal_path)
-            except:
-                exists = False
+            exists = os.path.exists(goal_path)
 
             #First make the dir if needed
             if not exists:
@@ -1888,7 +1885,7 @@ def delete_image(request, pk):
     image_path = gloss.get_image_path()
     if not image_path:
         return redirect(url)
-    full_image_path = settings.WRITABLE_FOLDER + os.sep + image_path
+    full_image_path = settings.WRITABLE_FOLDER + image_path
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
     if os.path.exists(full_image_path.encode('utf-8')):
         os.remove(full_image_path.encode('utf-8'))
