@@ -1111,7 +1111,7 @@ def process_gloss_changes(sender, instance, update_fields=[], **kwargs):
     :param kwargs: 
     :return: 
     """
-    if not update_fields or 'path' not in update_fields:
+    if not update_fields:
         return
     gloss = instance
     glossvideos = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None)
@@ -1135,7 +1135,7 @@ def process_nmevideo_changes(sender, instance, update_fields=[], **kwargs):
     :param kwargs:
     :return:
     """
-    if not update_fields or 'path' not in update_fields:
+    if not update_fields or 'offset' not in update_fields:
         return
     glossvideo = instance
     glossvideo.move_video(move_files_on_disk=True)
@@ -1152,9 +1152,9 @@ def process_perspectivevideo_changes(sender, instance, update_fields=[], **kwarg
     :return:
     """
     if settings.DEBUG_VIDEOS:
-        move_videos = update_fields or 'path' in update_fields
+        move_videos = update_fields
         print('process_perspectivevideo_changes move videos: ', str(instance), move_videos)
-    if not update_fields or 'path' not in update_fields:
+    if not update_fields:
         return
     glossvideo = instance
     glossvideo.move_video(move_files_on_disk=True)
