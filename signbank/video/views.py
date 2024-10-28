@@ -248,17 +248,24 @@ def deletevideo(request, glossid):
 
     # deal with any existing video for this sign
     gloss = get_object_or_404(Gloss, pk=glossid, archived=False)
+    # save the video path of the version 0 video before it gets deleted by the reversion method in the loop
+    deleted_video_filename = gloss.get_video_path()
     vids = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None).order_by('version')
+    reversion_log = []
     for v in vids:
         # this will remove the most recent video, ie it's equivalent
         # to delete if version=0
+        # save the to be deleted data in a list of tuples
+        uploadfile = os.path.basename(v.videofile.name)
+        goal_location = v.videofile.path
+        reversion_log.append((uploadfile, goal_location))
         v.reversion(revert=True)
-
+    for (uploadfile, goal_location) in reversion_log:
         # Issue #162: log the deletion history
         log_entry = GlossVideoHistory(action="delete", gloss=gloss,
                                       actor=request.user,
-                                      uploadfile=os.path.basename(v.videofile.name),
-                                      goal_location=v.videofile.path)
+                                      uploadfile=uploadfile,
+                                      goal_location=goal_location)
         log_entry.save()
 
     default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
@@ -268,7 +275,7 @@ def deletevideo(request, glossid):
     deleted_video.idgloss = gloss.idgloss
     deleted_video.annotation_idgloss = default_annotationidglosstranslation
     deleted_video.old_pk = gloss.pk
-    deleted_video.filename = gloss.get_video_path()
+    deleted_video.filename = deleted_video_filename
     deleted_video.save()
 
     return redirect(url)

@@ -1173,6 +1173,7 @@ def delete_files(sender, instance, **kwargs):
     """
     if settings.DEBUG_VIDEOS:
         print('delete_files pre_delete: ', str(instance))
+        print('delete_files settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE: ', settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE)
     if settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE:
         # default.py has this set to false so primary gloss video files are not deleted
         instance.delete_files()
