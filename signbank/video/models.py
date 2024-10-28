@@ -152,6 +152,8 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
         dataset_dir = instance.gloss.lemma.dataset.acronym
     except KeyError:
         dataset_dir = ""
+        if settings.DEBUG_VIDEOS:
+            print('get_video_file_path: dataset_dir is empty for gloss ', str(instance.gloss.pk))
     if nmevideo:
         nme_video_offset = '_nme_' + str(offset)
         filename = idgloss + '-' + str(instance.gloss.id) + nme_video_offset + ext + (version * ".bak")
@@ -747,6 +749,9 @@ class GlossVideo(models.Model):
         way and decrease the version number, if version=0
         we delete ourselves"""
 
+        if hasattr(self, 'glossvideonme') or hasattr(self, 'glossvideoperspective'):
+            # make sure this is not applied to subclass objects
+            return
         if revert:
             print("REVERT VIDEO", self.videofile.name, self.version)
             if self.version == 0:
@@ -790,22 +795,7 @@ class GlossVideo(models.Model):
     def __str__(self):
         # this coercion to a string type sometimes causes special characters in the filename to be a problem
         # code has been introduced elsewhere to make sure paths are the correct encoding
-        if hasattr(self, 'glossvideonme'):
-            name, _ = os.path.splitext(self.videofile.name)
-            glossvideonme = self.glossvideonme
-            offset = '_' + str(glossvideonme.offset) if glossvideonme.offset else ''
-            nme_name = name + '_nme' + offset + '.mp4'
-
-            glossvideoname = nme_name
-        elif hasattr(self, 'glossvideoperspective'):
-            name, _ = os.path.splitext(self.videofile.name)
-            glossvideoperspective = self.glossvideoperspective
-            perspective = '_' + str(glossvideoperspective.perspective) if glossvideoperspective.perspective else ''
-            perspective_name = name + '_' + perspective + '.mp4'
-
-            glossvideoname = perspective_name
-        else:
-            glossvideoname = self.videofile.name
+        glossvideoname = self.videofile.name
         return glossvideoname
 
     def is_glossvideonme(self):
@@ -1006,6 +996,8 @@ class GlossVideoPerspective(GlossVideo):
         """Delete the files associated with this object"""
         old_path = str(self.videofile)
         file_system_path = os.path.join(settings.WRITABLE_FOLDER, old_path)
+        if settings.DEBUG_VIDEOS:
+            print('perspective video delete files: ', file_system_path)
         if not os.path.exists(file_system_path):
             # Video file not found on server
             # on the production server this is a problem
@@ -1150,6 +1142,9 @@ def process_perspectivevideo_changes(sender, instance, update_fields=[], **kwarg
     :param kwargs:
     :return:
     """
+    if settings.DEBUG_VIDEOS:
+        move_videos = not update_fields or 'path' not in update_fields
+        print('process_perspectivevideo_changes move videos: ', str(instance), move_videos)
     if not update_fields or 'path' not in update_fields:
         return
     glossvideo = instance
@@ -1167,6 +1162,8 @@ def delete_files(sender, instance, **kwargs):
     :param kwargs: 
     :return: 
     """
+    if settings.DEBUG_VIDEOS:
+        print('delete_files pre_delete: ', str(instance))
     if settings.DELETE_FILES_ON_GLOSSVIDEO_DELETE:
         # default.py has this set to false so primary gloss video files are not deleted
         instance.delete_files()

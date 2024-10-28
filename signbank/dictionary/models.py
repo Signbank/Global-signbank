@@ -2318,22 +2318,21 @@ class Gloss(models.Model):
         """Returns the path within the writable and static folder"""
         from signbank.video.models import GlossVideo
 
-        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0)
-        if glossvideo:
-            glossvideo = glossvideo.first()
-            videofile_path = str(glossvideo.videofile)
-            videofile_path_without_extension, extension = os.path.splitext(videofile_path)
+        glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0).first()
+        if not glossvideo:
+            return ""
+        videofile_path = str(glossvideo.videofile)
+        videofile_path_without_extension, extension = os.path.splitext(videofile_path)
 
-            if check_existence:
-                for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
-                    imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
-                    try:
-                        imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
-                    except:
-                        imagefile_path_exists = False
-                    if check_existence and imagefile_path_exists:
-                        return imagefile_path
-        return ''
+        if check_existence:
+            for extension in settings.SUPPORTED_CITATION_IMAGE_EXTENSIONS:
+                imagefile_path = videofile_path_without_extension.replace("glossvideo", "glossimage") + extension
+                try:
+                    imagefile_path_exists = os.path.exists(os.path.join(settings.WRITABLE_FOLDER, imagefile_path))
+                except:
+                    imagefile_path_exists = False
+                if check_existence and imagefile_path_exists:
+                    return imagefile_path
 
     def get_image_url(self):
         return escape_uri_path(self.get_image_path())
@@ -2397,7 +2396,9 @@ class Gloss(models.Model):
                 video_object.reversion(revert=False)
 
             # Create a GlossVideoHistory object
-            relative_path = get_video_file_path(video, str(videofile))
+            relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective='', version=0)
+            if settings.DEBUG_VIDEOS:
+                print('add_video relative_path: ', relative_path)
             # Save the new videofile in the video object
             try:
                 video.videofile.save(relative_path, videofile)
@@ -2440,7 +2441,7 @@ class Gloss(models.Model):
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = GlossVideoNME(gloss=self, offset=offset, upload_to=get_video_file_path)
             # Create a GlossVideoHistory object
-            relative_path = get_video_file_path(video, str(videofile), nmevideo=True, offset=offset)
+            relative_path = get_video_file_path(video, str(videofile), nmevideo=True, perspective='', offset=offset, version=0)
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
             glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
                                                   uploadfile=videofile, goal_location=video_file_full_path)
@@ -2472,11 +2473,13 @@ class Gloss(models.Model):
         if existing_perspectivevideos.count() > 0:
             for existing_video in existing_perspectivevideos:
                 existing_video.delete()
-
+        perspective = str(new_perspective)
         if isinstance(videofile, File):
-            video = GlossVideoPerspective(gloss=self, perspective=new_perspective, upload_to=get_video_file_path)
+            video = GlossVideoPerspective(gloss=self, perspective=perspective, upload_to=get_video_file_path)
             # Create a GlossVideoHistory object
-            relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective=new_perspective)
+            relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective=perspective, offset=1, version=0)
+            if settings.DEBUG_VIDEOS:
+                print('add_perspective_video relative_path: ', relative_path)
             video_file_full_path = os.path.join(WRITABLE_FOLDER, relative_path)
             glossvideohistory = GlossVideoHistory(action="upload", gloss=self, actor=user,
                                                   uploadfile=videofile, goal_location=video_file_full_path)

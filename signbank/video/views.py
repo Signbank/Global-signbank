@@ -52,12 +52,10 @@ def addvideo(request):
                 if not gloss:
                     redirect(redirect_url)
                 perspective = form.cleaned_data['perspective']
-                try:
-                    gloss.add_perspective_video(request.user, vfile, perspective, recorded)
-                except ValidationError as e:
-                    feedback_message = getattr(e, 'message', repr(e))
-                    messages.add_message(request, messages.ERROR, feedback_message)
-                    return redirect(redirect_url)
+                stringpersp = str(perspective)
+                perspvideo = gloss.add_perspective_video(request.user, vfile, stringpersp, recorded)
+                if settings.DEBUG_VIDEOS:
+                    print('Perspective video created: ', str(perspvideo))
             elif object_type == 'gloss_nmevideo':
                 gloss = Gloss.objects.filter(id=object_id).first()
                 if not gloss:
@@ -97,7 +95,7 @@ def addvideo(request):
                 url = form.cleaned_data['url']
                 annotated_video = annotated_sentence.add_video(request.user, vfile, eaf_file, source, url)
                 
-                if annotated_video == None:
+                if annotated_video is None:
                     messages.add_message(request, messages.ERROR, _('Annotated sentence upload went wrong. Please try again.'))
                     annotated_sentence.delete()
                 else:
@@ -272,13 +270,6 @@ def deletevideo(request, glossid):
     deleted_video.old_pk = gloss.pk
     deleted_video.filename = gloss.get_video_path()
     deleted_video.save()
-
-    try:
-        video = gloss.glossvideo_set.exclude(glossvideonme__isnull=False, glossvideoperspective__isnull=False).get(version=0)
-        # video.make_small_video()
-        video.make_poster_image()
-    except ObjectDoesNotExist:
-        pass
 
     return redirect(url)
 
