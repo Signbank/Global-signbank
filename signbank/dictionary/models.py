@@ -2348,14 +2348,6 @@ class Gloss(models.Model):
             glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0)
             return str(glossvideos.first().videofile)
 
-    def get_video_path_prefix(self):
-        try:
-            glossvideo = self.glossvideo_set.exclude(glossvideonme__isnull=False, glossvideoperspective__isnull=False).get(version=0)
-            prefix, extension = os.path.splitext(str(glossvideo))
-            return prefix
-        except ObjectDoesNotExist:
-            return ''
-
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
 
@@ -2366,16 +2358,10 @@ class Gloss(models.Model):
         else:
             return ''
 
-    def count_videos(self):
-        """Return a count of the number of videos as indicated in the database"""
-
-        return self.glossvideo_set.exclude(glossvideonme__isnull=False, glossvideoperspective__isnull=False).count()
-
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
-        video_url_or_empty_string = escape_uri_path(self.get_video())
-
-        return video_url_or_empty_string
+        video_path = self.get_video()
+        return escape_uri_path(video_path) if video_path else ''
 
     def has_video(self):
         """Test to see if the video for this sign is present"""
