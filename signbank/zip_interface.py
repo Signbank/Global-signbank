@@ -256,9 +256,10 @@ def get_gloss_filepath(video_file_path, gloss):
     if not os.path.exists(destination_folder):
         os.mkdir(destination_folder, mode=0o775)
 
+    idgloss = gloss.idgloss
     glossid = str(gloss.id)
 
-    video_file_name = annotation_text + '-' + glossid + extension
+    video_file_name = idgloss + '-' + glossid + extension
     goal = os.path.join(destination_folder, video_file_name)
     video_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
                               dataset_acronym,
@@ -278,17 +279,7 @@ def get_gloss_filepath_glossid(video_file_path, gloss):
     if not gloss.lemma or not gloss.lemma.dataset:
         return "", "", ""
 
-    language = gloss.lemma.dataset.default_language
-    if not language:
-        language = gloss.lemma.dataset.translation_languages.first()
-
-    # get the annotation text of the gloss
-    annotationidglosstranslation = gloss.annotationidglosstranslation_set.all().filter(language=language)
-    if not annotationidglosstranslation:
-        # the gloss has no annotations for the language
-        annotationidglosstranslation = gloss.annotationidglosstranslation_set.all()
-    annotation_text = annotationidglosstranslation.first().text
-
+    idgloss = gloss.idgloss
     glossid = str(gloss.id)
     if glossid != filename_without_extension:
         # gloss id does not match zip file name
@@ -304,7 +295,7 @@ def get_gloss_filepath_glossid(video_file_path, gloss):
     if not os.path.exists(destination_folder):
         os.mkdir(destination_folder, mode=0o775)
 
-    video_file_name = annotation_text + '-' + glossid + extension
+    video_file_name = idgloss + '-' + glossid + extension
     goal = os.path.join(destination_folder, video_file_name)
     video_path = os.path.join(settings.GLOSS_VIDEO_DIRECTORY,
                               dataset_acronym,
