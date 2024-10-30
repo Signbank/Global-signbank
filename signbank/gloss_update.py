@@ -902,7 +902,7 @@ def gloss_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code, cre
         elif field == 'offset':
             # this changes the filename and moves the file
             nmevideo.offset = int(new_value)
-            nmevideo.save()
+            nmevideo.save(update_fields=['offset'])
 
     operation = 'nmevideo_create' if create else 'nmevideo_update'
     filename = os.path.basename(nmevideo.videofile.name)

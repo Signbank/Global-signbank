@@ -91,7 +91,7 @@ class GlossVideoExistenceFilter(admin.SimpleListFilter):
 
 class GlossVideoAdmin(admin.ModelAdmin):
 
-    list_display = ['id', 'gloss', 'video_file', 'file_timestamp', 'file_group', 'permissions', 'file_size', 'version']
+    list_display = ['id', 'gloss', 'video_file', 'perspective', 'NME', 'file_timestamp', 'file_group', 'permissions', 'file_size', 'version']
     list_filter = (GlossVideoDatasetFilter, GlossVideoFileSystemGroupFilter, GlossVideoExistenceFilter)
 
     search_fields = ['^gloss__annotationidglosstranslation__text']
@@ -104,6 +104,16 @@ class GlossVideoAdmin(admin.ModelAdmin):
         video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
 
         return video_file_full_path
+
+    def perspective(self, obj=None):
+        if obj is None:
+            return ""
+        return obj.is_glossvideoperspective() is True
+
+    def NME(self, obj=None):
+        if obj is None:
+            return ""
+        return obj.is_glossvideonme() is True
 
     def file_timestamp(self, obj=None):
         # if the file exists, this will display its timestamp in the list view

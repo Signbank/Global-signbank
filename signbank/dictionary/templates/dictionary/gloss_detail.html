@@ -787,11 +787,11 @@ textarea:focus {
      <!-- {{gloss.get_video}} -->
 
         <div id="player" style="">
-            <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}"
+            <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}"
                    playsinline type="video/mp4" autoplay muted></video>
 
         {% for perspvideo in gloss.get_perspective_videos %}
-            <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}"
+            <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={% now 'YmdHis' %}"
                    playsinline type="video/mp4" autoplay muted></video>
         {% endfor %}
         </div>
@@ -1013,7 +1013,7 @@ textarea:focus {
                                    <tr>
                                        <td colspan="2">
                                            <div id="perspectiveplayer">
-                                            <video id='videoperspplayer' src="{{protected_media_url}}{{perspvideo.get_video_path}}"
+                                            <video id='videoperspplayer' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={% now 'YmdHis' %}"
                                                    style="height:200px;width:auto;" controls muted></video>
                                            </div>
                                         </td>
@@ -1038,6 +1038,7 @@ textarea:focus {
                     {% csrf_token %}
                         <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                         <input type='hidden' name='object_type' value='gloss_perspectivevideo'>
+                        <input type='hidden' name='object_id' value='{{gloss.pk}}'>
                         <input type='hidden' name='recorded' value='False'>
                         <table>
                           <tr>
@@ -1048,7 +1049,6 @@ textarea:focus {
                           </tr>
                           <tr>
                             <td id="perspvideo-buttons">
-                                <input type='hidden' name='object_id' value='{{gloss.pk}}'>
                                 <input class='btn btn-primary' type='submit' value='Upload' />
                             </td>
                           </tr>
@@ -1467,7 +1467,7 @@ textarea:focus {
                                                     <div id="videocontainer_{{examplesentence.id}}"  style="width:100%">
                                                         {% if examplesentence.has_video %}
                                                             <div id="player">
-                                                                <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}" controls type="video/mp4" muted></video>
+                                                                <video id='videoplayer' src="{{protected_media_url}}/{{examplesentence.get_video_path}}?v={% now 'YmdHis' %}" controls type="video/mp4" muted></video>
                                                                 </div>
                                                             <div id="replay"></div>
                                                         {% else %}
@@ -1635,7 +1635,7 @@ textarea:focus {
                                    <tr>
                                        <td colspan="2">
                                            <div id="nmeplayer">
-                                            <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}"
+                                            <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
                                                    style="height:200px;width:auto;" controls muted></video>
                                            </div>
                                         </td>
@@ -1676,6 +1676,7 @@ textarea:focus {
                     {% csrf_token %}
                         <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                         <input type='hidden' name='object_type' value='gloss_nmevideo'>
+                        <input type='hidden' name='object_id' value='{{gloss.pk}}'>
                         <input type='hidden' name='recorded' value='False'>
                         <table>
                           <tr>
@@ -1683,7 +1684,6 @@ textarea:focus {
                           </tr>
                           <tr>
                             <td id="nmevideo-buttons">
-                                <input type='hidden' name='object_id' value='{{gloss.pk}}'>
                                 <input class='btn btn-primary' type='submit' value='Upload' />
                             </td>
                           </tr>
@@ -2581,7 +2581,7 @@ textarea:focus {
                                 <style>.highlight {background-color: rgb(255, 149, 63);}</style>
 
                                 <video id="myVideo_{{forloop.counter}}" controls>
-                                    <source src="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.videofile}}" type="video/mp4">
+                                    <source src="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
                                 </video>                               
                             
                                 <br><br><i>{% trans "Glosses" %}</i><br>
@@ -2629,7 +2629,7 @@ textarea:focus {
                                         <i>{% trans "Source" %}</i><br>
                                         {{ annotated_sentence.annotatedvideo.source.source }}
                                         {% if annotated_sentence.annotatedvideo.source.url %}
-                                            , <a href="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.source.get_absolute_url}}">{{ annotated_sentence.annotatedvideo.source.url }}</a>
+                                            , <a href="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.source.get_absolute_url}}?v={% now 'YmdHis' %}">{{ annotated_sentence.annotatedvideo.source.url }}</a>
                                         {% endif %}
                                     {% endif %}
                                 </p>
