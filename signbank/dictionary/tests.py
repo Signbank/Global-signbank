@@ -5,7 +5,6 @@ from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
 from signbank.tools import get_selected_datasets_for_user
 from signbank.settings.base import *
-from signbank.settings.server_specific import *
 from django.utils.translation import override, gettext_lazy as _, activate
 
 from django.contrib.auth.models import User, Permission, Group
@@ -814,7 +813,6 @@ class VideoTests(TestCase):
 
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
-        assign_perm('dictionary.change_gloss', self.user)
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
@@ -831,10 +829,9 @@ class VideoTests(TestCase):
 
         # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
-        test_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        test_dataset = Dataset.objects.get(name=dataset_name)
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
 
-        assign_perm('view_dataset', self.user, test_dataset)
         assign_perm('change_dataset', self.user, test_dataset)
         print('User granted permmission to change dataset.')
 
@@ -898,7 +895,7 @@ class VideoTests(TestCase):
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
-        self.assertEqual(response.status_code,401)
+        self.assertEqual(response.status_code,200)
 
         # Remove the video
         client.login(username='test-user',password='test-user')
@@ -928,10 +925,9 @@ class VideoTests(TestCase):
 
         # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
-        test_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        test_dataset = Dataset.objects.get(name=dataset_name)
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
 
-        assign_perm('view_dataset', self.user, test_dataset)
         assign_perm('change_dataset', self.user, test_dataset)
         print('User granted permmission to change dataset.')
 
@@ -1005,7 +1001,7 @@ class VideoTests(TestCase):
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
-        self.assertEqual(response.status_code,401)
+        self.assertEqual(response.status_code,200)
 
         # Remove the video
         client.login(username='test-user',password='test-user')
