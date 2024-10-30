@@ -21,7 +21,7 @@ PERSPECTIVE_CHOICES = (('left', 'Left'),
 
 
 class VideoUploadForObjectForm(forms.Form):
-    """Form for video upload for a particular example sentence"""
+    """Form for video upload for all video types"""
     
     videofile = forms.FileField(label="Upload Video", widget=forms.FileInput(attrs={'accept':'video/mp4, video/quicktime'}))
     object_id = forms.CharField(widget=forms.HiddenInput)

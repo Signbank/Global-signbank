@@ -1206,7 +1206,7 @@ def update_nmevideo(user, gloss, field, value):
         if new_offset in existing_offsets or new_offset == nmevideo.offset:
             return HttpResponse(value, {'content-type': 'text/plain'})
         nmevideo.offset = new_offset
-        nmevideo.save()
+        nmevideo.save(update_fields=['offset'])
     elif field.startswith('nmevideo_delete_'):
         nmevideoid = field[len('nmevideo_delete_'):]
         nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))
