@@ -1830,10 +1830,7 @@ def add_image(request):
             )
             goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
-            try:
-                exists = os.path.exists(goal_path)
-            except:
-                exists = False
+            exists = os.path.exists(goal_path)
 
             #First make the dir if needed
             if not exists:
@@ -1874,30 +1871,34 @@ def add_image(request):
 
 def delete_image(request, pk):
 
-    if request.method == "POST":
-
-        # deal with any existing video for this sign
-        gloss = get_object_or_404(Gloss, pk=pk, archived=False)
-        image_path = gloss.get_image_path()
-        full_image_path = settings.WRITABLE_FOLDER + os.sep + image_path
-        default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
-        if os.path.exists(full_image_path.encode('utf-8')):
-            os.remove(full_image_path.encode('utf-8'))
-        else:
-            print('delete_image: wrong type for image path, file does not exist')
-        deleted_image = DeletedGlossOrMedia()
-        deleted_image.item_type = 'image'
-        deleted_image.idgloss = gloss.idgloss
-        deleted_image.annotation_idgloss = default_annotationidglosstranslation
-        deleted_image.old_pk = gloss.pk
-        deleted_image.filename = image_path
-        deleted_image.save()
-
     # return to referer
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
+
+    if not request.method == "POST":
+        return redirect(url)
+
+    # deal with any existing video for this sign
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
+    image_path = gloss.get_image_path()
+    if not image_path:
+        return redirect(url)
+    full_image_path = settings.WRITABLE_FOLDER + image_path
+    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+    if os.path.exists(full_image_path.encode('utf-8')):
+        os.remove(full_image_path.encode('utf-8'))
+    else:
+        print('delete_image: wrong type for image path, file does not exist')
+    deleted_image = DeletedGlossOrMedia()
+    deleted_image.item_type = 'image'
+    deleted_image.idgloss = gloss.idgloss
+    deleted_image.annotation_idgloss = default_annotationidglosstranslation
+    deleted_image.old_pk = gloss.pk
+    deleted_image.filename = image_path
+    deleted_image.save()
+
     return redirect(url)
 
 
