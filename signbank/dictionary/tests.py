@@ -5,6 +5,7 @@ from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
 from signbank.tools import get_selected_datasets_for_user
 from signbank.settings.base import *
+from signbank.settings.server_specific import *
 from django.utils.translation import override, gettext_lazy as _, activate
 
 from django.contrib.auth.models import User, Permission, Group
@@ -829,9 +830,10 @@ class VideoTests(TestCase):
 
         # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
-        test_dataset = Dataset.objects.get(name=dataset_name)
+        test_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
 
+        assign_perm('view_dataset', self.user, test_dataset)
         assign_perm('change_dataset', self.user, test_dataset)
         print('User granted permmission to change dataset.')
 
@@ -925,9 +927,10 @@ class VideoTests(TestCase):
 
         # Create the glosses
         dataset_name = settings.DEFAULT_DATASET
-        test_dataset = Dataset.objects.get(name=dataset_name)
+        test_dataset = Dataset.objects.get(acronym=settings.DEFAULT_DATASET_ACRONYM)
         default_language = Language.objects.get(id=settings.DEFAULT_DATASET_LANGUAGE_ID)
 
+        assign_perm('view_dataset', self.user, test_dataset)
         assign_perm('change_dataset', self.user, test_dataset)
         print('User granted permmission to change dataset.')
 
