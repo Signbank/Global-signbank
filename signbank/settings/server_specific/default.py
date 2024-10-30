@@ -204,9 +204,9 @@ ECV_FILE = 'myecv.ecv'
 
 #What do you want to include in the ECV file?
 ECV_SETTINGS = {
-    'include_phonology_and_frequencies': True,
+    'include_phonology_and_frequencies': False,
 
-    'description_fields' : ['handedness', 'tokNo'],
+    'description_fields' : [],
 
     # The order of languages matters as the first will
     # be treated as default by ELAN
