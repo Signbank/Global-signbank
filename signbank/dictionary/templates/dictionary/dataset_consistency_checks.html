@@ -1,0 +1,125 @@
+{% extends 'baselayout.html' %}
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+{% load has_group %}
+{% load bootstrap3 %}
+
+{% load guardian_tags %}
+
+
+{% block extrajs %}
+<script type='text/javascript'>
+var url = '{{PREFIX_URL}}';
+</script>
+
+{% endblock %}
+
+{% block bootstrap3_title %}
+{% blocktrans %}Manage Dataset Videos{% endblocktrans %}
+{% endblock %}
+
+{% block content %}
+<div>
+<h3>{% trans "Manage Dataset Videos" %}</h3>
+
+    <table class='table table-condensed table-condensed-light'>
+    <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:1200px;">{{dataset.name}}</td></tr>
+    <tr><th>{% trans "Acronym" %}</th><td>{{dataset.acronym}}</td></tr>
+    <tr><th>{% trans "Number of glosses" %}</th><td>{{nr_of_glosses}} total</td></tr>
+    </table>
+    <br>
+
+    {% if glosses_with_too_many_videos %}
+    <h4>{% trans "Glosses with Multiple Version 0 Videos" %}</h4>
+    <table class='table table-condensed table-condensed-light'>
+    <tr>
+        <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
+        <th style="width:100px;">{% trans "Gloss ID" %}</th>
+        {% for language in dataset_languages %}
+        <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
+        {% endfor %}
+        <th style="width:1000px;">{% trans "Video Paths" %}</th></tr>
+        {% for gloss, videos in glosses_with_too_many_videos %}
+        <tr>
+            <td>{{gloss.idgloss}}</td>
+            <td>{{gloss.id}}</td>
+            {% for language in dataset_languages %}
+            <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
+            {% endfor %}
+            <td>{{videos}}</td></tr>
+        {% endfor %}
+    </table>
+    <br>
+    {% endif %}
+
+    {% if glosses_with_weird_filenames %}
+    <h4>{% trans "Glosses with Extra Characters in Video Filenames" %}</h4>
+    <table class='table table-condensed table-condensed-light'>
+    <tr>
+        <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
+        <th style="width:100px;">{% trans "Gloss ID" %}</th>
+        {% for language in dataset_languages %}
+        <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
+        {% endfor %}
+        <th style="width:1000px;">{% trans "Video Paths" %}</th></tr>
+        {% for gloss, videos in glosses_with_weird_filenames %}
+        <tr>
+            <td>{{gloss.idgloss}}</td>
+            <td>{{gloss.id}}</td>
+            {% for language in dataset_languages %}
+            <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
+            {% endfor %}
+            <td>{{videos}}</td></tr>
+        {% endfor %}
+    </table>
+    <br>
+    {% endif %}
+
+    {% if non_mp4_videos %}
+    <h4>{% trans "Gloss Video Files with non-mp4 Extensions" %}</h4>
+    <table class='table table-condensed table-condensed-light'>
+    <tr>
+        <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
+        <th style="width:100px;">{% trans "Gloss ID" %}</th>
+        {% for language in dataset_languages %}
+        <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
+        {% endfor %}
+        <th style="width:1000px;">{% trans "Video Paths" %}</th></tr>
+        {% for gloss, videos in non_mp4_videos %}
+        <tr>
+            <td>{{gloss.idgloss}}</td>
+            <td>{{gloss.id}}</td>
+            {% for language in dataset_languages %}
+            <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
+            {% endfor %}
+            <td>{{videos}}</td></tr>
+        {% endfor %}
+    </table>
+    <br>
+    {% endif %}
+
+    {% if gloss_videos %}
+    <h4>{% trans "Gloss Videos" %}</h4>
+    <table class='table table-condensed table-condensed-light'>
+    <tr>
+        <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
+        <th style="width:100px;">{% trans "Gloss ID" %}</th>
+        {% for language in dataset_languages %}
+        <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
+        {% endfor %}
+        <th style="width:1000px;">{% trans "Video Paths" %}</th></tr>
+        {% for gloss, videos in gloss_videos %}
+        <tr>
+            <td>{{gloss.idgloss}}</td>
+            <td>{{gloss.id}}</td>
+            {% for language in dataset_languages %}
+            <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
+            {% endfor %}
+            <td>{{videos}}</td></tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+
+</div>
+{% endblock %}
