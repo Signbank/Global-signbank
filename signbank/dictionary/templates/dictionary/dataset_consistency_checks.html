@@ -16,12 +16,12 @@ var url = '{{PREFIX_URL}}';
 {% endblock %}
 
 {% block bootstrap3_title %}
-{% blocktrans %}Manage Dataset Videos{% endblocktrans %}
+{% blocktrans %}Manage Dataset Video Storage{% endblocktrans %}
 {% endblock %}
 
 {% block content %}
 <div>
-<h3>{% trans "Manage Dataset Videos" %}</h3>
+<h3>{% trans "Manage Dataset Video Storage" %}</h3>
 
     <table class='table table-condensed table-condensed-light'>
     <tr><th style="width:300px;">{% trans "Dataset name" %}</th><td style="width:1200px;">{{dataset.name}}</td></tr>
@@ -64,6 +64,29 @@ var url = '{{PREFIX_URL}}';
         {% endfor %}
         <th style="width:1000px;">{% trans "Video Paths" %}</th></tr>
         {% for gloss, videos in glosses_with_weird_filenames %}
+        <tr>
+            <td>{{gloss.idgloss}}</td>
+            <td>{{gloss.id}}</td>
+            {% for language in dataset_languages %}
+            <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
+            {% endfor %}
+            <td>{{videos}}</td></tr>
+        {% endfor %}
+    </table>
+    <br>
+    {% endif %}
+
+    {% if wrong_folder %}
+    <h4>{% trans "Glosses with Wrong Folder for Video" %}</h4>
+    <table class='table table-condensed table-condensed-light'>
+    <tr>
+        <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
+        <th style="width:100px;">{% trans "Gloss ID" %}</th>
+        {% for language in dataset_languages %}
+        <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
+        {% endfor %}
+        <th style="width:1000px;">{% trans "Video Paths" %}</th></tr>
+        {% for gloss, videos in wrong_folder %}
         <tr>
             <td>{{gloss.idgloss}}</td>
             <td>{{gloss.id}}</td>

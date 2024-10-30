@@ -4,6 +4,7 @@ from signbank.dictionary.models import *
 from signbank.video.models import GlossVideo, GlossVideoHistory
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from signbank.tools import get_two_letter_dir
 
 
 def gloss_annotations_check(dataset):
@@ -32,6 +33,7 @@ def gloss_videos_check(dataset):
 
     results = dict()
     glosses_with_too_many_videos = []
+    glosses_missing_video = []
     gloss_videos = []
 
     default_language = dataset.default_language
@@ -51,10 +53,11 @@ def gloss_videos_check(dataset):
         if num_videos > 0:
             list_videos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in glossvideos])
             gloss_videos.append((gloss, list_videos))
-        # elif not num_videos:
-        #     glosses_missing_video.append((gloss, num_videos))
+        elif not num_videos:
+            glosses_missing_video.append((gloss, num_videos))
 
     results['glosses_with_too_many_videos'] = glosses_with_too_many_videos
+    results['glosses_missing_video'] = glosses_missing_video
     results['gloss_videos'] = gloss_videos
 
     return results
@@ -65,6 +68,7 @@ def gloss_video_filename_check(dataset):
     results = dict()
     glosses_with_weird_filenames = []
     non_mp4_videos = []
+    wrong_folder = []
 
     default_language = dataset.default_language
 
@@ -86,9 +90,17 @@ def gloss_video_filename_check(dataset):
         if mp4_in_filename:
             list_videos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in mp4_in_filename])
             non_mp4_videos.append((gloss, list_videos))
+        idgloss = gloss.idgloss
+        two_letter_dir = get_two_letter_dir(idgloss)
+        folder_pattern = settings.GLOSS_VIDEO_DIRECTORY + os.sep + dataset.acronym + os.sep + two_letter_dir
+        folder_not_in_filename = [gv for gv in glossvideos if folder_pattern not in str(gv.videofile)]
+        if folder_not_in_filename:
+            list_videos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in mp4_in_filename])
+            wrong_folder.append((gloss, list_videos))
 
     results['glosses_with_weird_filenames'] = glosses_with_weird_filenames
     results['non_mp4_videos'] = non_mp4_videos
+    results['wrong_folder'] = wrong_folder
 
     return results
 

@@ -65,6 +65,7 @@ class DatasetConstraintsView(DetailView):
         summary_filenames = gloss_video_filename_check(dataset)
         context['glosses_with_weird_filenames'] = summary_filenames['glosses_with_weird_filenames']
         context['non_mp4_videos'] = summary_filenames['non_mp4_videos']
+        context['wrong_folder'] = summary_filenames['wrong_folder']
 
         context['nr_of_glosses'] = nr_of_glosses
 
