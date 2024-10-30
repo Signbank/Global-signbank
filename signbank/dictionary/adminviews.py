@@ -7304,6 +7304,9 @@ class AnnotatedGlossListView(ListView):
         fields_with_choices = fields_to_fieldcategory_dict(settings.GLOSS_CHOICE_FIELDS)
         set_up_fieldchoice_translations(self.search_form, fields_with_choices)
 
+    def get_paginate_by(self, queryset):
+        return self.request.GET.get('paginate_by', self.paginate_by)
+
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(AnnotatedGlossListView, self).get_context_data(**kwargs)
@@ -7334,7 +7337,11 @@ class AnnotatedGlossListView(ListView):
             dataset_display_languages.append(lang.language_code_2char)
         lang_attr_name = dataset_display_languages[0]
 
-        context['annotatedglosscount'] = AnnotatedGloss.objects.filter(gloss__lemma__dataset__in=context['selected_datasets']).count()
+        # get unique combination of gloss.id and annotatedsentence.id
+        annotated_glosses_sentences = AnnotatedGloss.objects.filter(gloss__lemma__dataset__in=context['selected_datasets']).values('gloss__id', 'annotatedsentence__id')
+        list_of_sentence_ids = [(ags['gloss__id'], ags['annotatedsentence__id']) for ags in annotated_glosses_sentences]
+        context['annotatedglosscount'] = len(list(set(list_of_sentence_ids)))
+
         items = construct_scrollbar(self.object_list, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
