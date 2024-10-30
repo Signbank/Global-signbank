@@ -814,6 +814,7 @@ class VideoTests(TestCase):
 
         # a new test user is created for use during the tests
         self.user = User.objects.create_user('test-user', 'example@example.com', 'test-user')
+        assign_perm('dictionary.change_gloss', self.user)
 
         self.handedness_fieldchoice_1 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).first()
         self.handedness_fieldchoice_2 = FieldChoice.objects.filter(field='Handedness', machine_value__gt=1).last()
