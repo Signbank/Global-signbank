@@ -189,7 +189,14 @@ function checkKey(e)
 };
 
 </script>
-
+<style>
+.video_button:hover {
+    color: red;
+}
+.video_button.active {
+    color: red;
+}
+</style>
     <script type='text/javascript' src="{{STATIC_URL}}js/gloss_edit_color.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
@@ -247,18 +254,24 @@ function checkKey(e)
 
         $('#show_left').click(function()
         {
+            $('.video_button').removeClass("active");
+            $(this).addClass("active");
             $('#videoplayer_middle').hide();
             $('#videoplayer_left').show();
             $('#videoplayer_right').hide();
         });
         $('#show_right').click(function()
         {
+            $('.video_button').removeClass("active");
+            $(this).addClass("active");
             $('#videoplayer_middle').hide();
             $('#videoplayer_left').hide();
             $('#videoplayer_right').show();
         });
         $('#show_middle').click(function()
         {
+            $('.video_button').removeClass("active");
+            $(this).addClass("active");
             $('#videoplayer_middle').show();
             $('#videoplayer_left').hide();
             $('#videoplayer_right').hide();
@@ -766,17 +779,17 @@ textarea:focus {
     <div id="buttonbar-top" style="background-color:transparent;height:auto;">
     {% for perspvideo in gloss.get_perspective_videos %}
         {% if perspvideo.perspective == 'left' %}
-        <button class="btn" id="show_left" style="font-size:18px;background-color:transparent;">
+        <button class="btn video_button" id="show_left" style="font-size:18px;background-color:transparent;">
             <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
         </button>
         {% endif %}
     {% endfor %}
-    <button class="btn" id="show_middle" style="font-size:18px;background-color:transparent;">
+    <button class="btn video_button active" id="show_middle" style="font-size:18px;background-color:transparent;">
         <span class="glyphicon glyphicon-user"></span>
     </button>
     {% for perspvideo in gloss.get_perspective_videos %}
         {% if perspvideo.perspective == 'right' %}
-        <button class="btn" id="show_right"style="font-size:18px;background-color:transparent;">
+        <button class="btn video_button" id="show_right" style="font-size:18px;background-color:transparent;">
             <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span></button>
         {% endif %}
     {% endfor %}
@@ -784,15 +797,13 @@ textarea:focus {
     {% endif %}
     {% if gloss.has_video %}
 
-     <!-- {{gloss.get_video}} -->
-
         <div id="player" style="">
             <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}"
-                   playsinline type="video/mp4" autoplay muted></video>
+                   playsinline autoplay muted></video>
 
         {% for perspvideo in gloss.get_perspective_videos %}
             <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={% now 'YmdHis' %}"
-                   playsinline type="video/mp4" autoplay muted></video>
+                   playsinline autoplay muted></video>
         {% endfor %}
         </div>
         <div id="buttonbar" style="background-color:transparent;">
@@ -805,7 +816,6 @@ textarea:focus {
     {% else %}
     <div id='player'>
      <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png'>
-     <!-- {{gloss.get_video}} -->
     </div>
     {% endif %}
     
@@ -824,7 +834,7 @@ textarea:focus {
             <label for="id_videofile" class="drop-container" id="drop-container-video">
               <div id="videogallery" class="gallery"></div>
               <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
-              <label id="drop-container-video-status", class="hide">Status here</label>
+              <label id="drop-container-video-status" class="hide">Status here</label>
               <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
