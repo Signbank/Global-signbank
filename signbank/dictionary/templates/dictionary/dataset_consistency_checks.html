@@ -13,6 +13,51 @@
 var url = '{{PREFIX_URL}}';
 </script>
 
+<style>
+list {
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+}
+dl:after {
+    content: none;
+}
+dl {
+    margin-bottom: 0px;
+}
+dt {
+    margin-left: 0px;
+}
+dd {
+    margin-left: 0px;
+}
+
+.list-group-item {
+    padding: 0px 8px;
+}
+.list-group-item:hover {
+
+}
+.list-group-item.active {
+    background-color: inherit;
+    color: inherit;
+}
+.list-group-item.active:hover {
+    color: white;
+    background-color: DodgerBlue;
+}
+.list-group-item-contents {
+    background-color: inherit;
+    color: inherit;
+}
+.row.list-group-item.list-group-item-contents:hover {
+    background-color: DodgerBlue;
+    color: white;
+}
+.table-condensed {
+    border-collapse: collapse;
+}
+</style>
 {% endblock %}
 
 {% block bootstrap3_title %}
@@ -125,29 +170,39 @@ var url = '{{PREFIX_URL}}';
     </table>
     {% endif %}
     <br>
-
+<div style="width:100%;">
     <h4>{% trans "Gloss Videos" %}</h4>
     <p>{{gloss_videos|length}} {% trans "results found" %}</p>
     {% if gloss_videos %}
-    <table class='table table-condensed table-condensed-light'>
+    <table class='table table-condensed table-condensed-light' style="width:100%;">
     <tr>
-        <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
-        <th style="width:100px;">{% trans "Gloss ID" %}</th>
-        {% for language in dataset_languages %}
-        <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
-        {% endfor %}
-        <th style="width:1000px;">{% trans "Video Paths" %}</th></tr>
-        {% for gloss, videos in gloss_videos %}
-        <tr>
-            <td>{{gloss.idgloss}}</td>
-            <td>{{gloss.id}}</td>
+        <td class="list-group-hover" style="padding: 0;">
+        <dl class="row list-group-item active"  style="padding: 0;">
+            <dt class="col-sm-2" style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</dt>
+            <dt class="col-sm-2" style="width:100px;">{% trans "Gloss ID" %}</dt>
             {% for language in dataset_languages %}
-            <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
+            <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
             {% endfor %}
-            <td>{{videos}}</td></tr>
-        {% endfor %}
+            <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
+        </dl>
+        <list id="document_tuples" style="height:300px; display:block;">
+              {% for gloss, videos in gloss_videos %}
+                  <dl id="gloss_videos_{{gloss.id}}" class="row list-group-item list-group-item-contents" style="padding: 0;">
+                      <dd class="col-sm-2" style="width:300px;">{{gloss.idgloss}}</dd>
+                      <dd class="col-sm-2" style="width:100px;">{{gloss.id}}</dd>
+                      {% for language in dataset_languages %}
+                        <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
+                      {% endfor %}
+                      <dd class="col-sm-2" style="width:600px;" id='videos_{{gloss.id}}'>{{videos}}</dd>
+                  </dl>
+             {% endfor %}
+        </list>
+        </td>
+        </tr>
     </table>
     {% endif %}
-
+    <br>
+    <br>
+</div>
 </div>
 {% endblock %}
