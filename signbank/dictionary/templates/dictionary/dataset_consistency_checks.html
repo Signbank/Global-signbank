@@ -30,8 +30,9 @@ var url = '{{PREFIX_URL}}';
     </table>
     <br>
 
-    {% if glosses_with_too_many_videos %}
     <h4>{% trans "Glosses with Multiple Version 0 Videos" %}</h4>
+    <p>{{glosses_with_too_many_videos|length}} {% trans "results found" %}</p>
+    {% if glosses_with_too_many_videos %}
     <table class='table table-condensed table-condensed-light'>
     <tr>
         <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
@@ -50,11 +51,12 @@ var url = '{{PREFIX_URL}}';
             <td>{{videos}}</td></tr>
         {% endfor %}
     </table>
-    <br>
     {% endif %}
+    <br>
 
-    {% if glosses_with_weird_filenames %}
     <h4>{% trans "Glosses with Extra Characters in Video Filenames" %}</h4>
+    <p>{{glosses_with_weird_filenames|length}} {% trans "results found" %}</p>
+    {% if glosses_with_weird_filenames %}
     <table class='table table-condensed table-condensed-light'>
     <tr>
         <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
@@ -73,11 +75,12 @@ var url = '{{PREFIX_URL}}';
             <td>{{videos}}</td></tr>
         {% endfor %}
     </table>
-    <br>
     {% endif %}
+    <br>
 
-    {% if wrong_folder %}
     <h4>{% trans "Glosses with Wrong Folder for Video" %}</h4>
+    <p>{{wrong_folder|length}} {% trans "results found" %}</p>
+    {% if wrong_folder %}
     <table class='table table-condensed table-condensed-light'>
     <tr>
         <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
@@ -96,11 +99,12 @@ var url = '{{PREFIX_URL}}';
             <td>{{videos}}</td></tr>
         {% endfor %}
     </table>
-    <br>
     {% endif %}
+    <br>
 
-    {% if non_mp4_videos %}
     <h4>{% trans "Gloss Video Files with non-mp4 Extensions" %}</h4>
+    <p>{{non_mp4_videos|length}} {% trans "results found" %}</p>
+    {% if non_mp4_videos %}
     <table class='table table-condensed table-condensed-light'>
     <tr>
         <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
@@ -119,11 +123,12 @@ var url = '{{PREFIX_URL}}';
             <td>{{videos}}</td></tr>
         {% endfor %}
     </table>
-    <br>
     {% endif %}
+    <br>
 
-    {% if gloss_videos %}
     <h4>{% trans "Gloss Videos" %}</h4>
+    <p>{{gloss_videos|length}} {% trans "results found" %}</p>
+    {% if gloss_videos %}
     <table class='table table-condensed table-condensed-light'>
     <tr>
         <th style="width:300px;">{% trans "Lemma" %} ({{default_language.name}})</th>
