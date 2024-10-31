@@ -4,7 +4,7 @@ from django.views.generic.detail import DetailView
 from django.core.paginator import Paginator
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from signbank.dictionary.models import Dataset, Gloss, AnnotationIdglossTranslation
-from signbank.dataset_checks import gloss_annotations_check, gloss_videos_check, gloss_video_filename_check
+from signbank.dataset_checks import gloss_annotations_check, gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check
 from signbank.tools import get_selected_datasets_for_user, get_dataset_languages
 from signbank.settings.server_specific import *
 from guardian.shortcuts import get_objects_for_user
@@ -61,6 +61,10 @@ class DatasetConstraintsView(DetailView):
         summary_videos = gloss_videos_check(dataset)
         context['glosses_with_too_many_videos'] = summary_videos['glosses_with_too_many_videos']
         context['gloss_videos'] = summary_videos['gloss_videos']
+
+        summary_subclass_videos = gloss_subclass_videos_check(dataset)
+        context['gloss_nme_videos'] = summary_subclass_videos['gloss_nme_videos']
+        context['gloss_perspective_videos'] = summary_subclass_videos['gloss_perspective_videos']
 
         summary_filenames = gloss_video_filename_check(dataset)
         context['glosses_with_weird_filenames'] = summary_filenames['glosses_with_weird_filenames']

@@ -1,7 +1,7 @@
 
 
 from signbank.dictionary.models import *
-from signbank.video.models import GlossVideo, GlossVideoHistory
+from signbank.video.models import GlossVideo, GlossVideoHistory, GlossVideoNME, GlossVideoPerspective
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from signbank.tools import get_two_letter_dir
@@ -33,7 +33,6 @@ def gloss_videos_check(dataset):
 
     results = dict()
     glosses_with_too_many_videos = []
-    glosses_missing_video = []
     gloss_videos = []
 
     default_language = dataset.default_language
@@ -53,12 +52,39 @@ def gloss_videos_check(dataset):
         if num_videos > 0:
             list_videos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in glossvideos])
             gloss_videos.append((gloss, list_videos))
-        elif not num_videos:
-            glosses_missing_video.append((gloss, num_videos))
 
     results['glosses_with_too_many_videos'] = glosses_with_too_many_videos
-    results['glosses_missing_video'] = glosses_missing_video
     results['gloss_videos'] = gloss_videos
+
+    return results
+
+
+def gloss_subclass_videos_check(dataset):
+
+    results = dict()
+    gloss_nme_videos = []
+    gloss_perspective_videos = []
+
+    default_language = dataset.default_language
+
+    all_glosses = Gloss.objects.filter(lemma__dataset=dataset,
+                                       lemma__lemmaidglosstranslation__language=default_language).order_by(
+        'lemma__lemmaidglosstranslation__text').distinct()
+    for gloss in all_glosses:
+        glossnmevideos = GlossVideoNME.objects.filter(gloss=gloss).order_by('offset')
+        num_nme_videos = glossnmevideos.count()
+        if num_nme_videos > 0:
+            list_videos = ', '.join([str(gv.offset)+': '+str(gv.videofile) for gv in glossnmevideos])
+            gloss_nme_videos.append((gloss, list_videos))
+
+        glossperspvideos = GlossVideoPerspective.objects.filter(gloss=gloss)
+        num_persp_videos = glossperspvideos.count()
+        if num_persp_videos > 0:
+            list_videos = ', '.join([str(gv.perspective) + ': ' + str(gv.videofile) for gv in glossperspvideos])
+            gloss_perspective_videos.append((gloss, list_videos))
+
+    results['gloss_nme_videos'] = gloss_nme_videos
+    results['gloss_perspective_videos'] = gloss_perspective_videos
 
     return results
 
