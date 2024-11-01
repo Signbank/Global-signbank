@@ -23,7 +23,7 @@ from signbank.dictionary.forms import *
 from django.conf import settings
 
 from signbank.video.forms import VideoUploadForObjectForm
-from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory
+from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescription, GlossVideoHistory, GlossVideoPerspective
 
 from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
@@ -920,6 +920,10 @@ def update_gloss(request, glossid):
 
         return update_nmevideo(request.user, gloss, field, value)
 
+    elif field.startswith('perspectivevideo'):
+
+        return update_perspectivevideo(request.user, gloss, field, value)
+
     elif field.startswith('lemmaidgloss'):
         # Set new lemmaidgloss for this gloss
         # First check whether the gloss dataset is the same as the lemma dataset
@@ -928,7 +932,7 @@ def update_gloss(request, glossid):
             lemma = LemmaIdgloss.objects.get(pk=value)
             if dataset is None or dataset == lemma.dataset:
                 gloss.lemma = lemma
-                gloss.save()
+                gloss.save(update_fields=['path'])
             else:
                 messages.add_message(request, messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
         except ObjectDoesNotExist:
@@ -1171,9 +1175,7 @@ def update_annotation_idgloss(request, gloss, field, value):
         annotation_idgloss_translation.save()
     except ValidationError as e:
         feedback_message = getattr(e, 'message', repr(e))
-        messages.add_message(request, messages.ERROR, feedback_message)
-        reverse_url = 'dictionary:admin_gloss_view'
-        return HttpResponseRedirect(reverse(reverse_url, kwargs={'pk': str(gloss.pk)}))
+        return HttpResponseBadRequest(feedback_message, {'content-type': 'text/plain'})
 
     return HttpResponse(str(value), {'content-type': 'text/plain'})
 
@@ -1204,13 +1206,33 @@ def update_nmevideo(user, gloss, field, value):
         if new_offset in existing_offsets or new_offset == nmevideo.offset:
             return HttpResponse(value, {'content-type': 'text/plain'})
         nmevideo.offset = new_offset
-        nmevideo.save()
+        nmevideo.save(update_fields=['offset'])
     elif field.startswith('nmevideo_delete_'):
         nmevideoid = field[len('nmevideo_delete_'):]
         nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))
         filename = os.path.basename(nmevideo.videofile.name)
         filepath = nmevideo.videofile.path
         nmevideo.reversion(revert=False)
+        log_entry = GlossVideoHistory(action="delete", gloss=gloss,
+                                      actor=user,
+                                      uploadfile=filename,
+                                      goal_location=filepath)
+        log_entry.save()
+        return HttpResponseRedirect(reverse('dictionary:admin_gloss_view', kwargs={'pk': gloss.id}))
+
+    else:
+        print('unknown nme video update field: ', field)
+    return HttpResponse(value, {'content-type': 'text/plain'})
+
+
+def update_perspectivevideo(user, gloss, field, value):
+    """Update the GlossVideoPerspective"""
+    if field.startswith('perspectivevideo_delete_'):
+        perspvideoid = field[len('perspectivevideo_delete_'):]
+        perspvideo = GlossVideoPerspective.objects.get(id=int(perspvideoid))
+        filename = os.path.basename(perspvideo.videofile.name)
+        filepath = perspvideo.videofile.path
+        perspvideo.reversion(revert=False)
         log_entry = GlossVideoHistory(action="delete", gloss=gloss,
                                       actor=user,
                                       uploadfile=filename,
@@ -2029,6 +2051,10 @@ def save_edit_annotated_sentence(request):
                 annotated_sentence.annotatedvideo.source = AnnotatedSentenceSource.objects.get(id=source)
             else:
                 annotated_sentence.annotatedvideo.source = None
+            annotated_sentence.annotatedvideo.save()
+        if 'url' in request.POST:
+            url = request.POST['url']
+            annotated_sentence.annotatedvideo.url = url
             annotated_sentence.annotatedvideo.save()
         if 'eaffile' in request.FILES:
             annotated_sentence.annotatedvideo.delete_files(only_eaf=True)

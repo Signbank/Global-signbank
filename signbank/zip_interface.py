@@ -261,7 +261,7 @@ def import_video_file(request, gloss, video_file_path):
                 if errors_deleting:
                     print('import_video_file: ', errors_deleting)
                 return "Failed", errors
-            existing_videos = GlossVideo.objects.filter(gloss=gloss, version=0)
+            existing_videos = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None, version=0)
             if existing_videos.count():
                 # overwrite existing video using shutil
                 success, feedback = save_video(video_file_path, goal_gloss_file_path)
@@ -286,7 +286,7 @@ def import_video_file(request, gloss, video_file_path):
 
             else:
                 # make new GlossVideo object for new video
-                video = GlossVideo(gloss=gloss,
+                video = GlossVideo(gloss=gloss, glossvideonme=None, glossvideoperspective=None,
                                    version=0)
                 new_glossvideo_name =os.path.join(video_path, video_file_name)
                 with open(video_file_path, 'rb') as f:

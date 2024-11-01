@@ -1,17 +1,17 @@
 {
   "openapi": "3.1.0",
-  "info": 
+  "info":
   {
     "version": "1.0.0",
     "title": "Signbank",
     "description": "Signbank API",
     "termsOfService": "",
-    "contact": 
+    "contact":
     {
       "name": "Signbank dev team"
     }
   },
-  "servers": 
+  "servers":
   [
     {
       "url": "https://signbank.cls.ru.nl",
@@ -19,14 +19,18 @@
     },
     {
       "url": "https://signbank-dev.cls.ru.nl",
+      "description": "Development server (empty database)"
+    },
+    {
+      "url": "https://signbank-test.cls.ru.nl",
       "description": "Development server"
     }
   ],
-  "components": 
+  "components":
   {
     "securitySchemes":
     {
-      "bearerAuth": 
+      "bearerAuth":
       {
         "name": "Authentication",
         "type": "http",
@@ -35,11 +39,11 @@
       }
     }
   },
-  "paths": 
+  "paths":
   {
-    "/dictionary/package/": 
+    "/dictionary/package/":
     {
-      "get": 
+      "get":
       {
         "description": "This returns a zipfile of images and videos, to be used in sign language software (originally designed to be used with video annotation software ELAN). If you set the `since_timestamp` parameter, you will only get all glosses that have been created or updated after that particular second, so you don't have to download the whole collection each time you want an up to date set of Signbank videos.",
         "parameters":
@@ -49,7 +53,7 @@
             "in": "query",
             "description": "Acrynym of the dataset, like `NGT` or `ASL`",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
@@ -59,7 +63,7 @@
             "in": "query",
             "description": "(Unix epoch format, 1 january 2024 will be 1704067200). Limits the glosses to everything created or updated after this second.",
             "required": false,
-            "schema": 
+            "schema":
             {
               "type": "int"
             }
@@ -69,15 +73,15 @@
             "in": "query",
             "description": "",
             "required": false,
-            "schema": 
+            "schema":
             {
               "type": "bool"
             }
-          }        
+          }
         ],
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "A zipfile containing 3 json files: `glosses.json`, `image_urls.json` and `video_urls.json`"
           }
@@ -85,27 +89,27 @@
         "tags": ["Collecting information"]
       }
     },
-    "/dictionary/info/": 
+    "/dictionary/info/":
     {
-      "get": 
+      "get":
       {
         "description": "Retrieves the names (acronyms) of available datasets.",
         "parameters":
-        [       
+        [
         ],
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "The names (acronyms) of available datasets."
           }
         },
-        "tags": ["Collecting information"]        
+        "tags": ["Collecting information"]
       }
     },
     "/dictionary/get_fields_data/{datasetid}":
     {
-      "get": 
+      "get":
       {
         "description": "Provides the full set of fields for a dataset. The fields are essentially those available in `Import CSV Update Glosses`. Based on the request, the `LANGUAGE_CODE` set to `nl` or one of the other interface languages yields results in that language.",
         "parameters":
@@ -115,16 +119,16 @@
             "in": "path",
             "description": "The dataset ID is required to provide the language based fields, Annotation, Lemma, Senses, which are available for the translation languages of the dataset. If the user does not have access to the dataset, it defaults to NGT (dataset ID `5`).",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string",
               "default": "5"
             }
-          }     
+          }
         ],
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "The full set of fields for a dataset."
           }
@@ -134,7 +138,7 @@
     },
     "/dictionary/get_gloss_data/{datasetid}/{glossid}":
     {
-      "get": 
+      "get":
       {
         "description": "Gives you detailed information on particular gloss. It returns the non-empty fields for the available fields as described above. If the user is not logged in, or the requested gloss is not in the Web dictionary, fewer fields are returned. Based on the request, the `LANGUAGE_CODE` set to `nl` or one of the other interface languages yields results in that language.",
         "parameters":
@@ -144,7 +148,7 @@
             "in": "path",
             "description": "The dataset ID.",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string",
               "default": "5"
@@ -155,21 +159,21 @@
             "in": "path",
             "description": "The gloss ID.",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
-          }     
+          }
         ],
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "Detailed information on the gloss."
           }
         },
         "tags": ["Collecting information"],
-        "security": 
+        "security":
         [
           {
             "bearerAuth": []
@@ -177,94 +181,211 @@
         ]
       }
     },
-    "/dictionary/api_create_gloss/": 
+    "/dictionary/get_annotated_sentences_of_gloss/{datasetid}/{glossid}":
     {
-      "post": 
+      "get":
+      {
+        "description": "Gives you the annotated sentences of a particular gloss in the format of a list with a dictionary for each annotated sentence. The fields in the dictionary are 'Translation ([Language])', 'Context ([Language])', 'Source', 'Url', 'Representative glosses', 'Unrepresentative glosses'. Based on the request, the `LANGUAGE_CODE` set to `nl` or one of the other interface languages yields results in that language.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "The dataset ID.",
+            "required": true,
+            "schema":
+            {
+              "type": "string",
+              "default": "5"
+            }
+          },
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "The gloss ID.",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "responses":
+        {
+          "200":
+          {
+            "description": "Detailed information on the annotated sentences of a gloss."
+          }
+        },
+        "tags": ["Collecting information"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_create_gloss/{datasetid}/":
+    {
+      "post":
       {
         "description": "Creates a new gloss",
         "parameters":
         [
           {
-            "name": "Dataset id",
+            "name": "datasetid",
             "in": "path",
             "description": "ID of the dataset this gloss should be part of (not the acronym)",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
-          }     
+          }
         ],
         "requestBody":
         {
-          "content": 
+          "content":
           {
-            "application/json": 
+            "application/json":
             {
-              "schema": 
+              "schema":
               {
                 "type": "object",
-                "properties": 
+                "properties":
                 {
-                  "Dataset": 
+                  "Dataset":
                   {
                     "type": "string",
                     "description": "Acronym of the dataset, like `NGT` or `ASL`"
                   },
-                  "Lemma ID Gloss (Dutch)": 
+                  "Lemma ID Gloss (Dutch)":
                   {
                     "type": "string"
                   },
-                  "Lemma ID Gloss (English)": 
+                  "Lemma ID Gloss (English)":
                   {
                     "type": "string"
                   },
-                  "Annotation ID Gloss (Dutch)": 
+                  "Annotation ID Gloss (Dutch)":
                   {
                     "type": "string"
                   },
-                  "Annotation ID Gloss (English)": 
+                  "Annotation ID Gloss (English)":
                   {
                     "type": "string"
                   },
-                  "Senses (Dutch)": 
+                  "Senses (Dutch)":
                   {
-                    "type": "array",
-                    "items": 
-                    {
-                      "type": "array",
-                      "items": 
-                      {
-                        "type": "string"
-                      }
-                    }
+                    "type": "string",
+                    "example": "[['string']]"
                   },
-                  "Senses (English)": 
+                  "Senses (English)":
                   {
-                    "type": "array",
-                    "items": 
-                    {
-                      "type": "array",
-                      "items": 
-                      {
-                        "type": "string"
-                      }
-                    }
+                    "type": "string",
+                    "example": "[['string']]"
                   }
                 }
               }
             }
           }
         },
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "Creation successful"
           }
         },
         "tags": ["Adding Signbank data"],
-        "security": 
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_create_annotated_sentence/{datasetid}/":
+    {
+      "post":
+      {
+        "description": "Creates a new annotated sentence",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this annotated sentence should be part of (not the acronym)",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content":
+          {
+            "multipart/form-data":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties":
+                {
+                  "Dataset":
+                  {
+                    "type": "string",
+                    "description": "Acronym of the dataset, like `NGT` or `ASL`",
+                    "example": "Test dataset"
+                  },
+                  "Video_file":
+                  {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The video file to upload"
+                  },
+                  "Eaf_file":
+                  {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The EAF file to upload"
+                  },
+                  "Source":
+                  {
+                    "type": "string",
+                    "description": "The source of the sentence",
+                    "example": "Corpus name"
+                  },
+                  "Url":
+                  {
+                    "type": "string",
+                    "description": "The URL of the sentence",
+                    "example": "www.corpus.com/sentenceid"
+                  }
+                },
+                "required":
+                [
+                  "Dataset",
+                  "Video_file",
+                  "Eaf_file"
+                ]
+              }
+            }
+          }
+        },
+        "responses":
+        {
+          "200":
+          {
+            "description": "Creation successful"
+          }
+        },
+        "tags": ["Adding Signbank data"],
+        "security":
         [
           {
             "bearerAuth": []
@@ -274,7 +395,7 @@
     },
     "/dictionary/api_create_gloss_nmevideo/{datasetid}/{glossid}/":
     {
-      "post": 
+      "post":
       {
         "description": "Creates a new 'non manual element' video for a gloss",
         "parameters":
@@ -284,7 +405,7 @@
             "in": "path",
             "description": "ID of the dataset this gloss should be part of (not the acronym)",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
@@ -294,54 +415,59 @@
             "in": "path",
             "description": "ID of the gloss",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
-          }     
+          }
         ],
         "requestBody":
         {
-          "content": 
+          "content":
           {
-            "application/json": 
+            "multipart/form-data":
             {
-              "schema": 
+              "schema":
               {
                 "type": "object",
-                "properties": 
+                "properties":
                 {
-                  "Index": 
+                  "Index":
                   {
                     "type": "int",
                     "description": "Order to display"
                   },
-                  "Description (Dutch)": 
+                  "Description (Dutch)":
                   {
                     "type": "string"
                   },
-                  "Description (English)": 
+                  "Description (English)":
                   {
                     "type": "string"
                   },
-                  "File": 
+                  "File":
                   {
-                    "type": "base64-encoded file"
+                    "type": "string",
+                    "format": "binary"
                   }
                 }
-              }
+              },
+              "required":
+                [
+                  "File"
+                ]
             }
           }
         },
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "Creation successful"
           }
         },
         "tags": ["Adding Signbank data"],
-        "security": 
+        "security":
         [
           {
             "bearerAuth": []
@@ -351,7 +477,7 @@
     },
     "/dictionary/api_update_gloss/{datasetid}/{glossid}/":
     {
-      "post": 
+      "post":
       {
         "description": "Change a gloss. Between languages the number of senses given must be the same, but the number of words in a sense can differ.",
         "parameters":
@@ -361,7 +487,7 @@
             "in": "path",
             "description": "ID of the dataset this gloss should be part of (not the acronym)",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
@@ -371,203 +497,203 @@
             "in": "path",
             "description": "ID of the gloss",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
-          }     
+          }
         ],
         "requestBody":
         {
-          "content": 
+          "content":
           {
-            "application/json": 
+            "application/json":
             {
-              "schema": 
+              "schema":
               {
                 "type": "object",
-                "properties": 
+                "properties":
                 {
-                  "Lemma ID Gloss (Dutch)": 
+                  "Lemma ID Gloss (Dutch)":
                   {
                     "type": "string"
                   },
-                  "Lemma ID Gloss (English)": 
+                  "Lemma ID Gloss (English)":
                   {
                     "type": "string"
                   },
-                  "Annotation ID Gloss (Dutch)": 
+                  "Annotation ID Gloss (Dutch)":
                   {
                     "type": "string"
                   },
-                  "Annotation ID Gloss (English)": 
+                  "Annotation ID Gloss (English)":
                   {
                     "type": "string"
                   },
-                  "Word Class": 
+                  "Word Class":
                   {
                     "type": "string"
                   },
-                  "Handedness": 
+                  "Handedness":
                   {
                     "type": "string"
                   },
-                  "Strong Hand": 
+                  "Strong Hand":
                   {
                     "type": "string"
                   },
-                  "Weak Hand": 
+                  "Weak Hand":
                   {
                     "type": "string"
                   },
-                  "Handshape Change": 
+                  "Handshape Change":
                   {
                     "type": "string"
                   },
-                  "Relation Between Articulators": 
+                  "Relation Between Articulators":
                   {
                     "type": "string"
                   },
-                  "Location": 
+                  "Location":
                   {
                     "type": "string"
                   },
-                  "Contact Type": 
+                  "Contact Type":
                   {
                     "type": "string"
                   },
-                  "Movement Shape": 
+                  "Movement Shape":
                   {
                     "type": "string"
                   },
-                  "Movement Direction": 
+                  "Movement Direction":
                   {
                     "type": "string"
                   },
-                  "Repeated Movement": 
+                  "Repeated Movement":
                   {
                     "type": "string"
                   },
-                  "Alternating Movement": 
+                  "Alternating Movement":
                   {
                     "type": "string"
                   },
-                  "Relative Orientation: Movement": 
+                  "Relative Orientation: Movement":
                   {
                     "type": "string"
                   },
-                  "Relative Orientation: Location": 
+                  "Relative Orientation: Location":
                   {
                     "type": "string"
                   },
-                  "Orientation Change": 
+                  "Orientation Change":
                   {
                     "type": "string"
                   },
-                  "Virtual Object": 
+                  "Virtual Object":
                   {
                     "type": "string"
                   },
-                  "Phonology Other": 
+                  "Phonology Other":
                   {
                     "type": "string"
                   },
-                  "Mouth Gesture": 
+                  "Mouth Gesture":
                   {
                     "type": "string"
                   },
-                  "Mouthing": 
+                  "Mouthing":
                   {
                     "type": "string"
                   },
-                  "Phonetic Variation": 
+                  "Phonetic Variation":
                   {
                     "type": "string"
                   },
-                  "Strong Hand Letter": 
+                  "Strong Hand Letter":
                   {
                     "type": "string"
                   },
-                  "Strong Hand Number": 
+                  "Strong Hand Number":
                   {
                     "type": "string"
                   },
-                  "Weak Hand Letter": 
+                  "Weak Hand Letter":
                   {
                     "type": "string"
                   },
-                  "Weak Hand Number":	
+                  "Weak Hand Number":
                   {
                     "type": "int"
                   },
-                  "Weak Drop": 
+                  "Weak Drop":
                   {
                     "type": "string"
                   },
-                  "Weak Prop": 
+                  "Weak Prop":
                   {
                     "type": "string"
                   },
-                  "Semantic Field": 
+                  "Semantic Field":
                   {
                     "type": "string"
                   },
-                  "Derivation History": 
+                  "Derivation History":
                   {
                     "type": "string"
                   },
-                  "Named Entity": 
+                  "Named Entity":
                   {
                     "type": "string"
                   },
-                  "Valence": 
+                  "Valence":
                   {
                     "type": "string"
                   },
-                  "Iconic Image": 
+                  "Iconic Image":
                   {
                     "type": "string"
                   },
-                  "Concepticon Concept Set": 
+                  "Concepticon Concept Set":
                   {
                     "type": "string"
                   },
-                  "In The Web Dictionary": 
+                  "In The Web Dictionary":
                   {
                     "type": "bool"
                   },
-                  "Is This A Proposed New Sign?": 
+                  "Is This A Proposed New Sign?":
                   {
                     "type": "bool"
                   },
-                  "Exclude From Ecv": 
+                  "Exclude From Ecv":
                   {
                     "type": "bool"
                   },
-                  "Senses": 
+                  "Senses":
                   {
                     "type": "object",
-                    "properties": 
+                    "properties":
                     {
-                      "en": 
+                      "en":
                       {
                         "type": "array",
-                        "items": 
+                        "items":
                         {
                           "type": "array",
-                          "items": 
+                          "items":
                           {
                             "type": "string"
                           }
                         }
                       },
-                      "nl": 
+                      "nl":
                       {
                         "type": "array",
-                        "items": 
+                        "items":
                         {
                           "type": "array",
-                          "items": 
+                          "items":
                           {
                             "type": "string"
                           }
@@ -581,15 +707,15 @@
             }
           }
         },
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "Update successful"
           }
         },
         "tags": ["Updating Signbank data"],
-        "security": 
+        "security":
         [
           {
             "bearerAuth": []
@@ -675,17 +801,17 @@
     },
     "/dictionary/api_update_gloss_morphology/{datasetid}/{glossid}/": 
     {
-      "post": 
+      "post":
       {
         "description": "Updates the morphology fields for a gloss. Note the required `schema` of the request body below.",
-        "parameters": 
+        "parameters":
         [
           {
             "name": "datasetid",
             "in": "path",
             "description": "ID of the dataset this gloss is part of",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
@@ -700,29 +826,29 @@
             }
           }
         ],
-        "requestBody": 
+        "requestBody":
         {
           "required": true,
-          "content": 
+          "content":
           {
             "application/json":
              {
-              "schema": 
+              "schema":
               {
                 "type": "object",
-                "properties": 
+                "properties":
                 {
-                  "Sequential Morphology": 
+                  "Sequential Morphology":
                   {
                     "type": "string",
                     "description": "The sequential morphology of the gloss, formatted as 'GLOSS1 + GLOSS2 + GLOSS3'."
                   },
-                  "Simultaneous Morphology": 
+                  "Simultaneous Morphology":
                   {
                     "type": "string",
                     "description": "The simultaneous morphology of the gloss, formatted as 'MORPHEME1:meaning1, MORPHEME2:meaning2'. Requires morphemes."
                   },
-                  "Blend Morphology": 
+                  "Blend Morphology":
                   {
                     "type": "string",
                     "description": "The blend morphology of the gloss, formatted as 'GLOSS1:role1, GLOSS2:role2'."
@@ -732,9 +858,9 @@
             }
           }
         },
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "Update successful"
           }
@@ -747,19 +873,111 @@
         ]
       }
     },
-    "/dictionary/api_update_gloss_nmevideo/{datasetid}/{glossid}/{videoid}/": 
+    "/dictionary/api_update_annotated_sentence/{datasetid}/{annotatedsentenceid}/":
     {
-      "post": 
+      "post":
+      {
+        "description": "Updates an annotated sentence with translations, context, source, url, and representative glosses.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this annotated sentence is part of",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "annotatedsentenceid",
+            "in": "path",
+            "description": "ID of the annotated sentence to update",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content":
+          {
+            "application/json":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties":
+                {
+                  "Translation (Dutch)":
+                  {
+                    "type": "string"
+                  },
+                  "Translation (English)":
+                  {
+                    "type": "string"
+                  },
+                  "Context (Dutch)":
+                  {
+                    "type": "string"
+                  },
+                  "Context (English)":
+                  {
+                    "type": "string"
+                  },
+                  "Source":
+                  {
+                    "type": "string"
+                  },
+                  "Url":
+                  {
+                    "type": "string"
+                  },
+                  "Representative glosses":
+                  {
+                    "type": "array",
+                    "items":
+                    {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses":
+        {
+          "200":
+          {
+            "description": "Update successful"
+          }
+        },
+        "tags": ["Updating Signbank data"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_update_gloss_nmevideo/{datasetid}/{glossid}/{videoid}/":
+    {
+      "post":
       {
         "description": "Updates the details of a 'non-manual element' video for a gloss. To replace the video, delete it using `api_delete_gloss_nmevideo` and create a new NME video using `api_create_gloss_nmevideo`.",
-        "parameters": 
+        "parameters":
         [
           {
             "name": "datasetid",
             "in": "path",
             "description": "ID of the dataset this gloss is part of",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
@@ -769,7 +987,7 @@
             "in": "path",
             "description": "ID of the gloss to update",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
@@ -779,41 +997,41 @@
             "in": "path",
             "description": "ID of the video to update",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
           }
         ],
-        "requestBody": 
+        "requestBody":
         {
           "required": true,
-          "content": 
+          "content":
           {
-            "application/json": 
+            "application/json":
             {
-              "schema": 
+              "schema":
               {
                 "type": "object",
-                "properties": 
+                "properties":
                 {
-                  "Description (English)": 
+                  "Description (English)":
                   {
                     "type": "string",
                     "description": "Description of the video in English."
                   },
-                  "Description (Dutch)": 
+                  "Description (Dutch)":
                   {
                     "type": "string",
                     "description": "Description of the video in Dutch."
                   },
-                  "Index": 
+                  "Index":
                   {
                     "type": "integer",
                     "description": "Display number in sequence."
                   }
                 },
-                "required": 
+                "required":
                 [
                   "Description (English)",
                   "Description (Dutch)",
@@ -823,15 +1041,15 @@
             }
           }
         },
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "Update successful"
           }
         },
         "tags": ["Updating Signbank data"],
-        "security": 
+        "security":
         [
           {
             "bearerAuth": []
@@ -839,62 +1057,75 @@
         ]
       }
     },
-    "/dictionary/upload_zipped_videos_folder_json/{datasetid}/": 
+    "/dictionary/upload_zipped_videos_folder_json/{datasetid}/":
     {
-      "post": 
+      "post":
       {
-        "description": "Uploads and unzips a zipped videos folder to the import_videos folder for a specific dataset.",
-        "parameters": 
+        "description": "Uploads and unzips a zipped videos folder to the api_video_archives folder for a specific dataset.",
+        "parameters":
         [
           {
             "name": "datasetid",
             "in": "path",
-            "description": "The dataset ID required to provide language-based fields such as Annotation, Lemma, Senses, which are available for the translation languages of the dataset. Defaults to NGT (dataset ID 5) if the user does not have access.",
+            "description": "The dataset ID is required.",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
-          },
-          {
-            "name": "file",
-            "in": "query",
-            "description": "The URL of the zip file to upload. The file path must include an IP address from the other computer. The zip file archive has the structure `<dataset_acronym>/<language_code_3char>/<annotation_text>.mp4`. For dataset NGT, this looks like `NGT/nld/OLIFANT.mp4`, and for an English language, this looks like: `ASL/eng/FINGERSPELLING.mp4`. The videos need to be in `mp4` format. It is recommended to use the English gloss annotation for languages with UTF-8 characters or symbols because of file naming and storage. For example, right-to-left languages flip the order of the extension to the left. Because Signbank is multilingual, not using English in these cases may not work as expected because all the files are stored in the same file system, albeit in separate folders.",
-            "required": true,
-            "schema": 
-            {
-              "type": "string",
-              "format": "uri"
-            }
           }
         ],
-        "responses": 
+        "requestBody":
         {
-          "200": 
+          "content":
+          {
+            "multipart/form-data":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties": {
+                  "File": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The zip archive file to upload"
+                  }
+                }
+              },
+              "required":
+                [
+                  "File"
+                ]
+            }
+          }
+        },
+        "responses":
+        {
+          "200":
           {
             "description": "File uploaded and unzipped successfully.",
-            "content": 
+            "content":
             {
-              "application/json": 
+              "application/json":
               {
-                "schema": 
+                "schema":
                 {
                   "type": "object",
-                  "properties": 
+                  "properties":
                   {
-                    "filename": 
+                    "filename":
                     {
                       "type": "string",
                       "description": "The name of the uploaded zip file."
                     },
-                    "unzippedvideos": 
+                    "unzippedvideos":
                     {
                       "type": "object",
                       "description": "The unzipped videos categorized by language code.",
-                      "additionalProperties": 
+                      "additionalProperties":
                       {
                         "type": "array",
-                        "items": 
+                        "items":
                         {
                           "type": "string",
                           "description": "The names of the unzipped video files."
@@ -902,29 +1133,24 @@
                       }
                     }
                   },
-                  "example": 
+                  "example":
                   {
                     "filename": "tst_videos.zip",
-                    "unzippedvideos": 
-                    {
-                      "nld": 
+                    "unzippedvideos":
                       [
-                        "STOMP-B.mp4",
-                        "POMPOEN-A.mp4"
-                      ],
-                      "eng": []
-                    }
+                        "4681.mp4"
+                      ]
                   }
                 }
               }
             }
           }
         },
-        "tags": 
+        "tags":
         [
           "Updating Signbank data"
         ],
-        "security": 
+        "security":
         [
           {
             "bearerAuth": []
@@ -934,69 +1160,69 @@
     },
     "/dictionary/upload_videos_to_glosses/{datasetid}/":
     {
-      "post": 
+      "post":
       {
-        "description": "Imports the video files found for the dataset in the `import_videos` folder into the corresponding glosses. If a video for a gloss already exists, it is overwritten. After the operation, the video files are deleted from `import_videos`.",
-        "parameters": 
+        "description": "Imports the video files found for the dataset in the `api_video_archives` folder into the corresponding glosses. If a video for a gloss already exists, it is overwritten. After the operation, the video files are deleted from `api_video_archives`.",
+        "parameters":
         [
           {
             "name": "datasetid",
             "in": "path",
             "description": "ID of the dataset to import videos for. The user must be in Group DatasetManager for the dataset.",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
           }
         ],
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "Videos imported successfully.",
-            "content": 
+            "content":
             {
-              "application/json": 
+              "application/json":
               {
-                "schema": 
+                "schema":
                 {
                   "type": "object",
-                  "properties": 
+                  "properties":
                   {
-                    "import_videos_status": 
+                    "api_video_archives_status":
                     {
                       "type": "array",
                       "description": "List of the status of each imported video file.",
-                      "items": 
+                      "items":
                       {
                         "type": "object",
-                        "additionalProperties": 
+                        "additionalProperties":
                         {
                           "type": "object",
-                          "properties": 
+                          "properties":
                           {
-                            "gloss": 
+                            "gloss":
                             {
                               "type": "string",
                               "description": "The ID of the gloss to which the video was imported."
                             },
-                            "videofile": 
+                            "videofile":
                             {
                               "type": "string",
                               "description": "The name of the video file that was imported."
                             },
-                            "Video": 
+                            "Video":
                             {
                               "type": "string",
                               "description": "URL to the new video in the gloss."
                             },
-                            "status": 
+                            "status":
                             {
                               "type": "string",
                               "description": "Status of the import operation (e.g., Success, Error)."
                             },
-                            "errors": 
+                            "errors":
                             {
                               "type": "string",
                               "description": "Error message if the import operation failed; empty if successful."
@@ -1006,26 +1232,26 @@
                       }
                     }
                   },
-                  "example": 
+                  "example":
                   {
-                    "import_videos_status": 
+                    "api_video_archives_status":
                     [
                       {
-                        "import_videos/tstMH/nld/STOMP-B.mp4": 
+                        "api_video_archives/tstMH/42090.mp4":
                         {
                           "gloss": "42090",
-                          "videofile": "STOMP-B.mp4",
-                          "Video": "https://signbank-dev.cls.ru.nl//dictionary/protected_media/glossvideo/tstMH/ST/STOMP-42090.mp4",
+                          "videofile": "42090.mp4",
+                          "Video": "https://signbank-test.cls.ru.nl//dictionary/protected_media/glossvideo/tstMH/ST/STOMP-42090.mp4",
                           "status": "Success",
                           "errors": ""
                         }
                       },
                       {
-                        "import_videos/tstMH/nld/POMPOEN-A.mp4": 
+                        "api_video_archives/tstMH/42087.mp4":
                         {
                           "gloss": "42087",
-                          "videofile": "POMPOEN-A.mp4",
-                          "Video": "https://signbank-dev.cls.ru.nl//dictionary/protected_media/glossvideo/tstMH/PO/POMPOEN-42087.mp4",
+                          "videofile": "42087.mp4",
+                          "Video": "https://signbank-test.cls.ru.nl//dictionary/protected_media/glossvideo/tstMH/PO/POMPOEN-42087.mp4",
                           "status": "Success",
                           "errors": ""
                         }
@@ -1046,20 +1272,20 @@
           }
         ]
       }
-    },    
-    "/dictionary/api_delete_gloss/{datasetid}/{glossid}/": 
+    },
+    "/dictionary/api_delete_gloss/{datasetid}/{glossid}/":
     {
-      "post": 
+      "post":
       {
         "description": "Deletes a gloss for a specified dataset.",
-        "parameters": 
+        "parameters":
         [
           {
             "name": "datasetid",
             "in": "path",
             "description": "ID of the dataset this gloss belongs to.",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
@@ -1069,21 +1295,21 @@
             "in": "path",
             "description": "ID of the gloss to delete.",
             "required": true,
-            "schema": 
+            "schema":
             {
               "type": "string"
             }
           }
         ],
-        "responses": 
+        "responses":
         {
-          "200": 
+          "200":
           {
             "description": "Gloss deleted successfully."
           }
         },
         "tags": ["Deleting and restoring Signbank data"],
-        "security": 
+        "security":
         [
           {
             "bearerAuth": []
@@ -1091,9 +1317,9 @@
         ]
       }
     },
-    "/dictionary/api_restore_gloss/{datasetid}/{glossid}/": 
+    "/dictionary/api_restore_gloss/{datasetid}/{glossid}/":
     {
-      "post": 
+      "post":
       {
         "description": "Restores a deleted gloss for a specified dataset.",
         "parameters": [
@@ -1149,7 +1375,51 @@
         ]
       }
     },
-    "/dictionary/api_delete_gloss_nmevideo/{datasetid}/{glossid}/{videoid}/": 
+    "/dictionary/api_delete_annotated_sentence/{datasetid}/{annotatedsentenceid}/":
+    {
+      "post":
+      {
+        "description": "Deletes an annotated sentence for a specified dataset.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "ID of the dataset this annotated sentence belongs to.",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          },
+          {
+            "name": "annotatedsentenceid",
+            "in": "path",
+            "description": "ID of the annotated sentence to delete.",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "responses":
+        {
+          "200":
+          {
+            "description": "Annotated sentence deleted successfully."
+          }
+        },
+        "tags": ["Deleting and restoring Signbank data"],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_delete_gloss_nmevideo/{datasetid}/{glossid}/{videoid}/":
     {
       "post": {
         "description": "Deletes a non-manual element (NME) video associated with a gloss for a specified dataset.",
