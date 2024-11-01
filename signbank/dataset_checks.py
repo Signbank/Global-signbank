@@ -2,8 +2,6 @@
 
 from signbank.dictionary.models import *
 from signbank.video.models import GlossVideo, GlossVideoHistory, GlossVideoNME, GlossVideoPerspective
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
 from signbank.tools import get_two_letter_dir
 
 
@@ -129,43 +127,3 @@ def gloss_video_filename_check(dataset):
     results['wrong_folder'] = wrong_folder
 
     return results
-
-
-def check_consistency_gloss_translations(request):
-    # this is an ajax call in the DatasetConstraintsView template
-    if not request.user.is_authenticated:
-        return JsonResponse({})
-
-    from django.contrib.auth.models import Group
-    try:
-        group_manager = Group.objects.get(name='Dataset_Manager')
-    except ObjectDoesNotExist:
-        return JsonResponse({})
-
-    groups_of_user = request.user.groups.all()
-    if group_manager not in groups_of_user:
-        return JsonResponse({})
-
-    datasetid = request.POST.get('dataset', '')
-    if not datasetid:
-        return JsonResponse({})
-
-    try:
-        dataset_id = int(datasetid)
-    except TypeError:
-        return JsonResponse({})
-
-    dataset = Dataset.objects.filter(id=dataset_id).first()
-    if not dataset:
-        return JsonResponse({})
-
-    # make sure the user can write to this dataset
-    from guardian.shortcuts import get_objects_for_user
-    user_change_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset,
-                                                accept_global_perms=False)
-    if not user_change_datasets or dataset not in user_change_datasets:
-        return JsonResponse({})
-
-    results = gloss_annotations_check(dataset)
-
-    return JsonResponse(results)
