@@ -1704,7 +1704,8 @@ textarea:focus {
                                 <tr>
                                     <th style="width:200px;">{% trans "Index" %}</th>
                                     <td class="td td-light" style='width:5em'>
-                                        <input class='form-control form-control-light' name='offset' id='offset' type='number' value=1>
+                                        <input class='form-control form-control-light' name='offset' id='offset'
+                                               type='number' min=0 value=0 style="width:10em;">
                                     </td>
                                 </tr>
                                 {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
