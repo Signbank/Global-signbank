@@ -1,46 +1,39 @@
-import io
 import json
-from urllib.error import URLError
-
-from django.views.decorators.csrf import csrf_exempt
-from requests.exceptions import InvalidURL
-from urllib3.exceptions import DecodeError, RequestError
-
-from signbank.dictionary.models import *
-from django.db.models import FileField
-from django.core.files.base import ContentFile, File
-from tagging.models import Tag, TaggedItem
-from signbank.dictionary.forms import *
-from django.utils.translation import override, gettext_lazy as _, activate
-from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS
-from signbank.api_token import put_api_user_in_request
-from signbank.abstract_machine import get_interface_language_api
-
-from django.core.exceptions import ObjectDoesNotExist, BadRequest
-
-from django.shortcuts import get_object_or_404
-
-from django.contrib.auth.decorators import permission_required
-from django.db import DatabaseError, IntegrityError
-from django.db.transaction import TransactionManagementError
-
-from tagging.models import TaggedItem, Tag
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse
-from signbank.settings.server_specific import VIDEOS_TO_IMPORT_FOLDER, API_VIDEO_ARCHIVES
-import zipfile
-from django.urls import reverse, reverse_lazy
 import urllib.request
 import tempfile
 import shutil
 import os
 import stat
+import zipfile
+
+from urllib.error import URLError
+from requests.exceptions import InvalidURL
+from guardian.shortcuts import get_objects_for_user, get_user_perms
+from tagging.models import Tag, TaggedItem
+
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import Group, User
+from django.contrib.auth.decorators import permission_required
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.translation import override, gettext_lazy as _, activate
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, HttpResponseBadRequest, JsonResponse, StreamingHttpResponse
+from django.urls import reverse, reverse_lazy
+
+from django.core.exceptions import ObjectDoesNotExist
+from django.core.files.base import ContentFile, File
+
+from django.db import DatabaseError, IntegrityError
+from django.db.transaction import TransactionManagementError
+from django.db.models import FileField
+
+from signbank.dictionary.models import *
+from signbank.dictionary.forms import *
+from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS, VIDEOS_TO_IMPORT_FOLDER
+from signbank.api_token import put_api_user_in_request
+from signbank.abstract_machine import get_interface_language_api
 from signbank.video.convertvideo import probe_format
 from signbank.video.models import GlossVideo, GlossVideoHistory
-from django.http import StreamingHttpResponse
-from django.contrib.auth.models import Group, User
 from signbank.zip_interface import *
-import base64
-from guardian.shortcuts import get_user_perms, get_group_perms, get_objects_for_user
 
 
 def api_fields(dataset, language_code='en', advanced=False):
@@ -541,3 +534,48 @@ def upload_videos_to_glosses(request, datasetid):
         headers={"Content-Disposition": 'attachment; filename='+'glosses.json'},
     )
 
+@csrf_exempt
+@put_api_user_in_request
+def api_add_video(request, gloss_id):
+    print('Got here')
+
+    if not request.user:
+        return JsonResponse({'error': 'User not found'}, status=401)
+
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+    if not gloss:
+        return JsonResponse({'error': 'Gloss not found'}, status=404)
+
+    if gloss.archived:
+        return JsonResponse({'error': 'Gloss is archived'}, status=403)
+
+    if not gloss.lemma:
+        return JsonResponse({'error': 'Gloss has no lemma'}, status=404)
+
+    if not gloss.lemma.dataset:
+        return JsonResponse({'error': 'Gloss has no dataset'}, status=404)
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return JsonResponse({'error': 'No change gloss permission'}, status=403)
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+
+    if gloss.lemma.dataset not in change_permit_datasets:
+        return JsonResponse({'error': 'No change permission for dataset'}, status=403)
+
+    if len(gloss.idgloss) < 2:
+        return JsonResponse({'error': 'This gloss has no idgloss'}, status=400)
+
+    if 'file' not in request.FILES:
+        return JsonResponse({'error': 'No file uploaded'}, status=400)
+
+    file_size = request.FILES['file'].size
+
+    dataset = gloss.lemma.dataset
+    
+    # Handle the file upload here (e.g., save it to a model or file system)
+    vfile = request.FILES['file']
+    gloss = Gloss.objects.filter(id=gloss_id).first()
+    gloss.add_video(request.user, vfile, False)
+
+    return JsonResponse({'message': f'Uploaded video of size {file_size} bytes to dataset {dataset}.'}, status=200)

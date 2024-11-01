@@ -44,6 +44,7 @@ class VideoUploadForObjectForm(forms.Form):
         dataset = kwargs.pop('dataset', None)
         super(VideoUploadForObjectForm, self).__init__(*args, **kwargs)
 
+        self.fields['offset'].initial = 0
         for language in languages:
             description_field_name = 'description_' + language.language_code_2char
             self.fields[description_field_name] = forms.CharField(
