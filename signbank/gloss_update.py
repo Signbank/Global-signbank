@@ -1257,7 +1257,6 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
 
     return JsonResponse(results, safe=False)
 
-
 @csrf_exempt
 @put_api_user_in_request
 def api_create_annotated_sentence(request, datasetid):
