@@ -494,12 +494,23 @@ def upload_videos_to_glosses(request, datasetid):
 @csrf_exempt
 @put_api_user_in_request
 def api_add_video(request, gloss_id):
+    print('Got here')
+
     if not request.user:
         return JsonResponse({'error': 'User not found'}, status=401)
 
     gloss = Gloss.objects.filter(id=gloss_id).first()
     if not gloss:
         return JsonResponse({'error': 'Gloss not found'}, status=404)
+
+    if gloss.archived:
+        return JsonResponse({'error': 'Gloss is archived'}, status=403)
+
+    if not gloss.lemma:
+        return JsonResponse({'error': 'Gloss has no lemma'}, status=404)
+
+    if not gloss.lemma.dataset:
+        return JsonResponse({'error': 'Gloss has no dataset'}, status=404)
 
     if not request.user.has_perm('dictionary.change_gloss'):
         return JsonResponse({'error': 'No change gloss permission'}, status=403)
@@ -508,6 +519,9 @@ def api_add_video(request, gloss_id):
 
     if gloss.lemma.dataset not in change_permit_datasets:
         return JsonResponse({'error': 'No change permission for dataset'}, status=403)
+
+    if len(gloss.idgloss) < 2:
+        return JsonResponse({'error': 'This gloss has no idgloss'}, status=400)
 
     if 'file' not in request.FILES:
         return JsonResponse({'error': 'No file uploaded'}, status=400)
