@@ -42,12 +42,11 @@ def check_api_dataset_manager_permissions(request, datasetid):
     if not dataset:
         return None, {"error": "Dataset with given id does not exist."}, 400
 
-    group_manager = Group.objects.filter(name='Dataset_Manager')
+    group_manager = Group.objects.filter(name='Dataset_Manager').first()
     if not group_manager:
         return None, {"error": "No group Dataset Manager found."}, 400
 
     groups_of_user = request.user.groups.all()
-    print(groups_of_user)
     if group_manager not in groups_of_user:
         return None, {"error": "You must be in group Dataset Manager to upload a zip video archive."}, 400
 
