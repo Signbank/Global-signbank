@@ -979,11 +979,11 @@ textarea:focus {
 
 <br><br>
 <!-- Perspective videos -->
-   <div class="panel panel-default panel-light">
+   <div class="empty_row panel panel-default panel-light">
         <div class='panel-heading panel-light' data-toggle='collapse'
-             data-target='#perspectivevideos'>{% trans "Upload Perspective Videos" %}
+             data-target='#perspectivevideos'><h4>{% trans "Upload Perspective Videos" %}</h4>
         </div>
-        <div id='perspectivevideos' class='collapse'>
+        <div id='perspectivevideos' class='collapse in'>
             <div class="panel panel-default panel-light">
             {% if gloss.has_perspective_videos %}
                <table class='table table-responsive' style="text-align: left;width:100%;">
@@ -993,7 +993,12 @@ textarea:focus {
                         <div class="table-responsive" style="display:inline-block;">
                          <table class="table table-condensed" style="text-align: left;">
                          <tr>
-                           <td class="editform" style="width:5em;">
+                           <td class="editform" style="width:10em;">
+                             {% if perspvideo.perspective == 'left' %}
+                             <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
+                             {% elif perspvideo.perspective == 'right' %}
+                             <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span>
+                            {% endif %}
                            <span class='glyphicon glyphicon-trash perspvideo-delete' data-toggle='modal' data-target='#delete_perspvideo_modal_{{perspvideo.id}}'></span>
                              <div class="modal fade" id="delete_perspvideo_modal_{{perspvideo.id}}" role="dialog" aria-labelledby="#modalDeletePersp" aria-hidden="true">
                                  <div class="modal-dialog modal-sm">
