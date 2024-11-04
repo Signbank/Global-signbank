@@ -30,16 +30,13 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import *
 from signbank.settings.server_specific import LANGUAGES, LEFT_DOUBLE_QUOTE_PATTERNS, RIGHT_DOUBLE_QUOTE_PATTERNS, VIDEOS_TO_IMPORT_FOLDER
 from signbank.api_token import put_api_user_in_request
-from signbank.abstract_machine import get_interface_language_api
+from signbank.abstract_machine import get_interface_language_api, get_human_readable_value_dict
 from signbank.video.convertvideo import probe_format
 from signbank.video.models import GlossVideo, GlossVideoHistory
 from signbank.zip_interface import *
 
 
 def check_api_dataset_manager_permissions(request, datasetid):
-
-    if not request.method == 'POST':
-        return None, {"error": "POST method required."}, 400
 
     dataset = Dataset.objects.filter(id=int(datasetid)).first()
     if not dataset:
@@ -50,6 +47,7 @@ def check_api_dataset_manager_permissions(request, datasetid):
         return None, {"error": "No group Dataset Manager found."}, 400
 
     groups_of_user = request.user.groups.all()
+    print(groups_of_user)
     if group_manager not in groups_of_user:
         return None, {"error": "You must be in group Dataset Manager to upload a zip video archive."}, 400
 
