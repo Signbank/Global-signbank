@@ -21,6 +21,33 @@ import ast
 import base64
 
 
+def check_api_dataset_permissions(request, datasetid):
+
+    if not request.method == 'POST':
+        return {"error": "POST method required."}, 400
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        return {"error": "Dataset with given id does not exist."}, 400
+
+    dataset_acronym = request.POST.get('Dataset')
+    dataset_by_acronym = Dataset.objects.filter(acronym=dataset_acronym).first()
+    if not dataset_by_acronym:
+        return {"error": "Dataset with given acronym does not exist."}, 400
+
+    if dataset.acronym != dataset_by_acronym.acronym:
+        return {"error": "Dataset acronym does not match."}, 400
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        return {"error": "No change permission for dataset."}, 400
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return {"error": "No permission."}, 400
+
+    return {}, 200
+
+
 def api_update_gloss_fields(dataset, language_code='en'):
     activate(language_code)
 

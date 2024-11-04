@@ -36,6 +36,59 @@ from signbank.video.models import GlossVideo, GlossVideoHistory
 from signbank.zip_interface import *
 
 
+def check_api_dataset_manager_permissions(request, datasetid):
+
+    if not request.method == 'POST':
+        return None, {"error": "POST method required."}, 400
+
+    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    if not dataset:
+        return None, {"error": "Dataset with given id does not exist."}, 400
+
+    group_manager = Group.objects.filter(name='Dataset_Manager')
+    if not group_manager:
+        return None, {"error": "No group Dataset Manager found."}, 400
+
+    groups_of_user = request.user.groups.all()
+    if group_manager not in groups_of_user:
+        return None, {"error": "You must be in group Dataset Manager to upload a zip video archive."}, 400
+
+    change_permit_datasets = get_objects_for_user(request.user, 'change_dataset', Dataset)
+    if dataset not in change_permit_datasets:
+        return None, {"error": "No change permission for dataset."}, 400
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return None, {"error": "No permission."}, 400
+
+    return dataset, {}, 200
+
+
+def check_api_file_storage(dataset):
+
+    import_folder = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES)
+    import_folder_exists = os.path.exists(import_folder)
+    if not import_folder_exists:
+        return {"error": "Upload zip archive: The folder API_VIDEO_ARCHIVES is missing."}, 400
+
+    # Create the TEMP folder if needed
+    temp_goal_directory = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, 'TEMP')
+    if not os.path.exists(temp_goal_directory):
+        try:
+            os.mkdir(temp_goal_directory, mode=0o775)
+        except (OSError, PermissionError):
+            return {"error": "Upload zip archive: The folder API_VIDEO_ARCHIVES/TEMP is missing."}, 400
+
+    dataset_folder = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, dataset.acronym)
+    dataset_folder_exists = os.path.exists(dataset_folder)
+    if not dataset_folder_exists:
+        try:
+            os.mkdir(dataset_folder, mode=0o775)
+        except (OSError, PermissionError):
+            return {"error": f"Upload zip archive: The folder API_VIDEO_ARCHIVES/{dataset.acronym} cannot be created."}, 400
+
+    return {}, 200
+
+
 def api_fields(dataset, language_code='en', advanced=False):
     activate(language_code)
     api_fields_2023 = []
@@ -330,59 +383,19 @@ def upload_zipped_videos_folder_json(request, datasetid):
     activate(interface_language_code)
 
     # check if the user can manage this dataset
-    try:
-        group_manager = Group.objects.get(name='Dataset_Manager')
-    except ObjectDoesNotExist:
-        results['errors'] = 'No group Dataset Manager found.'
-        results['unzippedvideos'] = []
-        return JsonResponse(results)
-
-    groups_of_user = request.user.groups.all()
-    if group_manager not in groups_of_user:
-        results['errors'] = 'You must be in group Dataset Manager to upload a zip video archive.'
-        results['unzippedvideos'] = []
-        return JsonResponse(results, safe=False)
-
-    dataset = Dataset.objects.filter(id=int(datasetid)).first()
+    dataset, errors, status = check_api_dataset_manager_permissions(request, datasetid)
     if not dataset:
-        results['errors'] = gettext("Dataset ID does not exist.")
-        results['updatestatus'] = "Failed"
-        return JsonResponse(results, safe=False)
+        return JsonResponse(errors, status=status)
 
-    import_folder = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES)
-    import_folder_exists = os.path.exists(import_folder)
-    if not import_folder_exists:
-        results['errors'] = "Upload zip archive: The folder API_VIDEO_ARCHIVES is missing."
-        results['unzippedvideos'] = []
-        return JsonResponse(results)
-
-    # Create the TEMP folder if needed
-    temp_goal_directory = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, 'TEMP')
-    if not os.path.exists(temp_goal_directory):
-        try:
-            os.mkdir(temp_goal_directory, mode=0o775)
-        except (OSError, PermissionError):
-            results['errors'] = "Upload zip archive: The folder API_VIDEO_ARCHIVES/TEMP is missing."
-            results['unzippedvideos'] = []
-            return JsonResponse(results)
-
-    dataset_folder = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, dataset.acronym)
-    dataset_folder_exists = os.path.exists(dataset_folder)
-    if not dataset_folder_exists:
-        try:
-            os.mkdir(dataset_folder, mode=0o775)
-        except (OSError, PermissionError):
-            results['errors'] = "Upload zip archive: The folder API_VIDEO_ARCHIVES/" + dataset.acronym + " cannot be created."
-            results['unzippedvideos'] = []
-            return JsonResponse(results)
+    errors, status = check_api_file_storage(dataset)
+    if errors:
+        return JsonResponse(errors, status=status)
 
     value_dict = get_dataset_zipfile_value_dict(request)
 
     file_key = gettext("File")
     if file_key not in value_dict.keys():
-        results['errors'] = "Error processing the zip file."
-        results['unzippedvideos'] = []
-        return JsonResponse(results)
+        return JsonResponse({"error": "Error processing the zip file."}, status=400)
 
     zip_file = value_dict[file_key]
     file_name = zip_file.name
@@ -391,48 +404,31 @@ def upload_zipped_videos_folder_json(request, datasetid):
     try:
         shutil.move(zip_file.name, str(goal_zipped_file))
     except (OSError, PermissionError):
-        results['errors'] = "Could not copy the zip file to the destination folder."
-        results['unzippedvideos'] = []
-        return JsonResponse(results)
+        return JsonResponse({"error": "Could not copy the zip file to the destination folder."}, status=400)
 
     if not zipfile.is_zipfile(goal_zipped_file):
         # unrecognised file type has been uploaded
-        results['filename'] = file_name
-        results['errors'] = "Upload zip archive: The file is not a zip file."
-        results['unzippedvideos'] = []
-        return JsonResponse(results)
+        return JsonResponse({"error": "Upload zip archive: The file is not a zip file."}, status=400)
 
     norm_filename = os.path.normpath(goal_zipped_file)
     split_norm_filename = norm_filename.split('.')
 
     if len(split_norm_filename) == 1:
         # file has no extension
-        results['filename'] = file_name
-        results['errors'] = "Upload zip archive: The file has no extension."
-        results['unzippedvideos'] = []
-        return JsonResponse(results, safe=False)
+        return JsonResponse({"error": "Upload zip archive: The file has no extension."}, status=400)
 
     filenames = get_filenames(goal_zipped_file)
     video_paths_okay = check_subfolders_for_unzipping_ids(dataset.acronym, filenames)
     if not video_paths_okay:
-        error_feedback = ("The zip archive has the wrong structure. It should be: "
-                          + str(dataset.acronym) + '/' + "GLOSSID.mp4")
-        results['filename'] = file_name
-        results['errors'] = error_feedback
-        results['unzippedvideos'] = filenames
-        return JsonResponse(results, safe=False)
+        return JsonResponse({"error": f"The zip archive has the wrong structure. It should be: {dataset.acronym}/GLOSSID.mp4"}, status=400)
 
     with atomic():
         unzip_video_files_ids(dataset, goal_zipped_file, API_VIDEO_ARCHIVES)
 
     unzipped_files = uploaded_video_files(dataset)
 
-    videos_data = dict()
-    videos_data['filename'] = file_name
-    videos_data['errors'] = ""
-    videos_data['unzippedvideos'] = unzipped_files
-
-    return JsonResponse(videos_data, safe=False)
+    return JsonResponse({"success": f"Zip archive {file_name} uploaded successfully.",
+                         "unzippedvideos": unzipped_files}, status=200, safe=False)
 
 
 def import_video_to_gloss_api(request, video_file_path):
