@@ -451,11 +451,7 @@
                     "format": "binary"
                   }
                 }
-              },
-              "required":
-                [
-                  "File"
-                ]
+              }
             }
           }
         },
@@ -1091,11 +1087,7 @@
                     "description": "The zip archive file to upload"
                   }
                 }
-              },
-              "required":
-                [
-                  "File"
-                ]
+              }
             }
           }
         },
