@@ -397,6 +397,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
     zip_file = value_dict[file_key]
     file_name = zip_file.name
     goal_zipped_file = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, 'TEMP', file_name)
+    basename = os.path.basename(file_name)
 
     try:
         shutil.move(zip_file.name, str(goal_zipped_file))
@@ -424,7 +425,7 @@ def upload_zipped_videos_folder_json(request, datasetid):
 
     unzipped_files = uploaded_video_files(dataset)
 
-    return JsonResponse({"success": f"Zip archive {file_name} uploaded successfully.",
+    return JsonResponse({"success": f"Zip archive {basename} uploaded successfully.",
                          "unzippedvideos": unzipped_files}, status=200, safe=False)
 
 
