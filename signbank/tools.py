@@ -1995,7 +1995,7 @@ def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies
             else:
                 desc = desc + ', ' + value
 
-    if desc:
+    if desc and include_phonology_and_frequencies:
         desc += ", "
 
     lang = Language.objects.get(language_code_2char=lang)
