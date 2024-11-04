@@ -602,14 +602,6 @@ class ExampleSentence(models.Model):
             examplevideos = self.examplevideo_set.filter(version=0)
             return str(examplevideos[0].videofile)
 
-    def get_video_path_prefix(self):
-        try:
-            examplesentence = self.examplesentence_set.get(version=0)
-            prefix, extension = os.path.splitext(str(examplesentence))
-            return prefix
-        except ObjectDoesNotExist:
-            return ''
-        
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
 
