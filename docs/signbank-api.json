@@ -1057,6 +1057,106 @@
     {
       "post":
       {
+        "description": "Uploads and unzips a zipped videos folder to the import_videos folder for a specific dataset.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "The dataset ID is required.",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content":
+          {
+            "multipart/form-data":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties": {
+                  "File": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The zip archive file to upload"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses":
+        {
+          "200":
+          {
+            "description": "File uploaded and unzipped successfully.",
+            "content":
+            {
+              "application/json":
+              {
+                "schema":
+                {
+                  "type": "object",
+                  "properties":
+                  {
+                    "filename":
+                    {
+                      "type": "string",
+                      "description": "The name of the uploaded zip file."
+                    },
+                    "unzippedvideos":
+                    {
+                      "type": "object",
+                      "description": "The unzipped videos categorized by 3-char language code.",
+                      "additionalProperties":
+                      {
+                        "type": "array",
+                        "items":
+                        {
+                          "type": "string",
+                          "description": "The names of the unzipped video files."
+                        }
+                      }
+                    }
+                  },
+                  "example":
+                  {
+                    "filename": "tst_videos.zip",
+                    "unzippedvideos": {
+                          "nld": [
+                            "STOMP-B.mp4",
+                            "POMPOEN-A.mp4"
+                          ],
+                          "eng": []
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags":
+        [
+          "Updating Signbank data"
+        ],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/upload_zipped_videos_archive/{datasetid}/":
+    {
+      "post":
+      {
         "description": "Uploads and unzips a zipped videos folder to the api_video_archives folder for a specific dataset.",
         "parameters":
         [
@@ -1130,7 +1230,8 @@
                     "filename": "tst_videos.zip",
                     "unzippedvideos":
                       [
-                        "4681.mp4"
+                        "4681.mp4",
+                        "42087.mp4"
                       ]
                   }
                 }
