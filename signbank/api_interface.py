@@ -450,6 +450,7 @@ def get_dataset_zipfile_value_dict(request):
     return value_dict
 
 
+@csrf_exempt
 @put_api_user_in_request
 def upload_zipped_videos_folder_json(request, datasetid):
 
