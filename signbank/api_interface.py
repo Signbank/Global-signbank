@@ -349,10 +349,11 @@ def uploaded_video_files(dataset, useid=False):
 
     dataset_acronym = str(dataset.acronym)
     if useid:
+        list_of_videos = []
         goal_directory = os.path.join(WRITABLE_FOLDER, API_VIDEO_ARCHIVES, dataset_acronym)
     else:
+        list_of_videos = dict()
         goal_directory = os.path.join(VIDEOS_TO_IMPORT_FOLDER, dataset_acronym)
-    list_of_videos = []
 
     if not os.path.isdir(goal_directory):
         return list_of_videos
