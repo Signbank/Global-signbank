@@ -16,6 +16,7 @@ from signbank.dictionary.views import create_citation_image
 import signbank.dictionary.views
 import signbank.dictionary.tagviews
 import signbank.dictionary.adminviews
+import signbank.dictionary.update
 import signbank.api_interface
 import signbank.manage_videos
 import signbank.abstract_machine
