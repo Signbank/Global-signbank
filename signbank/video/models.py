@@ -967,7 +967,7 @@ class GlossVideoPerspective(GlossVideo):
         ordering = ['perspective', ]
 
     def get_video_path(self):
-        return str(self.videofile)
+        return self.videofile.name
 
     def save(self, *args, **kwargs):
         super(GlossVideoPerspective, self).save(*args, **kwargs)
