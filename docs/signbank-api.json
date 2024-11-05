@@ -1213,7 +1213,7 @@
                     "unzippedvideos":
                     {
                       "type": "object",
-                      "description": "The unzipped videos categorized by language code.",
+                      "description": "The unzipped videos are characterized by gloss ID.",
                       "additionalProperties":
                       {
                         "type": "array",
