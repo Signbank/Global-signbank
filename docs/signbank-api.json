@@ -1155,9 +1155,7 @@
       "post":
       {
         "description": "Imports the video files found for the dataset in the `api_video_archives` folder into the corresponding glosses. If a video for a gloss already exists, it is overwritten. After the operation, the video files are deleted from `api_video_archives`.",
-
         "parameters":
-
         [
           {
             "name": "datasetid",
