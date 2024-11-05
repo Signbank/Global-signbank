@@ -1057,7 +1057,7 @@
     {
       "post":
       {
-        "description": "Uploads and unzips a zipped videos folder to the api_video_archives folder for a specific dataset.",
+        "description": "Uploads and unzips a zipped videos folder to the import_videos folder for a specific dataset.",
         "parameters":
         [
           {
@@ -1113,7 +1113,7 @@
                     "unzippedvideos":
                     {
                       "type": "object",
-                      "description": "The unzipped videos categorized by language code.",
+                      "description": "The unzipped videos categorized by 3-char language code.",
                       "additionalProperties":
                       {
                         "type": "array",
@@ -1128,10 +1128,13 @@
                   "example":
                   {
                     "filename": "tst_videos.zip",
-                    "unzippedvideos":
-                      [
-                        "4681.mp4"
-                      ]
+                    "unzippedvideos": {
+                          "nld": [
+                            "STOMP-B.mp4",
+                            "POMPOEN-A.mp4"
+                          ],
+                          "eng": []
+                    }
                   }
                 }
               }
