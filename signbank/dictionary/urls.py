@@ -198,6 +198,8 @@ urlpatterns = [
             signbank.api_interface.get_unzipped_video_files_json, name='get_unzipped_video_files_json'),
     re_path(r'upload_zipped_videos_folder_json/(?P<datasetid>\d+)/$',
             signbank.api_interface.upload_zipped_videos_folder_json, name='upload_zipped_videos_folder_json'),
+    re_path(r'upload_zipped_videos_archive/(?P<datasetid>\d+)/$',
+            signbank.api_interface.upload_zipped_videos_archive, name='upload_zipped_videos_archive'),
 
     re_path(r'upload_videos_to_glosses/(?P<datasetid>\d+)/$',
             signbank.api_interface.upload_videos_to_glosses, name='upload_videos_to_glosses'),

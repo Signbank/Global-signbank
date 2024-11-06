@@ -1153,11 +1153,109 @@
         ]
       }
     },
+    "/dictionary/upload_zipped_videos_archive/{datasetid}/":
+    {
+      "post":
+      {
+        "description": "Uploads and unzips a zipped videos folder to the api_video_archives folder for a specific dataset.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "The dataset ID is required.",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content":
+          {
+            "multipart/form-data":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties": {
+                  "File": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The zip archive file to upload"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses":
+        {
+          "200":
+          {
+            "description": "File uploaded and unzipped successfully.",
+            "content":
+            {
+              "application/json":
+              {
+                "schema":
+                {
+                  "type": "object",
+                  "properties":
+                  {
+                    "filename":
+                    {
+                      "type": "string",
+                      "description": "The name of the uploaded zip file."
+                    },
+                    "unzippedvideos":
+                    {
+                      "type": "object",
+                      "description": "The unzipped videos are characterized by gloss ID.",
+                      "additionalProperties":
+                      {
+                        "type": "array",
+                        "items":
+                        {
+                          "type": "string",
+                          "description": "The names of the unzipped video files."
+                        }
+                      }
+                    }
+                  },
+                  "example":
+                  {
+                    "filename": "tst_videos.zip",
+                    "unzippedvideos":
+                      [
+                        "4681.mp4",
+                        "42087.mp4"
+                      ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags":
+        [
+          "Updating Signbank data"
+        ],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/dictionary/upload_videos_to_glosses/{datasetid}/":
     {
       "post":
       {
-        "description": "Imports the video files found for the dataset in the `api_video_archives` folder into the corresponding glosses. If a video for a gloss already exists, it is overwritten. After the operation, the video files are deleted from `api_video_archives`.",
+        "description": "Imports the video files found for the dataset in the `import_videos` and `api_video_archives` folders into the corresponding glosses. If a video for a gloss already exists, it is overwritten.",
         "parameters":
         [
           {
@@ -1229,10 +1327,10 @@
                   },
                   "example":
                   {
-                    "api_video_archives_status":
+                    "imported_videos":
                     [
                       {
-                        "api_video_archives/tstMH/42090.mp4":
+                        "tstMH/42090.mp4":
                         {
                           "gloss": "42090",
                           "videofile": "42090.mp4",
@@ -1242,7 +1340,7 @@
                         }
                       },
                       {
-                        "api_video_archives/tstMH/42087.mp4":
+                        "tstMH/42087.mp4":
                         {
                           "gloss": "42087",
                           "videofile": "42087.mp4",
