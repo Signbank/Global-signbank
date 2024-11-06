@@ -79,8 +79,8 @@ class ExampleVideoHistory(models.Model):
     def __str__(self):
 
         # Basic feedback from one History item: gloss-action-date
-        name = str(self.examplesentence.id) + ': ' + self.action + ', (' + str(self.datestamp) + ')'
-        return str(name.encode('ascii', errors='replace'))
+        name = str(self.examplesentence.id) + ': ' + str(self.action) + ', (' + str(self.datestamp) + ')'
+        return name
 
     class Meta:
         ordering = ['datestamp']
@@ -109,7 +109,7 @@ class GlossVideoHistory(models.Model):
 
         # Basic feedback from one History item: gloss-action-date
         name = self.gloss.idgloss + ': ' + self.action + ', (' + str(self.datestamp) + ')'
-        return str(name.encode('ascii', errors='replace'))
+        return name
 
     class Meta:
         ordering = ['datestamp']
@@ -129,6 +129,19 @@ class GlossVideoHistory(models.Model):
 # * The video path: get_video_file_path(...)
 # * Changes to the dataset, acronym of default language: process_dataset_changes(...)
 # * Changes to the lemmaidglosstranslations: process_lemmaidglosstranslation_changes(...)
+
+
+def get_gloss_video_filepath(gloss):
+    idgloss = gloss.idgloss
+    two_letter_dir = get_two_letter_dir(idgloss)
+    dataset_dir = gloss.lemma.dataset.acronym
+    filename = idgloss + '-' + str(gloss.id) + '.mp4'
+    relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir, filename)
+    file_system_path = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir, filename)
+    if os.path.exists(file_system_path):
+        return relative_path
+    else:
+        return ""
 
 
 def get_video_file_path(instance, filename, nmevideo=False, perspective='', offset=1, version=0):
