@@ -1255,7 +1255,7 @@
     {
       "post":
       {
-        "description": "Imports the video files found for the dataset in the 'import_videos' and `api_video_archives` folders into the corresponding glosses. If a video for a gloss already exists, it is overwritten.",
+        "description": "Imports the video files found for the dataset in the `import_videos` and `api_video_archives` folders into the corresponding glosses. If a video for a gloss already exists, it is overwritten.",
         "parameters":
         [
           {
