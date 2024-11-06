@@ -583,7 +583,7 @@ def import_video_to_gloss(request, video_file_path):
         useid = False
         language_3_code = path_units[-1]
         dataset_acronym = path_units[-2]
-        json_path_key = 'import_videos/' + dataset_acronym + '/' + language_3_code + '/' + filename
+        json_path_key = dataset_acronym + '/' + language_3_code + '/' + filename
         (filename_without_extension, extension) = os.path.splitext(filename)
         gloss = Gloss.objects.filter(lemma__dataset__acronym=dataset_acronym, archived=False,
                                      annotationidglosstranslation__language__language_code_3char=language_3_code,
@@ -591,7 +591,7 @@ def import_video_to_gloss(request, video_file_path):
     else:
         useid = True
         dataset_acronym = path_units[-1]
-        json_path_key = settings.API_VIDEO_ARCHIVES + dataset_acronym + '/' + filename
+        json_path_key = dataset_acronym + '/' + filename
         (filename_without_extension, extension) = os.path.splitext(filename)
         gloss = Gloss.objects.filter(id=int(filename_without_extension), archived=False).first()
 
@@ -631,7 +631,7 @@ class VideoImporter:
     def write(self, request, value):
         """Write the value by returning it, instead of storing in a buffer."""
         if value == "start":
-            value_json = "{ \"import_videos_status\": ["
+            value_json = "{ \"imported_videos\": ["
         elif value == "finish":
             value_json = "]}"
         else:
@@ -651,6 +651,7 @@ def json_start():
 
 def json_finish():
     return ["finish"]
+
 
 @csrf_exempt
 @put_api_user_in_request
@@ -675,11 +676,12 @@ def upload_videos_to_glosses(request, datasetid):
     if group_manager not in groups_of_user:
         return JsonResponse({"error": gettext('You must be in group Dataset Manager to import gloss videos.')}, status=400)
 
-    video_file_paths = uploaded_video_filepaths(dataset, useid=True)
+    video_file_paths_with_ids = uploaded_video_filepaths(dataset, useid=True)
+    video_file_paths_with_annotations = uploaded_video_filepaths(dataset, useid=False)
 
     pseudo_buffer = VideoImporter()
     return StreamingHttpResponse(
-        (pseudo_buffer.write(request, vg) for vg in json_start() + video_file_paths + json_finish()),
+        (pseudo_buffer.write(request, vg) for vg in json_start() + video_file_paths_with_ids + video_file_paths_with_annotations + json_finish()),
         content_type="application/json",
         headers={"Content-Disposition": 'attachment; filename='+'glosses.json'},
     )
