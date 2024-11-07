@@ -7577,9 +7577,9 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
         elif fieldname == 'isRepresentative':
             display_value = this.isRepresentative
         elif fieldname == 'annotatedvideo':
-            display_value = this.annotatedsentence.get_video_path()
+            display_value = this.annotatedsentence.get_video()
         elif fieldname == 'eaffile':
-            display_value = this.annotatedsentence.get_eaf_path()
+            display_value = this.annotatedsentence.get_eaf()
         else:
             display_value = ''
         column_values.append((fieldname, display_value))

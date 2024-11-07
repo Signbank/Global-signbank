@@ -4196,7 +4196,17 @@ class AnnotatedSentence(models.Model):
             return video_path
         else:
             return ''
-    
+
+    def get_eaf(self):
+        """Return the video object for this gloss or None if no video available"""
+
+        eaf_path = self.get_eaf_path()
+        filepath = os.path.join(settings.WRITABLE_FOLDER, eaf_path)
+        if os.path.exists(filepath.encode('utf-8')):
+            return eaf_path
+        else:
+            return ''
+
     def has_video(self):
         """Test to see if the video for this sign is present"""
         
