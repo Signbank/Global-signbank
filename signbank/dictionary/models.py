@@ -4173,7 +4173,19 @@ class AnnotatedSentence(models.Model):
         except MultipleObjectsReturned:
             # Just return the first
             annotatedvideos = self.annotatedvideo.filter(version=0)
-            return str(annotatedvideos[0].videofile)
+            return str(annotatedvideos.first().videofile)
+
+    def get_eaf_path(self):
+        """Return the path to the video for this gloss or an empty string if no video available"""
+        try:
+            annotatedvideo = self.annotatedvideo
+            return str(annotatedvideo.eaffile)
+        except ObjectDoesNotExist:
+            return ''
+        except MultipleObjectsReturned:
+            # Just return the first
+            annotatedvideos = self.annotatedvideo.filter(version=0)
+            return str(annotatedvideos.first().eaffile)
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""

@@ -496,7 +496,7 @@ class AnnotatedVideo(models.Model):
             pass
 
     def get_eaffile_name(self):
-        return os.path.basename(self.eaffile.name)
+        return os.path.basename(self.eaffile.name) if self.eaffile else ""
 
     def get_end_ms(self):
         """Get the duration of a video in ms using ffprobe."""
