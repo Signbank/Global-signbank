@@ -156,12 +156,14 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
             print('get_video_file_path: dataset_dir is empty for gloss ', str(instance.gloss.pk))
     if nmevideo:
         nme_video_offset = '_nme_' + str(offset)
-        filename = idgloss + '-' + str(instance.gloss.id) + nme_video_offset + ext + (version * ".bak")
+        filename = idgloss + '-' + str(instance.gloss.id) + nme_video_offset + ext
     elif perspective:
         video_perpsective = '_' + perspective
-        filename = idgloss + '-' + str(instance.gloss.id) + video_perpsective + ext + (version * ".bak")
+        filename = idgloss + '-' + str(instance.gloss.id) + video_perpsective + ext
+    elif version > 0:
+        filename = idgloss + '-' + str(instance.gloss.id) + ext + '.bak' + str(instance.id)
     else:
-        filename = idgloss + '-' + str(instance.gloss.id) + ext + (version * ".bak")
+        filename = idgloss + '-' + str(instance.gloss.id) + ext + ext
 
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -217,8 +219,11 @@ def get_sentence_video_file_path(instance, filename, version=0):
         dataset_dir = os.path.join(instance.examplesentence.get_dataset().acronym, str(instance.examplesentence.id))
     except ObjectDoesNotExist:
         dataset_dir = ""
-    
-    filename = str(instance.examplesentence.id) + ext + (version * ".bak")
+
+    if version > 0:
+        filename = str(instance.examplesentence.id) + ext + '.bak' + str(instance.id)
+    else:
+        filename = str(instance.examplesentence.id) + ext
 
     path = os.path.join(video_dir, dataset_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -250,8 +255,11 @@ def get_annotated_video_file_path(instance, filename, version=0):
     (base, ext) = os.path.splitext(filename)
     video_dir = settings.ANNOTATEDSENTENCE_VIDEO_DIRECTORY
     dataset = instance.annotatedsentence.get_dataset().acronym
-    dataset_dir = os.path.join(dataset, str(instance.annotatedsentence.id))    
-    filename = str(instance.annotatedsentence.id) + ext + (version * ".bak")
+    dataset_dir = os.path.join(dataset, str(instance.annotatedsentence.id))
+    if version > 0:
+        filename = str(instance.examplesentence.id) + ext + '.bak' + str(instance.id)
+    else:
+        filename = str(instance.examplesentence.id) + ext
 
     path = os.path.join(video_dir, dataset_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -383,9 +391,10 @@ class ExampleVideo(models.Model):
             if self.version == 1:
                 # remove .bak from filename and decrement the version
                 (newname, bak) = os.path.splitext(self.videofile.name)
-                if bak != '.bak' + str(self.id):
+                expected_extension = '.bak' + str(self.id)
+                if bak != expected_extension:
                     # hmm, something bad happened
-                    raise Exception('Unknown suffix on stored video file. Expected .bak')
+                    raise Exception(f'Unknown suffix on stored video file. Expected {expected_extension}')
                     # print('Unknown suffix on stored video file. Expected .bak')
                     # self.delete()
                     # self.delete_files()
@@ -764,9 +773,10 @@ class GlossVideo(models.Model):
                 if self.version == 1:
                     # remove .bak from filename and decrement the version
                     (newname, bak) = os.path.splitext(self.videofile.name)
-                    if bak != '.bak' + str(self.id):
+                    expected_extension = '.bak' + str(self.id)
+                    if bak != expected_extension:
                         # hmm, something bad happened
-                        raise Exception('Unknown suffix on stored video file. Expected .bak')
+                        raise Exception(f'Unknown suffix on stored video file. Expected {expected_extension}')
                         # print('Unknown suffix on stored video file. Expected .bak')
                         # self.delete()
                         # self.delete_files()
