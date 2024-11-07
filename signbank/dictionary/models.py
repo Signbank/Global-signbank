@@ -2342,6 +2342,7 @@ class Gloss(models.Model):
                 video = GlossVideo(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
                 video.videofile.name = relative_path
                 video.save()
+                video.make_poster_image()
                 if settings.DEBUG_VIDEOS:
                     print('get_video_path: GlossVideo object created for already existing file: ', relative_path)
                 return relative_path
