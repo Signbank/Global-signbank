@@ -748,16 +748,27 @@
                 "type": "object",
                 "properties": 
                 {
-                  "file": 
+                  "center": 
                   {
                     "type": "string",
                     "format": "binary", 
-                    "description": "The video file to upload"
+                    "description": "The video file to upload, default/mid camera perspective/"
+                  },
+                  "left": 
+                  {
+                    "type": "string",
+                    "format": "binary", 
+                    "description": "The video file to upload, left camera perspective."
+                  },
+                  "right": 
+                  {
+                    "type": "string",
+                    "format": "binary", 
+                    "description": "The video file to upload, right camera perspective."
                   }
                 },
                 "required": 
                 [
-                  "file"
                 ]
               }
             }
