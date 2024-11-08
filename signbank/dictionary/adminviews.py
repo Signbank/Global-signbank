@@ -7493,7 +7493,7 @@ class AnnotatedGlossListView(ListView):
 
 def annotatedglosslistheader_ajax(request):
 
-    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo']
+    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo', 'eaffile']
     query_fields_parameters = []
 
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
@@ -7510,7 +7510,8 @@ def annotatedglosslistheader_ajax(request):
     fieldname_to_column_header = {'id' : _('Sentence ID'),
                                   'annotatedsentence': _("Annotated Sentence"),
                                   'isRepresentative': _("Is Representative"),
-                                  'annotatedvideo': _("Annotated Video")
+                                  'annotatedvideo': _("Annotated Video"),
+                                  'eaffile': _("EAF File")
                                   }
 
     column_headers = []
@@ -7544,7 +7545,7 @@ def annotatedglosslistheader_ajax(request):
 
 def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
 
-    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo']
+    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo', 'eaffile']
 
     query_fields_parameters = []
 
@@ -7576,7 +7577,9 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
         elif fieldname == 'isRepresentative':
             display_value = this.isRepresentative
         elif fieldname == 'annotatedvideo':
-            display_value = this.annotatedsentence.get_video_path()
+            display_value = this.annotatedsentence.get_video()
+        elif fieldname == 'eaffile':
+            display_value = this.annotatedsentence.get_eaf()
         else:
             display_value = ''
         column_values.append((fieldname, display_value))
