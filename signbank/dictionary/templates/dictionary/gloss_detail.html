@@ -189,12 +189,47 @@ function checkKey(e)
 };
 
 </script>
-
+<style>
+.video_button:hover {
+    color: red;
+}
+.video_button.active {
+    color: red;
+}
+</style>
     <script type='text/javascript' src="{{STATIC_URL}}js/gloss_edit_color.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/drag_drop_files.js"></script>
     <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
     <script type='text/javascript'>
+        function play_perspective() {
+            $('#videoplayer_middle').trigger('play');
+            $('#videoplayer_left').trigger('play');
+            $('#videoplayer_right').trigger('play');
+        }
+
+        function pause_perspective() {
+            $('#videoplayer_middle').trigger('pause');
+            $('#videoplayer_left').trigger('pause');
+            $('#videoplayer_right').trigger('pause');
+        }
+
+        function restart_video(vid) {
+            if (!vid) { return; }
+            vid.trigger('pause');
+            vid.currentTime = 0;
+            vid.trigger('play');
+        }
+
+        function restart_perspective() {
+            var middle = $('#videoplayer_middle');
+            restart_video(middle);
+            var left = $('#videoplayer_left');
+            restart_video(left);
+            var right = $('#videoplayer_right');
+            restart_video(right);
+        }
+
         // This script gets minimal pairs data and displays it as table rows
         $(document).ready(function() {
             lookup = "#header_mp_rows";
@@ -208,13 +243,39 @@ function checkKey(e)
                     $(lookup).first().append(result);
                 }
             });
+            $('#videoplayer_middle').show();
+            $('#videoplayer_left').hide();
+            $('#videoplayer_right').hide();
         });
 
         $('#searchquery').css({'margin-bottom': 10, 'padding-bottom': 10});
         $('#definitionblock').css({'padding-top': Math.round($('#searchquery').height() + $('#signinfo').height() + 10)});
-  //      $('#definitionblock').css({'padding-top': Math.round($('#signinfo').height() + 10)});
         $('#view_tabs').css({'padding-top': 10, 'margin-top': 10});
 
+        $('#show_left').click(function()
+        {
+            $('.video_button').removeClass("active");
+            $(this).addClass("active");
+            $('#videoplayer_middle').hide();
+            $('#videoplayer_left').show();
+            $('#videoplayer_right').hide();
+        });
+        $('#show_right').click(function()
+        {
+            $('.video_button').removeClass("active");
+            $(this).addClass("active");
+            $('#videoplayer_middle').hide();
+            $('#videoplayer_left').hide();
+            $('#videoplayer_right').show();
+        });
+        $('#show_middle').click(function()
+        {
+            $('.video_button').removeClass("active");
+            $(this).addClass("active");
+            $('#videoplayer_middle').show();
+            $('#videoplayer_left').hide();
+            $('#videoplayer_right').hide();
+        });
     </script>
 {% endblock %}
 
@@ -714,19 +775,47 @@ textarea:focus {
     {% url 'dictionary:protected_media' '' as protected_media_url %}
     <div id="leftblock">
     <div id="videocontainer">
+    {% if gloss.has_perspective_videos %}
+    <div id="buttonbar-top" style="background-color:transparent;height:auto;">
+    {% for perspvideo in gloss.get_perspective_videos %}
+        {% if perspvideo.perspective == 'left' %}
+        <button class="btn video_button" id="show_left" style="font-size:18px;background-color:transparent;">
+            <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
+        </button>
+        {% endif %}
+    {% endfor %}
+    <button class="btn video_button active" id="show_middle" style="font-size:18px;background-color:transparent;">
+        <span class="glyphicon glyphicon-user"></span>
+    </button>
+    {% for perspvideo in gloss.get_perspective_videos %}
+        {% if perspvideo.perspective == 'right' %}
+        <button class="btn video_button" id="show_right" style="font-size:18px;background-color:transparent;">
+            <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span></button>
+        {% endif %}
+    {% endfor %}
+    </div>
+    {% endif %}
     {% if gloss.has_video %}
 
-     <!-- {{gloss.get_video}} -->
+        <div id="player" style="">
+            <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}"
+                   playsinline autoplay muted></video>
 
-        <div id="player">
-            <video id='videoplayer' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}" controls type="video/mp4" autoplay muted></video>
+        {% for perspvideo in gloss.get_perspective_videos %}
+            <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={% now 'YmdHis' %}"
+                   playsinline autoplay muted></video>
+        {% endfor %}
         </div>
-        <div id="replay"></div>
-
+        <div id="buttonbar" style="background-color:transparent;">
+        <button class="btn" id="play_perspective" onclick="play_perspective();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
+        <button class="btn" id="pause_perspective" onclick="pause_perspective();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+        </div>
+        <br>
     {% else %}
     <div id='player'>
      <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png'>
-     <!-- {{gloss.get_video}} -->
     </div>
     {% endif %}
     
@@ -745,8 +834,8 @@ textarea:focus {
             <label for="id_videofile" class="drop-container" id="drop-container-video">
               <div id="videogallery" class="gallery"></div>
               <span id = "drop-container-title-video" class="drop-title">Drop video here<br>or...</span>
-              <label id="drop-container-video-status", class="hide">Status here</label>
-              <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
+              <label id="drop-container-video-status" class="hide">Status here</label>
+              <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                 <input type='hidden' name='object_type' value='gloss_video'>
@@ -767,7 +856,7 @@ textarea:focus {
         </fieldset>
 
         <!-- Trigger/Open the Video Record Modal -->
-        <br> or <input id="recordBtn" class="btn btn-primary" value='Record a video'></input>
+        <br> or <input id="recordBtn" class="btn btn-primary" value='Record a video'>
 
         <!-- The Modal -->
         <div id="recordModal" class="modal">
@@ -808,14 +897,14 @@ textarea:focus {
                             <td>
                                 <button class="btn" id="play" disabled>Play</button>
                                 <button class="btn" id="download" disabled>Download</button><br>
-                                <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data" onsubmit="return reloadVideo()">
+                                <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
                                     {% csrf_token %}
                                     <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                                     <input type='hidden' name='object_type' value='gloss_video'>
                                     <input type='hidden' name='object_id' value='{{gloss.pk}}'>
                                     <input type='file' name="videofile" id="videofile">
                                     <input type='hidden' name='recorded' value='True'>
-                                    <input class="btn btn-primary" type="submit" id="uploadrecorded" value ='Upload' disabled></input>
+                                    <input class="btn btn-primary" type="submit" id="uploadrecorded" value ='Upload' disabled>
                                 </form>
                             </td>
                             </tr>
@@ -887,6 +976,104 @@ textarea:focus {
          </fieldset>
     </div>
     {% endif %}
+
+<br><br>
+<!-- Perspective videos -->
+   <div class="empty_row panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#perspectivevideos'><h4>{% trans "Upload Perspective Videos" %}</h4>
+        </div>
+        <div id='perspectivevideos' class='collapse in'>
+            <div class="panel panel-default panel-light">
+            {% if gloss.has_perspective_videos %}
+               <table class='table table-responsive' style="text-align: left;width:100%;">
+                <tr style="overflow-y:auto;">
+                    <td style="display:inline-block;">
+                    {% for perspvideo in gloss.get_perspective_videos %}
+                        <div class="table-responsive" style="display:inline-block;">
+                         <table class="table table-condensed" style="text-align: left;">
+                         <tr>
+                           <td class="editform" style="width:10em;">
+                             {% if perspvideo.perspective == 'left' %}
+                             <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(-30deg);rotateY(0deg);height:auto;"></span>
+                             {% elif perspvideo.perspective == 'right' %}
+                             <span class="glyphicon glyphicon-facetime-video" style="transform:rotateZ(210deg);height:auto;"></span>
+                            {% endif %}
+                           <span class='glyphicon glyphicon-trash perspvideo-delete' data-toggle='modal' data-target='#delete_perspvideo_modal_{{perspvideo.id}}'></span>
+                             <div class="modal fade" id="delete_perspvideo_modal_{{perspvideo.id}}" role="dialog" aria-labelledby="#modalDeletePersp" aria-hidden="true">
+                                 <div class="modal-dialog modal-sm">
+                                    <div class="modal-content">
+                                        <div class='modal-header'>
+                                            <h2 id='modalDeletePersp'>{% trans "Delete Perspective Video" %}</h2>
+                                        </div>
+                                        <div class='modal-body'>
+                                            <p>{% trans "Are you sure? This cannot be undone." %}</p>
+                                         </div>
+                                        <form class="formbutton" action='{% url "dictionary:update_gloss" gloss.id %}'
+                                              method='post'>
+                                        {% csrf_token %}
+                                          <input type='hidden' name='id' value='perspectivevideo_delete_{{perspvideo.id}}'>
+                                          <input type='hidden' name='value' value='confirmed'>
+                                          <div class="modal-footer">
+                                            <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                            <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
+                                          </div>
+                                        </form>
+                                    </div>
+                                  </div>
+                             </div>
+                           </td>
+                           <td>
+                               <table>
+                                   <tr>
+                                       <td colspan="2">
+                                           <div id="perspectiveplayer">
+                                            <video id='videoperspplayer' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={% now 'YmdHis' %}"
+                                                   style="height:200px;width:auto;" controls muted></video>
+                                           </div>
+                                        </td>
+                                   </tr>
+                               </table>
+                           </td>
+                         </tr>
+                         </table>
+                      </div>
+                    {% endfor %}
+                    </td>
+                </tr>
+               </table>
+            {% endif %}
+            </div>
+
+            {% if "change_dataset" in dataset_perms %}
+            <div class='editform' style="width:800px;height:300px;">
+                <fieldset>
+                    <h4>{% trans "Upload New Perspective Video" %}</h4>
+                    <form action="{{PREFIX_URL}}/video/upload/" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                        <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
+                        <input type='hidden' name='object_type' value='gloss_perspectivevideo'>
+                        <input type='hidden' name='object_id' value='{{gloss.pk}}'>
+                        <input type='hidden' name='recorded' value='False'>
+                        <table>
+                          <tr>
+                            <td>{{perspectivevideoform.videofile}}</td>
+                          </tr>
+                         <tr>
+                            <td>{{perspectivevideoform.perspective}}</td>
+                          </tr>
+                          <tr>
+                            <td id="perspvideo-buttons">
+                                <input class='btn btn-primary' type='submit' value='Upload' />
+                            </td>
+                          </tr>
+                        </table>
+                    </form>
+                </fieldset>
+            </div>
+            {% endif %}
+        </div>
+   </div>
 
      {% if "change_dataset" in dataset_perms %}
     <div class="editform">
@@ -1463,7 +1650,7 @@ textarea:focus {
                                    <tr>
                                        <td colspan="2">
                                            <div id="nmeplayer">
-                                            <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}"
+                                            <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
                                                    style="height:200px;width:auto;" controls muted></video>
                                            </div>
                                         </td>
@@ -1504,6 +1691,7 @@ textarea:focus {
                     {% csrf_token %}
                         <input type='hidden' name='redirect' value='{{PREFIX_URL}}/dictionary/gloss/{{gloss.pk}}/'>
                         <input type='hidden' name='object_type' value='gloss_nmevideo'>
+                        <input type='hidden' name='object_id' value='{{gloss.pk}}'>
                         <input type='hidden' name='recorded' value='False'>
                         <table>
                           <tr>
@@ -1511,7 +1699,6 @@ textarea:focus {
                           </tr>
                           <tr>
                             <td id="nmevideo-buttons">
-                                <input type='hidden' name='object_id' value='{{gloss.pk}}'>
                                 <input class='btn btn-primary' type='submit' value='Upload' />
                             </td>
                           </tr>
@@ -1522,7 +1709,8 @@ textarea:focus {
                                 <tr>
                                     <th style="width:200px;">{% trans "Index" %}</th>
                                     <td class="td td-light" style='width:5em'>
-                                        <input class='form-control form-control-light' name='offset' id='offset' type='number' value=1>
+                                        <input class='form-control form-control-light' name='offset' id='offset'
+                                               type='number' min=0 value=0 style="width:10em;">
                                     </td>
                                 </tr>
                                 {% for dataset_lang in gloss.lemma.dataset.translation_languages.all %}
@@ -2408,15 +2596,15 @@ textarea:focus {
 
                                 <style>.highlight {background-color: rgb(255, 149, 63);}</style>
 
-                                <video id="myVideo_{{ forloop.counter }}" controls>
-                                    <source src="{{ protected_media_url }}/{{ annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
+                                <video id="myVideo_{{forloop.counter}}" controls>
+                                    <source src="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
                                 </video>                               
                             
                                 <br><br><i>{% trans "Glosses" %}</i><br>
                                 <div id="glossContainer_{{ forloop.counter }}">
                                     {% for annotated_gloss in annotated_sentence.annotated_glosses.all %}
                                         <span data-start="{{ annotated_gloss.get_start }}" data-end="{{ annotated_gloss.get_end }}">
-                                            <a href="{{ PREFIX_URL }}/dictionary/gloss/{{ annotated_gloss.gloss.id }}">{{ annotated_gloss.show_annotationidglosstranslation }}</a>
+                                            <a href="{{PREFIX_URL}}/dictionary/gloss/{{annotated_gloss.gloss.id}}">{{ annotated_gloss.show_annotationidglosstranslation }}</a>
                                         </span>
                                     {% endfor %}
                                 </div><br>
@@ -2457,8 +2645,14 @@ textarea:focus {
                                         <i>{% trans "Source" %}</i><br>
                                         {{ annotated_sentence.annotatedvideo.source.source }}
                                         {% if annotated_sentence.annotatedvideo.source.url %}
-                                            , <a href="{{ annotated_sentence.annotatedvideo.source.get_absolute_url }}">{{ annotated_sentence.annotatedvideo.source.url }}</a>
+                                            , <a href="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.source.get_absolute_url}}?v={% now 'YmdHis' %}">{{ annotated_sentence.annotatedvideo.source.url }}</a>
                                         {% endif %}
+                                    {% endif %}
+                                </p>
+                                <p>
+                                    {% if annotated_sentence.annotatedvideo.url %}
+                                    <i>{% trans "Original video" %}</i><br>
+                                    <a href="{{ annotated_sentence.annotatedvideo.get_absolute_url }}">{{ annotated_sentence.annotatedvideo.url }}</a>
                                     {% endif %}
                                 </p>
                             </td>

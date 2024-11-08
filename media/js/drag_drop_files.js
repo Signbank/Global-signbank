@@ -83,8 +83,8 @@ function checkinput(e, file_type, file_placeholder) {
  * @param {div} typeGallery the gallery that shows file previews
  */
 function handleByButton(files, dropContainerTitle, fileType, fileTypeP, inputArea, typeGallery) {
-    if (files[0].size > 5242880){
-        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the file size under 5 MB</p>";
+    if (files[0].size > 15728640){
+        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the file size under 15 MB</p>";
         inputArea.value = '';
         removeUploads(true, inputArea, dropContainerTitle, typeGallery)
     }
@@ -120,8 +120,8 @@ function handleByButton(files, dropContainerTitle, fileType, fileTypeP, inputAre
  */
 function handleDrop(e, fileType, fileTypeT, fileTypeP, inputArea, typeGallery, dropContainerTitle){
     files = e.dataTransfer.files
-    if (files[0].size > 5242880){
-        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the file size under 5 MB</p>";
+    if (files[0].size > 15728640){
+        dropContainerTitle.innerHTML = "<p style='color:#FF0000';>Error, try again: <br>keep the file size under 15 MB</p>";
         inputArea.value = '';
         removeUploads(true, inputArea, dropContainerTitle, typeGallery)
     }
@@ -269,12 +269,12 @@ if (image === true){
 
     function handleImageByButton(files) {
         removeImageUploads(false)
-        handleByButton(files, dropContainerImageTitle, ['image/jpeg'], 'img', inputImageArea, imageGallery)
+        handleByButton(files, dropContainerImageTitle, ['image/jpeg', 'image/png'], 'img', inputImageArea, imageGallery)
     }
 
     dropImageArea.addEventListener('drop', handleImageDrop, false)
     function handleImageDrop(e) {
-        handleDrop(e, ['image/jpeg'], 'image', 'img', inputImageArea, imageGallery, dropContainerImageTitle)
+        handleDrop(e, ['image/jpeg', 'image/png'], 'image', 'img', inputImageArea, imageGallery, dropContainerImageTitle)
     }
 
     function removeImageUploads(remove_file_name){

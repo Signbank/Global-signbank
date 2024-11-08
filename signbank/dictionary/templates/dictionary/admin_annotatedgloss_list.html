@@ -800,12 +800,10 @@ function do_toggle_language(el) {
 
 {% if view_type == "gloss_list" %}
 
-    <form name="show_pages">
-    <div class='form-group' id='paginate_by'>
+    <form name="show_pages" class='pages-form pages-form-light'>
+    <div class='form-group form-group-light' id='paginate_by'>
         <label for='paginate_by'>{% trans "Results Per Page" %}</label>
         <select class='form-control form-control-light' name="paginate_by">
-            <option {% if paginate_by == 500 %} selected="" {% endif %}>500</option>
-            <option {% if paginate_by == 100 %} selected="" {% endif %}>100</option>
             <option {% if paginate_by == 50 %} selected="" {% endif %}>50</option>
             <option {% if paginate_by == 25 %} selected="" {% endif %}>25</option>
             <option {% if paginate_by == 10 %} selected="" {% endif %}>10</option>

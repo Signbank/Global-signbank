@@ -1078,14 +1078,16 @@ class GlossDetailView(DetailView):
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            return show_warning(request, translated_message, selected_datasets)
+            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
                 return HttpResponseRedirect(reverse('dictionary:public_gloss', kwargs={'glossid': self.object.pk}))
             else:
                 translated_message = _('The gloss you are trying to view is not in a dataset you can view.')
-                return show_warning(request, translated_message, selected_datasets)
+                translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.name
+                return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         senses_consistent = consistent_senses(self.object, include_translations=True,
                                               allow_empty_language=True)
@@ -1164,6 +1166,7 @@ class GlossDetailView(DetailView):
         context['affiliationform'] = AffiliationUpdateForm()
         context['videoform'] = VideoUploadForObjectForm(languages=dataset_languages)
         context['nmevideoform'] = VideoUploadForObjectForm(languages=dataset_languages)
+        context['perspectivevideoform'] = VideoUploadForObjectForm(languages=dataset_languages)
         context['imageform'] = ImageUploadForGlossForm()
         context['definitionform'] = DefinitionForm()
         context['relationform'] = RelationForm()
@@ -1708,7 +1711,8 @@ class GlossVideosView(DetailView):
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            return show_warning(request, translated_message, selected_datasets)
+            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
@@ -1820,7 +1824,8 @@ class GlossRelationsDetailView(DetailView):
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            return show_warning(request, translated_message, selected_datasets)
+            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
@@ -3169,7 +3174,8 @@ class GlossFrequencyView(DetailView):
 
         if dataset_of_requested_gloss not in selected_datasets:
             translated_message = _('The gloss you are trying to view is not in your selected datasets.')
-            return show_warning(request, translated_message, selected_datasets)
+            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_gloss not in datasets_user_can_view:
             if self.object.inWeb:
@@ -5212,7 +5218,8 @@ class MorphemeDetailView(DetailView):
 
         if dataset_of_requested_morpheme not in selected_datasets:
             translated_message = _('The morpheme you are trying to view is not in your selected datasets.')
-            return show_warning(request, translated_message, selected_datasets)
+            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_morpheme not in datasets_user_can_view:
             translated_message = _('The morpheme you are trying to view is not in a dataset you can view.')
@@ -6620,11 +6627,13 @@ class LemmaUpdateView(UpdateView):
 
         if dataset_of_requested_lemma not in selected_datasets:
             translated_message = _('The lemma you are trying to view is not in your selected datasets.')
-            return show_warning(request, translated_message, selected_datasets)
+            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         if dataset_of_requested_lemma not in datasets_user_can_view:
             translated_message = _('The lemma you are trying to view is not in a dataset you can view.')
-            return show_warning(request, translated_message, selected_datasets)
+            translated_message2 = _(' It is in dataset ') + dataset_of_requested_gloss.acronym
+            return show_warning(request, translated_message + translated_message2, selected_datasets)
 
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
@@ -7295,6 +7304,9 @@ class AnnotatedGlossListView(ListView):
         fields_with_choices = fields_to_fieldcategory_dict(settings.GLOSS_CHOICE_FIELDS)
         set_up_fieldchoice_translations(self.search_form, fields_with_choices)
 
+    def get_paginate_by(self, queryset):
+        return self.request.GET.get('paginate_by', self.paginate_by)
+
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(AnnotatedGlossListView, self).get_context_data(**kwargs)
@@ -7325,7 +7337,11 @@ class AnnotatedGlossListView(ListView):
             dataset_display_languages.append(lang.language_code_2char)
         lang_attr_name = dataset_display_languages[0]
 
-        context['annotatedglosscount'] = AnnotatedGloss.objects.filter(gloss__lemma__dataset__in=context['selected_datasets']).count()
+        # get unique combination of gloss.id and annotatedsentence.id
+        annotated_glosses_sentences = AnnotatedGloss.objects.filter(gloss__lemma__dataset__in=context['selected_datasets']).values('gloss__id', 'annotatedsentence__id')
+        list_of_sentence_ids = [(ags['gloss__id'], ags['annotatedsentence__id']) for ags in annotated_glosses_sentences]
+        context['annotatedglosscount'] = len(list(set(list_of_sentence_ids)))
+
         items = construct_scrollbar(self.object_list, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -7477,7 +7493,7 @@ class AnnotatedGlossListView(ListView):
 
 def annotatedglosslistheader_ajax(request):
 
-    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo']
+    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo', 'eaffile']
     query_fields_parameters = []
 
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
@@ -7494,7 +7510,8 @@ def annotatedglosslistheader_ajax(request):
     fieldname_to_column_header = {'id' : _('Sentence ID'),
                                   'annotatedsentence': _("Annotated Sentence"),
                                   'isRepresentative': _("Is Representative"),
-                                  'annotatedvideo': _("Annotated Video")
+                                  'annotatedvideo': _("Annotated Video"),
+                                  'eaffile': _("EAF File")
                                   }
 
     column_headers = []
@@ -7528,7 +7545,7 @@ def annotatedglosslistheader_ajax(request):
 
 def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
 
-    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo']
+    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo', 'eaffile']
 
     query_fields_parameters = []
 
@@ -7560,7 +7577,9 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
         elif fieldname == 'isRepresentative':
             display_value = this.isRepresentative
         elif fieldname == 'annotatedvideo':
-            display_value = this.annotatedsentence.get_video_path()
+            display_value = this.annotatedsentence.get_video()
+        elif fieldname == 'eaffile':
+            display_value = this.annotatedsentence.get_eaf()
         else:
             display_value = ''
         column_values.append((fieldname, display_value))

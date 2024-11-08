@@ -15,6 +15,7 @@ HANDSHAPE_IMAGE_DIRECTORY = 'handshapeimage'
 OTHER_MEDIA_DIRECTORY = 'othermedia/'
 IMAGES_TO_IMPORT_FOLDER = 'import_images/'
 VIDEOS_TO_IMPORT_FOLDER = 'import_videos/'
+API_VIDEO_ARCHIVES = 'api_video_archives/'
 OTHER_MEDIA_TO_IMPORT_FOLDER = 'import_other_media/'
 SIGNBANK_PACKAGES_FOLDER = 'packages/'
 EAF_FILES_LOCATION = 'eaf/'
@@ -302,9 +303,13 @@ DEBUG_CSV = False
 
 DEBUG_SENSES = False
 
+DEBUG_VIDEOS = False
+
 # Set this to True to avoid deleting glosses that are in relations with other glosses
 GUARDED_GLOSS_DELETE = False
 
 GUARDED_MORPHEME_DELETE = True
 
 FILE_UPLOAD_HANDLERS = ['django.core.files.uploadhandler.TemporaryFileUploadHandler',]
+
+FILE_UPLOAD_MAX_MEMORY_SIZE = 15728640 # 15 MB
