@@ -163,7 +163,7 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
     elif version > 0:
         filename = idgloss + '-' + str(instance.gloss.id) + ext + '.bak' + str(instance.id)
     else:
-        filename = idgloss + '-' + str(instance.gloss.id) + ext + ext
+        filename = idgloss + '-' + str(instance.gloss.id) + ext
 
     path = os.path.join(video_dir, dataset_dir, two_letter_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
