@@ -2376,7 +2376,7 @@ class Gloss(models.Model):
 
     def add_video(self, user, videofile, recorded):
         # Preventing circular import
-        from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path, get_gloss_video_filepath
+        from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path, get_gloss_path_to_video_file_on_disk
 
         # Create a new GlossVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
@@ -2386,7 +2386,7 @@ class Gloss(models.Model):
             for video_object in existing_videos:
                 video_object.reversion(revert=False)
 
-            already_existing_relative_target_path = get_gloss_video_filepath(self)
+            already_existing_relative_target_path = get_gloss_path_to_video_file_on_disk(self)
             if already_existing_relative_target_path:
                 # a video file without a GlossVideo object already exists, remove the file
                 try:
