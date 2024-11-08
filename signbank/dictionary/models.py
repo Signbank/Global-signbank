@@ -4242,3 +4242,15 @@ class AnnotatedSentenceSource(models.Model):
         if not parsed_url.scheme:
             return 'http://' + self.url
         return self.url
+
+class Synset(models.Model):
+    """A synset is a set of glosses that are synonymous"""
+    name = models.CharField(max_length=200)
+    lemmas = models.TextField(blank=True)
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
+    url = models.TextField(blank=True)
+    description = models.TextField(blank=True)
+    glosses = models.ManyToManyField(Gloss, related_name = 'synsets')
+
+    def __str__(self):
+        return self.name

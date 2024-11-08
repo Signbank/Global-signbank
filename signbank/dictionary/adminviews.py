@@ -1442,6 +1442,8 @@ class GlossDetailView(DetailView):
         else:
             context['annotated_sentences'] = annotated_sentences[0:3]
 
+        context['synsets'] = gl.synsets.all()
+
         bad_dialect = False
         gloss_dialects = []
 

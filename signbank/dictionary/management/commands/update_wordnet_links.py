@@ -39,9 +39,9 @@ class Command(BaseCommand):
         }
         download_response = session.post(DOWNLOAD_URL, data=download_payload)
         if download_response.status_code == 200:
-            with open(os.path.join(WRITABLE_FOLDER, "wordnet_links.csv"), "wb") as f:
+            with open(os.path.join(WRITABLE_FOLDER, "synsets/wordnet_links.csv"), "wb") as f:
                 f.write(download_response.content)
-            print("Links CSV downloaded successfully!")
+            print("Links CSV downloaded successfully.")
         else:
             print("Failed to download Links CSV. Status code:", download_response.status_code)
 
@@ -51,9 +51,9 @@ class Command(BaseCommand):
         }
         download_response = session.post(DOWNLOAD_URL, data=download_payload)
         if download_response.status_code == 200:
-            with open(os.path.join(WRITABLE_FOLDER, "wordnet_signs.csv"), "wb") as f:
+            with open(os.path.join(WRITABLE_FOLDER, "synsets/wordnet_signs.csv"), "wb") as f:
                 f.write(download_response.content)
-            print("Signs CSV downloaded successfully!")
+            print("Signs CSV downloaded successfully.")
         else:
             print("Failed to download Signs CSV. Status code:", download_response.status_code)
 
@@ -62,7 +62,7 @@ class Command(BaseCommand):
         import csv
 
         signs = {}
-        with open(os.path.join(WRITABLE_FOLDER, "wordnet_signs.csv"), mode='r') as file:
+        with open(os.path.join(WRITABLE_FOLDER, "synsets/wordnet_signs.csv"), mode='r') as file:
             csv_reader = csv.reader(file)
             for row in csv_reader:
                 wordnet_sign_id = row[0]
@@ -73,7 +73,7 @@ class Command(BaseCommand):
 
         links = {}
         link_base = "https://www.sign-lang.uni-hamburg.de/easier/sign-wordnet/synset/"
-        with open(os.path.join(WRITABLE_FOLDER, "wordnet_links.csv"), mode='r') as file:
+        with open(os.path.join(WRITABLE_FOLDER, "synsets/wordnet_links.csv"), mode='r') as file:
             csv_reader = csv.reader(file)
             for row in csv_reader:
                 for r_i, r in enumerate(row):
@@ -86,14 +86,98 @@ class Command(BaseCommand):
                 if wordnet_sign_id in signs:
                     sign_id = signs[wordnet_sign_id]
                 
-                # add info to links
                 if signs[wordnet_sign_id] not in links:
                     links[sign_id]=[]
+
                 links[sign_id].append(links_list)
-        
         return links
+    
+
+    def get_lemma_definitions(self):
+        from nltk.corpus import wordnet as wn
+
+        with open(os.path.join(WRITABLE_FOLDER, 'synsets/sign_wordnet_gloss_dse.tab'), 'r') as file:
+            rows = file.readlines()
+            
+        wn_dict = {}
+        for row in rows[1:]:
+            row_split = row.split('\t')
+            omw_id = row_split[0]
+            offset, pos = omw_id.split('-')
+            synset = wn.synset_from_pos_and_offset(pos, int(offset))
+            if synset:
+                wn_dict["omw."+omw_id] = [synset.lemma_names(), synset.definition()]
+
+        return wn_dict
+
+    def find_lemmas_description_in_html(self, html):
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html, "html.parser")
+        lemmas_paragraph = None
+        for p in soup.find_all("p"):
+            if "Lemmas:" in p.get_text():
+                lemmas_paragraph = p
+                lemmas = [lemma.strip() for lemma in lemmas_paragraph.get_text().replace("Lemmas:", "").split(",")]
+                lemmas = ", ".join(lemmas)
+                break
+        if lemmas_paragraph is None:
+            lemmas = ""
+
+        definition_paragraph = soup.find("p", class_="synset_def")
+        if definition_paragraph:
+            definition = definition_paragraph.get_text().replace("Definition:", "").strip()
+        else:
+            definition = ""
+        return lemmas, definition
+    
+    def update_links_data(self, links, wn_dict):
+        from signbank.dictionary.models import Synset, Dataset, Gloss
+        from django.core.exceptions import ObjectDoesNotExist
+        import requests
+
+        ngt_dataset = Dataset.objects.get(acronym="NGT")
+        Synset.objects.filter(dataset = ngt_dataset).delete()
+        
+        for gloss_id in links.keys():
+
+            if not str(gloss_id).isdigit():
+                continue
+
+            gloss = Gloss.objects.filter(id=int(gloss_id)).first()
+            if not gloss:
+                continue 
+
+            for l in links[gloss_id]:
+                synset = Synset.objects.filter(name = l[0], dataset = ngt_dataset).first()
+                if not synset:
+                    synset = Synset.objects.create(name = l[0], dataset = ngt_dataset)
+
+                    if l[0] in wn_dict:
+                        lemmas_string = ', '.join(wn_dict[l[0]][0])
+                        synset.lemmas = lemmas_string
+                        synset.description = wn_dict[l[0]][1]
+
+                    response = requests.get(l[3])
+                    if response.status_code == 200:
+                        synset.url = l[3]
+                        if not synset.lemmas:
+                            lemmas, description = self.find_lemmas_description_in_html(response.text)
+                            synset.lemmas = lemmas
+                            synset.description = description
+
+                    synset.save()
+                gloss.synsets.add(synset)
+                gloss.save()          
+
+        print("WordNet links updated successfully.")     
 
 
     def handle(self, *args, **options):
+        import nltk
+        nltk.download('wordnet')
+        nltk.download('omw')
         self.download_links_csv()
         links = self.get_links_data()
+        wn_dict = self.get_lemma_definitions()
+        self.update_links_data(links, wn_dict)
+

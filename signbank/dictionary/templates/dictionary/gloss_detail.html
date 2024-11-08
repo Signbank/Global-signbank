@@ -1573,6 +1573,23 @@ textarea:focus {
                 </td>
             </tr>
 
+            <tr>
+                <th>
+                    Synsets
+                </th>
+                <td>
+                    {% for synset in synsets %}
+                        {% if synset.url %}
+                        <span class="synset">
+                            <a href='{{ synset.url }}'>{{synset.name}}</a> 
+                                {% if synset.lemmas %}
+                                {{synset.lemmas}} | {{synset.description}}
+                                {% endif %}
+                        </span><br>
+                        {% endif %}
+                    {% endfor %}
+            </tr>
+
             {% for value,name,label,kind in main_fields %}
                 <tr><th>{{label}}</th>
                     {% if kind == 'text' %}
