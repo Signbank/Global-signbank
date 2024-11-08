@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-08 15:18+0100\n"
+"POT-Creation-Date: 2024-11-08 15:20+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -197,27 +197,27 @@ msgstr ""
 
 #: templates/user_profile.html:130
 msgid "Affiliation"
-msgstr "Affiliatie"
+msgstr ""
 
 #: templates/user_profile.html:144
 msgid "Signbank API Tokens"
-msgstr "Signbank API-tokens"
+msgstr ""
 
 #: templates/user_profile.html:149
 msgid "A Signbank API Token was created on"
-msgstr "Een Signbank API-token is aangemaakt op"
+msgstr ""
 
 #: templates/user_profile.html:159
 msgid "Generate Signbank API Token"
-msgstr "Maak een Signbank API-token aan"
+msgstr ""
 
 #: templates/user_profile.html:176
 msgid "Recently Saved Queries"
-msgstr "Bewaarde zoekopdrachten"
+msgstr ""
 
 #: templates/user_profile.html:181
 msgid "Search History"
-msgstr "Zoek-geschiedenis"
+msgstr ""
 
 #: views.py:212
 msgid "Error processing your request."
