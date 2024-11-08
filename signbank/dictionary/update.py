@@ -932,7 +932,7 @@ def update_gloss(request, glossid):
             lemma = LemmaIdgloss.objects.get(pk=value)
             if dataset is None or dataset == lemma.dataset:
                 gloss.lemma = lemma
-                gloss.save(update_fields=['path'])
+                gloss.save(update_fields=['lemma'])
             else:
                 messages.add_message(request, messages.ERROR, _("The dataset of the gloss is not the same as that of the lemma."))
         except ObjectDoesNotExist:
@@ -1206,7 +1206,7 @@ def update_nmevideo(user, gloss, field, value):
         if new_offset in existing_offsets or new_offset == nmevideo.offset:
             return HttpResponse(value, {'content-type': 'text/plain'})
         nmevideo.offset = new_offset
-        nmevideo.save()
+        nmevideo.save(update_fields=['offset'])
     elif field.startswith('nmevideo_delete_'):
         nmevideoid = field[len('nmevideo_delete_'):]
         nmevideo = GlossVideoNME.objects.get(id=int(nmevideoid))

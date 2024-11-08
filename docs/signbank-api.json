@@ -230,7 +230,7 @@
     {
       "post":
       {
-        "description": "Creates a new gloss",
+        "description": "Creates a new gloss. Senses are optional.",
         "parameters":
         [
           {
@@ -425,7 +425,7 @@
         {
           "content":
           {
-            "application/json":
+            "multipart/form-data":
             {
               "schema":
               {
@@ -447,7 +447,8 @@
                   },
                   "File":
                   {
-                    "type": "base64-encoded file"
+                    "type": "string",
+                    "format": "binary"
                   }
                 }
               }
@@ -474,7 +475,7 @@
     {
       "post":
       {
-        "description": "Change a gloss. Between languages the number of senses given must be the same, but the number of words in a sense can differ.",
+        "description": "Change a gloss. Only include those gloss fields you wish to update. Values of fields with choices should match those available in Signbank. Between languages the number of senses given must be the same, but the number of words in a sense can differ.",
         "parameters":
         [
           {
@@ -718,7 +719,94 @@
         ]
       }
     },
-    "/dictionary/api_update_gloss_morphology/{datasetid}/{glossid}/":
+    "/dictionary/api_update_gloss/{glossid}/video": 
+    {
+      "post": 
+      {
+        "description": "Updates the video of a gloss.",
+        "parameters": 
+        [
+          {
+            "name": "glossid",
+            "in": "path",
+            "description": "ID of the gloss to be updated",
+            "required": true,
+            "schema": 
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content": 
+          {
+            "multipart/form-data": 
+            {
+              "schema": 
+              {
+                "type": "object",
+                "properties": 
+                {
+                  "center": 
+                  {
+                    "type": "string",
+                    "format": "binary", 
+                    "description": "The video file to upload, default/mid camera perspective/"
+                  },
+                  "left": 
+                  {
+                    "type": "string",
+                    "format": "binary", 
+                    "description": "The video file to upload, left camera perspective."
+                  },
+                  "right": 
+                  {
+                    "type": "string",
+                    "format": "binary", 
+                    "description": "The video file to upload, right camera perspective."
+                  }
+                },
+                "required": 
+                [
+                ]
+              }
+            }
+          }
+        },
+        "responses": 
+        {
+          "200": 
+          {
+            "description": "Update successful"
+          },
+          "400":
+          {
+            "description": "No file uploaded"
+          },
+          "401":
+          {
+            "description": "User not found"
+          },
+          "403":
+          {
+            "description": "No permission"
+          },
+          "404":
+          {
+            "description": "Gloss not found"
+          }
+        },
+        "tags": ["Updating Signbank data"],
+        "security": 
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/api_update_gloss_morphology/{datasetid}/{glossid}/": 
     {
       "post":
       {
@@ -980,6 +1068,106 @@
     {
       "post":
       {
+        "description": "Uploads and unzips a zipped videos folder to the import_videos folder for a specific dataset.",
+        "parameters":
+        [
+          {
+            "name": "datasetid",
+            "in": "path",
+            "description": "The dataset ID is required.",
+            "required": true,
+            "schema":
+            {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody":
+        {
+          "content":
+          {
+            "multipart/form-data":
+            {
+              "schema":
+              {
+                "type": "object",
+                "properties": {
+                  "File": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The zip archive file to upload"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses":
+        {
+          "200":
+          {
+            "description": "File uploaded and unzipped successfully.",
+            "content":
+            {
+              "application/json":
+              {
+                "schema":
+                {
+                  "type": "object",
+                  "properties":
+                  {
+                    "filename":
+                    {
+                      "type": "string",
+                      "description": "The name of the uploaded zip file."
+                    },
+                    "unzippedvideos":
+                    {
+                      "type": "object",
+                      "description": "The unzipped videos categorized by 3-char language code.",
+                      "additionalProperties":
+                      {
+                        "type": "array",
+                        "items":
+                        {
+                          "type": "string",
+                          "description": "The names of the unzipped video files."
+                        }
+                      }
+                    }
+                  },
+                  "example":
+                  {
+                    "filename": "tst_videos.zip",
+                    "unzippedvideos": {
+                          "nld": [
+                            "STOMP-B.mp4",
+                            "POMPOEN-A.mp4"
+                          ],
+                          "eng": []
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags":
+        [
+          "Updating Signbank data"
+        ],
+        "security":
+        [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/dictionary/upload_zipped_videos_archive/{datasetid}/":
+    {
+      "post":
+      {
         "description": "Uploads and unzips a zipped videos folder to the api_video_archives folder for a specific dataset.",
         "parameters":
         [
@@ -1006,15 +1194,11 @@
                 "properties": {
                   "File": {
                     "type": "string",
-                    "format": "byte",
+                    "format": "binary",
                     "description": "The zip archive file to upload"
                   }
                 }
-              },
-              "required":
-                [
-                  "File"
-                ]
+              }
             }
           }
         },
@@ -1040,7 +1224,7 @@
                     "unzippedvideos":
                     {
                       "type": "object",
-                      "description": "The unzipped videos categorized by language code.",
+                      "description": "The unzipped videos are characterized by gloss ID.",
                       "additionalProperties":
                       {
                         "type": "array",
@@ -1057,7 +1241,8 @@
                     "filename": "tst_videos.zip",
                     "unzippedvideos":
                       [
-                        "4681.mp4"
+                        "4681.mp4",
+                        "42087.mp4"
                       ]
                   }
                 }
@@ -1081,7 +1266,7 @@
     {
       "post":
       {
-        "description": "Imports the video files found for the dataset in the `api_video_archives` folder into the corresponding glosses. If a video for a gloss already exists, it is overwritten. After the operation, the video files are deleted from `api_video_archives`.",
+        "description": "Imports the video files found for the dataset in the `import_videos` and `api_video_archives` folders into the corresponding glosses. If a video for a gloss already exists, it is overwritten.",
         "parameters":
         [
           {
@@ -1153,10 +1338,10 @@
                   },
                   "example":
                   {
-                    "api_video_archives_status":
+                    "imported_videos":
                     [
                       {
-                        "api_video_archives/tstMH/42090.mp4":
+                        "tstMH/42090.mp4":
                         {
                           "gloss": "42090",
                           "videofile": "42090.mp4",
@@ -1166,7 +1351,7 @@
                         }
                       },
                       {
-                        "api_video_archives/tstMH/42087.mp4":
+                        "tstMH/42087.mp4":
                         {
                           "gloss": "42087",
                           "videofile": "42087.mp4",
