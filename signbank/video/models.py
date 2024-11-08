@@ -79,7 +79,7 @@ class ExampleVideoHistory(models.Model):
     def __str__(self):
 
         # Basic feedback from one History item: gloss-action-date
-        name = str(self.examplesentence.id) + ': ' + str(self.action) + ', (' + str(self.datestamp) + ')'
+        name = f"{self.examplesentence.id}: {self.action}, ({self.datestamp})"
         return name
 
     class Meta:
@@ -108,7 +108,7 @@ class GlossVideoHistory(models.Model):
     def __str__(self):
 
         # Basic feedback from one History item: gloss-action-date
-        name = self.gloss.idgloss + ': ' + self.action + ', (' + str(self.datestamp) + ')'
+        name = f"{self.gloss.idgloss}: {self.action}, ({self.datestamp})"
         return name
 
     class Meta:
@@ -131,7 +131,7 @@ class GlossVideoHistory(models.Model):
 # * Changes to the lemmaidglosstranslations: process_lemmaidglosstranslation_changes(...)
 
 
-def get_gloss_video_filepath(gloss):
+def get_gloss_path_to_video_file_on_disk(gloss):
     idgloss = gloss.idgloss
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
