@@ -18,6 +18,19 @@ from bs4 import BeautifulSoup
 class Command(BaseCommand):
     help = 'Update the WordNet links in the database. This works ONLY for NGT dataset.'
 
+    def download_wordnet_gloss(self):
+        """ Download the WordNet gloss file from the server. """
+
+        DOWNLOAD_URL = "https://www.sign-lang.uni-hamburg.de/easier/sign-wordnet/static/tab/sign_wordnet_gloss_dse.tab"
+
+        response = requests.get(DOWNLOAD_URL)
+        if response.status_code == 200:
+            with open(os.path.join(WRITABLE_FOLDER, "synsets/sign_wordnet_gloss_dse.tab"), "wb") as f:
+                f.write(response.content)
+            print("WordNet gloss file downloaded successfully.")
+        else:
+            print("Failed to download WordNet gloss file. Status code:", response.status_code)
+
     def download_links_csv(self):
         """ Download the WordNet links CSV file from the server. """
 
@@ -193,6 +206,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         nltk.download('wordnet')
         nltk.download('omw')
+        self.download_wordnet_gloss()
         self.download_links_csv()
         links = self.get_links_data()
         wn_dict = self.get_lemma_definitions()
