@@ -2329,8 +2329,12 @@ class Gloss(models.Model):
         return escape_uri_path(image_path) if image_path else ''
 
     def get_video_path(self, check_file_on_disk=True):
-        from signbank.video.models import GlossVideo, get_gloss_path_to_video_file_on_disk
-        glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
+        from signbank.video.models import GlossVideo, get_gloss_path_to_video_file_on_disk, GlossVideoNME, GlossVideoPerspective
+        glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=self)]
+        glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=self)]
+        glossvideos = GlossVideo.objects.filter(gloss=self,
+                                                glossvideonme=None,
+                                                glossvideoperspective=None, version=0).exclude(id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
         if glossvideos.count() > 0:
             # in the case of multiple version 0 objects the first is returned
             return str(glossvideos.first().videofile)
