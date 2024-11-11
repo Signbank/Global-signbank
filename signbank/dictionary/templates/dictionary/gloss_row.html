@@ -12,7 +12,7 @@
     {% endif %}
 
 
-    <td class="field_hasvideo">{%if focus_gloss.get_image_path %}
+    <td class="field_hasvideo">{% if focus_gloss.get_image_path or focus_gloss.has_video %}
     {% url 'dictionary:protected_media' '' as protected_media_url %}
 
       <div class="thumbnail_container">

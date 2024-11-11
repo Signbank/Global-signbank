@@ -2328,27 +2328,41 @@ class Gloss(models.Model):
         image_path = self.get_image_path()
         return escape_uri_path(image_path) if image_path else ''
 
-    def get_video_path(self):
-        from signbank.video.models import GlossVideo
-        try:
-            glossvideo = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).get(version=0)
-            return str(glossvideo.videofile)
-        except ObjectDoesNotExist:
-            return ''
-        except MultipleObjectsReturned:
-            # Just return the first
-            glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None).filter(version=0)
+    def get_video_path(self, check_file_on_disk=True):
+        from signbank.video.models import GlossVideo, get_gloss_path_to_video_file_on_disk
+        glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
+        if glossvideos.count() > 0:
+            # in the case of multiple version 0 objects the first is returned
             return str(glossvideos.first().videofile)
+        if not check_file_on_disk:
+            return ""
+        relative_path = get_gloss_path_to_video_file_on_disk(self)
+        if not relative_path:
+            # there is no video file and no GlossVideo object with version 0 for this gloss
+            return ''
+        # a video with the correct name was found
+        if settings.DEBUG_VIDEOS:
+            print('get_video_path: already existing file without GlossVideo object found: ', relative_path)
+        # there is a video file but no GlossVideo object
+        video = GlossVideo(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
+        video.videofile.name = relative_path
+        video.save()
+        video.make_poster_image()
+        if settings.DEBUG_VIDEOS:
+            print('get_video_path: GlossVideo object created for already existing file: ', relative_path)
+        return relative_path
+
 
     def get_video(self):
         """Return the video object for this gloss or None if no video available"""
 
         video_path = self.get_video_path()
+        if not video_path:
+            return ''
         filepath = os.path.join(settings.WRITABLE_FOLDER, video_path)
         if os.path.exists(filepath.encode('utf-8')):
             return video_path
-        else:
-            return ''
+        return ''
 
     def get_video_url(self):
         """return  the url of the video for this gloss which may be that of a homophone"""
@@ -2362,7 +2376,7 @@ class Gloss(models.Model):
 
     def add_video(self, user, videofile, recorded):
         # Preventing circular import
-        from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path
+        from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path, get_gloss_path_to_video_file_on_disk
 
         # Create a new GlossVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
@@ -2372,6 +2386,18 @@ class Gloss(models.Model):
             for video_object in existing_videos:
                 video_object.reversion(revert=False)
 
+            already_existing_relative_target_path = get_gloss_path_to_video_file_on_disk(self)
+            if already_existing_relative_target_path:
+                # a video file without a GlossVideo object already exists, remove the file
+                try:
+                    file_system_path = os.path.join(WRITABLE_FOLDER, already_existing_relative_target_path)
+                    os.remove(file_system_path)
+                    if settings.DEBUG_VIDEOS:
+                        print('add_video: already existing file without GlossVideo object deleted: ', file_system_path)
+                except (OSError, PermissionError):
+                    if settings.DEBUG_VIDEOS:
+                        print('add_video: already existing file without GlossVideo object not deleted: ', already_existing_relative_target_path)
+                    pass
             # Create a GlossVideoHistory object
             relative_path = get_video_file_path(video, str(videofile), nmevideo=False, perspective='', version=0)
             if settings.DEBUG_VIDEOS:
