@@ -2380,13 +2380,19 @@ class Gloss(models.Model):
 
     def add_video(self, user, videofile, recorded):
         # Preventing circular import
-        from signbank.video.models import GlossVideo, GlossVideoHistory, get_video_file_path, get_gloss_path_to_video_file_on_disk
+        from signbank.video.models import (GlossVideo, GlossVideoHistory, GlossVideoNME, GlossVideoPerspective,
+                                           get_video_file_path, get_gloss_path_to_video_file_on_disk)
 
         # Create a new GlossVideo object
         if isinstance(videofile, File) or videofile.content_type == 'django.core.files.uploadedfile.InMemoryUploadedFile':
             video = GlossVideo(gloss=self, upload_to=get_video_file_path, glossvideonme=None, glossvideoperspective=None)
             # Backup the existing video objects stored in the database
-            existing_videos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None)
+            glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=self)]
+            glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=self)]
+            existing_videos = GlossVideo.objects.filter(gloss=self,
+                                                        glossvideonme=None,
+                                                        glossvideoperspective=None, version=0).exclude(
+                id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
             for video_object in existing_videos:
                 video_object.reversion(revert=False)
 
