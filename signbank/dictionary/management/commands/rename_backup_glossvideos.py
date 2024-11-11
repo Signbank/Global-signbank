@@ -38,4 +38,3 @@ class Command(BaseCommand):
                         rename_backup_videos(gloss, glossvideos)
                 except ObjectDoesNotExist as e:
                     print("Dataset '{}' not found.".format(dataset_acronym), e)
-
