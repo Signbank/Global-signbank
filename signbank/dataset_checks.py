@@ -27,6 +27,48 @@ def gloss_annotations_check(dataset):
     return results
 
 
+def gloss_backup_videos(dataset):
+    backup_videos = []
+    default_language = dataset.default_language
+
+    all_glosses = Gloss.objects.filter(lemma__dataset=dataset,
+                                       lemma__lemmaidglosstranslation__language=default_language).order_by(
+        'lemma__lemmaidglosstranslation__text').distinct()
+    for gloss in all_glosses:
+        glossvideos = GlossVideo.objects.filter(gloss=gloss,
+                                                glossvideonme=None,
+                                                glossvideoperspective=None).order_by('version')
+        backup_videos_ordered = glossvideos.filter(version__gt=0).order_by('version')
+        if backup_videos_ordered.count() > 1:
+            gloss_videos = [gv for gv in backup_videos_ordered]
+            backup_videos.append((gloss, gloss_videos))
+    return backup_videos
+
+
+def rename_backup_videos(gloss, glossvideos):
+
+    idgloss = gloss.idgloss
+    desired_filename_without_extension = idgloss + '-' + str(gloss.id) + '.mp4'
+    for inx, gloss_video in enumerate(glossvideos, 1):
+        _, bak = os.path.splitext(gloss_video.videofile.name)
+        desired_extension = '.bak' + str(gloss_video.id)
+        current_version = gloss_video.version
+        desired_filename = desired_filename_without_extension + desired_extension
+        current_filename = str(gloss_video.videofile)
+        if bak == desired_extension and inx == current_version:
+            continue
+        if bak != desired_extension:
+            source = os.path.join(settings.WRITABLE_FOLDER, current_filename)
+            destination = os.path.join(settings.WRITABLE_FOLDER, desired_filename)
+            print('rename_backup_videos move ', source, destination)
+            os.rename(source, destination)
+            gloss_video.videofile.name = desired_filename
+        if inx != current_version:
+            print('rename_backup_videos change version ', current_version, inx)
+            gloss_video.version = inx
+        gloss_video.save()
+
+
 def gloss_videos_check(dataset):
 
     results = dict()
