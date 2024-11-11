@@ -1129,6 +1129,10 @@ def process_gloss_changes(sender, instance, update_fields=[], **kwargs):
     gloss = instance
     glossvideos = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None)
     for glossvideo in glossvideos:
+        if hasattr(instance, 'glossvideonme'):
+            continue
+        if hasattr(instance, 'glossvideoperspective'):
+            continue
         glossvideo.move_video(move_files_on_disk=True)
     glossvideos = GlossVideoNME.objects.filter(gloss=gloss)
     for glossvideo in glossvideos:
