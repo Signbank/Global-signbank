@@ -86,6 +86,8 @@ class Command(BaseCommand):
         signs = {}
         with open(os.path.join(WRITABLE_FOLDER, "synsets/wordnet_signs.csv"), mode='r') as file:
             csv_reader = csv.reader(file)
+            next(csv_reader)
+            
             for row in csv_reader:
                 wordnet_sign_id = row[0]
                 signbank_sign_id = row[1]
@@ -98,9 +100,17 @@ class Command(BaseCommand):
         link_base = "https://www.sign-lang.uni-hamburg.de/easier/sign-wordnet/synset/"
         with open(os.path.join(WRITABLE_FOLDER, "synsets/wordnet_links.csv"), mode='r') as file:
             csv_reader = csv.reader(file)
+            next(csv_reader)
+
             for row in csv_reader:
+
                 for r_i, r in enumerate(row):
                     row[r_i] = r.replace("'", '').replace(" ", "")
+
+                # only keep rows with confidence level >= 5
+                if int(row[2]) < 5:
+                    continue
+
                 wordnet_sign_id = row[0].replace("ngt.", "")
 
                 link = f"{link_base}{row[1]}.html"
