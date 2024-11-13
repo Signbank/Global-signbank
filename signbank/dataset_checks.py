@@ -1,8 +1,16 @@
 
 
 from signbank.dictionary.models import *
-from signbank.video.models import GlossVideo, GlossVideoHistory, GlossVideoNME, GlossVideoPerspective
-from signbank.tools import get_two_letter_dir
+from signbank.video.models import GlossVideo, GlossVideoNME, GlossVideoPerspective
+
+
+def get_two_letter_dir(idgloss):
+    foldername = idgloss[:2]
+
+    if len(foldername) == 1:
+        foldername += '-'
+
+    return foldername
 
 
 def gloss_annotations_check(dataset):
@@ -25,6 +33,65 @@ def gloss_annotations_check(dataset):
     results['glosses_with_too_many_annotations'] = glosses_with_too_many_annotations
     results['glosses_missing_annotations'] = glosses_missing_annotations
     return results
+
+
+def move_video_to_folder(gloss, glossvideo, desired_filename):
+    relative_path = str(glossvideo.videofile)
+    idgloss = gloss.idgloss
+    two_letter_dir = get_two_letter_dir(idgloss)
+    dataset_dir = gloss.lemma.dataset.acronym
+    source = os.path.join(settings.WRITABLE_FOLDER, relative_path)
+    destination = os.path.join(WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY,
+                               dataset_dir, two_letter_dir, desired_filename)
+    print('rename_backup_videos move ', source, destination)
+    os.rename(source, destination)
+    glossvideo.videofile.name = desired_filename
+    glossvideo.save()
+
+
+def gloss_backup_videos(dataset):
+    backup_videos = []
+    default_language = dataset.default_language
+
+    all_glosses = Gloss.objects.filter(lemma__dataset=dataset,
+                                       lemma__lemmaidglosstranslation__language=default_language).order_by(
+        'lemma__lemmaidglosstranslation__text').distinct()
+    for gloss in all_glosses:
+        glossvideos = GlossVideo.objects.filter(gloss=gloss,
+                                                glossvideonme=None,
+                                                glossvideoperspective=None).order_by('version')
+        backup_videos_ordered = glossvideos.filter(version__gt=0).order_by('version')
+        if backup_videos_ordered.count() > 0:
+            gloss_videos = [gv for gv in backup_videos_ordered]
+            backup_videos.append((gloss, gloss_videos))
+    return backup_videos
+
+
+def rename_backup_videos(gloss, glossvideos):
+
+    idgloss = gloss.idgloss
+    two_letter_dir = get_two_letter_dir(idgloss)
+    dataset_dir = gloss.lemma.dataset.acronym
+    desired_filename_without_extension = idgloss + '-' + str(gloss.id) + '.mp4'
+    for inx, gloss_video in enumerate(glossvideos, 1):
+        _, bak = os.path.splitext(gloss_video.videofile.name)
+        desired_extension = '.bak' + str(gloss_video.id)
+        current_version = gloss_video.version
+        desired_filename = desired_filename_without_extension + desired_extension
+        current_relative_path = str(gloss_video.videofile)
+        if bak == desired_extension and inx == current_version:
+            continue
+        if bak != desired_extension:
+            source = os.path.join(settings.WRITABLE_FOLDER, current_relative_path)
+            destination = os.path.join(WRITABLE_FOLDER, settings.GLOSS_VIDEO_DIRECTORY,
+                                       dataset_dir, two_letter_dir, desired_filename)
+            print('rename_backup_videos move ', source, destination)
+            os.rename(source, destination)
+            gloss_video.videofile.name = desired_filename
+        if inx != current_version:
+            print('rename_backup_videos change version ', current_version, inx)
+            gloss_video.version = inx
+        gloss_video.save()
 
 
 def gloss_videos_check(dataset):
