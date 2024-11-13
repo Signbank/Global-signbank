@@ -61,9 +61,9 @@ def rename_extension_videos(gloss, glossvideos):
         destination = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY,
                                    dataset_dir, two_letter_dir, desired_filename)
         print('rename_extension_videos move ', source, destination)
-        # os.rename(source, destination)
-        # gloss_video.videofile.name = desired_filename
-        # gloss_video.save()
+        os.rename(source, destination)
+        gloss_video.videofile.name = desired_filename
+        gloss_video.save()
 
 
 class Command(BaseCommand):
