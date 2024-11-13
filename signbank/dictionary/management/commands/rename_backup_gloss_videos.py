@@ -18,9 +18,11 @@ def get_two_letter_dir(idgloss):
 
     return foldername
 
+
 def move_video_to_folder(gloss, glossvideo, filename):
     if 'glossvideo' in filename:
         return
+    # this is for when the video is not in the correct folder, compute its relative path
     idgloss = gloss.idgloss
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
@@ -54,6 +56,7 @@ class Command(BaseCommand):
                         for gloss_video in gloss_video_objects:
                             source = os.path.join(WRITABLE_FOLDER, str(gloss_video.videofile))
                             if not os.path.exists(source):
+                                # skip non-existent files, don't put them in enumeration list
                                 continue
                             checked_videos_for_gloss.append(gloss_video)
                         checked_gloss_videos.append((gloss, checked_videos_for_gloss))
