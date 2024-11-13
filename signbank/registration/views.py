@@ -252,7 +252,7 @@ def mylogin(request, template_name='registration/login.html', redirect_field_nam
             # Expiry date cannot be in the past
             if profile.expiry_date is not None and date.today() > profile.expiry_date:
                 form = EmailAuthenticationForm(request)
-                error_message = _('This account has expired. Please contact o.crasborn@let.ru.nl.')
+                error_message = _('This account has expired. Please contact w.stoop@let.ru.nl.')
 
             else:
                 # Light security check -- make sure redirect_to isn't garbage.
