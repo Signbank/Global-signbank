@@ -67,7 +67,7 @@ def rename_extension_videos(gloss, glossvideos):
 
 
 class Command(BaseCommand):
-    help = 'Rename gloss backup videos that have bak sequences.'
+    help = 'Rename gloss videos with non-mp4 extension.'
 
     def add_arguments(self, parser):
         parser.add_argument('dataset-acronym', nargs='+', type=str)
