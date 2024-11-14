@@ -691,6 +691,10 @@ def upload_videos_to_glosses(request, datasetid):
 @put_api_user_in_request
 def api_add_video(request, gloss_id):
 
+    CENTER_VIDEO_LABELS = ['center', 'centered', 'mid', 'default', 'file', 'video']
+    LEFT_VIDEO_LABELS = ['left', 'l']
+    RIGHT_VIDEO_LABELS = ['right', 'r']
+
     if not request.user:
         return JsonResponse({'error': 'User not found'}, status=401)
 
@@ -718,16 +722,41 @@ def api_add_video(request, gloss_id):
     if len(gloss.idgloss) < 2:
         return JsonResponse({'error': 'This gloss has no idgloss'}, status=400)
 
-    if 'file' not in request.FILES:
+    if len(request.FILES) == 0:
         return JsonResponse({'error': 'No file uploaded'}, status=400)
 
-    file_size = request.FILES['file'].size
+    for label in request.FILES.keys():
+        if label not in CENTER_VIDEO_LABELS and label not in LEFT_VIDEO_LABELS and label not in RIGHT_VIDEO_LABELS:
+            return JsonResponse({'error': f"Unrecognized file label '{label}'. Use 'file', 'center', 'left' or 'right'."}, status=400)
 
     dataset = gloss.lemma.dataset
-    
-    # Handle the file upload here (e.g., save it to a model or file system)
-    vfile = request.FILES['file']
-    gloss = Gloss.objects.filter(id=gloss_id).first()
-    gloss.add_video(request.user, vfile, False)
+    nr_of_videos = 0
 
-    return JsonResponse({'message': f'Uploaded video of size {file_size} bytes to dataset {dataset}.'}, status=200)
+    for label in CENTER_VIDEO_LABELS:
+
+        if label not in request.FILES.keys():
+            continue
+
+        vfile = request.FILES[label]
+        gloss.add_video(request.user, vfile, False)
+        nr_of_videos += 1
+
+    for label in LEFT_VIDEO_LABELS:
+
+        if label not in request.FILES.keys():
+            continue
+
+        vfile = request.FILES[label]
+        gloss.add_perspective_video(request.user, vfile, 'left', False)
+        nr_of_videos += 1
+
+    for label in RIGHT_VIDEO_LABELS:
+
+        if label not in request.FILES.keys():
+            continue
+
+        vfile = request.FILES[label]
+        gloss.add_perspective_video(request.user, vfile, 'right', False)
+        nr_of_videos += 1
+
+    return JsonResponse({'message': f'Uploaded {nr_of_videos} videos to dataset {dataset}.' }, status=200)

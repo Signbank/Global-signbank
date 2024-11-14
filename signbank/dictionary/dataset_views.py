@@ -4,7 +4,7 @@ from django.views.generic.detail import DetailView
 from django.core.paginator import Paginator
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from signbank.dictionary.models import Dataset, Gloss, AnnotationIdglossTranslation
-from signbank.dataset_checks import gloss_annotations_check, gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check
+from signbank.dataset_checks import (gloss_annotations_check, gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check)
 from signbank.tools import get_selected_datasets_for_user, get_dataset_languages
 from signbank.settings.server_specific import *
 from guardian.shortcuts import get_objects_for_user

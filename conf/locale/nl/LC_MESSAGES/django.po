@@ -1,7 +1,7 @@
 # Dutch language file for Signbank.
 # Copyright (C) 2018 Radboud University
 # This file is distributed under the same license as the Global Signbank package.
-# Onno Crasborn <o.crasborn@let.ru.nl>, Wessel Stoop <w.stoop@let.ru.nl>, 2015.
+# Wessel Stoop <w.stoop@let.ru.nl>, 2015.
 #
 msgid ""
 msgstr ""
@@ -8258,8 +8258,8 @@ msgstr "gebruik backslash om <br/>speciale karakters te zoeken"
 #~ msgid "registration profiles"
 #~ msgstr "registratieprofielen"
 
-#~ msgid "This account has expired. Please contact o.crasborn@let.ru.nl."
-#~ msgstr "Deze account is verlopen. Neem contact op met o.crasborn@let.ru.nl."
+#~ msgid "This account has expired. Please contact w.stoop@let.ru.nl."
+#~ msgstr "Deze account is verlopen. Neem contact op met w.stoop@let.ru.nl."
 
 #~ msgid "The username or password is incorrect."
 #~ msgstr "De gebruikersnaam of het wachtwoord is fout."
