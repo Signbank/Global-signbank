@@ -133,7 +133,9 @@ dd {
     {% for language in dataset_languages %}
     <th style="width:300px;">{% trans "Annotation" %} ({{language.name}})</th>
     {% endfor %}
-    <th style="width:1000px;">{% trans "Video Paths" %}</th></tr>
+    <th style="width:1000px;">{% trans "Video Paths" %}</th>
+    <th style="width:100px;">{% trans "Exists" %}</th>
+</tr>
     {% for gloss, videos in wrong_folder %}
     <tr>
         <td>{{gloss.idgloss}}</td>
@@ -141,7 +143,18 @@ dd {
         {% for language in dataset_languages %}
         <td>{{gloss|get_annotation_idgloss_translation_no_default:language}}</td>
         {% endfor %}
-        <td>{{videos}}</td></tr>
+        <td colspan="2">
+            <table>
+            <tr><th style="width:1000px;"></th><th style="width:100px;"></th></tr>
+            {% for version, path, exists in videos %}
+            <tr>
+            <td style="width:1000px;">{{version}}: {{path}}</td>
+            <td style="width:100px;">{{exists}}</td>
+            </tr>
+            {% endfor %}
+            </table>
+        </td>
+    </tr>
     {% endfor %}
 </table>
 {% endif %}
