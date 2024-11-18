@@ -2389,13 +2389,16 @@ class Gloss(models.Model):
             # Backup the existing video objects stored in the database
             glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=self)]
             glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=self)]
-            existing_videos = GlossVideo.objects.filter(gloss=self,
-                                                        glossvideonme=None,
-                                                        glossvideoperspective=None, version=0).exclude(
+            # get existing gloss video objects but exclude NME and perspective videos
+            existing_videos = GlossVideo.objects.filter(gloss=self).exclude(
                 id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
-            for video_object in existing_videos:
-                video_object.reversion(revert=False)
+            # order them by version number
+            existing_videos_all = existing_videos.order_by('version')
+            # revert all the old video objects
+            for video_object in existing_videos_all:
+                video_object.reversion(revert=True)
 
+            # see if there is a file with the correct path that is not referred to by an object
             already_existing_relative_target_path = get_gloss_path_to_video_file_on_disk(self)
             if already_existing_relative_target_path:
                 # a video file without a GlossVideo object already exists, remove the file
