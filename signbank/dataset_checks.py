@@ -154,6 +154,12 @@ def gloss_subclass_videos_check(dataset):
     return results
 
 
+def path_exists(relativepath):
+
+    fullpath = os.path.join(WRITABLE_FOLDER, relativepath)
+    return os.path.exists(fullpath)
+
+
 def gloss_video_filename_check(dataset):
 
     results = dict()
@@ -186,7 +192,7 @@ def gloss_video_filename_check(dataset):
         folder_pattern = settings.GLOSS_VIDEO_DIRECTORY + os.sep + dataset.acronym + os.sep + two_letter_dir
         folder_not_in_filename = [gv for gv in glossvideos if folder_pattern not in str(gv.videofile)]
         if folder_not_in_filename:
-            list_videos = ', '.join([str(gv.version)+': '+str(gv.videofile) for gv in mp4_in_filename])
+            list_videos = [(gv.version, str(gv.videofile), path_exists(str(gv.videofile))) for gv in folder_not_in_filename]
             wrong_folder.append((gloss, list_videos))
 
     results['glosses_with_weird_filenames'] = glosses_with_weird_filenames

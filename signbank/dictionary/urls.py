@@ -242,6 +242,8 @@ urlpatterns = [
     re_path(r'restore_gloss/(?P<glossid>\d+)/$',
             signbank.dictionary.update.restore_gloss, name='restore_gloss'),
 
+    re_path(r'^trash_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.trash_gloss, name='trash_gloss'),
+
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
 

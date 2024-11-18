@@ -3901,3 +3901,37 @@ def restore_gloss(request, glossid):
     result['glossid'] = str(gloss.id)
 
     return JsonResponse(result)
+
+
+def trash_gloss(request, glossid):
+    """View to update a gloss model from the jeditable jquery form
+    We are sent one field and value at a time, return the new value
+    once we've updated it."""
+
+    if not request.method == "POST":
+        return HttpResponseForbidden("Gloss deletion method must be POST")
+
+    if not request.user.has_perm('dictionary.change_gloss'):
+        return HttpResponseForbidden("Gloss update not allowed")
+
+    from django.contrib.auth.models import Group
+    group_manager = Group.objects.filter(name='Dataset_Manager').first()
+    groups_of_user = request.user.groups.all()
+    if group_manager not in groups_of_user:
+        return HttpResponseForbidden("You must be in group manager to delete a gloss.")
+
+    gloss = get_object_or_404(Gloss, id=glossid)
+
+    if not gloss.archived:
+        return HttpResponseForbidden("Gloss is not archived. Please archive the gloss before deleting.")
+
+    field = request.POST.get('id', '')
+    value = request.POST.get('value', '')
+
+    if value != 'trash' or field != 'trash':
+        return HttpResponseForbidden("Gloss Deletion not confirmed")
+
+    lemma_id = gloss.lemma.id
+    gloss.delete()
+
+    return HttpResponseRedirect(reverse('dictionary:change_lemma', kwargs={'pk': lemma_id}))
