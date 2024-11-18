@@ -2396,7 +2396,7 @@ class Gloss(models.Model):
             existing_videos_all = existing_videos.order_by('version')
             # revert all the old video objects
             for video_object in existing_videos_all:
-                video_object.reversion(revert=True)
+                video_object.reversion(revert=False)
 
             # see if there is a file with the correct path that is not referred to by an object
             already_existing_relative_target_path = get_gloss_path_to_video_file_on_disk(self)
