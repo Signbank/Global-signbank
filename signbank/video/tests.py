@@ -64,7 +64,10 @@ class CommandTests(unittest.TestCase):
         # compare test files with db filenames
         unused_files_found = remove_unused.find_unused_files(self, some_folder_path, filenames_in_db)
 
-        self.assertEqual(unused_files_found, ["fileNOTindb.txt"])
+        # account for extra folder parameters in result
+        list_unused_files = [filename for (subdir, dirs, filename) in unused_files_found]
+
+        self.assertEqual(list_unused_files, ["fileNOTindb.txt"])
 
 
 class VideoTests(unittest.TestCase):
