@@ -404,14 +404,12 @@ class ExampleVideo(models.Model):
             if self.version == 1:
                 # remove .bak from filename and decrement the version
                 (newname, bak) = os.path.splitext(self.videofile.name)
-                expected_extension = '.bak' + str(self.id)
+                expected_extension = '.mp4' + '.bak' + str(self.id)
                 if bak != expected_extension:
-                    # hmm, something bad happened
-                    raise Exception(f'Unknown suffix on stored video file. Expected {expected_extension}')
-                    # print('Unknown suffix on stored video file. Expected .bak')
-                    # self.delete()
-                    # self.delete_files()
-                    # return
+                    print(f'Unknown suffix on stored video file. Expected {expected_extension}')
+                    self.delete()
+                    self.delete_files()
+                    return
                 if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                     os.rename(os.path.join(storage.location, self.videofile.name),
                             os.path.join(storage.location, newname))
@@ -786,14 +784,13 @@ class GlossVideo(models.Model):
                 if self.version == 1:
                     # remove .bak from filename and decrement the version
                     (newname, bak) = os.path.splitext(self.videofile.name)
-                    expected_extension = '.bak' + str(self.id)
+                    expected_extension = '.mp4' + '.bak' + str(self.id)
                     if bak != expected_extension:
                         # hmm, something bad happened
-                        raise Exception(f'Unknown suffix on stored video file. Expected {expected_extension}')
-                        # print('Unknown suffix on stored video file. Expected .bak')
-                        # self.delete()
-                        # self.delete_files()
-                        # return
+                        print(f'Unknown suffix on stored video file. Expected {expected_extension}')
+                        self.delete()
+                        self.delete_files()
+                        return
                     if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                         os.rename(os.path.join(storage.location, self.videofile.name),
                                   os.path.join(storage.location, newname))
