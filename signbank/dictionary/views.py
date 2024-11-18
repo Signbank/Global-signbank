@@ -46,7 +46,7 @@ import datetime as DT
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.timezone import get_current_timezone
 
-from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist, BadRequest
 from signbank.gloss_update import api_update_gloss_fields
 from django.utils.translation import gettext_lazy as _, activate
 from signbank.abstract_machine import get_interface_language_api
@@ -1732,7 +1732,7 @@ def recently_added_glosses(request):
     recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
     recent_glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets, archived=False).filter(
         creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
-        'creationDate')
+        '-creationDate')
 
     items = construct_scrollbar(recent_glosses, 'sign', lang_attr_name)
     request.session['search_results'] = items
@@ -1769,7 +1769,7 @@ def create_citation_image(request, pk):
     else:
         url = '/'
 
-    gloss = get_object_or_404(Gloss, pk=pk, archived=False, glossvideonme=None, glossvideoperspective=None)
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
     try:
         gloss.create_citation_image()
     except ValidationError as e:
@@ -1830,10 +1830,7 @@ def add_image(request):
             )
             goal_location_str = os.path.join(goal_path, gloss.idgloss + '-' + str(gloss.pk) + extension)
 
-            try:
-                exists = os.path.exists(goal_path)
-            except:
-                exists = False
+            exists = os.path.exists(goal_path)
 
             #First make the dir if needed
             if not exists:
@@ -1874,30 +1871,34 @@ def add_image(request):
 
 def delete_image(request, pk):
 
-    if request.method == "POST":
-
-        # deal with any existing video for this sign
-        gloss = get_object_or_404(Gloss, pk=pk, archived=False)
-        image_path = gloss.get_image_path()
-        full_image_path = settings.WRITABLE_FOLDER + os.sep + image_path
-        default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
-        if os.path.exists(full_image_path.encode('utf-8')):
-            os.remove(full_image_path.encode('utf-8'))
-        else:
-            print('delete_image: wrong type for image path, file does not exist')
-        deleted_image = DeletedGlossOrMedia()
-        deleted_image.item_type = 'image'
-        deleted_image.idgloss = gloss.idgloss
-        deleted_image.annotation_idgloss = default_annotationidglosstranslation
-        deleted_image.old_pk = gloss.pk
-        deleted_image.filename = image_path
-        deleted_image.save()
-
     # return to referer
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
         url = '/'
+
+    if not request.method == "POST":
+        return redirect(url)
+
+    # deal with any existing video for this sign
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
+    image_path = gloss.get_image_path()
+    if not image_path:
+        return redirect(url)
+    full_image_path = settings.WRITABLE_FOLDER + image_path
+    default_annotationidglosstranslation = get_default_annotationidglosstranslation(gloss)
+    if os.path.exists(full_image_path.encode('utf-8')):
+        os.remove(full_image_path.encode('utf-8'))
+    else:
+        print('delete_image: wrong type for image path, file does not exist')
+    deleted_image = DeletedGlossOrMedia()
+    deleted_image.item_type = 'image'
+    deleted_image.idgloss = gloss.idgloss
+    deleted_image.annotation_idgloss = default_annotationidglosstranslation
+    deleted_image.old_pk = gloss.pk
+    deleted_image.filename = image_path
+    deleted_image.save()
+
     return redirect(url)
 
 
@@ -2218,13 +2219,14 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
             # handshape images are allowed to be seen in Show All Handshapes
             pass
         else:
-            gloss_pk = int(filename.split('.')[-2].split('-')[-1])
-
             try:
-                if not Gloss.objects.get(pk=gloss_pk, archived=False).inWeb:
-                    return HttpResponse(status=401)
-            except Gloss.DoesNotExist:
+                gloss_pk = int(filename.split('.')[-2].split('-')[-1])
+            except IndexError:
                 return HttpResponse(status=401)
+
+            lookup_gloss = Gloss.objects.filter(pk=gloss_pk, archived=False, inWeb=True)
+            if not lookup_gloss.count() == 1:
+                HttpResponse(status=401)
 
         #If we got here, the gloss was found and in the web dictionary, so we can continue
 
@@ -2234,7 +2236,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     path = dir_path.encode('utf-8') + filename.encode('utf-8')
     try:
         exists = os.path.exists(path)
-    except:
+    except (OSError, FileExistsError):
         exists = False
     if not exists:
         # quote the filename instead to resolve special characters in the url

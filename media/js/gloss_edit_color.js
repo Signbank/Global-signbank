@@ -343,7 +343,7 @@ function toggle_edit(redirect_to_next) {
 $.editable.addInputType('positiveinteger', {
     element : function(settings, original) {
         $(this).first().first().addClass('preview-number');
-        var input = $('<input type="number" min="1" max="20" style="width:3em;">');
+        var input = $('<input type="number" min=0 max=20 style="width:5em;" value=0>');
         $(this).append(input);
         return(input);
     }

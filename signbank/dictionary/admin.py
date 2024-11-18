@@ -1366,6 +1366,10 @@ class AnnotatedSentenceSourceAdmin(admin.ModelAdmin):
     search_fields = ['name']
     list_filter = ['dataset']
 
+class AnnotatedSentenceTranslationAdmin(admin.ModelAdmin):
+    list_display = ('annotatedsentence_id', 'language', 'text')
+    search_fields = ['text']
+
 class AffiliationAdmin(admin.ModelAdmin):
     list_display = ("name", )
     search_fields = ['name']
@@ -1417,3 +1421,4 @@ admin.site.register(Sense, SenseAdmin)
 admin.site.register(ExampleSentence, ExampleSentenceAdmin)
 admin.site.register(ExampleSentenceTranslation, ExampleSentenceTranslationAdmin)
 admin.site.register(AnnotatedSentenceSource, AnnotatedSentenceSourceAdmin)
+admin.site.register(AnnotatedSentenceTranslation, AnnotatedSentenceTranslationAdmin)

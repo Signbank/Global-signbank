@@ -21,7 +21,7 @@ PERSPECTIVE_CHOICES = (('left', 'Left'),
 
 
 class VideoUploadForObjectForm(forms.Form):
-    """Form for video upload for a particular example sentence"""
+    """Form for video upload for all video types"""
     
     videofile = forms.FileField(label="Upload Video", widget=forms.FileInput(attrs={'accept':'video/mp4, video/quicktime'}))
     object_id = forms.CharField(widget=forms.HiddenInput)
@@ -44,6 +44,7 @@ class VideoUploadForObjectForm(forms.Form):
         dataset = kwargs.pop('dataset', None)
         super(VideoUploadForObjectForm, self).__init__(*args, **kwargs)
 
+        self.fields['offset'].initial = 0
         for language in languages:
             description_field_name = 'description_' + language.language_code_2char
             self.fields[description_field_name] = forms.CharField(

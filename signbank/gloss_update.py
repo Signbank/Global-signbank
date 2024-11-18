@@ -1,5 +1,7 @@
 
 from django.utils.translation import gettext_lazy as _, activate, gettext
+
+from signbank.attachments.views import upload_file
 from signbank.dictionary.models import *
 from signbank.video.models import GlossVideoDescription, GlossVideoNME
 from signbank.tools import get_default_annotationidglosstranslation
@@ -124,6 +126,11 @@ def check_fields_can_be_updated(value_dict, dataset, language_code):
     for field in value_dict.keys():
         if field not in api_fields_2024 and field not in language_fields:
             errors[field] = _("Field update not available")
+        if field == "Senses":
+            new_senses, formatting_error_senses = convert_string_to_dict_of_list_of_lists(value_dict[field])
+            if formatting_error_senses:
+                errors[field] = formatting_error_senses
+
     return errors
 
 
@@ -303,6 +310,8 @@ def detect_type_related_problems_for_gloss_update(changes, dataset, language_cod
         if not new_value:
             continue
         if field in language_fields:
+            continue
+        if field == "Senses":
             continue
         if isinstance(field, FieldChoiceForeignKey):
             field_choice_category = field.field_choice_category
@@ -491,6 +500,23 @@ def gloss_update_do_changes(user, gloss, changes, language_code):
             revision.save()
 
 
+def get_original_senses_value(gloss):
+    senses_dict = dict()
+    for language in gloss.dataset.translation_languages.all():
+        senses_dict[language.language_code_2char] = []
+    for sense in gloss.senses.all():
+        for language in gloss.dataset.translation_languages.all():
+            if sense.senseTranslations.filter(language=language).exists():
+                sensetranslation = sense.senseTranslations.get(language=language)
+                translations = sensetranslation.translations.all().order_by('index')
+                if translations:
+                    keywords_list = [str(trans.translation.text) for trans in translations if
+                                     trans.translation.text != '']
+                    if keywords_list:
+                        senses_dict[language.language_code_2char].append(keywords_list)
+    return senses_dict
+
+
 def gloss_update(gloss, update_fields_dict, language_code):
 
     dataset = gloss.lemma.dataset
@@ -501,9 +527,7 @@ def gloss_update(gloss, update_fields_dict, language_code):
     for language_field in language_fields:
         gloss_dict_language_field = human_readable_to_json[language_field]
         combined_fields.append(gloss_dict_language_field)
-
     gloss_data_dict = gloss.get_fields_dict(combined_fields, language_code)
-
     fields_to_update = dict()
     for human_readable_field, new_field_value in update_fields_dict.items():
         if not new_field_value:
@@ -513,6 +537,15 @@ def gloss_update(gloss, update_fields_dict, language_code):
             original_value = gloss_data_dict[gloss_language_field]
             gloss_field = human_readable_to_internal[human_readable_field]
             fields_to_update[gloss_field] = (original_value, new_field_value)
+            continue
+        if human_readable_field == 'Senses':
+            original_value = get_original_senses_value(gloss)
+            new_senses, errors = convert_string_to_dict_of_list_of_lists(new_field_value)
+            if errors:
+                # already checked at a previous step
+                continue
+            if original_value != new_senses:
+                fields_to_update[human_readable_field] = (original_value, new_senses)
             continue
         elif human_readable_field not in gloss_data_dict.keys():
             # new value
@@ -615,13 +648,6 @@ def api_update_gloss(request, datasetid, glossid):
         results['errors'] = errors
         results['updatestatus'] = "Failed"
         return JsonResponse(results, safe=False)
-
-    if 'Senses' in value_dict:
-        _, errors = convert_string_to_dict_of_list_of_lists(value_dict['Senses'])
-        if errors:
-            results['errors'] = [errors]
-            results['updatestatus'] = "Failed"
-            return JsonResponse(results, safe=False)
 
     gloss_update_do_changes(request.user, gloss, fields_to_update, interface_language_code)
 
@@ -900,7 +926,7 @@ def gloss_nmevideo_do_changes(user, gloss, nmevideo, changes, language_code, cre
         elif field == 'offset':
             # this changes the filename and moves the file
             nmevideo.offset = int(new_value)
-            nmevideo.save()
+            nmevideo.save(update_fields=['offset'])
 
     operation = 'nmevideo_create' if create else 'nmevideo_update'
     filename = os.path.basename(nmevideo.videofile.name)
@@ -1016,38 +1042,28 @@ def api_update_gloss_nmevideo(request, datasetid, glossid, videoid):
     return JsonResponse(results, safe=False)
 
 
-@csrf_exempt
-@put_api_user_in_request
 def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
-    post_data = json.loads(request.body.decode('utf-8'))
 
     value_dict = dict()
+    uploaded_file = None
+    if create:
+        try:
+            uploaded_file = request.FILES.get('File')
+        except (AttributeError, KeyError):
+            return value_dict
 
     index_key = gettext("Index")
-    if index_key in post_data.keys():
-        index_str = post_data[index_key]
+    if index_key in request.POST.keys():
+        index_str = request.POST.get(index_key)
         index = int(index_str)
     else:
         index = 1
     value_dict[index_key] = index
 
-    file_key = gettext("File")
-    if file_key in post_data.keys() and create:
-        # a file may be included in the json data
-        # if there are problems decoding it, the value_dict without it is returned
-        try:
-            uploaded_file = post_data[file_key]
-            uploaded_file_contents = uploaded_file[22:]
-            filename = get_default_annotationidglosstranslation(gloss) + '_' + str(gloss.id) + '.mp4'
-            goal_path = os.path.join(settings.TMP_DIR, filename)
-            f = open(goal_path, 'wb+')
-            inputbytes = base64.b64decode(uploaded_file_contents, validate=False, altchars=None)
-            f.write(inputbytes)
-            video_file = File(f)
-            nmevideo = gloss.add_nme_video(request.user, video_file, index, 'False')
-            value_dict[file_key] = nmevideo
-        except (OSError, EncodingWarning, UnicodeDecodeError):
-            pass
+    if create and uploaded_file:
+        file_key = gettext("File")
+        nmevideo = gloss.add_nme_video(request.user, uploaded_file, index, 'False')
+        value_dict[file_key] = nmevideo
 
     dataset = gloss.lemma.dataset
 
@@ -1058,7 +1074,7 @@ def get_gloss_nmevideo_value_dict(request, gloss, language_code, create=True):
                           for language in dataset_languages]
 
     for field in description_fields:
-        value = post_data.get(field, '')
+        value = request.POST.get(field, '')
         value_dict[field] = value.strip()
 
     return value_dict
@@ -1240,7 +1256,6 @@ def api_delete_gloss_nmevideo(request, datasetid, glossid, videoid):
     results['updatestatus'] = "Success"
 
     return JsonResponse(results, safe=False)
-
 
 @csrf_exempt
 @put_api_user_in_request

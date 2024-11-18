@@ -269,12 +269,12 @@ if (image === true){
 
     function handleImageByButton(files) {
         removeImageUploads(false)
-        handleByButton(files, dropContainerImageTitle, ['image/jpeg'], 'img', inputImageArea, imageGallery)
+        handleByButton(files, dropContainerImageTitle, ['image/jpeg', 'image/png'], 'img', inputImageArea, imageGallery)
     }
 
     dropImageArea.addEventListener('drop', handleImageDrop, false)
     function handleImageDrop(e) {
-        handleDrop(e, ['image/jpeg'], 'image', 'img', inputImageArea, imageGallery, dropContainerImageTitle)
+        handleDrop(e, ['image/jpeg', 'image/png'], 'image', 'img', inputImageArea, imageGallery, dropContainerImageTitle)
     }
 
     function removeImageUploads(remove_file_name){

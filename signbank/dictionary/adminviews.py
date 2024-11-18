@@ -7307,6 +7307,9 @@ class AnnotatedGlossListView(ListView):
         fields_with_choices = fields_to_fieldcategory_dict(settings.GLOSS_CHOICE_FIELDS)
         set_up_fieldchoice_translations(self.search_form, fields_with_choices)
 
+    def get_paginate_by(self, queryset):
+        return self.request.GET.get('paginate_by', self.paginate_by)
+
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(AnnotatedGlossListView, self).get_context_data(**kwargs)
@@ -7337,7 +7340,11 @@ class AnnotatedGlossListView(ListView):
             dataset_display_languages.append(lang.language_code_2char)
         lang_attr_name = dataset_display_languages[0]
 
-        context['annotatedglosscount'] = AnnotatedGloss.objects.filter(gloss__lemma__dataset__in=context['selected_datasets']).count()
+        # get unique combination of gloss.id and annotatedsentence.id
+        annotated_glosses_sentences = AnnotatedGloss.objects.filter(gloss__lemma__dataset__in=context['selected_datasets']).values('gloss__id', 'annotatedsentence__id')
+        list_of_sentence_ids = [(ags['gloss__id'], ags['annotatedsentence__id']) for ags in annotated_glosses_sentences]
+        context['annotatedglosscount'] = len(list(set(list_of_sentence_ids)))
+
         items = construct_scrollbar(self.object_list, self.search_type, lang_attr_name)
         self.request.session['search_results'] = items
 
@@ -7489,7 +7496,7 @@ class AnnotatedGlossListView(ListView):
 
 def annotatedglosslistheader_ajax(request):
 
-    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo']
+    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo', 'eaffile']
     query_fields_parameters = []
 
     if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest' and request.method == 'GET':
@@ -7506,7 +7513,8 @@ def annotatedglosslistheader_ajax(request):
     fieldname_to_column_header = {'id' : _('Sentence ID'),
                                   'annotatedsentence': _("Annotated Sentence"),
                                   'isRepresentative': _("Is Representative"),
-                                  'annotatedvideo': _("Annotated Video")
+                                  'annotatedvideo': _("Annotated Video"),
+                                  'eaffile': _("EAF File")
                                   }
 
     column_headers = []
@@ -7540,7 +7548,7 @@ def annotatedglosslistheader_ajax(request):
 
 def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
 
-    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo']
+    display_fields = ['id', 'annotatedsentence', 'isRepresentative', 'annotatedvideo', 'eaffile']
 
     query_fields_parameters = []
 
@@ -7572,7 +7580,9 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
         elif fieldname == 'isRepresentative':
             display_value = this.isRepresentative
         elif fieldname == 'annotatedvideo':
-            display_value = this.annotatedsentence.get_video_path()
+            display_value = this.annotatedsentence.get_video()
+        elif fieldname == 'eaffile':
+            display_value = this.annotatedsentence.get_eaf()
         else:
             display_value = ''
         column_values.append((fieldname, display_value))

@@ -1752,16 +1752,18 @@ def gloss_from_identifier(value):
 
 
 def get_default_annotationidglosstranslation(gloss):
-    try:
-        language = gloss.lemma.dataset.default_language
-    except (ObjectDoesNotExist, KeyError, ValueError):
-        language = Language.objects.get(**DEFAULT_KEYWORDS_LANGUAGE)
+    if not gloss.lemma or gloss.lemma.dataset:
+        return str(gloss.id)
+    dataset = gloss.lemma.dataset
+    language = dataset.default_language
+    if not language:
+        language = dataset.translation_languages.first()
 
-    default_annotationidglosstranslation = ""
-    annotationidglosstranslations = gloss.annotationidglosstranslation_set.filter(language=language)
-    if annotationidglosstranslations.count() > 0:
-        default_annotationidglosstranslation = annotationidglosstranslations.first().text
-    return default_annotationidglosstranslation
+    annotationidglosstranslations = gloss.annotationidglosstranslation_set.all()
+    if annotationidglosstranslations.filter(language=language):
+        return annotationidglosstranslations.get(language=language).text
+
+    return annotationidglosstranslations.first().text
 
 
 from signbank.settings.base import ECV_FILE,EARLIEST_GLOSS_CREATION_DATE, FIELDS, SEPARATE_ENGLISH_IDGLOSS_FIELD, LANGUAGE_CODE, ECV_SETTINGS, URL, LANGUAGE_CODE_MAP
@@ -1993,7 +1995,7 @@ def get_ecv_description_for_gloss(gloss, lang, include_phonology_and_frequencies
             else:
                 desc = desc + ', ' + value
 
-    if desc:
+    if desc and include_phonology_and_frequencies:
         desc += ", "
 
     lang = Language.objects.get(language_code_2char=lang)

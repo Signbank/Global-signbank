@@ -17,12 +17,15 @@ from signbank.dictionary.views import create_citation_image
 import signbank.dictionary.views
 import signbank.dictionary.tagviews
 import signbank.dictionary.adminviews
+import signbank.dictionary.update
 import signbank.api_interface
 import signbank.manage_videos
 import signbank.abstract_machine
+import signbank.csv_interface
 import signbank.gloss_update
 import signbank.dictionary.batch_edit
 import signbank.gloss_morphology_update
+import signbank.frequency
 
 app_name = 'dictionary'
 urlpatterns = [
@@ -196,6 +199,8 @@ urlpatterns = [
             signbank.api_interface.get_unzipped_video_files_json, name='get_unzipped_video_files_json'),
     re_path(r'upload_zipped_videos_folder_json/(?P<datasetid>\d+)/$',
             signbank.api_interface.upload_zipped_videos_folder_json, name='upload_zipped_videos_folder_json'),
+    re_path(r'upload_zipped_videos_archive/(?P<datasetid>\d+)/$',
+            signbank.api_interface.upload_zipped_videos_archive, name='upload_zipped_videos_archive'),
 
     re_path(r'upload_videos_to_glosses/(?P<datasetid>\d+)/$',
             signbank.api_interface.upload_videos_to_glosses, name='upload_videos_to_glosses'),
@@ -210,7 +215,7 @@ urlpatterns = [
     re_path(r'test_abstract_machine/(?P<datasetid>\d+)/$',
             signbank.dictionary.views.test_abstract_machine, name='test_abstract_machine'),
     re_path(r'api_update_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
-            signbank.gloss_update.api_update_gloss, name='api_update_gloss'),
+            signbank.gloss_update.api_update_gloss, name='api_update_gloss'),   
     re_path(r'api_delete_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
             signbank.gloss_update.api_delete_gloss, name='api_delete_gloss'),
     re_path(r'api_restore_gloss/(?P<datasetid>\d+)/(?P<glossid>\d+)/$',
@@ -238,6 +243,8 @@ urlpatterns = [
     re_path(r'restore_gloss/(?P<glossid>\d+)/$',
             signbank.dictionary.update.restore_gloss, name='restore_gloss'),
 
+    re_path(r'^trash_gloss/(?P<glossid>\d+)$', signbank.dictionary.update.trash_gloss, name='trash_gloss'),
+
     re_path(r'info/$', signbank.dictionary.views.info),
     re_path(r'protected_media/(?P<filename>.*)$', signbank.dictionary.views.protected_media, name='protected_media'),
 
@@ -250,14 +257,17 @@ urlpatterns = [
     re_path(r'^handshapes/$', permission_required('dictionary.search_gloss')(HandshapeListView.as_view()), name='admin_handshape_list'),
     re_path(r'^gloss/(?P<gloss_pk>\d+)/history', signbank.dictionary.views.gloss_revision_history, name='gloss_revision_history'),
     re_path(r'^gloss/(?P<pk>\d+)/glossvideos', GlossVideosView.as_view(), name='gloss_videos'),
+
     re_path(r'^gloss/(?P<pk>\d+)/glossanimations', GlossAnimationsView.as_view(), name='gloss_animations'),
+
+    re_path(r'^api_update_gloss/(?P<gloss_id>\d+)/video', signbank.api_interface.api_add_video, name='api_add_video'),
     re_path(r'^gloss/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view'),
     re_path(r'^gloss_preview/(?P<pk>\d+)', GlossDetailView.as_view(), name='admin_gloss_view_colors'),
     re_path(r'^gloss_frequency/(?P<gloss_id>.*)/$', GlossFrequencyView.as_view(), name='admin_frequency_gloss'),
     re_path(r'^lemma_frequency/(?P<gloss_id>.*)/$', LemmaFrequencyView.as_view(), name='admin_frequency_lemma'),
     re_path(r'^gloss_relations/(?P<pk>\d+)', GlossRelationsDetailView.as_view(), name='admin_gloss_relations_view'),
     re_path(r'^morpheme/(?P<pk>\d+)', MorphemeDetailView.as_view(), name='admin_morpheme_view'),
-    re_path(r'^handshape/(?P<pk>\d+)', HandshapeDetailView.as_view(), name='admin_handshape_view'),
+    re_path(r'^handshape/(?P<pk>\d+)/$', HandshapeDetailView.as_view(), name='admin_handshape_view'),
     re_path(r'^semanticfield/(?P<pk>\d+)', SemanticFieldDetailView.as_view(), name='admin_semanticfield_view'),
     re_path(r'^semanticfields/$', permission_required('dictionary.search_gloss')(SemanticFieldListView.as_view()), name='admin_semanticfield_list'),
     re_path(r'^derivationhistory/(?P<pk>\d+)', DerivationHistoryDetailView.as_view(), name='admin_derivationhistory_view'),
