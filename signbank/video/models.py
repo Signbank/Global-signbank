@@ -404,7 +404,7 @@ class ExampleVideo(models.Model):
             if self.version == 1:
                 # remove .bak from filename and decrement the version
                 (newname, bak) = os.path.splitext(self.videofile.name)
-                expected_extension = '.mp4' + '.bak' + str(self.id)
+                expected_extension = '.bak' + str(self.id)
                 if bak != expected_extension:
                     print(f'Unknown suffix on stored video file. Expected {expected_extension}')
                     self.delete()
@@ -784,7 +784,7 @@ class GlossVideo(models.Model):
                 if self.version == 1:
                     # remove .bak from filename and decrement the version
                     (newname, bak) = os.path.splitext(self.videofile.name)
-                    expected_extension = '.mp4' + '.bak' + str(self.id)
+                    expected_extension = '.bak' + str(self.id)
                     if bak != expected_extension:
                         # hmm, something bad happened
                         print(f'Unknown suffix on stored video file. Expected {expected_extension}')
