@@ -173,8 +173,6 @@ class Command(BaseCommand):
         """ Update the WordNet links in the database. """
 
         ngt_dataset = Dataset.objects.get(acronym="NGT")
-        existing_synset_names = Synset.objects.filter(dataset=ngt_dataset).values_list('name', flat=True)
-        new_synet_names = []
 
         # unlink all synsets from glosses
         for synset in Synset.objects.filter(dataset=ngt_dataset):
@@ -191,8 +189,6 @@ class Command(BaseCommand):
             
             # Create the Synset objects and add them to the Gloss
             for l in links[gloss_id]:
-                if l[0] not in existing_synset_names:
-                    new_synet_names.append(l[0])
 
                 synset = Synset.objects.filter(name = l[0], dataset = ngt_dataset).first()
 
@@ -219,10 +215,10 @@ class Command(BaseCommand):
 
                 if synset not in gloss.synsets.all():
                     gloss.synsets.add(synset)
-                    gloss.save()          
+                    gloss.save()
 
         # Delete the Synset objects that are not in the new synsets (outdated)
-        Synset.objects.filter(name__in=existing_synset_names).exclude(name__in=new_synet_names).delete()
+        Synset.objects.filter(glosses=None).delete()
 
         print("WordNet links updated successfully.")     
 
