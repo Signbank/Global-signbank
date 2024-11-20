@@ -204,7 +204,8 @@ function checkKey(e)
     <script type='text/javascript'>
         function show_stills(el) {
             var glossid = el.value;
-            lookup = "#stills_gloss_video";
+            var lookup = "#stills_gloss_video";
+            $(lookup).empty();
             $.ajax({
                 url : url + "/dictionary/ajax/glossvideostills/" + glossid + "/",
                 datatype: "json",
@@ -224,6 +225,21 @@ function checkKey(e)
                type: 'POST',
                data: { 'csrfmiddlewaretoken': csrf_token },
             });
+        });
+        $('.choose_still').click(function(e)
+        {
+            var glossid = $(this).attr('data-glossid');
+            var lookup = "#stills_gloss_video";
+            var chosen_image = $(lookup).find('input[name="stillimage"]');
+            if (!chosen_image.length > 0) {
+                return;
+            }
+            var chosen = chosen_image.first();
+<!--            $.ajax({-->
+<!--               url : url + "/dictionary/createstills/" + glossid,-->
+<!--               type: 'POST',-->
+<!--               data: { 'csrfmiddlewaretoken': csrf_token },-->
+<!--            });-->
         });
         function play_perspective() {
             $('#videoplayer_middle').trigger('play');
@@ -979,12 +995,6 @@ textarea:focus {
             <h4>{% trans "Create Citation Form Image from Current Video" %}</h4>
             <a href="{% url 'dictionary:create_citation_image'  gloss.id %}" class="btn btn-primary">{% trans "Create" %}</a>
 
-            <button id='quick_create_stills'
-                    class="quick_createstills btn btn-primary" style="width:auto;"
-                    name='quick_createstills'
-                    data-glossid='{{gloss.id}}'
-                    type="submit" >{% trans "Generate Stills" %}
-            </button>
             <button id='choose_still_btn' class='btn btn-primary' style="width:auto;"
                  data-toggle='modal'
                  data-target='#stills_modal'>{% trans "Choose Still Image" %}</button>
@@ -998,13 +1008,19 @@ textarea:focus {
                     <div class='modal-body'>
 
                         <div style="width:800px;">
+                            <button id='quick_create_stills'
+                                class="quick_createstills btn btn-primary" style="width:auto;"
+                                name='quick_createstills'
+                                data-glossid='{{gloss.id}}'
+                                type="submit" >{% trans "Generate Stills" %}
+                            </button>
                             <button id='show_stills_btn' class='btn btn-primary'
                                     onclick=show_stills(this) value='{{gloss.id}}'>{% trans "Show Stills" %}
                             </button>
-                            <table class='table table-condensed' id="stills_gloss_video">
+                            <table class='table table-condensed'>
                                 <tbody class="tbody tbody-light">
                                     <tr>
-                                        <td>
+                                        <td id="stills_gloss_video">
 
                                         </td>
                                     </tr>
@@ -1013,7 +1029,8 @@ textarea:focus {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <input class='btn btn-primary' value='{% trans "Choose Image" %}' type='submit'>
+                        <button class="choose_still btn btn-primary" id="choose_still" data-glossid="{{gloss.id}}"
+                                type="submit" style="width:auto;">{% trans "Choose Image" %}</button>
                         <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
                     </div>
                 </div>

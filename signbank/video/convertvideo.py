@@ -134,6 +134,11 @@ def make_thumbnails(sourcefile):
         os.mkdir(temp_location_frames)
     if not os.path.isdir(temp_video_frames_folder):
         os.mkdir(temp_video_frames_folder)
+    else:
+        # remove old files before generating again
+        stills_pattern = temp_video_frames_folder + "/*.png"
+        for f in glob.glob(stills_pattern):
+            os.remove(f)
     (
         ffmpeg
         .input(sourcefile.path, ss=1)

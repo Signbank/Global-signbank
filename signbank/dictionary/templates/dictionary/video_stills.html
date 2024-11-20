@@ -6,6 +6,21 @@
 {% load tagging_tags %}
 
 {% block extrajs %}
+<style>
+input[type="radio"] {
+    display: hidden;
+}
+label {
+    position: relative;
+}
+label input {
+    position: absolute;
+    opacity: 0;
+}
+label:focus-within {
+    outline: 2px solid red;
+}
+</style>
 <script type='text/javascript'>
     var url = '{{PREFIX_URL}}';
 </script>
@@ -20,7 +35,7 @@
 {% for imagepath in stills %}
 <label>
     <img src="{{PREFIX_URL}}{{protected_media_url}}{{imagepath}}" width="200">
-    <input type="radio" name="image" value="{{imagepath}}">
+    <input type="radio" name="stillimage" value="{{imagepath}}">
 </label>
 {% endfor %}
 {% endif %}

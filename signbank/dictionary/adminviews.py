@@ -1,3 +1,4 @@
+import os.path
 
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
@@ -7603,9 +7604,10 @@ def gloss_video_stills_ajax(request, gloss_id):
     temp_video_frames_folder = os.path.join(settings.WRITABLE_FOLDER,
                                             settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames", folder)
     stills = []
-    for filename in os.listdir(temp_video_frames_folder):
-        still_path = str(os.path.join(temp_location_frames, filename))
-        stills.append(still_path)
+    if os.path.exists(temp_video_frames_folder):
+        for filename in os.listdir(temp_video_frames_folder):
+            still_path = str(os.path.join(temp_location_frames, filename))
+            stills.append(still_path)
     sorted_stills = sorted(stills)
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
