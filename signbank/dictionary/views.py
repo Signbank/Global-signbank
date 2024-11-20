@@ -1778,6 +1778,23 @@ def create_citation_image(request, pk):
 
     return redirect(url)
 
+
+def create_stills(request, pk):
+    if 'HTTP_REFERER' in request.META:
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
+
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
+    try:
+        paths = gloss.create_stills()
+    except ValidationError as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        messages.add_message(request, messages.ERROR, feedback_message)
+
+    return redirect(url)
+
+
 def add_image(request):
 
     if 'HTTP_REFERER' in request.META:

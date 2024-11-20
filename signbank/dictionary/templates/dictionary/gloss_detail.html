@@ -202,6 +202,29 @@ function checkKey(e)
     <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
     <script type='text/javascript'>
+        function show_stills(el) {
+            var glossid = el.value;
+            lookup = "#stills_gloss_video";
+            $.ajax({
+                url : url + "/dictionary/ajax/glossvideostills/" + glossid + "/",
+                datatype: "json",
+                async: true,
+                data: { 'csrfmiddlewaretoken': csrf_token },
+                success : function(result) {
+                    var parsed = $.parseHTML(result);
+                    $(lookup).first().append(result);
+                }
+            });
+        }
+        $('.quick_createstills').click(function(e)
+        {
+            var glossid = $(this).attr('data-glossid');
+            $.ajax({
+               url : url + "/dictionary/createstills/" + glossid,
+               type: 'POST',
+               data: { 'csrfmiddlewaretoken': csrf_token },
+            });
+        });
         function play_perspective() {
             $('#videoplayer_middle').trigger('play');
             $('#videoplayer_left').trigger('play');
@@ -954,9 +977,48 @@ textarea:focus {
     {% if gloss.has_video and "change_dataset" in dataset_perms %}
         <div class="editform">
             <h4>{% trans "Create Citation Form Image from Current Video" %}</h4>
-            <a href="{% url 'dictionary:create_citation_image'  gloss.id %}" class="btn btn-primary">Create</a>
-        </div>
+            <a href="{% url 'dictionary:create_citation_image'  gloss.id %}" class="btn btn-primary">{% trans "Create" %}</a>
 
+            <button id='quick_create_stills'
+                    class="quick_createstills btn btn-primary" style="width:auto;"
+                    name='quick_createstills'
+                    data-glossid='{{gloss.id}}'
+                    type="submit" >{% trans "Generate Stills" %}
+            </button>
+            <button id='choose_still_btn' class='btn btn-primary' style="width:auto;"
+                 data-toggle='modal'
+                 data-target='#stills_modal'>{% trans "Choose Still Image" %}</button>
+        </div>
+        <div class="modal fade" id="stills_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleStills" aria-hidden="true">
+             <div class="modal-dialog modal-lg left-modal">
+                <div class="modal-content">
+                    <div class='modal-header'>
+                        <h2 id='modalTitleStills'>{% trans "Choose a Still Image" %}</h2>
+                    </div>
+                    <div class='modal-body'>
+
+                        <div style="width:800px;">
+                            <button id='show_stills_btn' class='btn btn-primary'
+                                    onclick=show_stills(this) value='{{gloss.id}}'>{% trans "Show Stills" %}
+                            </button>
+                            <table class='table table-condensed' id="stills_gloss_video">
+                                <tbody class="tbody tbody-light">
+                                    <tr>
+                                        <td>
+
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <input class='btn btn-primary' value='{% trans "Choose Image" %}' type='submit'>
+                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     {% endif %}
 
     {% if "change_dataset" in dataset_perms %}
@@ -2185,7 +2247,7 @@ textarea:focus {
              data-target='#minimalpairs'>{% trans "Minimal Pairs" %}
         </div>
         <div id='minimalpairs' class='collapse'>
-            <table class='table table-condensed' id = "header_mp_rows">
+            <table class='table table-condensed' id="header_mp_rows">
 
             {% if minimalpairs %}
                <tr>
