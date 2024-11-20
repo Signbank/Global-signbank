@@ -4222,7 +4222,7 @@ msgid ""
 "This action will delete this sign and all associated records. It cannot be "
 "undone."
 msgstr ""
-"Je verwijdert zo deze aantekening. Het kan niet ongedaan gemaakt worden."
+"Je verwijdert zo deze glos. Het kan niet ongedaan gemaakt worden."
 
 #: signbank/dictionary/templates/dictionary/gloss_detail.html:744
 #: signbank/dictionary/templates/dictionary/morpheme_detail.html:340
