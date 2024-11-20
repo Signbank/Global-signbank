@@ -38,11 +38,11 @@ class Command(BaseCommand):
         DOWNLOAD_URL = "https://signwordnetannotation.pythonanywhere.com/generate_csv.html" 
         EXPECTED_LANDING_URL = "https://signwordnetannotation.pythonanywhere.com/"
 
-        with requests.Session() as session:
-            login_payload = {
-                "username": WORDNET_USERNAME,      
-                "password": WORDNET_PASSWORD      
-            }
+        session = requests.Session() 
+        login_payload = {
+            "username": WORDNET_USERNAME,      
+            "password": WORDNET_PASSWORD      
+        }
 
         # Send the login request
         login_response = session.post(LOGIN_URL, data=login_payload)
@@ -168,12 +168,17 @@ class Command(BaseCommand):
             definition = ""
 
         return lemmas, definition
-    
+
     def update_links_data(self, links, wn_dict):
         """ Update the WordNet links in the database. """
 
         ngt_dataset = Dataset.objects.get(acronym="NGT")
-        Synset.objects.filter(dataset = ngt_dataset).delete()
+        existing_synset_names = Synset.objects.filter(dataset=ngt_dataset).values_list('name', flat=True)
+        new_synet_names = []
+
+        # unlink all synsets from glosses
+        for synset in Synset.objects.filter(dataset=ngt_dataset):
+            synset.glosses.clear()
         
         for gloss_id in links.keys():
 
@@ -186,7 +191,11 @@ class Command(BaseCommand):
             
             # Create the Synset objects and add them to the Gloss
             for l in links[gloss_id]:
+                if l[0] not in existing_synset_names:
+                    new_synet_names.append(l[0])
+
                 synset = Synset.objects.filter(name = l[0], dataset = ngt_dataset).first()
+
                 if not synset:
                     synset = Synset.objects.create(name = l[0], dataset = ngt_dataset)
 
@@ -207,8 +216,13 @@ class Command(BaseCommand):
                             synset.description = description
 
                     synset.save()
-                gloss.synsets.add(synset)
-                gloss.save()          
+
+                if synset not in gloss.synsets.all():
+                    gloss.synsets.add(synset)
+                    gloss.save()          
+
+        # Delete the Synset objects that are not in the new synsets (outdated)
+        Synset.objects.filter(name__in=existing_synset_names).exclude(name__in=new_synet_names).delete()
 
         print("WordNet links updated successfully.")     
 
