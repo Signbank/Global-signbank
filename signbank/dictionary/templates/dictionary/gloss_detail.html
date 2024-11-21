@@ -231,6 +231,7 @@ function checkKey(e)
             var glossid = $(this).attr('data-glossid');
             var lookup = "#stills_gloss_video";
             var chosen_image = $(lookup).find('input[name="stillimage"]');
+            console.log('chosen: '+chosen_image);
             if (!chosen_image.length > 0) {
                 return;
             }
@@ -440,8 +441,19 @@ textarea {
 textarea:focus {
     border: 1px solid red;
 }
+.radio_stills label:has(+ input[type="radio"]:checked) > img {
+    outline: 2px solid red;
+}
+.zoom {
+  background-color: transparent;
+  transition: transform .2s; /* Animation */
+  margin: 0 auto;
+}
+.zoom:hover {
+  transform: scale(1.5);
+  outline: 2px solid red;
+}
 </style>
-
 {% endblock %}
 
 {% block content %}
@@ -1029,9 +1041,9 @@ textarea:focus {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button class="choose_still btn btn-primary" id="choose_still" data-glossid="{{gloss.id}}"
-                                type="submit" style="width:auto;">{% trans "Choose Image" %}</button>
-                        <button type="button" class="btn btn-default btn-default-light" data-dismiss="modal">{% trans "Cancel" %}</button>
+                        <input type="submit" class="choose_still btn btn-primary" id="choose_still" data-glossid="{{gloss.id}}"
+                               style="width:auto;" value='{% trans "Choose Image" %}'>
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Dismiss" %}</button>
                     </div>
                 </div>
             </div>
