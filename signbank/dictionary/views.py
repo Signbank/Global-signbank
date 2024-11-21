@@ -1,3 +1,5 @@
+import os.path
+
 from django.conf import empty
 from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed, Http404
 from django.shortcuts import render, get_object_or_404, redirect
@@ -23,7 +25,7 @@ from signbank.dictionary.update_csv import (update_simultaneous_morphology, upda
 import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
-from signbank.tools import save_media
+from signbank.tools import save_media, get_two_letter_dir
 from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, \
     get_dataset_languages, \
     create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
@@ -1791,6 +1793,40 @@ def create_stills(request, pk):
     except ValidationError as e:
         feedback_message = getattr(e, 'message', repr(e))
         messages.add_message(request, messages.ERROR, feedback_message)
+
+    return redirect(url)
+
+def add_still_image(request, pk):
+    if 'HTTP_REFERER' in request.META:
+        url = request.META['HTTP_REFERER']
+    else:
+        url = '/'
+
+    gloss = get_object_or_404(Gloss, pk=pk, archived=False)
+
+    imagepath = request.POST.get('imagepath', '')
+    if not imagepath:
+        return redirect(url)
+
+    image_location = os.path.join(WRITABLE_FOLDER, imagepath)
+    dataset_folder = gloss.lemma.dataset.acronym
+    idgloss = gloss.idgloss
+    two_char_folder = get_two_letter_dir(idgloss)
+
+    vfile_name = idgloss + '-' + str(gloss.id) + '.png'
+    still_goal_location = os.path.join(WRITABLE_FOLDER, GLOSS_IMAGE_DIRECTORY, dataset_folder, two_char_folder, vfile_name)
+    try:
+        if os.path.exists(still_goal_location):
+            os.remove(still_goal_location)
+        os.rename(image_location, still_goal_location)
+    except (PermissionError, OSError) as e:
+        feedback_message = getattr(e, 'message', repr(e))
+        messages.add_message(request, messages.ERROR, feedback_message)
+
+    from signbank.video.models import GlossVideo
+    glossvideo = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None, version=0).first()
+    if glossvideo:
+        glossvideo.delete_image_sequence()
 
     return redirect(url)
 

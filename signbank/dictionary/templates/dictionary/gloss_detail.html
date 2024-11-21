@@ -230,17 +230,23 @@ function checkKey(e)
         {
             var glossid = $(this).attr('data-glossid');
             var lookup = "#stills_gloss_video";
-            var chosen_image = $(lookup).find('input[name="stillimage"]');
-            console.log('chosen: '+chosen_image);
+            var chosen_image = [];
+            $(lookup).find('input[name="stillimage"]').each(function() {
+                if (this.checked) {
+                    chosen_image.push(this.value);
+                }
+            });
             if (!chosen_image.length > 0) {
                 return;
             }
-            var chosen = chosen_image.first();
-<!--            $.ajax({-->
-<!--               url : url + "/dictionary/createstills/" + glossid,-->
-<!--               type: 'POST',-->
-<!--               data: { 'csrfmiddlewaretoken': csrf_token },-->
-<!--            });-->
+            var chosen = chosen_image[0];
+            $.ajax({
+               url : url + "/dictionary/addstill/" + glossid,
+               type: 'POST',
+               datatype: "json",
+               data: { 'csrfmiddlewaretoken': csrf_token,
+                       'imagepath': chosen }
+            });
         });
         function play_perspective() {
             $('#videoplayer_middle').trigger('play');

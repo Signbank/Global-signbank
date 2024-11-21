@@ -15,9 +15,6 @@
 <div id="glossstills_{{focus_gloss.id}}">
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 {% csrf_token %}
-{% if not stills %}
-    <p>{% trans "No stills found. Generate them first." %}</p>
-{% else %}
 <div class="radio_stills">
 {% for imagepath in stills %}
     <label class="still_label" for="still_{{forloop.counter}}">
@@ -26,5 +23,4 @@
     <input type="radio" name="stillimage" value="{{imagepath}}" id="still_{{forloop.counter}}">
 {% endfor %}
 </div>
-{% endif %}
 </div>

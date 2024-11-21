@@ -290,5 +290,8 @@ urlpatterns = [
     re_path(r'createstills/(?P<pk>\d+)',
             permission_required('dictionary.change_gloss')(signbank.dictionary.views.create_stills),
             name='create_stills'),
+    re_path(r'addstill/(?P<pk>\d+)',
+            permission_required('dictionary.change_gloss')(signbank.dictionary.views.add_still_image),
+            name='add_still_image'),
     re_path(r'gloss/api/', signbank.dictionary.views.gloss_api_get_sign_name_and_media_info, name='gloss_api_get_info')
 ]
