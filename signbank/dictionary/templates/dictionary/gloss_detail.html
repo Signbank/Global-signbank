@@ -239,7 +239,6 @@ function checkKey(e)
             videoIds.forEach(id => {
                 const video = document.getElementById(id);
                 if (video && window.getComputedStyle(video).display !== 'none') { 
-                    console.log('Found active video:', video);
                     activeVideo = video;
                 }
             });
