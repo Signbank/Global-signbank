@@ -251,6 +251,8 @@ function checkKey(e)
                     var lookup = "#stills_gloss_video";
                     $(lookup).empty();
                     $(stills_modal).modal("hide");
+                    var message = '{% trans "Success. Reload the page to show the new image." %}';
+                    alert(message);
                }
             });
         });
