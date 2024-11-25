@@ -7594,7 +7594,7 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
 
-def gloss_video_stills_ajax(request, gloss_id):
+def fetch_video_stills_for_gloss(request, gloss_id):
 
     gloss = Gloss.objects.get(id=gloss_id, archived=False)
 

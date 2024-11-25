@@ -207,7 +207,7 @@ function checkKey(e)
             var lookup = "#stills_gloss_video";
             $(lookup).empty();
             $.ajax({
-                url : url + "/dictionary/ajax/glossvideostills/" + glossid + "/",
+                url : url + "/dictionary/ajax/fetch_video_stills_for_gloss/" + glossid + "/",
                 datatype: "json",
                 async: true,
                 data: { 'csrfmiddlewaretoken': csrf_token },
@@ -221,7 +221,7 @@ function checkKey(e)
         {
             var glossid = $(this).attr('data-glossid');
             $.ajax({
-               url : url + "/dictionary/createstills/" + glossid,
+               url : url + "/dictionary/generate_video_stills_for_gloss/" + glossid,
                type: 'POST',
                data: { 'csrfmiddlewaretoken': csrf_token },
             });
@@ -241,11 +241,17 @@ function checkKey(e)
             }
             var chosen = chosen_image[0];
             $.ajax({
-               url : url + "/dictionary/addstill/" + glossid,
+               url : url + "/dictionary/save_chosen_still_for_gloss/" + glossid,
                type: 'POST',
                datatype: "json",
                data: { 'csrfmiddlewaretoken': csrf_token,
-                       'imagepath': chosen }
+                       'imagepath': chosen },
+               success: function() {
+                    var stills_modal = '#stills_modal';
+                    var lookup = "#stills_gloss_video";
+                    $(lookup).empty();
+                    $(stills_modal).modal("hide");
+               }
             });
         });
         function play_perspective() {

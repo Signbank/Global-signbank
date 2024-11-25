@@ -121,7 +121,7 @@ def probe_format(file):
     return r['inputvideoformat']
 
 
-def make_thumbnails(sourcefile):
+def generate_image_sequence(sourcefile):
     basename, _ = os.path.splitext(sourcefile.path)
     temp_location_frames = os.path.join(settings.WRITABLE_FOLDER,
                                         settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames")

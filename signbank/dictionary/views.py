@@ -1781,7 +1781,7 @@ def create_citation_image(request, pk):
     return redirect(url)
 
 
-def create_stills(request, pk):
+def generate_video_stills_for_gloss(request, pk):
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
@@ -1789,14 +1789,15 @@ def create_stills(request, pk):
 
     gloss = get_object_or_404(Gloss, pk=pk, archived=False)
     try:
-        paths = gloss.create_stills()
-    except ValidationError as e:
+        gloss.generate_stills()
+    except (PermissionError, OSError) as e:
         feedback_message = getattr(e, 'message', repr(e))
         messages.add_message(request, messages.ERROR, feedback_message)
 
     return redirect(url)
 
-def add_still_image(request, pk):
+
+def save_chosen_still_for_gloss(request, pk):
     if 'HTTP_REFERER' in request.META:
         url = request.META['HTTP_REFERER']
     else:
@@ -1823,6 +1824,7 @@ def add_still_image(request, pk):
         feedback_message = getattr(e, 'message', repr(e))
         messages.add_message(request, messages.ERROR, feedback_message)
 
+    # clean up the unused image files
     from signbank.video.models import GlossVideo
     glossvideo = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None, version=0).first()
     if glossvideo:
