@@ -282,6 +282,63 @@ function checkKey(e)
             restart_video(right);
         }
 
+        function openFullscreen() {
+            // Get the videos with IDs videoplayer_[direction]
+            const videoIds = ['videoplayer_left', 'videoplayer_middle', 'videoplayer_right']; 
+            let activeVideo = null;
+
+            // Loop through the video IDs and check which one is active
+            videoIds.forEach(id => {
+                const video = document.getElementById(id);
+                if (video && window.getComputedStyle(video).display !== 'none') { 
+                    activeVideo = video;
+                }
+            });
+
+            if (activeVideo) {
+
+                // turn on controls in fullscreen
+                activeVideo.controls = true;
+                // activate fullscreen mode
+                if (activeVideo.requestFullscreen) {
+                    activeVideo.requestFullscreen();
+                } else if (activeVideo.mozRequestFullScreen) { // Firefox
+                    activeVideo.mozRequestFullScreen();
+                } else if (activeVideo.webkitRequestFullscreen) { // Chrome, Safari, and Opera
+                    activeVideo.webkitRequestFullscreen();
+                } else if (activeVideo.msRequestFullscreen) { // IE/Edge
+                    activeVideo.msRequestFullscreen();
+                }
+            } 
+            // on exit fullscreen mode, reset each video
+            document.addEventListener('fullscreenchange', resetVideos);
+            document.addEventListener('webkitfullscreenchange', resetVideos); // For Safari
+            document.addEventListener('mozfullscreenchange', resetVideos); // For Firefox
+            document.addEventListener('MSFullscreenChange', resetVideos); // For IE/Edge
+        }
+
+        function resetVideos() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && 
+                !document.mozFullScreenElement && !document.msFullscreenElement) {
+                
+                // Get the videos with IDs videoplayer_[direction]
+                const videoIds = ['videoplayer_middle', 'videoplayer_left', 'videoplayer_right'];
+                videoIds.forEach(id => {
+                    const video = document.getElementById(id);
+                    if (video) {
+                        video.controls = false; 
+                        video.currentTime = 0; 
+                    }
+                });
+
+                // Remove fullscreen event listeners when exiting fullscreen
+                document.removeEventListener('fullscreenchange', resetVideos);
+                document.removeEventListener('webkitfullscreenchange', resetVideos);
+                document.removeEventListener('mozfullscreenchange', resetVideos);
+                document.removeEventListener('MSFullscreenChange', resetVideos);
+            }
+        }
+
         // This script gets minimal pairs data and displays it as table rows
         $(document).ready(function() {
             lookup = "#header_mp_rows";
@@ -874,6 +931,8 @@ textarea:focus {
                 style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-play"></span></button>
         <button class="btn" id="pause_perspective" onclick="pause_perspective();"
                 style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-pause"></span></button>
+        <button class="btn" id="fullscreen_perspective" onclick="openFullscreen();"
+                style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-fullscreen"></span></button>
         </div>
         <br>
     {% else %}
