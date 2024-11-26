@@ -89,12 +89,57 @@ class GlossVideoExistenceFilter(admin.SimpleListFilter):
             return queryset.all()
 
 
+@admin.action(description="Delete backup videos")
+def remove_backups(modeladmin, request, queryset):
+    import os
+    glosses_in_queryset = [obj.gloss for obj in queryset if obj.version > 0]
+    distinct_glosses = list(set(glosses_in_queryset))
+    lookup_backup_files = dict()
+    for gloss in distinct_glosses:
+        lookup_backup_files[gloss] = GlossVideo.objects.filter(gloss=gloss, version__gt=0).order_by('version')
+    for obj in queryset:
+        # unlink all the files
+        if obj.version == 0:
+            # skip version 0 video
+            continue
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
+        if os.path.exists(video_file_full_path):
+            try:
+                # os.unlink(obj.videofile.path)
+                print('unlink ', video_file_full_path)
+            except (OSError, PermissionError):
+                print('could not delete video file: ', video_file_full_path)
+    remaining_backup_files = dict()
+    for gloss, videos in lookup_backup_files.items():
+        cleaned_up_videos = []
+        for video in videos:
+            print(video)
+            video_file_full_path = os.path.join(WRITABLE_FOLDER, str(video))
+            if os.path.exists(video_file_full_path):
+                # file was not deleted in previous step
+                cleaned_up_videos.append(video)
+                continue
+            try:
+                # video.delete()
+                print('delete video')
+            except (OSError, PermissionError):
+                cleaned_up_videos.append(video)
+        remaining_backup_files[gloss] = cleaned_up_videos
+    print(remaining_backup_files)
+    for gloss, videos in remaining_backup_files.items():
+        for inx, video in enumerate(videos, 1):
+            print('gloss video version ', inx)
+            # video.version = inx
+            # video.save()
+
+
 class GlossVideoAdmin(admin.ModelAdmin):
 
     list_display = ['id', 'gloss', 'video_file', 'perspective', 'NME', 'file_timestamp', 'file_group', 'permissions', 'file_size', 'version']
     list_filter = (GlossVideoDatasetFilter, GlossVideoFileSystemGroupFilter, GlossVideoExistenceFilter)
 
     search_fields = ['^gloss__annotationidglosstranslation__text']
+    actions = [remove_backups]
 
     def video_file(self, obj=None):
         # this will display the full path in the list view
@@ -179,6 +224,7 @@ class GlossVideoAdmin(admin.ModelAdmin):
         if not self.file_timestamp(obj):
             return True
         return False
+
 
 
 class GlossVideoHistoryDatasetFilter(admin.SimpleListFilter):
