@@ -1,7 +1,7 @@
 import os.path
 
 from django.conf import empty
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed, Http404
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest, HttpResponseNotAllowed, Http404, JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
@@ -1798,16 +1798,13 @@ def generate_video_stills_for_gloss(request, pk):
 
 
 def save_chosen_still_for_gloss(request, pk):
-    if 'HTTP_REFERER' in request.META:
-        url = request.META['HTTP_REFERER']
-    else:
-        url = '/'
 
     gloss = get_object_or_404(Gloss, pk=pk, archived=False)
+    redirect_url = reverse('dictionary:admin_gloss_view', kwargs={'pk': pk})
 
     imagepath = request.POST.get('imagepath', '')
     if not imagepath:
-        return redirect(url)
+        return JsonResponse({'redirect_url': redirect_url})
 
     image_location = os.path.join(WRITABLE_FOLDER, imagepath)
     dataset_folder = gloss.lemma.dataset.acronym
@@ -1830,7 +1827,7 @@ def save_chosen_still_for_gloss(request, pk):
     if glossvideo:
         glossvideo.delete_image_sequence()
 
-    return redirect(url)
+    return JsonResponse({'redirect_url': redirect_url})
 
 
 def add_image(request):

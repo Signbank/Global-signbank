@@ -246,13 +246,13 @@ function checkKey(e)
                datatype: "json",
                data: { 'csrfmiddlewaretoken': csrf_token,
                        'imagepath': chosen },
-               success: function() {
+               success: function(data) {
                     var stills_modal = '#stills_modal';
                     var lookup = "#stills_gloss_video";
                     $(lookup).empty();
                     $(stills_modal).modal("hide");
-                    var message = '{% trans "Success. Reload the page to show the new image." %}';
-                    alert(message);
+                    var redirect_url = data.redirect_url;
+                    window.location.replace(redirect_url);
                }
             });
         });
