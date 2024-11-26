@@ -684,6 +684,7 @@ class GlossRevisionAdmin(VersionAdmin):
     list_display = ['time', 'user', 'dataset', 'gloss', 'field_name', 'old_value', 'new_value']
     readonly_fields = ['user', 'gloss', 'field_name', 'old_value', 'new_value', 'time', 'old_value']
     list_filter = (GlossRevisionDatasetFilter, GlossRevisionUserFilter,)
+    search_fields = ['gloss__lemma__lemmaidglosstranslation__text']
 
     def has_add_permission(self, request):
         return False
@@ -699,6 +700,7 @@ class DeletedGlossOrMediaAdmin(admin.ModelAdmin):
 
     list_display = ['item_type', 'idgloss', 'annotation_idgloss', 'old_pk', 'filename', 'deletion_date']
     readonly_fields = ['item_type', 'idgloss', 'annotation_idgloss', 'old_pk', 'filename', 'deletion_date']
+    search_fields = ['idgloss', 'annotation_idgloss']
 
     def has_add_permission(self, request):
         return False
