@@ -202,21 +202,6 @@ function checkKey(e)
     <script type="text/javascript" src="{{STATIC_URL}}js/recordscript.js"></script>
 
     <script type='text/javascript'>
-        function show_stills(el) {
-            var glossid = el.value;
-            var lookup = "#stills_gloss_video";
-            $(lookup).empty();
-            $.ajax({
-                url : url + "/dictionary/ajax/fetch_video_stills_for_gloss/" + glossid + "/",
-                datatype: "json",
-                async: true,
-                data: { 'csrfmiddlewaretoken': csrf_token },
-                success : function(result) {
-                    var parsed = $.parseHTML(result);
-                    $(lookup).first().append(result);
-                }
-            });
-        }
         $('.quick_createstills').click(function(e)
         {
             var glossid = $(this).attr('data-glossid');
@@ -224,6 +209,20 @@ function checkKey(e)
                url : url + "/dictionary/generate_video_stills_for_gloss/" + glossid,
                type: 'POST',
                data: { 'csrfmiddlewaretoken': csrf_token },
+               success : function(data) {
+                    var lookup = "#stills_gloss_video";
+                    $(lookup).empty();
+                    $.ajax({
+                        url : url + "/dictionary/ajax/fetch_video_stills_for_gloss/" + glossid + "/",
+                        datatype: "json",
+                        async: true,
+                        data: { 'csrfmiddlewaretoken': csrf_token },
+                        success : function(result) {
+                            var parsed = $.parseHTML(result);
+                            $(lookup).first().append(result);
+                        }
+                    });
+               }
             });
         });
         $('.choose_still').click(function(e)
@@ -1098,9 +1097,6 @@ textarea:focus {
                                 name='quick_createstills'
                                 data-glossid='{{gloss.id}}'
                                 type="submit" >{% trans "Generate Stills" %}
-                            </button>
-                            <button id='show_stills_btn' class='btn btn-primary'
-                                    onclick=show_stills(this) value='{{gloss.id}}'>{% trans "Show Stills" %}
                             </button>
                             <table class='table table-condensed'>
                                 <tbody class="tbody tbody-light">
