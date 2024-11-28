@@ -135,7 +135,8 @@ INSTALLED_APPS = (
     #'signbank.registration',
     'signbank.pages',
     'signbank.attachments',
-    'signbank.video'
+    'signbank.video',
+    'signbank.animation'
     # 'debug_toolbar',
     # 'video_encoding'
 )
