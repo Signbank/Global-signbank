@@ -10,7 +10,7 @@ import time
 import stat
 import shutil
 
-from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video
+from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video, generate_image_sequence, remove_stills
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
@@ -698,6 +698,14 @@ class GlossVideo(models.Model):
             return small_video_path
         else:
             return None
+
+    def make_image_sequence(self):
+
+        generate_image_sequence(self.videofile)
+
+    def delete_image_sequence(self):
+
+        remove_stills(self.videofile)
 
     def make_small_video(self):
         # this method is not called (bugs)

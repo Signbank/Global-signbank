@@ -2518,6 +2518,16 @@ class Gloss(models.Model):
         glossvideo = glossvideos.first()
         glossvideo.make_poster_image()
 
+    def generate_stills(self):
+        from signbank.video.models import GlossVideo
+        glossvideos = GlossVideo.objects.filter(gloss=self, glossvideonme=None, glossvideoperspective=None, version=0)
+        if not glossvideos:
+            msg = ("Gloss::create_stills: no video for gloss %s"
+                   % self.pk)
+            raise ValidationError(msg)
+        glossvideo = glossvideos.first()
+        glossvideo.make_image_sequence()
+
     def published_definitions(self):
         """Return a query set of just the published definitions for this gloss
         also filter out those fields not in DEFINITION_FIELDS"""

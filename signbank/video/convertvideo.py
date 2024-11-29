@@ -121,6 +121,53 @@ def probe_format(file):
     return r['inputvideoformat']
 
 
+def generate_image_sequence(sourcefile):
+    basename, _ = os.path.splitext(sourcefile.path)
+    temp_location_frames = os.path.join(settings.WRITABLE_FOLDER,
+                                        settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames")
+    filename, ext = os.path.splitext(os.path.basename(sourcefile.name))
+    filename = filename.replace(' ', '_')
+    folder_name, _ = os.path.splitext(filename)
+    temp_video_frames_folder = os.path.join(temp_location_frames, folder_name)
+    # Create the necessary subfolder if needed
+    if not os.path.isdir(temp_location_frames):
+        os.mkdir(temp_location_frames)
+    if not os.path.isdir(temp_video_frames_folder):
+        os.mkdir(temp_video_frames_folder)
+    else:
+        # remove old files before generating again
+        stills_pattern = temp_video_frames_folder + "/*.png"
+        for f in glob.glob(stills_pattern):
+            os.remove(f)
+    (
+        ffmpeg
+        .input(sourcefile.path, ss=1)
+        .filter('fps', fps=15, round='up')
+        .output("%s/%s-%%04d.png" % (temp_video_frames_folder, folder_name), **{'qscale:v': 2})
+        .run(quiet=True)
+    )
+    stills = []
+    for filename in os.listdir(temp_video_frames_folder):
+        still_path = os.path.join(temp_video_frames_folder, filename)
+        stills.append(still_path)
+
+    return stills
+
+
+def remove_stills(sourcefile):
+    basename, _ = os.path.splitext(sourcefile.path)
+    temp_location_frames = os.path.join(settings.WRITABLE_FOLDER,
+                                        settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames")
+    filename, ext = os.path.splitext(os.path.basename(sourcefile.name))
+    filename = filename.replace(' ', '_')
+    folder_name, _ = os.path.splitext(filename)
+    temp_video_frames_folder = os.path.join(temp_location_frames, folder_name)
+    # remove the temp files
+    stills_pattern = temp_video_frames_folder+"/*.png"
+    for f in glob.glob(stills_pattern):
+        os.remove(f)
+
+
 def make_thumbnail_video(sourcefile, targetfile):
     # this method is not called (need to move temp files to /tmp instead)
     # this function also works on source quicktime videos

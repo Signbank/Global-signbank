@@ -1,0 +1,26 @@
+{% load i18n %}
+{% load stylesheet %}
+{% load annotation_idgloss_translation %}
+
+{% load bootstrap3 %}
+{% load tagging_tags %}
+
+{% block extrajs %}
+<script type='text/javascript'>
+    var url = '{{PREFIX_URL}}';
+
+</script>
+{% endblock %}
+
+<div id="glossstills_{{focus_gloss.id}}">
+{% url 'dictionary:protected_media' '' as protected_media_url %}
+{% csrf_token %}
+<div class="radio_stills">
+{% for imagepath in stills %}
+    <label class="still_label" for="still_{{forloop.counter}}">
+    <img class="zoom" src="{{PREFIX_URL}}{{protected_media_url}}{{imagepath}}" width="200">
+    </label>
+    <input type="radio" name="stillimage" value="{{imagepath}}" id="still_{{forloop.counter}}">
+{% endfor %}
+</div>
+</div>
