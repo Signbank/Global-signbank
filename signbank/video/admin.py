@@ -11,7 +11,7 @@ from signbank.settings.server_specific import WRITABLE_FOLDER, FILESYSTEM_SIGNBA
 from django.utils.translation import override, gettext_lazy as _
 from django.db.models import Q, Count, CharField, TextField, Value as V
 from signbank.tools import get_two_letter_dir
-# from signbank.video.convertvideo import probe_format
+from signbank.video.convertvideo import video_file_type_extension
 import subprocess
 
 
@@ -94,15 +94,46 @@ class GlossVideoExistenceFilter(admin.SimpleListFilter):
             return queryset.all()
 
 
-@admin.action(description="Rename extension of backup videos for glosses")
+class GlossVideoFileTypeFilter(admin.SimpleListFilter):
+
+    title = _('MP4 File')
+    parameter_name = 'file_type'
+
+    def lookups(self, request, model_admin):
+        file_type = tuple((b, b) for b in ('True', 'False'))
+        return file_type
+
+    def queryset(self, request, queryset):
+
+        def matching_file_type(videofile, key):
+            if not key:
+                return False
+            from pathlib import Path
+            video_file_full_path = Path(WRITABLE_FOLDER, videofile)
+            if video_file_full_path.exists():
+                file_extension = video_file_type_extension(video_file_full_path)
+                return key == str((file_extension == '.mp4'))
+            else:
+                return key == 'False'
+
+        queryset_res = queryset.values('id', 'videofile')
+        results = [qv['id'] for qv in queryset_res
+                   if matching_file_type(qv['videofile'], self.value())]
+
+        if self.value():
+            return queryset.filter(id__in=results)
+        else:
+            return queryset.all()
+
+
+@admin.action(description="Rename extension to match video type")
 def rename_extension_videos(modeladmin, request, queryset):
     import os
     # retrieve glosses of selected GlossVideo objects for later step
     distinct_glosses = Gloss.objects.filter(glossvideo__in=queryset).distinct()
 
-    lookup_backup_files = dict()
     for gloss in distinct_glosses:
-        for glossvideo in GlossVideo.objects.filter(gloss=gloss, version__gt=0).order_by('version', 'id'):
+        for glossvideo in GlossVideo.objects.filter(gloss=gloss).order_by('version', 'id'):
 
             video_file_full_path = os.path.join(WRITABLE_FOLDER, str(glossvideo.videofile))
             if not os.path.exists(video_file_full_path):
@@ -116,28 +147,17 @@ def rename_extension_videos(modeladmin, request, queryset):
             dataset_dir = gloss.lemma.dataset.acronym
             desired_filename_without_extension = idgloss + '-' + str(gloss.id)
 
-            filetype_output = subprocess.run(["file", video_file_full_path], stdout=subprocess.PIPE)
-            filetype = str(filetype_output.stdout)
-            if 'MOV' in filetype:
-                desired_video_extension = '.mov'
-            elif 'M4V' in filetype:
-                desired_video_extension = 'm4v'
-            elif 'MP4' in filetype:
-                desired_video_extension = '.mp4'
-            elif 'Matroska' in filetype:
-                desired_video_extension = '.webm'
-            else:
-                if DEBUG_VIDEOS:
-                    print('video:admin:remove_backups:rename_extension_videos:file:UNKNOWN ', filetype)
-                desired_video_extension = '.mp4'
+            # use the file system command 'file' to determine the extension for the type of video file
+            desired_video_extension = video_file_type_extension(video_file_full_path)
 
-            desired_extension = desired_video_extension + '.bak' + str(glossvideo.id)
+            if glossvideo.version > 0:
+                desired_extension = desired_video_extension + '.bak' + str(glossvideo.id)
+            else:
+                desired_extension = desired_video_extension
 
             desired_filename = desired_filename_without_extension + desired_extension
 
             if base_filename == desired_filename:
-                if DEBUG_VIDEOS:
-                    print('video:admin:remove_backups:rename_extension_videos:basename: OKAY', base_filename)
                 continue
 
             current_relative_path = str(glossvideo.videofile)
@@ -152,7 +172,7 @@ def rename_extension_videos(modeladmin, request, queryset):
             # glossvideo.save()
 
 
-@admin.action(description="Delete backup videos for glosses")
+@admin.action(description="Delete selected backup videos and renumber remaining backups")
 def remove_backups(modeladmin, request, queryset):
     import os
     # retrieve glosses of selected GlossVideo objects for later step
@@ -166,18 +186,16 @@ def remove_backups(modeladmin, request, queryset):
             # this is in addition to  the signal pre_delete of a GlossVideo object, which may not delete the files
             try:
                 # os.unlink(obj.videofile.path)
-                if DEBUG_VIDEOS:
-                    print('video:admin:remove_backups:unlink: ', relative_path)
                 # os.remove(video_file_full_path)
                 if DEBUG_VIDEOS:
-                    print('video:admin:remove_backups:remove: ', video_file_full_path)
+                    print('video:admin:remove_backups:remove file: ', video_file_full_path)
             except (OSError, PermissionError):
                 if DEBUG_VIDEOS:
                     print('Exception video:admin:remove_backups: could not delete video file: ', video_file_full_path)
                 continue
         # only backup videos are deleted here
         if DEBUG_VIDEOS:
-            print('video:admin:remove_backups:delete: ', relative_path)
+            print('video:admin:remove_backups:delete object: ', relative_path)
         # obj.delete()
     # construct data structure for glosses and remaining backup videos that were not selected
     lookup_backup_files = dict()
@@ -198,8 +216,8 @@ def remove_backups(modeladmin, request, queryset):
 
 class GlossVideoAdmin(admin.ModelAdmin):
 
-    list_display = ['id', 'gloss', 'video_file', 'perspective', 'NME', 'file_timestamp', 'file_group', 'permissions', 'file_size', 'version']
-    list_filter = (GlossVideoDatasetFilter, GlossVideoFileSystemGroupFilter, GlossVideoExistenceFilter)
+    list_display = ['id', 'gloss', 'video_file', 'perspective', 'NME', 'file_timestamp', 'file_group', 'permissions', 'file_size', 'video_type',  'version']
+    list_filter = (GlossVideoDatasetFilter, GlossVideoFileSystemGroupFilter, GlossVideoExistenceFilter, GlossVideoFileTypeFilter)
 
     search_fields = ['^gloss__annotationidglosstranslation__text', '^gloss__lemma__lemmaidglosstranslation__text']
     actions = [remove_backups, rename_extension_videos]
@@ -274,6 +292,17 @@ class GlossVideoAdmin(admin.ModelAdmin):
                 return stats
             else:
                 return ""
+
+    def video_type(self, obj=None):
+        # if the file exists, this will display its timestamp in the list view
+        if obj is None:
+            return ""
+        import os
+        video_file_full_path = os.path.join(WRITABLE_FOLDER, str(obj.videofile))
+        if os.path.exists(video_file_full_path):
+            return video_file_type_extension(video_file_full_path)
+        else:
+            return ""
 
     def get_list_display_links(self, request, list_display):
         # do not allow the user to view individual revisions in list

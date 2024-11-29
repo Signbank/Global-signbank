@@ -18,6 +18,8 @@ import glob
 import ffmpeg
 from subprocess import Popen, PIPE
 import re
+import subprocess
+from signbank.settings.server_specific import DEBUG_VIDEOS
 
 
 def parse_ffmpeg_output(text):
@@ -207,6 +209,28 @@ def make_thumbnail_video(sourcefile, targetfile):
     for f in glob.glob(stills_pattern):
         os.remove(f)
     os.remove(temp_target)
+
+
+def video_file_type_extension(video_file_full_path):
+    filetype_output = subprocess.run(["file", video_file_full_path], stdout=subprocess.PIPE)
+    filetype = str(filetype_output.stdout)
+    if 'MOV' in filetype:
+        desired_video_extension = '.mov'
+    elif 'M4V' in filetype:
+        desired_video_extension = '.m4v'
+    elif 'MP4' in filetype:
+        desired_video_extension = '.mp4'
+    elif 'Matroska' in filetype:
+        desired_video_extension = '.webm'
+    elif 'MKV' in filetype:
+        desired_video_extension = '.mkv'
+    elif 'MPEG-2' in filetype:
+        desired_video_extension = '.m2v'
+    else:
+        if DEBUG_VIDEOS:
+            print('video:admin:convertvideo:video_file_type_extension:file:UNKNOWN ', filetype)
+        desired_video_extension = '.unknown'
+    return desired_video_extension
 
 
 def convert_video(sourcefile, targetfile, force=False):
