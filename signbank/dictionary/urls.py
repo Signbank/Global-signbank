@@ -10,7 +10,7 @@ from signbank.dictionary.adminviews import (GlossListView, GlossDetailView, Glos
     create_lemma_for_gloss, LemmaUpdateView, SemanticFieldDetailView, SemanticFieldListView, DerivationHistoryDetailView,
     DerivationHistoryListView, GlossVideosView, KeywordListView, AnnotatedSentenceDetailView, AnnotatedSentenceListView)
 
-from signbank.dictionary.views import create_citation_image
+from signbank.dictionary.views import create_citation_image, generate_video_stills_for_gloss
 
 # These are needed for the urls below
 import signbank.dictionary.views
@@ -169,6 +169,7 @@ urlpatterns = [
     re_path(r'^ajax/senserow/(?P<sense_id>.*)/$', signbank.dictionary.adminviews.senselist_ajax_complete, name='senselist_ajax_complete'),
     re_path(r'^ajax/senselistheader/$', signbank.dictionary.adminviews.senselistheader_ajax, name='senselistheader_ajax'),
     re_path(r'^ajax/lemmaglossrow/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.lemmaglosslist_ajax_complete, name='lemmaglosslist_ajax_complete'),
+    re_path(r'^ajax/fetch_video_stills_for_gloss/(?P<gloss_id>.*)/$', signbank.dictionary.adminviews.fetch_video_stills_for_gloss, name='fetch_video_stills_for_gloss'),
 
     re_path(r'^ajax/annotatedglosslistheader/$', signbank.dictionary.adminviews.annotatedglosslistheader_ajax,
             name='annotatedglosslistheader_ajax'),
@@ -286,6 +287,11 @@ urlpatterns = [
     re_path(r'createcitationimage/(?P<pk>\d+)',
             permission_required('dictionary.change_gloss')(signbank.dictionary.views.create_citation_image),
             name='create_citation_image'),
-
+    re_path(r'generate_video_stills_for_gloss/(?P<pk>\d+)',
+            permission_required('dictionary.change_gloss')(signbank.dictionary.views.generate_video_stills_for_gloss),
+            name='generate_video_stills_for_gloss'),
+    re_path(r'save_chosen_still_for_gloss/(?P<pk>\d+)',
+            permission_required('dictionary.change_gloss')(signbank.dictionary.views.save_chosen_still_for_gloss),
+            name='save_chosen_still_for_gloss'),
     re_path(r'gloss/api/', signbank.dictionary.views.gloss_api_get_sign_name_and_media_info, name='gloss_api_get_info')
 ]
