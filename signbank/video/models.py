@@ -10,7 +10,7 @@ import time
 import stat
 import shutil
 
-from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video
+from signbank.video.convertvideo import extract_frame, convert_video, probe_format, make_thumbnail_video, generate_image_sequence, remove_stills
 
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth import models as authmodels
@@ -79,8 +79,8 @@ class ExampleVideoHistory(models.Model):
     def __str__(self):
 
         # Basic feedback from one History item: gloss-action-date
-        name = str(self.examplesentence.id) + ': ' + self.action + ', (' + str(self.datestamp) + ')'
-        return str(name.encode('ascii', errors='replace'))
+        name = f"{self.examplesentence.id}: {self.action}, ({self.datestamp})"
+        return name
 
     class Meta:
         ordering = ['datestamp']
@@ -108,8 +108,8 @@ class GlossVideoHistory(models.Model):
     def __str__(self):
 
         # Basic feedback from one History item: gloss-action-date
-        name = self.gloss.idgloss + ': ' + self.action + ', (' + str(self.datestamp) + ')'
-        return str(name.encode('ascii', errors='replace'))
+        name = f"{self.gloss.idgloss}: {self.action}, ({self.datestamp})"
+        return name
 
     class Meta:
         ordering = ['datestamp']
@@ -129,6 +129,19 @@ class GlossVideoHistory(models.Model):
 # * The video path: get_video_file_path(...)
 # * Changes to the dataset, acronym of default language: process_dataset_changes(...)
 # * Changes to the lemmaidglosstranslations: process_lemmaidglosstranslation_changes(...)
+
+
+def get_gloss_path_to_video_file_on_disk(gloss):
+    idgloss = gloss.idgloss
+    two_letter_dir = get_two_letter_dir(idgloss)
+    dataset_dir = gloss.lemma.dataset.acronym
+    filename = idgloss + '-' + str(gloss.id) + '.mp4'
+    relative_path = os.path.join(GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir, filename)
+    file_system_path = os.path.join(WRITABLE_FOLDER, GLOSS_VIDEO_DIRECTORY, dataset_dir, two_letter_dir, filename)
+    if os.path.exists(file_system_path):
+        return relative_path
+    else:
+        return ""
 
 
 def get_video_file_path(instance, filename, nmevideo=False, perspective='', offset=1, version=0):
@@ -686,6 +699,14 @@ class GlossVideo(models.Model):
         else:
             return None
 
+    def make_image_sequence(self):
+
+        generate_image_sequence(self.videofile)
+
+    def delete_image_sequence(self):
+
+        remove_stills(self.videofile)
+
     def make_small_video(self):
         # this method is not called (bugs)
         name, _ = os.path.splitext(self.videofile.path)
@@ -1116,6 +1137,10 @@ def process_gloss_changes(sender, instance, update_fields=[], **kwargs):
     gloss = instance
     glossvideos = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None)
     for glossvideo in glossvideos:
+        if hasattr(instance, 'glossvideonme'):
+            continue
+        if hasattr(instance, 'glossvideoperspective'):
+            continue
         glossvideo.move_video(move_files_on_disk=True)
     glossvideos = GlossVideoNME.objects.filter(gloss=gloss)
     for glossvideo in glossvideos:

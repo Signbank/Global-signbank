@@ -1,3 +1,4 @@
+import os.path
 
 from django.views.generic.list import ListView
 from django.views.generic.detail import DetailView
@@ -7592,5 +7593,35 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
                    'selected_datasets': selected_datasets,
                    'width_gloss_columns': len(dataset_languages),
                    'column_values': column_values,
+                   'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
+                   'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})
+
+def fetch_video_stills_for_gloss(request, gloss_id):
+
+    gloss = Gloss.objects.get(id=gloss_id, archived=False)
+
+    folder = gloss.idgloss + '-' + gloss_id
+    folder = folder.replace(' ', '_')
+    temp_location_frames = os.path.join(settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames", folder)
+    temp_video_frames_folder = os.path.join(settings.WRITABLE_FOLDER,
+                                            settings.GLOSS_IMAGE_DIRECTORY, "signbank-thumbnail-frames", folder)
+    stills = []
+    if os.path.exists(temp_video_frames_folder):
+        for filename in os.listdir(temp_video_frames_folder):
+            still_path = str(os.path.join(temp_location_frames, filename))
+            stills.append(still_path)
+    sorted_stills = sorted(stills)
+    SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
+    USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
+
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    dataset_languages = get_dataset_languages(selected_datasets)
+
+    return render(request, 'dictionary/video_stills.html',
+                  {'focus_gloss': gloss,
+                   'stills': sorted_stills,
+                   'dataset_languages': dataset_languages,
+                   'selected_datasets': selected_datasets,
+                   'PREFIX_URL': settings.PREFIX_URL,
                    'USE_REGULAR_EXPRESSIONS': USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': SHOW_DATASET_INTERFACE_OPTIONS})

@@ -10,6 +10,14 @@
 {% load annotation_idgloss_translation %}
 
 {% block extrajs %}
+<style>
+.trash_button:hover {
+    color: red;
+}
+.trash_button.active {
+    color: red;
+}
+</style>
     <script type='text/javascript'>
 
     var csrf_token = '{{csrf_token}}';
@@ -19,6 +27,31 @@
     var url = '{{PREFIX_URL}}';
     var language_2chars = {{language_2chars|safe}};
 
+function ready_videos(el) {
+    $(el).find('video').hide();
+
+    $(el).mouseenter(function ()
+    {
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            $(this).find('img').hide();
+            video.show();
+            video.get(0).play();
+        }
+    });
+
+    $(el).mouseleave(function ()
+    {
+        $(this).find('img').show();
+
+        var video = $(this).find('video');
+        if(video.length > 0) {
+            video.hide();
+            video.get(0).pause();
+            video.get(0).currentTime = 0;
+        }
+    });
+}
     function toggle_restore(data) {
         if ($.isEmptyObject(data)) {
             return;
@@ -69,6 +102,9 @@
                 success : toggle_restore
              });
          });
+         $('.hover-shows-video').each(function() {
+            ready_videos(this);
+         });
     });
 
     var search_results_url = '{% url 'dictionary:lemma_ajax_search_results' %}';
@@ -116,25 +152,38 @@
      <input type='hidden' id="gloss_id" name="gloss_id" value="{{gloss_id}}">
      <input class='btn btn-primary' type='submit' value='{% trans "Update" %}'>
      </form>
+<br>
         <div>
         {% if SHOW_DATASET_INTERFACE_OPTIONS %}
+            {% url 'dictionary:protected_media' '' as protected_media_url %}
             {% csrf_token %}
-            <table class='table' style='width: 800px;'>
+            <table class='table' style='width: 1200px;'>
                 <tr>
                     <th>{% trans "Dataset" %}</th>
                     <td><a href="{{PREFIX_URL}}/datasets/{{object.dataset.acronym}}" >{{ object.dataset.acronym }}</a></td>
                 </tr>
                 <tr>
                     <th>{% trans "Glosses" %}</th>
-                    <th>{% trans "Signbank ID" %}</th>
+                    <th>{% trans "Video" %}</th>
+                    <th style="width:200px;">{% trans "Signbank ID" %}</th>
                            {% for dataset_lang in dataset_languages %}
-                                <th>{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</th>
+                                <th style="width:400px;">{% trans "Annotation ID Gloss" %} ({{dataset_lang.name}})</th>
                             {% endfor %}
                     <th></th>
                 </tr>
                 {% for gloss, annotation_idgloss_translations in lemma_group_list %}
                 <tr><td></td>
-
+                    <td>{% if gloss.get_image_path or gloss.has_video %}
+                        <div id='glossvideo_{{gloss.id}}' class="hover-shows-video">
+                        <img class="thumbnail" src="{{protected_media_url}}{{gloss.get_image_url}}">
+                        {% if gloss.has_video %}
+                        <video id="videoplayer" class="thumbnail-video"
+                               src="{{protected_media_url}}{{gloss.get_video_url}}"
+                               type="video/*" muted="muted"></video>
+                        {% endif %}
+                        </div>
+                        {% endif %}
+                    </td>
                     <td id="signbank_id_{{gloss.id}}">{{gloss.id}} {% if gloss.archived %}({% trans "Archived" %}){% endif %}</td>
                     {% for dataset_lang in dataset_languages %}
                     {% with gloss|get_annotation_idgloss_translation:dataset_lang as annotation_translation %}
@@ -151,11 +200,49 @@
                     {% endfor %}
                     <td id="restore_gloss_{{gloss.id}}">
                     {% if gloss.archived and perms.dictionary.change_gloss %}
-                    <button id='quick_restore_btn_{{gloss.id}}' class="quick_restore btn btn-danger"
+                    <button id='quick_restore_btn_{{gloss.id}}' class="quick_restore btn btn-success"
                             name='quick_restore_{{gloss.id}}'
                             value='{{gloss.id}}' style="height:36px;"
                             type="submit" >{% trans "Restore Gloss" %}</button>
 
+                    {% endif %}
+                    </td>
+                    <td id="trash_gloss_{{gloss.id}}">
+                    {% if gloss.archived and perms.dictionary.change_gloss %}
+                    <button id='quick_trash_btn_{{gloss.id}}' class="quick_trash btn trash_button"
+                            name='quick_trash_{{gloss.id}}' data-toggle='modal' data-target='#delete_gloss_modal_{{gloss.id}}'
+                            value='{{gloss.id}}' style="font-size:20px;background-color:transparent;"
+                            type="submit" ><span class='glyphicon glyphicon-trash'></span></button>
+                    
+                    <div class="modal fade" id="delete_gloss_modal_{{gloss.id}}" tabindex="-1" role="dialog" aria-labelledby="#modalTitleDelete" aria-hidden="true">
+                         <div class="modal-dialog modal-lg left-modal">
+                            <div class="modal-content">
+                                <div class='modal-header'>
+                                    <h2 id='modalTitleDelete'>{% trans "Delete This Sign" %}</h2>
+                                    <br>
+                                    <h4>{% trans "Signbank ID" %}: {{gloss.id}}</h4>
+                                    {% with gloss.get_annotationidglosstranslation_texts as annotations %}
+                                    {% for lang in dataset_languages %}
+                                        <p>{{lang.name}}: {{annotations|get_item:lang.language_code_2char}}</p>
+                                    {% endfor %}
+                                    {% endwith %}
+                                </div>
+                                <div class='modal-body'>
+                                    <p>{% trans "This action will delete this sign and all associated records. It cannot be undone." %}</p>
+                                 </div>
+                              <form action="{% url 'dictionary:trash_gloss' gloss.id %}" method='post'>
+                                  {% csrf_token %}
+                                  <input type='hidden' name='id' value='trash'>
+                                  <input type='hidden' name='value' value='trash'>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Cancel" %}</button>
+                                    <input type="submit" class="btn btn-danger" value='{% trans "Confirm Delete" %}'>
+                                  </div>
+                              </form>
+
+                            </div>
+                        </div>
+                    </div>
                     {% endif %}
                     </td>
                 </tr>
