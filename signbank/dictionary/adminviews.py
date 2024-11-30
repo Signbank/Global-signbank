@@ -6742,8 +6742,8 @@ class KeywordListView(ListView):
             messages.add_message(self.request, messages.ERROR, feedback_message)
             return []
 
-        if glosses_of_datasets.count() > 100:
-            feedback_message = _('Please refine your query to retrieve fewer than 100 glosses to use this functionality.')
+        if glosses_of_datasets.count() > 500:
+            feedback_message = _('Please refine your query to retrieve fewer than 500 glosses to use this functionality.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
             return []
 
