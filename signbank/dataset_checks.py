@@ -2,15 +2,7 @@
 
 from signbank.dictionary.models import *
 from signbank.video.models import GlossVideo, GlossVideoNME, GlossVideoPerspective
-
-
-def get_two_letter_dir(idgloss):
-    foldername = idgloss[:2]
-
-    if len(foldername) == 1:
-        foldername += '-'
-
-    return foldername
+from signbank.tools import get_two_letter_dir
 
 
 def gloss_annotations_check(dataset):
