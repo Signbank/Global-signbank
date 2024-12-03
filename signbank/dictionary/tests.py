@@ -1,5 +1,4 @@
 from django.db.models import CharField, TextField
-#from django.forms import TextInput, Textarea, CharField
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
@@ -18,7 +17,7 @@ from django.test import Client
 from pathlib import Path
 from os import path
 
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, get_user_perms
 
 from signbank.video.models import GlossVideo
 from signbank.dictionary.views import gloss_api_get_sign_name_and_media_info
@@ -165,7 +164,6 @@ class BasicCRUDTests(TestCase):
         # Get the test dataset
         dataset_name = settings.DEFAULT_DATASET
         test_dataset = Dataset.objects.get(name=dataset_name)
-
         # Construct the Create Gloss form data
         create_gloss_form_data = {'dataset': test_dataset.id, 'select_or_new_lemma': "new"}
         for language in test_dataset.translation_languages.all():
@@ -1371,6 +1369,7 @@ class ManageDatasetTests(TestCase):
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Change permission for user successfully granted.'
                             .format(self.user2.username))
+        self.assertEqual(response.status_code, 200)
 
         # Revoke change permission
         form_data = {'dataset_acronym': self.test_dataset.acronym, 'username': self.user2.username,
@@ -1378,12 +1377,12 @@ class ManageDatasetTests(TestCase):
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'Change permission for user successfully revoked.'
                             .format(self.user2.username))
-
+        self.assertEqual(response.status_code, 200)
 
     def test_Set_default_language(self):
         """
         Tests
-        :return: 
+        :return:
         """
         logged_in = self.client.login(username='test-user', password='test-user')
         self.assertTrue(logged_in)
@@ -1401,6 +1400,7 @@ class ManageDatasetTests(TestCase):
         assign_perm('change_dataset', self.user, self.test_dataset)
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, 'The default language of')
+        self.assertEqual(response.status_code, 200)
 
         # Try to add a language that is not in the translation language set of the test dataset
         language = Language(name="nonexistingtestlanguage", language_code_2char="ts", language_code_3char='tst')
@@ -1409,6 +1409,8 @@ class ManageDatasetTests(TestCase):
         response = self.client.get(reverse('admin_dataset_manager'), form_data, follow=True)
         self.assertContains(response, '{} is not in the set of languages of dataset {}.'.format(
                                                             language.name, self.test_dataset.acronym))
+        self.assertEqual(response.status_code, 200)
+
 
 class LemmaTests(TestCase):
 
