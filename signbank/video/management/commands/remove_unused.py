@@ -6,7 +6,6 @@ from django.conf import settings
 from signbank.video.models import GlossVideo
 from signbank.dictionary.models import OtherMedia
 import os
-import stat
 
 class Command(BaseCommand):
 
@@ -39,29 +38,25 @@ def find_file_names(self, path_type):
     file_names = []
 
     if path_type == "other_media":
-        chosen_path = os.path.join(settings.WRITABLE_FOLDER,settings.OTHER_MEDIA_DIRECTORY)
+        chosen_path = os.path.join(os.path.join(settings.WRITABLE_FOLDER),settings.OTHER_MEDIA_DIRECTORY)
         for other_media_file in OtherMedia.objects.all().iterator():
             file_names.append(other_media_file.path.split("/")[-1])
     elif path_type == "video":
-        chosen_path = os.path.join(settings.WRITABLE_FOLDER,settings.GLOSS_VIDEO_DIRECTORY)
+        chosen_path = os.path.join(os.path.join(settings.WRITABLE_FOLDER),settings.GLOSS_VIDEO_DIRECTORY)
         for gloss_video in GlossVideo.objects.all().iterator():
             file_names.append(gloss_video.videofile.name.split("/")[-1])
-    else:
-        file_names = []
-        chosen_path = ""
+
     return file_names, chosen_path
 
 def find_unused_files(self, chosen_path, file_names):
     """Return list of file_names that are not found in file list of db"""
 
     non_existent_file_names = []
-    if not chosen_path:
-        return non_existent_file_names
 
     for subdir, dirs, files in os.walk(chosen_path):
         for file in files:
             if file not in file_names:
-                non_existent_file_names.append((subdir+'/', dirs, file))
+                non_existent_file_names.append(file)
 
     return non_existent_file_names
 
@@ -75,9 +70,8 @@ def delete_files(self, non_existent_file_names, chosen_path):
 
     # Show list of files to delete to users
     self.stdout.write("\nUnused files found are:\n")
-    for (subdir, dirs, non_existent_file)  in non_existent_file_names:
-        non_existent_path = os.path.join(subdir, non_existent_file)
-        self.stdout.write(non_existent_path)
+    for non_existent_file in non_existent_file_names:
+        self.stdout.write(non_existent_file)
 
     # First condition: ask user to agree
     if input("Delete files? [Y/N]").lower() != 'y':
@@ -87,19 +81,7 @@ def delete_files(self, non_existent_file_names, chosen_path):
     # Delete files
     for subdir, dirs, files in os.walk(chosen_path):
         for file in files:
-            delete_tuple = (subdir+'/', dirs, file)
-            if delete_tuple in non_existent_file_names:
-                filepath = os.path.join(subdir, file)
-                try:
-                    os.remove(filepath)
-                except (PermissionError, OSError) as e:
-                    feedback_message = getattr(e, 'message', repr(e))
-                    print(feedback_message, ': ', filepath)
-                    try:
-                        os.chmod(filepath, stat.S_IRWXU | stat.S_IRWXG)
-                        os.remove(filepath)
-                    except (PermissionError, OSError) as e:
-                        feedback_message = getattr(e, 'message', repr(e))
-                        print(feedback_message, ': ', filepath)
+            if file in non_existent_file_names:
+                os.remove(os.path.join(subdir, file))
 
     self.stdout.write('Files are deleted')
