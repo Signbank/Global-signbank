@@ -4295,7 +4295,6 @@ class Synset(models.Model):
     """A synset is a set of glosses that are synonymous"""
     name = models.CharField(max_length=200, verbose_name=_("Name"))
     lemmas = models.TextField(blank=True, verbose_name=_("Lemmas"))
-    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, verbose_name=_("Dataset"))
     url = models.TextField(blank=True, verbose_name=_("Url"))
     description = models.TextField(blank=True, verbose_name=_("Description"))
     glosses = models.ManyToManyField(Gloss, related_name = 'synsets', verbose_name=_("Glosses"))
