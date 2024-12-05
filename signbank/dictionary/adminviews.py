@@ -6657,7 +6657,7 @@ class KeywordListView(ListView):
 
     model = Gloss
     template_name = 'dictionary/admin_batch_edit_senses.html'
-    paginate_by = 500
+    paginate_by = 100
     search_type = 'sign'
     query_parameters = dict()
 
