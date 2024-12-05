@@ -22,15 +22,16 @@
           <th style="width:150px;">{% trans "Dataset Acronym" %}</th>
           <th style="width:300px;">{% trans "Dataset Name" %}</th>
           <th style="width:200px;">{% trans "Languages" %}</th>
-          <th style="width:255px;">{% trans "Number of Signs" %}</th>
+          <th style="width:200px;">{% trans "Number of Signs" %}</th>
           <th style="width:255px;">{% trans "Number of Public Signs" %}</th>
           {% if not user.is_anonymous %}
           <th style="width:80px;">{% trans "View Dataset" %}</th>
           <th style="width:80px;">{% trans "Change Dataset" %}</th>
-          <th style="width:300px;">{% trans "Request Access" %}</th>
+          <th style="width:100px;">{% trans "Request Access" %}</th>
 
           <th style="width:80px;">{% trans "Selected" %}</th>
-          <th>{% trans "Export Dataset" %}</th>
+          <th style="width:200px;">{% trans "ECV File" %}</th>
+          <th style="width:200px;">{% trans "Download" %}</th>
           {% endif %}
       </tr>
     </thead>
@@ -110,10 +111,21 @@
                         <input name='dataset_acronym' class='form-control' value='{{dataset.acronym}}' >
                     </div>
                     <div class='btn-group'>
-                        <button id='export_ecv' class='btn btn-primary' type='submit' name='export_ecv' value='ECV'>{% trans "ECV" %}</button>
+                        <button id='export_ecv' class='btn btn-primary' type='submit' name='export_ecv' value='ECV'>{% trans "Refresh" %}</button>
                     </div>
                 </form>
                 {% endif %}
+            </td>
+            <td>
+                <div id='dataset_ecv'>
+                    {% if dataset.get_ecv_path %}
+                    {% url 'dictionary:protected_media' '' as protected_media_url %}
+                        <a download="{{dataset.acronym}}.csv" href="{{protected_media_url}}{{dataset.get_ecv_path}}"
+                                    style="font-style: bold;">{{dataset.acronym}}.csv</a>
+                    {% else %}
+                    <p>{% trans "No ECV file found." %}</p>
+                    {% endif %}
+                </div>
             </td>
             {% endif %}
         </tr>
