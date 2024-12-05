@@ -3237,6 +3237,17 @@ class Dataset(models.Model):
 
         return goal_string
 
+    def get_ecv_path(self, check_existence=True):
+        """Returns the path within the writable folder"""
+
+        dataset_filename = self.acronym.lower().replace(" ", "_") + ".ecv"
+        ecv_file_path = os.path.join(settings.WRITABLE_FOLDER, settings.ECV_FOLDER, dataset_filename)
+        ecv_relative_path = os.path.join(settings.ECV_FOLDER, dataset_filename)
+        if check_existence and os.path.exists(ecv_file_path):
+            return ecv_relative_path
+
+        return ''
+
     def uploaded_eafs(self):
 
         # this is to move the file system commands out of models.py
