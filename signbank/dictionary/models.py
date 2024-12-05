@@ -24,7 +24,7 @@ from collections import OrderedDict
 from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
-    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY
+    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, ECV_FOLDER
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 
 
@@ -3241,8 +3241,8 @@ class Dataset(models.Model):
         """Returns the path within the writable folder"""
 
         dataset_filename = self.acronym.lower().replace(" ", "_") + ".ecv"
-        ecv_file_path = os.path.join(settings.WRITABLE_FOLDER, settings.ECV_FOLDER, dataset_filename)
-        ecv_relative_path = os.path.join(settings.ECV_FOLDER, dataset_filename)
+        ecv_file_path = os.path.join(WRITABLE_FOLDER, ECV_FOLDER, dataset_filename)
+        ecv_relative_path = os.path.join(ECV_FOLDER, dataset_filename)
         if check_existence and os.path.exists(ecv_file_path):
             return ecv_relative_path
 

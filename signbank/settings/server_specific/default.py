@@ -202,6 +202,7 @@ MORPHEME_DISPLAY_FIELDS = ['handedness','handCh','relatArtic','locprim','relOriM
 #Where the ECV files are
 ECV_FOLDER = 'ecv/'
 ECV_FILE = 'myecv.ecv'
+ECV_FOLDER_ABSOLUTE_PATH = WRITABLE_FOLDER+ECV_FOLDER
 
 #What do you want to include in the ECV file?
 ECV_SETTINGS = {
