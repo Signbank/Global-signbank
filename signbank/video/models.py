@@ -406,10 +406,7 @@ class ExampleVideo(models.Model):
                 (newname, bak) = os.path.splitext(self.videofile.name)
                 expected_extension = '.bak' + str(self.id)
                 if bak != expected_extension:
-                    print(f'Unknown suffix on stored video file. Expected {expected_extension}')
-                    self.delete()
-                    self.delete_files()
-                    return
+                    raise Exception(f'Unknown suffix on stored video file. Expected {expected_extension}')
                 if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                     os.rename(os.path.join(storage.location, self.videofile.name),
                             os.path.join(storage.location, newname))
@@ -795,10 +792,7 @@ class GlossVideo(models.Model):
                     expected_extension = '.bak' + str(self.id)
                     if bak != expected_extension:
                         # hmm, something bad happened
-                        print(f'Unknown suffix on stored video file. Expected {expected_extension}')
-                        self.delete()
-                        self.delete_files()
-                        return
+                        raise Exception(f'Unknown suffix on stored video file. Expected {expected_extension}')
                     if os.path.isfile(os.path.join(storage.location, self.videofile.name)):
                         os.rename(os.path.join(storage.location, self.videofile.name),
                                   os.path.join(storage.location, newname))
