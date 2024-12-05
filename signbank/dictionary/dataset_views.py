@@ -4,7 +4,8 @@ from django.views.generic.detail import DetailView
 from django.core.paginator import Paginator
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from signbank.dictionary.models import Dataset, Gloss, AnnotationIdglossTranslation
-from signbank.dataset_checks import (gloss_annotations_check, gloss_videos_check, gloss_video_filename_check, gloss_subclass_videos_check)
+from signbank.dataset_operations import (gloss_annotations_check, gloss_videos_check, gloss_video_filename_check,
+                                         gloss_subclass_videos_check, find_unlinked_video_files_for_dataset)
 from signbank.tools import get_selected_datasets_for_user, get_dataset_languages
 from signbank.settings.server_specific import *
 from guardian.shortcuts import get_objects_for_user
@@ -19,7 +20,7 @@ from django.utils.translation import override, gettext, gettext_lazy as _, activ
 class DatasetConstraintsView(DetailView):
     model = Dataset
     context_object_name = 'dataset'
-    template_name = 'dictionary/dataset_consistency_checks.html'
+    template_name = 'dictionary/dataset_video_storage.html'
 
     # set the default dataset, this should not be empty
     dataset_acronym = DEFAULT_DATASET_ACRONYM
@@ -43,9 +44,7 @@ class DatasetConstraintsView(DetailView):
 
         dataset = context['dataset']
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
-        dataset_languages = get_dataset_languages(selected_datasets)
-        context['dataset_languages'] = dataset_languages
+        context['dataset_languages'] = dataset.translation_languages.all()
         context['default_language'] = dataset.default_language
 
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -70,6 +69,9 @@ class DatasetConstraintsView(DetailView):
         context['glosses_with_weird_filenames'] = summary_filenames['glosses_with_weird_filenames']
         context['non_mp4_videos'] = summary_filenames['non_mp4_videos']
         context['wrong_folder'] = summary_filenames['wrong_folder']
+
+        unlinked_video_files_for_dataset = find_unlinked_video_files_for_dataset(dataset)
+        context['unlinked_video_files_for_dataset'] = unlinked_video_files_for_dataset
 
         context['nr_of_glosses'] = nr_of_glosses
 
