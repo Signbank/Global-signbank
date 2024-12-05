@@ -6657,7 +6657,7 @@ class KeywordListView(ListView):
 
     model = Gloss
     template_name = 'dictionary/admin_batch_edit_senses.html'
-    paginate_by = 25
+    paginate_by = 100
     search_type = 'sign'
     query_parameters = dict()
 
@@ -6739,11 +6739,6 @@ class KeywordListView(ListView):
         # exclude morphemes
         if not glosses_of_datasets:
             feedback_message = _('No glosses found.')
-            messages.add_message(self.request, messages.ERROR, feedback_message)
-            return []
-
-        if glosses_of_datasets.count() > 100:
-            feedback_message = _('Please refine your query to retrieve fewer than 100 glosses to use this functionality.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
             return []
 
