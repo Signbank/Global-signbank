@@ -338,10 +338,10 @@ dd {
      data-target='#toggle_gloss_videos'>{% trans "Gloss Videos" %}
     <span>({{gloss_videos|length}} {% trans "results found" %})</span>
 </div>
-<div id='toggle_gloss_videos' class="panel-collapse collapse">
+<div id='toggle_gloss_videos' class="panel-collapse collapse" style="width:auto;">
 <div class="panel-body" style="display:inline-block;border-color:transparent;">
     {% if gloss_videos %}
-    <table class='table table-condensed table-condensed-light' style="width:100%;">
+    <table class='table table-condensed table-condensed-light'>
     <tr>
         <td class="list-group-hover" style="padding: 0;">
         <dl class="row list-group-item active"  style="padding: 0;">
@@ -350,8 +350,8 @@ dd {
             {% for language in dataset_languages %}
             <dt class="col-sm-2" style="width:300px;">{% trans "Annotation" %} ({{language.name}})</dt>
             {% endfor %}
-            <dt class="col-sm-2" style="width:600px;">{% trans "Video Paths" %}</dt>
-            <dt class="col-sm-2" style="width:400px;">
+            <dt class="col-sm-2" style="width:400px;">{% trans "Video Paths" %}</dt>
+            <dt class="col-sm-2" style="width:300px;">
                 <span class="hasTooltip">{% trans "Operations" %}
                     <span id="tooltip" class="glyphicon glyphicon-question-sign" aria-hidden="true" data-container="body"
                           data-toggle="tooltip" data-placement="top" data-html="true" title=""></span>
@@ -367,8 +367,8 @@ dd {
                       {% for language in dataset_languages %}
                         <dd class="col-sm-2" style="width:300px;">{{gloss|get_annotation_idgloss_translation_no_default:language}}</dd>
                       {% endfor %}
-                      <dd class="col-sm-2" style="width:600px;" id='videos_{{gloss.id}}'>{{videos}}</dd>
-                      <dd class="col-sm-2" style="width:400px;">
+                      <dd class="col-sm-2" style="width:400px;" id='videos_{{gloss.id}}'>{{videos}}</dd>
+                      <dd class="col-sm-2" style="width:300px;">
                             <div class='btn-group' >
                                 {% if num_videos > 1 or extra_chars %}
                                 <button id="update_gloss_video_backups_{{gloss.id}}" class="btn btn-success"
