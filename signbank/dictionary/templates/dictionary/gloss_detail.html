@@ -220,6 +220,8 @@ function checkKey(e)
                         success : function(result) {
                             var parsed = $.parseHTML(result);
                             $(lookup).first().append(result);
+                            var stills_modal = '#stills_modal';
+                            $(stills_modal).modal("show");
                         }
                     });
                }
@@ -1079,9 +1081,12 @@ textarea:focus {
             <h4>{% trans "Create Citation Form Image from Current Video" %}</h4>
             <a href="{% url 'dictionary:create_citation_image'  gloss.id %}" class="btn btn-primary">{% trans "Create" %}</a>
 
-            <button id='choose_still_btn' class='btn btn-primary' style="width:auto;"
-                 data-toggle='modal'
-                 data-target='#stills_modal'>{% trans "Choose Still Image" %}</button>
+            <button id='quick_create_stills'
+                class="quick_createstills btn btn-primary" style="width:auto;"
+                name='quick_createstills'
+                data-glossid='{{gloss.id}}'
+                type="submit" >{% trans "Choose Still Image" %}
+            </button>
         </div>
         <div class="modal fade" id="stills_modal" tabindex="-1" role="dialog" aria-labelledby="#modalTitleStills" aria-hidden="true">
              <div class="modal-dialog modal-lg left-modal">
@@ -1092,12 +1097,6 @@ textarea:focus {
                     <div class='modal-body'>
 
                         <div style="width:800px;">
-                            <button id='quick_create_stills'
-                                class="quick_createstills btn btn-primary" style="width:auto;"
-                                name='quick_createstills'
-                                data-glossid='{{gloss.id}}'
-                                type="submit" >{% trans "Generate Stills" %}
-                            </button>
                             <table class='table table-condensed'>
                                 <tbody class="tbody tbody-light">
                                     <tr>
