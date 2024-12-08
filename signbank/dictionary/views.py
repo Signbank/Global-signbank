@@ -2261,26 +2261,61 @@ def info(request):
     return HttpResponse(json.dumps(user_datasets_names), content_type='application/json')
 
 
+def extract_glossid_from_filename(filename):
+    file = os.path.basename(filename)
+    filename_without_extension = file.split('.')[0]
+
+    if filename_without_extension.endswith('_small'):
+        m = re.search(r".+-(\d+)\_small$", filename_without_extension)
+        gloss_pk = m.group(1)
+    elif filename_without_extension.endswith('_left'):
+        m = re.search(r".+-(\d+)\_left$", filename_without_extension)
+        gloss_pk = m.group(1)
+    elif filename_without_extension.endswith('_right'):
+        m = re.search(r".+-(\d+)\_right$", filename_without_extension)
+        gloss_pk = m.group(1)
+    elif re.search(r"\_nme_\d+$", filename_without_extension):
+        m = re.search(r".+-(\d+)\_nme_\d+$", filename_without_extension)
+        gloss_pk = m.group(1)
+    else:
+        gloss_pk = int(filename.split('.')[-2].split('-')[-1])
+
+    return gloss_pk
+
+
 def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_indexes=False):
 
     if not request.user.is_authenticated:
 
         # If we are not logged in, try to find if this maybe belongs to a gloss that is free to see for everbody?
         (name, ext) = os.path.splitext(os.path.basename(filename))
-        if 'handshape' in name:
+        if 'annotatedvideo' in filename:
+            # check that the sentence exists
+            try:
+                file = os.path.basename(filename)
+                sentence_pk = int(file.split('.')[0])
+            except IndexError:
+                return HttpResponse(status=401)
+
+            lookup_sentence = AnnotatedSentence.objects.filter(pk=sentence_pk).first()
+            if not lookup_sentence:
+                HttpResponse(status=401)
+            pass
+        elif 'handshape' in name:
             # handshape images are allowed to be seen in Show All Handshapes
             pass
         else:
             try:
-                gloss_pk = int(filename.split('.')[-2].split('-')[-1])
-            except IndexError:
+                gloss_pk = extract_glossid_from_filename(filename)
+                glosspk = int(gloss_pk)
+            except (IndexError, ValueError):
                 return HttpResponse(status=401)
 
-            lookup_gloss = Gloss.objects.filter(pk=gloss_pk, archived=False, inWeb=True)
+            lookup_gloss = Gloss.objects.filter(pk=glosspk, archived=False, inWeb=True)
             if not lookup_gloss.count() == 1:
                 HttpResponse(status=401)
 
-        #If we got here, the gloss was found and in the web dictionary, so we can continue
+        # If we got here, the gloss was found and in the web dictionary, so we can continue
 
     filename = os.path.normpath(filename)
 
@@ -2321,6 +2356,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
     else:
         from django.views.static import serve
         return serve(request, filename, document_root, show_indexes)
+
 
 def show_glosses_with_no_lemma(request):
 
