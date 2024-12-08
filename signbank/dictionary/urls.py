@@ -32,7 +32,7 @@ urlpatterns = [
     re_path(r'^tag/(?P<tag>[^/]*)/?$', signbank.dictionary.tagviews.taglist),
 
     # an alternate view for direct display of a gloss
-    re_path(r'gloss/(?P<glossid>\d+).html$', signbank.dictionary.views.gloss, name='public_gloss'),
+    re_path(r'gloss/(?P<glossid>\d+).html$', GlossDetailView.as_view(), {'public': True}, name='public_gloss'),
     re_path(r'morpheme/(?P<glossid>\d+).html$', signbank.dictionary.views.morpheme, name='public_morpheme'),
 
     re_path(r'^update/gloss/(?P<glossid>\d+)$', signbank.dictionary.update.update_gloss, name='update_gloss'),
