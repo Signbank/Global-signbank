@@ -1466,7 +1466,7 @@ textarea:focus {
                                     {% endif %}
                                     {% with sense_to_similar_senses|get_item:sense.id as similar_senses %}
                                     {% if similar_senses %}
-                                        <span class='glyphicon glyphicon-link sense_link' style="color:black" data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
+                                        <span class='glyphicon glyphicon-link sense_link' data-toggle='modal' data-target='#link_sense_modal_{{sense.id}}'></span>
                                         <div class="modal fade modal-sense" id="link_sense_modal_{{sense.id}}" role="dialog" aria-labelledby="#modalTitleSimilarSense" aria-hidden="true">
                                             <div class="modal-dialog modal-lg left-modal">
                                                 <div class="modal-content modal-content-sense" style="width:calc(({{gloss.lemma.dataset.translation_languages.count}}+3)*200px);">
