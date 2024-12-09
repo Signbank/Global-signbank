@@ -270,9 +270,9 @@ def get_annotated_video_file_path(instance, filename, version=0):
     dataset = instance.annotatedsentence.get_dataset().acronym
     dataset_dir = os.path.join(dataset, str(instance.annotatedsentence.id))
     if version > 0:
-        filename = str(instance.examplesentence.id) + ext + '.bak' + str(instance.id)
+        filename = str(instance.annotatedsentence.id) + ext + '.bak' + str(instance.id)
     else:
-        filename = str(instance.examplesentence.id) + ext
+        filename = str(instance.annotatedsentence.id) + ext
 
     path = os.path.join(video_dir, dataset_dir, filename)
     if hasattr(settings, 'ESCAPE_UPLOADED_VIDEO_FILE_PATH') and settings.ESCAPE_UPLOADED_VIDEO_FILE_PATH:
@@ -537,6 +537,9 @@ class AnnotatedVideo(models.Model):
     def select_annotations(self, eaf, tier_name, start_ms, end_ms):
         """ Select annotations that are within the selected range """
         
+        if tier_name not in eaf.tiers:
+            return
+        
         keys_to_remove = []
         for key in eaf.tiers[tier_name][0]:
             annotation_list = list(eaf.tiers[tier_name][0][key])
@@ -597,6 +600,8 @@ class AnnotatedVideo(models.Model):
         self.select_annotations(eaf, 'Sentences', start_ms, end_ms)
         self.select_annotations(eaf, 'Glosses R', start_ms, end_ms)
         self.select_annotations(eaf, 'Glosses L', start_ms, end_ms)
+        self.select_annotations(eaf, 'Nederlands', start_ms, end_ms)
+        self.select_annotations(eaf, 'Signbank ID glossen', start_ms, end_ms)
         # shift the timeslots to start at 0
         for key in eaf.timeslots:
             eaf.timeslots[key] -= start_ms
