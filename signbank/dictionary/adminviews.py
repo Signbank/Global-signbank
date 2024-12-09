@@ -7604,6 +7604,20 @@ def fetch_video_stills_for_gloss(request, gloss_id):
             still_path = str(os.path.join(temp_location_frames, filename))
             stills.append(still_path)
     sorted_stills = sorted(stills)
+    number_of_stills = len(sorted_stills)
+    if number_of_stills / 10 < 9:
+        if number_of_stills / 5 < 9:
+            nine_stills = (sorted_stills[i] for i in range(0, len(sorted_stills), 2))
+        else:
+            nine_stills = (sorted_stills[i] for i in range(0, len(sorted_stills), 5))
+    else:
+        nine_stills = (sorted_stills[i] for i in range(0, len(sorted_stills), 10))
+
+    sorted_nine_stills = sorted(nine_stills)
+
+    if len(sorted_nine_stills) > 9:
+        sorted_nine_stills = sorted_nine_stills[0:9]
+
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
@@ -7612,7 +7626,7 @@ def fetch_video_stills_for_gloss(request, gloss_id):
 
     return render(request, 'dictionary/video_stills.html',
                   {'focus_gloss': gloss,
-                   'stills': sorted_stills,
+                   'stills': sorted_nine_stills,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'PREFIX_URL': settings.PREFIX_URL,
