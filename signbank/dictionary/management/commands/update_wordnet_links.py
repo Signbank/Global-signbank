@@ -6,7 +6,6 @@ import shutil
 import requests
 import csv
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.management import BaseCommand
 
 from signbank.dictionary.models import Synset, Dataset, Gloss
@@ -16,15 +15,18 @@ import nltk
 from nltk.corpus import wordnet as wn
 from bs4 import BeautifulSoup
 
+LOGIN_URL = "https://signwordnetannotation.pythonanywhere.com/login.html"
+DOWNLOAD_SIGNS_LINKS_URL = "https://signwordnetannotation.pythonanywhere.com/generate_csv.html" 
+EXPECTED_LANDING_URL = "https://signwordnetannotation.pythonanywhere.com/"
+DOWNLOAD_TAB_URL = "https://www.sign-lang.uni-hamburg.de/easier/sign-wordnet/static/tab/sign_wordnet_gloss_dse.tab"
+LINK_BASE = "https://www.sign-lang.uni-hamburg.de/easier/sign-wordnet/synset/"
+
 class Command(BaseCommand):
     help = 'Update the WordNet links in the database. This works ONLY for NGT dataset.'
 
     def download_wordnet_gloss(self):
         """ Download the WordNet gloss file from the server. """
-
-        download_url = "https://www.sign-lang.uni-hamburg.de/easier/sign-wordnet/static/tab/sign_wordnet_gloss_dse.tab"
-
-        response = requests.get(download_url)
+        response = requests.get(DOWNLOAD_TAB_URL)
         if response.status_code == 200:
             glosses_wordnet = response.content
             print("WordNet gloss file downloaded successfully.")
@@ -32,26 +34,21 @@ class Command(BaseCommand):
         else:
             print("Failed to download WordNet gloss file. Status code:", response.status_code)
 
-    def download_csv(self, session, download_url, csv_type):
+    def download_csv(self, session, csv_type):
         """ Download the WordNet links and signs CSV file from the server. """
-
         download_payload = {
             "submit": csv_type
         }
-        download_response = session.post(download_url, data=download_payload)
+        download_response = session.post(DOWNLOAD_SIGNS_LINKS_URL, data=download_payload)
         if download_response.status_code == 200:
             csv = download_response.content
-            print("Links CSV downloaded successfully.")
+            print(f"{csv_type} CSV downloaded successfully.")
             return csv
         else:
             print(f"Failed to download {csv_type} CSV. Status code:", download_response.status_code)
 
     def download_links_csv(self):
         """ Download the WordNet links CSV file from the server. """
-
-        login_url = "https://signwordnetannotation.pythonanywhere.com/login.html"
-        download_url = "https://signwordnetannotation.pythonanywhere.com/generate_csv.html" 
-        expected_landing_url = "https://signwordnetannotation.pythonanywhere.com/"
 
         session = requests.Session() 
         login_payload = {
@@ -60,17 +57,17 @@ class Command(BaseCommand):
         }
 
         # Send the login request
-        login_response = session.post(login_url, data=login_payload)
+        login_response = session.post(LOGIN_URL, data=login_payload)
 
         # Check if login was successful by looking at the status code or response content
-        if login_response.url != expected_landing_url:
+        if login_response.url != EXPECTED_LANDING_URL:
             print("Login failed or redirected incorrectly.")
             return None
         else:
             print("Login successful!")
 
-        links_csv = self.download_csv(session, download_url, "links")
-        signs_csv = self.download_csv(session, download_url, "signs")
+        links_csv = self.download_csv(session, "links")
+        signs_csv = self.download_csv(session, "signs")
 
         return links_csv, signs_csv
 
@@ -80,11 +77,11 @@ class Command(BaseCommand):
         # Read the signs CSV file
         signs = {}
         decoded_signs_csv = signs_csv.decode('utf-8')
-        signs_csv = io.StringIO(decoded_signs_csv)
-        csv_reader = csv.reader(signs_csv)
-        next(csv_reader)
+        decoded_signs_csv = io.StringIO(decoded_signs_csv)
+        signs_csv_reader = csv.reader(decoded_signs_csv)
+        next(signs_csv_reader)
         
-        for row in csv_reader:
+        for row in signs_csv_reader:
             wordnet_sign_id = row[0]
             signbank_sign_id = row[1]
             wordnet_sign_id = wordnet_sign_id.replace("ngt.", "").replace("'", '').replace(" ", "")
@@ -93,15 +90,12 @@ class Command(BaseCommand):
 
         # Read the links CSV file
         links = {}
-        link_base = "https://www.sign-lang.uni-hamburg.de/easier/sign-wordnet/synset/"
-        
         decoded_links_csv = links_csv.decode('utf-8')
-        links_csv = io.StringIO(decoded_links_csv)
-        csv_reader = csv.reader(links_csv)
-        next(csv_reader)
+        decoded_links_csv = io.StringIO(decoded_links_csv)
+        links_csv_reader = csv.reader(decoded_links_csv)
+        next(links_csv_reader)
 
-        for row in csv_reader:
-
+        for row in links_csv_reader:
             for r_i, r in enumerate(row):
                 row[r_i] = r.replace("'", '').replace(" ", "")
 
@@ -111,7 +105,7 @@ class Command(BaseCommand):
 
             wordnet_sign_id = row[0].replace("ngt.", "")
 
-            link = f"{link_base}{row[1]}.html"
+            link = f"{LINK_BASE}{row[1]}.html"
             links_list = [row[1], row[2], row[3], link]
             sign_id = wordnet_sign_id
             if wordnet_sign_id in signs:
