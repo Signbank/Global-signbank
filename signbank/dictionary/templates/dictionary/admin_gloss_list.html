@@ -754,7 +754,7 @@ function do_toggle_language(el) {
                                 <td class='td td-light' style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
                                 <td class='td td-light' style="width:600px;">{{ searchform.dialects }}</td>
                             </tr>
-
+                            {% if not public %}
                             {% for fieldname,field,label in input_names_fields_and_labels.main %}
 
                                 <tr><td class='td td-light' style="padding-left:30px;">
@@ -762,7 +762,7 @@ function do_toggle_language(el) {
                                     <td class='td td-light' style="width:600px;">{{field}}</td></tr>
 
                             {% endfor %}
-
+                            {% endif %}
                         </table>
 
                         </div>
@@ -776,6 +776,7 @@ function do_toggle_language(el) {
                         <tr>
                           <td class='td td-light'>
                             <table class='table table-condensed table-condensed-light'>
+                                {% if not public %}
                                 <tr>
                                     <td class='td td-light' style="padding-left:30px;"><label for='id_morpheme'>{{searchform.morpheme.label}}</label></td>
                                     <td class='td td-light' style="width:600px;">
@@ -786,6 +787,7 @@ function do_toggle_language(el) {
                                         <input type="hidden" name='morpheme' id='morpheme_id' value="">
                                     </td>
                                 </tr>
+                                {% endif %}
                                 <tr><td class='td td-light' style="padding-left:30px;"><label for='id_hasComponentOfType'>{{searchform.hasComponentOfType.label}}</label></td>
                                     <td class='td td-light' style="width:600px;">{{searchform.hasComponentOfType}}</td></tr>
                                 <tr><td class='td td-light' style="padding-left:30px;"><label for='id_mrpType'>{{searchform.mrpType.label}}</label></td>
@@ -812,24 +814,27 @@ function do_toggle_language(el) {
                           <td class='td td-light'>
                             <table class='table table-condensed table-condensed-light'>
                                 {% for fieldname,field,label in input_names_fields_and_labels.phonology %}
-
+                                {% if not public or fieldname in PUBLIC_PHONOLOGY_FIELDS %}
                                     <tr>
-                                        <td class='td td-light' style="padding-left:30px;"><label>{{label}}</label></td>
-                                        <td class='td td-light'>{{field}}</td>
-                                        {% if fieldname == 'handedness' %}
+                                        <td class='td td-light' style="padding-left:30px;width:200px;"><label>{{label}}</label></td>
+                                        <td class='td td-light' style="width:600px;">{{field}}</td>
+                                        {% if fieldname == 'handedness' and not public %}
                                             {% for handednessfieldname,handednessfield,handednesslabel in input_names_fields_labels_handedness %}
                                                 <td class='td td-light'><label for='id_{{handednessfieldname}}'>{{handednesslabel}}</label></td><td class='td td-light'>{{handednessfield}}</td>
                                             {% endfor %}
-                                        {% elif fieldname == 'domhndsh' %}
+                                        {% elif fieldname == 'domhndsh' and not public %}
                                             {% for domhndshfieldname,domhndshfield,domhndshlabel in input_names_fields_labels_domhndsh %}
                                                 <td class='td td-light'><label for='id_{{domhndshfieldname}}'>{{domhndshlabel}}</label></td><td class='td td-light'>{{domhndshfield}}</td>
                                             {% endfor %}
-                                        {% elif fieldname == 'subhndsh' %}
+                                        {% elif fieldname == 'subhndsh' and not public %}
                                             {% for subhndshfieldname,subhndshfield,subhndshlabel in input_names_fields_labels_subhndsh %}
                                                 <td class='td td-light'><label for='id_{{subhndshfieldname}}'>{{subhndshlabel}}</label></td><td class='td td-light'>{{subhndshfield}}</td>
                                             {% endfor %}
+                                        {% else %}
+                                            <td style="width:200px;"></td><td style="width:200px;"></td>
                                         {% endif %}
                                     </tr>
+                                {% endif %}
                                 {% endfor %}
 
                             </table>
