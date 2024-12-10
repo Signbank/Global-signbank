@@ -230,6 +230,7 @@ def mapping_edit_keywords(request, glossid):
         sense_language = order_sense_dict[new_sense_number]
         sense_language.translations.add(new_trans)
 
+    deleted_sense_numbers = delete_empty_senses(gloss)
     glossXsenses = gloss_to_keywords_senses_groups(gloss, language_obj)
 
     updated_gloss_senses = get_state_of_gloss_senses(gloss)
@@ -238,7 +239,7 @@ def mapping_edit_keywords(request, glossid):
     glossXsenses['regrouped_keywords'] = []
     glossXsenses['dataset_languages'] = dataset_languages_ids
     glossXsenses['deleted_translations'] = deleted_translations
-    glossXsenses['deleted_sense_numbers'] = []
+    glossXsenses['deleted_sense_numbers'] = deleted_sense_numbers
     glossXsenses['new_translations'] = new_translations
 
     return glossXsenses
@@ -288,6 +289,7 @@ def delete_empty_senses(gloss):
             gs.delete()
             sense.delete()
             deleted_sense_numbers.append(str(order))
+
     return deleted_sense_numbers
 
 
@@ -389,7 +391,8 @@ def mapping_group_keywords(request, glossid):
             print('regroup error saving translation object: ', gloss, trans, target_sense_group)
             continue
 
-    deleted_sense_numbers = []
+    deleted_sense_numbers = delete_empty_senses(gloss)
+
     deleted_translations = []
     new_translations = []
     glossXsenses = gloss_to_keywords_senses_groups(gloss, changed_language)
