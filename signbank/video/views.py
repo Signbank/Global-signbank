@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext as _
 from django.forms.utils import ValidationError
 
-from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory
+from signbank.video.models import GlossVideo, ExampleVideo, GlossVideoHistory, ExampleVideoHistory, GlossVideoNME, GlossVideoPerspective
 from signbank.dictionary.models import Gloss, DeletedGlossOrMedia, ExampleSentence, Morpheme, AnnotatedSentence, Dataset, AnnotatedSentenceSource
 from signbank.video.forms import VideoUploadForObjectForm
 from django.http import JsonResponse
@@ -250,7 +250,12 @@ def deletevideo(request, glossid):
     gloss = get_object_or_404(Gloss, pk=glossid, archived=False)
     # save the video path of the version 0 video before it gets deleted by the reversion method in the loop
     deleted_video_filename = gloss.get_video_path()
-    vids = GlossVideo.objects.filter(gloss=gloss, glossvideonme=None, glossvideoperspective=None).order_by('version')
+    glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=gloss)]
+    glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=gloss)]
+    # get existing gloss video objects but exclude NME and perspective videos
+    existing_videos = GlossVideo.objects.filter(gloss=gloss).exclude(
+        id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
+    vids = existing_videos.order_by('version')
     reversion_log = []
     for v in vids:
         # this will remove the most recent video, ie it's equivalent
@@ -258,10 +263,12 @@ def deletevideo(request, glossid):
         # save the to be deleted data in a list of tuples
         uploadfile = os.path.basename(v.videofile.name)
         goal_location = v.videofile.path
-        reversion_log.append((uploadfile, goal_location))
+        reversion_log.append((v.version, uploadfile, goal_location))
         v.reversion(revert=True)
-    for (uploadfile, goal_location) in reversion_log:
+    for (version, uploadfile, goal_location) in reversion_log:
         # Issue #162: log the deletion history
+        if version > 0:
+            continue
         log_entry = GlossVideoHistory(action="delete", gloss=gloss,
                                       actor=request.user,
                                       uploadfile=uploadfile,

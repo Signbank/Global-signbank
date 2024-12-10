@@ -212,6 +212,8 @@ def make_thumbnail_video(sourcefile, targetfile):
 
 
 def video_file_type_extension(video_file_full_path):
+    if not os.path.exists(video_file_full_path):
+        return ".mp4"
     filetype_output = subprocess.run(["file", video_file_full_path], stdout=subprocess.PIPE)
     filetype = str(filetype_output.stdout)
     if 'MOV' in filetype:
@@ -229,7 +231,7 @@ def video_file_type_extension(video_file_full_path):
     else:
         if DEBUG_VIDEOS:
             print('video:admin:convertvideo:video_file_type_extension:file:UNKNOWN ', filetype)
-        desired_video_extension = '.unknown'
+        desired_video_extension = '.mp4'
     return desired_video_extension
 
 

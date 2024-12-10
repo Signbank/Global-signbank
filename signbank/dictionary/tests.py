@@ -429,7 +429,7 @@ class ECVsNonEmptyTests(TestCase):
         # it is not checked whether there is an ecv file for all datasets
         # ecv files for non-existing datasets are reported if empty
 
-        location_ecv_files = ECV_FOLDER
+        location_ecv_files = ECV_FOLDER_ABSOLUTE_PATH
         print('Checking for empty ECV files in location: ', location_ecv_files)
         ecv_folder_exists = os.path.exists(location_ecv_files)
         if not ecv_folder_exists:
@@ -518,7 +518,7 @@ class ImportExportTests(TestCase):
         print('Test DatasetListView export_ecv with permission change_dataset')
         print('Test Dataset is: ', self.test_dataset.acronym)
 
-        location_ecv_files = ECV_FOLDER
+        location_ecv_files = ECV_FOLDER_ABSOLUTE_PATH
         dataset_ecv_folder_exists = os.path.exists(location_ecv_files)
         if not dataset_ecv_folder_exists:
             print('The ecv folder is missing: ', location_ecv_files)
@@ -563,7 +563,7 @@ class ImportExportTests(TestCase):
         response = client.get(url, follow=True)
         self.assertTrue("ECV successfully updated." in str(response.content))
 
-        location_ecv_files = ECV_FOLDER
+        location_ecv_files = ECV_FOLDER_ABSOLUTE_PATH
         for filename in os.listdir(location_ecv_files):
             if filename == self.test_dataset.acronym.lower() + '.ecv':
                 filename_path = os.path.join(location_ecv_files, filename)

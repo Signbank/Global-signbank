@@ -1954,7 +1954,7 @@ def write_ecv_file_for_dataset(dataset_name):
     from django.template.loader import get_template
     ecv_template = get_template('dictionary/ecv.xml')
     xmlstr = ecv_template.render(context)
-    ecv_file = os.path.join(ECV_FOLDER, dataset_name.lower().replace(" ","_") + ".ecv")
+    ecv_file = os.path.join(ECV_FOLDER_ABSOLUTE_PATH, dataset_name.lower().replace(" ","_") + ".ecv")
     import codecs
     try:
         f = codecs.open(ecv_file, "w", "utf-8")

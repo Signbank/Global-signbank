@@ -24,7 +24,7 @@ from collections import OrderedDict
 from datetime import datetime, date
 
 from signbank.settings.base import FIELDS, DEFAULT_KEYWORDS_LANGUAGE, \
-    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY
+    WRITABLE_FOLDER, DATASET_METADATA_DIRECTORY, ECV_FOLDER
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_translated_dict
 
 
@@ -2389,13 +2389,16 @@ class Gloss(models.Model):
             # Backup the existing video objects stored in the database
             glossvideos_nme = [gv.id for gv in GlossVideoNME.objects.filter(gloss=self)]
             glossvideos_persp = [gv.id for gv in GlossVideoPerspective.objects.filter(gloss=self)]
-            existing_videos = GlossVideo.objects.filter(gloss=self,
-                                                        glossvideonme=None,
-                                                        glossvideoperspective=None, version=0).exclude(
+            # get existing gloss video objects but exclude NME and perspective videos
+            existing_videos = GlossVideo.objects.filter(gloss=self).exclude(
                 id__in=glossvideos_nme).exclude(id__in=glossvideos_persp)
-            for video_object in existing_videos:
+            # order them by version number
+            existing_videos_all = existing_videos.order_by('version')
+            # revert all the old video objects
+            for video_object in existing_videos_all:
                 video_object.reversion(revert=False)
 
+            # see if there is a file with the correct path that is not referred to by an object
             already_existing_relative_target_path = get_gloss_path_to_video_file_on_disk(self)
             if already_existing_relative_target_path:
                 # a video file without a GlossVideo object already exists, remove the file
@@ -3236,6 +3239,17 @@ class Dataset(models.Model):
         goal_string = DATASET_METADATA_DIRECTORY + '/' + metafile_name
 
         return goal_string
+
+    def get_ecv_path(self, check_existence=True):
+        """Returns the path within the writable folder"""
+
+        dataset_filename = self.acronym.lower().replace(" ", "_") + ".ecv"
+        ecv_file_path = os.path.join(WRITABLE_FOLDER, ECV_FOLDER, dataset_filename)
+        ecv_relative_path = os.path.join(ECV_FOLDER, dataset_filename)
+        if check_existence and os.path.exists(ecv_file_path):
+            return ecv_relative_path
+
+        return ''
 
     def uploaded_eafs(self):
 
