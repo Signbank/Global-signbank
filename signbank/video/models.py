@@ -27,15 +27,6 @@ else:
     from signbank.dictionary.models import Gloss, Language
 
 
-def get_two_letter_dir(idgloss):
-    foldername = idgloss[:2]
-
-    if len(foldername) == 1:
-        foldername += '-'
-
-    return foldername
-
-
 class GlossVideoStorage(FileSystemStorage):
     """Implement our shadowing video storage system"""
 
@@ -133,6 +124,7 @@ class GlossVideoHistory(models.Model):
 
 def get_gloss_path_to_video_file_on_disk(gloss):
     idgloss = gloss.idgloss
+    from signbank.tools import get_two_letter_dir
     two_letter_dir = get_two_letter_dir(idgloss)
     dataset_dir = gloss.lemma.dataset.acronym
     filename = idgloss + '-' + str(gloss.id) + '.mp4'
