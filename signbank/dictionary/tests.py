@@ -1094,6 +1094,7 @@ class FrontEndTests(TestCase):
         #Add a hidden gloss to this dataset
 
         self.hidden_gloss = Gloss(lemma=self.new_lemma)
+        self.hidden_gloss.inWeb = False
         self.hidden_gloss.save()
 
         hidden_annotationidglosstranslation = AnnotationIdglossTranslation(text=NAME + 'hidden', gloss=self.hidden_gloss,
@@ -1126,7 +1127,9 @@ class FrontEndTests(TestCase):
         self.assertEqual(response.status_code,302)
 
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
-        self.assertEqual(response.status_code,302)
+        message_result = list(response.context['messages'])[0]
+        message = message_result.message
+        self.assertTrue('The gloss you are trying to view is not in a dataset you can view' in message)
 
         #Log in
         self.client = Client()

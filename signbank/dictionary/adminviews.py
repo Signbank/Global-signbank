@@ -1060,7 +1060,9 @@ class GlossDetailView(DetailView):
 
     def get_template_names(self):
         if 'public' in self.kwargs:
-            self.public = True
+            self.public = self.kwargs['public']
+        if self.public:
+            print('redirect to public view')
             return ['dictionary/gloss.html']
         return ['dictionary/gloss_detail.html']
 
@@ -1074,15 +1076,17 @@ class GlossDetailView(DetailView):
             self.request.session['selected_datasets'] = [ds.acronym for ds in selected_datasets]
             self.request.session.modified = True
 
+        if 'public' in self.kwargs:
+            self.public = self.kwargs['public']
+
         try:
-            self.object = super().get_object()
-        except AttributeError:
-            if 'glossid' not in self.kwargs:
-                raise ObjectDoesNotExist
-            # if we get to here, this is public view
-            glossid = self.kwargs['glossid']
-            self.object = Gloss.objects.get(id=int(glossid), archived=False)
-            self.public = True
+            if self.public:
+                if 'glossid' not in self.kwargs:
+                    raise ObjectDoesNotExist
+                glossid = self.kwargs['glossid']
+                self.object = Gloss.objects.get(id=int(glossid), archived=False)
+            else:
+                self.object = super().get_object()
         except (Http404, ObjectDoesNotExist):
             translated_message = _('The requested gloss does not exist.')
             return show_warning(request, translated_message, selected_datasets)
@@ -1554,13 +1558,7 @@ class GlossDetailView(DetailView):
             context['annotation_idgloss'][language] = annotation_text
 
         # Put translations (keywords) per language in the context
-        context['sensetranslations_per_language'] = {}
-        if gl.dataset:
-            for language in gl.dataset.translation_languages.all():
-                context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
-        else:
-            language = Language.objects.get(id=get_default_language_id())
-            context['sensetranslations_per_language'][language] = gl.translation_set.filter(language=language).order_by('translation__index')
+        context['sensetranslations_per_language'] = sensetranslations_per_language_dict(gloss)
 
         sentencetype_choices = FieldChoice.objects.filter(field__iexact='SentenceType').order_by('machine_value')
         sentencetype_choice_list = choicelist_queryset_to_translated_dict(sentencetype_choices, id_prefix='', ordered=False)
