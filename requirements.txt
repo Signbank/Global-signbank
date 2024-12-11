@@ -1,6 +1,7 @@
 setuptools==70.0.0
 asgiref==3.7.2
 attrs==17.4.0
+beautifulsoup4==4.12.3
 Django==4.2.16
 django-appconf==1.0.5
 django-bootstrap3==22.2
@@ -19,6 +20,7 @@ future==0.18.3
 flatdict==4.0.0
 git+https://github.com/vanlummelhuizen/CNGT-scripts@master#egg=CNGT_scripts
 lxml==4.9.3
+nltk==3.9.1
 numpy==1.26.2
 py==1.11.0
 pympi-ling==1.70.2
