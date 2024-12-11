@@ -1213,6 +1213,8 @@ class GlossDetailView(DetailView):
 
         if self.public:
 
+            context['gloss_dialects'] = gloss.dialect.all()
+
             # Put annotation_idgloss per language in the context
             annotation_idgloss = {}
             if gloss.lemma.dataset:

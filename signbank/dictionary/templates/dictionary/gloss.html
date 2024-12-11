@@ -9,12 +9,6 @@
 {% blocktrans %}Sign for {{gloss}}{% endblocktrans %}
 {% endblock %}
 
-
-{% block jqueryready %}
-
-
-{% endblock %}
-
 {% block script %}
     function replay() {
         $f('player').play();
@@ -29,14 +23,15 @@
 <meta property="og:description" content="From the {{gloss.dataset.acronym}} dataset in Global Signbank." />
 <meta property="og:image" content="{{request.scheme}}://{{ request.get_host }}/media/{{protected_media_url}}{{gloss.get_image_url}}" />
 
-<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
-<script src="https://cdn.jsdelivr.net/sharer.js/latest/sharer.min.js"></script>
 <style>
 .video_button:hover {
     color: red;
 }
 .video_button.active {
     color: red;
+}
+.panel-heading:hover {
+    background-color: #D2D2D2;
 }
 </style>
 {% endblock %}
@@ -54,8 +49,9 @@ $('#definitionblock').css({'padding-top': Math.round($('#searchresults').height(
 var search_type = '{{search_type}}';
 var model_view = 'gloss';
 var active_id = '{{active_id}}';
-var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 var this_gloss_id = {{gloss.id}};
+
+var search_results_url = '{% url 'dictionary:ajax_search_results' %}';
 
 {% include "dictionary/search_result_bar.html" %}
 
@@ -190,6 +186,7 @@ $('#show_middle').click(function()
 
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
+<nav class="navbar navbar-light" id="searchquery" style="background-color:inherit; color:inherit;z-index: 50;">
 
 <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}
@@ -198,7 +195,7 @@ $('#show_middle').click(function()
     </div>
     {% endif %}
 </div>
-
+</nav>
     <div id="signinfo" class='navbar navbar-collapse'>
 
         {% if perms.dictionary.search_gloss %}
@@ -232,92 +229,12 @@ $('#show_middle').click(function()
         {% endif %}
     
     </div>
+<br>
+<div id="definitionblock" style="width:1600px;">
 
-<div id="definitionblock">
+<div id="leftblock" style="width:auto;">
 
-<div id="leftblock" style="width:65%;">
-    <div id='annotation_idgloss_summary'>
-    <table class='table table-condensed table-condensed-light'>
-        <tr class="empty_row"></tr>
-        {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
-        <tr>
-            <th>
-                {% trans "Annotation ID Gloss" %} ({{ lang }})
-            </th>
-            <td id='annotation_idgloss_{{ lang.language_code_2char }}'>{{ annotation_idgloss_translations.0.text|safe }}</td>
-        </tr>
-        {% endfor %}
-
-        {% if gloss.dialect.all %}
-            <tr>
-               <th>{% trans "Dialects" %}</th>
-               <td>
-                    {% for dialect in gloss.dialect.all %}
-                      <span>{{ dialect.name}}</span>
-                    {% if not forloop.last %}, {% endif %}
-                    {% endfor %}
-                </td>
-            </tr>
-        {% endif %}
-
-        {% if gloss_or_morpheme == 'gloss' %}
-        {% if sensetranslations_per_language %}
-        {% for lang, sensetranslations in sensetranslations_per_language.items %}
-        {% if sensetranslations %}
-        <tr id="senses_{{lang.language_code_2char}}">
-            <th>{% trans "Senses" %} ({{lang.name}})</th>
-            <td class="translation_{{lang.language_code_2char}}">
-                <div>
-                {% for key, value in sensetranslations.items %}
-                    {% if value != "" %}
-                        {{key}}. {{ value|safe }}
-                    {% if not forloop.last %}<br> {% endif %}
-                    {% endif %}
-                {% endfor %}
-                </div>
-            </td>
-        </tr>
-        {% endif %}
-        {% endfor %}
-        {% endif %}
-        {% else %}
-        {% if translations_per_language %}
-        {% for lang, translations in translations_per_language.items %}
-        <tr>
-            <th>
-                {% trans "Abstract Meaning" %} ({{ lang }})
-            </th>
-            <td class='edit edit_text'
-                id='keyword_{{ lang.language_code_2char }}'>{% for trn in translations %}{{ trn.translation.text|safe }}
-                                                            {% if not forloop.last %}, {% endif %}{% endfor %}</td>
-        </tr>
-        {% endfor %}
-        {% endif %}
-        {% endif %}
-        {% if notes_groupedby_role %}
-        <tr id="notes">
-            <th>{% blocktrans %}Note(s){% endblocktrans %}</th>
-            <td>
-                <table>
-                {% for role_id, note_list in notes_groupedby_role.items %}
-                    {% for def in note_list %}
-                        {% if def.published %}
-                            <tr><th id='definitionrole_{{def.id}}'>{{role_id.1}}</th></tr>
-                            <tr><td id='definition_{{def.id}}'>{{def.text}}</td></tr>
-                        {% endif %}
-                    {% endfor %}
-                {% endfor %}
-                </table>
-            </td>
-        </tr>
-        {% endif %}
-    </table>
-    </div>
-</div>
-<div class='clearfix' style="width:50%;">
-    <div id="videos"
-         style="z-index: 0;opacity:.99; position: relative;">
-
+    <div id="videos" style="z-index: 0;opacity:.99; position: relative;">
         <div class='col-md-4'>
             <div id="videocontainer">
             {% if gloss.has_perspective_videos %}
@@ -341,13 +258,13 @@ $('#show_middle').click(function()
             </div>
             {% endif %}
             {% if gloss.has_video %}
-                <div id="player" style="width:600px;">
+                <div id="player" style="height:259px;width:auto;">
                     <video id='videoplayer_middle' src="{{protected_media_url}}{{gloss.get_video_url}}?v={% now 'YmdHis' %}"
-                           playsinline autoplay muted style="height:auto;width:600px;"></video>
+                           playsinline autoplay muted style="height:259px;width:auto;"></video>
 
                 {% for perspvideo in gloss.get_perspective_videos %}
                     <video id='videoplayer_{{perspvideo.perspective}}' src="{{protected_media_url}}{{perspvideo.get_video_path}}?v={% now 'YmdHis' %}"
-                           playsinline autoplay muted style="height:auto;width:600px;"></video>
+                           playsinline autoplay muted style="height:259px;width:auto;"></video>
                 {% endfor %}
                 </div>
                 <div id="buttonbar" style="background-color:transparent;">
@@ -359,17 +276,70 @@ $('#show_middle').click(function()
                         style="font-size:16px;background-color:transparent;"><span class="glyphicon glyphicon-fullscreen"></span></button>
                 </div>
             {% else %}
-            <div id='player' style="width:600px;">
-             <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png' style="height:auto;width:600px;">
+            <div id='player' style="height:259px;width:auto;">
+             <img id='novideo' src='{{STATIC_URL}}images/no-video-ngt.png' style="height:259px;width:auto;">
             </div>
             <br>
             {% endif %}
             </div>
         </div>
     </div>
+    <div>
+        {% if gloss.get_image_path %}
+            <img id="imageframe" src="{{protected_media_url}}{{gloss.get_image_url}}?v={% now 'YmdHis' %}"
+                 style="height:259px;width:auto;">
+        {% endif %}
+    </div>
 </div>
-{% if gloss.has_nme_videos %}
-<div class="panel panel-default panel-light" style="width:50%;">
+
+<div class='panel-group' >
+<div id="definition" style="z-index: 0;opacity:.99; width:auto;">
+<div id='language_fields_summary'>
+    <table class='table table-condensed table-condensed-light' style="width:auto;">
+        {% if gloss_dialects %}
+        <tr>
+            <th>{% trans "Dialect" %}</th>
+            <td id='dialect'>{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+        {% endif %}
+        <tr>
+            <th>{% trans "Lemma ID Gloss" %}</th>
+            <td><span id="lemma">{{gloss.lemma}}
+                    {% if lemma_group %}
+                        <a href='{{lemma_group_url}}' title='{% trans "Show Lemma Group" %}'><span class="glyphicon glyphicon-th-list"></span></a>
+                    {% endif %}
+                </span>
+            </td>
+        </tr>
+        {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+        <tr>
+            <th>
+                {% trans "Annotation ID Gloss" %} ({{ lang }})
+            </th>
+            <td id='annotation_idgloss_{{ lang.language_code_2char }}'>{{ annotation_idgloss_translations.0.text|safe }}</td>
+        </tr>
+        {% endfor %}
+
+        {% for lang, sensetranslations in sensetranslations_per_language.items %}
+        {% if sensetranslations %}
+        <tr id="senses_{{lang.language_code_2char}}">
+            <th>{% trans "Senses" %} ({{lang.name}})</th>
+            <td class="translation_{{lang.language_code_2char}}">
+                <div>
+                {% for key, value in sensetranslations.items %}
+                    {% if value != "" %}
+                        {{key}}. {{ value|safe }}
+                    {% if not forloop.last %}<br> {% endif %}
+                    {% endif %}
+                {% endfor %}
+                </div>
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </table>
+</div>
+<div class="panel panel-default panel-light">
     <div class='panel-heading panel-light' id='nme_videos_heading'
          data-toggle='collapse' data-target='#nme_videos'>{% trans "NME Videos" %}
     </div>
@@ -382,9 +352,9 @@ $('#show_middle').click(function()
                        <table class="table table-condensed">
                            <tr>
                                <td class="td td-light" colspan="2">
-                                   <div id="nmeplayer" style="width:600px;">
+                                   <div id="nmeplayer" style="width:400px;">
                                     <video id='videonmeplayer' src="{{protected_media_url}}{{videonme.get_video_path}}?v={% now 'YmdHis' %}"
-                                           style="height:auto;width:600px;" controls muted></video>
+                                           style="height:auto;width:400px;" controls muted></video>
                                    </div>
                                 </td>
                            </tr>
@@ -406,9 +376,8 @@ $('#show_middle').click(function()
        </table>
     </div>
 </div>
-{% endif %}
 <!-- Phonology -->
-<div class="panel panel-default panel-light" style="width:50%;">
+<div class="panel panel-default panel-light">
     <div class='panel-heading panel-light' id='phonology_heading'
          data-toggle='collapse' data-target='#phonology'>{% trans "Phonology" %}
     </div>
@@ -431,15 +400,14 @@ $('#show_middle').click(function()
     </div>
 </div>
 <!-- Relations to other signs -->
-<div class="panel panel-default panel-light" style="width:50%;">
+<div class="panel panel-default panel-light">
     <div class='panel-heading panel-light' data-toggle='collapse'
          data-target='#relations'>{% trans "Relations to Other Signs" %}
     </div>
     <div id='relations' class='collapse'>
-       <table class='table table-condensed' style="z-index:1000;">
+       <table class='table table-condensed'>
            {% for rel, target_display in otherrelations %}
            <tr id='row_{{rel.id}}'>
-                <td></td>
                 <td class="td td-light" id='relationrole_{{rel.id}}'>{{rel.get_role_display}}</td>
                 <td class="td td-light" id='relationtarget_{{rel.id}}'>
                     <a id='relation_target_hyperlink_{{rel.id}}'
@@ -450,8 +418,25 @@ $('#show_middle').click(function()
        </table>
     </div>
 </div>
+<!-- Notes -->
+<div class="panel panel-default panel-light">
+    <div class='panel-heading panel-light' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
+    </div>
+    <div id='definitions' class='collapse'>
+        <table class='table table-condensed'>
+        {% for role_id, note_list in notes_groupedby_role.items %}
+            {% for def in note_list %}
+                {% if def.published %}
+                    <tr><th id='definitionrole_{{def.id}}'>{{role_id.1}}</th></tr>
+                    <tr><td id='definition_{{def.id}}'>{{def.text}}</td></tr>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+        </table>
+    </div>
+</div>
 <!-- Example sentences -->
-<div class="panel panel-default panel-light" style="width:50%;">
+<div class="panel panel-default panel-light">
     <div class='panel-heading panel-light' data-toggle='collapse'
          data-target='#exSentence'>{% trans "Example Sentences" %}
     </div>
@@ -466,7 +451,7 @@ $('#show_middle').click(function()
 
                             <style>.highlight {background-color: rgb(255, 149, 63);}</style>
 
-                            <video id="myVideo_{{forloop.counter}}" controls style="width:600px;">
+                            <video id="myVideo_{{forloop.counter}}" controls style="width:400px;">
                                 <source src="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
                             </video>
 
@@ -535,6 +520,7 @@ $('#show_middle').click(function()
     </div>
 </div>
 <br>
+</div>
 </div>
 </div>
 
