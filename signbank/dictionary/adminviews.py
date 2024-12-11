@@ -16,6 +16,7 @@ from django.http import HttpResponse, HttpResponseRedirect, \
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.utils.translation import override, gettext, gettext_lazy as _, activate
+from django.utils import html
 from django.shortcuts import *
 from django.contrib import messages
 from django.contrib.sites.models import Site
@@ -783,7 +784,7 @@ class GlossListView(ListView):
         if 'search' in get and get['search']:
             # menu bar gloss search, return the results
             val = get['search']
-            query_parameters['search'] = val
+            query_parameters['search'] = html.escapejs(val)
             if USE_REGULAR_EXPRESSIONS:
                 query = Q(annotationidglosstranslation__text__iregex=val)
             else:
@@ -804,7 +805,7 @@ class GlossListView(ListView):
         if 'translation' in get and get['translation']:
             # menu bar senses search, return the results
             val = get['translation']
-            query_parameters['translation'] = val
+            query_parameters['translation'] = html.escapejs(val)
             if USE_REGULAR_EXPRESSIONS:
                 query = Q(senses__senseTranslations__translations__translation__text__iregex=val)
             else:
