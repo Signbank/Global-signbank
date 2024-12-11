@@ -75,7 +75,7 @@ from signbank.dictionary.senses_display import (senses_per_language, senses_per_
                                                 senses_translations_per_language_list,
                                                 senses_sentences_per_language_list)
 from signbank.dictionary.context_data import (get_context_data_for_list_view, get_context_data_for_gloss_search_form,
-                                                get_web_search)
+                                                get_web_search, get_selected_datasets)
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to, gloss_related_objects,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
@@ -714,12 +714,7 @@ class GlossListView(ListView):
         else:
             self.query_parameters = dict()
 
-        if self.request.user.is_authenticated:
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
-        elif 'selected_datasets' in self.request.session.keys():
-            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
-        else:
-            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
@@ -3732,20 +3727,12 @@ class DatasetListView(ListView):
     # set the default dataset, this should not be empty
     dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
 
-
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(DatasetListView, self).get_context_data(**kwargs)
 
-        if not self.request.user.is_authenticated:
-            if 'selected_datasets' in self.request.session.keys():
-                selected_dataset_acronyms = self.request.session['selected_datasets']
-                selected_datasets = Dataset.objects.filter(acronym__in=selected_dataset_acronyms)
-            else:
-                selected_datasets = get_selected_datasets_for_user(self.request.user)
-                self.request.session['selected_datasets'] = [ ds.acronym for ds in selected_datasets ]
-        else:
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
+        context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 

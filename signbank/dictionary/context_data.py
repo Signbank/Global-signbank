@@ -24,9 +24,28 @@ def get_selected_datasets(request):
     """
     Get the selected datasets
     """
-    if 'selected_datasets' in request.session.keys():
-        return Dataset.objects.filter(acronym__in=request.session['selected_datasets'])
-    return get_selected_datasets_for_user(request.user)
+    if request.user.is_authenticated:
+        selected_datasets = get_selected_datasets_for_user(request.user)
+        if 'selected_datasets' in request.session.keys():
+            session_datasets = request.session['selected_datasets']
+            selected_datasets_acronyms = [ds.acronym for ds in selected_datasets]
+            if session_datasets != selected_datasets_acronyms:
+                # if the session variable does not match, fix it
+                request.session['selected_datasets'] = selected_datasets_acronyms
+                request.session.modified = True
+        else:
+            # add the selected datasets to the session variables
+            selected_datasets_acronyms = [ds.acronym for ds in selected_datasets]
+            request.session['selected_datasets'] = selected_datasets_acronyms
+            request.session.modified = True
+    elif 'selected_datasets' in request.session.keys():
+        selected_datasets = Dataset.objects.filter(acronym__in=request.session['selected_datasets'])
+    else:
+        # this will end up setting it to the DEFAULT DATASET for anonymous users
+        selected_datasets = get_selected_datasets_for_user(request.user)
+        request.session['selected_datasets'] = [ds.acronym for ds in selected_datasets]
+        request.session.modified = True
+    return selected_datasets
 
 
 def get_context_data_for_list_view(request, listview, kwargs, context={}):
