@@ -94,7 +94,6 @@ def order_annotatedsentence_queryset_by_sort_order(get, qs, queryset_language_co
     """
 
     def order_queryset_by_annotatedglosses(qs, sOrder):
-        print(sOrder)
         # filter query on dataset and sort based on first gloss of the sentence
         qs = qs.annotate(
             firstgloss=Subquery(
@@ -527,19 +526,8 @@ class GlossListView(ListView):
 
         this_page_number = context['page_obj'].number
         this_paginator = context['page_obj'].paginator
-        if len(self.object_list) > settings.MAX_SCROLL_BAR:
-            this_page = this_paginator.page(this_page_number)
-            if this_page.has_previous():
-                previous_objects = this_paginator.page(this_page_number - 1).object_list
-            else:
-                previous_objects = []
-            if this_page.has_next():
-                next_objects = this_paginator.page(this_page_number + 1).object_list
-            else:
-                next_objects = []
-            list_of_objects = previous_objects + list(context['page_obj'].object_list) + next_objects
-        else:
-            list_of_objects = self.object_list
+
+        list_of_objects = self.object_list
 
         # construct scroll bar
         # the following retrieves language code for English (or DEFAULT LANGUAGE)
@@ -6685,6 +6673,8 @@ class KeywordListView(ListView):
 
         context['searchform'] = search_form
 
+        context['search_type'] = self.search_type
+
         multiple_select_gloss_fields = ['tags']
         context['MULTIPLE_SELECT_GLOSS_FIELDS'] = multiple_select_gloss_fields
 
@@ -6713,8 +6703,9 @@ class KeywordListView(ListView):
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
-        if ('search_type' in self.request.session.keys() and
-                self.request.session['search_type'] != self.search_type):
+        session_search_type = self.request.session['search_type'] if 'search_type' in self.request.session.keys() else ''
+
+        if session_search_type != self.search_type:
             feedback_message = _('Your query result is not glosses.')
             messages.add_message(self.request, messages.ERROR, feedback_message)
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
@@ -6751,6 +6742,8 @@ class KeywordListView(ListView):
                 glosses_with_tag = list(
                     TaggedItem.objects.filter(tag__id__in=values).values_list('object_id', flat=True))
                 glosses_of_datasets = glosses_of_datasets.filter(id__in=glosses_with_tag)
+
+        glosses_of_datasets = glosses_of_datasets.order_by('lemma__lemmaidglosstranslation__text')
 
         (interface_language, interface_language_code,
          default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
