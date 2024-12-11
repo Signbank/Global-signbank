@@ -16,6 +16,7 @@ from django.http import HttpResponse, HttpResponseRedirect, \
 from django.urls import reverse_lazy
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.utils.translation import override, gettext, gettext_lazy as _, activate
+from django.utils import html
 from django.shortcuts import *
 from django.contrib import messages
 from django.contrib.sites.models import Site
@@ -791,7 +792,7 @@ class GlossListView(ListView):
         if 'search' in get and get['search']:
             # menu bar gloss search, return the results
             val = get['search']
-            query_parameters['search'] = val
+            query_parameters['search'] = html.escapejs(val)
             if USE_REGULAR_EXPRESSIONS:
                 query = Q(annotationidglosstranslation__text__iregex=val)
             else:
@@ -812,7 +813,7 @@ class GlossListView(ListView):
         if 'translation' in get and get['translation']:
             # menu bar senses search, return the results
             val = get['translation']
-            query_parameters['translation'] = val
+            query_parameters['translation'] = html.escapejs(val)
             if USE_REGULAR_EXPRESSIONS:
                 query = Q(senses__senseTranslations__translations__translation__text__iregex=val)
             else:
@@ -7728,6 +7729,20 @@ def fetch_video_stills_for_gloss(request, gloss_id):
             still_path = str(os.path.join(temp_location_frames, filename))
             stills.append(still_path)
     sorted_stills = sorted(stills)
+    number_of_stills = len(sorted_stills)
+    if number_of_stills / 10 < 9:
+        if number_of_stills / 5 < 9:
+            nine_stills = (sorted_stills[i] for i in range(0, len(sorted_stills), 2))
+        else:
+            nine_stills = (sorted_stills[i] for i in range(0, len(sorted_stills), 5))
+    else:
+        nine_stills = (sorted_stills[i] for i in range(0, len(sorted_stills), 10))
+
+    sorted_nine_stills = sorted(nine_stills)
+
+    if len(sorted_nine_stills) > 9:
+        sorted_nine_stills = sorted_nine_stills[0:9]
+
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
@@ -7736,7 +7751,7 @@ def fetch_video_stills_for_gloss(request, gloss_id):
 
     return render(request, 'dictionary/video_stills.html',
                   {'focus_gloss': gloss,
-                   'stills': sorted_stills,
+                   'stills': sorted_nine_stills,
                    'dataset_languages': dataset_languages,
                    'selected_datasets': selected_datasets,
                    'PREFIX_URL': settings.PREFIX_URL,
