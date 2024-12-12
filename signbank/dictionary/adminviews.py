@@ -5483,6 +5483,72 @@ class MorphemeDetailView(DetailView):
         context['lemma_create_field_prefix'] = LemmaCreateForm.lemma_create_field_prefix
         return context
 
+
+class RecentGlossListView(ListView):
+
+    model = Gloss
+    paginate_by = 100
+    search_type = 'sign'
+    queryset_language_codes = []
+    query_parameters = dict()
+    search_form_data = QueryDict(mutable=True)
+    search_form = RecentGlossSearchForm()
+    public = False
+
+    def get_template_names(self):
+        return ['dictionary/admin_recently_added_glosses.html']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        # Call the base implementation first to get a context
+        context = super(RecentGlossListView, self).get_context_data(**kwargs)
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        context['selected_datasets'] = selected_datasets
+        context['dataset_languages'] = Language.objects.filter(dataset__in=selected_datasets).distinct()
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        context['language'] = interface_language
+        context['number_of_days'] = RECENTLY_ADDED_SIGNS_PERIOD.days
+        context['USE_REGULAR_EXPRESSIONS'] = settings.USE_REGULAR_EXPRESSIONS
+        context['SHOW_DATASET_INTERFACE_OPTIONS'] = settings.SHOW_DATASET_INTERFACE_OPTIONS
+
+        return context
+
+    def get_queryset(self):
+
+        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
+        from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
+
+        (interface_language, interface_language_code,
+         default_language, default_language_code) = get_interface_language_and_default_language_codes(self.request)
+
+        dataset_display_languages = []
+        for lang in dataset_languages:
+            dataset_display_languages.append(lang.language_code_2char)
+        if interface_language_code in dataset_display_languages:
+            lang_attr_name = interface_language_code
+        else:
+            lang_attr_name = default_language_code
+
+        recently_added_signs_since_date = DT.datetime.now(tz=get_current_timezone()) - RECENTLY_ADDED_SIGNS_PERIOD
+        recent_glosses = Gloss.objects.filter(morpheme=None, lemma__dataset__in=selected_datasets, archived=False).filter(
+            creationDate__range=[recently_added_signs_since_date, DT.datetime.now(tz=get_current_timezone())]).order_by(
+            '-creationDate')
+
+        items = construct_scrollbar(recent_glosses, 'sign', lang_attr_name)
+        self.request.session['search_results'] = items
+        self.request.session['search_type'] = 'sign'
+        self.request.session.modified = True
+
+        return recent_glosses
+
+
 def gloss_ajax_search_results(request):
     """Returns a JSON list of glosses that match the previous search stored in sessions"""
     if 'search_type' in request.session.keys() and 'search_results' in request.session.keys() \

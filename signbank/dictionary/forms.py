@@ -1089,6 +1089,27 @@ class FocusGlossSearchForm(forms.ModelForm):
             self.fields[boolean_field].choices = [('0', '-'), ('2', _('Yes')), ('3', _('No'))]
 
 
+class RecentGlossSearchForm(forms.ModelForm):
+
+    use_required_attribute = False  # otherwise the html required attribute will show up on every form
+
+    createdBy = forms.CharField(label=_('Created By'), widget=forms.TextInput(attrs=ATTRS_FOR_FORMS))
+
+    class Meta:
+
+        ATTRS_FOR_FORMS = {'class': 'form-control'}
+
+        model = Gloss
+        fields = settings.MINIMAL_PAIRS_SEARCH_FIELDS
+
+    def __init__(self, *args, **kwargs):
+        super(RecentGlossSearchForm, self).__init__(*args, **kwargs)
+
+        self.fields['tags'] = forms.ModelChoiceField(label=_('Tags'),
+                                                     queryset=Tag.objects.all(), empty_label=None,
+                                                     widget=forms.Select(attrs=ATTRS_FOR_FORMS))
+
+
 class FieldChoiceColorForm(forms.Form):
     field_color = forms.CharField(widget=ColorWidget)
     readonly_fields = ['machine_value']
