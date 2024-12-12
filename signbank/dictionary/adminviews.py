@@ -6703,7 +6703,7 @@ class KeywordListView(ListView):
             # the query set is a list of tuples (gloss, keyword_translations, senses_groups)
             return []
 
-        session_search_type = self.request.session['search_type'] if 'search_type' in self.request.session.keys() else ''
+        session_search_type = self.request.session.get('search_type' '')
 
         if session_search_type != self.search_type:
             feedback_message = _('Your query result is not glosses.')
