@@ -2,7 +2,7 @@ from signbank.dictionary.models import *
 from signbank.dictionary.forms import GlossSearchForm, SentenceForm, GlossCreateForm, LemmaCreateForm
 from signbank.tools import get_selected_datasets_for_user, get_dataset_languages, searchform_panels
 from django.http import QueryDict
-from django.utils.html import escape
+from django.utils import html
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 from signbank.dictionary.translate_choice_list import choicelist_queryset_to_field_colors, choicelist_choicelist_to_field_colors
 from signbank.query_parameters import search_fields_from_get
@@ -54,7 +54,7 @@ def get_context_data_for_list_view(request, listview, kwargs, context={}):
     """
     context['show_all'] = kwargs.get('show_all', False)
     context['view_type'] = request.GET.get('view_type', listview.view_type)
-    context['menu_bar_search'] = request.GET['search'] if 'search' in request.GET else ''
+    context['menu_bar_search'] = html.escape(request.GET['search']) if 'search' in request.GET else ''
     context['web_search'] = get_web_search(request)
 
     search_type = request.GET.get('search_type')

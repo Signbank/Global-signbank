@@ -14,7 +14,7 @@ from django.http import QueryDict
 from django.utils.translation import override, gettext_lazy as _
 
 from django.http import HttpResponse, HttpResponseRedirect
-from django.utils.html import escape
+from django.utils import html
 
 from signbank.dictionary.models import *
 from signbank.video.models import GlossVideo
@@ -741,6 +741,9 @@ def search_fields_from_get(searchform, GET):
             vals = GET.getlist(get_key)
             search_fields_to_populate[get_key] = vals
             search_keys.append(get_key)
+        elif get_key in ['translation', 'search']:
+            print(get_key, html.escape(get_value))
+            search_fields_to_populate[get_key] = html.escape(get_value)
         elif get_key not in search_form_fields:
             # skip csrf_token and page
             continue
