@@ -42,7 +42,7 @@ from signbank.dictionary.field_choices import get_static_choice_lists, get_frequ
     fields_to_categories, fields_to_fieldcategory_dict
 
 from signbank.dictionary.forms import *
-from signbank.tools import (get_selected_datasets_for_user, write_ecv_file_for_dataset,
+from signbank.tools import (write_ecv_file_for_dataset,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
                             get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
