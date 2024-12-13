@@ -150,6 +150,7 @@ def get_video_file_path(instance, filename, nmevideo=False, perspective='', offs
     (base, ext) = os.path.splitext(filename)
 
     idgloss = instance.gloss.idgloss
+    from signbank.tools import get_two_letter_dir
     two_letter_dir = get_two_letter_dir(idgloss)
 
     video_dir = settings.GLOSS_VIDEO_DIRECTORY
