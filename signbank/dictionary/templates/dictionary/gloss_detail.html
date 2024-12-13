@@ -1826,10 +1826,13 @@ textarea:focus {
                                     </tr>
                                    {% endfor %}
                                    {% endwith %}
+                                   <tr>Perspective {{videonme.perspective}}</tr>
                                    <tr class="editform">
                                        <td>{% trans "Index" %}</td>
                                        <td class='edit edit_int' id='nmevideo_offset_{{videonme.id}}'>{{videonme.offset}}</td>
                                    </tr>
+                                   <tr>
+                                </tr>
                                </table>
                            </td>
                          </tr>
@@ -1882,6 +1885,16 @@ textarea:focus {
                                     </td>
                                 </tr>
                                 {% endfor %}
+
+                                <th>{% trans "Perspective" %}</th>
+                                <td>
+                                    <select name="perspective" class="form-control" id="nmevideo_perspective">
+                                        <option value="left">Left</option>
+                                        <option value="center">Center</option>
+                                        <option value="right">Right</option>    
+                                    </select>
+                                </td>
+
                             </table>
                       <br><br>
                     </form>

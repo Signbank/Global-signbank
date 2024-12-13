@@ -69,6 +69,7 @@ def addvideo(request):
                     form_value = form.cleaned_data[form_field]
                     descriptions[language.language_code_2char] = form_value.strip()
                 nmevideo.add_descriptions(descriptions)
+                nmevideo.perspective = form.cleaned_data['perspective'] #This is incorrect
             elif object_type == 'morpheme_video':
                 morpheme = Morpheme.objects.filter(id=object_id).first()
                 if not morpheme:

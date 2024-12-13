@@ -36,6 +36,10 @@ def get_two_letter_dir(idgloss):
     return foldername
 
 
+PERSPECTIVE_CHOICES = (('left', 'Left'),
+                       ('right', 'Right')
+                       )
+
 class GlossVideoStorage(FileSystemStorage):
     """Implement our shadowing video storage system"""
 
@@ -886,6 +890,7 @@ class GlossVideoDescription(models.Model):
 
 class GlossVideoNME(GlossVideo):
     offset = models.IntegerField(default=1)
+    perspective = models.CharField(max_length=20, choices=PERSPECTIVE_CHOICES, default='center')    
 
     class Meta:
         verbose_name = gettext("NME Gloss Video")
@@ -974,12 +979,6 @@ class GlossVideoNME(GlossVideo):
         print("DELETE NME VIDEO", self.videofile.name)
         self.delete_files()
         self.delete()
-
-
-PERSPECTIVE_CHOICES = (('left', 'Left'),
-                       ('right', 'Right')
-                       )
-
 
 class GlossVideoPerspective(GlossVideo):
     perspective = models.CharField(max_length=20, choices=PERSPECTIVE_CHOICES)
