@@ -3467,13 +3467,7 @@ class HandshapeListView(ListView):
 
         context['handshapefieldchoicecount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
-        if self.request.user.is_authenticated:
-            selected_datasets = get_selected_datasets(self.request)
-        elif 'selected_datasets' in self.request.session.keys():
-            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
-        else:
-            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
-        context['selected_datasets'] = selected_datasets
+        context['selected_datasets'] = get_selected_datasets(request)
 
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -7336,12 +7330,7 @@ class AnnotatedGlossListView(ListView):
         self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
-        if self.request.user.is_authenticated:
-            selected_datasets = get_selected_datasets(self.request)
-        elif 'selected_datasets' in self.request.session.keys():
-            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
-        else:
-            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        selected_datasets = get_selected_datasets(request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         if 'last_used_dataset' in self.request.session.keys():
