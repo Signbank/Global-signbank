@@ -27,7 +27,7 @@ from signbank.video.models import AnnotatedVideo, GlossVideoNME, GlossVideoDescr
 
 from signbank.settings.server_specific import OTHER_MEDIA_DIRECTORY, DATASET_METADATA_DIRECTORY, DATASET_EAF_DIRECTORY, LANGUAGES
 from signbank.dictionary.translate_choice_list import machine_value_to_translated_human_value
-from signbank.tools import get_selected_datasets_for_user, gloss_from_identifier, get_default_annotationidglosstranslation
+from signbank.tools import gloss_from_identifier, get_default_annotationidglosstranslation
 from signbank.frequency import document_identifiers_from_paths, documents_paths_dictionary
 
 from django.utils.translation import gettext_lazy as _
@@ -43,14 +43,16 @@ from signbank.dictionary.batch_edit import batch_edit_update_gloss, add_gloss_up
 
 
 def show_error(request, translated_message, form, dataset_languages):
+    from signbank.dictionary.context_data import get_selected_datasets
     # this function is used by the add_gloss function below
     messages.add_message(request, messages.ERROR, translated_message)
     return render(request, 'dictionary/add_gloss.html',
                   {'add_gloss_form': form,
                    'dataset_languages': dataset_languages,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                    'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
+
 
 # this method is called from the GlossListView (Add Gloss button on the page)
 def add_gloss(request):
@@ -63,7 +65,8 @@ def add_gloss(request):
         dataset = Dataset.objects.get(pk=request.POST['dataset'])
         selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
     else:
-        selected_datasets = get_selected_datasets_for_user(request.user)
+        from signbank.dictionary.context_data import get_selected_datasets
+        selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     if dataset:
@@ -2324,7 +2327,8 @@ def add_morpheme(request):
         dataset = Dataset.objects.get(pk=request.POST['dataset'])
         selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
     else:
-        selected_datasets = get_selected_datasets_for_user(request.user)
+        from signbank.dictionary.context_data import get_selected_datasets
+        selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     if len(selected_datasets) == 1:
@@ -2396,7 +2400,7 @@ def add_morpheme(request):
             messages.add_message(request, messages.ERROR, ve.message)
             return render(request, 'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                  'dataset_languages': dataset_languages,
-                                                 'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                 'selected_datasets': selected_datasets,
                                                  'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                                                  'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
@@ -2410,7 +2414,7 @@ def add_morpheme(request):
     else:
         return render(request,'dictionary/add_morpheme.html', {'add_morpheme_form': form,
                                                                 'dataset_languages': dataset_languages,
-                                                                'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                                'selected_datasets': selected_datasets,
                                                                 'USE_REGULAR_EXPRESSIONS': settings.USE_REGULAR_EXPRESSIONS,
                                                                'SHOW_DATASET_INTERFACE_OPTIONS': settings.SHOW_DATASET_INTERFACE_OPTIONS})
 
@@ -3074,8 +3078,10 @@ def update_owner(dataset, field, values):
 
     return HttpResponse(str(new_owners_value) + '\t' + str(owners_value), {'content-type': 'text/plain'})
 
+
 def update_excluded_choices(request):
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    from signbank.dictionary.context_data import get_selected_datasets
+    selected_datasets = get_selected_datasets(request)
 
     managed_datasets = []
     change_dataset_permission = get_objects_for_user(request.user, 'change_dataset', Dataset)
@@ -3530,7 +3536,8 @@ def assign_lemma_dataset_to_gloss(request, glossid):
     dataset_of_dummy = dummy_lemma.dataset
     dummy_dataset_name = str(dataset_of_dummy.name)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    from signbank.dictionary.context_data import get_selected_datasets
+    selected_datasets = get_selected_datasets(request)
 
     if not request.user.is_superuser:
         # check that user can write to the dataset

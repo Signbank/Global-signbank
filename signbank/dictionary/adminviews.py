@@ -42,7 +42,7 @@ from signbank.dictionary.field_choices import get_static_choice_lists, get_frequ
     fields_to_categories, fields_to_fieldcategory_dict
 
 from signbank.dictionary.forms import *
-from signbank.tools import (get_selected_datasets_for_user, write_ecv_file_for_dataset,
+from signbank.tools import (write_ecv_file_for_dataset,
                             construct_scrollbar, get_dataset_languages, get_datasets_with_public_glosses,
                             searchform_panels, map_search_results_to_gloss_list,
                             get_interface_language_and_default_language_codes, get_default_annotationidglosstranslation)
@@ -76,7 +76,7 @@ from signbank.dictionary.senses_display import (senses_per_language, senses_per_
                                                 senses_translations_per_language_list,
                                                 senses_sentences_per_language_list)
 from signbank.dictionary.context_data import (get_context_data_for_list_view, get_context_data_for_gloss_search_form,
-                                                get_web_search)
+                                                get_web_search, get_selected_datasets)
 from signbank.dictionary.related_objects import (morpheme_is_related_to, gloss_is_related_to, gloss_related_objects,
                                                  okay_to_move_gloss, same_translation_languages, okay_to_move_glosses,
                                                  glosses_in_lemma_group, transitive_related_objects)
@@ -328,7 +328,7 @@ def show_warning(request, translated_message, selected_datasets):
     messages.add_message(request, messages.ERROR, translated_message)
     return render(request, 'dictionary/warning.html',
                   {'dataset_languages': dataset_languages,
-                   'selected_datasets': get_selected_datasets_for_user(request.user),
+                   'selected_datasets': get_selected_datasets(request),
                    'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                    'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
@@ -361,7 +361,7 @@ class AnnotatedSentenceListView(ListView):
     def get_queryset(self):
         self.show_all = self.kwargs.get('show_all', False)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datases(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         get = self.request.GET
@@ -432,7 +432,7 @@ class AnnotatedSentenceListView(ListView):
         context = super().get_context_data(**kwargs)
 
         set_up_language_fields(AnnotatedSentence, self, self.search_form)
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         nr_sentences_in_dataset = AnnotatedSentence.objects.annotate(
             dataset=Subquery(
@@ -654,7 +654,7 @@ class GlossListView(ListView):
         fieldnames = FIELDS['main'] + FIELDS['phonology'] + FIELDS['semantics'] + FIELDS['frequency'] + ['inWeb', 'isNew']
         fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         header = csv_header_row_glosslist(dataset_languages)
@@ -711,12 +711,7 @@ class GlossListView(ListView):
         else:
             self.query_parameters = dict()
 
-        if self.request.user.is_authenticated:
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
-        elif 'selected_datasets' in self.request.session.keys():
-            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
-        else:
-            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
@@ -968,12 +963,7 @@ class SenseListView(ListView):
             session_query_parameters = self.request.session['query_parameters']
             self.query_parameters = json.loads(session_query_parameters)
 
-        if self.request.user.is_authenticated:
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
-        elif 'selected_datasets' in self.request.session.keys():
-            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
-        else:
-            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, GlossSearchForm, get, dataset_languages)
@@ -1057,15 +1047,10 @@ class GlossDetailView(DetailView):
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
 
-        if 'selected_datasets' in self.request.session.keys():
-            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
-        else:
-            selected_datasets = get_selected_datasets_for_user(request.user)
-            self.request.session['selected_datasets'] = [ds.acronym for ds in selected_datasets]
-            self.request.session.modified = True
-
         if 'public' in self.kwargs:
             self.public = self.kwargs['public']
+
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             if self.public:
@@ -1160,7 +1145,7 @@ class GlossDetailView(DetailView):
             dark_mode = False
         context['dark_mode'] = str(dark_mode)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -1797,7 +1782,7 @@ class GlossVideosView(DetailView):
     template_name = 'dictionary/gloss_videos.html'
 
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             self.object = super().get_object()
@@ -1893,7 +1878,7 @@ class GlossVideosView(DetailView):
 
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -1910,7 +1895,7 @@ class GlossRelationsDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             self.object = super().get_object()
@@ -2095,7 +2080,7 @@ class GlossRelationsDetailView(DetailView):
                 annotation_text = gloss_default_annotationidglosstranslation
             context['annotation_idgloss'][language] = annotation_text
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -2135,7 +2120,7 @@ class MorphemeListView(ListView):
 
         set_up_language_fields(Morpheme, self, self.search_form)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -2215,7 +2200,7 @@ class MorphemeListView(ListView):
         else:
             context['paginate_by'] = self.paginate_by # default
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -2267,7 +2252,7 @@ class MorphemeListView(ListView):
         self.show_all = self.kwargs.get('show_all', self.show_all)
         setattr(self.request.session, 'search_type', self.search_type)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, MorphemeSearchForm, get, dataset_languages)
@@ -2323,7 +2308,7 @@ class MorphemeListView(ListView):
         fieldnames = FIELDS['main']+settings.MORPHEME_DISPLAY_FIELDS+FIELDS['semantics']+FIELDS['frequency']+['inWeb', 'isNew']
         fields = [Morpheme.get_field(fname) for fname in fieldnames if fname in Morpheme.get_field_names()]
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         header = csv_header_row_morphemelist(dataset_languages, fields)
@@ -2364,7 +2349,7 @@ class HandshapeDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         match_machine_value = int(kwargs['pk'])
         try:
@@ -2388,7 +2373,7 @@ class HandshapeDetailView(DetailView):
 
         setattr(self.request.session, 'search_type', self.search_type)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -2497,7 +2482,7 @@ class SemanticFieldDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         # Get the machine value in the URL
         match_machine_value = int(kwargs['pk'])
@@ -2515,7 +2500,7 @@ class SemanticFieldDetailView(DetailView):
 
         context = super(SemanticFieldDetailView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
 
         context['translations'] = [ (translation.language.name, translation.name)
@@ -2558,7 +2543,7 @@ class SemanticFieldListView(ListView):
         # Call the base implementation first to get a context
         context = super(SemanticFieldListView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
 
         # this is needed to avoid crashing the browser if you go to the last page
@@ -2594,7 +2579,7 @@ class DerivationHistoryDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         # Get the machine value in the URL
         match_machine_value = int(kwargs['pk'])
@@ -2612,7 +2597,7 @@ class DerivationHistoryDetailView(DetailView):
 
         context = super(DerivationHistoryDetailView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
 
         context['translations'] = [ (translation.language.name, translation.name)
@@ -2636,7 +2621,7 @@ class DerivationHistoryListView(ListView):
         # Call the base implementation first to get a context
         context = super(DerivationHistoryListView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
 
         # this is needed to avoid crashing the browser if you go to the last page
@@ -2679,7 +2664,7 @@ class HomonymListView(ListView):
         else:
             context['language'] = Language.objects.get(id=get_default_language_id())
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -2699,7 +2684,7 @@ class HomonymListView(ListView):
 
     def get_queryset(self):
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         handedness_filter = 'handedness__name__in'
         strong_hand_filter = 'domhndsh__name__in'
@@ -2730,7 +2715,7 @@ class MinimalPairsListView(ListView):
 
         set_up_language_fields(Gloss, self, self.search_form)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -2808,7 +2793,7 @@ class MinimalPairsListView(ListView):
 
         # this ends up being English for Global Signbank
         language_code = settings.DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset = selected_datasets.first()
 
         if self.object_list:
@@ -2846,7 +2831,7 @@ class MinimalPairsListView(ListView):
             self.request.session.modified = True
             return qs
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, FocusGlossSearchForm, get, dataset_languages)
@@ -2911,7 +2896,7 @@ class QueryListView(ListView):
         # Call the base implementation first to get a context
         context = super(QueryListView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -3035,7 +3020,7 @@ class SearchHistoryView(ListView):
 
         language_code = self.request.LANGUAGE_CODE
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -3124,7 +3109,7 @@ class FrequencyListView(ListView):
         # Call the base implementation first to get a context
         context = super(FrequencyListView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -3226,7 +3211,7 @@ class FrequencyListView(ListView):
         user = self.request.user
 
         if user.is_authenticated:
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
+            selected_datasets = get_selected_datasets(self.request)
             from django.db.models import Prefetch
             qs = Dataset.objects.filter(id__in=selected_datasets).prefetch_related(
                 Prefetch(
@@ -3260,7 +3245,7 @@ class GlossFrequencyView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             self.object = super().get_object()
@@ -3337,7 +3322,7 @@ class GlossFrequencyView(DetailView):
         # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -3484,7 +3469,7 @@ class LemmaFrequencyView(DetailView):
         # CHECK THIS
         self.request.session['last_used_dataset'] = self.last_used_dataset
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -3597,13 +3582,7 @@ class HandshapeListView(ListView):
 
         context['handshapefieldchoicecount'] = Handshape.objects.filter(machine_value__gt=1).count()
 
-        if self.request.user.is_authenticated:
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
-        elif 'selected_datasets' in self.request.session.keys():
-            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
-        else:
-            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
-        context['selected_datasets'] = selected_datasets
+        context['selected_datasets'] = get_selected_datasets(request)
 
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -3684,7 +3663,7 @@ class HandshapeListView(ListView):
                                                                                                              'isNew']
             fields = [Gloss.get_field(fname) for fname in fieldnames if fname in Gloss.get_field_names()]
 
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
+            selected_datasets = get_selected_datasets(self.request)
             dataset_languages = get_dataset_languages(selected_datasets)
 
             header = csv_header_row_glosslist(dataset_languages, fields)
@@ -3731,7 +3710,7 @@ class HandshapeListView(ListView):
             qs = Handshape.objects.none()
             return qs
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         valid_regex, search_fields, field_values = check_multilingual_fields(Handshape, get, dataset_languages)
@@ -3820,7 +3799,7 @@ class HandshapeListView(ListView):
             # search for signs with found hadnshapes
             # find relevant machine values for handshapes
             selected_handshapes = [ h.machine_value for h in qs ]
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
+            selected_datasets = get_selected_datasets(self.request)
 
             # set up filters, obscuring whether the _fk field names are used
             strong_hand = 'domhndsh'
@@ -3843,20 +3822,12 @@ class DatasetListView(ListView):
     # set the default dataset, this should not be empty
     dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
 
-
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get a context
         context = super(DatasetListView, self).get_context_data(**kwargs)
 
-        if not self.request.user.is_authenticated:
-            if 'selected_datasets' in self.request.session.keys():
-                selected_dataset_acronyms = self.request.session['selected_datasets']
-                selected_datasets = Dataset.objects.filter(acronym__in=selected_dataset_acronyms)
-            else:
-                selected_datasets = get_selected_datasets_for_user(self.request.user)
-                self.request.session['selected_datasets'] = [ ds.acronym for ds in selected_datasets ]
-        else:
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
+        context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -4092,17 +4063,8 @@ class DatasetListView(ListView):
             return qs
         else:
             # User is not authenticated
-            # check if the session variable has been set
-            # this reverts to publically available datasets or the default dataset
-
-            if 'selected_datasets' in self.request.session.keys():
-                selected_dataset_acronyms = self.request.session['selected_datasets']
-                selected_dataset_ids = [ ds.id for ds in Dataset.objects.filter(acronym__in=selected_dataset_acronyms) ]
-            else:
-                # this is the first time the session variable is set, set it to the default via the called function
-                selected_datasets = get_selected_datasets_for_user(self.request.user)
-                self.request.session['selected_datasets'] = [ds.acronym for ds in selected_datasets]
-                selected_dataset_ids = [ ds.id for ds in selected_datasets ]
+            selected_datasets = get_selected_datasets(self.request)
+            selected_dataset_ids = [ ds.id for ds in selected_datasets ]
 
             datasets_with_public_glosses = get_datasets_with_public_glosses()
             viewable_datasets = list(
@@ -4126,7 +4088,7 @@ class DatasetManagerView(ListView):
         # Call the base implementation first to get a context
         context = super(DatasetManagerView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -4451,7 +4413,7 @@ class DatasetManagerView(ListView):
         if response:
             return response
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         lang_attr_name = 'name_' + DEFAULT_KEYWORDS_LANGUAGE['language_code_2char']
 
@@ -4570,7 +4532,7 @@ class DatasetDetailView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             self.object = super().get_object()
@@ -4597,7 +4559,7 @@ class DatasetDetailView(DetailView):
         datasetform = DatasetUpdateForm(languages=context['default_language_choice_list'])
         context['datasetform'] = datasetform
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -4697,7 +4659,7 @@ class DatasetMediaView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             self.object = super().get_object()
@@ -4723,7 +4685,7 @@ class DatasetMediaView(DetailView):
         zipped_archives = uploaded_zip_archives(dataset)
         context['zipped_archives'] = zipped_archives
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -4754,7 +4716,7 @@ class DatasetFieldChoiceView(ListView):
         # Call the base implementation first to get a context
         context = super(DatasetFieldChoiceView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         managed_datasets = []
         change_dataset_permission = get_objects_for_user(self.request.user, 'change_dataset', Dataset)
@@ -4902,7 +4864,7 @@ class FieldChoiceView(ListView):
         # Call the base implementation first to get a context
         context = super(FieldChoiceView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         user_object = self.request.user
 
         if 'dark_mode' in self.request.session.keys():
@@ -4972,7 +4934,7 @@ class DatasetFrequencyView(DetailView):
 
     # Overriding the get method get permissions right
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             self.object = super().get_object()
@@ -5010,7 +4972,7 @@ class DatasetFrequencyView(DetailView):
         datasetform = DatasetUpdateForm(languages=context['default_language_choice_list'])
         context['datasetform'] = datasetform
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -5306,7 +5268,7 @@ class MorphemeDetailView(DetailView):
     # Overriding the get method get permissions right
 
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             self.object = super().get_object()
@@ -5578,7 +5540,7 @@ class MorphemeDetailView(DetailView):
                     dataset_choices[dataset.acronym] = dataset.acronym
                 context['dataset_choices'] = json.dumps(dataset_choices)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -5949,7 +5911,7 @@ def glosslist_ajax_complete(request, gloss_id):
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     sensetranslations_per_language = sensetranslations_per_language_dict(this_gloss)
@@ -6014,7 +5976,7 @@ def glosslistheader_ajax(request):
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     fieldname_to_column_header = {'dialect': _("Dialect"),
@@ -6076,7 +6038,7 @@ def senselist_ajax_complete(request, sense_id):
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     sensetranslations_per_language = senses_translations_per_language_list(this_sense)
@@ -6110,7 +6072,7 @@ def senselistheader_ajax(request):
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     fieldname_to_column_header = {'dialect': _("Dialect"),
@@ -6170,7 +6132,7 @@ def lemmaglosslist_ajax_complete(request, gloss_id):
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     sensetranslations_per_language = senses_per_language_list(this_gloss)
@@ -6229,7 +6191,7 @@ class LemmaListView(ListView):
         # if it is missing, a Lemma Search is being done and starts with no results
         self.show_all = self.kwargs.get('show_all', False)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         valid_regex, search_fields, field_values = check_language_fields(self.search_form, LemmaSearchForm, get, dataset_languages)
@@ -6292,7 +6254,7 @@ class LemmaListView(ListView):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -6362,7 +6324,7 @@ class LemmaListView(ListView):
         if not self.request.user.has_perm('dictionary.export_csv'):
             raise PermissionDenied
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         header = csv_header_row_lemmalist(dataset_languages)
@@ -6400,7 +6362,7 @@ class LemmaListView(ListView):
                                  _("You do not have change permission on the dataset of the lemma you are attempting to delete."))
             return HttpResponseRedirect(reverse('dictionary:admin_lemma_list'))
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         queryset = self.get_queryset()
 
@@ -6434,7 +6396,7 @@ class LemmaCreateView(CreateView):
         context['SHOW_DATASET_INTERFACE_OPTIONS'] = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
         context['USE_REGULAR_EXPRESSIONS'] = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
@@ -6458,7 +6420,7 @@ class LemmaCreateView(CreateView):
             dataset = Dataset.objects.get(pk=request.POST['dataset'])
             selected_datasets = Dataset.objects.filter(pk=request.POST['dataset'])
         else:
-            selected_datasets = get_selected_datasets_for_user(request.user)
+            selected_datasets = get_selected_datasets(request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -6490,7 +6452,7 @@ class LemmaCreateView(CreateView):
                                                                  user=request.user,
                                                                  last_used_dataset=self.last_used_dataset),
                                'dataset_languages': dataset_languages,
-                               'selected_datasets': get_selected_datasets_for_user(request.user),
+                               'selected_datasets': get_selected_datasets(request),
                                'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                                'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
@@ -6499,7 +6461,7 @@ class LemmaCreateView(CreateView):
         else:
             return render(request, 'dictionary/add_lemma.html', {'add_lemma_form': form,
                                                              'dataset_languages': dataset_languages,
-                                                             'selected_datasets': get_selected_datasets_for_user(request.user),
+                                                             'selected_datasets': get_selected_datasets(request),
                                                              'USE_REGULAR_EXPRESSIONS': use_regular_expressions,
                                                              'SHOW_DATASET_INTERFACE_OPTIONS': show_dataset_interface})
 
@@ -6647,7 +6609,7 @@ class LemmaUpdateView(UpdateView):
 
     def post(self, request, *args, **kwargs):
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         instance = self.get_object()
         dataset = instance.dataset
@@ -6718,7 +6680,7 @@ class LemmaUpdateView(UpdateView):
 
     def get(self, request, *args, **kwargs):
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             self.object = super().get_object()
@@ -6778,7 +6740,7 @@ class KeywordListView(ListView):
     def get_context_data(self, **kwargs):
         context = super(KeywordListView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
 
         if not selected_datasets or selected_datasets.count() > 1:
@@ -6817,7 +6779,7 @@ class KeywordListView(ListView):
             session_query_parameters = self.request.session['query_parameters']
             self.query_parameters = json.loads(session_query_parameters)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view keywords.')
@@ -6981,7 +6943,7 @@ class BatchEditView(ListView):
     def get_context_data(self, **kwargs):
         context = super(BatchEditView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
 
         if not selected_datasets or selected_datasets.count() > 1:
@@ -7099,7 +7061,7 @@ class BatchEditView(ListView):
             session_query_parameters = self.request.session['query_parameters']
             self.query_parameters = json.loads(session_query_parameters)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to use Batch Edit.')
@@ -7188,7 +7150,7 @@ class ToggleListView(ListView):
     def get_context_data(self, **kwargs):
         context = super(ToggleListView, self).get_context_data(**kwargs)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         context['selected_datasets'] = selected_datasets
 
         if not selected_datasets or selected_datasets.count() > 1:
@@ -7249,7 +7211,7 @@ class ToggleListView(ListView):
     def get_queryset(self):
         # this is a ListView for a complicated data structure
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         if not selected_datasets or selected_datasets.count() > 1:
             feedback_message = _('Please select a single dataset to view keywords.')
@@ -7311,7 +7273,7 @@ class AnnotatedSentenceDetailView(DetailView):
         ordering = ['id']
 
     def get(self, request, *args, **kwargs):
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
 
         try:
             self.object = super().get_object()
@@ -7328,7 +7290,7 @@ class AnnotatedSentenceDetailView(DetailView):
 
         setattr(self.request.session, 'search_type', self.search_type)
 
-        selected_datasets = get_selected_datasets_for_user(self.request.user)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
         context['dataset_languages'] = dataset_languages
 
@@ -7483,12 +7445,7 @@ class AnnotatedGlossListView(ListView):
         self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
-        if self.request.user.is_authenticated:
-            selected_datasets = get_selected_datasets_for_user(self.request.user)
-        elif 'selected_datasets' in self.request.session.keys():
-            selected_datasets = Dataset.objects.filter(acronym__in=self.request.session['selected_datasets'])
-        else:
-            selected_datasets = Dataset.objects.filter(acronym=settings.DEFAULT_DATASET_ACRONYM)
+        selected_datasets = get_selected_datasets(request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         if 'last_used_dataset' in self.request.session.keys():
@@ -7616,7 +7573,7 @@ def annotatedglosslistheader_ajax(request):
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     fieldname_to_column_header = {'id' : _('Sentence ID'),
@@ -7673,7 +7630,7 @@ def annotatedglosslist_ajax_complete(request, annotatedgloss_id):
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     column_values = []
@@ -7737,7 +7694,7 @@ def fetch_video_stills_for_gloss(request, gloss_id):
     SHOW_DATASET_INTERFACE_OPTIONS = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
     USE_REGULAR_EXPRESSIONS = getattr(settings, 'USE_REGULAR_EXPRESSIONS', False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     return render(request, 'dictionary/video_stills.html',
