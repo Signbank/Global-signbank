@@ -1,9 +1,8 @@
 from django.db.models import CharField, TextField
-#from django.forms import TextInput, Textarea, CharField
+# from django.forms import TextInput, Textarea, CharField
 from signbank.dictionary.adminviews import *
 from signbank.dictionary.forms import GlossCreateForm, FieldChoiceForm
 from signbank.dictionary.models import *
-from signbank.tools import get_selected_datasets_for_user
 from signbank.settings.base import *
 from django.utils.translation import override, gettext_lazy as _, activate
 
