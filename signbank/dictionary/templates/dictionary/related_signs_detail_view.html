@@ -608,13 +608,12 @@
 		   <tr>
 			   <th style="width:auto; color:darkred">{% trans "Compounds" %}</th>
 
-			   <th style='width:12em'>{% trans "Component Gloss" %}</th>
-			   <th colspan="2" style='width:12em'>{% trans "Sequential Morphology" %}</th>
+			   <th colspan="2" style="width:600px;;">{% trans "Sequential Morphology" %}</th>
 
 		   </tr>
 		</thead>
 		<tbody>
-		{% for c, c_display in compounds %}
+		{% for c, component_list in compounds %}
 		<tr>
 			  <td>{%if c.get_image_path %}
 				  <div class="thumbnail_container">
@@ -624,9 +623,13 @@
 				  </div>
 				  {% endif %}
 			  </td>
-			  <td id='comp_idgloss'>
-				  <a href='{% url "dictionary:admin_gloss_view" pk=c.pk %}'>{{c|get_default_annotation_idgloss_translation}}</a></td>
-			  <td colspan="2" id='comp_display'>{{c_display}}</td>
+			  <td>
+			  {% for component_id, component_display in component_list %}
+                <span class="relation_view_component"><a href='{% url "dictionary:admin_gloss_view" pk=component_id %}'>
+                    {{component_display}}</a>{% if not forloop.last %} + {% endif %}
+                </span>
+              {% endfor %}
+			  </td>
 		</tr>
 		{% endfor %}
 		</tbody>
