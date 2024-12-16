@@ -1760,6 +1760,10 @@ def get_default_annotationidglosstranslation(gloss):
         language = dataset.translation_languages.first()
 
     annotationidglosstranslations = gloss.annotationidglosstranslation_set.all()
+
+    if not annotationidglosstranslations:
+        return str(gloss.id)
+
     if annotationidglosstranslations.filter(language=language):
         return annotationidglosstranslations.get(language=language).text
 
