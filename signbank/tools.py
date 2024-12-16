@@ -1752,7 +1752,7 @@ def gloss_from_identifier(value):
 
 
 def get_default_annotationidglosstranslation(gloss):
-    if not gloss.lemma or gloss.lemma.dataset:
+    if not gloss.lemma or not gloss.lemma.dataset:
         return str(gloss.id)
     dataset = gloss.lemma.dataset
     language = dataset.default_language
