@@ -1123,12 +1123,15 @@ class FrontEndTests(TestCase):
 
         #And we get a 302 for both details
         response = self.client.get('/dictionary/gloss/'+str(self.public_gloss.pk))
-        self.assertEqual(response.status_code,302)
+        redirect_template = 'dictionary/gloss.html'
+        template_name = response.__dict__['template_name'][0]
+        print('Anonymous request redirected to public view template: ', redirect_template)
+        self.assertEqual(redirect_template, template_name)
 
         response = self.client.get('/dictionary/gloss/'+str(self.hidden_gloss.pk))
         message_result = list(response.context['messages'])[0]
         message = message_result.message
-        self.assertTrue('The gloss you are trying to view is not in a dataset you can view' in message)
+        self.assertTrue('Requested gloss is not available for public viewing.' in message)
 
         #Log in
         self.client = Client()
