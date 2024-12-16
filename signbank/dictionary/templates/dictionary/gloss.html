@@ -23,6 +23,9 @@
 <meta property="og:description" content="From the {{gloss.dataset.acronym}} dataset in Global Signbank." />
 <meta property="og:image" content="{{request.scheme}}://{{ request.get_host }}/media/{{protected_media_url}}{{gloss.get_image_url}}" />
 
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+<script src="https://cdn.jsdelivr.net/sharer.js/latest/sharer.min.js"></script>
+
 <style>
 .video_button:hover {
     color: red;
@@ -181,25 +184,42 @@ $('#show_middle').click(function()
     $('#videoplayer_right').hide();
 });
 </script>
+<style>
+    #view_tabs.affix {
+        position:fixed;
+    }
+    #searchquery.affix {
+        position:fixed;
+    }
+</style>
 {% endblock %}
 
 
 {% block content %}
 {% url 'dictionary:protected_media' '' as protected_media_url %}
 <nav class="navbar navbar-light" id="searchquery" style="background-color:inherit; color:inherit;z-index: 50;">
-
-<div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
+<table class="table-responsive">
+<tr>
+    <td>
+    <div id="searchresults" class='navbar navbar-light' style="overflow-y:hidden;border:0;box-sizing:content-box; z-index: 50;">
     {% if request.session.search_results %}
     <div id="results-inline" class="btn-group" role="group" aria-label="search results"
          style="white-space:nowrap;">
     </div>
     {% endif %}
 </div>
+</td>
+</tr>
+</table>
 </nav>
-    <div id="signinfo" class='navbar navbar-collapse'>
+{% if request.GET.warning %}
+<div class="alert alert-warning">{{request.GET.warning}}</div>
+{% endif %}
+    <div id="signinfo" class='navbar navbar-collapse' style="background-color:inherit;border:0;">
 
-        {% if perms.dictionary.search_gloss %}
         <div id="view_tabs" style="margin-right:15px;margin-top:10px;z-index:100;" class='view-tabs view-tabs-light'>
+        {% if perms.dictionary.search_gloss %}
+        <br><br>
         <ul class='nav nav-tabs nav-tabs-light'>
             <li class="nav-item">
                 <a class='nav-link active' href="{{PREFIX_URL}}/dictionary/{{gloss_or_morpheme}}/{{gloss.id}}.html">{% trans "Public View" %}</a>
@@ -224,10 +244,9 @@ $('#show_middle').click(function()
             </li>
             {% endif %}
         </ul>
+        {% endif %}
         </div>
         <br>
-        {% endif %}
-    
     </div>
 <br>
 <div id="definitionblock" style="width:1600px;">
@@ -296,12 +315,6 @@ $('#show_middle').click(function()
 <div id="definition" style="z-index: 0;opacity:.99; width:auto;">
 <div id='language_fields_summary'>
     <table class='table table-condensed table-condensed-light' style="width:auto;">
-        {% if gloss_dialects %}
-        <tr>
-            <th>{% trans "Dialect" %}</th>
-            <td id='dialect'>{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
-        </tr>
-        {% endif %}
         <tr>
             <th>{% trans "Lemma ID Gloss" %}</th>
             <td><span id="lemma">{{gloss.lemma}}
@@ -311,15 +324,35 @@ $('#show_middle').click(function()
                 </span>
             </td>
         </tr>
-        {% for lang, annotation_idgloss_translations in annotation_idgloss.items %}
+        {% for lang, annotation_idgloss_translation in annotation_idgloss.items %}
         <tr>
             <th>
-                {% trans "Annotation ID Gloss" %} ({{ lang }})
+                {% trans "Annotation ID Gloss" %}
+                {% if SHOW_DATASET_INTERFACE_OPTIONS %} ({{ lang }}) {% endif %}
             </th>
-            <td id='annotation_idgloss_{{ lang.language_code_2char }}'>{{ annotation_idgloss_translations.0.text|safe }}</td>
+
+            <td id='annotation_idgloss_{{lang.language_code_2char}}'
+                style="color:inherit;"
+                colspan="2">{{annotation_idgloss_translation}}</td>
+        </tr>
+        <tr>
+            <th></th>
+            <td>
+
+            {% for morphdef_id, morphdef_display in simultaneous_morphology_display %}
+            <span class="gloss_detail_morpheme"><a href='{% url "dictionary:admin_morpheme_view" pk=morphdef_id %}'>
+                {{morphdef_display}}</a>{% if not forloop.last %}, {% endif %}
+            </span>
+            {% endfor %}
+
+            {% for component_id, component_display in sequential_morphology_display %}
+            <span class="gloss_detail_component"><a href='{% url "dictionary:admin_gloss_view" pk=component_id %}'>
+                {{component_display}}</a>{% if not forloop.last %} + {% endif %}
+            </span>
+            {% endfor %}
+            </td>
         </tr>
         {% endfor %}
-
         {% for lang, sensetranslations in sensetranslations_per_language.items %}
         {% if sensetranslations %}
         <tr id="senses_{{lang.language_code_2char}}">
@@ -336,9 +369,31 @@ $('#show_middle').click(function()
             </td>
         </tr>
         {% endif %}
+        {% if gloss_dialects %}
+        <tr>
+            <th>{% trans "Dialect" %}</th>
+            <td id='dialect'>{% for dia in gloss_dialects %}{{dia}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+        </tr>
+        {% endif %}
         {% endfor %}
+            {% for value,name,label,kind in main_fields %}
+                {% if value != '-' %}
+                <tr><th>{{label}}</th>
+                    {% if kind == 'text' %}
+                    <td id='{{name}}'
+                        value='{{value}}'>{% value value %}
+                    </td>
+                    {% else %}
+                    <td id='{{name}}'
+                        value='{{value}}'>{% value value %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endif %}
+            {% endfor %}
     </table>
 </div>
+{% if gloss.get_nme_videos %}
 <div class="panel panel-default panel-light">
     <div class='panel-heading panel-light' id='nme_videos_heading'
          data-toggle='collapse' data-target='#nme_videos'>{% trans "NME Videos" %}
@@ -376,6 +431,54 @@ $('#show_middle').click(function()
        </table>
     </div>
 </div>
+{% endif %}
+{% if simultaneous_morphology_display %}
+   <!-- Sequential Morphology -->
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#sim_morphology'>{% trans "Simultaneous Morphology" %}
+        </div>
+        <div id='sim_morphology' class='collapse'>
+            <table class='table table-condensed'>
+                <tr>
+                    <th style="width:22em;">{% trans "Morpheme Gloss" %}</th>
+                    <th>{% trans "Meaning in This Sign" %}</th>
+                </tr>
+
+                {% for morpheme, morph_display, morpheme_type in simultaneous_morphology %}
+                <tr>
+                    <td id='morpheme-definition_{{morpheme.pk}}'>
+                        <a href='{% url "dictionary:admin_morpheme_view" pk=morpheme.morpheme.pk %}'>{{morph_display}} ({{morpheme_type}})</a></td>
+                    <td id='morpheme-definition-meaning_{{morpheme.pk}}'>{{morpheme.role}}</td>
+               </tr>
+                {% endfor %}
+            </table>
+        </div>
+   </div>
+{% endif %}
+{% if sequential_morphology_display %}
+   <!-- Sequential Morphology -->
+   <div class="panel panel-default panel-light">
+        <div class='panel-heading panel-light' data-toggle='collapse'
+             data-target='#morphology'>{% trans "Sequential Morphology" %}
+        </div>
+        <div id='morphology' class='collapse'>
+               <table class='table table-condensed table-condensed-light'>
+                   <tbody class="tbody tbody-light">
+                   {% for morphdef, translated_role, sign_display in morphdefs %}
+                   <tr>
+                        <td class="td td-light" style="width:300px;"
+                            id='morphology-definition-role_{{morphdef.id}}' >{{translated_role}}</td>
+                        <td class="td td-light" id='morphology-definition-morpheme_{{morphdef.id}}'>
+                            <a href='{% url "dictionary:admin_gloss_view" pk=morphdef.morpheme.pk %}'>{{sign_display}}</a>
+                        </td>
+                   </tr>
+                   {% endfor %}
+           </tbody>
+           </table>
+        </div>
+   </div>
+{% else %}
 <!-- Phonology -->
 <div class="panel panel-default panel-light">
     <div class='panel-heading panel-light' id='phonology_heading'
@@ -399,6 +502,31 @@ $('#show_middle').click(function()
         </table>
     </div>
 </div>
+{% endif %}
+{% if gloss_semanticfields %}
+<!-- Semantics -->
+<div class="panel panel-default panel-light">
+    <div class='panel-heading panel-light' data-toggle='collapse' data-target='#semantics'>{% trans "Semantics" %}
+                {% if SemanticFieldDefined %}
+                <div class="pull-right">
+                <span id="semantics-icon"><img id='ball' src='{{STATIC_URL}}images/black_circle.png'
+                                               style="width:15px; height:15px; margin: 0px;"></span>
+                </div>
+                {% endif %}
+    </div>
+    <div id='semantics' class='collapse'>
+        <table class='table table-condensed'>
+            <tr>
+                <th>{% trans "Semantic Field" %}</th>
+                <td style="width:500px;"
+                    id='semanticfield'>{% for sf in gloss_semanticfields %}{{sf}}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% if otherrelations %}
 <!-- Relations to other signs -->
 <div class="panel panel-default panel-light">
     <div class='panel-heading panel-light' data-toggle='collapse'
@@ -418,23 +546,8 @@ $('#show_middle').click(function()
        </table>
     </div>
 </div>
-<!-- Notes -->
-<div class="panel panel-default panel-light">
-    <div class='panel-heading panel-light' data-toggle='collapse' data-target='#definitions'>{% trans "Notes" %}
-    </div>
-    <div id='definitions' class='collapse'>
-        <table class='table table-condensed'>
-        {% for role_id, note_list in notes_groupedby_role.items %}
-            {% for def in note_list %}
-                {% if def.published %}
-                    <tr><th id='definitionrole_{{def.id}}'>{{role_id.1}}</th></tr>
-                    <tr><td id='definition_{{def.id}}'>{{def.text}}</td></tr>
-                {% endif %}
-            {% endfor %}
-        {% endfor %}
-        </table>
-    </div>
-</div>
+{% endif %}
+{% if annotated_sentences %}
 <!-- Example sentences -->
 <div class="panel panel-default panel-light">
     <div class='panel-heading panel-light' data-toggle='collapse'
@@ -452,7 +565,7 @@ $('#show_middle').click(function()
                             <style>.highlight {background-color: rgb(255, 149, 63);}</style>
 
                             <video id="myVideo_{{forloop.counter}}" controls style="width:400px;">
-                                <source src="{{protected_media_url}}/{{annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
+                                <source src="{{protected_media_url}}{{annotated_sentence.annotatedvideo.videofile}}?v={% now 'YmdHis' %}" type="video/mp4">
                             </video>
 
                             <br><br><i>{% trans "Glosses" %}</i><br>
@@ -519,6 +632,7 @@ $('#show_middle').click(function()
         </table>
     </div>
 </div>
+{% endif %}
 <br>
 </div>
 </div>

@@ -114,6 +114,8 @@ FIELDS = {}
 
 FIELDS['main'] = ['useInstr', 'wordClass']
 
+PUBLIC_MAIN_FIELDS = ['wordClass']
+
 # fields are ordered per kind: Field Choice Lists, Text, Boolean
 # followed by etymology and articulation
 FIELDS['phonology'] = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'relatArtic', 'locprim',
@@ -130,6 +132,8 @@ PUBLIC_PHONOLOGY_FIELDS = ['handedness', 'domhndsh', 'subhndsh', 'handCh', 'rela
                            'relOriMov', 'relOriLoc', 'oriCh']
 
 FIELDS['semantics'] = ['semField', 'derivHist', 'namEnt','valence','iconImg','concConcSet']
+
+PUBLIC_SEMANTICS_FIELDS = ['semField']
 
 FIELDS['frequency'] = ['tokNo','tokNoSgnr']
 

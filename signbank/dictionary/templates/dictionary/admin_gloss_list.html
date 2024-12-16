@@ -754,15 +754,14 @@ function do_toggle_language(el) {
                                 <td class='td td-light' style="padding-left:30px;"><label>{{searchform.dialects.label}}</label></td>
                                 <td class='td td-light' style="width:600px;">{{ searchform.dialects }}</td>
                             </tr>
-                            {% if not public %}
                             {% for fieldname,field,label in input_names_fields_and_labels.main %}
+                                {% if not public or fieldname in PUBLIC_MAIN_FIELDS %}
 
                                 <tr><td class='td td-light' style="padding-left:30px;">
                                     <label for='id_{{fieldname}}'>{{label}}</label></td>
                                     <td class='td td-light' style="width:600px;">{{field}}</td></tr>
-
-                            {% endfor %}
                             {% endif %}
+                            {% endfor %}
                         </table>
 
                         </div>
@@ -855,14 +854,11 @@ function do_toggle_language(el) {
                           <td class='td td-light'>
                             <table class='table table-condensed table-condensed-light' style="width:65%;">
                                 {% for fieldname,field,label in input_names_fields_and_labels.semantics %}
-
+                                {% if not public or fieldname in PUBLIC_SEMANTICS_FIELDS %}
                                     <tr><td class='td td-light' style="padding-left:30px;"><label for='id_{{fieldname}}'>{{label}}</label></td>
                                         <td class='td td-light' style="width:600px;">{{field}}</td></tr>
-
+                                {% endif %}
                                 {% endfor %}
-
-
-
                             </table>
 
                           </td>
@@ -984,11 +980,13 @@ function do_toggle_language(el) {
             {% endif %}
         </button>
 &nbsp;&nbsp;      <span class="span-text span-text-light">
-        {% trans "Number of Matches:" %} {{page_obj.paginator.count}} {% if user.is_anonymous %}(publically available){% endif %} {% trans "out of" %} {{glosscount}}.
+        {% trans "Number of Matches:" %}
+        {{page_obj.paginator.count}}
+        {% trans "out of" %} {{glosscount}}{% if user.is_anonymous %} (publically available){% endif %}
 
         {% if SHOW_DATASET_INTERFACE_OPTIONS and selected_datasets %}
         {% trans "Datasets:" %}
-        {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}.{% endif %}
+        {% for ds in selected_datasets %}{{ds.acronym}}{% if not forloop.last %}, {% else %}{% endif %}
         {% endfor %}
         {% endif %}
         </span>
