@@ -361,7 +361,7 @@ class AnnotatedSentenceListView(ListView):
     def get_queryset(self):
         self.show_all = self.kwargs.get('show_all', False)
 
-        selected_datasets = get_selected_datases(self.request)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         get = self.request.GET
@@ -2031,13 +2031,12 @@ class GlossRelationsDetailView(DetailView):
         compounds = []
         reverse_morphdefs = gl.parent_glosses.filter(parent_gloss__archived__exact=False,
                                                      morpheme__archived__exact=False)
+        parent_glosses_display = []
         for rm in reverse_morphdefs:
-            parent_glosses = rm.parent_gloss.parent_glosses.filter(parent_gloss__archived__exact=False,
-                                                                   morpheme__archived__exact=False)
-            parent_glosses_display = []
-            for pg in parent_glosses:
-                parent_glosses_display.append(get_default_annotationidglosstranslation(pg.morpheme))
-            compounds.append((rm.morpheme, ' + '.join(parent_glosses_display)))
+            display = str(rm.morpheme)
+            parent_glosses_display.append((rm.morpheme.pk, display))
+        if parent_glosses_display:
+            compounds = [(rm.parent_gloss, parent_glosses_display)]
         context['compounds'] = compounds
 
         appearsin = []
