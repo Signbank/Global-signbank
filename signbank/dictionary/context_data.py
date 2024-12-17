@@ -24,9 +24,15 @@ def get_selected_datasets(request):
     """
     Get the selected datasets
     """
-    if 'selected_datasets' in request.session.keys():
+    if not request.user.is_authenticated and 'selected_datasets' in request.session.keys():
         return Dataset.objects.filter(acronym__in=request.session['selected_datasets'])
-    return get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets_acronyms = [ds.acronym for ds in selected_datasets]
+    dataset_acronyms_in_session = request.session.get('selected_datasets', [])
+    if not dataset_acronyms_in_session or selected_datasets_acronyms != dataset_acronyms_in_session:
+        request.session['selected_datasets'] = selected_datasets_acronyms
+        request.session.modified = True
+    return selected_datasets
 
 
 def get_context_data_for_list_view(request, listview, kwargs, context={}):

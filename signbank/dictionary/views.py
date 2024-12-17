@@ -25,12 +25,13 @@ from signbank.dictionary.update_csv import (update_simultaneous_morphology, upda
 import signbank.dictionary.forms
 from signbank.video.models import GlossVideo, small_appendix, add_small_appendix
 
+from signbank.dictionary.context_data import get_selected_datasets
 from signbank.tools import save_media, get_two_letter_dir
-from signbank.tools import get_selected_datasets_for_user, get_default_annotationidglosstranslation, \
-    get_dataset_languages, \
-    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar, \
-    get_interface_language_and_default_language_codes, detect_delimiter, split_csv_lines_header_body, \
-    split_csv_lines_sentences_header_body, create_sentence_from_valuedict
+from signbank.tools import (get_default_annotationidglosstranslation,
+    get_dataset_languages,
+    create_gloss_from_valuedict, compare_valuedict_to_gloss, compare_valuedict_to_lemma, construct_scrollbar,
+    get_interface_language_and_default_language_codes, detect_delimiter, split_csv_lines_header_body,
+    split_csv_lines_sentences_header_body, create_sentence_from_valuedict)
 from signbank.dictionary.field_choices import fields_to_fieldcategory_dict
 
 from signbank.csv_interface import (csv_create_senses, csv_update_sentences, csv_create_sentence, required_csv_columns,
@@ -91,7 +92,7 @@ def gloss(request, glossid):
     else:
         request.session['search_type'] = 'sign'
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -173,7 +174,7 @@ def gloss(request, glossid):
 def morpheme(request, glossid):
     # this is public view of a morpheme
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -311,7 +312,7 @@ def missing_video_view(request):
         messages.add_message(self.request, messages.ERROR, _('Please login to use this functionality.'))
         return HttpResponseRedirect(settings.PREFIX_URL + '/datasets/available')
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
 
     glosses = missing_video_list(selected_datasets)
 
@@ -323,7 +324,7 @@ def try_code(request, pk):
     """A view for the developer to try out senses for a particular gloss"""
     context = {}
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
 
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
@@ -379,7 +380,7 @@ def try_code(request, pk):
 def add_new_sign(request):
     context = {}
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
 
     default_dataset_acronym = settings.DEFAULT_DATASET_ACRONYM
     default_dataset = Dataset.objects.get(acronym=default_dataset_acronym)
@@ -413,7 +414,7 @@ def add_new_morpheme(request):
 
     context = {}
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     context['dataset_languages'] = dataset_languages
     context['default_dataset_lang'] = dataset_languages.first().language_code_2char if dataset_languages else LANGUAGE_CODE
@@ -446,7 +447,7 @@ def import_csv_create(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
     selected_dataset_acronyms = [dataset.acronym for dataset in selected_datasets]
 
@@ -853,7 +854,7 @@ def import_csv_update(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     required_columns, language_fields, optional_columns = required_csv_columns(dataset_languages, 'update_gloss')
@@ -1410,7 +1411,7 @@ def import_csv_lemmas(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     translation_languages_dict = {}
     # this dictionary is used in the template
@@ -1715,8 +1716,9 @@ def switch_to_language(request,language):
 
     return HttpResponse('OK')
 
+
 def recently_added_glosses(request):
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     from signbank.settings.server_specific import RECENTLY_ADDED_SIGNS_PERIOD
 
@@ -1752,7 +1754,7 @@ def recently_added_glosses(request):
 
 
 def proposed_new_signs(request):
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     proposed_or_new_signs = (Gloss.objects.filter(isNew=True, archived=False) |
                              TaggedItem.objects.get_intersection_by_model(Gloss, "sign:_proposed")).order_by('creationDate').reverse()
@@ -2048,7 +2050,7 @@ def gloss_annotations(this_gloss):
 
 def find_and_save_variants(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -2141,7 +2143,7 @@ def find_and_save_variants(request):
 
 def get_unused_videos(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
     selected_dataset_acronyms = [ds.acronym for ds in selected_datasets]
 
@@ -2360,7 +2362,7 @@ def protected_media(request, filename, document_root=WRITABLE_FOLDER, show_index
 
 def show_glosses_with_no_lemma(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -2478,7 +2480,7 @@ from django.db import models
 
 def choice_lists(request):
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     all_choice_lists = {}
 
     fields_with_choices = fields_to_fieldcategory_dict()
@@ -2539,7 +2541,7 @@ def gloss_revision_history(request,gloss_pk):
 
     gloss = get_object_or_404(Gloss, pk=gloss_pk, archived=False)
 
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = Language.objects.filter(dataset__in=selected_datasets).distinct()
 
     show_dataset_interface = getattr(settings, 'SHOW_DATASET_INTERFACE_OPTIONS', False)
@@ -2803,7 +2805,7 @@ def import_csv_create_sentences(request):
     user_datasets = guardian.shortcuts.get_objects_for_user(user, 'change_dataset', Dataset)
     user_datasets_names = [dataset.acronym for dataset in user_datasets]
 
-    selected_datasets = get_selected_datasets_for_user(user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
 
     translation_languages_dict = {}
@@ -3069,7 +3071,7 @@ def test_abstract_machine(request, datasetid):
     # used to test api method since PyCharm runserver does not support CORS
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
     if not dataset or not (request.user.is_staff or request.user.is_superuser):
         translated_message = _('You do not have permission to use the test command.')
@@ -3095,7 +3097,7 @@ def test_am_update_gloss(request, datasetid, glossid):
     # used to test api method since PyCharm runserver does not support CORS
     dataset_id = int(datasetid)
     dataset = Dataset.objects.filter(id=dataset_id).first()
-    selected_datasets = get_selected_datasets_for_user(request.user)
+    selected_datasets = get_selected_datasets(request)
     dataset_languages = get_dataset_languages(selected_datasets)
     if not dataset or not (request.user.is_staff or request.user.is_superuser):
         translated_message = _('You do not have permission to use the test command.')
