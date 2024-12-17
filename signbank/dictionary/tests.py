@@ -894,7 +894,7 @@ class VideoTests(TestCase):
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code,401)
 
         # Remove the video
         client.login(username='test-user',password='test-user')
@@ -1000,7 +1000,7 @@ class VideoTests(TestCase):
         print('User has logged out.')
         print('Attempt to see video. Must log in.')
         response = client.get(video_url)
-        self.assertEqual(response.status_code,200)
+        self.assertEqual(response.status_code,401)
 
         # Remove the video
         client.login(username='test-user',password='test-user')

@@ -7458,7 +7458,7 @@ class AnnotatedGlossListView(ListView):
         self.web_search = get_web_search(self.request)
         setattr(self.request, 'web_search', self.web_search)
 
-        selected_datasets = get_selected_datasets(request)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         if 'last_used_dataset' in self.request.session.keys():
