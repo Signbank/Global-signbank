@@ -1269,6 +1269,13 @@ class GlossDetailView(DetailView):
         context['morphdefs'] = morphdefs
         context['sequential_morphology_display'] = [(md[0].morpheme.pk, md[2]) for md in morphdefs]
 
+        blend_morphology = []
+        for ble_morph in gloss.blend_morphology.filter(parent_gloss__archived__exact=False,
+                                                       glosses__archived__exact=False):
+            morpheme_display = get_default_annotationidglosstranslation(ble_morph.glosses)
+            blend_morphology.append((ble_morph, morpheme_display))
+        context['blend_morphology'] = blend_morphology
+
         context['gloss_semanticfields'] = list(gloss.semField.all())
 
         context['SemanticFieldDefined'] = self.object.semField.all().count() > 0
@@ -1319,6 +1326,10 @@ class GlossDetailView(DetailView):
                             human_value = ''
                         else:
                             human_value = field_value
+
+                    if field in ['repeat', 'altern'] and not human_value:
+                        # do not display these because they are by default False
+                        continue
 
                     context[topic + '_fields'].append([human_value, field, labels[field], kind])
 
@@ -1611,13 +1622,6 @@ class GlossDetailView(DetailView):
         dataset_id_of_gloss = gl.dataset
         count_morphemes_in_dataset = Morpheme.objects.filter(lemma__dataset=dataset_id_of_gloss).count()
         context['count_morphemes_in_dataset'] = count_morphemes_in_dataset
-
-        blend_morphology = []
-        for ble_morph in gl.blend_morphology.filter(parent_gloss__archived__exact=False,
-                                                    glosses__archived__exact=False):
-            morpheme_display = get_default_annotationidglosstranslation(ble_morph.glosses)
-            blend_morphology.append((ble_morph, morpheme_display))
-        context['blend_morphology'] = blend_morphology
 
         context['related_objects'] = gloss_is_related_to(gl, interface_language_code, default_language_code)
 
