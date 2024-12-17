@@ -361,7 +361,7 @@ class AnnotatedSentenceListView(ListView):
     def get_queryset(self):
         self.show_all = self.kwargs.get('show_all', False)
 
-        selected_datasets = get_selected_datases(self.request)
+        selected_datasets = get_selected_datasets(self.request)
         dataset_languages = get_dataset_languages(selected_datasets)
 
         get = self.request.GET
